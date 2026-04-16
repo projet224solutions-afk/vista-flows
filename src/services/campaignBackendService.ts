@@ -10,8 +10,9 @@ import { backendFetch, type BackendResponse } from './backendApi';
 
 export interface VendorCustomerLink {
   id: string;
-  vendor_id: string;
-  customer_user_id: string;
+  vendor_id?: string;
+  customer_user_id?: string | null;
+  external_contact_id?: string | null;
   source_type: 'digital' | 'physical' | 'both';
   linked_via: string;
   email: string | null;

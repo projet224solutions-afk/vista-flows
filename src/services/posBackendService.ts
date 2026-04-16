@@ -23,8 +23,16 @@ export interface PosSalePayload {
   discount_total: number;
   customer_name?: string | null;
   customer_phone?: string | null;
+  marketing_contact?: string | null;
   notes?: string | null;
   sold_at: string; // ISO 8601
+}
+
+export interface PosMarketingContactPayload {
+  contact: string;
+  customer_name?: string | null;
+  order_total?: number | null;
+  sold_at?: string | null;
 }
 
 export interface SyncResult {
@@ -113,6 +121,25 @@ export async function getReconciliationPending(vendorId?: string, signal?: Abort
 
   return backendFetch<PosReconciliationEntry[]>('/api/pos/reconciliation', {
     method: 'GET',
+    headers,
+    signal,
+  });
+}
+
+/**
+ * Collecter un contact marketing POS (email ou téléphone)
+ */
+export async function collectPosMarketingContact(
+  payload: PosMarketingContactPayload,
+  vendorId?: string,
+  signal?: AbortSignal,
+) {
+  const headers: Record<string, string> = {};
+  if (vendorId) headers['x-vendor-id'] = vendorId;
+
+  return backendFetch<{ id: string; status: 'created' | 'updated' }>('/api/pos/marketing-contact', {
+    method: 'POST',
+    body: payload,
     headers,
     signal,
   });

@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { listVendorClients, type VendorCustomerLink } from '@/services/campaignBackendService';
 import { 
   Users, Search, Filter, Eye, Star, ShoppingCart, 
   CreditCard, Calendar, Mail, Phone, MapPin, 
@@ -15,18 +15,23 @@ import {
 
 interface Client {
   id: string;
-  user_id: string;
-  addresses?: unknown;
-  payment_methods?: unknown;
-  preferences?: unknown;
+  user_id?: string | null;
+  source_type: 'digital' | 'physical' | 'both';
+  linked_via: string;
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  total_orders: number;
+  total_spent: number;
+  last_purchase_at?: string | null;
   created_at: string;
   profile?: {
     first_name?: string;
     last_name?: string;
-    email: string;
+    email?: string | null;
     phone?: string;
   };
-  orders?: {
+  orders: {
     id: string;
     total_amount: number;
     status: string;
@@ -44,7 +49,10 @@ interface ClientStats {
 }
 
 export default function ClientManagement() {
-  const { vendorId: currentVendorId, loading: vendorContextLoading } = useCurrentVendor();
+  const {
+    vendorId: currentVendorId,
+    loading: vendorContextLoading,
+  } = useCurrentVendor();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<ClientStats>({
@@ -60,61 +68,68 @@ export default function ClientManagement() {
   const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'vip' | 'regular' | 'new'>('all');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientDialog, setShowClientDialog] = useState(false);
+  const [showContactsDialog, setShowContactsDialog] = useState(false);
 
   useEffect(() => {
     if (!currentVendorId || vendorContextLoading) return;
     fetchClients();
   }, [currentVendorId, vendorContextLoading]);
 
+  const getClientDisplayName = (client: Client) => {
+    if (client.profile?.first_name && client.profile?.last_name) {
+      return `${client.profile.first_name} ${client.profile.last_name}`;
+    }
+
+    return client.full_name || client.email?.split('@')[0] || client.phone || 'Client anonyme';
+  };
+
+  const mapContactToClient = (contact: VendorCustomerLink): Client => {
+    const baseName = contact.full_name || contact.email?.split('@')[0] || contact.phone || 'Client';
+    const [firstName, ...lastNameParts] = baseName.split(' ');
+
+    return {
+      id: contact.id,
+      user_id: contact.customer_user_id || null,
+      source_type: contact.source_type,
+      linked_via: contact.linked_via,
+      full_name: contact.full_name,
+      email: contact.email,
+      phone: contact.phone,
+      total_orders: Number(contact.total_orders || 0),
+      total_spent: Number(contact.total_spent || 0),
+      last_purchase_at: contact.last_purchase_at,
+      created_at: contact.created_at,
+      profile: {
+        first_name: firstName || undefined,
+        last_name: lastNameParts.join(' ') || undefined,
+        email: contact.email,
+        phone: contact.phone || undefined,
+      },
+      orders: [],
+    };
+  };
+
   const fetchClients = async () => {
     if (!currentVendorId) return;
     try {
-      const vendorIdToUse = currentVendorId;
-
-      // Fetch clients who have made orders with this vendor
-      const { data: clientsData, error } = await supabase
-        .from('customers')
-        .select(`
-          *,
-          profile:profiles!customers_user_id_fkey(first_name, last_name, email, phone),
-          orders!orders_customer_id_fkey(
-            id,
-            total_amount,
-            status,
-            created_at,
-            vendor_id
-          )
-        `);
-
-      if (error) throw error;
-
-      // Filtrer pour ne garder que les clients qui ont des commandes avec ce vendeur
-      const processedClients = (clientsData || [])
-        .map(client => ({
-          ...client,
-          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendorIdToUse)
-        }))
-        .filter(client => client.orders.length > 0);
+      const contacts = await listVendorClients();
+      const processedClients = contacts.map(mapContactToClient);
 
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      const totalOrders = processedClients.reduce((sum, client) => sum + client.orders.length, 0);
-      const totalRevenue = processedClients.reduce((sum, client) => 
-        sum + client.orders.reduce((orderSum, order) => orderSum + order.total_amount, 0), 0);
+      const totalOrders = processedClients.reduce((sum, client) => sum + client.total_orders, 0);
+      const totalRevenue = processedClients.reduce((sum, client) => sum + client.total_spent, 0);
 
       const newClientsThisMonth = processedClients.filter(client => 
         new Date(client.created_at) >= thisMonthStart).length;
 
       const vipClients = processedClients.filter(client => {
-        const clientRevenue = client.orders.reduce((sum, order) => sum + order.total_amount, 0);
-        return clientRevenue > 0; // VIP si plus de 0 GNF dépensés
+        return client.total_spent > 500000 || client.total_orders > 10;
       }).length;
 
       const activeClients = processedClients.filter(client => {
-        const lastOrderDate = client.orders.length > 0 
-          ? new Date(Math.max(...client.orders.map(o => new Date(o.created_at).getTime())))
-          : null;
+        const lastOrderDate = client.last_purchase_at ? new Date(client.last_purchase_at) : null;
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         return lastOrderDate && lastOrderDate >= thirtyDaysAgo;
@@ -142,8 +157,8 @@ export default function ClientManagement() {
   };
 
   const getClientType = (client: Client) => {
-    const clientRevenue = client.orders.reduce((sum, order) => sum + order.total_amount, 0);
-    const orderCount = client.orders.length;
+    const clientRevenue = client.total_spent;
+    const orderCount = client.total_orders;
     const isNew = new Date(client.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     if (clientRevenue > 500000 || orderCount > 10) return 'vip';
@@ -169,17 +184,39 @@ export default function ClientManagement() {
     }
   };
 
+  const getClientSourceLabel = (client: Client) => {
+    switch (client.linked_via) {
+      case 'pos_order':
+        return 'Contact POS';
+      case 'marketplace_order':
+        return 'Commande en ligne';
+      case 'manual':
+        return 'Ajout manuel';
+      case 'campaign_import':
+        return 'Import campagne';
+      default:
+        return client.source_type === 'physical' ? 'Client boutique' : client.source_type === 'digital' ? 'Client en ligne' : 'Client mixte';
+    }
+  };
+
   const filteredClients = clients.filter(client => {
     const matchesSearch = !searchTerm || 
+      getClientDisplayName(client).toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.profile?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.profile?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.profile?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      client.profile?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const clientType = getClientType(client);
     const matchesType = clientTypeFilter === 'all' || clientType === clientTypeFilter;
 
     return matchesSearch && matchesType;
   });
+
+  const clientsWithContacts = clients.filter(client => (client.email || client.profile?.email || client.phone || client.profile?.phone));
+  const clientsWithEmails = clients.filter(client => Boolean(client.email || client.profile?.email));
+  const clientsWithPhones = clients.filter(client => Boolean(client.phone || client.profile?.phone));
 
   if (loading) return <div className="p-4">Chargement des clients...</div>;
 
@@ -190,16 +227,24 @@ export default function ClientManagement() {
         <div className="min-w-0">
           <h2 className="text-lg sm:text-2xl font-bold truncate">Gestion des Clients</h2>
           <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos relations clients</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
+            Cette section affiche les contacts saisis au POS et ceux issus des commandes en ligne.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
-            toast({
-              title: "Fonction en développement",
-              description: "La fonctionnalité de contact groupé sera bientôt disponible."
-            });
+            if (clientsWithContacts.length === 0) {
+              toast({
+                title: "Aucun contact disponible",
+                description: "Aucun email ou numéro n'a encore été collecté pour vos clients.",
+              });
+              return;
+            }
+
+            setShowContactsDialog(true);
           }}>
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Contacter</span>
+            <span>Contact client</span>
           </Button>
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             toast({
@@ -208,7 +253,7 @@ export default function ClientManagement() {
             });
           }}>
             <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden xs:inline">Newsletter</span>
+            <span>Newsletter</span>
           </Button>
         </div>
       </div>
@@ -314,11 +359,9 @@ export default function ClientManagement() {
       {/* Liste des clients */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredClients.map((client) => {
-          const clientRevenue = client.orders.reduce((sum, order) => sum + order.total_amount, 0);
-          const orderCount = client.orders.length;
-          const lastOrder = client.orders.length > 0 
-            ? new Date(Math.max(...client.orders.map(o => new Date(o.created_at).getTime())))
-            : null;
+          const clientRevenue = client.total_spent;
+          const orderCount = client.total_orders;
+          const lastOrder = client.last_purchase_at ? new Date(client.last_purchase_at) : null;
           const clientType = getClientType(client);
 
           return (
@@ -328,25 +371,26 @@ export default function ClientManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">
-                        {client.profile?.first_name && client.profile?.last_name 
-                          ? `${client.profile.first_name} ${client.profile.last_name}`
-                          : client.profile?.email?.split('@')[0] || 'Client anonyme'}
+                          {getClientDisplayName(client)}
                       </h3>
                       <Badge className={getClientTypeColor(clientType)}>
                         {getClientTypeLabel(clientType)}
                       </Badge>
+                      <Badge variant="outline">
+                        {getClientSourceLabel(client)}
+                      </Badge>
                     </div>
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      {client.profile?.email && (
+                        {(client.email || client.profile?.email) && (
                         <div className="flex items-center gap-1">
                           <Mail className="w-4 h-4" />
-                          {client.profile.email}
+                            {client.email || client.profile?.email}
                         </div>
                       )}
-                      {client.profile?.phone && (
+                        {(client.phone || client.profile?.phone) && (
                         <div className="flex items-center gap-1">
                           <Phone className="w-4 h-4" />
-                          {client.profile.phone}
+                            {client.phone || client.profile?.phone}
                         </div>
                       )}
                     </div>
@@ -392,25 +436,42 @@ export default function ClientManagement() {
                   )}
                 </div>
 
-                <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                    // Contact client functionality
-                    if (client.profile?.email) {
+                <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t">
+                  <Button size="sm" variant="outline" onClick={() => {
+                    const email = client.email || client.profile?.email;
+                    if (email) {
                       const mailtoLink = document.createElement('a');
-                      mailtoLink.href = `mailto:${client.profile.email}`;
+                      mailtoLink.href = `mailto:${email}`;
                       mailtoLink.click();
-                    } else {
-                      toast({
-                        title: "Email non disponible",
-                        description: "L'adresse email de ce client n'est pas renseignée."
-                      });
+                      return;
                     }
+
+                    toast({
+                      title: "Email non disponible",
+                      description: "L'adresse email de ce client n'est pas renseignée."
+                    });
                   }}>
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    Contacter
+                    <Mail className="w-4 h-4 mr-1" />
+                    Mail
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                    // View client orders
+                  <Button size="sm" variant="outline" onClick={() => {
+                    const phone = client.phone || client.profile?.phone;
+                    if (phone) {
+                      const phoneLink = document.createElement('a');
+                      phoneLink.href = `tel:${phone}`;
+                      phoneLink.click();
+                      return;
+                    }
+
+                    toast({
+                      title: "Numéro non disponible",
+                      description: "Le numéro de téléphone de ce client n'est pas renseigné."
+                    });
+                  }}>
+                    <Phone className="w-4 h-4 mr-1" />
+                    Numéro
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
                     toast({
                       title: "Commandes du client",
                       description: "Affichage des commandes de ce client."
@@ -457,24 +518,26 @@ export default function ClientManagement() {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Nom complet</label>
                     <p className="font-medium">
-                      {selectedClient.profile?.first_name && selectedClient.profile?.last_name 
-                        ? `${selectedClient.profile.first_name} ${selectedClient.profile.last_name}`
-                        : 'Non renseigné'}
+                      {getClientDisplayName(selectedClient)}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="font-medium">{selectedClient.profile?.email || 'Non renseigné'}</p>
+                    <p className="font-medium">{selectedClient.email || selectedClient.profile?.email || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
-                    <p className="font-medium">{selectedClient.profile?.phone || 'Non renseigné'}</p>
+                    <p className="font-medium">{selectedClient.phone || selectedClient.profile?.phone || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Membre depuis</label>
                     <p className="font-medium">
                       {new Date(selectedClient.created_at).toLocaleDateString('fr-FR')}
                     </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Origine du contact</label>
+                    <p className="font-medium">{getClientSourceLabel(selectedClient)}</p>
                   </div>
                 </div>
               </div>
@@ -485,20 +548,20 @@ export default function ClientManagement() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-vendeur-primary">
-                      {selectedClient.orders.length}
+                      {selectedClient.total_orders}
                     </p>
                     <p className="text-sm text-muted-foreground">Commandes</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-green-600">
-                      {selectedClient.orders.reduce((sum, order) => sum + order.total_amount, 0).toLocaleString()}
+                      {selectedClient.total_spent.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">GNF dépensés</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">
-                      {selectedClient.orders.length > 0 
-                        ? Math.round(selectedClient.orders.reduce((sum, order) => sum + order.total_amount, 0) / selectedClient.orders.length).toLocaleString()
+                      {selectedClient.total_orders > 0 
+                        ? Math.round(selectedClient.total_spent / selectedClient.total_orders).toLocaleString()
                         : 0}
                     </p>
                     <p className="text-sm text-muted-foreground">Panier moyen</p>
@@ -510,7 +573,7 @@ export default function ClientManagement() {
               <div>
                 <h4 className="font-semibold mb-4">Historique des commandes</h4>
                 <div className="space-y-2">
-                  {selectedClient.orders.slice(0, 5).map((order) => (
+                  {selectedClient.orders.length > 0 ? selectedClient.orders.slice(0, 5).map((order) => (
                     <div key={order.id} className="flex justify-between items-center p-3 bg-accent rounded-lg">
                       <div>
                         <p className="font-medium">Commande #{order.id.slice(0, 8)}</p>
@@ -523,7 +586,11 @@ export default function ClientManagement() {
                         <Badge variant="outline">{order.status}</Badge>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="p-3 bg-accent rounded-lg text-sm text-muted-foreground">
+                      Ce contact provient de la base client fusionnée. Les commandes détaillées ne sont pas encore affichées ici pour les contacts POS et les contacts externes.
+                    </div>
+                  )}
                   {selectedClient.orders.length > 5 && (
                     <p className="text-sm text-muted-foreground text-center pt-2">
                       ... et {selectedClient.orders.length - 5} autres commandes
@@ -533,6 +600,91 @@ export default function ClientManagement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Contacts clients collectés</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Contacts disponibles</p>
+                  <p className="text-2xl font-bold">{clientsWithContacts.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Emails collectés</p>
+                  <p className="text-2xl font-bold">{clientsWithEmails.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Numéros collectés</p>
+                  <p className="text-2xl font-bold">{clientsWithPhones.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-3">
+              {clientsWithContacts.map((client) => {
+                const email = client.email || client.profile?.email;
+                const phone = client.phone || client.profile?.phone;
+
+                return (
+                  <div key={client.id} className="rounded-lg border p-4 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold">{getClientDisplayName(client)}</p>
+                        <p className="text-sm text-muted-foreground">{getClientSourceLabel(client)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant="outline">{client.total_orders} commande{client.total_orders > 1 ? 's' : ''}</Badge>
+                        <Badge variant="outline">{client.total_spent.toLocaleString()} GNF</Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="rounded-md bg-muted/40 p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Email</p>
+                        <p className="font-medium break-all">{email || 'Non renseigné'}</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Numéro</p>
+                        <p className="font-medium break-all">{phone || 'Non renseigné'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" disabled={!email} onClick={() => {
+                        if (!email) return;
+                        const mailtoLink = document.createElement('a');
+                        mailtoLink.href = `mailto:${email}`;
+                        mailtoLink.click();
+                      }}>
+                        <Mail className="w-4 h-4 mr-1" />
+                        Envoyer un mail
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={!phone} onClick={() => {
+                        if (!phone) return;
+                        const phoneLink = document.createElement('a');
+                        phoneLink.href = `tel:${phone}`;
+                        phoneLink.click();
+                      }}>
+                        <Phone className="w-4 h-4 mr-1" />
+                        Appeler le numéro
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

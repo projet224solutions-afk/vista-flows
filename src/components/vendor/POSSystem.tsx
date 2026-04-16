@@ -63,7 +63,7 @@ import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
 import { useChapChapPay, type ChapChapPayMethod } from '@/hooks/useChapChapPay';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
-import { syncPosSales } from '@/services/posBackendService';
+import { collectPosMarketingContact, syncPosSales } from '@/services/posBackendService';
 
 interface Product {
   id: string;
@@ -571,6 +571,8 @@ export function POSSystem() {
   const [numericInput, setNumericInput] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showMarketingContactField, setShowMarketingContactField] = useState(false);
+  const [marketingContactInput, setMarketingContactInput] = useState('');
   const [showKeypad, setShowKeypad] = useState(false);
   const [showQuantityKeypad, setShowQuantityKeypad] = useState(false);
   const [selectedProductForQuantity, setSelectedProductForQuantity] = useState<Product | null>(null);
@@ -891,9 +893,59 @@ export function POSSystem() {
     setDiscountPercent(0);
     setDiscountAmount(0);
     setDiscountMode('percent');
+    setShowMarketingContactField(false);
+    setMarketingContactInput('');
     // Effacer aussi les données persistées
     clearPOSState();
     toast.info('Panier vidé');
+  };
+
+  const getNormalizedMarketingContact = () => {
+    const raw = marketingContactInput.trim();
+    if (!raw) return null;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(raw.toLowerCase())) {
+      return {
+        kind: 'email' as const,
+        value: raw.toLowerCase(),
+      };
+    }
+
+    const digitsOnly = raw.replace(/\D/g, '');
+    if (digitsOnly.length >= 8 && digitsOnly.length <= 15) {
+      return {
+        kind: 'phone' as const,
+        value: raw.startsWith('+') ? `+${digitsOnly}` : digitsOnly,
+      };
+    }
+
+    return null;
+  };
+
+  const collectMarketingContactAfterSale = async () => {
+    const normalizedContact = getNormalizedMarketingContact();
+    if (!normalizedContact || !vendorId || !navigator.onLine) return;
+
+    const response = await collectPosMarketingContact({
+      contact: normalizedContact.value,
+      customer_name: selectedCustomer?.name || 'Client POS',
+      order_total: total,
+      sold_at: new Date().toISOString(),
+    }, vendorId);
+
+    if (!response.success) {
+      toast.warning('Vente enregistrée, mais le contact campagne n\'a pas été ajouté', {
+        description: response.error || 'Vous pourrez le ressaisir plus tard.',
+      });
+      return;
+    }
+
+    toast.success(
+      normalizedContact.kind === 'email'
+        ? 'Email ajouté aux contacts campagnes'
+        : 'Numéro ajouté aux contacts campagnes'
+    );
   };
 
   // Fonctions du pavé numérique - maintenant pour quantité
@@ -1258,6 +1310,11 @@ export function POSSystem() {
   const processPayment = async () => {
     // Note: Le montant reçu n'est plus obligatoire pour valider
 
+    if (marketingContactInput.trim() && !getNormalizedMarketingContact()) {
+      toast.error('Le contact client doit être un email valide ou un numéro valide');
+      return;
+    }
+
     if (isProcessingPayment) return;
     setIsProcessingPayment(true);
 
@@ -1427,6 +1484,8 @@ export function POSSystem() {
               payment_status: 'paid'
             });
             if (updateError) throw updateError;
+
+            await collectMarketingContactAfterSale();
             
             setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
             setShowOrderSummary(false);
@@ -1549,7 +1608,8 @@ export function POSSystem() {
               })),
               sale_date: new Date().toISOString(),
               customer_name: selectedCustomer?.name || 'Client comptoir',
-              customer_phone: selectedCustomer?.phone || ''
+              customer_phone: selectedCustomer?.phone || '',
+              marketing_contact: getNormalizedMarketingContact()?.value || ''
             }
           };
           
@@ -1635,6 +1695,7 @@ export function POSSystem() {
           discount_total: discountValue,
           customer_name: selectedCustomer?.name || 'Client comptoir',
           customer_phone: selectedCustomer?.phone || null,
+          marketing_contact: getNormalizedMarketingContact()?.value || null,
           notes: 'Paiement POS - Espèces',
           sold_at: new Date().toISOString(),
         },
@@ -1654,6 +1715,7 @@ export function POSSystem() {
         setLastOrderNumber((fallbackOrder.order_number || fallbackOrder.id).toUpperCase());
         setShowOrderSummary(false);
         setShowReceipt(true);
+        await collectMarketingContactAfterSale();
         toast.success('Paiement effectué avec succès! (mode fallback)');
         await loadVendorProducts();
         return;
@@ -1696,6 +1758,7 @@ export function POSSystem() {
             setLastOrderNumber((fallbackOrder.order_number || fallbackOrder.id).toUpperCase());
             setShowOrderSummary(false);
             setShowReceipt(true);
+            await collectMarketingContactAfterSale();
             toast.success('Paiement effectué avec succès! (fallback réseau)');
             await loadVendorProducts();
             return;
@@ -2729,7 +2792,7 @@ export function POSSystem() {
 
       {/* Dialog de confirmation de commande */}
       <Dialog open={showOrderSummary} onOpenChange={setShowOrderSummary}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-primary" />
@@ -2789,7 +2852,47 @@ export function POSSystem() {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold">Contact client</p>
+                  <p className="text-xs text-muted-foreground">Choisissez mail ou numéro avant la validation POS.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant={showMarketingContactField ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setShowMarketingContactField((prev) => {
+                      const next = !prev;
+                      if (!next) {
+                        setMarketingContactInput('');
+                      }
+                      return next;
+                    });
+                  }}
+                  className="h-8 shrink-0"
+                >
+                  {showMarketingContactField ? 'Masquer' : 'Activer'}
+                </Button>
+              </div>
+
+              {showMarketingContactField && (
+                <div className="space-y-2">
+                  <Input
+                    value={marketingContactInput}
+                    onChange={(e) => setMarketingContactInput(e.target.value)}
+                    placeholder="Email ou numéro du client"
+                    className="h-9"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Saisissez directement l'email ou le numéro. Le contact sera ajouté à la fiche client et aux campagnes après la vente.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="sticky bottom-0 flex gap-2 bg-background/95 pt-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               <Button variant="outline" onClick={() => setShowOrderSummary(false)} className="flex-1">
                 Annuler
               </Button>
@@ -3009,6 +3112,8 @@ export function POSSystem() {
                 notes: `Paiement Stripe confirmé - Intent: ${paymentIntentId}`
               });
               if (updateError) throw updateError;
+
+              await collectMarketingContactAfterSale();
 
               skipStripeCancelOnCloseRef.current = true;
               setLastOrderNumber(pendingStripeOrder.order_number);

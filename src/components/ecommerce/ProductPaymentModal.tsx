@@ -329,7 +329,7 @@ export default function ProductPaymentModal({
         markAsPaid: true,
         shippingAddress: {
           full_name: 'Client 224Solutions',
-          phone: 'Non fourni',
+          phone: normalizedMethod === 'mobile_money' && mobilePhone.trim() ? mobilePhone.trim() : 'Non fourni',
           address_line: 'Adresse de livraison',
           city: 'Conakry',
           country: 'Guinée',

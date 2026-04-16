@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { supabase } from '@/integrations/supabase/client';
 import offlineDB from '@/lib/offlineDB';
+import { collectPosMarketingContact } from '@/services/posBackendService';
 
 interface SyncOfflinePosSalesOptions {
   vendorId?: string | null;
@@ -201,6 +202,23 @@ export async function syncOfflinePosSales(
               await supabase.from('orders').delete().eq('id', orderId);
             }
             throw itemsError;
+          }
+        }
+
+        const marketingContact = String(saleData.marketing_contact || '').trim();
+        if (marketingContact) {
+          const marketingContactResult = await collectPosMarketingContact(
+            {
+              contact: marketingContact,
+              customer_name: customerName,
+              order_total: Number(saleData.total_amount || 0),
+              sold_at: saleData.sale_date || new Date().toISOString(),
+            },
+            currentVendorId,
+          );
+
+          if (!marketingContactResult.success) {
+            throw new Error(marketingContactResult.error || 'Impossible de synchroniser le contact marketing POS');
           }
         }
 

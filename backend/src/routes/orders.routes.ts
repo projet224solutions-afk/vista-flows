@@ -188,6 +188,146 @@ async function getOrCreateCustomerId(userId: string) {
   return createdCustomer.id;
 }
 
+function normalizeCampaignContact(contact: string):
+  | { contactType: 'email'; normalized: string; email: string; phone: null }
+  | { contactType: 'phone'; normalized: string; email: null; phone: string } {
+  const trimmed = contact.trim();
+  const lowered = trimmed.toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (emailRegex.test(lowered)) {
+    return {
+      contactType: 'email',
+      normalized: lowered,
+      email: lowered,
+      phone: null,
+    };
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+    throw new Error('Contact marketing invalide');
+  }
+
+  return {
+    contactType: 'phone',
+    normalized: digitsOnly,
+    email: null,
+    phone: trimmed.startsWith('+') ? `+${digitsOnly}` : digitsOnly,
+  };
+}
+
+async function getOrderContactProfile(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('email, phone, first_name, last_name')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+}
+
+async function upsertVendorMarketingContact(params: {
+  vendorId: string;
+  rawContact: string;
+  fullName?: string | null;
+  orderTotal: number;
+  purchasedAt: string;
+}) {
+  const normalizedContact = normalizeCampaignContact(params.rawContact);
+
+  const { data: existingContact, error: loadError } = await supabaseAdmin
+    .from('vendor_marketing_contacts')
+    .select('id, source_type, total_orders, total_spent')
+    .eq('vendor_id', params.vendorId)
+    .eq('normalized_contact', normalizedContact.normalized)
+    .maybeSingle();
+
+  if (loadError) {
+    throw loadError;
+  }
+
+  const sharedPayload = {
+    full_name: params.fullName || null,
+    linked_via: 'marketplace_order',
+    source_type: existingContact?.source_type === 'physical' ? 'both' : 'digital',
+    last_purchase_at: params.purchasedAt,
+    is_active: true,
+    marketing_email_opt_in: true,
+    marketing_sms_opt_in: true,
+  };
+
+  if (existingContact?.id) {
+    const { error: updateError } = await supabaseAdmin
+      .from('vendor_marketing_contacts')
+      .update({
+        ...sharedPayload,
+        email: normalizedContact.email,
+        phone: normalizedContact.phone,
+        total_orders: Number(existingContact.total_orders || 0) + 1,
+        total_spent: Number(existingContact.total_spent || 0) + Number(params.orderTotal || 0),
+      })
+      .eq('id', existingContact.id);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    return;
+  }
+
+  const { error: insertError } = await supabaseAdmin
+    .from('vendor_marketing_contacts')
+    .insert({
+      vendor_id: params.vendorId,
+      contact_type: normalizedContact.contactType,
+      normalized_contact: normalizedContact.normalized,
+      email: normalizedContact.email,
+      phone: normalizedContact.phone,
+      total_orders: 1,
+      total_spent: Number(params.orderTotal || 0),
+      ...sharedPayload,
+    });
+
+  if (insertError) {
+    throw insertError;
+  }
+}
+
+async function syncOrderMarketingContacts(params: {
+  vendorId: string;
+  userId: string;
+  shippingAddress: {
+    full_name: string;
+    phone: string;
+  };
+  orderTotal: number;
+}) {
+  const profile = await getOrderContactProfile(params.userId);
+  const purchasedAt = new Date().toISOString();
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || params.shippingAddress.full_name;
+  const contacts = [profile?.email, profile?.phone, params.shippingAddress.phone]
+    .filter((value): value is string => Boolean(value && value.trim() && value !== 'Non fourni'));
+
+  for (const contact of new Set(contacts)) {
+    try {
+      await upsertVendorMarketingContact({
+        vendorId: params.vendorId,
+        rawContact: contact,
+        fullName,
+        orderTotal: params.orderTotal,
+        purchasedAt,
+      });
+    } catch (error: any) {
+      logger.warn(`Unable to sync order marketing contact for vendor ${params.vendorId}: ${error?.message || 'unknown error'}`);
+    }
+  }
+}
+
 // ==================== ROUTES ====================
 
 /**
@@ -303,6 +443,16 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         .eq('order_id', result.order_id);
       escrowStatus = 'pending';
     }
+
+    await syncOrderMarketingContacts({
+      vendorId: vendor_id,
+      userId,
+      shippingAddress: {
+        full_name: shipping_address.full_name,
+        phone: shipping_address.phone,
+      },
+      orderTotal: Number(result.total_amount || 0),
+    });
 
     // Performance logging
     const duration = Date.now() - startTime;

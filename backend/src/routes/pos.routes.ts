@@ -121,6 +121,7 @@ const PosSaleSchema = z.object({
   discount_total: z.number().min(0).default(0),
   customer_name: z.string().max(200).nullish(),
   customer_phone: z.string().max(20).nullish(),
+  marketing_contact: z.string().trim().max(200).nullish(),
   notes: z.string().max(500).nullish(),
   sold_at: z.string().datetime({ message: 'sold_at doit être ISO 8601' }),
 });
@@ -128,6 +129,116 @@ const PosSaleSchema = z.object({
 const BatchSyncSchema = z.object({
   sales: z.array(PosSaleSchema).min(1, 'Au moins une vente').max(50, 'Maximum 50 ventes par lot'),
 });
+
+const PosMarketingContactSchema = z.object({
+  contact: z.string().trim().min(3).max(200),
+  customer_name: z.string().trim().max(200).nullish(),
+  order_total: z.number().min(0).nullish(),
+  sold_at: z.string().datetime({ message: 'sold_at doit être ISO 8601' }).nullish(),
+});
+
+function normalizeMarketingContact(contact: string):
+  | { contactType: 'email'; normalized: string; email: string; phone: null }
+  | { contactType: 'phone'; normalized: string; email: null; phone: string } {
+  const trimmed = contact.trim();
+  const lowered = trimmed.toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (emailRegex.test(lowered)) {
+    return {
+      contactType: 'email',
+      normalized: lowered,
+      email: lowered,
+      phone: null,
+    };
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+    throw new Error('Le contact doit être un email valide ou un numéro de téléphone valide.');
+  }
+
+  const phone = trimmed.startsWith('+') ? `+${digitsOnly}` : digitsOnly;
+  return {
+    contactType: 'phone',
+    normalized: digitsOnly,
+    email: null,
+    phone,
+  };
+}
+
+async function upsertPosMarketingContact(params: {
+  vendorId: string;
+  contact: string;
+  customerName?: string | null;
+  orderTotal?: number | null;
+  soldAt?: string | null;
+}) {
+  const normalizedContact = normalizeMarketingContact(params.contact);
+  const soldAt = params.soldAt || new Date().toISOString();
+  const orderTotal = Number(params.orderTotal || 0);
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('vendor_marketing_contacts')
+    .select('id, total_orders, total_spent, source_type, email, phone, full_name')
+    .eq('vendor_id', params.vendorId)
+    .eq('normalized_contact', normalizedContact.normalized)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing?.id) {
+    const mergedSourceType = existing.source_type === 'both'
+      ? 'both'
+      : existing.source_type === 'physical'
+        ? 'physical'
+        : 'both';
+
+    const { error: updateError } = await supabaseAdmin
+      .from('vendor_marketing_contacts')
+      .update({
+        contact_type: normalizedContact.contactType,
+        email: normalizedContact.email || existing.email,
+        phone: normalizedContact.phone || existing.phone,
+        full_name: params.customerName || existing.full_name,
+        source_type: mergedSourceType,
+        linked_via: 'pos_order',
+        last_purchase_at: soldAt,
+        total_orders: Number(existing.total_orders || 0) + 1,
+        total_spent: Number(existing.total_spent || 0) + orderTotal,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id);
+
+    if (updateError) throw updateError;
+
+    return { id: existing.id, status: 'updated' as const };
+  }
+
+  const { data: created, error: insertError } = await supabaseAdmin
+    .from('vendor_marketing_contacts')
+    .insert({
+      vendor_id: params.vendorId,
+      contact_type: normalizedContact.contactType,
+      normalized_contact: normalizedContact.normalized,
+      email: normalizedContact.email,
+      phone: normalizedContact.phone,
+      full_name: params.customerName || null,
+      source_type: 'physical',
+      linked_via: 'pos_order',
+      last_purchase_at: soldAt,
+      total_orders: 1,
+      total_spent: orderTotal,
+      is_active: true,
+    })
+    .select('id')
+    .single();
+
+  if (insertError) throw insertError;
+
+  return { id: created.id, status: 'created' as const };
+}
 
 // ==================== CONCURRENCY CONTROL ====================
 
@@ -234,6 +345,16 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
         }
 
         if (result.status === 'duplicate') {
+          if (sale.marketing_contact?.trim()) {
+            await upsertPosMarketingContact({
+              vendorId,
+              contact: sale.marketing_contact,
+              customerName: sale.customer_name || null,
+              orderTotal: sale.total_amount,
+              soldAt: sale.sold_at,
+            });
+          }
+
           return {
             local_sale_id: sale.local_sale_id,
             status: 'duplicate' as const,
@@ -248,6 +369,16 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
 
         if (!result.stock_synced) {
           logger.warn(`POS stock sync failed: sale=${sale.local_sale_id}: ${result.stock_error}`);
+        }
+
+        if (sale.marketing_contact?.trim()) {
+          await upsertPosMarketingContact({
+            vendorId,
+            contact: sale.marketing_contact,
+            customerName: sale.customer_name || null,
+            orderTotal: sale.total_amount,
+            soldAt: sale.sold_at,
+          });
         }
 
         return {
@@ -347,6 +478,46 @@ router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: 
   } catch (error: any) {
     logger.error(`POS reconciliation error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+/**
+ * POST /api/pos/marketing-contact
+ * Collecter un contact marketing POS (email ou téléphone) pour les campagnes vendeur
+ */
+router.post('/marketing-contact', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const requestedVendorId = (req.headers['x-vendor-id'] as string | undefined)?.trim() || null;
+    const vendorId = await resolvePosVendorId(userId, requestedVendorId);
+
+    if (!vendorId) {
+      res.status(404).json({ success: false, error: 'Boutique non trouvée' });
+      return;
+    }
+
+    const parsed = PosMarketingContactSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        success: false,
+        error: 'Contact marketing invalide',
+        details: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    const result = await upsertPosMarketingContact({
+      vendorId,
+      contact: parsed.data.contact,
+      customerName: parsed.data.customer_name || null,
+      orderTotal: parsed.data.order_total,
+      soldAt: parsed.data.sold_at || null,
+    });
+
+    res.status(result.status === 'created' ? 201 : 200).json({ success: true, data: result });
+  } catch (error: any) {
+    logger.error(`POS marketing contact error: ${error.message}`);
+    res.status(500).json({ success: false, error: error?.message || 'Erreur collecte contact marketing POS' });
   }
 });
 

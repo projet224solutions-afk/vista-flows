@@ -399,19 +399,24 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
       selected_channels: ['in_app'],
     });
     setAudiencePreview(null);
+    setPreviewFailed(false);
+    setPreviewError(null);
   };
 
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const loadPreview = async () => {
     setLoadingPreview(true);
     setPreviewFailed(false);
+    setPreviewError(null);
     try {
       const preview = await previewAudience(form.target_type, form.target_filters);
       setAudiencePreview(preview);
-    } catch {
+    } catch (err: any) {
       setPreviewFailed(true);
       setAudiencePreview(null);
+      setPreviewError(err?.message || 'Impossible de calculer l\'audience. Vous pouvez continuer malgré tout.');
     } finally {
       setLoadingPreview(false);
     }
@@ -616,7 +621,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
               {previewFailed && (
                 <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <span>Impossible de calculer l'audience (vérifiez que le backend et la base sont configurés). Vous pouvez continuer malgré tout.</span>
+                  <span>{previewError || 'Impossible de calculer l\'audience. Vous pouvez continuer malgré tout.'}</span>
                 </div>
               )}
 

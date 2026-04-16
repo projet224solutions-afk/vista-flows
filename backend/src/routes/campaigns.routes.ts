@@ -30,6 +30,42 @@ type CampaignRequest = AuthenticatedRequest & {
 
 type CampaignResponse = Parameters<typeof verifyJWT>[1];
 
+type VendorCustomerLinkRecord = {
+  id?: string;
+  source_type: string | null;
+  linked_via?: string | null;
+  store_id?: string | null;
+  customer_user_id?: string | null;
+  external_contact_id?: string | null;
+  email: string | null;
+  phone: string | null;
+  full_name?: string | null;
+  preferred_language?: string | null;
+  marketing_email_opt_in: boolean | null;
+  marketing_sms_opt_in: boolean | null;
+  marketing_push_opt_in?: boolean | null;
+  marketing_in_app_opt_in?: boolean | null;
+  last_purchase_at: string | null;
+  total_orders: number | null;
+  total_spent: number | null;
+  is_active: boolean | null;
+  created_at?: string | null;
+};
+
+type AudiencePreviewResult = {
+  total: number;
+  channels: {
+    in_app: number;
+    push: number;
+    email: number;
+    sms: number;
+  };
+};
+
+type VendorAudienceExclusion = {
+  userId: string | null;
+};
+
 const router = Router();
 
 // ==================== SCHEMAS ====================
@@ -110,6 +146,133 @@ async function auditLog(vendorId: string, action: string, campaignId?: string, d
   });
 }
 
+async function loadVendorAudienceExclusion(vendorId: string): Promise<VendorAudienceExclusion> {
+  const { data: vendor, error: vendorError } = await supabaseAdmin
+    .from('vendors')
+    .select('user_id')
+    .eq('id', vendorId)
+    .maybeSingle();
+
+  if (vendorError) {
+    throw vendorError;
+  }
+
+  return {
+    userId: vendor?.user_id || null,
+  };
+}
+
+function shouldExcludeVendorContact(
+  contact: VendorCustomerLinkRecord,
+  exclusion: VendorAudienceExclusion,
+): boolean {
+  return Boolean(exclusion.userId && contact.customer_user_id === exclusion.userId);
+}
+
+function buildAudienceDedupKey(contact: VendorCustomerLinkRecord): string {
+  if (contact.customer_user_id) return `user:${contact.customer_user_id}`;
+  if (contact.email) return `email:${contact.email.trim().toLowerCase()}`;
+  if (contact.phone) return `phone:${contact.phone.replace(/\D/g, '')}`;
+  if (contact.external_contact_id) return `external:${contact.external_contact_id}`;
+  if (contact.id) return `record:${contact.id}`;
+  return `anonymous:${crypto.randomUUID()}`;
+}
+
+function mergeAudienceContacts(contacts: VendorCustomerLinkRecord[]): VendorCustomerLinkRecord[] {
+  const merged = new Map<string, VendorCustomerLinkRecord>();
+
+  for (const contact of contacts) {
+    const key = buildAudienceDedupKey(contact);
+    const current = merged.get(key);
+
+    if (!current) {
+      merged.set(key, contact);
+      continue;
+    }
+
+    merged.set(key, {
+      ...current,
+      customer_user_id: current.customer_user_id || contact.customer_user_id || null,
+      external_contact_id: current.external_contact_id || contact.external_contact_id || null,
+      email: current.email || contact.email || null,
+      phone: current.phone || contact.phone || null,
+      full_name: current.full_name || contact.full_name || null,
+      preferred_language: current.preferred_language || contact.preferred_language || 'fr',
+      source_type: current.source_type === contact.source_type
+        ? current.source_type
+        : 'both',
+      marketing_email_opt_in: current.marketing_email_opt_in ?? contact.marketing_email_opt_in ?? true,
+      marketing_sms_opt_in: current.marketing_sms_opt_in ?? contact.marketing_sms_opt_in ?? true,
+      marketing_push_opt_in: current.marketing_push_opt_in ?? contact.marketing_push_opt_in ?? false,
+      marketing_in_app_opt_in: current.marketing_in_app_opt_in ?? contact.marketing_in_app_opt_in ?? false,
+      linked_via: current.linked_via || contact.linked_via || null,
+      total_orders: Math.max(Number(current.total_orders || 0), Number(contact.total_orders || 0)),
+      total_spent: Math.max(Number(current.total_spent || 0), Number(contact.total_spent || 0)),
+      last_purchase_at: current.last_purchase_at && contact.last_purchase_at
+        ? (new Date(current.last_purchase_at) > new Date(contact.last_purchase_at) ? current.last_purchase_at : contact.last_purchase_at)
+        : current.last_purchase_at || contact.last_purchase_at || null,
+      is_active: current.is_active ?? contact.is_active ?? true,
+      store_id: current.store_id || contact.store_id || null,
+      created_at: current.created_at || contact.created_at || null,
+    });
+  }
+
+  return Array.from(merged.values());
+}
+
+async function loadAudienceContacts(vendorId: string): Promise<VendorCustomerLinkRecord[]> {
+  const [linkedResult, externalResult, exclusion] = await Promise.all([
+    supabaseAdmin
+      .from('vendor_customer_links')
+      .select('id, customer_user_id, source_type, linked_via, store_id, email, phone, full_name, preferred_language, marketing_email_opt_in, marketing_sms_opt_in, marketing_push_opt_in, marketing_in_app_opt_in, last_purchase_at, total_orders, total_spent, is_active, created_at')
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true),
+    supabaseAdmin
+      .from('vendor_marketing_contacts')
+      .select('id, source_type, linked_via, store_id, email, phone, full_name, preferred_language, marketing_email_opt_in, marketing_sms_opt_in, marketing_push_opt_in, marketing_in_app_opt_in, last_purchase_at, total_orders, total_spent, is_active, created_at')
+      .eq('vendor_id', vendorId)
+      .eq('is_active', true),
+    loadVendorAudienceExclusion(vendorId),
+  ]);
+
+  if (linkedResult.error) throw linkedResult.error;
+  if (externalResult.error) throw externalResult.error;
+
+  const linkedContacts = ((linkedResult.data || []) as VendorCustomerLinkRecord[]).map(contact => ({
+    ...contact,
+    external_contact_id: null,
+  }));
+
+  const externalContacts = ((externalResult.data || []) as VendorCustomerLinkRecord[]).map(contact => ({
+    ...contact,
+    customer_user_id: null,
+    external_contact_id: contact.id || null,
+  }));
+
+  return mergeAudienceContacts([...linkedContacts, ...externalContacts]).filter(
+    (contact) => !shouldExcludeVendorContact(contact, exclusion),
+  );
+}
+
+async function getAudiencePreview(
+  vendorId: string,
+  targetType: string,
+  targetFilters: Record<string, any> = {},
+): Promise<AudiencePreviewResult> {
+  const contacts = await loadAudienceContacts(vendorId);
+  const filteredClients = filterAudience(contacts, targetType || 'all_clients', targetFilters || {});
+
+  return {
+    total: filteredClients.length,
+    channels: {
+      in_app: filteredClients.filter(client => client.customer_user_id && client.marketing_in_app_opt_in !== false).length,
+      push: filteredClients.filter(client => client.customer_user_id && client.marketing_push_opt_in !== false).length,
+      email: filteredClients.filter(client => client.email && client.marketing_email_opt_in !== false).length,
+      sms: filteredClients.filter(client => client.phone && client.marketing_sms_opt_in !== false).length,
+    },
+  };
+}
+
 // ==================== ROUTES ====================
 
 /**
@@ -121,14 +284,13 @@ router.get('/clients', verifyJWT, async (req: CampaignRequest, res: CampaignResp
     const vendorId = await getVendorId(userId);
     if (!vendorId) { res.status(403).json({ success: false, error: 'Non vendeur' }); return; }
 
-    const { data, error } = await supabaseAdmin
-      .from('vendor_customer_links')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .eq('is_active', true)
-      .order('last_purchase_at', { ascending: false });
+    const data = await loadAudienceContacts(vendorId);
 
-    if (error) throw error;
+    data.sort((left, right) => {
+      const leftTime = left.last_purchase_at ? new Date(left.last_purchase_at).getTime() : 0;
+      const rightTime = right.last_purchase_at ? new Date(right.last_purchase_at).getTime() : 0;
+      return rightTime - leftTime;
+    });
 
     res.json({ success: true, data: data || [] });
   } catch (err: any) {
@@ -148,13 +310,7 @@ router.post('/preview-audience', verifyJWT, async (req: CampaignRequest, res: Ca
 
     const { target_type, target_filters } = req.body;
 
-    const { data, error } = await supabaseAdmin.rpc('preview_campaign_audience', {
-      p_vendor_id: vendorId,
-      p_target_type: target_type || 'all_clients',
-      p_target_filters: target_filters || {},
-    });
-
-    if (error) throw error;
+    const data = await getAudiencePreview(vendorId, target_type || 'all_clients', target_filters || {});
 
     res.json({ success: true, data });
   } catch (err: any) {
@@ -190,11 +346,7 @@ router.post('/', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) 
     const status = campaign.scheduled_at ? 'scheduled' : 'draft';
 
     // Get audience preview
-    const { data: audiencePreview } = await supabaseAdmin.rpc('preview_campaign_audience', {
-      p_vendor_id: vendorId,
-      p_target_type: campaign.target_type,
-      p_target_filters: campaign.target_filters,
-    });
+    const audiencePreview = await getAudiencePreview(vendorId, campaign.target_type, campaign.target_filters);
 
     const totalTargeted = audiencePreview?.total || 0;
 
@@ -425,16 +577,10 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
       .eq('id', campaign.id);
 
     // Resolve audience
-    const { data: clients, error: clientsError } = await supabaseAdmin
-      .from('vendor_customer_links')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .eq('is_active', true);
-
-    if (clientsError) throw clientsError;
+    const audienceContacts = await loadAudienceContacts(vendorId);
 
     // Apply targeting filters
-    let targetedClients = filterAudience(clients || [], campaign.target_type, campaign.target_filters);
+    let targetedClients = filterAudience(audienceContacts || [], campaign.target_type, campaign.target_filters);
 
     const channels = campaign.selected_channels as string[];
     let totalEligible = 0;
@@ -470,7 +616,8 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
         id: recipientId,
         campaign_id: campaign.id,
         vendor_id: vendorId,
-        customer_user_id: client.customer_user_id,
+        customer_user_id: client.customer_user_id || null,
+        external_contact_id: client.external_contact_id || null,
         email: client.email,
         phone: client.phone,
         full_name: client.full_name,
@@ -488,7 +635,8 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
         deliveryRecords.push({
           campaign_id: campaign.id,
           recipient_id: recipientId,
-          customer_user_id: client.customer_user_id,
+          customer_user_id: client.customer_user_id || null,
+          external_contact_id: client.external_contact_id || null,
           channel,
           status: 'queued',
         });
@@ -775,7 +923,7 @@ async function processCampaignDeliveries(campaignId: string, vendorId: string) {
   while (hasMore) {
     const { data: batch, error } = await supabaseAdmin
       .from('vendor_campaign_deliveries')
-      .select('*, vendor_campaign_recipients!inner(email, phone, full_name, customer_user_id)')
+      .select('*, vendor_campaign_recipients!inner(email, phone, full_name, customer_user_id, external_contact_id)')
       .eq('campaign_id', campaignId)
       .eq('status', 'queued')
       .limit(BATCH_SIZE);
@@ -870,6 +1018,7 @@ async function sendSingleDelivery(delivery: any, recipient: any, campaign: any):
  * Channel: In-App notification
  */
 async function sendInApp(recipient: any, campaign: any): Promise<boolean> {
+  if (!recipient.customer_user_id) return false;
   const { error } = await supabaseAdmin.from('notifications').insert({
     user_id: recipient.customer_user_id,
     title: campaign.title,
@@ -885,6 +1034,7 @@ async function sendInApp(recipient: any, campaign: any): Promise<boolean> {
  * Uses the existing smart-notifications edge function
  */
 async function sendPush(recipient: any, campaign: any): Promise<boolean> {
+  if (!recipient.customer_user_id) return false;
   try {
     const { error } = await supabaseAdmin.functions.invoke('smart-notifications', {
       body: {
