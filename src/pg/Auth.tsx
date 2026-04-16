@@ -20,7 +20,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 import { getSafeBrowserGeo } from "@/lib/safeGeo";
-import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
+import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags, getValidatedPostAuthRedirect } from "@/utils/postAuthRoute";
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
 // Validation schemas avec tous les r├┤les
@@ -465,8 +465,9 @@ export default function Auth() {
             const pendingRedirectOAuth = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectOAuth) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('­ƒöù [Auth OAuth] Redirection vers lien partag├®:', pendingRedirectOAuth);
-              navigate(pendingRedirectOAuth, { replace: true });
+              const validatedRedirect = getValidatedPostAuthRedirect(pendingRedirectOAuth, effectiveRole, targetRoute);
+              console.log('­ƒöù [Auth OAuth] Redirection validée:', validatedRedirect, '(demandée:', pendingRedirectOAuth, ')');
+              navigate(validatedRedirect, { replace: true });
             } else {
               navigate(targetRoute, { replace: true });
             }
@@ -526,8 +527,9 @@ export default function Auth() {
           const pendingRedirectMount = sessionStorage.getItem('post_auth_redirect');
           if (pendingRedirectMount) {
             sessionStorage.removeItem('post_auth_redirect');
-            console.log('­ƒöù [Auth Mount] Redirection vers lien partag├®:', pendingRedirectMount);
-            navigate(pendingRedirectMount, { replace: true });
+            const validatedRedirect = getValidatedPostAuthRedirect(pendingRedirectMount, profileData.role, targetRoute);
+            console.log('­ƒöù [Auth Mount] Redirection validée:', validatedRedirect, '(demandée:', pendingRedirectMount, ')');
+            navigate(validatedRedirect, { replace: true });
           } else {
             navigate(targetRoute, { replace: true });
           }
@@ -1044,8 +1046,9 @@ export default function Auth() {
             const pendingRedirectSignup = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectSignup) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('­ƒöù [Auth Signup] Redirection vers lien partag├®:', pendingRedirectSignup);
-              navigate(pendingRedirectSignup, { replace: true });
+              const validatedRedirect = getValidatedPostAuthRedirect(pendingRedirectSignup, profileData.role, targetRoute);
+              console.log('­ƒöù [Auth Signup] Redirection validée:', validatedRedirect, '(demandée:', pendingRedirectSignup, ')');
+              navigate(validatedRedirect, { replace: true });
             } else {
               console.log('­ƒÜÇ [Auth Signup] Redirection vers:', targetRoute);
               navigate(targetRoute, { replace: true });
@@ -1124,8 +1127,9 @@ export default function Auth() {
             const pendingRedirectLogin = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectLogin) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('­ƒöù [Auth Login] Redirection vers lien partag├®:', pendingRedirectLogin);
-              navigate(pendingRedirectLogin, { replace: true });
+              const validatedRedirect = getValidatedPostAuthRedirect(pendingRedirectLogin, profileData.role, targetRoute);
+              console.log('­ƒöù [Auth Login] Redirection validée:', validatedRedirect, '(demandée:', pendingRedirectLogin, ')');
+              navigate(validatedRedirect, { replace: true });
             } else {
               navigate(targetRoute, { replace: true });
             }

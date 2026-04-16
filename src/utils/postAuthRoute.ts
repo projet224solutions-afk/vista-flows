@@ -12,6 +12,122 @@ export interface PostAuthRouteOptions {
   vendorShopType?: string | null;
 }
 
+const PUBLIC_ROUTE_PREFIXES = [
+  '/home',
+  '/marketplace',
+  '/tracking',
+  '/client-tracking',
+  '/profil',
+  '/profile',
+  '/messages',
+  '/services-proximite',
+  '/taxi-moto',
+  '/taxi',
+  '/delivery',
+  '/delivery-request',
+  '/devis',
+  '/payment',
+  '/wallet',
+  '/cart',
+  '/product',
+  '/produit',
+  '/shop',
+  '/boutique',
+  '/s',
+  '/contact-user',
+  '/communication',
+  '/bug-bounty',
+  '/proximite',
+  '/categories',
+  '/digital-products',
+  '/boutiques',
+  '/ref',
+  '/service',
+  '/restaurant',
+  '/digital-product',
+  '/vendor-agent',
+  '/payment/success',
+  '/orders',
+  '/my-purchases',
+  '/mes-commandes',
+  '/my-digital-purchases',
+  '/my-digital-subscriptions',
+];
+
+const PROTECTED_ROUTE_RULES: Array<{ prefix: string; roles: string[] }> = [
+  { prefix: '/client/contracts', roles: ['client', 'admin'] },
+  { prefix: '/client', roles: ['client', 'admin'] },
+  { prefix: '/vendeur-digital', roles: ['vendeur', 'admin'] },
+  { prefix: '/vendeur/subscription', roles: ['vendeur', 'admin'] },
+  { prefix: '/vendeur', roles: ['vendeur', 'admin'] },
+  { prefix: '/livreur/profile', roles: ['livreur', 'admin'] },
+  { prefix: '/livreur/settings', roles: ['livreur', 'admin'] },
+  { prefix: '/livreur/help', roles: ['livreur', 'admin'] },
+  { prefix: '/livreur', roles: ['livreur', 'admin'] },
+  { prefix: '/taxi-moto/driver', roles: ['taxi', 'driver', 'admin'] },
+  { prefix: '/driver-subscription', roles: ['taxi', 'driver', 'livreur', 'admin'] },
+  { prefix: '/transitaire', roles: ['transitaire', 'admin'] },
+  { prefix: '/syndicat', roles: ['syndicat', 'admin'] },
+  { prefix: '/bureau/change-password', roles: ['syndicat', 'admin'] },
+  { prefix: '/bureau', roles: ['syndicat', 'admin'] },
+  { prefix: '/agent/change-password', roles: ['agent', 'admin'] },
+  { prefix: '/agent-dashboard', roles: ['agent', 'admin'] },
+  { prefix: '/agent', roles: ['agent', 'admin'] },
+  { prefix: '/admin/migrate-ids', roles: ['admin'] },
+  { prefix: '/admin', roles: ['admin', 'pdg', 'ceo'] },
+  { prefix: '/pdg224solutionssoulbah', roles: ['admin', 'pdg', 'ceo'] },
+  { prefix: '/pdg', roles: ['admin', 'pdg', 'ceo'] },
+];
+
+function normalizeRoleForRouteCheck(role: string): string {
+  const normalizedRole = role.toLowerCase();
+  return normalizedRole === 'ceo' ? 'pdg' : normalizedRole;
+}
+
+function normalizePath(path: string): string {
+  if (!path) return '/';
+
+  try {
+    const url = new URL(path, window.location.origin);
+    return url.pathname;
+  } catch {
+    return path.split('?')[0]?.split('#')[0] || '/';
+  }
+}
+
+function pathMatchesPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+export function isPublicPostAuthPath(path: string): boolean {
+  const pathname = normalizePath(path);
+  return PUBLIC_ROUTE_PREFIXES.some((prefix) => pathMatchesPrefix(pathname, prefix));
+}
+
+export function isAllowedPostAuthPath(path: string, role: string): boolean {
+  const pathname = normalizePath(path);
+  const normalizedRole = normalizeRoleForRouteCheck(role);
+
+  if (isPublicPostAuthPath(pathname)) {
+    return true;
+  }
+
+  const matchedRule = PROTECTED_ROUTE_RULES.find((rule) => pathMatchesPrefix(pathname, rule.prefix));
+  if (!matchedRule) {
+    return false;
+  }
+
+  return matchedRule.roles.map(normalizeRoleForRouteCheck).includes(normalizedRole);
+}
+
+export function getValidatedPostAuthRedirect(path: string | null, role: string, fallbackRoute: string): string {
+  if (!path) {
+    return fallbackRoute;
+  }
+
+  return isAllowedPostAuthPath(path, role) ? path : fallbackRoute;
+}
+
 async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, label: string, fallback: T): Promise<T> {
   let timeoutId: number | undefined;
   const timeoutPromise = new Promise<T>((resolve) => {
