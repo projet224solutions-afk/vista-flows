@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
-import { cancelOrder as cancelOrderRequest, listMyOrders } from '@/services/orderBackendService';
+import { formatCurrency } from '@/lib/utils';
+import { cancelOrder as cancelOrderRequest, confirmCashOnDeliveryOrder, listMyOrders } from '@/services/orderBackendService';
 import { toast } from 'sonner';
 import { 
   Package, CheckCircle, Clock, Truck, XCircle, 
@@ -52,16 +53,65 @@ interface Order {
   escrow?: EscrowStatus | null;
 }
 
+interface RatingOrderData {
+  orderId: string;
+  vendorId: string;
+  vendorName: string;
+}
+
 // Helper pour vérifier si une commande est paiement à la livraison
 const isCashOnDelivery = (order: Order): boolean => {
-  return order.payment_method === 'cash' && 
-         order.shipping_address?.is_cod === true;
+  return order.payment_method === 'cash' &&
+         (
+           order.shipping_address?.is_cod === true ||
+           order.metadata?.is_cod === true ||
+           order.metadata?.payment_type === 'cash_on_delivery'
+         );
 };
+
+const canCancelOrder = (order: Order): boolean => order.status === 'pending';
 interface EscrowStatus {
   id: string;
   status: string;
   amount: number;
+  currency?: string;
 }
+
+const getVendorReceivableAmount = (order: Order, escrow?: EscrowStatus | null): number => {
+  if (typeof escrow?.amount === 'number' && Number.isFinite(escrow.amount)) {
+    return escrow.amount;
+  }
+
+  return typeof order.total_amount === 'number' && Number.isFinite(order.total_amount)
+    ? order.total_amount
+    : 0;
+};
+
+const getVendorReceivableCurrency = (order: Order, escrow?: EscrowStatus | null): string => {
+  const metadataCurrency = typeof order.metadata?.currency === 'string' ? order.metadata.currency : null;
+  const shippingCurrency = typeof order.shipping_address?.currency === 'string' ? order.shipping_address.currency : null;
+  return escrow?.currency || metadataCurrency || shippingCurrency || 'GNF';
+};
+
+const extractFunctionErrorMessage = async (error: unknown): Promise<string> => {
+  if (error instanceof Error && error.message) {
+    const functionError = error as Error & { context?: { json?: () => Promise<any> } };
+    if (functionError.context?.json) {
+      try {
+        const payload = await functionError.context.json();
+        if (payload?.error && typeof payload.error === 'string') {
+          return payload.error;
+        }
+      } catch {
+        // Ignore JSON parsing issues and fallback to the standard error message.
+      }
+    }
+
+    return error.message;
+  }
+
+  return 'Veuillez réessayer';
+};
 
 export default function ClientOrdersList() {
   const { user } = useAuth();
@@ -73,7 +123,8 @@ export default function ClientOrdersList() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in_progress' | 'delivered'>('all');
   const [showRatingDialog, setShowRatingDialog] = useState(false);
-  const [ratingOrderData, setRatingOrderData] = useState<{ orderId: string; vendorId: string; vendorName: string } | null>(null);
+  const [ratingOrderData, setRatingOrderData] = useState<RatingOrderData | null>(null);
+  const [pendingRatingOrderData, setPendingRatingOrderData] = useState<RatingOrderData | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -81,6 +132,14 @@ export default function ClientOrdersList() {
   const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState<string>('');
+  const selectedOrderEscrow = selectedOrder ? escrows[selectedOrder.id] ?? selectedOrder.escrow ?? null : null;
+  const selectedOrderIsCashOnDelivery = selectedOrder ? isCashOnDelivery(selectedOrder) : false;
+  const sellerReceivableAmount = selectedOrder
+    ? getVendorReceivableAmount(selectedOrder, selectedOrderEscrow)
+    : 0;
+  const sellerReceivableCurrency = selectedOrder
+    ? getVendorReceivableCurrency(selectedOrder, selectedOrderEscrow)
+    : 'GNF';
 
   useEffect(() => {
     if (user) {
@@ -127,6 +186,20 @@ export default function ClientOrdersList() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!pendingRatingOrderData || showConfirmDialog) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRatingOrderData(pendingRatingOrderData);
+      setShowRatingDialog(true);
+      setPendingRatingOrderData(null);
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingRatingOrderData, showConfirmDialog]);
+
   const loadOrders = async () => {
     try {
       if (!user?.id) return;
@@ -154,43 +227,41 @@ export default function ClientOrdersList() {
     }
   };
 
-  const handleConfirmDelivery = async (order: Order) => {
+  const handleConfirmDelivery = (order: Order) => {
+    if (isCashOnDelivery(order)) {
+      void confirmDelivery(order);
+      return;
+    }
+
     setSelectedOrder(order);
     setShowConfirmDialog(true);
   };
 
-  const confirmDelivery = async () => {
-    if (!selectedOrder) return;
+  const confirmDelivery = async (orderOverride?: Order) => {
+    const orderToConfirm = orderOverride ?? selectedOrder;
+    if (!orderToConfirm) return;
 
-    setConfirmingOrderId(selectedOrder.id);
-    setShowConfirmDialog(false);
+    setConfirmingOrderId(orderToConfirm.id);
+    if (!orderOverride) {
+      setShowConfirmDialog(false);
+    }
 
     try {
-      const escrow = escrows[selectedOrder.id];
+      const escrow = escrows[orderToConfirm.id];
+      const requiresEscrowRelease = orderToConfirm.payment_method !== 'cash';
 
-      const isCardOrder = selectedOrder.payment_method === 'card';
-      if (isCardOrder && !escrow) {
-        throw new Error("Commande carte non synchronisée avec l'escrow. Rechargez la page puis réessayez.");
-      }
-
-      if (escrow) {
+      if (requiresEscrowRelease) {
         const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-          body: { order_id: selectedOrder.id }
+          body: { order_id: orderToConfirm.id }
         });
 
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
       } else {
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            status: 'completed',
-            payment_status: (isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status) as "failed" | "paid" | "pending" | "refunded",
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', selectedOrder.id);
-
-        if (error) throw error;
+        const response = await confirmCashOnDeliveryOrder(orderToConfirm.id);
+        if (!response.success) {
+          throw new Error(response.error || 'Erreur lors de la confirmation du paiement à la livraison');
+        }
       }
 
       toast.success('Réception confirmée !', {
@@ -198,23 +269,25 @@ export default function ClientOrdersList() {
       });
 
       // Afficher la fenêtre de notation
-      setRatingOrderData({
-        orderId: selectedOrder.id,
-        vendorId: selectedOrder.vendor_id,
-        vendorName: selectedOrder.vendors?.business_name || 'ce vendeur'
+      setPendingRatingOrderData({
+        orderId: orderToConfirm.id,
+        vendorId: orderToConfirm.vendor_id,
+        vendorName: orderToConfirm.vendors?.business_name || 'ce vendeur'
       });
-      setShowRatingDialog(true);
 
       // Recharger les commandes
       await loadOrders();
     } catch (error) {
       console.error('Error confirming delivery:', error);
+      const errorMessage = await extractFunctionErrorMessage(error);
       toast.error('Erreur lors de la confirmation', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+        description: errorMessage
       });
     } finally {
       setConfirmingOrderId(null);
-      setSelectedOrder(null);
+      if (!orderOverride) {
+        setSelectedOrder(null);
+      }
     }
   };
 
@@ -455,10 +528,12 @@ export default function ClientOrdersList() {
               <div className="space-y-4">
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
-                  const isCardOrder = order.payment_method === 'card';
+                  const isCODOrder = isCashOnDelivery(order);
+                  const requiresEscrowRelease = order.payment_method !== 'cash';
                   const escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
-                  const isDeliveryState = order.status === 'in_transit' || order.status === 'delivered';
-                  const canConfirmDelivery = isDeliveryState && (isCardOrder ? escrowPending : (!escrow || escrowPending));
+                  const isDeliveryPending = order.status === 'in_transit' || order.status === 'shipped' || order.status === 'ready';
+                  const isDeliveredAwaitingConfirmation = order.status === 'delivered' && (requiresEscrowRelease ? escrow?.status !== 'released' && escrow?.status !== 'refunded' : true);
+                  const canConfirmDelivery = order.status !== 'cancelled' && order.status !== 'completed' && (isDeliveryPending || isDeliveredAwaitingConfirmation);
 
                   return (
             <Card key={order.id} className="overflow-hidden">
@@ -495,9 +570,9 @@ export default function ClientOrdersList() {
                 {/* Statuts */}
                 <div className="flex flex-wrap gap-2">
                   {getStatusBadge(order.status)}
-                  {escrow && getEscrowBadge(escrow.status)}
+                  {!isCODOrder && escrow && getEscrowBadge(escrow.status)}
                   {/* Badge paiement à la livraison */}
-                  {isCashOnDelivery(order) && (
+                  {isCODOrder && (
                     <Badge className="bg-amber-100 text-amber-800">
                       <Banknote className="w-3 h-3 mr-1" />
                       Paiement à la livraison
@@ -506,7 +581,7 @@ export default function ClientOrdersList() {
                 </div>
 
                 {/* Info Paiement à la livraison */}
-                {isCashOnDelivery(order) && !['delivered', 'completed', 'cancelled'].includes(order.status) && (
+                {isCODOrder && !['delivered', 'completed', 'cancelled'].includes(order.status) && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
                     <Banknote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -521,7 +596,7 @@ export default function ClientOrdersList() {
                 )}
 
                 {/* Protection Escrow */}
-                {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
+                {!isCODOrder && escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
                   <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                     <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -538,7 +613,7 @@ export default function ClientOrdersList() {
                 {/* Boutons d'action */}
                 <div className="space-y-2">
                   {/* Bouton d'annulation */}
-                  {['pending', 'confirmed', 'preparing'].includes(order.status) && (
+                  {canCancelOrder(order) && (
                     <Button
                       variant="destructive"
                       onClick={() => handleCancelOrder(order)}
@@ -560,7 +635,7 @@ export default function ClientOrdersList() {
                   )}
 
                   {/* Bouton de demande de remboursement */}
-                  {escrow && ['pending', 'held', 'released'].includes(escrow.status) && !['cancelled'].includes(order.status) && (
+                  {!isCODOrder && escrow && ['pending', 'held', 'released'].includes(escrow.status) && !['cancelled'].includes(order.status) && (
                     <Button
                       variant="outline"
                       onClick={() => handleRequestRefund(order)}
@@ -608,7 +683,7 @@ export default function ClientOrdersList() {
                   <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-muted-foreground">
-                      Commande terminée et paiement transféré au vendeur
+                      Commande terminée et {formatCurrency(getVendorReceivableAmount(order, escrow), getVendorReceivableCurrency(order, escrow))} transférés au vendeur
                     </span>
                   </div>
                 )}
@@ -629,12 +704,21 @@ export default function ClientOrdersList() {
             <AlertDialogTitle>Confirmer la réception ?</AlertDialogTitle>
             <AlertDialogDescription>
               En confirmant, vous attestez avoir reçu votre commande en bon état.
-              Le paiement sera immédiatement transféré au vendeur.
+              {!selectedOrderIsCashOnDelivery && (
+                <div className="mt-3 rounded-lg border border-primary/15 bg-primary/5 p-3">
+                  <div className="text-sm text-muted-foreground">Montant qui sera libéré au vendeur</div>
+                  <div className="mt-1 text-lg font-semibold text-foreground">
+                    {formatCurrency(sellerReceivableAmount, sellerReceivableCurrency)}
+                  </div>
+                </div>
+              )}
               <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-orange-800 dark:text-orange-200">
-                    Cette action est irréversible. Assurez-vous que votre colis est bien conforme.
+                    {selectedOrderIsCashOnDelivery
+                      ? 'Cette action est irréversible. Après confirmation, la fenêtre d\'avis s\'ouvrira automatiquement.'
+                      : 'Cette action est irréversible. Assurez-vous que votre colis est bien conforme.'}
                   </span>
                 </div>
               </div>
@@ -671,7 +755,9 @@ export default function ClientOrdersList() {
                   <div className="flex items-start gap-2">
                     <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-blue-800 dark:text-blue-200">
-                      Si vous avez payé, votre argent sera automatiquement remboursé via le système Escrow.
+                      {selectedOrderIsCashOnDelivery
+                        ? 'Cette commande est en paiement à la livraison. Aucun montant escrow ne sera affiché ni remboursé.'
+                        : 'Si vous avez payé, votre argent sera automatiquement remboursé via le système Escrow.'}
                     </span>
                   </div>
                 </div>
@@ -746,6 +832,7 @@ export default function ClientOrdersList() {
           vendorName={ratingOrderData.vendorName}
           onRatingSubmitted={() => {
             setRatingOrderData(null);
+            setPendingRatingOrderData(null);
           }}
         />
       )}

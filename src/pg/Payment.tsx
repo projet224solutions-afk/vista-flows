@@ -23,8 +23,10 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
-import { createOrder } from "@/services/orderBackendService";
+import { createDigitalOrder, createOrder } from "@/services/orderBackendService";
+import { resolvePostPaymentRoute } from '@/lib/payment/postPaymentRoute';
 import { previewWalletTransfer, resolveWalletRecipient, transferToWallet } from "@/services/walletBackendService";
+import { getCartItemVendorId, groupCartItemsByVendor } from "@/lib/marketplace/checkout";
 
 // Mapping pays ÔåÆ devise pour d├®river la devise du vendeur
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
@@ -123,9 +125,6 @@ export default function Payment() {
   const { user } = useAuth();
   const { clearCart } = useCart();
 
-  const getDigitalSuccessRoute = (pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want') => {
-    return pricingType === 'subscription' ? '/my-digital-subscriptions' : '/my-digital-purchases';
-  };
   const { toast } = useToast();
   const { currency: userCurrency } = useCurrency();
   const { convert: convertPrice, loading: converterLoading } = usePriceConverter();
@@ -223,9 +222,7 @@ export default function Payment() {
     productType: 'physical' | 'digital'; // Type de produit
   } | null>(null);
 
-  const getVendorIdFromItem = (item: any): string | null => {
-    return item?.vendor_id || item?.vendorId || item?.vendor?.id || null;
-  };
+  const getVendorIdFromItem = (item: any): string | null => getCartItemVendorId(item);
 
   const inferPaymentMethod = (status?: string, transactionId?: string): 'card' | 'mobile_money' | 'wallet' => {
     const upperStatus = (status || '').toUpperCase();
@@ -242,6 +239,7 @@ export default function Payment() {
     paymentMethod,
     externalPaymentId,
     shippingAddress,
+    orderMetadata,
     markAsPaid = false,
   }: {
     vendorId: string;
@@ -256,50 +254,117 @@ export default function Payment() {
       country: string;
       postal_code?: string | null;
       notes?: string | null;
+      is_cod?: boolean | null;
+      cod_phone?: string | null;
+      cod_city?: string | null;
+      neighborhood?: string | null;
+      landmark?: string | null;
+      instructions?: string | null;
     };
+    orderMetadata?: Record<string, unknown>;
     markAsPaid?: boolean;
   }) => {
+    const normalizedItems = items.map((item: any) => {
+      const productId = item.product_id || item.id;
+      if (!productId) {
+        throw new Error(`Article sans identifiant produit: ${item.name || 'article inconnu'}`);
+      }
+
+      return {
+        product_id: productId,
+        quantity: Number(item.quantity || 1),
+        variant_id: item.variant_id || null,
+      };
+    });
+
     const response = await createOrder({
       vendor_id: vendorId,
-      items: items.map((item: any) => ({
-        product_id: item.product_id || item.id,
-        quantity: item.quantity,
-        variant_id: item.variant_id || null,
-      })),
+      items: normalizedItems,
       payment_method: paymentMethod,
       payment_intent_id: externalPaymentId || null,
+      payment_confirmed: !!markAsPaid,
+      charged_amount: items.reduce((sum: number, item: any) => sum + (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)), 0),
+      order_metadata: {
+        external_payment_id: externalPaymentId || null,
+        source: 'payment_page_post_provider_success',
+        ...(orderMetadata || {}),
+      },
       shipping_address: shippingAddress || {
         full_name: user?.user_metadata?.full_name || user?.email || 'Client 224Solutions',
         phone: user?.phone || 'Non fourni',
         address_line: 'Adresse de livraison',
         city: 'Conakry',
-        country: 'Guin├®e',
+        country: 'Guinée',
         notes: null,
         postal_code: null,
       },
     });
 
     if (!response.success || !response.data?.order) {
-      throw new Error(response.error || 'Impossible de cr├®er la commande');
+      const details = Array.isArray(response.details)
+        ? response.details
+            .map((detail: any) => [detail.field, detail.message].filter(Boolean).join(': '))
+            .filter(Boolean)
+            .join(', ')
+        : '';
+      throw new Error(details || response.error || 'Impossible de créer la commande');
     }
 
     const orderId = response.data.order.id;
     const orderNumber = response.data.order.order_number;
 
-    if (markAsPaid || externalPaymentId) {
-      await supabase
-        .from('orders')
-        .update({
-          payment_status: (markAsPaid ? 'paid' : response.data.order.payment_status) as "failed" | "paid" | "pending" | "refunded",
-          metadata: {
-            external_payment_id: externalPaymentId || null,
-            source: 'payment_page_post_provider_success',
-          },
-        })
-        .eq('id', orderId);
+    return { orderId, orderNumber };
+  };
+
+  const createDigitalOrderForVendor = async ({
+    vendorId,
+    productId,
+    productName,
+    quantity,
+    totalAmount,
+    paymentMethod,
+    externalPaymentId,
+    purchaseRecordId,
+    pricingType,
+    subscriptionInterval,
+  }: {
+    vendorId: string;
+    productId: string;
+    productName: string;
+    quantity: number;
+    totalAmount: number;
+    paymentMethod: 'card' | 'mobile_money' | 'wallet' | 'cash';
+    externalPaymentId?: string;
+    purchaseRecordId?: string | null;
+    pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want';
+    subscriptionInterval?: 'monthly' | 'yearly' | 'lifetime';
+  }) => {
+    const response = await createDigitalOrder({
+      vendor_id: vendorId,
+      product_id: productId,
+      product_name: productName,
+      quantity,
+      unit_price: totalAmount / Math.max(quantity, 1),
+      total_amount: totalAmount,
+      currency: productCurrency || 'GNF',
+      payment_method: paymentMethod,
+      payment_intent_id: externalPaymentId || null,
+      purchase_record_id: purchaseRecordId || null,
+      pricing_type: pricingType || 'one_time',
+      subscription_interval: subscriptionInterval || null,
+    });
+
+    if (!response.success || !response.data) {
+      const details = Array.isArray(response.details)
+        ? response.details
+            .map((detail: any) => [detail.field, detail.message].filter(Boolean).join(': '))
+            .filter(Boolean)
+            .join(', ')
+        : '';
+      throw new Error(details || response.error || 'Impossible de créer la commande digitale');
     }
 
-    return { orderId, orderNumber };
+    return response.data;
   };
 
   const createOrdersForCartAfterPayment = async ({
@@ -311,15 +376,13 @@ export default function Payment() {
   }) => {
     if (!cartPaymentInfo || !cartPaymentInfo.items.length) return [];
 
-    const byVendor = cartPaymentInfo.items.reduce((acc: Record<string, any[]>, item: any) => {
-      const vendorId = getVendorIdFromItem(item);
-      if (!vendorId) return acc;
-      if (!acc[vendorId]) acc[vendorId] = [];
-      acc[vendorId].push(item);
-      return acc;
-    }, {});
+    const byVendor = groupCartItemsByVendor(cartPaymentInfo.items);
 
     const vendorEntries = Object.entries(byVendor);
+    if (vendorEntries.length === 0) {
+      throw new Error('Aucun vendeur identifiable dans le panier');
+    }
+
     const results: Array<{ orderId: string; orderNumber: string }> = [];
 
     for (const [vendorId, items] of vendorEntries) {
@@ -352,15 +415,19 @@ export default function Payment() {
         const totalAmount = stateData.totalAmount;
         
         // Calcul multi-vendeur
-        const firstItem = cartItems[0];
         const uniqueVendorIds = Array.from(new Set(cartItems.map((item: any) => getVendorIdFromItem(item)).filter(Boolean))) as string[];
         const isMultiVendorCart = uniqueVendorIds.length > 1;
+        const firstVendorId = uniqueVendorIds[0];
+
+        if (!firstVendorId) {
+          throw new Error('Aucun vendeur identifiable dans le panier');
+        }
         
         // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
           .from('vendors')
           .select('id, user_id, country, vendor_code, public_id')
-          .eq('id', firstItem.vendor_id)
+          .eq('id', firstVendorId)
           .single();
 
         if (vendorError || !vendorInfo) {
@@ -486,7 +553,7 @@ export default function Payment() {
             const intervalLabel = interval === 'yearly' ? '/an' : '/mois';
             setPaymentDescription(isSubscription 
               ? `Abonnement ${intervalLabel}: ${dpProduct.title}` 
-              : `Achat num├®rique: ${dpProduct.title} (x${qty})`);
+              : `Achat numérique: ${dpProduct.title} (x${qty})`);
             setPaymentOpen(true);
           } else {
             // Fallback: essayer service_products
@@ -524,7 +591,7 @@ export default function Payment() {
 
               setPaymentAmount(totalAmount.toString());
               setRecipientId(vendorCode);
-              setPaymentDescription(`Achat num├®rique: ${digitalProduct.name} (x${qty})`);
+              setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
               setPaymentOpen(true);
             }
           }
@@ -805,6 +872,30 @@ export default function Payment() {
 
     setProcessing(true);
     try {
+      if (productPaymentInfo?.productType === 'digital') {
+        await createDigitalOrderForVendor({
+          vendorId: productPaymentInfo.vendorId,
+          productId: productPaymentInfo.productId,
+          productName: productPaymentInfo.productName,
+          quantity: productPaymentInfo.quantity,
+          totalAmount: parseFloat(paymentAmount) || 0,
+          paymentMethod: 'cash',
+          pricingType: productPaymentInfo.pricingType,
+          subscriptionInterval: productPaymentInfo.subscriptionInterval,
+        });
+
+        toast({
+          title: "Commande créée !",
+          description: "Votre commande digitale sera confirmée après le paiement à la livraison"
+        });
+
+        setPaymentOpen(false);
+        setPaymentStep('form');
+        setProductPaymentInfo(null);
+        navigate(resolvePostPaymentRoute({ productType: 'physical' }));
+        return;
+      }
+
       // Si c'est un achat produit ou panier, cr├®er la commande en mode "cash on delivery"
       if (productPaymentInfo || cartPaymentInfo) {
         const vendorId = productPaymentInfo?.vendorId || cartPaymentInfo?.vendorId;
@@ -821,35 +912,35 @@ export default function Payment() {
           .single();
 
         // Construire l'adresse de livraison avec les donn├®es du formulaire ou valeurs par d├®faut
-        const shippingAddress = addressData ? {
-          address: addressData.street,
+        const shippingAddress: any = addressData ? {
+          address: addressData.address || 'Adresse à confirmer par téléphone',
           neighborhood: addressData.neighborhood || '',
           city: addressData.city,
           landmark: addressData.landmark || '',
           phone: profileData?.phone || 'Non fourni',
-          cod_phone: addressData.street || '',
-          country: 'Guin├®e',
+          cod_phone: addressData.phone || addressData.street || profileData?.phone || 'Non fourni',
+          country: 'Guinée',
           instructions: addressData.instructions || '',
           is_cod: true
         } : {
-          address: 'Adresse ├á confirmer par le client',
+          address: 'Adresse à confirmer par le client',
           city: 'Conakry',
           phone: profileData?.phone || 'Non fourni',
-          country: 'Guin├®e',
+          country: 'Guinée',
           is_cod: true,
-          instructions: 'Le client sera contact├® pour confirmer l\'adresse exacte'
+          cod_phone: profileData?.phone || 'Non fourni',
+          instructions: 'Le client sera contacté pour confirmer l\'adresse exacte'
         };
 
         if (cartPaymentInfo?.items?.length) {
+          const cartItemsByVendor = groupCartItemsByVendor(cartPaymentInfo.items);
+          if (Object.keys(cartItemsByVendor).length === 0) {
+            throw new Error('Aucun vendeur identifiable dans le panier');
+          }
+
           await Promise.all(
             Object.entries(
-              cartPaymentInfo.items.reduce((acc: Record<string, any[]>, item: any) => {
-                const currentVendorId = getVendorIdFromItem(item);
-                if (!currentVendorId) return acc;
-                if (!acc[currentVendorId]) acc[currentVendorId] = [];
-                acc[currentVendorId].push(item);
-                return acc;
-              }, {})
+              cartItemsByVendor
             ).map(([currentVendorId, currentItems]) =>
               createOrderForVendor({
                 vendorId: currentVendorId,
@@ -863,6 +954,18 @@ export default function Payment() {
                   country: shippingAddress.country,
                   notes: shippingAddress.instructions || null,
                   postal_code: null,
+                  is_cod: true,
+                  cod_phone: shippingAddress.cod_phone,
+                  cod_city: shippingAddress.city,
+                  neighborhood: shippingAddress.neighborhood || null,
+                  landmark: shippingAddress.landmark || null,
+                  instructions: shippingAddress.instructions || null,
+                },
+                order_metadata: {
+                  is_cod: true,
+                  payment_type: 'cash_on_delivery',
+                  cod_phone: shippingAddress.cod_phone,
+                  cod_city: shippingAddress.city,
                 },
               })
             )
@@ -880,6 +983,18 @@ export default function Payment() {
               country: shippingAddress.country,
               notes: shippingAddress.instructions || null,
               postal_code: null,
+              is_cod: true,
+              cod_phone: shippingAddress.cod_phone,
+              cod_city: shippingAddress.city,
+              neighborhood: shippingAddress.neighborhood || null,
+              landmark: shippingAddress.landmark || null,
+              instructions: shippingAddress.instructions || null,
+            },
+            order_metadata: {
+              is_cod: true,
+              payment_type: 'cash_on_delivery',
+              cod_phone: shippingAddress.cod_phone,
+              cod_city: shippingAddress.city,
             },
           });
         }
@@ -894,7 +1009,7 @@ export default function Payment() {
         setProductPaymentInfo(null);
         setCartPaymentInfo(null);
         clearCart();
-        navigate('/client');
+        navigate(resolvePostPaymentRoute({ productType: 'physical' }));
       } else {
         toast({
           title: "Information",
@@ -973,7 +1088,7 @@ export default function Payment() {
         // R├®initialiser et naviguer vers les commandes
         setCartPaymentInfo(null);
         clearCart();
-        navigate('/client');
+        navigate(resolvePostPaymentRoute());
         return;
       } 
       
@@ -1028,7 +1143,7 @@ export default function Payment() {
           }
 
           // Enregistrer l'achat dans digital_product_purchases
-          const { error: purchaseError } = await supabase
+          const { data: purchaseRecord, error: purchaseError } = await supabase
             .from('digital_product_purchases')
             .insert({
               product_id: productPaymentInfo.productId,
@@ -1041,10 +1156,29 @@ export default function Payment() {
               max_downloads: isSubscription ? null : 10,
               transaction_id: escrowResult.escrow_id || null,
               access_expires_at: accessExpiresAt
-            });
+            })
+            .select('id')
+            .single();
 
           if (purchaseError) {
             console.error('[Payment] Error creating purchase record:', purchaseError);
+          } else {
+            try {
+              await createDigitalOrderForVendor({
+                vendorId: productPaymentInfo.vendorId,
+                productId: productPaymentInfo.productId,
+                productName: productPaymentInfo.productName,
+                quantity: productPaymentInfo.quantity,
+                totalAmount: paymentPreview.amount,
+                paymentMethod: 'wallet',
+                externalPaymentId: escrowResult.escrow_id || undefined,
+                purchaseRecordId: purchaseRecord?.id,
+                pricingType: productPaymentInfo.pricingType,
+                subscriptionInterval: productPaymentInfo.subscriptionInterval,
+              });
+            } catch (digitalOrderError) {
+              console.error('[Payment] Error creating digital vendor order:', digitalOrderError);
+            }
           }
 
           // Si c'est un abonnement, cr├®er l'enregistrement dans digital_subscriptions
@@ -1087,7 +1221,10 @@ export default function Payment() {
               : `${productPaymentInfo.productName} ÔÇö Acc├¿s au t├®l├®chargement accord├®`
           });
 
-          const successRoute = getDigitalSuccessRoute(productPaymentInfo.pricingType);
+          const successRoute = resolvePostPaymentRoute({
+            productType: 'digital',
+            pricingType: productPaymentInfo.pricingType,
+          });
           setProductPaymentInfo(null);
           navigate(successRoute);
           return;
@@ -1112,7 +1249,7 @@ export default function Payment() {
 
         // R├®initialiser l'info produit et rediriger
         setProductPaymentInfo(null);
-        navigate('/client');
+        navigate(resolvePostPaymentRoute({ productType: 'physical' }));
         return;
       } else {
         // Transfert wallet normal (non-produit)
@@ -1337,6 +1474,7 @@ export default function Payment() {
                         onPaymentSuccess={async (transactionId, status) => {
                           console.log('[Payment] Success:', transactionId);
                           const normalizedMethod = inferPaymentMethod(status, transactionId);
+                          const orderErrors: string[] = [];
 
                           if (cartPaymentInfo && user?.id) {
                             try {
@@ -1352,6 +1490,7 @@ export default function Payment() {
                               clearCart();
                             } catch (err: any) {
                               console.error('[Payment] Error creating cart orders after payment:', err);
+                              orderErrors.push(err?.message || 'Commande panier non créée');
                               toast({
                                 title: 'Paiement re├ºu mais commande incompl├¿te',
                                 description: err?.message || 'Contactez le support avec votre r├®f├®rence de paiement',
@@ -1377,6 +1516,7 @@ export default function Payment() {
                               console.log('[Payment] Physical order created after provider success:', order);
                             } catch (err: any) {
                               console.error('[Payment] Error creating physical order after payment:', err);
+                              orderErrors.push(err?.message || 'Commande produit non créée');
                               toast({
                                 title: 'Paiement re├ºu mais commande incompl├¿te',
                                 description: err?.message || 'Contactez le support avec votre r├®f├®rence de paiement',
@@ -1405,7 +1545,7 @@ export default function Payment() {
                               }
 
                               // Cr├®er l'achat dans digital_product_purchases
-                              const { error: purchaseError } = await supabase
+                              const { data: purchaseRecord, error: purchaseError } = await supabase
                                 .from('digital_product_purchases')
                                 .insert({
                                   product_id: productPaymentInfo.productId,
@@ -1418,12 +1558,31 @@ export default function Payment() {
                                   max_downloads: isSubscription ? null : 10,
                                   transaction_id: transactionId || null,
                                   access_expires_at: accessExpiresAt
-                                });
+                                })
+                                .select('id')
+                                .single();
 
                               if (purchaseError) {
                                 console.error('[Payment] Error creating digital purchase:', purchaseError);
                               } else {
                                 console.log('[Payment] Ô£à Digital purchase record created');
+                                try {
+                                  await createDigitalOrderForVendor({
+                                    vendorId: productPaymentInfo.vendorId,
+                                    productId: productPaymentInfo.productId,
+                                    productName: productPaymentInfo.productName,
+                                    quantity: productPaymentInfo.quantity,
+                                    totalAmount: parseFloat(paymentAmount) || 0,
+                                    paymentMethod: normalizedMethod,
+                                    externalPaymentId: transactionId || undefined,
+                                    purchaseRecordId: purchaseRecord?.id,
+                                    pricingType: productPaymentInfo.pricingType,
+                                    subscriptionInterval: productPaymentInfo.subscriptionInterval,
+                                  });
+                                } catch (digitalOrderError) {
+                                  console.error('[Payment] Error creating digital vendor order after provider success:', digitalOrderError);
+                                  orderErrors.push(digitalOrderError instanceof Error ? digitalOrderError.message : 'Commande digitale non créée');
+                                }
                               }
 
                               // Si abonnement, cr├®er aussi l'enregistrement
@@ -1457,6 +1616,16 @@ export default function Payment() {
                             }
                           }
 
+                          if (orderErrors.length > 0) {
+                            toast({
+                              title: 'Paiement reçu mais commande non créée',
+                              description: orderErrors[0],
+                              variant: 'destructive',
+                              duration: 10000,
+                            });
+                            return;
+                          }
+
                           toast({
                             title: "Paiement r├®ussi",
                             description: "Votre paiement a ├®t├® effectu├® avec succ├¿s",
@@ -1467,12 +1636,15 @@ export default function Payment() {
                           loadRecentTransactions();
                           if (productPaymentInfo) {
                             if (productPaymentInfo.productType === 'digital') {
-                              navigate(getDigitalSuccessRoute(productPaymentInfo.pricingType));
+                              navigate(resolvePostPaymentRoute({
+                                productType: 'digital',
+                                pricingType: productPaymentInfo.pricingType,
+                              }));
                             } else {
-                              navigate('/client');
+                              navigate(resolvePostPaymentRoute({ productType: 'physical' }));
                             }
                           } else if (cartPaymentInfo) {
-                            navigate('/client');
+                            navigate(resolvePostPaymentRoute());
                           }
                         }}
                         onPaymentFailed={(error) => {
@@ -1499,22 +1671,22 @@ export default function Payment() {
         {/* Statistiques mensuelles */}
         <WalletMonthlyStats />
 
-        {/* Transactions r├®centes */}
+        {/* Transactions récentes */}
         <Card className="mt-6 mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Transactions r├®centes
+              Transactions récentes
             </CardTitle>
             <CardDescription>
-              Les 5 derni├¿res transactions
+              Les 5 dernières transactions
             </CardDescription>
           </CardHeader>
           <CardContent>
             {recentTransactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune transaction r├®cente</p>
+                <p>Aucune transaction récente</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1582,14 +1754,14 @@ export default function Payment() {
                   Moyens de paiement
                 </CardTitle>
                 <CardDescription>
-                  G├®rez vos moyens de paiement pour des transactions plus rapides
+                  Gérez vos moyens de paiement pour des transactions plus rapides
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Gestionnaire des 5 moyens de paiement */}
                 <PaymentMethodsManager />
 
-                {/* S├®parateur */}
+                {/* Separateur */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -1606,7 +1778,7 @@ export default function Payment() {
                   <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
                   <h3 className="text-base font-semibold mb-2">Carte virtuelle 224SOLUTIONS</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    G├®rez votre carte virtuelle pour les paiements en ligne
+                    Gérez votre carte virtuelle pour les paiements en ligne
                   </p>
                   <ProfessionalVirtualCard />
                 </div>

@@ -16,7 +16,7 @@ export interface CreateOrderItem {
 export interface CreateOrderPayload {
   vendor_id: string;
   items: CreateOrderItem[];
-  payment_method: 'card' | 'mobile_money' | 'wallet' | 'cod';
+  payment_method: 'card' | 'mobile_money' | 'wallet' | 'cash';
   shipping_address: {
     full_name: string;
     phone: string;
@@ -25,9 +25,33 @@ export interface CreateOrderPayload {
     country: string;
     postal_code?: string | null;
     notes?: string | null;
+    is_cod?: boolean;
+    cod_phone?: string | null;
+    cod_city?: string | null;
+    neighborhood?: string | null;
+    landmark?: string | null;
+    instructions?: string | null;
   };
   payment_intent_id?: string | null;
+  payment_confirmed?: boolean | null;
+  charged_amount?: number | null;
+  order_metadata?: Record<string, unknown> | null;
   coupon_code?: string | null;
+}
+
+export interface CreateDigitalOrderPayload {
+  vendor_id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number;
+  currency: string;
+  payment_method: 'card' | 'mobile_money' | 'wallet' | 'cash';
+  payment_intent_id?: string | null;
+  purchase_record_id?: string | null;
+  pricing_type?: 'one_time' | 'subscription' | 'pay_what_you_want' | null;
+  subscription_interval?: 'monthly' | 'yearly' | 'lifetime' | null;
 }
 
 export interface OrderItemDetail {
@@ -101,6 +125,15 @@ export async function createOrder(payload: CreateOrderPayload, signal?: AbortSig
   });
 }
 
+export async function createDigitalOrder(payload: CreateDigitalOrderPayload, signal?: AbortSignal) {
+  return backendFetch<OrderSummary>('/api/orders/digital', {
+    method: 'POST',
+    body: payload,
+    idempotencyKey: generateIdempotencyKey(),
+    signal,
+  });
+}
+
 /**
  * Lister les commandes de l'utilisateur connecté (acheteur)
  */
@@ -156,6 +189,14 @@ export async function cancelOrder(orderId: string, reason: string, signal?: Abor
   return backendFetch<OrderSummary>(`/api/orders/${orderId}/cancel`, {
     method: 'POST',
     body: { reason },
+    idempotencyKey: generateIdempotencyKey(),
+    signal,
+  });
+}
+
+export async function confirmCashOnDeliveryOrder(orderId: string, signal?: AbortSignal) {
+  return backendFetch<OrderSummary>(`/api/orders/${orderId}/confirm-cod-delivery`, {
+    method: 'POST',
     idempotencyKey: generateIdempotencyKey(),
     signal,
   });

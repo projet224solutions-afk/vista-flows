@@ -215,10 +215,10 @@ export function JomyPaymentSelector({
 
     // Paiement à la livraison
     if (selectedMethod === 'CASH_ON_DELIVERY') {
-      // Valider adresse complète
+      // Valider les informations minimales pour rappeler le client.
       if (!deliveryAddress.street.trim()) {
-        toast.error('Adresse requise', {
-          description: 'Veuillez entrer votre adresse complète'
+        toast.error('Numéro requis', {
+          description: 'Veuillez entrer le numéro à contacter'
         });
         return;
       }
@@ -231,7 +231,11 @@ export function JomyPaymentSelector({
       }
 
       if (onCashOnDelivery) {
-        onCashOnDelivery(deliveryAddress as any); // Passer l'adresse au callback
+        onCashOnDelivery({
+          ...deliveryAddress,
+          phone: deliveryAddress.street,
+          address: 'Adresse à confirmer par téléphone',
+        } as any);
       }
       return;
     }

@@ -21,7 +21,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { idempotencyGuard } from '../middlewares/idempotency.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
-import { orderCreateRateLimit } from '../middlewares/routeRateLimiter.js';
+import { orderCreateRateLimit, orderManageRateLimit } from '../middlewares/routeRateLimiter.js';
 import { cache } from '../config/redis.js';
 import { z } from 'zod';
 
@@ -95,10 +95,34 @@ const CreateOrderSchema = z.object({
     country: z.string().trim().min(2).max(100),
     postal_code: z.string().max(20).nullish(),
     notes: z.string().max(500).nullish(),
+    is_cod: z.boolean().nullish(),
+    cod_phone: z.string().trim().max(20).nullish(),
+    cod_city: z.string().trim().max(100).nullish(),
+    neighborhood: z.string().trim().max(200).nullish(),
+    landmark: z.string().trim().max(200).nullish(),
+    instructions: z.string().trim().max(500).nullish(),
   }),
   payment_method: z.enum(['card', 'mobile_money', 'wallet', 'cash']),
   payment_intent_id: z.string().max(500).nullish(),
+  payment_confirmed: z.boolean().nullish(),
+  charged_amount: z.number().nonnegative().nullish(),
+  order_metadata: z.record(z.string(), z.unknown()).nullish(),
   coupon_code: z.string().max(50).nullish(),
+});
+
+const CreateDigitalOrderSchema = z.object({
+  vendor_id: z.string().uuid('vendor_id invalide'),
+  product_id: z.string().uuid('product_id invalide'),
+  product_name: z.string().trim().min(1).max(300),
+  quantity: z.number().int().min(1).max(9999).default(1),
+  unit_price: z.number().nonnegative(),
+  total_amount: z.number().nonnegative(),
+  currency: z.string().trim().min(3).max(10).default(DEFAULT_CURRENCY),
+  payment_method: z.enum(['card', 'mobile_money', 'wallet', 'cash']),
+  payment_intent_id: z.string().max(500).nullish(),
+  purchase_record_id: z.string().uuid().nullish(),
+  pricing_type: z.enum(['one_time', 'subscription', 'pay_what_you_want']).nullish(),
+  subscription_interval: z.enum(['monthly', 'yearly', 'lifetime']).nullish(),
 });
 
 const ORDER_LIST_SELECT = `
@@ -133,7 +157,7 @@ async function attachEscrowToOrders<T extends { id: string }>(orders: T[]) {
 
   const { data: escrows, error } = await supabaseAdmin
     .from('escrow_transactions')
-    .select('id, order_id, status, amount, currency, auto_release_at, released_at, seller_confirmed_at')
+    .select('id, order_id, status, amount, currency, auto_release_date, released_at, seller_confirmed_at')
     .in('order_id', orders.map(order => order.id))
     .order('created_at', { ascending: false });
 
@@ -188,6 +212,67 @@ async function getOrCreateCustomerId(userId: string) {
   return createdCustomer.id;
 }
 
+async function canUserManageBuyerOrder(orderId: string, userId: string, customerId?: string | null) {
+  const orderLookup = await supabaseAdmin
+    .from('orders')
+    .select('id, status, customer_id, vendor_id, metadata')
+    .eq('id', orderId)
+    .single();
+
+  let order = orderLookup.data;
+  const error = orderLookup.error;
+
+  if (error) {
+    logger.warn(`Buyer order lookup failed for ${orderId} with extended select: ${error.message}`);
+
+    const fallbackResult = await supabaseAdmin
+      .from('orders')
+      .select('id, status, customer_id')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (fallbackResult.error) {
+      throw fallbackResult.error;
+    }
+
+    order = fallbackResult.data
+      ? {
+          ...fallbackResult.data,
+          vendor_id: null,
+          metadata: null,
+        }
+      : null;
+  }
+
+  if (!order) {
+    return { order: null, isBuyer: false };
+  }
+
+  let isBuyer = Boolean(customerId) && order.customer_id === customerId;
+
+  if (!isBuyer && order.customer_id) {
+    const { data: customerOwner } = await supabaseAdmin
+      .from('customers')
+      .select('user_id')
+      .eq('id', order.customer_id)
+      .maybeSingle();
+
+    isBuyer = customerOwner?.user_id === userId;
+  }
+
+  if (!isBuyer) {
+    const { data: escrow } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('buyer_id')
+      .eq('order_id', orderId)
+      .maybeSingle();
+
+    isBuyer = escrow?.buyer_id === userId;
+  }
+
+  return { order, isBuyer };
+}
+
 function normalizeCampaignContact(contact: string):
   | { contactType: 'email'; normalized: string; email: string; phone: null }
   | { contactType: 'phone'; normalized: string; email: null; phone: string } {
@@ -229,6 +314,23 @@ async function getOrderContactProfile(userId: string) {
   }
 
   return data || null;
+}
+
+function buildDigitalShippingAddress(params: {
+  productName: string;
+  profile: Awaited<ReturnType<typeof getOrderContactProfile>>;
+}) {
+  const fullName = [params.profile?.first_name, params.profile?.last_name].filter(Boolean).join(' ') || params.profile?.email || 'Client 224Solutions';
+
+  return {
+    full_name: fullName,
+    phone: params.profile?.phone || 'Non fourni',
+    address_line: `Livraison numérique: ${params.productName}`,
+    city: 'En ligne',
+    country: 'Digital',
+    postal_code: null,
+    notes: 'Accès numérique délivré automatiquement après paiement',
+  };
 }
 
 async function upsertVendorMarketingContact(params: {
@@ -373,7 +475,16 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
-    const { items, vendor_id, shipping_address, payment_method, payment_intent_id } = validation.data;
+    const {
+      items,
+      vendor_id,
+      shipping_address,
+      payment_method,
+      payment_intent_id,
+      payment_confirmed,
+      charged_amount,
+      order_metadata,
+    } = validation.data;
 
     // 2. Vendor lookup (Redis cached, TTL 5min)
     const vendor = await getCachedVendor(vendor_id);
@@ -429,18 +540,70 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
-    let escrowStatus = result.escrow_status as string;
-    if (payment_method === 'cash') {
-      await supabaseAdmin
-        .from('escrow_transactions')
-        .update({
-          status: 'pending',
-          metadata: {
+    const effectiveChargedAmount = typeof charged_amount === 'number' && charged_amount >= 0
+      ? charged_amount
+      : Number(result.total_amount || 0);
+
+    // orders.payment_status only supports pending|paid|failed|refunded.
+    // Keep unconfirmed orders in pending, then mark paid only after confirmed payment.
+    const finalPaymentStatus: 'pending' | 'paid' = payment_method === 'cash'
+      ? 'pending'
+      : payment_confirmed
+        ? 'paid'
+        : 'pending';
+
+    const mergedOrderMetadata = {
+      ...(payment_method === 'cash'
+        ? {
             payment_type: 'cash_on_delivery',
-            note: 'Paiement à la livraison - escrow virtuel',
-          },
-        })
-        .eq('order_id', result.order_id);
+            is_cod: true,
+          }
+        : {}),
+      ...(payment_intent_id ? { external_payment_id: payment_intent_id } : {}),
+      ...(order_metadata || {}),
+    };
+
+    const { error: orderUpdateError } = await supabaseAdmin
+      .from('orders')
+      .update({
+        total_amount: effectiveChargedAmount,
+        payment_status: finalPaymentStatus,
+        metadata: mergedOrderMetadata,
+      })
+      .eq('id', result.order_id);
+
+    if (orderUpdateError) {
+      logger.error(`order finalization update error: ${orderUpdateError.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation de la commande' });
+      return;
+    }
+
+    let escrowStatus = result.escrow_status as string;
+    const { error: escrowUpdateError } = await supabaseAdmin
+      .from('escrow_transactions')
+      .update({
+        amount: effectiveChargedAmount,
+        status: payment_method === 'cash' ? 'pending' : result.escrow_status,
+        metadata: {
+          ...(payment_method === 'cash'
+            ? {
+                payment_type: 'cash_on_delivery',
+                note: 'Paiement à la livraison - escrow virtuel',
+              }
+            : {}),
+          ...(payment_intent_id ? { external_payment_id: payment_intent_id } : {}),
+          ...(order_metadata || {}),
+        },
+      })
+      .eq('order_id', result.order_id);
+
+    if (escrowUpdateError) {
+      logger.error(`escrow finalization update error: ${escrowUpdateError.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation du séquestre' });
+      return;
+    }
+
+    if (payment_method === 'cash') {
       escrowStatus = 'pending';
     }
 
@@ -451,12 +614,12 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         full_name: shipping_address.full_name,
         phone: shipping_address.phone,
       },
-      orderTotal: Number(result.total_amount || 0),
+      orderTotal: effectiveChargedAmount,
     });
 
     // Performance logging
     const duration = Date.now() - startTime;
-    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${result.total_amount} ${currency}, escrow=${escrowStatus}, duration=${duration}ms, db_calls=2`);
+    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${effectiveChargedAmount} ${currency}, escrow=${escrowStatus}, duration=${duration}ms, db_calls=2`);
 
     res.status(201).json({
       success: true,
@@ -465,10 +628,10 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
           id: result.order_id,
           order_number: result.order_number,
           status: 'pending',
-          payment_status: payment_method === 'cash' ? 'pending' : 'processing',
+          payment_status: finalPaymentStatus,
           payment_method,
           subtotal: result.subtotal,
-          total_amount: result.total_amount,
+          total_amount: effectiveChargedAmount,
           currency: result.currency,
           shipping_address,
         },
@@ -481,6 +644,153 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     const duration = Date.now() - startTime;
     logger.error(`Order creation error (${duration}ms): ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
+  }
+});
+
+router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const customerId = await getOrCreateCustomerId(userId);
+
+    const validation = CreateDigitalOrderSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        success: false,
+        error: 'Données de commande digitale invalides',
+        details: validation.error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+      return;
+    }
+
+    const {
+      vendor_id,
+      product_id,
+      product_name,
+      quantity,
+      unit_price,
+      total_amount,
+      currency,
+      payment_method,
+      payment_intent_id,
+      purchase_record_id,
+      pricing_type,
+      subscription_interval,
+    } = validation.data;
+
+    const vendor = await getCachedVendor(vendor_id);
+    if (!vendor) {
+      res.status(404).json({ success: false, error: 'Vendeur introuvable ou inactif' });
+      return;
+    }
+
+    if (vendor.user_id === userId) {
+      res.status(400).json({ success: false, error: 'Vous ne pouvez pas commander dans votre propre boutique' });
+      return;
+    }
+
+    let existingOrder: any = null;
+
+    if (purchase_record_id) {
+      const { data } = await supabaseAdmin
+        .from('orders')
+        .select(ORDER_LIST_SELECT)
+        .eq('customer_id', customerId)
+        .eq('vendor_id', vendor_id)
+        .eq('metadata->>purchase_record_id', purchase_record_id)
+        .maybeSingle();
+      existingOrder = data || null;
+    }
+
+    if (!existingOrder && payment_intent_id) {
+      const { data } = await supabaseAdmin
+        .from('orders')
+        .select(ORDER_LIST_SELECT)
+        .eq('customer_id', customerId)
+        .eq('vendor_id', vendor_id)
+        .eq('payment_intent_id', payment_intent_id)
+        .maybeSingle();
+      existingOrder = data || null;
+    }
+
+    if (existingOrder) {
+      const [enrichedExistingOrder] = await attachEscrowToOrders([existingOrder]);
+      res.json({ success: true, data: enrichedExistingOrder });
+      return;
+    }
+
+    const profile = await getOrderContactProfile(userId);
+    const shippingAddress = buildDigitalShippingAddress({ productName: product_name, profile });
+    const orderNumber = `DGT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const isCashOnDelivery = payment_method === 'cash';
+
+    const { data: insertedOrder, error: insertError } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        order_number: orderNumber,
+        customer_id: customerId,
+        vendor_id,
+        full_name: shippingAddress.full_name,
+        payment_method,
+        payment_status: payment_method === 'cash' ? 'pending' : 'paid',
+        payment_intent_id: payment_intent_id || null,
+        subtotal: total_amount,
+        total_amount,
+        shipping_amount: 0,
+        tax_amount: 0,
+        discount_amount: 0,
+        status: isCashOnDelivery ? 'pending' : 'confirmed',
+        source: 'online',
+        shipping_address: shippingAddress,
+        metadata: {
+          source_flow: 'digital_marketplace',
+          item_type: 'digital_product',
+          digital_product_id: product_id,
+          digital_product_name: product_name,
+          purchase_record_id: purchase_record_id || null,
+          pricing_type: pricing_type || 'one_time',
+          subscription_interval: subscription_interval || null,
+          quantity,
+          unit_price,
+          currency,
+          ...(isCashOnDelivery
+            ? {
+                is_cod: true,
+                payment_type: 'cash_on_delivery',
+                digital_delivery_status: 'awaiting_payment',
+              }
+            : {
+                digital_delivery_status: 'access_granted',
+              }),
+        },
+      })
+      .select(ORDER_LIST_SELECT)
+      .single();
+
+    if (insertError) {
+      logger.error(`Digital order mirror creation error: ${insertError.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande digitale' });
+      return;
+    }
+
+    await syncOrderMarketingContacts({
+      vendorId: vendor_id,
+      userId,
+      shippingAddress: {
+        full_name: shippingAddress.full_name,
+        phone: shippingAddress.phone,
+      },
+      orderTotal: total_amount,
+    });
+
+    const [enrichedOrder] = await attachEscrowToOrders([insertedOrder]);
+
+    res.status(201).json({ success: true, data: enrichedOrder });
+  } catch (error: any) {
+    logger.error(`Digital order creation error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande digitale' });
   }
 });
 
@@ -519,7 +829,7 @@ router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRe
 
     const { data: escrow } = await supabaseAdmin
       .from('escrow_transactions')
-      .select('id, status, auto_release_at, released_at, seller_confirmed_at')
+      .select('id, status, auto_release_date, released_at, seller_confirmed_at')
       .eq('order_id', orderId)
       .maybeSingle();
 
@@ -534,32 +844,27 @@ router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRe
  * POST /api/orders/:orderId/cancel
  * P0 OPTIMIZED: Uses increment_stock_batch instead of per-product loop
  */
-router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
     const { reason } = req.body || {};
-    const customerId = await getCustomerIdByUserId(userId);
-
-    if (!customerId) {
-      res.status(404).json({ success: false, error: 'Profil client introuvable' });
-      return;
-    }
+    const customerId = await getOrCreateCustomerId(userId);
 
     if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
       res.status(400).json({ success: false, error: 'Raison d\'annulation requise (min 3 caractères)' });
       return;
     }
 
-    const { data: order } = await supabaseAdmin
-      .from('orders')
-      .select('id, status, customer_id, vendor_id, seller_confirmed_at')
-      .eq('id', orderId)
-      .eq('customer_id', customerId)
-      .single();
+    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
 
     if (!order) {
       res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+
+    if (!isBuyer) {
+      res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' });
       return;
     }
 
@@ -572,7 +877,17 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderCreateRateLimi
       return;
     }
 
-    if (order.seller_confirmed_at) {
+    const { data: escrow, error: escrowLookupError } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('seller_confirmed_at')
+      .eq('order_id', orderId)
+      .maybeSingle();
+
+    if (escrowLookupError) {
+      throw escrowLookupError;
+    }
+
+    if (escrow?.seller_confirmed_at) {
       res.status(400).json({
         success: false,
         error: 'Le vendeur a confirmé cette commande, annulation impossible. Ouvrez un litige.',
@@ -585,28 +900,54 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderCreateRateLimi
       .from('order_items').select('product_id, quantity').eq('order_id', orderId);
 
     if (orderItems && orderItems.length > 0) {
-      await supabaseAdmin.rpc('increment_stock_batch', {
+      const { error: stockRestoreError } = await supabaseAdmin.rpc('increment_stock_batch', {
         p_items: orderItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
       });
+
+      if (stockRestoreError) {
+        throw stockRestoreError;
+      }
     }
 
     // Update escrow
-    await supabaseAdmin
+    const { error: escrowUpdateError } = await supabaseAdmin
       .from('escrow_transactions')
       .update({ status: 'refunded', released_at: new Date().toISOString() })
       .eq('order_id', orderId);
 
+    if (escrowUpdateError) {
+      throw escrowUpdateError;
+    }
+
     // Update order
-    const { data: updated, error } = await supabaseAdmin
+    const cancellationReason = reason.trim();
+    const baseOrderUpdate = {
+      status: 'cancelled',
+      updated_at: new Date().toISOString(),
+      metadata: {
+        ...(order.metadata && typeof order.metadata === 'object' ? order.metadata : {}),
+        cancellation_reason: cancellationReason,
+      },
+    };
+
+    let { data: updated, error } = await supabaseAdmin
       .from('orders')
       .update({
-        status: 'cancelled',
-        cancellation_reason: reason.trim(),
-        updated_at: new Date().toISOString(),
+        ...baseOrderUpdate,
+        cancellation_reason: cancellationReason,
       })
       .eq('id', orderId)
       .select('*')
       .single();
+
+    if (error && /cancellation_reason/i.test(error.message || '')) {
+      ({ data: updated, error } = await supabaseAdmin
+        .from('orders')
+        .update(baseOrderUpdate)
+        .eq('id', orderId)
+        .select('*')
+        .single());
+    }
 
     if (error) throw error;
 
@@ -698,7 +1039,7 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
  * PATCH /api/orders/:orderId/status
  * P0 OPTIMIZED: Uses increment_stock_batch for vendor cancellations
  */
-router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLimit, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
@@ -729,7 +1070,7 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLim
 
     const { data: order } = await supabaseAdmin
       .from('orders')
-      .select('id, status, vendor_id')
+      .select('id, status, vendor_id, metadata')
       .eq('id', orderId)
       .eq('vendor_id', vendor.id)
       .single();
@@ -768,8 +1109,14 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLim
     const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
     // Note: tracking_number, cancellation_reason, seller_confirmed_at, delivered_at
     // don't exist on orders table — store in metadata instead
+    const existingMetadata =
+      order.metadata && typeof order.metadata === 'object' && !Array.isArray(order.metadata)
+        ? order.metadata
+        : {};
+
     if (tracking_number || cancellation_reason) {
       updates.metadata = {
+        ...existingMetadata,
         ...(tracking_number ? { tracking_number } : {}),
         ...(cancellation_reason ? { cancellation_reason } : {}),
       };
@@ -786,7 +1133,11 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLim
     }
 
     if (status === 'delivered') {
-      updates.metadata = { ...(updates.metadata || {}), delivered_at: new Date().toISOString() };
+      updates.metadata = {
+        ...existingMetadata,
+        ...(updates.metadata || {}),
+        delivered_at: new Date().toISOString(),
+      };
     }
 
     if (status === 'cancelled') {
@@ -816,6 +1167,106 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLim
   } catch (error: any) {
     logger.error(`Order status update error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+router.post('/:orderId([0-9a-fA-F-]{36})/confirm-cod-delivery', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+    const customerId = await getCustomerIdByUserId(userId);
+
+    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
+
+    if (!order) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+
+    if (!isBuyer) {
+      res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' });
+      return;
+    }
+
+    const { data: currentOrder, error: currentOrderError } = await supabaseAdmin
+      .from('orders')
+      .select('id, status, payment_method, payment_status, shipping_address, metadata')
+      .eq('id', orderId)
+      .single();
+
+    if (currentOrderError || !currentOrder) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+
+    const metadata =
+      currentOrder.metadata && typeof currentOrder.metadata === 'object' && !Array.isArray(currentOrder.metadata)
+        ? currentOrder.metadata
+        : {};
+    const shippingAddress =
+      currentOrder.shipping_address && typeof currentOrder.shipping_address === 'object' && !Array.isArray(currentOrder.shipping_address)
+        ? currentOrder.shipping_address
+        : {};
+    const isCod =
+      currentOrder.payment_method === 'cash' &&
+      (metadata.is_cod === true || shippingAddress.is_cod === true || metadata.payment_type === 'cash_on_delivery');
+
+    if (!isCod) {
+      res.status(400).json({ success: false, error: 'Cette commande n’est pas en paiement à la livraison' });
+      return;
+    }
+
+    if (!['ready', 'shipped', 'in_transit', 'delivered', 'completed'].includes(currentOrder.status)) {
+      res.status(400).json({
+        success: false,
+        error: `Confirmation impossible pour une commande en statut "${currentOrder.status}"`,
+      });
+      return;
+    }
+
+    if (currentOrder.status === 'completed' && currentOrder.payment_status === 'paid') {
+      res.json({ success: true, data: currentOrder });
+      return;
+    }
+
+    const confirmedAt = new Date().toISOString();
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'completed',
+        payment_status: 'paid',
+        metadata: {
+          ...metadata,
+          is_cod: true,
+          payment_type: 'cash_on_delivery',
+          cod_confirmed_at: confirmedAt,
+        },
+        updated_at: confirmedAt,
+      })
+      .eq('id', orderId)
+      .select('*')
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    await supabaseAdmin
+      .from('escrow_transactions')
+      .update({
+        metadata: {
+          payment_type: 'cash_on_delivery',
+          note: 'Paiement à la livraison confirmé par le client',
+          cod_confirmed_at: confirmedAt,
+        },
+      })
+      .eq('order_id', orderId);
+
+    logger.info(`COD order ${orderId} confirmed by buyer ${userId}`);
+    res.json({ success: true, data: updated });
+  } catch (error: any) {
+    logger.error(`COD delivery confirmation error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la confirmation du paiement à la livraison' });
   }
 });
 

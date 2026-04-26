@@ -133,13 +133,27 @@ const paymentMethodLabels: Record<string, string> = {
   bank_transfer: 'Virement bancaire'
 };
 
+const isCashOnDeliveryOrder = (order: Order): boolean => {
+  const shippingAddress = order.shipping_address as any;
+  return order.source === 'online' &&
+    order.payment_method === 'cash' &&
+    (
+      shippingAddress?.is_cod === true ||
+      order.metadata?.is_cod === true ||
+      order.metadata?.payment_type === 'cash_on_delivery'
+    );
+};
+
 // Fonction pour obtenir le libellé de la méthode de paiement
 const getPaymentMethodLabel = (order: Order): string => {
   const method = order.payment_method;
+  if (isCashOnDeliveryOrder(order)) {
+    return 'Paiement à la livraison';
+  }
   const isCOD = order.source === 'online' && 
                 method === 'cash' && 
                 order.payment_status === 'pending' &&
-                (order.shipping_address as any)?.is_cod === true;
+                ((order.shipping_address as any)?.is_cod === true || order.metadata?.is_cod === true);
   
   if (isCOD) {
     return '💵 Paiement à la livraison';
@@ -159,7 +173,7 @@ export default function OrderManagement() {
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeView, setActiveView] = useState<'pos' | 'online'>('pos');
+  const [activeView, setActiveView] = useState<'pos' | 'online'>('online');
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
   const [mainTab, setMainTab] = useState<'orders' | 'credit'>('orders');
 
@@ -1276,10 +1290,7 @@ export default function OrderManagement() {
                         </Badge>
                       )}
                       {/* Badge Paiement à la livraison */}
-                      {order.source === 'online' && 
-                       order.payment_method === 'cash' && 
-                       order.payment_status === 'pending' &&
-                       (order.shipping_address as any)?.is_cod === true && (
+                      {isCashOnDeliveryOrder(order) && (
                         <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2 text-[10px] sm:text-xs shrink-0">
                           💵 Paiement à la livraison
                         </Badge>
@@ -1330,7 +1341,7 @@ export default function OrderManagement() {
                             <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
                             <p className="font-medium text-sm mt-1">
                               {[
-                                (order.shipping_address as any)?.is_cod !== true ? (order.shipping_address as any)?.address : null,
+                                (order.shipping_address as any)?.address || (order.shipping_address as any)?.address_line,
                                 (order.shipping_address as any)?.neighborhood,
                                 (order.shipping_address as any)?.landmark,
                                 (order.shipping_address as any)?.city,
@@ -1557,7 +1568,7 @@ export default function OrderManagement() {
                   <div className="text-sm text-muted-foreground">
                     {selectedOrder.shipping_address ? (
                       <div>
-                        {(selectedOrder.shipping_address as Address)?.street && <div>{(selectedOrder.shipping_address as Address).street}</div>}
+                        {((selectedOrder.shipping_address as any)?.street || (selectedOrder.shipping_address as any)?.address_line) && <div>{(selectedOrder.shipping_address as any).street || (selectedOrder.shipping_address as any).address_line}</div>}
                         {(selectedOrder.shipping_address as Address)?.city && <div>{(selectedOrder.shipping_address as Address).city}</div>}
                         {(selectedOrder.shipping_address as Address)?.postal_code && <div>{(selectedOrder.shipping_address as Address).postal_code}</div>}
                         {(selectedOrder.shipping_address as Address)?.country && <div>{(selectedOrder.shipping_address as Address).country}</div>}
@@ -1597,8 +1608,8 @@ export default function OrderManagement() {
                     const customerName = profile?.full_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Client';
                     const customerEmail = profile?.email || '';
                     const customerPhone = profile?.phone || '';
-                    const codPhone = addr?.cod_phone || '';
-                    const isCOD = addr?.is_cod === true || selectedOrder.payment_method === 'cash_on_delivery' || selectedOrder.metadata?.payment_method === 'cash_on_delivery';
+                    const codPhone = addr?.cod_phone || selectedOrder.metadata?.cod_phone || '';
+                    const isCOD = isCashOnDeliveryOrder(selectedOrder);
 
                     const labelHTML = `
 <!DOCTYPE html>
@@ -1652,7 +1663,7 @@ export default function OrderManagement() {
   <div class="section">
     <div class="section-title">Adresse de livraison</div>
     <div class="address-block">
-      ${addr.street ? `<div class="address-line">${addr.street}</div>` : ''}
+      ${addr.street || addr.address_line ? `<div class="address-line">${addr.street || addr.address_line}</div>` : ''}
       <div class="address-line">${addr.city || ''}${addr.postal_code ? ', ' + addr.postal_code : ''}</div>
       ${addr.country ? `<div class="address-line">${addr.country}</div>` : ''}
     </div>
