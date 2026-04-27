@@ -18,23 +18,18 @@ import Stripe from 'stripe';
 
 const router = Router();
 
-async function agentHasPosPermission(agentId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabaseAdmin.rpc('check_agent_permission' as any, {
-      p_agent_id: agentId,
-      p_permission_key: 'access_pos',
-    });
+function hasVendorAgentPosPermission(permissions: unknown): boolean {
+  if (!permissions) return false;
 
-    if (error) {
-      logger.warn(`[POS] check_agent_permission failed: ${error.message}`);
-      return false;
-    }
-
-    return Boolean(data);
-  } catch (error: any) {
-    logger.warn(`[POS] check_agent_permission exception: ${error?.message || 'unknown'}`);
-    return false;
+  if (Array.isArray(permissions)) {
+    return permissions.includes('access_pos');
   }
+
+  if (typeof permissions === 'object') {
+    return Boolean((permissions as Record<string, unknown>).access_pos);
+  }
+
+  return false;
 }
 
 async function resolvePosVendorId(userId: string, requestedVendorId?: string | null): Promise<string | null> {
@@ -51,26 +46,30 @@ async function resolvePosVendorId(userId: string, requestedVendorId?: string | n
     return null;
   }
 
-  const { data: agent } = await supabaseAdmin
-    .from('agents_management')
-    .select('id, vendor_id, is_active')
+  const { data: vendorAgent, error: vendorAgentError } = await supabaseAdmin
+    .from('vendor_agents')
+    .select('id, vendor_id, is_active, permissions')
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (!agent || !agent.is_active || !agent.vendor_id) {
+  if (vendorAgentError) {
+    logger.warn(`[POS] vendor agent lookup failed: ${vendorAgentError.message}`);
     return null;
   }
 
-  if (requestedVendorId && requestedVendorId !== agent.vendor_id) {
+  if (!vendorAgent || !vendorAgent.is_active || !vendorAgent.vendor_id) {
     return null;
   }
 
-  const canAccessPos = await agentHasPosPermission(agent.id);
-  if (!canAccessPos) {
+  if (requestedVendorId && requestedVendorId !== vendorAgent.vendor_id) {
     return null;
   }
 
-  return agent.vendor_id;
+  if (!hasVendorAgentPosPermission(vendorAgent.permissions)) {
+    return null;
+  }
+
+  return vendorAgent.vendor_id;
 }
 
 async function getConfiguredStripeSecretKey(): Promise<string | null> {

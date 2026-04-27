@@ -53,6 +53,7 @@ import { CurrencySelect } from '@/components/ui/currency-select';
 import { getCurrencyByCode, formatCurrency } from '@/data/currencies';
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendorOptimized } from '@/hooks/useVendorOptimized';
 import { getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
@@ -99,6 +100,7 @@ interface Customer {
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
   const { user: authUser, session } = useAuth();
+  const { vendorId: currentVendorId, userId: vendorOwnerUserId, loading: currentVendorLoading } = useCurrentVendor();
   const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
   const isAgentMode = !!agent; // Détecte si on est dans l'interface agent
@@ -108,39 +110,22 @@ export function POSSystem() {
   const { initiatePullPayment, pollStatus, isLoading: chapchapLoading, error: chapchapError } = useChapChapPay();
   
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
-  const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
-  
-  // En mode agent, utiliser le user_id du vendeur pour les mutations
-  const [vendorUserId, setVendorUserId] = useState<string | null>(null);
-  const user = useMemo(() => {
-    if (agent && vendorUserId) {
-      return { ...authUser, id: vendorUserId };
-    }
-    return authUser;
-  }, [authUser, agent, vendorUserId]);
+  const [vendorId, setVendorId] = useState<string | null>(currentVendorId || agentVendorId || null);
+  const user = authUser;
   
   useEffect(() => {
     const VENDOR_ID_CACHE_KEY = 'pos_vendor_id';
 
-    // Si on a déjà un vendorId depuis le contexte agent, on l'utilise
-    if (agentVendorId) {
-      setVendorId(agentVendorId);
-      // Récupérer le user_id du vendeur pour les mutations (mode agent)
-      supabase
-        .from('vendors')
-        .select('user_id')
-        .eq('id', agentVendorId)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.user_id) {
-            setVendorUserId(data.user_id);
-            console.log('✅ [POS Agent] vendor user_id récupéré:', data.user_id);
-          }
-        });
+    if (currentVendorLoading) {
+      return;
+    }
+
+    if (currentVendorId || agentVendorId) {
+      setVendorId(currentVendorId || agentVendorId);
       return;
     }
     
-    // Sinon, on cherche le vendor_id via l'utilisateur connecté
+    // Sinon, on cherche le vendor_id via l'utilisateur connecte
     if (authUser?.id) {
       // ✨ MODE OFFLINE: Utiliser le cache si hors ligne
       if (!navigator.onLine) {
@@ -169,7 +154,7 @@ export function POSSystem() {
           }
         });
     }
-  }, [authUser?.id, agentVendorId]);
+  }, [authUser?.id, agentVendorId, currentVendorId, currentVendorLoading]);
   
   // Charger les produits du vendor depuis la base de données
   const [products, setProducts] = useState<Product[]>([]);
@@ -962,7 +947,7 @@ export function POSSystem() {
       if (numericInput) {
         if (keypadMode === 'amount') {
           setReceivedAmount(parseFloat(numericInput));
-          toast.success(`Montant saisi: ${numericInput} GNF`);
+          toast.success(`Montant saisi: ${formatPriceWithCurrency(Number(numericInput))}${selectedCurrency !== 'GNF' ? ` (${Number(numericInput).toLocaleString()} GNF)` : ''}`);
         } else if (keypadMode === 'quantity' && selectedCartItemForQuantity) {
           const qty = parseInt(numericInput, 10);
           if (qty > 0) {
@@ -1116,7 +1101,7 @@ export function POSSystem() {
         setCart([]);
 
         toast.success('✅ Vente à crédit enregistrée (hors-ligne)', {
-          description: `Client: ${creditSaleData.data.customer_name} - ${total.toLocaleString()} GNF - Sera synchronisée à la reconnexion.`,
+          description: `Client: ${creditSaleData.data.customer_name} - ${formatPriceWithCurrency(total)}${selectedCurrency !== 'GNF' ? ` (${total.toLocaleString()} GNF)` : ''} - Sera synchronisée à la reconnexion.`,
           duration: 5000
         });
 
@@ -1206,7 +1191,7 @@ export function POSSystem() {
       if (creditError) throw creditError;
 
       toast.success('Vente à crédit enregistrée !', {
-        description: `${creditCustomerName} - ${total.toLocaleString()} GNF - Stock mis à jour`,
+        description: `${creditCustomerName} - ${formatPriceWithCurrency(total)}${selectedCurrency !== 'GNF' ? ` (${total.toLocaleString()} GNF)` : ''} - Stock mis à jour`,
       });
 
       // Fermer le modal et réinitialiser
@@ -1402,16 +1387,17 @@ export function POSSystem() {
             order_number: mobileOrderNumber,
             vendor_id: vendorId,
             customer_id: customerId,
-            total_amount: total,
-            subtotal: subtotal,
-            tax_amount: tax,
-            discount_amount: discountValue,
+            total_amount: convertPrice(total),
+            subtotal: convertPrice(subtotal),
+            tax_amount: convertPrice(tax),
+            discount_amount: convertPrice(discountValue),
             payment_status: 'pending',
             status: 'processing',
             payment_method: paymentMethod,
             shipping_address: { address: 'Point de vente' },
             notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
-            source: 'pos'
+            source: 'pos',
+            currency: selectedCurrency
           })
           .select('id, order_number')
           .single();
@@ -1531,16 +1517,17 @@ export function POSSystem() {
               order_number: cardOrderNumber,
               vendor_id: vendorId,
               customer_id: customerId,
-              total_amount: total,
-              subtotal: subtotal,
-              tax_amount: tax,
-              discount_amount: discountValue,
+              total_amount: convertPrice(total),
+              subtotal: convertPrice(subtotal),
+              tax_amount: convertPrice(tax),
+              discount_amount: convertPrice(discountValue),
               payment_status: 'pending',
               status: 'processing',
               payment_method: 'card',
               shipping_address: { address: 'Point de vente' },
               notes: 'Paiement par carte bancaire - En attente',
-              source: 'pos'
+              source: 'pos',
+              currency: selectedCurrency
             })
             .select('id, order_number')
             .single();
@@ -1789,51 +1776,38 @@ export function POSSystem() {
     }
   };
 
-  // Helper function pour obtenir ou créer un customer
+  // Helper function pour obtenir ou creer un customer
   const getOrCreateCustomerId = async (): Promise<string | null> => {
     try {
-      // Vérification que user existe
       if (!user?.id) {
-        console.error('❌ [POS] getOrCreateCustomerId: user.id est undefined');
-        toast.error('Utilisateur non connecté');
+        toast.error('Utilisateur non connecte');
         return null;
       }
 
-      console.log('🔄 [POS] Recherche customer existant pour user:', user.id);
       const { data: existingCustomer, error: searchError } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (searchError) {
-        console.error('❌ [POS] Erreur recherche customer:', searchError);
-        throw searchError;
-      }
+      if (searchError) throw searchError;
+      if (existingCustomer?.id) return existingCustomer.id;
 
-      if (existingCustomer) {
-        console.log('✅ [POS] Customer existant trouvé:', existingCustomer.id);
-        return existingCustomer.id;
-      }
-
-      console.log('🔄 [POS] Création nouveau customer...');
       const { data: newCustomer, error: customerError } = await supabase
         .from('customers')
         .insert({ user_id: user.id })
         .select('id')
         .single();
 
-      if (customerError) {
-        console.error('❌ [POS] Erreur création customer:', customerError);
-        throw customerError;
+      if (customerError || !newCustomer?.id) {
+        throw customerError || new Error('Impossible de creer le client POS');
       }
 
-      console.log('✅ [POS] Nouveau customer créé:', newCustomer.id);
       return newCustomer.id;
     } catch (error: any) {
-      console.error('❌ [POS] Exception getOrCreateCustomerId:', error);
-      toast.error('Erreur lors de la création du client', {
-        description: error?.message || 'Vérifiez la console pour plus de détails'
+      console.error('[POS] getOrCreateCustomerId error:', error);
+      toast.error('Erreur lors de la creation du client', {
+        description: error?.message || 'Veuillez reessayer'
       });
       return null;
     }
@@ -2361,6 +2335,9 @@ export function POSSystem() {
                             <div className="flex items-baseline gap-1">
                               <span className="text-sm md:text-lg font-bold text-primary">
                                 {formatPriceWithCurrency(product.price)}
+                                {selectedCurrency !== 'GNF' && (
+                                  <span className="block text-[9px] text-muted-foreground ml-1">({product.price.toLocaleString()} GNF)</span>
+                                )}
                               </span>
                               <span className="text-[10px] text-muted-foreground">/unité</span>
                             </div>
@@ -2382,6 +2359,9 @@ export function POSSystem() {
                                   }`}
                                 >
                                   📦 {formatPriceWithCurrency(cartonsAvailable > 0 ? cartonPrice : 0)}
+                                  {selectedCurrency !== 'GNF' && cartonsAvailable > 0 && (
+                                    <span className="block text-[9px] text-muted-foreground ml-1">({cartonPrice.toLocaleString()} GNF)</span>
+                                  )}
                                 </span>
                                 <span
                                   className={`text-[9px] ${
@@ -2497,6 +2477,9 @@ export function POSSystem() {
                 <div className="flex items-center gap-1">
                                 <span className="text-xs sm:text-sm font-black text-primary tabular-nums">
                                   {formatPriceWithCurrency(subtotal)}
+                                  {selectedCurrency !== 'GNF' && (
+                                    <span className="ml-1 text-[10px] text-muted-foreground">({subtotal.toLocaleString()} GNF)</span>
+                                  )}
                                 </span>
                   <Button
                     variant="ghost"
@@ -2547,6 +2530,9 @@ export function POSSystem() {
                           </p>
                           <p className="text-[10px] text-muted-foreground">
                             {formatPriceWithCurrency(item.price)}
+                            {selectedCurrency !== 'GNF' && (
+                              <span className="ml-1">({item.price.toLocaleString()} GNF)</span>
+                            )}
                           </p>
                         </div>
                         
@@ -2807,7 +2793,12 @@ export function POSSystem() {
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.name} × {item.quantity}</span>
-                    <span>{item.total.toLocaleString()} GNF</span>
+                    <span>
+                      {formatPriceWithCurrency(item.total)}
+                      {selectedCurrency !== 'GNF' && (
+                        <span className="block text-[10px] text-muted-foreground">({item.total.toLocaleString()} GNF)</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2817,21 +2808,41 @@ export function POSSystem() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Sous-total</span>
-                  <span>{subtotal.toLocaleString()} GNF</span>
+                  <span>
+                    {formatPriceWithCurrency(subtotal)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({subtotal.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
-                  <span>{tax.toLocaleString()} GNF</span>
+                  <span>
+                    {formatPriceWithCurrency(tax)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({tax.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
                 {hasDiscount && (
                   <div className="flex justify-between text-[#ff4000] font-medium">
                     <span>{discountLabel}</span>
-                    <span>-{discountValue.toLocaleString()} GNF</span>
+                    <span>
+                      -{formatPriceWithCurrency(discountValue)}
+                      {selectedCurrency !== 'GNF' && (
+                        <span className="block text-[10px] text-muted-foreground">(-{discountValue.toLocaleString()} GNF)</span>
+                      )}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                   <span>TOTAL</span>
-                  <span className="text-primary">{total.toLocaleString()} GNF</span>
+                  <span className="text-primary">
+                    {formatPriceWithCurrency(total)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({total.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -2846,8 +2857,14 @@ export function POSSystem() {
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
                 <div className="text-sm mt-1">
-                  <strong>Montant reçu:</strong> {receivedAmount.toLocaleString()} GNF<br/>
-                  <strong>Rendu:</strong> {change.toLocaleString()} GNF
+                  <strong>Montant reçu:</strong> {formatPriceWithCurrency(receivedAmount)}
+                  {selectedCurrency !== 'GNF' && (
+                    <span className="block text-[10px] text-muted-foreground">({receivedAmount.toLocaleString()} GNF)</span>
+                  )}<br/>
+                  <strong>Rendu:</strong> {formatPriceWithCurrency(change)}
+                  {selectedCurrency !== 'GNF' && (
+                    <span className="block text-[10px] text-muted-foreground">({change.toLocaleString()} GNF)</span>
+                  )}
                 </div>
               )}
             </div>
@@ -2922,7 +2939,12 @@ export function POSSystem() {
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between">
                     <span>{item.name} × {item.quantity}</span>
-                    <span>{item.total.toLocaleString()} GNF</span>
+                    <span>
+                      {formatPriceWithCurrency(item.total)}
+                      {selectedCurrency !== 'GNF' && (
+                        <span className="block text-[10px] text-muted-foreground">({item.total.toLocaleString()} GNF)</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -2930,21 +2952,41 @@ export function POSSystem() {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span>Sous-total</span>
-                  <span>{subtotal.toLocaleString()} GNF</span>
+                  <span>
+                    {formatPriceWithCurrency(subtotal)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({subtotal.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
-                  <span>{tax.toLocaleString()} GNF</span>
+                  <span>
+                    {formatPriceWithCurrency(tax)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({tax.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
                 {hasDiscount && (
                   <div className="flex justify-between text-sm text-[#ff4000] font-medium">
                     <span>{discountLabel}</span>
-                    <span>-{discountValue.toLocaleString()} GNF</span>
+                    <span>
+                      -{formatPriceWithCurrency(discountValue)}
+                      {selectedCurrency !== 'GNF' && (
+                        <span className="block text-[10px] text-muted-foreground">(-{discountValue.toLocaleString()} GNF)</span>
+                      )}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                   <span>TOTAL</span>
-                  <span className="text-primary">{total.toLocaleString()} GNF</span>
+                  <span className="text-primary">
+                    {formatPriceWithCurrency(total)}
+                    {selectedCurrency !== 'GNF' && (
+                      <span className="block text-[10px] text-muted-foreground">({total.toLocaleString()} GNF)</span>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -3099,7 +3141,7 @@ export function POSSystem() {
           amount={total}
           currency="GNF"
           orderId={pendingStripeOrder.id}
-          sellerId={vendorUserId || vendorId}
+          sellerId={vendorOwnerUserId || vendorId}
           description={`Vente POS - ${cart.length} article(s)`}
           onSuccess={async (paymentIntentId) => {
             // Paiement réussi - POS orders are completed immediately (no delivery needed)

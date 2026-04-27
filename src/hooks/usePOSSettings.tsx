@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useCurrentVendor } from './useCurrentVendor';
 import { toast } from 'sonner';
 
 export interface POSSettings {
@@ -26,13 +27,19 @@ export interface POSSettings {
 
 export const usePOSSettings = () => {
   const { user } = useAuth();
+  const { vendorId, userId: vendorOwnerUserId, loading: vendorLoading } = useCurrentVendor();
   const [settings, setSettings] = useState<POSSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Charger les paramètres
   const loadSettings = async () => {
-    if (!user?.id) {
+    if (vendorLoading) {
+      return;
+    }
+
+    const settingsVendorId = vendorId || vendorOwnerUserId || user?.id;
+    if (!settingsVendorId) {
       setLoading(false);
       return;
     }
@@ -44,7 +51,7 @@ export const usePOSSettings = () => {
       const { data, error: fetchError } = await supabase
         .from('pos_settings')
         .select('*')
-        .eq('vendor_id', user.id)
+        .eq('vendor_id', settingsVendorId)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -56,7 +63,7 @@ export const usePOSSettings = () => {
       } else {
         // Créer des paramètres par défaut
         const defaultSettings: Omit<POSSettings, 'id' | 'created_at' | 'updated_at'> = {
-          vendor_id: user.id,
+          vendor_id: settingsVendorId,
           company_name: 'Mon Commerce',
           tax_enabled: true,
           tax_rate: 0.18,
@@ -83,7 +90,7 @@ export const usePOSSettings = () => {
 
       // Utiliser des paramètres par défaut en cas d'erreur
       setSettings({
-        vendor_id: user.id,
+        vendor_id: settingsVendorId,
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
@@ -98,7 +105,7 @@ export const usePOSSettings = () => {
 
   // Mettre à jour les paramètres
   const updateSettings = async (updates: Partial<POSSettings>) => {
-    if (!user?.id || !settings) {
+    if (!settings) {
       toast.error('Impossible de mettre à jour les paramètres');
       return;
     }
@@ -144,11 +151,12 @@ export const usePOSSettings = () => {
 
   // Réinitialiser les paramètres
   const resetSettings = async () => {
-    if (!user?.id) return;
+    const settingsVendorId = vendorId || vendorOwnerUserId || user?.id;
+    if (!settingsVendorId) return;
 
     try {
       const defaultSettings: Omit<POSSettings, 'id' | 'created_at' | 'updated_at'> = {
-        vendor_id: user.id,
+        vendor_id: settingsVendorId,
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
@@ -181,7 +189,7 @@ export const usePOSSettings = () => {
 
   useEffect(() => {
     loadSettings();
-  }, [user?.id]);
+  }, [user?.id, vendorId, vendorOwnerUserId, vendorLoading]);
 
   return {
     settings,

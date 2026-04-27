@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './useAuth';
+import { useCurrentVendor } from './useCurrentVendor';
 import { useToast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,6 +33,7 @@ interface VendorProfile {
 
 export function useVendorOptimized() {
     const { user } = useAuth();
+    const { vendorId: currentVendorId, loading: currentVendorLoading } = useCurrentVendor();
     const { toast } = useToast();
 
     // Charger stats depuis Supabase directement
@@ -40,15 +42,17 @@ export function useVendorOptimized() {
     const [statsError, setStatsError] = useState<Error | null>(null);
 
     const refetchStats = useCallback(async () => {
-        if (!user) return;
+        if (currentVendorLoading || (!user && !currentVendorId)) return;
         
         setStatsLoading(true);
         try {
-            const { data: vendor } = await supabase
-                .from('vendors')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
+            const vendor = currentVendorId
+                ? { id: currentVendorId }
+                : (await supabase
+                    .from('vendors')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single()).data;
 
             if (!vendor) throw new Error('Vendeur non trouvé');
 
@@ -68,7 +72,7 @@ export function useVendorOptimized() {
         } finally {
             setStatsLoading(false);
         }
-    }, [user]);
+    }, [user, currentVendorId, currentVendorLoading]);
 
     useEffect(() => {
         refetchStats();
@@ -80,15 +84,17 @@ export function useVendorOptimized() {
     const [profileError, setProfileError] = useState<Error | null>(null);
 
     const loadProfile = useCallback(async () => {
-        if (!user) return;
+        if (currentVendorLoading || (!user && !currentVendorId)) return;
         
         setProfileLoading(true);
         try {
-            const { data, error } = await supabase
+            const query = supabase
                 .from('vendors')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
+                .select('*');
+
+            const { data, error } = currentVendorId
+                ? await query.eq('id', currentVendorId).single()
+                : await query.eq('user_id', user.id).single();
 
             if (error) throw error;
             setProfile(data as unknown);
@@ -97,7 +103,7 @@ export function useVendorOptimized() {
         } finally {
             setProfileLoading(false);
         }
-    }, [user]);
+    }, [user, currentVendorId, currentVendorLoading]);
 
     useEffect(() => {
         loadProfile();
