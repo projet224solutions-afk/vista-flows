@@ -8,6 +8,7 @@ import { DollarSign, AlertCircle, TrendingUp, Users, Percent, RefreshCw, Save, S
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAgent } from '@/contexts/AgentContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -43,6 +44,7 @@ interface CommissionStats {
 }
 
 export default function CommissionsManagement() {
+  const { agent } = useAgent();
   const [settings, setSettings] = useState<CommissionSetting[]>([]);
   const [commissionLogs, setCommissionLogs] = useState<CommissionLog[]>([]);
   const [stats, setStats] = useState<CommissionStats>({
@@ -61,6 +63,30 @@ export default function CommissionsManagement() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+
+      if (agent) {
+        const { data: vendorAgent } = await supabase
+          .from('vendor_agents')
+          .select('id, commission_rate, total_commissions_earned')
+          .eq('id', agent.id)
+          .maybeSingle();
+
+        const totalEarned = Number(vendorAgent?.total_commissions_earned || 0);
+        const currentRate = Number(vendorAgent?.commission_rate || 0);
+
+        setSettings([]);
+        setCommissionLogs([]);
+        setIsPDG(false);
+        setStats({
+          totalEarned,
+          pendingAmount: 0,
+          paidAmount: totalEarned,
+          currentRate,
+          thisMonthEarned: totalEarned,
+          totalTransactions: 0
+        });
+        return;
+      }
       
       // Vérifier si l'utilisateur est PDG
       const { data: { user } } = await supabase.auth.getUser();
@@ -152,7 +178,7 @@ export default function CommissionsManagement() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [agent]);
 
   useEffect(() => {
     loadData();

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useCurrentVendor } from './useCurrentVendor';
 
 const STATS_TIMEOUT_MS = 10000;
 
@@ -104,21 +105,27 @@ export interface SupportTicket {
 
 export function useVendorStats() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, userId: currentVendorUserId, loading: vendorLoading } = useCurrentVendor();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (vendorLoading) {
+      return;
+    }
+
+    const ownerUserId = currentVendorUserId || user?.id;
+    if (!ownerUserId && !currentVendorId) {
       setLoading(false);
       return;
     }
 
-    const STATS_CACHE_KEY = `vendor_stats_cache_${user.id}`;
+    const STATS_CACHE_KEY = `vendor_stats_cache_${currentVendorId || ownerUserId}`;
 
     const fetchStats = async () => {
       const startedAt = performance.now();
-      console.info('[VENDOR STATS START]', { userId: user.id });
+      console.info('[VENDOR STATS START]', { userId: ownerUserId, vendorId: currentVendorId });
 
       const withTimeout = <T,>(promiseFactory: () => PromiseLike<T>, timeoutMs: number, label: string) =>
         Promise.race<T>([
@@ -126,42 +133,26 @@ export function useVendorStats() {
           new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), timeoutMs)),
         ]);
 
-      // ✨ OFFLINE FALLBACK: si hors ligne, utiliser le cache
-      if (!navigator.onLine) {
-        console.info('[VENDOR STATS] Mode hors ligne - utilisation cache');
-        try {
-          const cached = localStorage.getItem(STATS_CACHE_KEY);
-          if (cached) {
-            const parsedStats = JSON.parse(cached) as VendorStats;
-            setStats(parsedStats);
-            console.info('[VENDOR STATS SUCCESS]', { source: 'offline_cache' });
-          } else {
-            setError('Données vendeur non disponibles hors ligne');
-            console.warn('[VENDOR STATS FAIL]', { reason: 'no_offline_cache' });
-          }
-        } catch (e) {
-          setError('Erreur lecture cache hors ligne');
-        }
-        setLoading(false);
-        return;
-      }
-
       try {
         // Get vendor ID first
-        const { data: vendor } = await withTimeout(
-          () =>
-            supabase
-              .from('vendors')
-              .select('id')
-              .eq('user_id', user.id)
-              .maybeSingle(),
-          STATS_TIMEOUT_MS,
-          'vendor_lookup_timeout',
-        );
+        let vendor = currentVendorId ? { id: currentVendorId } : null;
+        if (!vendor && ownerUserId) {
+          const result = await withTimeout(
+            () =>
+              supabase
+                .from('vendors')
+                .select('id')
+                .eq('user_id', ownerUserId)
+                .maybeSingle(),
+            STATS_TIMEOUT_MS,
+            'vendor_lookup_timeout',
+          );
+          vendor = result.data;
+        }
 
         if (!vendor) {
           setError('Vendor profile not found');
-          console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId: user.id });
+          console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId: ownerUserId });
           setLoading(false);
           return;
         }
@@ -232,9 +223,9 @@ export function useVendorStats() {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
         if (message.includes('timeout')) {
-          console.error('[VENDOR STATS FAIL]', { userId: user.id, message, type: 'timeout' });
+          console.error('[VENDOR STATS FAIL]', { userId: ownerUserId, message, type: 'timeout' });
         } else {
-          console.error('[VENDOR STATS FAIL]', { userId: user.id, message });
+          console.error('[VENDOR STATS FAIL]', { userId: ownerUserId, message });
         }
 
         // ✨ Fallback sur cache en cas d'erreur réseau
@@ -256,34 +247,40 @@ export function useVendorStats() {
     };
 
     fetchStats();
-  }, [user]);
+  }, [user, currentVendorId, currentVendorUserId, vendorLoading]);
 
   return { stats, loading, error };
 }
 
 export function useProspects() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading) return;
+    if (!user && !currentVendorId) return;
 
     const fetchProspects = async () => {
       try {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        let vendorId = currentVendorId;
+        if (!vendorId && user?.id) {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          vendorId = vendor?.id || null;
+        }
 
-        if (!vendor) return;
+        if (!vendorId) return;
 
         const { data, error: fetchError } = await supabase
           .from('prospects')
           .select('*')
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
@@ -296,21 +293,25 @@ export function useProspects() {
     };
 
     fetchProspects();
-  }, [user]);
+  }, [user, currentVendorId, vendorLoading]);
 
   const createProspect = async (prospectData: Omit<Prospect, 'id' | 'created_at'>) => {
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      let vendorId = currentVendorId;
+      if (!vendorId && user?.id) {
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        vendorId = vendor?.id || null;
+      }
 
-      if (!vendor) throw new Error('Vendor not found');
+      if (!vendorId) throw new Error('Vendor not found');
 
       const { data, error } = await supabase
         .from('prospects')
-        .insert([{ ...prospectData, vendor_id: vendor.id }])
+        .insert([{ ...prospectData, vendor_id: vendorId }])
         .select()
         .single();
 
@@ -346,22 +347,28 @@ export function useProspects() {
 
 export function useCustomerCredits() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
   const [credits, setCredits] = useState<CustomerCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading) return;
+    if (!user && !currentVendorId) return;
 
     const fetchCredits = async () => {
       try {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        let vendorId = currentVendorId;
+        if (!vendorId && user?.id) {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          vendorId = vendor?.id || null;
+        }
 
-        if (!vendor) return;
+        if (!vendorId) return;
 
         const { data, error: fetchError } = await supabase
           .from('customer_credits')
@@ -372,7 +379,7 @@ export function useCustomerCredits() {
               user_id
             )
           `)
-          .eq('vendor_id', vendor.id);
+          .eq('vendor_id', vendorId);
 
         if (fetchError) throw fetchError;
         setCredits(data || []);
@@ -384,29 +391,35 @@ export function useCustomerCredits() {
     };
 
     fetchCredits();
-  }, [user]);
+  }, [user, currentVendorId, vendorLoading]);
 
   return { credits, loading, error };
 }
 
 export function usePaymentSchedules() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
   const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading) return;
+    if (!user && !currentVendorId) return;
 
     const fetchSchedules = async () => {
       try {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        let vendorId = currentVendorId;
+        if (!vendorId && user?.id) {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          vendorId = vendor?.id || null;
+        }
 
-        if (!vendor) return;
+        if (!vendorId) return;
 
         const { data, error: fetchError } = await supabase
           .from('payment_schedules')
@@ -419,7 +432,7 @@ export function usePaymentSchedules() {
               )
             )
           `)
-          .eq('order.vendor_id', vendor.id)
+          .eq('order.vendor_id', vendorId)
           .order('due_date', { ascending: true });
 
         if (fetchError) throw fetchError;
@@ -432,34 +445,40 @@ export function usePaymentSchedules() {
     };
 
     fetchSchedules();
-  }, [user]);
+  }, [user, currentVendorId, vendorLoading]);
 
   return { schedules, loading, error };
 }
 
 export function usePromoCodes() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading) return;
+    if (!user && !currentVendorId) return;
 
     const fetchPromoCodes = async () => {
       try {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
+        let vendorId = currentVendorId;
+        if (!vendorId && user?.id) {
+          const { data: vendor } = await supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          vendorId = vendor?.id || null;
+        }
 
-        if (!vendor) return;
+        if (!vendorId) return;
 
         const { data, error: fetchError } = await supabase
           .from('promo_codes')
           .select('*')
-          .eq('vendor_id', vendor.id)
+          .eq('vendor_id', vendorId)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
@@ -472,21 +491,25 @@ export function usePromoCodes() {
     };
 
     fetchPromoCodes();
-  }, [user]);
+  }, [user, currentVendorId, vendorLoading]);
 
   const createPromoCode = async (codeData: Omit<PromoCode, 'id' | 'used_count' | 'created_at'>) => {
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      let vendorId = currentVendorId;
+      if (!vendorId && user?.id) {
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        vendorId = vendor?.id || null;
+      }
 
-      if (!vendor) throw new Error('Vendor not found');
+      if (!vendorId) throw new Error('Vendor not found');
 
       const { data, error } = await supabase
         .from('promo_codes')
-        .insert([{ ...codeData, vendor_id: vendor.id }])
+        .insert([{ ...codeData, vendor_id: vendorId }])
         .select()
         .single();
 

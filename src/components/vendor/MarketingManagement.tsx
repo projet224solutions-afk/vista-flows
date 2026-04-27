@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePromoCodes } from "@/hooks/useVendorData";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Megaphone, Tag, Mail, MessageSquare, TrendingUp, 
@@ -53,6 +54,7 @@ const statusLabels = {
 
 export default function MarketingManagement() {
   const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const { promoCodes, loading: promoLoading, error: promoError, createPromoCode } = usePromoCodes();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -78,24 +80,29 @@ export default function MarketingManagement() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (vendorLoading) return;
+    if (!vendorId && !user) return;
     fetchCampaigns();
-  }, [user]);
+  }, [user, vendorId, vendorLoading]);
 
   const fetchCampaigns = async () => {
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      let resolvedVendorId = vendorId;
+      if (!resolvedVendorId && user?.id) {
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        resolvedVendorId = vendor?.id || null;
+      }
 
-      if (!vendor) return;
+      if (!resolvedVendorId) return;
 
       const { data, error } = await supabase
         .from('marketing_campaigns')
         .select('*')
-        .eq('vendor_id', vendor.id)
+        .eq('vendor_id', resolvedVendorId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -143,19 +150,23 @@ export default function MarketingManagement() {
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      let resolvedVendorId = vendorId;
+      if (!resolvedVendorId && user?.id) {
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        resolvedVendorId = vendor?.id || null;
+      }
 
-      if (!vendor) throw new Error('Vendor not found');
+      if (!resolvedVendorId) throw new Error('Vendor not found');
 
       const { data, error } = await supabase
         .from('marketing_campaigns')
         .insert([{
           ...campaignForm,
-          vendor_id: vendor.id,
+          vendor_id: resolvedVendorId,
           content: { message: campaignForm.content },
           target_audience: { segment: campaignForm.target_audience }
         }])

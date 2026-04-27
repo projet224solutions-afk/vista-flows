@@ -212,6 +212,35 @@ async function getOrCreateCustomerId(userId: string) {
   return createdCustomer.id;
 }
 
+async function getManagedVendorForUser(userId: string) {
+  const { data: ownedVendor, error: ownedVendorError } = await supabaseAdmin
+    .from('vendors')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (ownedVendorError) {
+    throw ownedVendorError;
+  }
+
+  if (ownedVendor) {
+    return { id: ownedVendor.id, isAgent: false };
+  }
+
+  const { data: agentVendor, error: agentVendorError } = await supabaseAdmin
+    .from('vendor_agents')
+    .select('vendor_id')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (agentVendorError) {
+    throw agentVendorError;
+  }
+
+  return agentVendor?.vendor_id ? { id: agentVendor.vendor_id, isAgent: true } : null;
+}
+
 async function canUserManageBuyerOrder(orderId: string, userId: string, customerId?: string | null) {
   const orderLookup = await supabaseAdmin
     .from('orders')
@@ -817,9 +846,8 @@ router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRe
     const isCustomer = customerId !== null && order.customer_id === customerId;
     let isVendor = false;
     if (!isCustomer) {
-      const { data: vendor } = await supabaseAdmin
-        .from('vendors').select('id').eq('user_id', userId).eq('id', order.vendor_id).maybeSingle();
-      isVendor = !!vendor;
+      const vendor = await getManagedVendorForUser(userId);
+      isVendor = vendor?.id === order.vendor_id;
     }
 
     if (!isCustomer && !isVendor) {
@@ -1002,8 +1030,7 @@ router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) 
 router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+    const vendor = await getManagedVendorForUser(userId);
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -1060,8 +1087,7 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
     const status = requestedStatus === 'shipped' ? 'in_transit' : requestedStatus;
     const { tracking_number, cancellation_reason } = validation.data;
 
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+    const vendor = await getManagedVendorForUser(userId);
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });

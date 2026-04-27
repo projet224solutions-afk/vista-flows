@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { toast } from 'sonner';
 
 export interface VendorAgentPermissions {
@@ -57,6 +58,7 @@ export interface VendorAgentStats {
 
 export const useVendorAgentsData = () => {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
   const [agents, setAgents] = useState<VendorAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [realVendorId, setRealVendorId] = useState<string | null>(null);
@@ -70,6 +72,11 @@ export const useVendorAgentsData = () => {
   // Récupérer le vrai vendor_id depuis la table vendors
   useEffect(() => {
     const fetchVendorId = async () => {
+      if (vendorLoading) return;
+      if (currentVendorId) {
+        setRealVendorId(currentVendorId);
+        return;
+      }
       if (!user) return;
       
       const { data: vendor } = await supabase
@@ -88,10 +95,10 @@ export const useVendorAgentsData = () => {
     };
     
     fetchVendorId();
-  }, [user]);
+  }, [user, currentVendorId, vendorLoading]);
 
   const loadAgents = useCallback(async () => {
-    if (!user || !realVendorId) return;
+    if (!realVendorId) return;
 
     try {
       setLoading(true);
@@ -145,7 +152,7 @@ export const useVendorAgentsData = () => {
     can_create_sub_agent?: boolean;
     agent_type?: 'commercial' | 'logistique' | 'support' | 'administratif' | 'manager' | 'technique';
   }) => {
-    if (!user || !realVendorId) {
+    if (!realVendorId) {
       toast.error('Vous devez être connecté');
       return null;
     }
@@ -226,7 +233,7 @@ export const useVendorAgentsData = () => {
   }, [user, realVendorId, loadAgents]);
 
   const updateAgent = useCallback(async (agentId: string, updates: Partial<VendorAgent> & { new_email?: string }) => {
-    if (!user || !realVendorId) {
+    if (!realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -296,7 +303,7 @@ export const useVendorAgentsData = () => {
   }, [user, realVendorId, loadAgents]);
 
   const deleteAgent = useCallback(async (agentId: string) => {
-    if (!user || !realVendorId) {
+    if (!realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -324,7 +331,7 @@ export const useVendorAgentsData = () => {
   }, [user, realVendorId, loadAgents]);
 
   const toggleAgentStatus = useCallback(async (agentId: string, isActive: boolean) => {
-    if (!user || !realVendorId) {
+    if (!realVendorId) {
       toast.error('Vous devez être connecté');
       return;
     }
@@ -351,10 +358,10 @@ export const useVendorAgentsData = () => {
   }, [user, realVendorId, loadAgents]);
 
   useEffect(() => {
-    if (user && realVendorId) {
+    if (realVendorId) {
       loadAgents();
     }
-  }, [user, realVendorId, loadAgents]);
+  }, [realVendorId, loadAgents]);
 
   return {
     agents,

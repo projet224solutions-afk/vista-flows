@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { dataManager } from '@/services/DataManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useCurrentVendor } from './useCurrentVendor';
 import { useToast } from './use-toast';
 import { getPublicBaseUrl } from '@/lib/site';
 
@@ -87,6 +88,7 @@ export interface CreatePaymentLinkData {
 
 export function usePaymentLinks() {
   const { user } = useAuth();
+  const { vendorId: currentVendorId, userId: currentVendorUserId, isAgent, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
@@ -94,17 +96,27 @@ export function usePaymentLinks() {
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [ownerType, setOwnerType] = useState<OwnerType>('vendor');
 
+  const effectiveOwnerUserId = currentVendorUserId || user?.id || null;
+
   useEffect(() => {
     loadOwnerInfo();
-  }, [user?.id]);
+  }, [user?.id, currentVendorId, currentVendorUserId, isAgent, vendorLoading]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (effectiveOwnerUserId) {
       loadPaymentLinks();
     }
-  }, [user?.id, vendorId]);
+  }, [effectiveOwnerUserId, vendorId]);
 
   const loadOwnerInfo = async () => {
+    if (vendorLoading) return;
+
+    if (currentVendorId) {
+      setVendorId(currentVendorId);
+      setOwnerType('vendor');
+      return;
+    }
+
     if (!user?.id) return;
 
     // Check vendor first
@@ -134,7 +146,7 @@ export function usePaymentLinks() {
   };
 
   const loadPaymentLinks = async (filters?: { status?: string; search?: string }) => {
-    if (!user?.id) return;
+    if (!effectiveOwnerUserId) return;
 
     try {
       setLoading(true);
@@ -148,7 +160,7 @@ export function usePaymentLinks() {
             id, public_id, first_name, last_name, email
           )
         `)
-        .eq('owner_user_id', user.id)
+        .eq('owner_user_id', effectiveOwnerUserId)
         .order('created_at', { ascending: false });
 
       if (filters?.status && filters.status !== 'all') {
@@ -208,7 +220,7 @@ export function usePaymentLinks() {
   };
 
   const createPaymentLink = async (data: CreatePaymentLinkData): Promise<string | null> => {
-    if (!user?.id) {
+    if (!effectiveOwnerUserId) {
       toast({ title: "Erreur", description: "Connexion requise", variant: "destructive" });
       return null;
     }
@@ -261,7 +273,7 @@ export function usePaymentLinks() {
           payment_id: paymentId,
           link_type: data.linkType || 'payment',
           owner_type: ownerType,
-          owner_user_id: user.id,
+          owner_user_id: effectiveOwnerUserId,
           vendeur_id: vendorId || '00000000-0000-0000-0000-000000000000',
           client_id: clientUuid,
           product_id: data.product_id || null,
@@ -311,7 +323,8 @@ export function usePaymentLinks() {
       const { error } = await supabase
         .from('payment_links')
         .update({ status })
-        .eq('payment_id', paymentId);
+        .eq('payment_id', paymentId)
+        .eq('owner_user_id', effectiveOwnerUserId);
 
       if (error) throw error;
       toast({ title: "Succès", description: "Statut mis à jour" });
@@ -327,7 +340,7 @@ export function usePaymentLinks() {
         .from('payment_links')
         .delete()
         .eq('payment_id', paymentId)
-        .eq('owner_user_id', user?.id);
+        .eq('owner_user_id', effectiveOwnerUserId);
 
       if (error) throw error;
       toast({ title: "Succès", description: "Lien supprimé" });

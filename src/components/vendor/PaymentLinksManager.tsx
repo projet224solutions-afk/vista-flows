@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks, LinkType } from '@/hooks/usePaymentLinks';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { tryNativeShare } from '@/utils/nativeShare';
 import { getPublicBaseUrl } from '@/lib/site';
@@ -80,6 +81,7 @@ const initialForm = {
 
 export default function PaymentLinksManager() {
   const { toast } = useToast();
+  const { userId: vendorUserId } = useCurrentVendor();
   const {
     paymentLinks, stats, loading, vendorId, ownerType,
     loadPaymentLinks, createPaymentLink, updatePaymentLinkStatus, deletePaymentLink, getPaymentUrl
@@ -105,10 +107,9 @@ export default function PaymentLinksManager() {
         .eq('vendor_id', vendorId).eq('is_active', true).order('name');
       setProducts(data || []);
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    if (vendorUserId) {
       const { data } = await supabase.from('professional_services').select('id, business_name, description')
-        .eq('user_id', user.id).order('business_name');
+        .eq('user_id', vendorUserId).order('business_name');
       setServices((data || []).map((d: any) => ({ id: d.id, business_name: d.business_name, description: d.description })));
     }
   };

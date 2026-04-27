@@ -4,22 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AffiliateManagement({ shopId }: { shopId?: string }) {
   const { user } = useAuth();
+  const { userId: vendorUserId, loading: vendorLoading } = useCurrentVendor();
   const [percentage, setPercentage] = useState<number>(5);
   const [link, setLink] = useState<string>("");
   const [vendorCustomId, setVendorCustomId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (vendorLoading) return;
     fetchVendorCustomId();
-  }, [user]);
+  }, [user, vendorUserId, vendorLoading]);
 
   const fetchVendorCustomId = async () => {
-    if (!user) {
+    const ownerUserId = vendorUserId || user?.id;
+    if (!ownerUserId) {
       setLoading(false);
       return;
     }
@@ -28,7 +32,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
       const { data: userIdData, error } = await supabase
         .from('user_ids')
         .select('custom_id')
-        .eq('user_id', user.id)
+        .eq('user_id', ownerUserId)
         .maybeSingle();
 
       if (error) throw error;

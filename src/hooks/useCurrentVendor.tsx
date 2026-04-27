@@ -63,6 +63,7 @@ export const useCurrentVendor = () => {
   const authProfileId = auth.profile?.id;
   const agentVendorId = agentContext.vendorId;
   const hasAgent = !!agentContext.agent;
+  const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   
   // Le loading global inclut le chargement du profil auth
   const loading = auth.loading || auth.profileLoading || internalLoading;
@@ -78,31 +79,29 @@ export const useCurrentVendor = () => {
       setInternalLoading(true);
       setError(null);
 
-      // Vérifier si on est en ligne
-      const isOnline = navigator.onLine;
-
       // CAS 1: On est dans un contexte AGENT (prioritaire)
       if (hasAgent && agentVendorId) {
         console.log('🔄 Mode Agent - Chargement données vendeur:', agentVendorId);
         
         let vendorInfo = null;
-        
-        if (isOnline) {
+
+        try {
           // Récupérer le business_type et user_id du vendeur
-          const { data } = await supabase
+          const { data, error: vendorInfoError } = await supabase
             .from('vendors')
             .select('business_type, user_id')
             .eq('id', agentVendorId)
             .maybeSingle();
+
+          if (vendorInfoError) throw vendorInfoError;
+
           vendorInfo = data;
-          
-          // Mettre en cache pour mode offline
+
           if (vendorInfo) {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`, vendorInfo, CACHE_TTL_VENDOR);
           }
-        } else {
-          // Mode offline : récupérer depuis le cache
-          console.log('📴 Mode hors ligne - Récupération cache agent');
+        } catch (agentVendorError) {
+          console.log('📴 Requête vendeur agent indisponible - récupération cache');
           vendorInfo = await getCachedData<{business_type: string; user_id: string}>(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`);
         }
         
@@ -133,29 +132,29 @@ export const useCurrentVendor = () => {
         console.log('🔄 Mode Vendeur Direct - Utilisation user actuel:', authUserId);
         
         let vendorProfile = null;
-        
-        if (isOnline) {
+
+        try {
           // Trouver le vendor_id et business_type du profil vendeur
           const { data, error: vendorError } = await supabase
             .from('vendors')
             .select('id, business_type')
             .eq('user_id', authUserId)
             .maybeSingle();
-          
+
+          if (vendorError) throw vendorError;
+
           vendorProfile = data;
-          
-          // Mettre en cache pour mode offline
+
           if (vendorProfile) {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`, vendorProfile, CACHE_TTL_VENDOR);
             console.log('💾 Profil vendeur mis en cache');
           }
-        } else {
-          // Mode offline : récupérer depuis le cache
-          console.log('📴 Mode hors ligne - Récupération cache vendeur');
+        } catch (vendorProfileError) {
+          console.log('📴 Requête vendeur indisponible - récupération cache');
           vendorProfile = await getCachedData<{id: string; business_type: string}>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
-          
+
           if (!vendorProfile) {
-            console.warn('⚠️ Pas de cache vendeur disponible en mode offline');
+            console.warn('⚠️ Pas de cache vendeur disponible après échec réseau');
           }
         }
 
@@ -172,7 +171,7 @@ export const useCurrentVendor = () => {
           businessType: businessType || 'hybrid' // Default pour nouveaux vendeurs
         });
         
-        console.log('✅ Données vendeur chargées (mode direct):', { vendorId, userId: authUserId, businessType, fromCache: !isOnline });
+        console.log('✅ Données vendeur chargées (mode direct):', { vendorId, userId: authUserId, businessType, fromCache: !vendorProfile });
       } else if (!hasAgent) {
         // CAS 3: Aucun contexte valide (ni agent ni vendeur)
         console.warn('⚠️ Aucun contexte vendeur valide');

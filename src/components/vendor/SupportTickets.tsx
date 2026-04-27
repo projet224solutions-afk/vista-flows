@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { MessageSquare, AlertCircle, Clock, CheckCircle, Search, Filter, Plus, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -75,6 +76,7 @@ const priorityLabels = {
 
 export default function SupportTickets() {
   const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -94,19 +96,26 @@ export default function SupportTickets() {
   });
 
   useEffect(() => {
-    if (user) {
+    if (!vendorLoading && (user || vendorId)) {
       loadTickets();
     }
-  }, [user]);
+  }, [user, vendorId, vendorLoading]);
 
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('support_tickets')
         .select('*')
-        .eq('requester_id', user?.id)
         .order('created_at', { ascending: false });
+
+      if (vendorId) {
+        query = query.eq('vendor_id', vendorId);
+      } else {
+        query = query.eq('requester_id', user?.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setTickets(data || []);
@@ -129,6 +138,7 @@ export default function SupportTickets() {
         .from('support_tickets')
         .insert([{
           requester_id: user?.id,
+          vendor_id: vendorId || null,
           subject: newTicket.subject,
           description: newTicket.description,
           category: newTicket.category,

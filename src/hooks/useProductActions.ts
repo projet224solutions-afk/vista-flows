@@ -246,7 +246,7 @@ export function useProductActions({
       return { success: false };
     }
 
-    if (!user?.id) {
+    if (!limitCheckUserId) {
       toast.error('Utilisateur non connecté');
       return { success: false };
     }
@@ -380,7 +380,7 @@ export function useProductActions({
       toast.error(errorMessage);
       return { success: false };
     }
-  }, [vendorId, user, uploadImages, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
+  }, [vendorId, limitCheckUserId, uploadImages, uploadPromotionalVideo, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
 
   /**
    * Mettre à jour un produit
@@ -411,8 +411,8 @@ export function useProductActions({
         return { success: false };
       }
 
-      if (!existingProduct.is_active && formData.is_active && user?.id) {
-        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+      if (!existingProduct.is_active && formData.is_active && limitCheckUserId) {
+        const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId);
 
         if (!limitCheck) {
           toast.error('Impossible de vérifier les limites d\'abonnement');
@@ -491,7 +491,7 @@ export function useProductActions({
       toast.error(`Erreur mise à jour: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, uploadImages, handleCategory, onProductUpdated, syncInventoryQuantity, user?.id]);
+  }, [vendorId, limitCheckUserId, uploadImages, uploadPromotionalVideo, handleCategory, onProductUpdated, syncInventoryQuantity]);
 
   /**
    * Supprimer un produit
@@ -544,8 +544,8 @@ export function useProductActions({
 
       if (fetchError) throw fetchError;
 
-      if (original?.is_active && user?.id) {
-        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+      if (original?.is_active && limitCheckUserId) {
+        const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId);
 
         if (!limitCheck) {
           toast.error('Impossible de vérifier les limites d\'abonnement');
@@ -593,7 +593,7 @@ export function useProductActions({
       toast.error(`Erreur duplication: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, generatePublicId, onProductCreated, generateUniqueSKU, user?.id]);
+  }, [vendorId, limitCheckUserId, generatePublicId, onProductCreated, generateUniqueSKU]);
 
   /**
    * Mise à jour en masse du stock

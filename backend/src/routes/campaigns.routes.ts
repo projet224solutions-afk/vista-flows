@@ -93,12 +93,24 @@ const createCampaignSchema = z.object({
 // ==================== HELPERS ====================
 
 async function getVendorId(userId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
+  const { data: vendor } = await supabaseAdmin
     .from('vendors')
     .select('id')
     .eq('user_id', userId)
-    .single();
-  return data?.id || null;
+    .maybeSingle();
+
+  if (vendor?.id) {
+    return vendor.id;
+  }
+
+  const { data: agent } = await supabaseAdmin
+    .from('vendor_agents')
+    .select('vendor_id')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  return agent?.vendor_id || null;
 }
 
 async function isAdminUser(userId: string): Promise<boolean> {
