@@ -152,7 +152,7 @@ export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     // Toujours faire la comparaison même si longueurs différentes
     // pour éviter les fuites d'information sur la longueur
-    const _result = 1;
+    let _result = 0;
     const maxLen = Math.max(a.length, b.length);
     for (let i = 0; i < maxLen; i++) {
       _result |= (a.charCodeAt(i % a.length) || 0) ^ (b.charCodeAt(i % b.length) || 0);
