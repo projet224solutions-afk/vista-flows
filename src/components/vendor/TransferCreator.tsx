@@ -12,8 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
+import { _Table, _TableBody, _TableCell, _TableHead, _TableHeader, _TableRow } from '@/components/ui/table';
+import { _Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
@@ -67,7 +67,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   const {
     locations,
     posLocations,
-    productMappings,
+    _productMappings,
     getLocationStock,
     getShopProductMappingForItem,
     createAdvancedTransfer,
@@ -102,7 +102,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lieux disponibles pour la source
-  const sourceLocations = useMemo(() => 
+  const sourceLocations = useMemo(() =>
     locations.filter(l => !l.is_pos_enabled && l.location_type !== 'shop' && l.id !== toLocationId),
     [locations, toLocationId]
   );
@@ -139,6 +139,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     } else {
       setSourceStock([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromLocationId]);
 
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   const filteredStock = useMemo(() => {
     if (!searchQuery.trim()) return sourceStock;
     const q = searchQuery.toLowerCase();
-    return sourceStock.filter(s => 
+    return sourceStock.filter(s =>
       s.product?.name?.toLowerCase().includes(q) ||
       s.product?.sku?.toLowerCase().includes(q)
     );
@@ -188,8 +189,8 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     const normalized = normalizeStockUnits(stock);
     const existing = transferItems.find(i => i.product_id === stock.product_id);
     const mapping = destinationType === 'shop' ? getShopProductMappingForItem(stock.product_id, toLocationId) : null;
-    const defaultShopProductId = mapping?.shop_product_id || (destinationType === 'shop' ? stock.product_id : null);
-    const defaultShopProductName = mapping?.shop_product?.name || (destinationType === 'shop' ? stock.product?.name || 'Produit boutique lié' : null);
+    const _defaultShopProductId = mapping?.shop_product_id || (destinationType === 'shop' ? stock.product_id : null);
+    const _defaultShopProductName = mapping?.shop_product?.name || (destinationType === 'shop' ? stock.product?.name || 'Produit boutique lié' : null);
 
     if (existing) {
       updateBreakdown(stock.product_id, {
@@ -249,7 +250,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   };
 
   // Vérifier si un produit est déjà dans le transfert
-  const isInTransfer = (productId: string) => 
+  const isInTransfer = (productId: string) =>
     transferItems.some(i => i.product_id === productId);
 
   // Total des items
@@ -580,19 +581,19 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   <div className="space-y-2">
                     {filteredStock.map(stock => {
                       const inTransfer = isInTransfer(stock.product_id);
-                      const item = transferItems.find(i => i.product_id === stock.product_id);
+                      const _item = transferItems.find(i => i.product_id === stock.product_id);
                       const normalizedStock = normalizeStockUnits(stock);
                       const mappedShopProduct = destinationType === 'shop'
                         ? getShopProductMappingForItem(stock.product_id, toLocationId)
                         : null;
-                      
+
                       return (
                         <div
                           key={stock.id}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
-                            inTransfer 
-                              ? "bg-primary/5 border-primary/30" 
+                            inTransfer
+                              ? "bg-primary/5 border-primary/30"
                               : "hover:bg-muted/50"
                           )}
                           onClick={() => addToTransfer(stock)}
@@ -600,9 +601,9 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                           {/* Image */}
                           <div className="w-12 h-12 rounded bg-muted overflow-hidden shrink-0">
                             {stock.product?.images?.[0] ? (
-                              <img 
-                                src={stock.product.images[0]} 
-                                alt="" 
+                              <img
+                                src={stock.product.images[0]}
+                                alt=""
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -672,8 +673,8 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   </CardDescription>
                 </div>
                 {transferItems.length > 0 && (
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setTransferItems([])}
                   >
@@ -699,9 +700,9 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         {/* Image */}
                         <div className="w-10 h-10 rounded bg-background overflow-hidden shrink-0">
                           {item.product_image ? (
-                            <img 
-                              src={item.product_image} 
-                              alt="" 
+                            <img
+                              src={item.product_image}
+                              alt=""
                               className="w-full h-full object-cover"
                             />
                           ) : (

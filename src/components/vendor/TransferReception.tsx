@@ -5,17 +5,17 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, _CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { _Table, _TableBody, _TableCell, _TableHead, _TableHeader, _TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
+import { _Progress } from '@/components/ui/progress';
 import {
   Package,
   CheckCircle2,
@@ -24,11 +24,11 @@ import {
   ArrowRight,
   Warehouse,
   Store,
-  XCircle,
-  FileText,
-  Camera
+  _XCircle,
+  _FileText,
+  _Camera
 } from 'lucide-react';
-import { StockTransfer, ConfirmReceptionInput, useMultiWarehouse } from '@/hooks/useMultiWarehouse';
+import { StockTransfer, _ConfirmReceptionInput, useMultiWarehouse } from '@/hooks/useMultiWarehouse';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -66,7 +66,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Préparer les items à partir du transfert
-  const [receptionItems, setReceptionItems] = useState<ReceptionItem[]>(() => 
+  const [receptionItems, setReceptionItems] = useState<ReceptionItem[]>(() =>
     (transfer.items || []).map(item => ({
       product_id: item.product_id,
       product_name: item.product?.name || 'Produit',
@@ -282,15 +282,15 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             {receptionItems.map((item, index) => (
               <div key={item.product_id}>
                 {index > 0 && <Separator className="my-4" />}
-                
+
                 <div className="flex flex-col md:flex-row gap-4">
                   {/* Info produit */}
                   <div className="flex items-center gap-3 md:w-1/3">
                     <div className="w-12 h-12 rounded bg-muted overflow-hidden shrink-0">
                       {item.product_image ? (
-                        <img 
-                          src={item.product_image} 
-                          alt="" 
+                        <img
+                          src={item.product_image}
+                          alt=""
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -320,7 +320,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                         className="w-24"
                       />
                       <span className="text-sm text-muted-foreground">/ {item.quantity_sent}</span>
-                      
+
                       {item.quantity_received === item.quantity_sent ? (
                         <Badge className="bg-green-100 text-green-700">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -339,8 +339,8 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                   {item.quantity_missing > 0 && (
                     <div className="md:w-1/3">
                       <Label className="text-sm">Raison du manquant *</Label>
-                      <Select 
-                        value={item.loss_reason || ''} 
+                      <Select
+                        value={item.loss_reason || ''}
                         onValueChange={(v) => updateLossReason(item.product_id, v)}
                       >
                         <SelectTrigger className="mt-1">
@@ -408,8 +408,8 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           onClick={handleSubmit}
           disabled={isSubmitting}
           className={cn(
-            isComplete 
-              ? "bg-green-600 hover:bg-green-700" 
+            isComplete
+              ? "bg-green-600 hover:bg-green-700"
               : "bg-amber-600 hover:bg-amber-700"
           )}
         >

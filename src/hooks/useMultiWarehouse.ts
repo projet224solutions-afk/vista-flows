@@ -6,6 +6,27 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+// ─── Registre singleton des channels Realtime ────────────────────────────────
+// useMultiWarehouse est appelé par plusieurs composants simultanément
+// (MultiWarehouseManagement, TransferCreator, TransferReception…).
+// Sans ce registre, chaque instance crée son propre supabase.channel() avec le
+// même nom → le 2ème .on() arrive sur un channel déjà souscrit → crash Supabase.
+// Solution : un seul channel par vendorId, partagé via un Map module-level.
+interface ChannelEntry {
+  channel: ReturnType<typeof supabase.channel>;
+  count: number;
+  callbacks: Set<() => void>;
+}
+const _warehouseChannelRegistry = new Map<string, ChannelEntry>();
+const WAREHOUSE_TABLES = [
+  'vendor_locations',
+  'location_stock',
+  'stock_transfers',
+  'stock_transfer_items',
+  'stock_losses',
+] as const;
+// ─────────────────────────────────────────────────────────────────────────────
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { toast } from 'sonner';
 import {
@@ -1099,10 +1120,8 @@ export function useMultiWarehouse() {
     }
   }, [vendorId, vendorLoading, fetchLocations, fetchTransfers, fetchLosses, fetchProductMappings]);
 
-  // Ref pour éviter la re-souscription Realtime quand les callbacks changent.
-  // Le useEffect ne doit se relancer que si vendorId change, pas à chaque
-  // recréation des useCallback — sinon Supabase reçoit des .on() sur un
-  // channel déjà souscrit et lève "cannot add postgres_changes after subscribe()".
+  // Ref stable : pointe toujours vers les callbacks les plus récents sans
+  // que useEffect n'ait besoin de les lister comme dépendances.
   const realtimeRefreshRef = useRef<() => void>(() => {});
   realtimeRefreshRef.current = () => {
     fetchLocations();
@@ -1111,26 +1130,50 @@ export function useMultiWarehouse() {
     fetchProductMappings();
   };
 
+  // Callback stable référencé dans le Set partagé du registre singleton.
+  // useCallback avec [] garantit que la référence ne change jamais entre renders.
+  const myRefreshCallback = useCallback(() => {
+    realtimeRefreshRef.current();
+  }, []);
+
+  // Registre singleton : un seul channel Supabase par vendorId, partagé entre
+  // toutes les instances du hook (MultiWarehouseManagement + TransferCreator +
+  // TransferReception). Chaque instance ajoute son callback au Set commun.
+  // Le channel n'est détruit que quand le dernier abonné se démonte.
   useEffect(() => {
     if (!vendorId) return;
 
-    const channel = supabase.channel(`multi-warehouse-live-${vendorId}`);
+    const channelName = `multi-warehouse-live-${vendorId}`;
+    const existing = _warehouseChannelRegistry.get(channelName);
 
-    ['vendor_locations', 'location_stock', 'stock_transfers', 'stock_transfer_items', 'stock_losses']
-      .forEach((table) => {
+    if (existing) {
+      existing.count++;
+      existing.callbacks.add(myRefreshCallback);
+    } else {
+      const callbacks = new Set<() => void>([myRefreshCallback]);
+      const channel = supabase.channel(channelName);
+      WAREHOUSE_TABLES.forEach((table) => {
         channel.on(
           'postgres_changes',
           { event: '*', schema: 'public', table },
-          () => realtimeRefreshRef.current(),
+          () => callbacks.forEach((cb) => cb()),
         );
       });
-
-    channel.subscribe();
+      channel.subscribe();
+      _warehouseChannelRegistry.set(channelName, { channel, count: 1, callbacks });
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      const entry = _warehouseChannelRegistry.get(channelName);
+      if (!entry) return;
+      entry.callbacks.delete(myRefreshCallback);
+      entry.count--;
+      if (entry.count <= 0) {
+        supabase.removeChannel(entry.channel);
+        _warehouseChannelRegistry.delete(channelName);
+      }
     };
-  }, [vendorId]); // vendorId uniquement : le channel ne se recrée que si le vendeur change
+  }, [vendorId, myRefreshCallback]);
 
   return {
     // Data
