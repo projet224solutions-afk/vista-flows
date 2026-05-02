@@ -2,11 +2,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Users, TrendingUp, Package, ShoppingCart, Warehouse, 
-  Truck, UserPlus, LogOut, BarChart3, FileText, 
+import {
+  Users, TrendingUp, Package, ShoppingCart, Warehouse,
+  Truck, UserPlus, LogOut, BarChart3, FileText,
   MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign,
-  Menu, X, ChevronRight, Home
+  Menu, _X, ChevronRight, Home
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -84,7 +84,7 @@ export default function VendorAgentInterface() {
         toast.error(`Erreur base de données: ${agentError.message}`);
         return;
       }
-      
+
       if (!agentData) {
         toast.error('Agent non trouvé. Vérifiez le lien d\'accès.');
         return;
@@ -126,7 +126,7 @@ export default function VendorAgentInterface() {
       await supabase.auth.signOut();
       toast.success('Déconnexion réussie');
       navigate('/auth', { replace: true });
-    } catch (error) {
+    } catch (_error) {
       navigate('/auth', { replace: true });
     }
   };
@@ -264,7 +264,7 @@ export default function VendorAgentInterface() {
               >
                 <Icon className={cn("w-4 h-4 flex-shrink-0", active && "text-vendeur-primary")} />
                 <span className="truncate">{item.label}</span>
-                {item.disabled && <span className="ml-auto text-xs">­ƒöÆ</span>}
+                {item.disabled && <span className="ml-auto text-xs">🔒</span>}
                 {active && <ChevronRight className="w-3 h-3 ml-auto flex-shrink-0 text-vendeur-primary" />}
               </button>
             );
@@ -416,7 +416,8 @@ export default function VendorAgentInterface() {
 
             {/* Mobile Content */}
             {activeTab === 'pos' ? (
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
+              /* POS gère son propre scroll interne — pas d'overflow-y-auto ici */
+              <div className="flex-1 min-h-0 overflow-hidden">
                 {renderTabContent()}
               </div>
             ) : (
@@ -483,12 +484,19 @@ export default function VendorAgentInterface() {
                 </div>
               </header>
 
-              {/* Desktop Scrollable Content */}
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-6">
+              {/* Desktop Content — POS sans scroll parent, autres modules avec scroll */}
+              {activeTab === 'pos' ? (
+                /* POS gère son propre scroll interne — container borné sans overflow-y-auto ni padding */
+                <div className="flex-1 min-h-0 overflow-hidden">
                   {renderTabContent()}
                 </div>
-              </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-6">
+                    {renderTabContent()}
+                  </div>
+                </div>
+              )}
             </main>
           </div>
         )}
@@ -497,7 +505,7 @@ export default function VendorAgentInterface() {
   );
 }
 
-/* ÔöÇÔöÇÔöÇ Overview Content ÔöÇÔöÇÔöÇ */
+/* --- Overview Content --- */
 function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
   agent: VendorAgent;
   hasPermission: (p: string) => boolean;
@@ -508,11 +516,11 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
 
   const moduleButtons: { id: string; icon: React.ElementType; label: string; permission?: string; disabled?: boolean }[] = [
     hasPermission('view_dashboard') ? { id: 'dashboard', icon: BarChart3, label: 'Dashboard' } : null,
-    hasPermission('access_pos') ? { id: 'pos', icon: CreditCard, label: canAccessPOS ? 'POS' : 'POS ­ƒöÆ', disabled: !canAccessPOS } : null,
+    hasPermission('access_pos') ? { id: 'pos', icon: CreditCard, label: canAccessPOS ? 'POS' : 'POS 🔒', disabled: !canAccessPOS } : null,
     hasPermission('manage_products') ? { id: 'products', icon: Package, label: 'Produits' } : null,
     hasPermission('manage_orders') ? { id: 'orders', icon: ShoppingCart, label: 'Commandes' } : null,
     hasPermission('manage_inventory') ? { id: 'inventory', icon: Package, label: 'Inventaire' } : null,
-    hasPermission('manage_warehouse') ? { id: 'warehouse', icon: Warehouse, label: 'Entrep├┤t' } : null,
+    hasPermission('manage_warehouse') ? { id: 'warehouse', icon: Warehouse, label: 'Entrepôt' } : null,
     hasPermission('manage_clients') ? { id: 'clients', icon: Users, label: 'Clients' } : null,
     hasPermission('manage_delivery') ? { id: 'delivery', icon: Truck, label: 'Livraisons' } : null,
     hasPermission('access_wallet') ? { id: 'wallet', icon: Wallet, label: 'Wallet' } : null,
@@ -601,7 +609,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
                 {Object.entries(agent.permissions)
                   .filter(([_, value]) => value)
                   .map(([perm]) => (
-                  <Badge 
+                  <Badge
                     key={perm}
                     variant="secondary"
                     className="bg-vendeur-primary/10 text-vendeur-primary border-vendeur-primary/20 text-[10px] px-2 py-0.5"

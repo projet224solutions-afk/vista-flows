@@ -55,6 +55,19 @@ router.post("/stripe", async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: "Invalid stripe signature" });
     }
 
+    // Guard idempotence : ignorer les événements déjà traités
+    // (évite la double exécution si les deux endpoints sont configurés dans Stripe)
+    const { data: existingEvent } = await supabaseAdmin
+      .from("webhook_events")
+      .select("processing_status")
+      .eq("provider", "stripe")
+      .eq("webhook_id", event.id)
+      .maybeSingle();
+
+    if (existingEvent?.processing_status === "completed") {
+      return res.status(200).json({ success: true, received: true, status: "already_processed" });
+    }
+
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       const orderId = paymentIntent.metadata?.order_id;

@@ -124,7 +124,7 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
 );
 
 // Composant de fallback simple
-const POSFallback = () => (
+const _POSFallback = () => (
   <Card className="border-0 shadow-xl rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
     <CardHeader>
       <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
@@ -213,12 +213,12 @@ class POSErrorBoundary extends React.Component<
 
 // Export du wrapper principal
 export default function POSSystemWrapper() {
-  const [forceReload, setForceReload] = React.useState(0);
+  const [forceReload, _setForceReload] = React.useState(0);
 
   return (
     <POSErrorBoundary fallback={POSError}>
       <Suspense fallback={<POSLoading />}>
-        <div key={forceReload}>
+        <div key={forceReload} className="h-full">
           <POSSystem />
         </div>
       </Suspense>

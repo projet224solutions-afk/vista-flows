@@ -9,46 +9,20 @@
  */
 
 import { Router, Request, Response } from 'express';
-import crypto from 'crypto';
+import Stripe from 'stripe';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { auditTrail } from '../services/auditTrail.service.js';
+import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { webhookRateLimit } from '../middlewares/routeRateLimiter.js';
 
 const router = Router();
 
-// ==================== STRIPE SIGNATURE VERIFICATION ====================
-
-function verifyStripeSignature(payload: string, signature: string, secret: string): boolean {
-  try {
-    const elements = signature.split(',');
-    const timestampElement = elements.find(e => e.startsWith('t='));
-    const signatureElement = elements.find(e => e.startsWith('v1='));
-
-    if (!timestampElement || !signatureElement) return false;
-
-    const timestamp = timestampElement.split('=')[1];
-    const expectedSig = signatureElement.split('=')[1];
-
-    // Reject events older than 5 minutes (replay protection)
-    const age = Math.floor(Date.now() / 1000) - parseInt(timestamp);
-    if (age > 300) {
-      logger.warn('Stripe webhook: timestamp too old, possible replay');
-      return false;
-    }
-
-    const signedPayload = `${timestamp}.${payload}`;
-    const computedSig = crypto
-      .createHmac('sha256', secret)
-      .update(signedPayload)
-      .digest('hex');
-
-    return crypto.timingSafeEqual(Buffer.from(computedSig), Buffer.from(expectedSig));
-  } catch (err: any) {
-    logger.error(`Stripe signature verification error: ${err.message}`);
-    return false;
-  }
-}
+// Instance Stripe utilisée uniquement pour la vérification de signature webhook
+// (aucun appel réseau supplémentaire — constructEvent est 100% local)
+const stripeWebhook: Stripe | null = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' as any })
+  : null;
 
 // ==================== WEBHOOK EVENT JOURNAL ====================
 
@@ -107,10 +81,71 @@ function stripeAmountToReal(stripeAmount: number, currency: string): number {
     : stripeAmount / 100;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function triggerOrderAgentCommission(
+  orderId: string,
+  fallbackUserId?: string,
+  fallbackAmount?: number
+): Promise<void> {
+  if (!UUID_RE.test(orderId)) {
+    logger.warn(`Skipping agent commission for non-UUID order id: ${orderId}`);
+    return;
+  }
+
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from('orders')
+    .select('id, total_amount, customer_id')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (orderError) {
+    logger.warn(`Unable to load order ${orderId} for agent commission: ${orderError.message}`);
+  }
+
+  let buyerUserId = fallbackUserId || null;
+  if (order?.customer_id) {
+    const { data: customer, error: customerError } = await supabaseAdmin
+      .from('customers')
+      .select('user_id')
+      .eq('id', order.customer_id)
+      .maybeSingle();
+
+    if (customerError) {
+      logger.warn(`Unable to load customer ${order.customer_id} for agent commission: ${customerError.message}`);
+    } else if (customer?.user_id) {
+      buyerUserId = customer.user_id;
+    }
+  }
+
+  const amount = Number(order?.total_amount ?? fallbackAmount ?? 0);
+  if (!buyerUserId || amount <= 0) {
+    logger.warn(`Skipping agent commission for order ${orderId}: missing buyer or amount`);
+    return;
+  }
+
+  const commissionResult = await triggerAffiliateCommission(
+    buyerUserId,
+    amount,
+    'achat_produit',
+    orderId
+  );
+
+  if (!commissionResult.success) {
+    logger.warn(`Agent commission not credited for webhook order ${orderId}: ${commissionResult.error || 'unknown error'}`);
+  }
+}
+
 async function handlePaymentIntentSucceeded(event: any): Promise<void> {
   const paymentIntent = event.data.object;
   let orderId = paymentIntent.metadata?.order_id;
   const userId = paymentIntent.metadata?.user_id;
+
+  // Vérifier que le PaymentIntent est bien en statut succeeded (double contrôle)
+  if (paymentIntent.status !== 'succeeded') {
+    logger.warn(`Webhook: payment_intent.succeeded reçu mais status=${paymentIntent.status} — ignoré`);
+    return;
+  }
 
   logger.info(`Webhook: payment_intent.succeeded — PI=${paymentIntent.id}, order=${orderId}`);
 
@@ -119,7 +154,7 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
   if (!orderId) {
     const { data: matchedOrder } = await supabaseAdmin
       .from('orders')
-      .select('id')
+      .select('id, total_amount')
       .eq('payment_intent_id', paymentIntent.id)
       .maybeSingle();
     if (matchedOrder) {
@@ -129,6 +164,32 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
   }
 
   if (orderId) {
+    // Valider que le montant réellement payé correspond au montant attendu
+    const currency = (paymentIntent.currency || 'gnf').toUpperCase();
+    const amountPaid = stripeAmountToReal(paymentIntent.amount_received ?? paymentIntent.amount, currency);
+    const expectedMeta = Number(paymentIntent.metadata?.total_amount || 0);
+
+    if (expectedMeta > 0) {
+      const diff = Math.abs(amountPaid - expectedMeta);
+      const tolerance = Math.max(1, expectedMeta * 0.001); // 0.1% tolérance arrondi
+      if (diff > tolerance) {
+        logger.error(
+          `Webhook: montant mismatch PI=${paymentIntent.id} — payé=${amountPaid}, attendu=${expectedMeta}`
+        );
+        await auditTrail.log({
+          actorId: 'stripe',
+          actorType: 'webhook',
+          action: 'payment.amount_mismatch',
+          resourceType: 'payment_intent',
+          resourceId: paymentIntent.id,
+          metadata: { amountPaid, expectedMeta, orderId },
+          riskLevel: 'critical',
+        });
+        // Bloquer la confirmation de paiement — ne pas marquer comme payé
+        return;
+      }
+    }
+
     // Update order payment status
     await supabaseAdmin
       .from('orders')
@@ -144,6 +205,12 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
       .from('escrow_transactions')
       .update({ payment_confirmed: true, updated_at: new Date().toISOString() })
       .eq('order_id', orderId);
+
+    await triggerOrderAgentCommission(
+      orderId,
+      userId,
+      stripeAmountToReal(paymentIntent.amount, currency)
+    );
   }
 
   // Also confirm escrow by stripe_payment_intent_id (for marketplace-escrow flow)
@@ -167,20 +234,81 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
     .update({ status: 'SUCCEEDED', updated_at: new Date().toISOString() })
     .eq('stripe_payment_intent_id', paymentIntent.id);
 
-  // Credit wallet if it's a deposit
-  if (paymentIntent.metadata?.type === 'wallet_deposit' && userId) {
+  // Credit wallet deposits through the idempotent DB function.
+  // The frontend also confirms deposits, so both paths must converge here.
+  if (
+    (paymentIntent.metadata?.type === 'wallet_deposit' ||
+      paymentIntent.metadata?.type === 'deposit' ||
+      paymentIntent.metadata?.source === 'wallet_deposit') &&
+    userId
+  ) {
     const currency = paymentIntent.currency?.toUpperCase() || 'GNF';
-    const amount = stripeAmountToReal(paymentIntent.amount, currency);
+    const grossAmount = Number(
+      paymentIntent.metadata?.gross_amount || stripeAmountToReal(paymentIntent.amount, currency)
+    );
+    const feeRate = Number(paymentIntent.metadata?.fee_rate || 0);
+    const depositFee = Number(paymentIntent.metadata?.deposit_fee || 0);
+    const netAmount = Number(paymentIntent.metadata?.net_amount || Math.max(grossAmount - depositFee, 0));
 
-    await supabaseAdmin.rpc('credit_wallet', {
-      p_user_id: userId,
-      p_amount: amount,
-      p_description: `Dépôt carte Stripe (${paymentIntent.id})`,
-      p_transaction_type: 'deposit',
-      p_reference: paymentIntent.id,
-    });
+    const { data: existingTx } = await supabaseAdmin
+      .from('stripe_transactions')
+      .select('id')
+      .eq('stripe_payment_intent_id', paymentIntent.id)
+      .maybeSingle();
 
-    logger.info(`Wallet credited: user=${userId}, amount=${amount} ${currency}`);
+    let transactionId = existingTx?.id;
+
+    if (!transactionId) {
+      const { data: createdTx, error: createTxError } = await supabaseAdmin
+        .from('stripe_transactions')
+        .insert({
+          stripe_payment_intent_id: paymentIntent.id,
+          payment_intent_id: paymentIntent.id,
+          buyer_id: userId,
+          seller_id: userId,
+          amount: grossAmount,
+          currency,
+          commission_rate: feeRate,
+          commission_amount: depositFee,
+          seller_net_amount: netAmount,
+          status: 'SUCCEEDED',
+          payment_method: 'card',
+          metadata: {
+            type: 'wallet_deposit',
+            source: 'wallet_deposit',
+            recovered_from_webhook: true,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (createTxError || !createdTx) {
+        logger.warn(`Wallet deposit transaction creation failed: ${createTxError?.message || 'no transaction'}`);
+      } else {
+        transactionId = createdTx.id;
+      }
+    } else {
+      await supabaseAdmin
+        .from('stripe_transactions')
+        .update({
+          status: 'SUCCEEDED',
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', transactionId);
+    }
+
+    if (transactionId) {
+      const { error: depositError } = await supabaseAdmin.rpc('process_deposit_payment', {
+        p_transaction_id: transactionId,
+      });
+
+      if (depositError) {
+        logger.warn(`Wallet deposit processing failed: ${depositError.message}`);
+      } else {
+        logger.info(`Wallet deposit processed: user=${userId}, net=${netAmount} ${currency}`);
+      }
+    }
   }
 
   await auditTrail.log({
@@ -226,7 +354,9 @@ async function handlePaymentIntentFailed(event: any): Promise<void> {
 async function handleChargeRefunded(event: any): Promise<void> {
   const charge = event.data.object;
   const paymentIntentId = charge.payment_intent;
-  const refundAmount = charge.amount_refunded / 100;
+  // Utiliser stripeAmountToReal pour respecter les devises zéro-décimal (GNF, XOF…)
+  const currency = (charge.currency || 'usd').toUpperCase();
+  const refundAmount = stripeAmountToReal(charge.amount_refunded, currency);
   const isPartial = charge.amount_refunded < charge.amount;
 
   logger.info(`Webhook: charge.refunded — PI=${paymentIntentId}, amount=${refundAmount}, partial=${isPartial}`);
@@ -310,7 +440,7 @@ async function handleCheckoutSessionExpired(event: any): Promise<void> {
 
 /**
  * POST /webhooks/stripe
- * 
+ *
  * IMPORTANT: This route must receive RAW body (not parsed JSON).
  * Configure express.raw() for this route in server.ts.
  */
@@ -319,7 +449,13 @@ router.post('/stripe', webhookRateLimit, async (req: Request, res: Response) => 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    logger.error('CRITICAL: STRIPE_WEBHOOK_SECRET not configured');
+    logger.error('CRITIQUE: STRIPE_WEBHOOK_SECRET non configuré');
+    res.status(500).json({ error: 'Webhook not configured' });
+    return;
+  }
+
+  if (!stripeWebhook) {
+    logger.error('CRITIQUE: STRIPE_SECRET_KEY non configuré');
     res.status(500).json({ error: 'Webhook not configured' });
     return;
   }
@@ -329,16 +465,20 @@ router.post('/stripe', webhookRateLimit, async (req: Request, res: Response) => 
     return;
   }
 
-  // Get raw body — express.raw() delivers a Buffer
+  // Récupérer le body brut — express.raw() livre un Buffer
   const rawBody = Buffer.isBuffer(req.body)
     ? req.body.toString('utf8')
     : typeof req.body === 'string'
       ? req.body
       : JSON.stringify(req.body);
 
-  // Verify signature
-  if (!verifyStripeSignature(rawBody, signature, webhookSecret)) {
-    logger.warn('Stripe webhook: invalid signature');
+  // Vérification signature + parsing JSON via SDK officiel Stripe
+  // constructEvent gère : HMAC-SHA256, anti-replay 5min, rotation de secrets (multi-v1)
+  let event: any;
+  try {
+    event = stripeWebhook.webhooks.constructEvent(rawBody, signature, webhookSecret);
+  } catch (err: any) {
+    logger.warn(`Stripe webhook: signature invalide — ${err.message}`);
     await auditTrail.log({
       actorId: 'stripe',
       actorType: 'webhook',
@@ -349,15 +489,6 @@ router.post('/stripe', webhookRateLimit, async (req: Request, res: Response) => 
       riskLevel: 'critical',
     });
     res.status(401).json({ error: 'Invalid signature' });
-    return;
-  }
-
-  // Parse JSON from the validated raw body (never trust pre-parsed req.body for webhooks)
-  let event: any;
-  try {
-    event = JSON.parse(rawBody);
-  } catch {
-    res.status(400).json({ error: 'Invalid JSON' });
     return;
   }
 

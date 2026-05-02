@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { usePOSPersistence, clearPOSState, type POSPersistedState } from '@/hooks/usePOSPersistence';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,36 +10,36 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Select, _SelectContent, _SelectItem, _SelectTrigger, _SelectValue } from '@/components/ui/select';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  Receipt, 
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  Receipt,
   Search,
   Grid3X3,
   List,
   Calculator,
   Smartphone,
-  User,
+  _User,
   CheckSquare,
   Settings,
-  Building,
-  Printer,
-  FileText,
+  _Building,
+  _Printer,
+  _FileText,
   Clock,
-  UserX,
-  StickyNote,
+  _UserX,
+  _StickyNote,
   ShoppingBag,
   Check,
   Euro,
-  Eye,
+  _Eye,
   Package,
   Store,
-  Upload,
+  _Upload,
   ImageIcon,
   Percent,
   ChevronRight,
@@ -56,7 +56,7 @@ import { useAgent } from '@/contexts/AgentContext';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendorOptimized } from '@/hooks/useVendorOptimized';
-import { getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
+import { _getEdgeFunctionErrorMessage } from '@/utils/supabaseFunctionsError';
 import { NumericKeypadPopup } from './pos/NumericKeypadPopup';
 import { QuantityKeypadPopup } from './pos/QuantityKeypadPopup';
 import { POSReceipt } from './pos/POSReceipt';
@@ -99,20 +99,20 @@ interface Customer {
 
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
-  const { user: authUser, session } = useAuth();
+  const { user: authUser, _session } = useAuth();
   const { vendorId: currentVendorId, userId: vendorOwnerUserId, loading: currentVendorLoading } = useCurrentVendor();
   const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
   const isAgentMode = !!agent; // Détecte si on est dans l'interface agent
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
-  
+
   // Hook ChapChapPay pour paiements sécurisés
-  const { initiatePullPayment, pollStatus, isLoading: chapchapLoading, error: chapchapError } = useChapChapPay();
-  
+  const { initiatePullPayment, pollStatus, isLoading: _chapchapLoading, error: _chapchapError } = useChapChapPay();
+
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
   const [vendorId, setVendorId] = useState<string | null>(currentVendorId || agentVendorId || null);
   const user = authUser;
-  
+
   useEffect(() => {
     const VENDOR_ID_CACHE_KEY = 'pos_vendor_id';
 
@@ -124,7 +124,7 @@ export function POSSystem() {
       setVendorId(currentVendorId || agentVendorId);
       return;
     }
-    
+
     // Sinon, on cherche le vendor_id via l'utilisateur connecte
     if (authUser?.id) {
       // ✨ MODE OFFLINE: Utiliser le cache si hors ligne
@@ -144,7 +144,7 @@ export function POSSystem() {
         .select('id')
         .eq('user_id', authUser.id)
         .maybeSingle()
-        .then(({ data, error }) => {
+        .then(({ data, _error }) => {
           if (data) {
             setVendorId(data.id);
             // ✨ Persister vendorId pour offline
@@ -155,18 +155,18 @@ export function POSSystem() {
         });
     }
   }, [authUser?.id, agentVendorId, currentVendorId, currentVendorLoading]);
-  
+
   // Charger les produits du vendor depuis la base de données
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
-  
+
   // Charger les catégories depuis la base de données
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  
+
   // Devise sélectionnée
   const selectedCurrency = settings?.currency || 'GNF';
-  
+
   // Taux de change (taux exact du jour) via Edge Function
   const { rates: fxRates, lastUpdated: ratesLastUpdated } = useFxRates({
     base: 'GNF',
@@ -183,7 +183,7 @@ export function POSSystem() {
     }
     return priceInGNF;
   };
-  
+
   // Formater le prix avec la devise
   const formatPriceWithCurrency = (priceInGNF: number): string => {
     const convertedPrice = convertPrice(priceInGNF);
@@ -191,7 +191,7 @@ export function POSSystem() {
     if (!currencyInfo) return `${convertedPrice.toLocaleString()} ${selectedCurrency}`;
     return formatCurrency(convertedPrice, selectedCurrency);
   };
-  
+
 
   // Clé de cache pour les catégories
   const CATEGORIES_CACHE_KEY = 'pos_categories';
@@ -200,13 +200,13 @@ export function POSSystem() {
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      
+
       // ✨ MODE OFFLINE: Récupérer depuis le cache
       if (!navigator.onLine) {
         try {
           const { default: offlineDB } = await import('@/lib/offlineDB');
           const cachedCategories = await offlineDB.getCachedData<Array<{id: string, name: string}>>(CATEGORIES_CACHE_KEY);
-          
+
           if (cachedCategories && cachedCategories.length > 0) {
             console.log('📦 [POS] Catégories depuis cache offline');
             setCategories(cachedCategories);
@@ -218,7 +218,7 @@ export function POSSystem() {
         setCategoriesLoading(false);
         return;
       }
-      
+
       const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('id, name')
@@ -228,7 +228,7 @@ export function POSSystem() {
       if (error) throw error;
 
       setCategories(categoriesData || []);
-      
+
       // ✨ Sauvegarder dans le cache
       try {
         const { default: offlineDB } = await import('@/lib/offlineDB');
@@ -236,17 +236,17 @@ export function POSSystem() {
       } catch (cacheError) {
         console.warn('Erreur écriture cache catégories:', cacheError);
       }
-      
+
     } catch (error) {
       console.error('Erreur chargement catégories:', error);
-      
+
       // Fallback sur cache
       if (!navigator.onLine) {
         try {
           const { default: offlineDB } = await import('@/lib/offlineDB');
           const cached = await offlineDB.getCachedData<Array<{id: string, name: string}>>(CATEGORIES_CACHE_KEY);
           if (cached) setCategories(cached);
-        } catch (e) {}
+        } catch (_e) {}
       }
     } finally {
       setCategoriesLoading(false);
@@ -256,7 +256,7 @@ export function POSSystem() {
   // Trier les catégories: celles avec des produits en premier
   const sortedCategories = useMemo(() => {
     if (!categories.length || !products.length) return categories;
-    
+
     // Compter les produits par catégorie
     const productCountByCategory = new Map<string, number>();
     products.forEach(product => {
@@ -265,17 +265,17 @@ export function POSSystem() {
         productCountByCategory.set(product.categoryId, count + 1);
       }
     });
-    
+
     // Trier: catégories avec produits d'abord (par nombre décroissant), puis les autres
     return [...categories].sort((a, b) => {
       const countA = productCountByCategory.get(a.id) || 0;
       const countB = productCountByCategory.get(b.id) || 0;
-      
+
       // Si les deux ont des produits ou les deux n'en ont pas, trier par nom
       if ((countA > 0 && countB > 0) || (countA === 0 && countB === 0)) {
         return a.name.localeCompare(b.name);
       }
-      
+
       // Sinon, celle avec des produits vient en premier
       return countB - countA;
     });
@@ -283,8 +283,9 @@ export function POSSystem() {
 
   useEffect(() => {
     loadCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   // ✨ Synchronisation automatique des ventes offline lors de la reconnexion
   useEffect(() => {
     const syncOfflineSales = async () => {
@@ -366,24 +367,25 @@ export function POSSystem() {
 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, user?.id]);
-  
+
   // Clé de cache pour les produits
   const PRODUCTS_CACHE_KEY = 'pos_products';
   const PRODUCTS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 heures
-  
+
   const loadVendorProducts = async () => {
     if (!vendorId) return;
-    
+
     try {
       setProductsLoading(true);
-      
+
       // ✨ MODE OFFLINE: Récupérer depuis le cache
       if (!navigator.onLine) {
         try {
           const { default: offlineDB } = await import('@/lib/offlineDB');
           const cachedProducts = await offlineDB.getCachedData<Product[]>(`${PRODUCTS_CACHE_KEY}_${vendorId}`);
-          
+
           if (cachedProducts && cachedProducts.length > 0) {
             console.log('📦 [POS] Utilisation du cache offline:', cachedProducts.length, 'produits');
             setProducts(cachedProducts);
@@ -396,7 +398,7 @@ export function POSSystem() {
         } catch (cacheError) {
           console.warn('Erreur lecture cache produits:', cacheError);
         }
-        
+
         // Pas de cache disponible
         toast.error('Mode hors ligne - Aucun produit en cache', {
           description: 'Visitez le POS une fois avec internet pour charger les produits.',
@@ -405,7 +407,7 @@ export function POSSystem() {
         setProductsLoading(false);
         return;
       }
-      
+
       // MODE ONLINE: Charger depuis Supabase
       const { data: productsData, error } = await supabase
         .from('products')
@@ -457,7 +459,7 @@ export function POSSystem() {
       });
 
       setProducts(sortedProducts);
-      
+
       // ✨ Sauvegarder dans le cache pour utilisation offline
       try {
         const { default: offlineDB } = await import('@/lib/offlineDB');
@@ -471,16 +473,16 @@ export function POSSystem() {
       } catch (cacheError) {
         console.warn('Erreur écriture cache produits:', cacheError);
       }
-      
+
     } catch (error) {
       console.error('Erreur chargement produits:', error);
-      
+
       // ✨ En cas d'erreur, essayer le cache
       if (!navigator.onLine) {
         try {
           const { default: offlineDB } = await import('@/lib/offlineDB');
           const cachedProducts = await offlineDB.getCachedData<Product[]>(`${PRODUCTS_CACHE_KEY}_${vendorId}`);
-          
+
           if (cachedProducts && cachedProducts.length > 0) {
             console.log('📦 [POS] Fallback sur cache après erreur');
             setProducts(cachedProducts);
@@ -491,7 +493,7 @@ export function POSSystem() {
           console.warn('Erreur fallback cache:', cacheError);
         }
       }
-      
+
       toast.error('Erreur lors du chargement des produits');
     } finally {
       setProductsLoading(false);
@@ -502,23 +504,24 @@ export function POSSystem() {
     if (vendorId) {
       loadVendorProducts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  
+
   // Synchroniser le panier avec les données produits mises à jour
   useEffect(() => {
     if (products.length === 0 || cart.length === 0) return;
-    
+
     setCart(prevCart => prevCart.map(cartItem => {
       const updatedProduct = products.find(p => p.id === cartItem.id);
       if (!updatedProduct) return cartItem;
-      
+
       // Mettre à jour les données du produit dans le panier
-      const newPrice = cartItem.saleType === 'carton' 
+      const newPrice = cartItem.saleType === 'carton'
         ? (updatedProduct.price_carton || updatedProduct.price * (updatedProduct.units_per_carton || 1))
         : updatedProduct.price;
-      
+
       // Recalculer le total
       let newTotal: number;
       if (cartItem.saleType === 'carton' && updatedProduct.units_per_carton) {
@@ -527,7 +530,7 @@ export function POSSystem() {
       } else {
         newTotal = cartItem.quantity * newPrice;
       }
-      
+
       return {
         ...cartItem,
         name: updatedProduct.name,
@@ -539,6 +542,7 @@ export function POSSystem() {
         total: newTotal
       };
     }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -566,7 +570,7 @@ export function POSSystem() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [keypadMode, setKeypadMode] = useState<'quantity' | 'amount'>('quantity');
   const [selectedCartItemForQuantity, setSelectedCartItemForQuantity] = useState<CartItem | null>(null);
-  
+
   // État pour la vente à crédit
   const [showCreditSaleModal, setShowCreditSaleModal] = useState(false);
   const [creditCustomerName, setCreditCustomerName] = useState('');
@@ -574,17 +578,17 @@ export function POSSystem() {
   const [creditDueDate, setCreditDueDate] = useState('');
   const [creditNotes, setCreditNotes] = useState('');
   const [isProcessingCredit, setIsProcessingCredit] = useState(false);
-  
+
   // État pour le modal de paiement Stripe
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [pendingStripeOrder, setPendingStripeOrder] = useState<{id: string, order_number: string} | null>(null);
   const skipStripeCancelOnCloseRef = useRef(false);
-  
+
   // États pour personnalisation - Récupérer le nom de l'entreprise depuis le profil vendor
   const { profile: vendorProfile } = useVendorOptimized();
   const companyName = vendorProfile?.business_name || 'Point de Vente';
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   // Historique des 3 derniers produits sélectionnés
   const [recentlySelected, setRecentlySelected] = useState<string[]>([]);
 
@@ -595,7 +599,7 @@ export function POSSystem() {
       clearPOSState();
       return;
     }
-    
+
     if (savedState.cart.length > 0) {
       setCart(savedState.cart as CartItem[]);
       toast.success(`🔄 Panier restauré (${savedState.cart.length} article${savedState.cart.length > 1 ? 's' : ''})`, {
@@ -615,7 +619,7 @@ export function POSSystem() {
   }, [vendorId]);
 
   // Hook de persistance automatique
-  const { saveImmediately } = usePOSPersistence(
+  const { _saveImmediately } = usePOSPersistence(
     {
       cart,
       selectedCustomer,
@@ -645,15 +649,15 @@ export function POSSystem() {
 
   // Sections uniques disponibles (filtrées par catégorie si sélectionnée)
   const availableSections = useMemo(() => {
-    const productsInCategory = selectedCategory === 'all' 
-      ? products 
+    const productsInCategory = selectedCategory === 'all'
+      ? products
       : products.filter(p => p.categoryId === selectedCategory);
-    
+
     const sections = [...new Set(productsInCategory
       .map(p => p.section)
       .filter((s): s is string => !!s && s.trim() !== '')
     )];
-    
+
     return sections.sort((a, b) => a.localeCompare(b));
   }, [products, selectedCategory]);
 
@@ -666,7 +670,7 @@ export function POSSystem() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const aIndex = recentlySelected.indexOf(a.id);
     const bIndex = recentlySelected.indexOf(b.id);
-    
+
     // Si les deux sont dans les récents, trier par ordre de sélection (plus récent d'abord)
     if (aIndex !== -1 && bIndex !== -1) {
       return aIndex - bIndex;
@@ -685,10 +689,10 @@ export function POSSystem() {
   const taxEnabled = settings?.tax_enabled ?? true;
   const tax = taxEnabled ? subtotal * taxRate : 0;
   const totalBeforeDiscount = subtotal + tax;
-  
+
   // Calcul de la remise selon le mode sélectionné
-  const discountValue = discountMode === 'percent' 
-    ? (totalBeforeDiscount * discountPercent) / 100 
+  const discountValue = discountMode === 'percent'
+    ? (totalBeforeDiscount * discountPercent) / 100
     : discountAmount;
   const total = Math.max(0, totalBeforeDiscount - discountValue);
   const change = receivedAmount - total;
@@ -703,7 +707,7 @@ export function POSSystem() {
     const originalProduct = products.find(p => p.id === productOrCartItem.id);
     const product = originalProduct || productOrCartItem;
     const unitPrice = originalProduct?.price || productOrCartItem.price;
-    
+
     if (product.stock <= 0) {
       toast.error('Produit en rupture de stock');
       return;
@@ -748,7 +752,7 @@ export function POSSystem() {
     // Récupérer le produit original depuis la liste des produits pour avoir les prix corrects
     const originalProduct = products.find(p => p.id === productOrCartItem.id);
     const product = originalProduct || productOrCartItem;
-    
+
     if (!product.sell_by_carton || !product.units_per_carton || product.units_per_carton <= 1) {
       toast.error('Ce produit ne peut pas être vendu par carton');
       return;
@@ -766,7 +770,7 @@ export function POSSystem() {
     // car le CartItem.price peut être le prix carton déjà calculé
     const originalUnitPrice = originalProduct?.price || product.price;
     const originalPriceCarton = originalProduct?.price_carton || product.price_carton;
-    
+
     const pricePerCarton = (originalPriceCarton && originalPriceCarton > 0)
       ? originalPriceCarton
       : (originalUnitPrice * product.units_per_carton);
@@ -822,7 +826,7 @@ export function POSSystem() {
   };
 
   // Mise à jour de quantité avec recalcul automatique
-  const updateQuantity = (productId: string, newQuantity: number, saleType?: 'unit' | 'carton') => {
+  const updateQuantity = (productId: string, newQuantity: number, _saleType?: 'unit' | 'carton') => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
@@ -843,22 +847,22 @@ export function POSSystem() {
     setCart(prev =>
       prev.map(item => {
         if (item.id !== productId) return item;
-        
+
         // Pour les ventes carton, calculer le total correctement avec le prix du produit ORIGINAL
         if (item.saleType === 'carton' && product?.units_per_carton) {
           const cartonCount = Math.floor(newQuantity / product.units_per_carton);
           // Utiliser les prix du produit original, pas du cartItem
-          const pricePerCarton = (product.price_carton && product.price_carton > 0) 
-            ? product.price_carton 
+          const pricePerCarton = (product.price_carton && product.price_carton > 0)
+            ? product.price_carton
             : (product.price * product.units_per_carton);
-          return { 
-            ...item, 
-            quantity: newQuantity, 
+          return {
+            ...item,
+            quantity: newQuantity,
             total: cartonCount * pricePerCarton,
             displayQuantity: `${cartonCount} carton(s) (${newQuantity} unités)`
           };
         }
-        
+
         // Vente unitaire standard - utiliser le prix du produit original
         const unitPrice = product?.price || item.price;
         return { ...item, quantity: newQuantity, total: newQuantity * unitPrice };
@@ -942,7 +946,7 @@ export function POSSystem() {
       }
       return;
     }
-    
+
     if (input === 'enter') {
       if (numericInput) {
         if (keypadMode === 'amount') {
@@ -966,15 +970,15 @@ export function POSSystem() {
       }
       return;
     }
-    
+
     // Empêcher les décimales pour les quantités
     if (keypadMode === 'quantity' && input === '.') return;
-    
+
     setNumericInput(prev => prev + input);
   };
 
   // Ouvrir le pavé numérique pour modifier la quantité d'un article du panier
-  const openQuantityKeypadForCartItem = (item: CartItem) => {
+  const _openQuantityKeypadForCartItem = (item: CartItem) => {
     setSelectedCartItemForQuantity(item);
     setKeypadMode('quantity');
     setNumericInput(item.quantity.toString());
@@ -982,7 +986,7 @@ export function POSSystem() {
   };
 
   // Ouvrir le pavé numérique pour le montant reçu
-  const openAmountKeypad = () => {
+  const _openAmountKeypad = () => {
     setKeypadMode('amount');
     setSelectedCartItemForQuantity(null);
     setNumericInput('');
@@ -1201,10 +1205,10 @@ export function POSSystem() {
       setCreditDueDate('');
       setCreditNotes('');
       setCart([]);
-      
+
       // Recharger les produits pour afficher le stock mis à jour
       await loadVendorProducts();
-      
+
     } catch (error: any) {
       console.error('Erreur vente à crédit:', error);
       toast.error('Erreur lors de l\'enregistrement', {
@@ -1317,7 +1321,7 @@ export function POSSystem() {
 
     // ✨ NOUVEAU: Vérification mode offline
     const isOffline = !navigator.onLine;
-    
+
     // En mode offline, seuls les paiements en espèces sont autorisés
     if (isOffline && paymentMethod !== 'cash') {
       toast.error('Mode hors ligne: Seuls les paiements en espèces sont disponibles', {
@@ -1363,13 +1367,13 @@ export function POSSystem() {
       // Pour Mobile Money, utiliser ChapChapPay E-Commerce (redirection vers page de paiement)
       if (paymentMethod === 'mobile_money') {
         toast.loading('Initialisation du paiement ChapChapPay...');
-        
+
         // Mapper le provider vers le format ChapChapPay
         const chapchapPaymentMethod: ChapChapPayMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
-        
+
         // Formater le numéro de téléphone pour ChapChapPay (format 224XXXXXXXXX)
         const formattedPhone = `224${mobileMoneyPhone}`;
-        
+
         // Créer la commande d'abord pour avoir l'orderId
         const customerId = await getOrCreateCustomerId();
         if (!customerId) {
@@ -1442,8 +1446,8 @@ export function POSSystem() {
 
         // Mettre à jour la commande avec l'ID de transaction ChapChapPay
         await supabase.from('orders')
-          .update({ 
-            notes: `Paiement ChapChapPay (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${chapchapResult.transactionId}` 
+          .update({
+            notes: `Paiement ChapChapPay (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone} - Transaction: ${chapchapResult.transactionId}`
           })
           .eq('id', order.id);
 
@@ -1455,7 +1459,7 @@ export function POSSystem() {
         // Polling pour vérifier le statut du paiement
         if (chapchapResult.transactionId) {
           toast.loading('En attente de confirmation...', { id: 'payment-polling' });
-          
+
           const finalStatus = await pollStatus(chapchapResult.transactionId, (status) => {
             console.log('[POS] Payment status:', status);
           });
@@ -1464,7 +1468,7 @@ export function POSSystem() {
 
           if (finalStatus?.status === 'completed' || finalStatus?.status === 'success') {
             toast.success('🎉 Paiement confirmé !');
-            
+
             // Mettre à jour la commande - POS orders are completed immediately (no delivery needed)
             const { error: updateError } = await updatePosOrderStatus(order.id, {
               payment_status: 'paid'
@@ -1472,14 +1476,14 @@ export function POSSystem() {
             if (updateError) throw updateError;
 
             await collectMarketingContactAfterSale();
-            
+
             setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
             setShowOrderSummary(false);
             setShowReceipt(true);
             await loadVendorProducts();
           } else if (finalStatus?.status === 'failed' || finalStatus?.status === 'cancelled' || finalStatus?.status === 'expired') {
             toast.error('Paiement échoué, annulé ou expiré');
-            
+
             // Marquer la commande comme échouée
             await supabase.from('orders')
               .update({ payment_status: 'failed' })
@@ -1562,14 +1566,14 @@ export function POSSystem() {
 
       // Pour les paiements en espèces, procéder normalement OU en mode offline
       const isOfflinePayment = !navigator.onLine;
-      
+
       // ✨ MODE OFFLINE: Stocker localement pour synchronisation ultérieure
       if (isOfflinePayment) {
         try {
           // Générer un ID local unique pour la commande
           const offlineOrderId = `offline_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
           const offlineOrderNumber = `POS-OFF-${Date.now().toString(36).toUpperCase()}`;
-          
+
           // Préparer les données de la vente
           const saleData = {
             type: 'sale',
@@ -1599,14 +1603,14 @@ export function POSSystem() {
               marketing_contact: getNormalizedMarketingContact()?.value || ''
             }
           };
-          
+
           // Stocker dans IndexedDB via offlineDB
           const { default: offlineDB } = await import('@/lib/offlineDB');
           await offlineDB.initDB();
           const eventId = await offlineDB.storeEvent(saleData, true);
-          
+
           console.log('✅ [POS Offline] Vente stockée:', eventId);
-          
+
           // Mettre à jour le stock localement (décrémenter)
           const updatedProducts = products.map(product => {
             const cartItem = cart.find(item => item.id === product.id);
@@ -1616,7 +1620,7 @@ export function POSSystem() {
             return product;
           });
           setProducts(updatedProducts);
-          
+
           // Mettre à jour le cache avec les nouveaux stocks
           try {
             await offlineDB.cacheData(
@@ -1628,7 +1632,7 @@ export function POSSystem() {
           } catch (cachErr) {
             console.warn('Erreur mise à jour cache:', cachErr);
           }
-          
+
           setLastOrderNumber(offlineOrderNumber);
           setShowOrderSummary(false);
           setShowReceipt(true);
@@ -1640,10 +1644,10 @@ export function POSSystem() {
 
           setIsProcessingPayment(false);
           return;
-          
+
         } catch (offlineError: any) {
           console.error('Erreur stockage offline:', offlineError);
-          
+
           // Diagnostic plus précis de l'erreur
           let errorMessage = 'Veuillez réessayer.';
           if (offlineError.message?.includes('QuotaExceeded')) {
@@ -1653,7 +1657,7 @@ export function POSSystem() {
           } else if (offlineError.message) {
             errorMessage = offlineError.message;
           }
-          
+
           toast.error('Erreur enregistrement hors-ligne', {
             description: errorMessage,
             duration: 6000
@@ -1662,7 +1666,7 @@ export function POSSystem() {
           return;
         }
       }
-      
+
       // Mode ONLINE: passer par le backend POS atomique
       console.log('🔄 [POS] Création de vente via backend atomique...');
 
@@ -1840,13 +1844,14 @@ export function POSSystem() {
 
     document.addEventListener('keypress', handleKeyPress);
     return () => document.removeEventListener('keypress', handleKeyPress);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barcodeInput]);
 
   return (
     <div className={`flex flex-col w-full overflow-hidden bg-transparent max-w-full ${
-      isAgentMode && isMobile 
-        ? 'h-full' 
-        : 'h-[100dvh] md:h-full -m-2 sm:-m-3 md:-m-6'
+      isAgentMode
+        ? 'h-full'
+        : 'h-[100dvh] -m-2 sm:-m-3 md:-m-6'
     }`}>
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="border-b border-border/50 flex-shrink-0 w-full max-w-full">
@@ -1882,7 +1887,7 @@ export function POSSystem() {
                 </div>
               </div>
             </div>
-            
+
             {/* Dialog des paramètres */}
             <Dialog>
               <DialogTrigger asChild>
@@ -1898,7 +1903,7 @@ export function POSSystem() {
                     Paramètres POS
                   </DialogTitle>
                 </DialogHeader>
-                
+
                 {settingsLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="text-muted-foreground">Chargement...</div>
@@ -1921,7 +1926,7 @@ export function POSSystem() {
                             <ImageIcon className="h-8 w-8 text-muted-foreground" />
                           )}
                         </div>
-                        
+
                         {/* Upload Button */}
                         <div className="flex-1">
                           <Input
@@ -1930,30 +1935,30 @@ export function POSSystem() {
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              
+
                               if (file.size > 2 * 1024 * 1024) {
                                 toast.error('Le fichier est trop volumineux (max 2MB)');
                                 return;
                               }
-                              
+
                               try {
                                 const fileExt = file.name.split('.').pop();
                                 const fileName = `pos-logo-${user?.id}-${Date.now()}.${fileExt}`;
                                 const filePath = `logos/${fileName}`;
-                                
+
                                 const { error: uploadError } = await supabase.storage
                                   .from('documents')
                                   .upload(filePath, file, {
                                     contentType: file.type,
                                     upsert: true
                                   });
-                                
+
                                 if (uploadError) throw uploadError;
-                                
+
                                 const { data: publicUrlData } = supabase.storage
                                   .from('documents')
                                   .getPublicUrl(filePath);
-                                
+
                                 await updateSettings({ logo_url: publicUrlData.publicUrl });
                                 toast.success('Logo mis à jour');
                               } catch (error) {
@@ -1969,9 +1974,9 @@ export function POSSystem() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <label className="text-sm font-medium mb-2 block">Nom de l'entreprise</label>
                       <Input
@@ -1980,7 +1985,7 @@ export function POSSystem() {
                         placeholder="Nom de votre entreprise"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="text-sm font-medium mb-2 block flex items-center gap-2">
                         TVA
@@ -2020,7 +2025,7 @@ export function POSSystem() {
                         Format décimal (ex: 0.18 pour 18%)
                       </p>
                     </div>
-                    
+
                     <div>
                       <label className="text-sm font-medium mb-2 block">Devise</label>
                       <CurrencySelect
@@ -2035,7 +2040,7 @@ export function POSSystem() {
                         </p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="text-sm font-medium mb-2 block">Pied de page des reçus</label>
                       <Textarea
@@ -2045,7 +2050,7 @@ export function POSSystem() {
                         className="h-20"
                       />
                     </div>
-                    
+
                 <div className="bg-muted/30 p-3 rounded-lg">
                       <div className="text-xs text-muted-foreground">
                         <strong>TVA:</strong> {taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'Désactivée'}<br/>
@@ -2105,7 +2110,7 @@ export function POSSystem() {
                       className="pl-9 h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
                     />
                   </div>
-                  
+
                   {/* Bouton Scanner */}
                   <Button
                     variant="default"
@@ -2116,7 +2121,7 @@ export function POSSystem() {
                   >
                     <Scan className="h-5 w-5" />
                   </Button>
-                  
+
                   {/* Vue mode - Desktop only */}
                   <div className="hidden md:flex gap-1">
                     <Button
@@ -2135,7 +2140,7 @@ export function POSSystem() {
                     </Button>
                   </div>
                 </div>
-                
+
                 {/* Barre-code - Desktop only */}
                 <Input
                   placeholder="Scanner code-barres"
@@ -2144,9 +2149,9 @@ export function POSSystem() {
                   className="hidden md:block h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
                 />
               </div>
-              
+
               {/* Filtres par catégorie - Scroll horizontal */}
-              <div 
+              <div
                 className="flex gap-1.5 md:gap-2 mt-3 md:mt-4 overflow-x-auto pb-2 max-w-full"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
               >
@@ -2189,7 +2194,7 @@ export function POSSystem() {
 
               {/* Sélecteur de Section - Affiché uniquement s'il y a des sections disponibles */}
               {availableSections.length > 0 && (
-                <div 
+                <div
                   className="flex gap-1.5 md:gap-2 mt-2 overflow-x-auto pb-2 max-w-full"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                 >
@@ -2202,8 +2207,8 @@ export function POSSystem() {
                     Toutes sections
                   </Button>
                   {availableSections.map(section => {
-                    const sectionProductCount = products.filter(p => 
-                      p.section === section && 
+                    const sectionProductCount = products.filter(p =>
+                      p.section === section &&
                       (selectedCategory === 'all' || p.categoryId === selectedCategory)
                     ).length;
                     return (
@@ -2266,16 +2271,16 @@ export function POSSystem() {
                         : 0;
 
                       return (
-                        <Card 
-                          key={product.id} 
+                        <Card
+                          key={product.id}
                           onClick={() => {
                             if (remainingStock > 0) {
                               addToCart(product);
                             }
                           }}
                           className={`group relative transition-all duration-200 hover:shadow-xl border bg-card cursor-pointer ${
-                            isRecent 
-                              ? 'border-primary/60 ring-2 ring-primary/20 shadow-lg' 
+                            isRecent
+                              ? 'border-primary/60 ring-2 ring-primary/20 shadow-lg'
                               : 'border-border/50 hover:border-primary/40'
                           } ${remainingStock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
@@ -2284,8 +2289,8 @@ export function POSSystem() {
                           <div className="relative w-full h-24 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
                             {/* Badge stock (restant) */}
                             <div className="absolute top-1 right-1 z-10">
-                              <Badge 
-                                variant={remainingStock > 10 ? 'default' : remainingStock > 0 ? 'secondary' : 'destructive'} 
+                              <Badge
+                                variant={remainingStock > 10 ? 'default' : remainingStock > 0 ? 'secondary' : 'destructive'}
                                 className="shadow-md font-bold text-[10px] px-1.5 py-0.5"
                               >
                                 {remainingStock}
@@ -2302,8 +2307,8 @@ export function POSSystem() {
                             )}
 
                             {product.images && product.images.length > 0 ? (
-                              <img 
-                                src={product.images[0]} 
+                              <img
+                                src={product.images[0]}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                               />
@@ -2313,14 +2318,14 @@ export function POSSystem() {
                               </div>
                             )}
                           </div>
-                          
+
                           {/* Info produit - Très compact sur mobile */}
                             <div className="p-2 md:p-3 space-y-1">
                             {/* Nom produit */}
                             <h3 className="font-semibold text-xs md:text-sm leading-tight line-clamp-2 min-h-[2rem]">
                               {product.name}
                             </h3>
-                            
+
                             {/* Code-barres affiché */}
                             {product.barcode && (
                               <div className="flex items-center gap-1 text-[9px] text-muted-foreground font-mono bg-muted/30 px-1 py-0.5 rounded">
@@ -2330,7 +2335,7 @@ export function POSSystem() {
                                 <span className="truncate max-w-[80px]">{product.barcode}</span>
                               </div>
                             )}
-                            
+
                             {/* Prix unité */}
                             <div className="flex items-baseline gap-1">
                               <span className="text-sm md:text-lg font-bold text-primary">
@@ -2399,7 +2404,7 @@ export function POSSystem() {
                                 >
                                   <Minus className="h-3.5 w-3.5" />
                                 </Button>
-                                
+
                                 {/* Bouton pavé numérique pour quantité multiple */}
                                 <Button
                                   variant="outline"
@@ -2414,7 +2419,7 @@ export function POSSystem() {
                                 >
                                   <Calculator className="h-3.5 w-3.5 text-primary" />
                                 </Button>
-                                
+
                                 <Button
                                   variant="default"
                                   size="sm"
@@ -2505,14 +2510,14 @@ export function POSSystem() {
                 ) : (
                   <div className="space-y-1 pr-4">
                     {cart.map(item => (
-                      <div 
-                        key={`${item.id}-${item.saleType || 'unit'}`} 
+                      <div
+                        key={`${item.id}-${item.saleType || 'unit'}`}
                         className="flex items-center gap-2 p-2 bg-background/80 rounded-lg border border-border/30"
                       >
                         {/* Image produit - petite */}
                         {item.images && item.images[0] ? (
-                          <img 
-                            src={item.images[0]} 
+                          <img
+                            src={item.images[0]}
                             alt={item.name}
                             className="w-10 h-10 rounded object-cover flex-shrink-0"
                           />
@@ -2521,7 +2526,7 @@ export function POSSystem() {
                             <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )}
-                        
+
                         {/* Nom + Prix - zone flexible */}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-xs truncate">
@@ -2535,15 +2540,15 @@ export function POSSystem() {
                             )}
                           </p>
                         </div>
-                        
+
                         {/* Contrôles quantité - taille fixe */}
                         <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              const decrementBy = item.saleType === 'carton' && item.units_per_carton 
-                                ? item.units_per_carton 
+                              const decrementBy = item.saleType === 'carton' && item.units_per_carton
+                                ? item.units_per_carton
                                 : 1;
                               updateQuantity(item.id, item.quantity - decrementBy);
                             }}
@@ -2552,7 +2557,7 @@ export function POSSystem() {
                             <Minus className="h-3.5 w-3.5" />
                           </Button>
                           <span className="font-mono font-bold text-sm w-6 text-center">
-                            {item.saleType === 'carton' && item.units_per_carton 
+                            {item.saleType === 'carton' && item.units_per_carton
                               ? Math.floor(item.quantity / item.units_per_carton)
                               : item.quantity}
                           </span>
@@ -2565,10 +2570,10 @@ export function POSSystem() {
                             <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                        
+
                         {/* Supprimer */}
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => removeFromCart(item.id)}
                           className="text-muted-foreground hover:text-destructive h-8 w-8 p-0 flex-shrink-0"
@@ -2599,7 +2604,7 @@ export function POSSystem() {
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
                   </summary>
-                  
+
                   <div className="mt-2 space-y-2 p-2 bg-muted/20 rounded-lg">
                     <div className="grid grid-cols-2 gap-1">
                       <Button
@@ -2619,7 +2624,7 @@ export function POSSystem() {
                         <Euro className="h-3 w-3 mr-1" />GNF
                       </Button>
                     </div>
-                    
+
                     <Input
                       type="number"
                       value={discountMode === 'percent' ? (discountPercent || '') : (discountAmount || '')}
@@ -2636,7 +2641,7 @@ export function POSSystem() {
                     />
                   </div>
                 </details>
-                
+
                 {/* Total et TVA avec remise visible */}
                 <div className="space-y-1.5 py-1.5 border-y border-border/30">
                   <div className="flex items-center justify-between">
@@ -2691,27 +2696,27 @@ export function POSSystem() {
                       <Smartphone className="h-3.5 w-3.5" />
                       Paiement Mobile Money
                     </Label>
-                    
+
                     {/* Sélection du provider */}
                     <div className="flex gap-1">
-                      <Button 
-                        variant={mobileMoneyProvider === 'orange' ? 'default' : 'outline'} 
-                        size="sm" 
+                      <Button
+                        variant={mobileMoneyProvider === 'orange' ? 'default' : 'outline'}
+                        size="sm"
                         onClick={() => setMobileMoneyProvider('orange')}
                         className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'border-orange-300'}`}
                       >
                         🟠 Orange Money
                       </Button>
-                      <Button 
-                        variant={mobileMoneyProvider === 'mtn' ? 'default' : 'outline'} 
-                        size="sm" 
+                      <Button
+                        variant={mobileMoneyProvider === 'mtn' ? 'default' : 'outline'}
+                        size="sm"
                         onClick={() => setMobileMoneyProvider('mtn')}
                         className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'mtn' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 'border-yellow-400'}`}
                       >
                         🟡 MTN MoMo
                       </Button>
                     </div>
-                    
+
                     {/* Numéro de téléphone */}
                     <div className="space-y-1">
                       <Label className="text-[10px] text-muted-foreground">Numéro de téléphone du client</Label>
@@ -2727,7 +2732,7 @@ export function POSSystem() {
                         <p className="text-[10px] text-destructive">Entrez 9 chiffres</p>
                       )}
                     </div>
-                    
+
                     <p className="text-[9px] text-muted-foreground">
                       💡 Le client recevra une demande de paiement sur son téléphone
                     </p>
@@ -2751,7 +2756,7 @@ export function POSSystem() {
 
                 {/* Boutons de validation */}
                 <div className="grid grid-cols-2 gap-2 pt-1">
-                  <Button 
+                  <Button
                     onClick={openCreditSaleModal}
                     variant="outline"
                     className="h-12 font-semibold text-sm"
@@ -2760,7 +2765,7 @@ export function POSSystem() {
                     <CreditCard className="h-4 w-4 mr-1.5" />
                     À crédit
                   </Button>
-                  <Button 
+                  <Button
                     onClick={validateOrder}
                     className="h-12 font-bold text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={cart.length === 0}
@@ -2785,7 +2790,7 @@ export function POSSystem() {
               Confirmation de commande
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="bg-muted/30 p-4 rounded-lg">
               <h3 className="font-semibold mb-3">Récapitulatif</h3>
@@ -2802,9 +2807,9 @@ export function POSSystem() {
                   </div>
                 ))}
               </div>
-              
+
               <Separator className="my-3" />
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Sous-total</span>
@@ -2850,7 +2855,7 @@ export function POSSystem() {
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="text-sm">
                 <strong>Mode de paiement:</strong> {
-                  paymentMethod === 'cash' ? 'Espèces' : 
+                  paymentMethod === 'cash' ? 'Espèces' :
                   paymentMethod === 'card' ? 'Carte bancaire (Stripe)' :
                   'Mobile Money (ChapChapPay)'
                 }
@@ -2931,7 +2936,7 @@ export function POSSystem() {
               Vente à crédit
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="bg-muted/30 p-4 rounded-lg">
               <h3 className="font-semibold mb-3">Récapitulatif panier</h3>
@@ -3036,9 +3041,9 @@ export function POSSystem() {
               <Button variant="outline" onClick={() => setShowCreditSaleModal(false)} className="flex-1">
                 Annuler
               </Button>
-              <Button 
-                onClick={processCreditSale} 
-                className="flex-1" 
+              <Button
+                onClick={processCreditSale}
+                className="flex-1"
                 disabled={isProcessingCredit || !creditCustomerName.trim() || !creditDueDate}
               >
                 <CreditCard className="h-4 w-4 mr-2" />

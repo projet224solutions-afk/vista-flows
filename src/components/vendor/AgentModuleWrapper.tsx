@@ -31,7 +31,7 @@ export const AgentModuleWrapper: React.FC<AgentModuleWrapperProps> = ({
   // Injecter le vendorId dans un contexte local si nécessaire
   // Les composants enfants devront utiliser ce vendorId pour charger les données
   return (
-    <div data-vendor-id={vendorId} className="agent-module-wrapper">
+    <div data-vendor-id={vendorId} className="agent-module-wrapper h-full">
       {children}
     </div>
   );
