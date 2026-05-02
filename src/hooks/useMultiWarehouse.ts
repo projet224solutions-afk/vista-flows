@@ -4,7 +4,7 @@
  * 224SOLUTIONS - Système professionnel
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { toast } from 'sonner';
@@ -280,7 +280,7 @@ export interface AdvancedTransferInput {
 
 export function useMultiWarehouse() {
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
-  
+
   const [locations, setLocations] = useState<VendorLocation[]>([]);
   const [transfers, setTransfers] = useState<StockTransfer[]>([]);
   const [losses, setLosses] = useState<StockLoss[]>([]);
@@ -314,7 +314,7 @@ export function useMultiWarehouse() {
             .from('location_stock')
             .select('quantity, minimum_stock, cost_price')
             .eq('location_id', loc.id);
-          
+
           const stats = {
             location_id: loc.id,
             total_products: stockData?.length || 0,
@@ -325,7 +325,7 @@ export function useMultiWarehouse() {
             pending_transfers_in: 0,
             pending_transfers_out: 0
           };
-          
+
           return {
             ...loc,
             coordinates: loc.coordinates,
@@ -698,7 +698,7 @@ export function useMultiWarehouse() {
 
       // Enregistrer dans l'historique
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       await supabase
         .from('location_stock_history')
         .insert({
@@ -1098,23 +1098,29 @@ export function useMultiWarehouse() {
     }
   }, [vendorId, vendorLoading, fetchLocations, fetchTransfers, fetchLosses, fetchProductMappings]);
 
+  // Ref pour éviter la re-souscription Realtime quand les callbacks changent.
+  // Le useEffect ne doit se relancer que si vendorId change, pas à chaque
+  // recréation des useCallback — sinon Supabase reçoit des .on() sur un
+  // channel déjà souscrit et lève "cannot add postgres_changes after subscribe()".
+  const realtimeRefreshRef = useRef<() => void>(() => {});
+  realtimeRefreshRef.current = () => {
+    fetchLocations();
+    fetchTransfers();
+    fetchLosses();
+    fetchProductMappings();
+  };
+
   useEffect(() => {
     if (!vendorId) return;
 
     const channel = supabase.channel(`multi-warehouse-live-${vendorId}`);
-    const refreshAll = () => {
-      fetchLocations();
-      fetchTransfers();
-      fetchLosses();
-      fetchProductMappings();
-    };
 
     ['vendor_locations', 'location_stock', 'stock_transfers', 'stock_transfer_items', 'stock_losses']
       .forEach((table) => {
         channel.on(
           'postgres_changes',
           { event: '*', schema: 'public', table },
-          refreshAll,
+          () => realtimeRefreshRef.current(),
         );
       });
 
@@ -1123,7 +1129,7 @@ export function useMultiWarehouse() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [vendorId, fetchLocations, fetchTransfers, fetchLosses, fetchProductMappings]);
+  }, [vendorId]); // vendorId uniquement : le channel ne se recrée que si le vendeur change
 
   return {
     // Data
@@ -1139,23 +1145,23 @@ export function useMultiWarehouse() {
     completedTransfers,
     losses,
     totalLossValue,
-    
+
     // State
     loading,
     error,
-    
+
     // Location Actions
     createLocation,
     updateLocation,
     deleteLocation,
     togglePOS,
     setDefaultLocation,
-    
+
     // Stock Actions
     getLocationStock,
     getProductStockByLocations,
     adjustStock,
-    
+
     // Transfer Actions
     createTransfer,
     createAdvancedTransfer,
@@ -1164,7 +1170,7 @@ export function useMultiWarehouse() {
     cancelTransfer,
     downloadTransferReceipt,
     getShopProductMappingForItem,
-    
+
     // Refresh
     refresh: () => Promise.all([fetchLocations(), fetchTransfers(), fetchLosses(), fetchProductMappings()]),
     refreshLocations: fetchLocations,
