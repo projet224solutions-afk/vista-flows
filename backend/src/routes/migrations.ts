@@ -170,4 +170,72 @@ router.get("/status", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/migrations/apply-warehouse
+ * Applique les migrations warehouse manquantes via connexion directe PostgreSQL
+ * Header requis: X-DB-Password: <mot de passe Supabase depuis Settings > Database>
+ */
+router.post("/apply-warehouse", async (req: Request, res: Response) => {
+  const dbPassword = req.headers["x-db-password"] as string;
+  if (!dbPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Header X-DB-Password requis (depuis Supabase > Settings > Database)",
+    });
+  }
+
+  const { Client } = await import("pg");
+
+  const connectionString = `postgresql://postgres.uakkxaibujzxdiqzpnpr:${encodeURIComponent(dbPassword)}@aws-0-eu-west-2.pooler.supabase.com:6543/postgres`;
+
+  const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
+
+  try {
+    await client.connect();
+
+    // Vérifier si vendor_locations existe déjà
+    const check = await client.query(
+      "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='vendor_locations') as exists"
+    );
+
+    if (check.rows[0]?.exists) {
+      await client.end();
+      return res.status(200).json({ success: true, message: "vendor_locations existe déjà, aucune migration nécessaire" });
+    }
+
+    // Lire et appliquer la migration principale
+    const { readFileSync } = await import("fs");
+    const { join, dirname } = await import("path");
+    const { fileURLToPath } = await import("url");
+
+    const sqlFiles = [
+      "../../supabase/migrations/20260129220000_multi_warehouse_pos_system.sql",
+      "../../supabase/migrations/20260502000000_fix_agent_permission_rpcs.sql",
+      "../../supabase/migrations/20260502100000_cancel_order_wallet_refund.sql",
+      "../../supabase/migrations/20260502200000_fix_create_order_core_payer_id_wallet_debit.sql",
+      "../../supabase/migrations/20260502300000_fix_warehouse_rpcs.sql",
+      "../../supabase/migrations/20260502400000_warehouse_migration_and_rls.sql",
+    ];
+
+    const results: string[] = [];
+
+    for (const relPath of sqlFiles) {
+      try {
+        const fullPath = join(process.cwd(), relPath);
+        const sql = readFileSync(fullPath, "utf-8");
+        await client.query(sql);
+        results.push(`✓ ${relPath.split("/").pop()}`);
+      } catch (err: any) {
+        results.push(`⚠ ${relPath.split("/").pop()}: ${err.message?.split("\n")[0]}`);
+      }
+    }
+
+    await client.end();
+    return res.status(200).json({ success: true, message: "Migrations appliquées", results });
+  } catch (err: any) {
+    try { await client.end(); } catch {}
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
