@@ -197,6 +197,76 @@ app.use('/jobs', jobsRoutes);
 app.use('/media', mediaRoutes);
 
 /**
+ * ==================== MIGRATION ENDPOINT ====================
+ * POST /api/migrations/apply-warehouse
+ * Header requis: X-DB-Password (depuis Supabase > Settings > Database)
+ */
+app.post('/api/migrations/apply-warehouse', async (req, res) => {
+  const dbPassword = req.headers['x-db-password'];
+  if (!dbPassword) {
+    return res.status(400).json({ success: false, message: 'Header X-DB-Password requis' });
+  }
+  try {
+    const { Client } = await import('pg');
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const connectionString = `postgresql://postgres.uakkxaibujzxdiqzpnpr:${encodeURIComponent(dbPassword)}@aws-0-eu-west-2.pooler.supabase.com:6543/postgres`;
+    const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
+    await client.connect();
+    const check = await client.query("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='vendor_locations') as exists");
+    if (check.rows[0]?.exists) {
+      await client.end();
+      return res.json({ success: true, message: 'vendor_locations existe déjà' });
+    }
+    const sqlFiles = [
+      '../../supabase/migrations/20260129220000_multi_warehouse_pos_system.sql',
+      '../../supabase/migrations/20260413160000_fix_create_order_core_columns.sql',
+      '../../supabase/migrations/20260417094500_fix_create_order_core_payment_status_enum.sql',
+      '../../supabase/migrations/20260427143000_allow_vendor_agents_pos_settings.sql',
+      '../../supabase/migrations/20260429120000_fix_agent_subagent_commissions.sql',
+      '../../supabase/migrations/20260501100000_fix_agent_commission_credits_wallets.sql',
+      '../../supabase/migrations/20260502000000_fix_agent_permission_rpcs.sql',
+      '../../supabase/migrations/20260502100000_cancel_order_wallet_refund.sql',
+      '../../supabase/migrations/20260502200000_fix_create_order_core_payer_id_wallet_debit.sql',
+      '../../supabase/migrations/20260502300000_fix_warehouse_rpcs.sql',
+      '../../supabase/migrations/20260502400000_warehouse_migration_and_rls.sql',
+    ];
+    const results = [];
+    for (const relPath of sqlFiles) {
+      try {
+        const fullPath = join(process.cwd(), relPath);
+        const sql = readFileSync(fullPath, 'utf-8');
+        await client.query(sql);
+        results.push('✓ ' + relPath.split('/').pop());
+      } catch (err) {
+        results.push('⚠ ' + relPath.split('/').pop() + ': ' + (err.message || '').split('\n')[0]);
+      }
+    }
+    await client.end();
+    return res.json({ success: true, message: 'Migrations appliquées', results });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/migrations/status', async (req, res) => {
+  try {
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+    const missing = [];
+    for (const tbl of ['vendor_locations', 'location_permissions', 'location_stock_history']) {
+      const { error } = await supabase.from(tbl).select('id').limit(1);
+      if (error && error.code === 'PGRST205') missing.push(tbl);
+    }
+    return res.json({ success: true, missing_tables: missing, migrations_needed: missing.length > 0 });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * ==================== 404 ====================
  */
 app.use((req, res) => {
