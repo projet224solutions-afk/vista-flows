@@ -26,6 +26,7 @@ export function EscrowDashboard() {
     if (profile?.id) {
       loadTransactions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
   const loadTransactions = async () => {

@@ -16,11 +16,11 @@ import {
     DollarSign,
     User,
     Phone,
-    Link,
-    QrCode,
+    _Link,
+    _QrCode,
     Copy,
     Share2,
-    Clock,
+    _Clock,
     Shield
 } from 'lucide-react';
 import useGeolocation from '../../hooks/useGeolocation';
@@ -46,7 +46,7 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     const [clientPhone, setClientPhone] = useState('');
     const [notes, setNotes] = useState('');
     const [startCoordinates, setStartCoordinates] = useState<Position | null>(null);
-    const [endCoordinates, setEndCoordinates] = useState<Position | null>(null);
+    const [endCoordinates, _setEndCoordinates] = useState<Position | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [createdInvoice, setCreatedInvoice] = useState<EscrowInvoice | null>(null);
     const [feeAmount, setFeeAmount] = useState(0);
@@ -67,10 +67,10 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     const useCurrentLocation = async () => {
         try {
             const position = await geolocation.getCurrentLocation();
-            setStartCoordinates({ 
-                latitude: position.latitude, 
-                longitude: position.longitude, 
-                timestamp: Date.now() 
+            setStartCoordinates({
+                latitude: position.latitude,
+                longitude: position.longitude,
+                timestamp: Date.now()
             });
             setStartLocation(`${position.latitude}, ${position.longitude}`);
         } catch (error) {

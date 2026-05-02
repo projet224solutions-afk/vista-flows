@@ -13,9 +13,9 @@ interface EscrowStatusBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function EscrowStatusBadge({ 
-  status, 
-  amount, 
+export function EscrowStatusBadge({
+  status,
+  amount,
   showAmount = false,
   size = 'md'
 }: EscrowStatusBadgeProps) {
@@ -82,7 +82,7 @@ export function EscrowStatusBadge({
   };
 
   return (
-    <Badge 
+    <Badge
       variant={config.variant}
       className={`${sizeClasses[size]} gap-1.5 ${config.color}`}
     >

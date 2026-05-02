@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     Shield,
     MapPin,
-    Clock,
+    _Clock,
     DollarSign,
     CreditCard,
     Smartphone,
@@ -43,6 +43,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
         if (invoiceId) {
             loadInvoice();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [invoiceId]);
 
     const loadInvoice = async () => {
