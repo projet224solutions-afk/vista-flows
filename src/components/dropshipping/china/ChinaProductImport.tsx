@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  Link2, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Download,
+  Link2,
+  CheckCircle2,
+  XCircle,
   Loader2,
   ExternalLink,
   Package
@@ -95,8 +95,8 @@ export function ChinaProductImport() {
                 className="h-11"
               />
             </div>
-            <Button 
-              onClick={handleImport} 
+            <Button
+              onClick={handleImport}
               disabled={loading || !url.trim()}
               className="h-11"
             >
@@ -137,7 +137,7 @@ export function ChinaProductImport() {
           ) : (
             <div className="space-y-3">
               {imports.map((imp) => (
-                <div 
+                <div
                   key={imp.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
@@ -158,10 +158,10 @@ export function ChinaProductImport() {
 
                   <div className="flex items-center gap-3">
                     {getStatusBadge(imp.import_status)}
-                    
+
                     {imp.import_status === 'completed' && !imp.product_id && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={() => setSelectedImport(imp)}
                       >
                         Créer produit
@@ -175,9 +175,9 @@ export function ChinaProductImport() {
                       </Badge>
                     )}
 
-                    <a 
-                      href={imp.source_url} 
-                      target="_blank" 
+                    <a
+                      href={imp.source_url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted-foreground hover:text-foreground"
                     >

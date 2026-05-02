@@ -3,7 +3,7 @@
  * 224Solutions - Auto-défilement fluide avec animations premium
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,10 +29,10 @@ export function ProductImageCarousel({
   autoPlayInterval = 15000,
   showDots = true,
 }: ProductImageCarouselProps) {
-  const mediaItems: MediaItem[] = [
+  const mediaItems = useMemo<MediaItem[]>(() => [
     ...videos.filter(Boolean).map((src) => ({ type: 'video' as const, src })),
     ...images.filter(Boolean).map((src) => ({ type: 'image' as const, src })),
-  ];
+  ], [videos, images]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -41,6 +41,39 @@ export function ProductImageCarousel({
   const [loadedMedia, setLoadedMedia] = useState<Set<number>>(new Set([0]));
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (mediaItems.length <= 1 || isHovered) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setDirection('next');
+      setCurrentIndex((prev) => {
+        const next = (prev + 1) % mediaItems.length;
+        setLoadedMedia((loaded) => new Set(loaded).add(next));
+        return next;
+      });
+    }, autoPlayInterval);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [mediaItems.length, autoPlayInterval, isHovered]);
+
+  useEffect(() => {
+    return () => {
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isHovered) {
+      mediaItems.forEach((_, index) => {
+        setLoadedMedia((loaded) => new Set(loaded).add(index));
+      });
+    }
+  }, [isHovered, mediaItems]);
 
   if (mediaItems.length === 0) {
     return (
@@ -86,31 +119,6 @@ export function ProductImageCarousel({
       </div>
     );
   }
-
-  useEffect(() => {
-    if (mediaItems.length <= 1 || isHovered) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setDirection('next');
-      setCurrentIndex((prev) => {
-        const next = (prev + 1) % mediaItems.length;
-        setLoadedMedia((loaded) => new Set(loaded).add(next));
-        return next;
-      });
-    }, autoPlayInterval);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [mediaItems.length, autoPlayInterval, isHovered]);
-
-  useEffect(() => {
-    return () => {
-      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
-    };
-  }, []);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -172,14 +180,6 @@ export function ProductImageCarousel({
       setIsHovered(false);
     }, 2000);
   };
-
-  useEffect(() => {
-    if (isHovered) {
-      mediaItems.forEach((_, index) => {
-        setLoadedMedia((loaded) => new Set(loaded).add(index));
-      });
-    }
-  }, [isHovered, mediaItems]);
 
   return (
     <div

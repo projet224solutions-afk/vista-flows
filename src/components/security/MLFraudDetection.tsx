@@ -46,7 +46,7 @@ export function MLFraudDetection() {
       // Calculer les métriques depuis les logs réels
       const highRiskCount = fraudLogs.filter(log => log.risk_level === 'high' || log.risk_level === 'critical').length;
       const falsePos = fraudLogs.filter(log => log.reviewed && log.risk_level === 'low').length;
-      
+
       setMetrics({
         transactionsAnalyzed: fraudLogs.length,
         fraudDetected: highRiskCount,
@@ -104,8 +104,8 @@ export function MLFraudDetection() {
               Intelligence artificielle prédictive - Données en temps réel
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleRefresh} 
+          <Button
+            onClick={handleRefresh}
             disabled={loading}
             variant="outline"
             size="sm"

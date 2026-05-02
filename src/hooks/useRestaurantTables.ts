@@ -58,7 +58,7 @@ export function useRestaurantTables(serviceId: string) {
   const createTable = async (data: { table_number: string } & Partial<Omit<RestaurantTable, 'table_number'>>) => {
     const { data: newTable, error } = await supabase
       .from('restaurant_tables')
-      .insert([{ 
+      .insert([{
         table_number: data.table_number,
         capacity: data.capacity ?? 4,
         location: data.location,
@@ -67,11 +67,11 @@ export function useRestaurantTables(serviceId: string) {
         position_x: data.position_x ?? 0,
         position_y: data.position_y ?? 0,
         is_active: data.is_active ?? true,
-        professional_service_id: serviceId 
+        professional_service_id: serviceId
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     setTables(prev => [...prev, newTable as RestaurantTable]);
     return newTable;
@@ -84,7 +84,7 @@ export function useRestaurantTables(serviceId: string) {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     setTables(prev => prev.map(t => t.id === id ? updated as RestaurantTable : t));
     return updated;
@@ -99,7 +99,7 @@ export function useRestaurantTables(serviceId: string) {
       .from('restaurant_tables')
       .update({ is_active: false })
       .eq('id', id);
-    
+
     if (error) throw error;
     setTables(prev => prev.filter(t => t.id !== id));
   };

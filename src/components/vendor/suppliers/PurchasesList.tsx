@@ -21,7 +21,7 @@ import {
   Eye,
   Trash2,
   ShoppingCart,
-  Building2,
+  _Building2,
   Pencil,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -129,22 +129,22 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
 
   // Create new purchase with supplier and products
   const createMutation = useMutation({
-    mutationFn: async ({ 
-      supplierId, 
-      supplierName, 
-      products 
-    }: { 
-      supplierId: string; 
+    mutationFn: async ({
+      supplierId,
+      supplierName,
+      products
+    }: {
+      supplierId: string;
       supplierName: string;
       products: PurchaseProduct[];
     }) => {
       // Generate purchase number
       const purchaseNumber = `ACH-${Date.now().toString(36).toUpperCase()}`;
-      
+
       // Create the purchase (supplier_id is stored in purchase items, not in purchase header)
       const { data: purchase, error: purchaseError } = await supabase
         .from('stock_purchases')
-        .insert([{ 
+        .insert([{
           vendor_id: vendorId,
           purchase_number: purchaseNumber,
           notes: `Fournisseur: ${supplierName}`,
@@ -204,7 +204,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
         .from('stock_purchase_items')
         .delete()
         .eq('purchase_id', id);
-      
+
       if (itemsError) throw itemsError;
 
       // 2. Supprimer l'achat

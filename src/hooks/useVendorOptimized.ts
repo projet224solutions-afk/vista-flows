@@ -5,7 +5,7 @@
  * 224Solutions - Optimized Vendor Hook
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useCurrentVendor } from './useCurrentVendor';
 import { useToast } from './use-toast';
@@ -43,7 +43,7 @@ export function useVendorOptimized() {
 
     const refetchStats = useCallback(async () => {
         if (currentVendorLoading || (!user && !currentVendorId)) return;
-        
+
         setStatsLoading(true);
         try {
             const vendor = currentVendorId
@@ -85,7 +85,7 @@ export function useVendorOptimized() {
 
     const loadProfile = useCallback(async () => {
         if (currentVendorLoading || (!user && !currentVendorId)) return;
-        
+
         setProfileLoading(true);
         try {
             const query = supabase

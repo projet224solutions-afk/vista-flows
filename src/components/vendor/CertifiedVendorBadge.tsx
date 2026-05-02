@@ -9,7 +9,7 @@ import React from 'react';
 import { Shield, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { VendorCertificationStatus, getCertificationStatusLabel } from '@/types/vendorCertification';
+import { VendorCertificationStatus, _getCertificationStatusLabel } from '@/types/vendorCertification';
 import { cn } from '@/lib/utils';
 
 interface CertifiedVendorBadgeProps {
@@ -20,14 +20,14 @@ interface CertifiedVendorBadgeProps {
   className?: string;
 }
 
-export function CertifiedVendorBadge({ 
-  status, 
+export function CertifiedVendorBadge({
+  status,
   verifiedAt,
   variant = 'default',
   showTooltip = true,
-  className 
+  className
 }: CertifiedVendorBadgeProps) {
-  
+
   // Ne rien afficher si non certifié (pour les vues publiques)
   if (status === 'NON_CERTIFIE' && variant !== 'detailed') {
     return null;
@@ -41,7 +41,7 @@ export function CertifiedVendorBadge({
           label: 'Vendeur certifié',
           color: 'bg-[#04439e] text-white border-[#04439e]',
           iconColor: 'text-white',
-          tooltipText: verifiedAt 
+          tooltipText: verifiedAt
             ? `Vendeur certifié le ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
             : 'Vendeur certifié par 224Solutions'
         };
@@ -119,7 +119,7 @@ export function CertifiedVendorBadge({
 
   // Variante par défaut
   const badge = (
-    <Badge 
+    <Badge
       className={cn(
         "inline-flex items-center gap-1.5 px-2 py-1 font-semibold shadow-sm",
         config.color,
@@ -148,18 +148,18 @@ export function CertifiedVendorBadge({
 }
 
 // Export d'un composant simplifié pour icône seule
-export function CertifiedIcon({ 
-  status, 
-  className 
-}: { 
-  status: VendorCertificationStatus; 
+export function CertifiedIcon({
+  status,
+  className
+}: {
+  status: VendorCertificationStatus;
   className?: string;
 }) {
   if (status !== 'CERTIFIE') return null;
 
   return (
-    <CheckCircle2 
-      className={cn("text-[#04439e]", className)} 
+    <CheckCircle2
+      className={cn("text-[#04439e]", className)}
       aria-label="Vendeur certifié"
     />
   );

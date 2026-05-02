@@ -167,11 +167,11 @@ export default function PDGKYCManagement() {
       {/* Settings Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {userTypes.map(({ key, label, icon: Icon, description }) => (
-          <Card 
-            key={key} 
+          <Card
+            key={key}
             className={`transition-all duration-200 ${
-              settings[key as keyof KYCSettings] 
-                ? 'border-green-500/50 bg-green-500/5' 
+              settings[key as keyof KYCSettings]
+                ? 'border-green-500/50 bg-green-500/5'
                 : 'border-muted'
             }`}
           >

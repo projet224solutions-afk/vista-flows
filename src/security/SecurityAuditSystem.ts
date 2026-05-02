@@ -16,30 +16,30 @@ export enum SecurityEventType {
   LOGIN_FAILED = 'login_failed',
   LOGOUT = 'logout',
   PASSWORD_CHANGE = 'password_change',
-  
+
   // Accès aux ressources
   UNAUTHORIZED_ACCESS = 'unauthorized_access',
   PERMISSION_DENIED = 'permission_denied',
   RESOURCE_ACCESS = 'resource_access',
-  
+
   // Transactions financières
   WALLET_TRANSACTION = 'wallet_transaction',
   PAYMENT_CREATED = 'payment_created',
   PAYMENT_FAILED = 'payment_failed',
   WITHDRAWAL_ATTEMPT = 'withdrawal_attempt',
-  
+
   // Modifications de données
   DATA_CREATED = 'data_created',
   DATA_UPDATED = 'data_updated',
   DATA_DELETED = 'data_deleted',
-  
+
   // Sécurité
   RATE_LIMIT_EXCEEDED = 'rate_limit_exceeded',
   SUSPICIOUS_ACTIVITY = 'suspicious_activity',
   CSRF_VIOLATION = 'csrf_violation',
   XSS_ATTEMPT = 'xss_attempt',
   SQL_INJECTION_ATTEMPT = 'sql_injection_attempt',
-  
+
   // Système
   SESSION_EXPIRED = 'session_expired',
   API_ERROR = 'api_error',
@@ -416,7 +416,7 @@ export function AuditedFunction(
 
       try {
         const result = await originalMethod.apply(this, args);
-        
+
         // Logger le succès
         audit.logEvent({
           type: eventType,

@@ -89,7 +89,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
   const downloadBadge = async () => {
     if (!badgeRef.current) return;
-    
+
     try {
       setIsSaving(true);
       toast.info('Génération du badge en cours...');
@@ -108,13 +108,13 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
         unit: 'mm',
         format: [85.6, 53.98] // Taille carte de crédit standard
       });
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 53.98);
       pdf.save(`badge-${badgeData.idNumber}.pdf`);
 
       // Sauvegarder dans Supabase
       await saveBadgeToSupabase(imgData);
-      
+
       toast.success('Badge généré avec succès!');
     } catch (error) {
       console.error('Erreur génération badge:', error);
@@ -126,7 +126,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
   const saveBadgeToSupabase = async (imageData: string) => {
     try {
-      const { data, error } = await (supabase as any)
+      const { _data, error } = await (supabase as any)
         .from('badges')
         .insert({
           bureau_id: moto.bureau_id,

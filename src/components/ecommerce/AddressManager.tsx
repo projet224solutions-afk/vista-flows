@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
  * Composant de gestion des adresses multiples (style Amazon)
  */
 export const AddressManager = () => {
-  const { addresses, defaultAddress, loading, addAddress, deleteAddress, setAsDefault } = useUserAddresses();
+  const { addresses, _defaultAddress, loading, addAddress, deleteAddress, setAsDefault } = useUserAddresses();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     label: '',

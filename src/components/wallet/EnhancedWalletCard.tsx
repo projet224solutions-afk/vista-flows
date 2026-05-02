@@ -103,7 +103,7 @@ export function EnhancedWalletCard({
             <div>
               <CardTitle className="text-white text-lg">{t('wallet.myWallet')}</CardTitle>
               {wallet.id && (
-                <PublicIdBadge 
+                <PublicIdBadge
                   publicId={wallet.id.slice(0, 8).toUpperCase()}
                   variant="outline"
                   size="sm"

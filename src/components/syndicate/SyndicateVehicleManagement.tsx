@@ -25,19 +25,19 @@ import {
     QrCode,
     Download,
     Upload,
-    Eye,
+    _Eye,
     Edit,
-    Trash2,
+    _Trash2,
     CheckCircle,
     XCircle,
     AlertTriangle,
     Shield,
     FileText,
     Calendar,
-    MapPin,
+    _MapPin,
     Settings,
     Printer,
-    Share2,
+    _Share2,
     IdCard
 } from "lucide-react";
 import { toast } from "sonner";
@@ -119,6 +119,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         loadBureauInfo();
         loadVehicles();
         loadMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bureauId]);
 
     /**
@@ -140,7 +141,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 setBureauPrefecture((data as any).prefecture || '');
                 setBureauCommune((data as any).commune || '');
                 setBureauPhone((data as any).president_phone || '');
-                
+
                 // Pour l'affichage du nom dans les badges
                 const name = (data as any).commune || (data as any).prefecture || 'VOTRE BUREAU';
                 setBureauName(name);
@@ -185,7 +186,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     const loadVehicles = async () => {
         try {
             setLoading(true);
-            
+
             const { data, error } = await supabase
                 .from('vehicles')
                 .select('*')
@@ -197,13 +198,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             // Récupérer les noms des membres
             const memberIds = [...new Set(data?.map(v => v.owner_member_id).filter(Boolean))];
             let memberNames: Record<string, string> = {};
-            
+
             if (memberIds.length > 0) {
                 const { data: workersData } = await supabase
                     .from('syndicate_workers')
                     .select('id, nom')
                     .in('id', memberIds);
-                
+
                 memberNames = workersData?.reduce((acc, w) => {
                     acc[w.id] = w.nom;
                     return acc;
@@ -309,7 +310,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
      */
     const addVehicle = async () => {
         console.log('[VehicleAdd] Début ajout véhicule:', formData);
-        
+
         if (!formData.serial_number || !formData.license_plate) {
             toast.error('Veuillez remplir le numéro de série et la plaque d\'immatriculation');
             return;
@@ -390,7 +391,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             await loadVehicles();
 
             setShowAddDialog(false);
-            
+
             // Message de succès avec détails
             toast.success(`Véhicule ajouté avec succès ! Badge: ${result.badge_id}`);
 
@@ -419,10 +420,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         try {
             const { error } = await supabase
                 .from('vehicles')
-                .update({ 
+                .update({
                     verified: true,
                     verified_at: new Date().toISOString(),
-                    status: 'active' 
+                    status: 'active'
                 })
                 .eq('id', vehicleId);
 
@@ -482,7 +483,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
     /**
      * Génère un nouveau badge
      */
-    const regenerateBadge = (vehicleId: string) => {
+    const _regenerateBadge = (vehicleId: string) => {
         const newBadgeId = generateBadgeId();
 
         setVehicles(prev => prev.map(v =>
@@ -702,8 +703,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     setFormData(prev => ({ ...prev, member_id: '', owner_name: '' }));
                                                 } else {
                                                     const member = members.find(m => m.id === value);
-                                                    setFormData(prev => ({ 
-                                                        ...prev, 
+                                                    setFormData(prev => ({
+                                                        ...prev,
                                                         member_id: value,
                                                         owner_name: member?.name || ''
                                                     }));
@@ -823,7 +824,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             Téléchargement de Documents et Photos
                                         </h3>
                                         <p className="text-sm text-gray-600 mb-4">Formats acceptés: PDF, JPG, PNG. Taille max: 5MB par fichier</p>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Document d'immatriculation */}
                                             <div className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors">
@@ -971,8 +972,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                 </Label>
                                                 {formData.driver_photo_url && (
                                                     <div className="flex justify-center mb-2">
-                                                        <img 
-                                                            src={formData.driver_photo_url} 
+                                                        <img
+                                                            src={formData.driver_photo_url}
                                                             alt="Photo du conducteur"
                                                             className="w-20 h-20 object-cover rounded-lg border-2 border-border"
                                                         />
@@ -1136,7 +1137,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     <Printer className="w-4 h-4" />
                                                 </Button>
                                             </div>
-                                            
+
                                             {/* Boutons de statut - Bien visibles */}
                                             <div className="flex gap-1">
                                                 {!vehicle.verified && (

@@ -10,7 +10,7 @@ import { formatCurrency } from '@/lib/formatters';
 
 /**
  * Hook React pour formater les montants dans la devise de l'utilisateur.
- * 
+ *
  * @example
  * const fc = useFormatCurrency();
  * fc(15000);           // "15 000 GNF" ou "9 150 XOF" selon la devise détectée

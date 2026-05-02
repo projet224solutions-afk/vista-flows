@@ -45,7 +45,7 @@ export default function BadgeGeneratorDialog({
   // Utiliser le titre sauvegardé ou construire automatiquement basé sur la commune
   const locationName = bureauCommune || bureauName;
   const defaultTitle = locationName && locationName !== 'VOTRE BUREAU'
-    ? `TAXI-MOTO Bureau Syndicat de ${locationName}` 
+    ? `TAXI-MOTO Bureau Syndicat de ${locationName}`
     : 'TAXI-MOTO Bureau Syndicat';
   const badgeTitle = vehicleData.badge_title || defaultTitle;
   const badgeRef = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ export default function BadgeGeneratorDialog({
 
     try {
       toast.info('Génération du badge en cours...');
-      
+
       const [html2canvas] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
@@ -103,7 +103,7 @@ export default function BadgeGeneratorDialog({
 
     try {
       toast.info('Génération du PDF en cours...');
-      
+
       const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
@@ -155,7 +155,7 @@ export default function BadgeGeneratorDialog({
     }
 
     const badgeHtml = badgeRef.current.outerHTML;
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -186,7 +186,7 @@ export default function BadgeGeneratorDialog({
     `);
 
     printWindow.document.close();
-    
+
     setTimeout(() => {
       printWindow.print();
       toast.success('Badge envoyé à l\'imprimante');
@@ -199,8 +199,8 @@ export default function BadgeGeneratorDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Badge Professionnel - {vehicleData.member_name}</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
             >

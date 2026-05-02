@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { CommissionService } from '@/services/commissionService';
 import DetailedTransactionsList from './DetailedTransactionsList';
-import { 
-  Wallet, 
-  TrendingUp, 
-  ShoppingCart, 
-  Users, 
-  Truck, 
+import {
+  Wallet,
+  TrendingUp,
+  _ShoppingCart,
+  Users,
+  Truck,
   Package,
   RefreshCw,
   DollarSign,
@@ -258,9 +258,9 @@ export default function PlatformRevenueOverview() {
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm mt-1">Détail par type de service</CardDescription>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="gap-2 w-full sm:w-auto"

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  COUNTRY_TO_CURRENCY, 
-  COUNTRY_TO_LANGUAGE, 
-  getCurrencyForCountry, 
-  getLanguageForCountry 
+import {
+  _COUNTRY_TO_CURRENCY,
+  _COUNTRY_TO_LANGUAGE,
+  _getCurrencyForCountry,
+  getLanguageForCountry
 } from '@/data/countryMappings';
 
 interface GeoInfo {

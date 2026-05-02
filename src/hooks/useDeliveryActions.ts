@@ -122,7 +122,7 @@ export function useDeliveryActions({
 
     try {
       const updateData: any = { status };
-      
+
       if (status === 'delivered') {
         updateData.completed_at = new Date().toISOString();
       }
@@ -191,7 +191,7 @@ export function useDeliveryActions({
 
     try {
       console.log('🎯 [useDeliveryActions] Completing delivery:', deliveryId);
-      
+
       // Vérifier que la livraison existe et appartient au driver
       const { data: existingDelivery, error: checkError } = await supabase
         .from('deliveries')
@@ -232,7 +232,7 @@ export function useDeliveryActions({
 
       console.log('✅ Delivery completed successfully');
       toast.success('🎉 Livraison terminée avec succès!');
-      
+
       // Forcer le rechargement après un délai pour laisser la DB se synchroniser
       setTimeout(() => {
         onDeliveryCompleted?.();

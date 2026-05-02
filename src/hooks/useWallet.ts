@@ -1,13 +1,13 @@
 /**
  * 💳 HOOK: GESTION WALLET COMPLÈTE
  * Hook principal pour toutes les opérations wallet
- * 
+ *
  * ⚡ Phase 6: Migré depuis Edge Functions (wallet-operations) vers le backend Node.js
  * Utilise backendFetch → /api/v2/wallet/* au lieu de supabase.functions.invoke('wallet-operations')
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import {
@@ -166,7 +166,7 @@ export const useWallet = () => {
   }, [user?.id]);
 
   // Dépôt — via backend Node.js /api/v2/wallet/deposit
-  const deposit = async (amount: number, method: string = 'card', metadata: any = {}) => {
+  const deposit = async (amount: number, _method: string = 'card', metadata: any = {}) => {
     if (!wallet) {
       toast.error('Wallet non disponible');
       return false;
@@ -189,7 +189,7 @@ export const useWallet = () => {
       toast.success(`Dépôt de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
-      
+
       window.dispatchEvent(new Event('wallet-updated'));
       return true;
 
@@ -203,7 +203,7 @@ export const useWallet = () => {
   };
 
   // Retrait — via backend Node.js /api/v2/wallet/withdraw
-  const withdraw = async (amount: number, method: string = 'card', metadata: any = {}) => {
+  const withdraw = async (amount: number, _method: string = 'card', metadata: any = {}) => {
     if (!wallet) {
       toast.error('Wallet non disponible');
       return false;
@@ -231,7 +231,7 @@ export const useWallet = () => {
       toast.success(`Retrait de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
-      
+
       window.dispatchEvent(new Event('wallet-updated'));
       return true;
 
@@ -284,7 +284,7 @@ export const useWallet = () => {
       toast.success(`Transfert de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
-      
+
       window.dispatchEvent(new Event('wallet-updated'));
       return true;
 

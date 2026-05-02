@@ -12,7 +12,7 @@ import {
   cognitoSignUp,
   cognitoSignOut,
   cognitoGetCurrentSession,
-  cognitoGetCurrentUser,
+  _cognitoGetCurrentUser,
   cognitoConfirmSignUp,
   cognitoForgotPassword,
   cognitoConfirmPassword,
@@ -102,13 +102,13 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const existingSession = await cognitoGetCurrentSession();
         updateAuthState(existingSession);
-        
+
         // Sync silencieuse au démarrage si session existante
         if (existingSession && existingSession.isValid()) {
           const idToken = existingSession.getIdToken().getJwtToken();
           syncCognitoProfile(idToken).catch(() => {});
         }
-      } catch (err) {
+      } catch (_err) {
         console.warn('⚠️ [CognitoAuth] Pas de session existante');
       } finally {
         setIsLoading(false);
@@ -174,10 +174,10 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
             emailVerified: payload.email_verified === true,
           });
           setTokens(result.tokens);
-        } catch (e) {
+        } catch (_e) {
           console.warn('⚠️ [CognitoAuth] Impossible de décoder le token ID');
         }
-        
+
         if (result.tokens.idToken) {
           syncCognitoProfile(result.tokens.idToken).catch(err => {
             console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);

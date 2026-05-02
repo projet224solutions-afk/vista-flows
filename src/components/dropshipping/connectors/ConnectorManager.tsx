@@ -1,7 +1,7 @@
 /**
  * CONNECTOR MANAGER COMPONENT
  * Interface admin pour gérer les connecteurs dropshipping
- * 
+ *
  * @module ConnectorManager
  * @version 1.0.0
  * @author 224Solutions
@@ -36,12 +36,12 @@ import {
 import {
   Power,
   PowerOff,
-  RefreshCw,
+  _RefreshCw,
   Settings,
   Check,
-  AlertTriangle,
+  _AlertTriangle,
   Loader2,
-  ExternalLink,
+  _ExternalLink,
   Info,
   Zap,
   Globe,
@@ -83,7 +83,7 @@ function ConnectorCard({
       default: return <Globe className="w-4 h-4" />;
     }
   };
-  
+
   const getStatusBadge = () => {
     if (isActive) {
       return <Badge className="bg-green-500">Actif</Badge>;
@@ -94,7 +94,7 @@ function ConnectorCard({
       case 'deprecated': return <Badge variant="destructive">Obsolète</Badge>;
     }
   };
-  
+
   return (
     <Card className={`transition-all ${isActive ? 'ring-2 ring-green-500' : ''}`}>
       <CardHeader className="pb-3">
@@ -112,7 +112,7 @@ function ConnectorCard({
               </CardDescription>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {isActive && (
               <Button
@@ -123,7 +123,7 @@ function ConnectorCard({
                 <Settings className="w-4 h-4" />
               </Button>
             )}
-            
+
             <Button
               variant={isActive ? 'destructive' : 'default'}
               size="sm"
@@ -141,12 +141,12 @@ function ConnectorCard({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <p className="text-sm text-muted-foreground mb-3">
           {connector.description}
         </p>
-        
+
         <div className="flex flex-wrap gap-1">
           {connector.features.slice(0, 4).map((feature, i) => (
             <Badge key={i} variant="outline" className="text-xs">
@@ -159,7 +159,7 @@ function ConnectorCard({
             </Badge>
           )}
         </div>
-        
+
         {connector.requiresApiKey && !isActive && (
           <Alert className="mt-3">
             <Info className="w-4 h-4" />
@@ -184,24 +184,24 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
     disconnectConnector,
     isConnectorActive
   } = useConnectors(vendorId);
-  
+
   const [configDialog, setConfigDialog] = useState<{
     open: boolean;
     connector: ConnectorType | null;
   }>({ open: false, connector: null });
-  
+
   const [config, setConfig] = useState<Partial<ConnectorConfig>>({
     sandbox: true,
     autoSync: true,
     syncIntervalMinutes: 60
   });
-  
+
   const [activatingConnector, setActivatingConnector] = useState<ConnectorType | null>(null);
-  
+
   // Grouper les connecteurs par région
   const chinaConnectors = availableConnectors.filter(c => c.region === 'CHINA');
   const otherConnectors = availableConnectors.filter(c => c.region !== 'CHINA');
-  
+
   const handleActivate = async (type: ConnectorType, info: ConnectorInfo) => {
     if (info.requiresApiKey) {
       // Ouvrir le dialog de configuration
@@ -213,25 +213,25 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
       setActivatingConnector(null);
     }
   };
-  
+
   const handleConfigSubmit = async () => {
     if (!configDialog.connector) return;
-    
+
     setActivatingConnector(configDialog.connector);
     const success = await initConnector(configDialog.connector, config);
-    
+
     if (success) {
       setConfigDialog({ open: false, connector: null });
     }
     setActivatingConnector(null);
   };
-  
+
   const handleDeactivate = async (type: ConnectorType) => {
     setActivatingConnector(type);
     await disconnectConnector(type);
     setActivatingConnector(null);
   };
-  
+
   return (
     <div className="space-y-6">
       {/* En-tête */}
@@ -245,12 +245,12 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
             Connectez vos fournisseurs externes pour importer des produits automatiquement
           </p>
         </div>
-        
+
         <Badge variant="outline" className="text-lg px-4 py-2">
           {activeConnectors.length} actif{activeConnectors.length > 1 ? 's' : ''}
         </Badge>
       </div>
-      
+
       {/* Résumé des connecteurs actifs */}
       {activeConnectors.length > 0 && (
         <Alert className="bg-green-50 border-green-200">
@@ -264,7 +264,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
           </AlertDescription>
         </Alert>
       )}
-      
+
       {/* Tabs par région */}
       <Tabs defaultValue="china" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -277,7 +277,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
             Autres ({otherConnectors.length})
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="china" className="mt-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {chinaConnectors.map(connector => (
@@ -293,7 +293,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
             ))}
           </div>
         </TabsContent>
-        
+
         <TabsContent value="other" className="mt-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {otherConnectors.map(connector => (
@@ -310,10 +310,10 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {/* Dialog de configuration */}
-      <Dialog 
-        open={configDialog.open} 
+      <Dialog
+        open={configDialog.open}
         onOpenChange={(open) => setConfigDialog({ open, connector: open ? configDialog.connector : null })}
       >
         <DialogContent className="max-w-md">
@@ -323,7 +323,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
               Configurez les paramètres du connecteur
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="apiKey">Clé API</Label>
@@ -335,7 +335,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
                 onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="apiSecret">Secret API (optionnel)</Label>
               <Input
@@ -346,7 +346,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
                 onChange={(e) => setConfig(prev => ({ ...prev, apiSecret: e.target.value }))}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <Label htmlFor="sandbox">Mode Sandbox (test)</Label>
               <Switch
@@ -355,7 +355,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
                 onCheckedChange={(checked) => setConfig(prev => ({ ...prev, sandbox: checked }))}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <Label htmlFor="autoSync">Synchronisation automatique</Label>
               <Switch
@@ -364,7 +364,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
                 onCheckedChange={(checked) => setConfig(prev => ({ ...prev, autoSync: checked }))}
               />
             </div>
-            
+
             {config.autoSync && (
               <div className="space-y-2">
                 <Label htmlFor="syncInterval">Intervalle de sync (minutes)</Label>
@@ -374,15 +374,15 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
                   min={15}
                   max={1440}
                   value={config.syncIntervalMinutes || 60}
-                  onChange={(e) => setConfig(prev => ({ 
-                    ...prev, 
-                    syncIntervalMinutes: parseInt(e.target.value) || 60 
+                  onChange={(e) => setConfig(prev => ({
+                    ...prev,
+                    syncIntervalMinutes: parseInt(e.target.value) || 60
                   }))}
                 />
               </div>
             )}
           </div>
-          
+
           <DialogFooter>
             <Button
               variant="outline"

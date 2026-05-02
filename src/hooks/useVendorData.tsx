@@ -158,7 +158,7 @@ export function useVendorStats() {
         }
 
         // 🚀 PARALLEL: Fire all stats queries at once instead of sequential
-        const [ordersResult, productsResult, lowStockResult, overdueResult, customerResult] = await Promise.allSettled([
+        const [ordersResult, productsResult, lowStockResult, overdueResult, _customerResult] = await Promise.allSettled([
           withTimeout(
             () => supabase.from('orders').select('total_amount, status, customer_id').eq('vendor_id', vendor.id),
             STATS_TIMEOUT_MS, 'orders_stats_timeout',
@@ -212,7 +212,7 @@ export function useVendorStats() {
         // ✨ Persister pour le mode offline
         try {
           localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(newStats));
-        } catch (e) {}
+        } catch (_e) {}
 
         console.info('[VENDOR STATS SUCCESS]', {
           vendorId: vendor.id,
@@ -238,7 +238,7 @@ export function useVendorStats() {
             setLoading(false);
             return;
           }
-        } catch (e) {}
+        } catch (_e) {}
 
         setError(message);
       } finally {

@@ -37,7 +37,7 @@ export const useTrendingProducts = (days: number = 7, limit: number = 20) => {
       // Enrichir avec les données produits
       if (data && data.length > 0) {
         const productIds = data.map((item: any) => item.product_id);
-        
+
         const { data: productsData } = await supabase
           .from('products')
           .select('id, name, price, images, rating')
@@ -59,6 +59,7 @@ export const useTrendingProducts = (days: number = 7, limit: number = 20) => {
 
   useEffect(() => {
     loadTrendingProducts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, limit]);
 
   return {

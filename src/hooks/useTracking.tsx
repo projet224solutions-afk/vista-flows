@@ -282,7 +282,7 @@ export const useTracking = () => {
   };
 
   // Souscrire aux mises à jour de tracking en temps réel
-  const subscribeToTracking = (orderId?: string) => {
+  const subscribeToTracking = (_orderId?: string) => {
     const channel = supabase
       .channel('tracking-updates')
       .on(

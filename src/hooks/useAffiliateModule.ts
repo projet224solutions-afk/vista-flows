@@ -100,7 +100,7 @@ export function useAffiliateModule() {
 
     const hasActiveSubscription = !!subData?.id;
     const activePlan = (subData as any)?.plans;
-    const activePlanEligible = activePlan ? isDedicatedAffiliatePlan(activePlan) : false;
+    const _activePlanEligible = activePlan ? isDedicatedAffiliatePlan(activePlan) : false;
     // Nouveau comportement: l'activation affiliation est gratuite et indépendante de l'abonnement.
     const hasEligibleActiveSubscription = true;
 

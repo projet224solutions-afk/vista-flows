@@ -13,9 +13,9 @@ interface VendorRoleGuardProps {
  * Composant de protection pour les fonctionnalités vendeur
  * Vérifie le rôle et affiche un message si l'utilisateur n'est pas autorisé
  */
-export function VendorRoleGuard({ 
-  children, 
-  fallbackMessage = "🚫 Vous devez être un vendeur pour accéder à cette fonctionnalité." 
+export function VendorRoleGuard({
+  children,
+  fallbackMessage = "🚫 Vous devez être un vendeur pour accéder à cette fonctionnalité."
 }: VendorRoleGuardProps) {
   const { profile, loading: authLoading } = useAuth();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();

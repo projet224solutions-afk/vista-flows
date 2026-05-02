@@ -25,17 +25,17 @@ interface RideRequestCardProps {
   isAccepting: boolean;
 }
 
-export function RideRequestCard({ 
-  request, 
-  onAccept, 
-  onDecline, 
-  isAccepting = false 
+export function RideRequestCard({
+  request,
+  onAccept,
+  onDecline,
+  isAccepting = false
 }: RideRequestCardProps) {
   const timeAgo = (() => {
     try {
-      return formatDistanceToNow(new Date(request.requestTime), { 
+      return formatDistanceToNow(new Date(request.requestTime), {
         addSuffix: true,
-        locale: fr 
+        locale: fr
       });
     } catch {
       return 'À l\'instant';
@@ -54,10 +54,10 @@ export function RideRequestCard({
     )}>
       {/* Top accent gradient */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
-      
+
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
-      
+
       {/* Content */}
       <div className="relative p-4 space-y-4">
         {/* Header: Customer & Time */}
@@ -73,7 +73,7 @@ export function RideRequestCard({
               <p className="text-gray-500 text-xs">{timeAgo}</p>
             </div>
           </div>
-          
+
           {/* Earnings badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
             <Zap className="w-4 h-4 text-emerald-400" />
@@ -95,14 +95,14 @@ export function RideRequestCard({
               <p className="text-white text-sm font-medium truncate">{request.pickupAddress}</p>
             </div>
           </div>
-          
+
           {/* Route line */}
           <div className="flex items-center gap-3">
             <div className="w-8 flex justify-center">
               <div className="w-0.5 h-4 bg-gradient-to-b from-emerald-500 to-orange-500 rounded-full" />
             </div>
           </div>
-          
+
           {/* Destination */}
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
@@ -139,7 +139,7 @@ export function RideRequestCard({
             <X className="w-5 h-5 mr-2" />
             Refuser
           </Button>
-          
+
           <Button
             onClick={onAccept}
             disabled={isAccepting}

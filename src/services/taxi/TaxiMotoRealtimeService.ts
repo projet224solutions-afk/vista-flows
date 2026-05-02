@@ -34,7 +34,7 @@ export class TaxiMotoRealtimeService {
     onUpdate: (location: DriverLocation) => void
   ): () => void {
     const channelName = `driver-location:${driverId}`;
-    
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -77,7 +77,7 @@ export class TaxiMotoRealtimeService {
     onStatusChange?: (status: string) => void
   ): () => void {
     console.log('🔔 [TaxiMotoRealtimeService] Configuration subscription nouvelles courses');
-    
+
     const channel = supabase
       .channel('new-ride-requests')
       .on(
@@ -90,7 +90,7 @@ export class TaxiMotoRealtimeService {
         (payload) => {
           console.log('✅ [TaxiMotoRealtimeService] INSERT taxi_trips reçu:', payload.new);
           const ride = payload.new as any;
-          
+
           // Filtrer côté client pour les courses "requested"
           if (ride.status === 'requested') {
             console.log('🚗 [TaxiMotoRealtimeService] Nouvelle course REQUESTED détectée:', {
@@ -116,7 +116,7 @@ export class TaxiMotoRealtimeService {
         (payload) => {
           console.log('📝 [TaxiMotoRealtimeService] UPDATE taxi_trips reçu:', payload.new);
           const ride = payload.new as any;
-          
+
           // Notifier aussi si une course passe en "requested"
           if (ride.status === 'requested') {
             console.log('🚗 [TaxiMotoRealtimeService] Course UPDATE vers REQUESTED:', ride.id);
@@ -126,12 +126,12 @@ export class TaxiMotoRealtimeService {
       )
       .subscribe((status) => {
         console.log('📡 [TaxiMotoRealtimeService] Status subscription:', status);
-        
+
         // Notifier le composant parent du changement de status
         if (onStatusChange) {
           onStatusChange(status);
         }
-        
+
         // Gérer les différents statuts
         if (status === 'SUBSCRIBED') {
           console.log('✅ [TaxiMotoRealtimeService] ABONNÉ avec succès aux nouvelles courses');
@@ -161,7 +161,7 @@ export class TaxiMotoRealtimeService {
     onUpdate: (ride: any) => void
   ): () => void {
     const channelName = `ride-updates:${rideId}`;
-    
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -197,7 +197,7 @@ export class TaxiMotoRealtimeService {
     onLocationUpdate: (location: { lat: number; lng: number; timestamp: string }) => void
   ): () => void {
     const channelName = `ride-tracking:${rideId}`;
-    
+
     const channel = supabase
       .channel(channelName)
       .on(

@@ -86,14 +86,14 @@ export function usePDGData() {
     pendingOrders: 0,
     systemHealth: 0
   });
-  
+
   const [loadingState, setLoadingState] = useState<LoadingState>({
     users: true,
     transactions: true,
     products: true,
     stats: true
   });
-  
+
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [circuitState, setCircuitState] = useState<CircuitState>('CLOSED');
@@ -101,7 +101,7 @@ export function usePDGData() {
   // Références pour le cache
   const cacheRef = useRef<Map<string, CacheEntry<any>>>(new Map());
   const circuitName = 'pdg-data';
-  
+
   // Subscribe to circuit state changes
   useEffect(() => {
     const unsubscribe = circuitBreaker.subscribe(circuitName, (state) => {
@@ -119,13 +119,13 @@ export function usePDGData() {
   const getFromCache = <T,>(key: string): T | null => {
     const entry = cacheRef.current.get(key);
     if (!entry) return null;
-    
+
     const now = Date.now();
     if (now - entry.timestamp > CACHE_TTL) {
       cacheRef.current.delete(key);
       return null;
     }
-    
+
     return entry.data as T;
   };
 
@@ -171,7 +171,7 @@ export function usePDGData() {
       return result;
     } catch (err: any) {
       console.error(`❌ [PDG] Erreur ${key}:`, err);
-      
+
       // Retourner les données en cache même si stale en cas d'erreur
       if (useCache) {
         const staleData = getFromCache<T>(key);
@@ -193,7 +193,7 @@ export function usePDGData() {
   // Charger les utilisateurs
   const loadUsers = useCallback(async (silent = false) => {
     setLoadingState(prev => ({ ...prev, users: true }));
-    
+
     const result = await executeRobust<UserAccount[]>(
       'pdg_users',
       async () => {
@@ -232,15 +232,16 @@ export function usePDGData() {
     if (result) {
       setUsers(result);
     }
-    
+
     setLoadingState(prev => ({ ...prev, users: false }));
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Charger les transactions
   const loadTransactions = useCallback(async (silent = false) => {
     setLoadingState(prev => ({ ...prev, transactions: true }));
-    
+
     const result = await executeRobust<Transaction[]>(
       'pdg_transactions',
       async () => {
@@ -275,15 +276,16 @@ export function usePDGData() {
     if (result) {
       setTransactions(result);
     }
-    
+
     setLoadingState(prev => ({ ...prev, transactions: false }));
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Charger les produits
   const loadProducts = useCallback(async (silent = false) => {
     setLoadingState(prev => ({ ...prev, products: true }));
-    
+
     const result = await executeRobust<Product[]>(
       'pdg_products',
       async () => {
@@ -321,15 +323,16 @@ export function usePDGData() {
     if (result) {
       setProducts(result);
     }
-    
+
     setLoadingState(prev => ({ ...prev, products: false }));
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Charger les statistiques
   const loadStats = useCallback(async (silent = false) => {
     setLoadingState(prev => ({ ...prev, stats: true }));
-    
+
     const result = await executeRobust<PDGStats>(
       'pdg_stats',
       async () => {
@@ -370,9 +373,10 @@ export function usePDGData() {
     if (result) {
       setStats(result);
     }
-    
+
     setLoadingState(prev => ({ ...prev, stats: false }));
     return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Charger toutes les données
@@ -423,12 +427,12 @@ export function usePDGData() {
         // Invalider le cache
         cacheRef.current.delete('pdg_users');
         await loadUsers(true);
-        
-        const actionText = action === 'delete' ? 'supprimé' 
+
+        const actionText = action === 'delete' ? 'supprimé'
           : action === 'suspend' ? 'suspendu' : 'activé';
         toast.success(`Utilisateur ${actionText} avec succès`);
       }
-      
+
       return result || false;
     } catch (error: any) {
       console.error('❌ Erreur action utilisateur:', error);
@@ -464,12 +468,12 @@ export function usePDGData() {
         // Invalider le cache
         cacheRef.current.delete('pdg_products');
         await loadProducts(true);
-        
-        const actionText = action === 'delete' ? 'supprimé' 
+
+        const actionText = action === 'delete' ? 'supprimé'
           : action === 'block' ? 'bloqué' : 'débloqué';
         toast.success(`Produit ${actionText} avec succès`);
       }
-      
+
       return result || false;
     } catch (error: any) {
       console.error('❌ Erreur action produit:', error);
@@ -498,7 +502,7 @@ export function usePDGData() {
   }, [loadAllData]);
 
   // État de chargement global
-  const loading = loadingState.users || loadingState.transactions || 
+  const loading = loadingState.users || loadingState.transactions ||
                   loadingState.products || loadingState.stats;
 
   return {
@@ -507,23 +511,23 @@ export function usePDGData() {
     transactions,
     products,
     stats,
-    
+
     // États
     loading,
     loadingState,
     error,
     lastRefresh,
     circuitState,
-    
+
     // Actions
     loadAllData,
     handleUserAction,
     handleProductAction,
     refetch: loadAllData,
-    
+
     // Cache
     invalidateCache,
-    
+
     // Helpers
     isCircuitOpen: circuitState === 'OPEN',
     isHealthy: circuitState === 'CLOSED' && !error

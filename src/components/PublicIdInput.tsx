@@ -54,7 +54,7 @@ export function PublicIdInput({
         {label}
         {required && <span className="text-destructive ml-1">*</span>}
       </Label>
-      
+
       <div className="relative">
         <Input
           id="public-id-input"
@@ -71,7 +71,7 @@ export function PublicIdInput({
             showSuccess && 'border-green-500 focus-visible:ring-green-500'
           )}
         />
-        
+
         {showValidation && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             {showError && (
@@ -89,7 +89,7 @@ export function PublicIdInput({
           Format invalide. Attendu: 3 lettres + 4 chiffres (ex: ABC1234)
         </p>
       )}
-      
+
       {showValidation && showSuccess && (
         <p className="text-xs text-green-600">
           Format valide ✓

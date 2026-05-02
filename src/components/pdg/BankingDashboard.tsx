@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  AlertTriangle, 
-  Shield, 
-  TrendingUp, 
-  Wallet, 
-  Clock, 
-  CheckCircle, 
+import {
+  AlertTriangle,
+  Shield,
+  _TrendingUp,
+  Wallet,
+  _Clock,
+  CheckCircle,
   XCircle,
   AlertOctagon,
   RefreshCw,
@@ -20,7 +20,7 @@ import {
   Eye,
   Activity,
   DollarSign,
-  Users,
+  _Users,
   FileText
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from '@/components/ui/input';
+import { _Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 interface DashboardData {
@@ -112,11 +112,11 @@ const BankingDashboard: React.FC = () => {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      
+
       // Load dashboard stats
       const { data: statsData, error: statsError } = await supabase
         .rpc('get_pdg_financial_dashboard');
-      
+
       if (statsError) throw statsError;
       setDashboardData(statsData as unknown as DashboardData);
 
@@ -126,7 +126,7 @@ const BankingDashboard: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (!alertsError && alertsData) {
         setAlerts(alertsData as FinancialAlert[]);
       }
@@ -137,7 +137,7 @@ const BankingDashboard: React.FC = () => {
         .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      
+
       if (!quarantineError && quarantineData) {
         setQuarantine(quarantineData as QuarantinedTransaction[]);
       }
@@ -148,7 +148,7 @@ const BankingDashboard: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
-      
+
       if (!ledgerError && ledgerData) {
         setLedger(ledgerData as LedgerEntry[]);
       }
@@ -163,7 +163,7 @@ const BankingDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboard();
-    
+
     // Refresh every 30 seconds
     const interval = setInterval(loadDashboard, 30000);
     return () => clearInterval(interval);
@@ -182,7 +182,7 @@ const BankingDashboard: React.FC = () => {
       });
 
       if (error) throw error;
-      
+
       const result = data as { success: boolean; message?: string; error?: string };
       if (result.success) {
         toast.success('Mode Panic activé - Toutes les transactions sont gelées');
@@ -206,7 +206,7 @@ const BankingDashboard: React.FC = () => {
       });
 
       if (error) throw error;
-      
+
       const result = data as { success: boolean; message?: string };
       if (result.success) {
         toast.success('Mode Panic désactivé - Transactions autorisées');
@@ -223,7 +223,7 @@ const BankingDashboard: React.FC = () => {
         .from('pdg_financial_alerts')
         .update({ is_read: true })
         .eq('id', alertId);
-      
+
       setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, is_read: true } : a));
     } catch (error) {
       console.error('Error marking alert read:', error);
@@ -234,13 +234,13 @@ const BankingDashboard: React.FC = () => {
     try {
       await supabase
         .from('financial_quarantine')
-        .update({ 
-          status: action, 
+        .update({
+          status: action,
           reviewed_by: user?.id,
           reviewed_at: new Date().toISOString()
         })
         .eq('id', id);
-      
+
       toast.success(action === 'approved' ? 'Transaction approuvée' : 'Transaction rejetée');
       loadDashboard();
     } catch (error: any) {
@@ -288,13 +288,13 @@ const BankingDashboard: React.FC = () => {
           </h1>
           <p className="text-muted-foreground">Supervision financière en temps réel</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={loadDashboard}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualiser
           </Button>
-          
+
           {dashboardData?.panic_mode_active ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -343,7 +343,7 @@ const BankingDashboard: React.FC = () => {
                 />
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction 
+                  <AlertDialogAction
                     onClick={activatePanicMode}
                     className="bg-red-500 hover:bg-red-600"
                   >
@@ -485,8 +485,8 @@ const BankingDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {alerts.map((alert) => (
-                      <div 
-                        key={alert.id} 
+                      <div
+                        key={alert.id}
                         className={`p-4 rounded-lg border ${!alert.is_read ? 'bg-muted/50' : ''}`}
                       >
                         <div className="flex items-start justify-between">
@@ -501,8 +501,8 @@ const BankingDashboard: React.FC = () => {
                             </div>
                           </div>
                           {!alert.is_read && (
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => markAlertRead(alert.id)}
                             >
@@ -555,8 +555,8 @@ const BankingDashboard: React.FC = () => {
                             </p>
                           </div>
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               className="text-green-600 border-green-600"
                               onClick={() => handleQuarantineAction(tx.id, 'approved')}
@@ -564,8 +564,8 @@ const BankingDashboard: React.FC = () => {
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approuver
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               className="text-red-600 border-red-600"
                               onClick={() => handleQuarantineAction(tx.id, 'rejected')}
@@ -597,8 +597,8 @@ const BankingDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     {ledger.map((entry) => (
-                      <div 
-                        key={entry.id} 
+                      <div
+                        key={entry.id}
                         className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center justify-between">

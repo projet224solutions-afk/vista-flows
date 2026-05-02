@@ -44,7 +44,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
       }
 
       console.log('[TaxiMotoDriverDashboard] Loaded pending rides:', data?.length || 0);
-      
+
       if (data && data.length > 0) {
         setIncoming(data.map(ride => ({
           id: ride.id,
@@ -79,7 +79,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
     if (!pollingEnabled) return;
 
     console.log('🔄 [TaxiMotoDriverDashboard] Démarrage polling de secours (5s)');
-    
+
     const interval = setInterval(async () => {
       console.log('🔄 [TaxiMotoDriverDashboard] Polling courses...');
       await loadPendingRides();

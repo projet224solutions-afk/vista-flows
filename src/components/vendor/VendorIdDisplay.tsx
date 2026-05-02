@@ -14,9 +14,9 @@ interface VendorIdDisplayProps {
   showName?: boolean;
 }
 
-export function VendorIdDisplay({ 
+export function VendorIdDisplay({
   className = '',
-  showName = true 
+  showName = true
 }: VendorIdDisplayProps) {
   const { user } = useAuth();
   const [vendorData, setVendorData] = useState<{
@@ -88,7 +88,7 @@ export function VendorIdDisplay({
 
   return (
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
-      <StandardIdBadge 
+      <StandardIdBadge
         standardId={vendorData.custom_id}
         variant="secondary"
         size="md"

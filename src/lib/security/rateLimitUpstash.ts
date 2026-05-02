@@ -33,25 +33,25 @@ const checkRateLimitLocal = (config: RateLimitConfig): RateLimitResult => {
   const { maxRequests, windowMs, identifier } = config;
   const key = `ratelimit_${identifier}`;
   const now = Date.now();
-  
+
   // Récupérer historique
   const stored = localStorage.getItem(key);
   let requests: number[] = stored ? JSON.parse(stored) : [];
-  
+
   // Filtrer requêtes hors fenêtre
   requests = requests.filter(timestamp => now - timestamp < windowMs);
-  
+
   // Ajouter nouvelle requête
   requests.push(now);
-  
+
   // Sauvegarder
   localStorage.setItem(key, JSON.stringify(requests));
-  
+
   const allowed = requests.length <= maxRequests;
   const remaining = Math.max(0, maxRequests - requests.length);
   const oldestRequest = requests[0] || now;
   const resetAt = new Date(oldestRequest + windowMs);
-  
+
   return {
     allowed,
     remaining,
@@ -69,25 +69,25 @@ export const RATE_LIMIT_PRESETS = {
     maxRequests: 5,
     windowMs: 5 * 60 * 1000
   },
-  
+
   // API standard: 100 requêtes par minute
   api: {
     maxRequests: 100,
     windowMs: 60 * 1000
   },
-  
+
   // API stricte: 10 requêtes par minute
   apiStrict: {
     maxRequests: 10,
     windowMs: 60 * 1000
   },
-  
+
   // Wallet operations: 20 requêtes par minute
   wallet: {
     maxRequests: 20,
     windowMs: 60 * 1000
   },
-  
+
   // Email/SMS: 3 par heure
   notifications: {
     maxRequests: 3,
@@ -107,14 +107,14 @@ export const withRateLimit = async <T>(
     ...RATE_LIMIT_PRESETS[preset],
     identifier
   };
-  
+
   const result = await checkRateLimit(config);
-  
+
   if (!result.allowed) {
     throw new Error(
       `Rate limit dépassé. Réessayez dans ${result.retryAfter} secondes.`
     );
   }
-  
+
   return fn();
 };

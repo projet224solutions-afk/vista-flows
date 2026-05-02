@@ -1,8 +1,8 @@
 /**
  * UNIFIED NOTIFICATIONS REALTIME LISTENER
- * 
+ *
  * Listens to `notifications` table (source of truth) + `messages` table.
- * 
+ *
  * Behavior:
  * - Tab VISIBLE: toast + in-app sound + vibration
  * - Tab HIDDEN: system Notification API push (with sound/vibration via OS)

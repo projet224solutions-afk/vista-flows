@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Clock, Check, XCircle, ChefHat, Package, Truck, 
-  Phone, MapPin, CreditCard, Wallet, Banknote, RefreshCw,
+import {
+  Clock, Check, XCircle, ChefHat, Package, Truck,
+  Phone, MapPin, CreditCard, _Wallet, Banknote, RefreshCw,
   Bell, Eye, Utensils
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,10 +77,10 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
 
   const loadOrders = useCallback(async () => {
     if (!serviceId) return;
-    
+
     try {
       setIsRefreshing(true);
-      
+
       const { data, error } = await supabase
         .from('restaurant_orders')
         .select('*')
@@ -89,7 +89,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
         .limit(100);
 
       if (error) throw error;
-      
+
       setOrders((data as RestaurantOrder[]) || []);
       console.log('✅ Commandes restaurant chargées:', data?.length || 0);
     } catch (err) {
@@ -122,21 +122,21 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
         },
         (payload) => {
           console.log('🔔 Changement commande restaurant:', payload);
-          
+
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new as RestaurantOrder;
             setOrders(prev => [newOrder, ...prev]);
-            
+
             // Notification sonore et toast
             toast.success(`🔔 Nouvelle commande: ${newOrder.order_number}`, {
               description: `${newOrder.customer_name} - ${newOrder.total.toLocaleString()} GNF`
             });
-            
+
             // Play sound
             try {
               const audio = new Audio('/notification.mp3');
               audio.play().catch(() => {});
-            } catch (e) {}
+            } catch (_e) {}
           } else if (payload.eventType === 'UPDATE') {
             const updatedOrder = payload.new as RestaurantOrder;
             setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
@@ -155,7 +155,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
   const updateOrderStatus = async (orderId: string, newStatus: RestaurantOrder['status']) => {
     try {
       const updates: any = { status: newStatus };
-      
+
       // Timestamps
       const now = new Date().toISOString();
       if (newStatus === 'preparing') updates.started_preparing_at = now;
@@ -172,7 +172,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
 
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       toast.success(`Commande ${statusConfig[newStatus].label.toLowerCase()}`);
-      
+
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
       }
@@ -199,11 +199,11 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
   const renderOrderCard = (order: RestaurantOrder) => {
     const status = statusConfig[order.status] || statusConfig.pending;
     const orderType = orderTypeLabels[order.order_type] || orderTypeLabels.takeaway;
-    const paymentIcon = paymentMethodIcons[order.payment_method] || paymentMethodIcons.cash;
+    const _paymentIcon = paymentMethodIcons[order.payment_method] || paymentMethodIcons.cash;
     const isPending = order.status === 'pending';
-    
+
     return (
-      <Card 
+      <Card
         key={order.id}
         className={cn(
           "cursor-pointer transition-all hover:shadow-md",
@@ -258,8 +258,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           {/* Quick actions */}
           {isPending && (
             <div className="flex gap-2 pt-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="flex-1 bg-green-600 hover:bg-green-700"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -269,8 +269,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                 <Check className="w-4 h-4 mr-1" />
                 Confirmer
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="destructive"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -283,8 +283,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           )}
 
           {order.status === 'confirmed' && (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="w-full bg-purple-600 hover:bg-purple-700"
               onClick={(e) => {
                 e.stopPropagation();
@@ -297,8 +297,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           )}
 
           {order.status === 'preparing' && (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={(e) => {
                 e.stopPropagation();
@@ -311,8 +311,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           )}
 
           {order.status === 'ready' && (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="w-full bg-teal-600 hover:bg-teal-700"
               onClick={(e) => {
                 e.stopPropagation();
@@ -356,8 +356,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
             <Badge className="bg-red-500 animate-pulse">{pendingOrders.length} nouvelle(s)</Badge>
           )}
         </div>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={loadOrders}
           disabled={isRefreshing}
@@ -411,7 +411,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               Détails commande
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-4">
               {/* Status */}
@@ -469,7 +469,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                     <span className="text-muted-foreground">Paiement</span>
                     <span className="flex items-center gap-1">
                       {paymentMethodIcons[selectedOrder.payment_method]}
-                      {selectedOrder.payment_method === 'cash' ? 'Espèces' : 
+                      {selectedOrder.payment_method === 'cash' ? 'Espèces' :
                        selectedOrder.payment_method === 'mobile' ? 'Mobile Money' : 'Carte'}
                     </span>
                   </div>
@@ -494,7 +494,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                       <span className="font-medium">{item.total_price?.toLocaleString()} GNF</span>
                     </div>
                   ))}
-                  
+
                   <div className="pt-2 border-t flex justify-between font-bold text-lg">
                     <span>Total</span>
                     <span className="text-primary">{selectedOrder.total.toLocaleString()} GNF</span>

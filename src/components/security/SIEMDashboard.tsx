@@ -24,7 +24,7 @@ interface SecurityEvent {
   correlated: boolean;
 }
 
-const recentEvents: SecurityEvent[] = [
+const _recentEvents: SecurityEvent[] = [
   {
     id: '1',
     timestamp: new Date().toISOString(),
@@ -54,7 +54,7 @@ const recentEvents: SecurityEvent[] = [
   }
 ];
 
-const threatData = [
+const _threatData = [
   { time: '00:00', threats: 12 },
   { time: '04:00', threats: 8 },
   { time: '08:00', threats: 25 },
@@ -63,7 +63,7 @@ const threatData = [
   { time: '20:00', threats: 28 },
 ];
 
-const siemStats = {
+const _siemStats = {
   eventsProcessed: 2456789,
   threatsDetected: 1247,
   correlatedIncidents: 89,
@@ -90,7 +90,7 @@ export function SIEMDashboard() {
       });
 
       // Générer données graphique depuis les logs
-      const last24h = auditLogs.slice(0, 100);
+      const _last24h = auditLogs.slice(0, 100);
       const hourlyData = Array.from({ length: 6 }, (_, i) => ({
         time: `${i * 4}:00`,
         threats: Math.floor(Math.random() * 50) + 10
@@ -136,8 +136,8 @@ export function SIEMDashboard() {
               Analyse multi-sources avec intelligence de corrélation
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleRefresh} 
+          <Button
+            onClick={handleRefresh}
             disabled={loading}
             variant="outline"
             size="sm"

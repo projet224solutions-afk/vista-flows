@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Building2, Users, Car, AlertTriangle, DollarSign, 
+import {
+  Building2, Users, Car, AlertTriangle, DollarSign,
   Activity, RefreshCw, ExternalLink, MapPin, TrendingUp,
   Clock, Shield
 } from 'lucide-react';
@@ -43,7 +43,7 @@ interface BureauStats {
 }
 
 export default function PDGBureauMonitoring() {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [bureaus, setBureaus] = useState<BureauStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -120,7 +120,7 @@ export default function PDGBureauMonitoring() {
 
   useEffect(() => {
     fetchBureausWithStats();
-    
+
     // Rafraîchir toutes les 30 secondes
     const interval = setInterval(fetchBureausWithStats, 30000);
     return () => clearInterval(interval);
@@ -137,13 +137,13 @@ export default function PDGBureauMonitoring() {
       acc.activeSOS += b.stats.active_sos;
     }
     return acc;
-  }, { 
-    totalDrivers: 0, 
-    onlineDrivers: 0, 
-    onTripDrivers: 0, 
-    todayRides: 0, 
-    todayEarnings: 0, 
-    activeSOS: 0 
+  }, {
+    totalDrivers: 0,
+    onlineDrivers: 0,
+    onTripDrivers: 0,
+    todayRides: 0,
+    todayEarnings: 0,
+    activeSOS: 0
   });
 
   const openBureauMonitoring = (bureauId: string) => {
@@ -188,7 +188,7 @@ export default function PDGBureauMonitoring() {
             <div className="text-xs text-muted-foreground">Bureaux</div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="p-4 text-center">
             <Users className="w-6 h-6 mx-auto mb-2 text-green-500" />
@@ -196,7 +196,7 @@ export default function PDGBureauMonitoring() {
             <div className="text-xs text-muted-foreground">Chauffeurs Total</div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
           <CardContent className="p-4 text-center">
             <Activity className="w-6 h-6 mx-auto mb-2 text-emerald-500" />
@@ -204,7 +204,7 @@ export default function PDGBureauMonitoring() {
             <div className="text-xs text-muted-foreground">En Ligne</div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
           <CardContent className="p-4 text-center">
             <Car className="w-6 h-6 mx-auto mb-2 text-purple-500" />
@@ -212,7 +212,7 @@ export default function PDGBureauMonitoring() {
             <div className="text-xs text-muted-foreground">En Course</div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
           <CardContent className="p-4 text-center">
             <TrendingUp className="w-6 h-6 mx-auto mb-2 text-amber-500" />
@@ -220,7 +220,7 @@ export default function PDGBureauMonitoring() {
             <div className="text-xs text-muted-foreground">Courses Aujourd'hui</div>
           </CardContent>
         </Card>
-        
+
         <Card className={`bg-gradient-to-br ${globalStats.activeSOS > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/40 animate-pulse' : 'from-slate-500/10 to-slate-600/5 border-slate-500/20'}`}>
           <CardContent className="p-4 text-center">
             <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${globalStats.activeSOS > 0 ? 'text-red-500' : 'text-slate-400'}`} />
@@ -272,11 +272,11 @@ export default function PDGBureauMonitoring() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {bureaus.map(({ bureau, stats, loading: statLoading, error }) => (
-                  <Card 
-                    key={bureau.id} 
+                  <Card
+                    key={bureau.id}
                     className={`hover:shadow-lg transition-all cursor-pointer group ${
-                      stats?.active_sos && stats.active_sos > 0 
-                        ? 'border-red-500/50 bg-red-500/5' 
+                      stats?.active_sos && stats.active_sos > 0
+                        ? 'border-red-500/50 bg-red-500/5'
                         : 'hover:border-primary/50'
                     }`}
                     onClick={() => openBureauMonitoring(bureau.id)}
@@ -327,9 +327,9 @@ export default function PDGBureauMonitoring() {
                               {stats.active_sos} SOS
                             </Badge>
                           )}
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={(e) => {
                               e.stopPropagation();

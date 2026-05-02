@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Video, 
-  Mic, 
-  Play, 
-  Pause, 
-  Eye,
+import {
+  Video,
+  Mic,
+  Play,
+  Pause,
+  _Eye,
   Clock,
   User,
   Download,
@@ -97,7 +97,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
           console.log('📹 Nouveau média SOS reçu:', payload);
           const newMedia = payload.new as SOSMedia;
           setMediaList(prev => [newMedia, ...prev]);
-          
+
           // Notification sonore via Web Audio API (évite CSP)
           try {
             const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -111,10 +111,10 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.3);
-          } catch (e) {
+          } catch (_e) {
             // Ignorer si Web Audio non supporté
           }
-          
+
           toast.success(`🎥 Nouveau ${newMedia.media_type === 'video' ? 'vidéo' : 'audio'} reçu!`, {
             description: `De: ${newMedia.driver_name}`,
             action: {
@@ -129,6 +129,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sosAlertId]);
 
   const markAsViewed = async (media: SOSMedia) => {
@@ -143,8 +144,8 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
         })
         .eq('id', media.id);
 
-      setMediaList(prev => 
-        prev.map(m => 
+      setMediaList(prev =>
+        prev.map(m =>
           m.id === media.id ? { ...m, is_viewed: true, viewed_at: new Date().toISOString() } : m
         )
       );
@@ -281,8 +282,8 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
                   {/* Icône type */}
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center",
-                    media.media_type === 'video' 
-                      ? "bg-red-100 text-red-600" 
+                    media.media_type === 'video'
+                      ? "bg-red-100 text-red-600"
                       : "bg-orange-100 text-orange-600"
                   )}>
                     {media.media_type === 'video' ? (

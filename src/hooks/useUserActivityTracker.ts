@@ -188,73 +188,73 @@ export interface UserActivitySummary {
   customId: string | null;
   roleType: string | null;
   userId: string | null;
-  
+
   // Wallet & Finance
   wallet: WalletInfo | null;
   transactions: TransactionActivity[];
   totalTransactions: number;
   totalSpent: number;
   totalReceived: number;
-  
+
   // Transactions additionnelles
   financialTransactions: FinancialTransaction[];
   mobileMoneyPayments: any[];
   p2pTransactions: any[];
-  
+
   // Commerce
   orders: OrderActivity[];
   totalOrders: number;
   totalOrdersAmount: number;
-  
+
   // Security & Auth
   loginHistory: LoginActivity[];
   totalLogins: number;
   lastLogin: string | null;
-  
+
   // Audit Trail
   auditLogs: AuditActivity[];
   totalAuditEvents: number;
-  
+
   // Communication - CONTENU COMPLET
   messages: MessageActivity[];
   totalMessages: number;
   messagesSent: number;
   messagesReceived: number;
-  
+
   // Delivery & Rides
   deliveries: DeliveryActivity[];
   totalDeliveries: number;
   rides: RideActivity[];
   totalRides: number;
-  
+
   // Reviews
   reviewsGiven: ReviewActivity[];
   reviewsReceived: ReviewActivity[];
   totalReviews: number;
   averageRating: number;
-  
+
   // Favoris et Wishlists
   favorites: any[];
   wishlists: any[];
   totalFavorites: number;
   totalWishlists: number;
-  
+
   // Paniers
   carts: any[];
-  
+
   // Notifications
   notifications: any[];
   totalNotifications: number;
-  
+
   // Role-specific
   vendorInfo: VendorInfo | null;
   driverInfo: DriverInfo | null;
-  
+
   // Meta
   accountAge: number; // en jours
   registrationDate: string | null;
   lastActivity: string | null;
-  
+
   // Stats résumé
   activitySummary: ActivitySummary;
 }
@@ -294,60 +294,60 @@ export function useUserActivityTracker() {
         customId: data.customId,
         roleType: data.roleType,
         userId: data.userId,
-        
+
         wallet: data.wallet,
         transactions: data.transactions || [],
         totalTransactions: data.totalTransactions || 0,
         totalSpent: data.totalSpent || 0,
         totalReceived: data.totalReceived || 0,
-        
+
         financialTransactions: data.financialTransactions || [],
         mobileMoneyPayments: data.mobileMoneyPayments || [],
         p2pTransactions: data.p2pTransactions || [],
-        
+
         orders: data.orders || [],
         totalOrders: data.totalOrders || 0,
         totalOrdersAmount: data.totalOrdersAmount || 0,
-        
+
         loginHistory: data.loginHistory || [],
         totalLogins: data.totalLogins || 0,
         lastLogin: data.lastLogin,
-        
+
         auditLogs: data.auditLogs || [],
         totalAuditEvents: data.totalAuditEvents || 0,
-        
+
         messages: data.messages || [],
         totalMessages: data.totalMessages || 0,
         messagesSent: data.messagesSent || 0,
         messagesReceived: data.messagesReceived || 0,
-        
+
         deliveries: data.deliveries || [],
         totalDeliveries: data.totalDeliveries || 0,
         rides: data.rides || [],
         totalRides: data.totalRides || 0,
-        
+
         reviewsGiven: data.reviewsGiven || [],
         reviewsReceived: data.reviewsReceived || [],
         totalReviews: data.totalReviews || 0,
         averageRating: data.averageRating || 0,
-        
+
         favorites: data.favorites || [],
         wishlists: data.wishlists || [],
         totalFavorites: data.totalFavorites || 0,
         totalWishlists: data.totalWishlists || 0,
-        
+
         carts: data.carts || [],
-        
+
         notifications: data.notifications || [],
         totalNotifications: data.totalNotifications || 0,
-        
+
         vendorInfo: data.vendorInfo,
         driverInfo: data.driverInfo,
-        
+
         accountAge: data.accountAge || 0,
         registrationDate: data.registrationDate,
         lastActivity: data.lastActivity,
-        
+
         activitySummary: data.activitySummary || {
           totalTransactions: 0,
           totalOrders: 0,
@@ -389,7 +389,7 @@ export function useUserActivityTracker() {
     const dataStr = JSON.stringify(activityData, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `activite_complete_${activityData.customId}_${new Date().toISOString().split('T')[0]}.json`;

@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useSubscriptionFeatures, SubscriptionFeature, FEATURE_MIN_PLAN } from '@/hooks/useSubscriptionFeatures';
 import { Button } from '@/components/ui/button';
-import { Lock, Crown, Zap, Check } from 'lucide-react';
+import { Lock, Crown, _Zap, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -35,7 +35,7 @@ const PLAN_COLORS: Record<string, string> = {
   'premium': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
 };
 
-const PLAN_DESCRIPTIONS: Record<string, string> = {
+const _PLAN_DESCRIPTIONS: Record<string, string> = {
   'free': "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
   'basic': "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
   'pro': "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
@@ -74,11 +74,11 @@ const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
   ],
 };
 
-export function FeatureGuard({ 
-  feature, 
-  children, 
+export function FeatureGuard({
+  feature,
+  children,
   fallback,
-  showUpgradePrompt = true 
+  showUpgradePrompt = true
 }: FeatureGuardProps) {
   const { canAccessFeature, loading, getPlanName, isActive } = useSubscriptionFeatures();
   const [showDialog, setShowDialog] = useState(false);
@@ -129,7 +129,7 @@ export function FeatureGuard({
               <div>
                 <h3 className="text-lg font-semibold">Fonctionnalité Premium</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {!isActive() 
+                  {!isActive()
                     ? "Votre abonnement est expiré ou inactif."
                     : <>Requiert le plan <Badge className={PLAN_COLORS[minPlan]}>{minPlanDisplay}</Badge> ou supérieur</>
                   }
@@ -169,7 +169,7 @@ export function FeatureGuard({
                 )}
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="py-4 space-y-4">
               {/* Plan actuel */}
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -200,7 +200,7 @@ export function FeatureGuard({
               <Button variant="outline" onClick={() => setShowDialog(false)} className="flex-1">
                 Plus tard
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubscribe}
                 className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
               >
@@ -212,8 +212,8 @@ export function FeatureGuard({
         </Dialog>
 
         {/* Sélecteur de plan intégré */}
-        <VendorSubscriptionPlanSelector 
-          open={showPlanSelector} 
+        <VendorSubscriptionPlanSelector
+          open={showPlanSelector}
           onOpenChange={setShowPlanSelector}
           onSuccess={handleSubscriptionSuccess}
         />
@@ -235,10 +235,10 @@ interface FeatureButtonProps {
   disabled?: boolean;
 }
 
-export function FeatureButton({ 
-  feature, 
-  onClick, 
-  children, 
+export function FeatureButton({
+  feature,
+  onClick,
+  children,
   className,
   variant = 'default',
   size = 'default',
@@ -290,13 +290,13 @@ export function FeatureButton({
               Fonctionnalité Premium
             </DialogTitle>
             <DialogDescription>
-              {!isActive() 
+              {!isActive()
                 ? "Votre abonnement est expiré ou inactif. Veuillez le renouveler pour accéder à cette fonctionnalité."
                 : `Cette fonctionnalité n'est pas disponible avec votre plan actuel: ${getPlanName()}`
               }
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
               Passez à un plan supérieur pour accéder à cette fonctionnalité et bien d'autres avantages.
@@ -314,8 +314,8 @@ export function FeatureButton({
         </DialogContent>
       </Dialog>
 
-      <VendorSubscriptionPlanSelector 
-        open={showPlanSelector} 
+      <VendorSubscriptionPlanSelector
+        open={showPlanSelector}
         onOpenChange={setShowPlanSelector}
         onSuccess={handleSubscriptionSuccess}
       />

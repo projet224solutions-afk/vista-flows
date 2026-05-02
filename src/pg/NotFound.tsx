@@ -15,10 +15,10 @@ const NotFound = () => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  // D├®terminer la page d'accueil selon le r├┤le
+  // Déterminer la page d'accueil selon le rôle
   const getHomePath = () => {
     if (!user || !profile?.role) return "/";
-    
+
     switch (profile.role) {
       case "vendeur":
         return "/vendeur/dashboard";
@@ -87,11 +87,11 @@ const NotFound = () => {
             </CardDescription>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="text-center space-y-3">
             <p className="text-muted-foreground">
-              La page que vous recherchez n'existe pas ou a ├®t├® d├®plac├®e.
+              La page que vous recherchez n'existe pas ou a été déplacée.
             </p>
             <div className="bg-muted/50 rounded-lg p-4 text-sm">
               <p className="font-mono text-muted-foreground break-all">
@@ -101,30 +101,30 @@ const NotFound = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button 
+            <Button
               onClick={() => navigate(getHomePath())}
               className="flex-1 h-12 text-base shadow-lg"
               size="lg"
             >
               <Home className="w-5 h-5 mr-2" />
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={() => navigate(-1)}
-              variant="outline" 
+              variant="outline"
               className="flex-1 h-12 text-base"
               size="lg"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Page pr├®c├®dente
+              Page précédente
             </Button>
           </div>
 
           {user && (
             <div className="pt-4 border-t border-border/50">
               <p className="text-sm text-muted-foreground text-center">
-                Connect├® en tant que{" "}
+                Connecté en tant que{" "}
                 <span className="font-semibold text-foreground">
                   {profile?.first_name} {profile?.last_name}
                 </span>

@@ -29,7 +29,7 @@ export function VendorSubscriptionInfo() {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: fr });
-    } catch (error) {
+    } catch (_error) {
       return "Date invalide";
     }
   };
@@ -40,7 +40,7 @@ export function VendorSubscriptionInfo() {
     try {
       setCancelling(true);
       const success = await SubscriptionService.cancelSubscription(subscription.id);
-      
+
       if (success) {
         toast.success("Abonnement annulé avec succès", {
           description: "Votre abonnement restera actif jusqu'à la date de fin prévue."
@@ -94,8 +94,8 @@ export function VendorSubscriptionInfo() {
             </Button>
           </div>
         </CardContent>
-        <VendorSubscriptionPlanSelector 
-          open={showPlanSelector} 
+        <VendorSubscriptionPlanSelector
+          open={showPlanSelector}
           onOpenChange={setShowPlanSelector}
           onSuccess={refresh}
         />
@@ -106,7 +106,7 @@ export function VendorSubscriptionInfo() {
   const isActive = subscription.status === 'active';
   const isExpired = subscription.status === 'expired';
   const isCancelled = subscription.status === 'cancelled';
-  const daysRemaining = subscription.current_period_end 
+  const daysRemaining = subscription.current_period_end
     ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0;
 
@@ -123,7 +123,7 @@ export function VendorSubscriptionInfo() {
           {/* Statut de l'abonnement */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Statut</span>
-            <Badge 
+            <Badge
               variant={isActive ? "default" : isExpired ? "destructive" : "secondary"}
               className="gap-1"
             >
@@ -161,8 +161,8 @@ export function VendorSubscriptionInfo() {
           {/* Compteur de jours restants */}
           {daysRemaining > 0 && (
             <div className={`p-4 rounded-lg border ${
-              daysRemaining <= 7 
-                ? 'bg-orange-50 border-orange-200' 
+              daysRemaining <= 7
+                ? 'bg-orange-50 border-orange-200'
                 : 'bg-blue-50 border-blue-200'
             }`}>
               <div className="flex items-center justify-center gap-2">
@@ -211,17 +211,17 @@ export function VendorSubscriptionInfo() {
 
           {/* Boutons d'action */}
           <div className="flex gap-2 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={() => setShowPlanSelector(true)}
             >
               🟩 Choisir un plan
             </Button>
-            
+
             {isActive && !isCancelled && (
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 className="flex-1"
                 onClick={() => setShowCancelDialog(true)}
               >
@@ -233,8 +233,8 @@ export function VendorSubscriptionInfo() {
       </Card>
 
       {/* Dialog de sélection de plan */}
-      <VendorSubscriptionPlanSelector 
-        open={showPlanSelector} 
+      <VendorSubscriptionPlanSelector
+        open={showPlanSelector}
         onOpenChange={setShowPlanSelector}
         onSuccess={refresh}
       />
@@ -245,11 +245,11 @@ export function VendorSubscriptionInfo() {
           <AlertDialogHeader>
             <AlertDialogTitle>Annuler l'abonnement ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Voulez-vous vraiment annuler votre abonnement ? Cette action n'arrête pas immédiatement vos accès 
+              Voulez-vous vraiment annuler votre abonnement ? Cette action n'arrête pas immédiatement vos accès
               mais bloque le renouvellement automatique. Votre abonnement restera actif jusqu'au{" "}
               <strong>{subscription.current_period_end ? formatDate(subscription.current_period_end) : 'N/A'}</strong>.
               <br /><br />
-              <strong className="text-destructive">Attention :</strong> Cette action est irréversible. 
+              <strong className="text-destructive">Attention :</strong> Cette action est irréversible.
               Vous ne pourrez pas reprendre cet abonnement, seulement racheter un nouveau plan.
             </AlertDialogDescription>
           </AlertDialogHeader>

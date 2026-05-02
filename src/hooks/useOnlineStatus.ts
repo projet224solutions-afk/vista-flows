@@ -19,6 +19,7 @@ interface OnlineStatus {
 const HEALTH_TIMEOUT_MS = 4500;
 const OFFLINE_CONFIRMATION_FAILURES = 2;
 const OFFLINE_RECOVERY_POLL_MS = 15000;
+const OFFLINE_EVENT_GRACE_MS = 1500;
 
 export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState<boolean>(
@@ -34,15 +35,25 @@ export function useOnlineStatus(): OnlineStatus {
 
   const offlineStartRef = useRef<Date | null>(isOnline ? null : new Date());
   const consecutiveFailuresRef = useRef(0);
+  const pendingOfflineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPendingOfflineTimer = useCallback(() => {
+    if (pendingOfflineTimerRef.current) {
+      clearTimeout(pendingOfflineTimerRef.current);
+      pendingOfflineTimerRef.current = null;
+    }
+  }, []);
 
   const markOffline = useCallback((reason: string) => {
+    clearPendingOfflineTimer();
     if (!offlineStartRef.current) offlineStartRef.current = new Date();
     setIsOnline(false);
     setConnectivity('offline');
     setLastError(reason);
-  }, []);
+  }, [clearPendingOfflineTimer]);
 
   const markOnline = useCallback((nextConnectivity: 'online' | 'degraded', reason?: string) => {
+    clearPendingOfflineTimer();
     const now = new Date();
     if (offlineStartRef.current) {
       setOfflineDuration(Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000));
@@ -54,16 +65,10 @@ export function useOnlineStatus(): OnlineStatus {
     setLastOnline(now);
     setLastError(nextConnectivity === 'degraded' ? reason || 'degraded' : null);
     consecutiveFailuresRef.current = 0;
-  }, []);
+  }, [clearPendingOfflineTimer]);
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      consecutiveFailuresRef.current = OFFLINE_CONFIRMATION_FAILURES;
-      markOffline('navigator_offline');
-      return false;
-    }
-
-    // Don't force by default: shared cache deduplicates all calls
+    // Probe real reachability instead of trusting navigator.onLine alone.
     const result = await checkNetworkHealth({ timeoutMs: HEALTH_TIMEOUT_MS, retries: 1, force: !isOnline });
     if (result.connectivity !== 'offline') {
       markOnline(result.connectivity, result.reason);
@@ -89,8 +94,17 @@ export function useOnlineStatus(): OnlineStatus {
   useEffect(() => {
     const handleOnline = () => void checkConnection();
     const handleOffline = () => {
-      consecutiveFailuresRef.current = OFFLINE_CONFIRMATION_FAILURES;
-      markOffline('browser_offline_event');
+      clearPendingOfflineTimer();
+      pendingOfflineTimerRef.current = setTimeout(() => {
+        pendingOfflineTimerRef.current = null;
+        if (!navigator.onLine) {
+          consecutiveFailuresRef.current = OFFLINE_CONFIRMATION_FAILURES;
+          markOffline('browser_offline_event');
+          return;
+        }
+
+        void checkConnection();
+      }, OFFLINE_EVENT_GRACE_MS);
     };
 
     window.addEventListener('online', handleOnline);
@@ -108,9 +122,10 @@ export function useOnlineStatus(): OnlineStatus {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearPendingOfflineTimer();
       if (interval) clearInterval(interval);
     };
-  }, [checkConnection, isOnline, markOffline]);
+  }, [checkConnection, clearPendingOfflineTimer, isOnline, markOffline]);
 
   useEffect(() => {
     if (wasOffline) {

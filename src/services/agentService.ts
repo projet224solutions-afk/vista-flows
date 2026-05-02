@@ -152,10 +152,10 @@ export class AgentService {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       // Récupérer tous les agents (y compris les sous-agents)
       const allAgents = (data || []) as AgentManagement[];
-      
+
       // Pour chaque agent, compter les utilisateurs créés (incluant ceux des sous-agents)
       const agentsWithStats = await Promise.all(
         allAgents.map(async (agent) => {
@@ -163,19 +163,19 @@ export class AgentService {
           const subAgentIds = allAgents
             .filter(a => a.parent_agent_id === agent.id)
             .map(a => a.id);
-          
+
           const agentIds = [agent.id, ...subAgentIds];
-          
+
           // Compter les utilisateurs créés par l'agent et ses sous-agents
           const { count, error: countError } = await supabase
             .from('agent_created_users')
             .select('*', { count: 'exact', head: true })
             .in('agent_id', agentIds);
-          
+
           if (countError) {
             console.error(`Erreur comptage utilisateurs pour agent ${agent.id}:`, countError);
           }
-          
+
           return {
             ...agent,
             total_users_created: count || 0,
@@ -183,7 +183,7 @@ export class AgentService {
           };
         })
       );
-      
+
       return agentsWithStats;
     } catch (error) {
       console.error('❌ Erreur récupération agents:', error);
@@ -214,7 +214,7 @@ export class AgentService {
         }
 
         // Si d'autres champs à mettre à jour (sans l'email)
-        const { email, ...otherUpdates } = updates;
+        const { _email, ...otherUpdates } = updates;
         if (Object.keys(otherUpdates).length > 0) {
           const { error: dbError } = await supabase
             .from('agents_management')
@@ -285,15 +285,15 @@ export class AgentService {
   }
 
   // Méthodes additionnelles pour compatibilité
-  async getSubAgentsByAgent(agentId: string): Promise<SubAgentManagement[]> {
+  async getSubAgentsByAgent(_agentId: string): Promise<SubAgentManagement[]> {
     return [];
   }
 
-  async getUsersByCreator(creatorId: string): Promise<AgentCreatedUser[]> {
+  async getUsersByCreator(_creatorId: string): Promise<AgentCreatedUser[]> {
     return [];
   }
 
-  async getCommissionsByRecipient(recipientId: string): Promise<AgentCommission[]> {
+  async getCommissionsByRecipient(_recipientId: string): Promise<AgentCommission[]> {
     return [];
   }
 
@@ -301,17 +301,17 @@ export class AgentService {
     return { rate: 0, type: 'percentage' };
   }
 
-  async updateCommissionSetting(settings: Partial<CommissionSettings>): Promise<void> {}
-  
-  async processTransaction(data: unknown): Promise<void> {}
-  
-  async createUserByAgent(agentId: string, userData: unknown): Promise<AgentCreatedUser | null> {
+  async updateCommissionSetting(_settings: Partial<CommissionSettings>): Promise<void> {}
+
+  async processTransaction(_data: unknown): Promise<void> {}
+
+  async createUserByAgent(_agentId: string, _userData: unknown): Promise<AgentCreatedUser | null> {
     return null;
   }
 
-  async activateUser(userId: string): Promise<void> {}
-  
-  async createSubAgent(data: unknown): Promise<SubAgentManagement> {
+  async activateUser(_userId: string): Promise<void> {}
+
+  async createSubAgent(_data: unknown): Promise<SubAgentManagement> {
     throw new Error('Not implemented');
   }
 }

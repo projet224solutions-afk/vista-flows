@@ -50,7 +50,7 @@ export function useEscrowTransactions() {
   const loadTransactions = async () => {
     try {
       setLoading(true);
-      
+
       // Charger les transactions escrow
       const { data: escrowData, error: escrowError } = await supabase
         .from('escrow_transactions')
@@ -58,7 +58,7 @@ export function useEscrowTransactions() {
         .order('created_at', { ascending: false});
 
       if (escrowError) throw escrowError;
-      
+
       // Charger les informations des vendeurs et commandes pour chaque transaction
       const enrichedData = await Promise.all((escrowData || []).map(async (transaction) => {
         // Charger les infos du vendeur
@@ -67,21 +67,21 @@ export function useEscrowTransactions() {
           .select('id, business_name, user_id')
           .eq('id', transaction.receiver_id)
           .maybeSingle();
-        
+
         // Charger les infos de la commande
         const { data: orderData } = await supabase
           .from('orders')
           .select('id, order_number')
           .eq('id', transaction.order_id)
           .maybeSingle();
-        
+
         return {
           ...transaction,
           receiver: vendorData || undefined,
           order: orderData || undefined
         };
       }));
-      
+
       setTransactions(enrichedData as EscrowTransaction[]);
       setError(null);
     } catch (err: any) {

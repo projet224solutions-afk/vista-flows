@@ -8,11 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useVirtualCard } from '@/hooks/useVirtualCard';
 import { toast } from 'sonner';
-import { 
-  CreditCard, 
-  Eye, 
-  EyeOff, 
-  Copy, 
+import {
+  CreditCard,
+  Eye,
+  EyeOff,
+  Copy,
   Plus,
   Wifi,
   Lock,
@@ -66,6 +66,7 @@ export const ProfessionalVirtualCard = () => {
 
   useEffect(() => {
     if (user) loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadData = async () => {
@@ -78,7 +79,7 @@ export const ProfessionalVirtualCard = () => {
       ]);
       setWallet(walletRes.data);
       setCard(cardRes.data);
-      
+
       // Charger les stats si la carte existe
       if (cardRes.data?.id) {
         await loadStats(cardRes.data.id);
@@ -100,7 +101,7 @@ export const ProfessionalVirtualCard = () => {
       const cardNumber = '5245' + Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
       const cvv = Math.floor(Math.random() * 900 + 100).toString();
       const expiry = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000);
-      const holderName = profile?.first_name && profile?.last_name 
+      const holderName = profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`.toUpperCase()
         : 'UTILISATEUR 224PAY';
 
@@ -162,8 +163,8 @@ export const ProfessionalVirtualCard = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant={card ? "default" : "outline"} 
+        <Button
+          variant={card ? "default" : "outline"}
           className={cn(
             "gap-2 transition-all",
             card && "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
@@ -195,7 +196,7 @@ export const ProfessionalVirtualCard = () => {
           {card ? (
             <div className="space-y-4">
               {/* Card Visual */}
-              <div 
+              <div
                 className="relative cursor-pointer perspective-1000"
                 onClick={() => setIsFlipped(!isFlipped)}
               >
@@ -300,7 +301,7 @@ export const ProfessionalVirtualCard = () => {
                     <div className="w-full h-full rounded-2xl bg-gradient-to-br from-slate-700 via-slate-600 to-slate-700 flex flex-col shadow-2xl overflow-hidden">
                       {/* Magnetic Strip */}
                       <div className="w-full h-12 bg-slate-900 mt-6" />
-                      
+
                       {/* Signature & CVV */}
                       <div className="flex-1 p-6 flex flex-col justify-center">
                         <div className="flex items-center gap-4">
@@ -314,7 +315,7 @@ export const ProfessionalVirtualCard = () => {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="mt-4 text-center">
                           <p className="text-white/60 text-xs">
                             Cette carte est la propriété de 224PAY. En cas de perte, veuillez la retourner.
@@ -333,7 +334,7 @@ export const ProfessionalVirtualCard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="text-center text-white/40 text-xs mt-2">
                   Cliquez pour retourner la carte
                 </p>
@@ -372,10 +373,10 @@ export const ProfessionalVirtualCard = () => {
                       {(stats?.daily_spent || card.daily_spent || 0).toLocaleString('fr-FR')} GNF
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-violet-500"
-                        style={{ 
-                          width: `${Math.min(100, ((stats?.daily_spent || 0) / (card.daily_limit || 1)) * 100)}%` 
+                        style={{
+                          width: `${Math.min(100, ((stats?.daily_spent || 0) / (card.daily_limit || 1)) * 100)}%`
                         }}
                       />
                     </div>
@@ -391,10 +392,10 @@ export const ProfessionalVirtualCard = () => {
                       {(stats?.monthly_spent || card.monthly_spent || 0).toLocaleString('fr-FR')} GNF
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-indigo-500"
-                        style={{ 
-                          width: `${Math.min(100, ((stats?.monthly_spent || 0) / (card.monthly_limit || 1)) * 100)}%` 
+                        style={{
+                          width: `${Math.min(100, ((stats?.monthly_spent || 0) / (card.monthly_limit || 1)) * 100)}%`
                         }}
                       />
                     </div>
@@ -450,11 +451,11 @@ export const ProfessionalVirtualCard = () => {
                     Infos
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="card" className="mt-4">
                   <CardTransactionsHistory cardId={card.id} />
                 </TabsContent>
-                
+
                 <TabsContent value="stats" className="mt-4">
                   <Card className="bg-white/5 border-white/10">
                     <CardContent className="p-4 space-y-3">
@@ -473,10 +474,10 @@ export const ProfessionalVirtualCard = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Statut</span>
                         <Badge className={cn(
-                          card.status === 'active' ? 'bg-emerald-500' : 
+                          card.status === 'active' ? 'bg-emerald-500' :
                           card.status === 'frozen' ? 'bg-blue-500' : 'bg-red-500'
                         )}>
-                          {card.status === 'active' ? 'Active' : 
+                          {card.status === 'active' ? 'Active' :
                            card.status === 'frozen' ? 'Gelée' : 'Bloquée'}
                         </Badge>
                       </div>

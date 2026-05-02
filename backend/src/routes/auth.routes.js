@@ -15,7 +15,7 @@ const router = express.Router();
  */
 router.get('/google', (req, res) => {
   logger.info('Google OAuth flow initiated');
-  
+
   // TODO: Implémenter Google OAuth
   res.status(501).json({
     success: false,
@@ -30,7 +30,7 @@ router.get('/google', (req, res) => {
  */
 router.get('/google/callback', (req, res) => {
   logger.info('Google OAuth callback received');
-  
+
   // TODO: Implémenter callback
   res.redirect('/auth/google/success');
 });

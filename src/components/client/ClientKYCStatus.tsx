@@ -16,10 +16,10 @@ interface ClientKYCStatusProps {
   showIcon?: boolean;
 }
 
-export function ClientKYCStatus({ 
-  kyc_status = 'incomplete', 
+export function ClientKYCStatus({
+  kyc_status = 'incomplete',
   className = '',
-  showIcon = true 
+  showIcon = true
 }: ClientKYCStatusProps) {
   const status = kyc_status || 'incomplete';
 
@@ -58,7 +58,7 @@ export function ClientKYCStatus({
   const config = statusConfig[status];
 
   return (
-    <Badge 
+    <Badge
       variant={config.variant}
       className={`${config.className} ${className}`}
     >
@@ -69,9 +69,9 @@ export function ClientKYCStatus({
 }
 
 // Variante compacte pour les espaces réduits
-export function ClientKYCStatusCompact({ 
-  kyc_status = 'incomplete', 
-  className = '' 
+export function ClientKYCStatusCompact({
+  kyc_status = 'incomplete',
+  className = ''
 }: ClientKYCStatusProps) {
   const status = kyc_status || 'incomplete';
 

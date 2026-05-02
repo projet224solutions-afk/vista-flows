@@ -46,8 +46,8 @@ const generateTOTPSecret = (): string => {
 const generateBackupCodes = (count: number = 10): string[] => {
   const codes: string[] = [];
   for (let i = 0; i < count; i++) {
-    const code = Math.random().toString(36).substring(2, 6).toUpperCase() + 
-                 '-' + 
+    const code = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                 '-' +
                  Math.random().toString(36).substring(2, 6).toUpperCase();
     codes.push(code);
   }
@@ -59,18 +59,18 @@ const calculateTOTP = (secret: string): string => {
   const epoch = Math.floor(Date.now() / 1000);
   const timeStep = 30;
   const counter = Math.floor(epoch / timeStep);
-  
+
   // Simplified TOTP - using Utf8 encoding since CryptoJS doesn't have native Base32
   // In production, consider using a proper TOTP library like otpauth
   const hmac = CryptoJS.HmacSHA1(
     CryptoJS.enc.Hex.parse(counter.toString(16).padStart(16, '0')),
     CryptoJS.enc.Utf8.parse(secret)
   );
-  
+
   const offset = hmac.words[hmac.words.length - 1] & 0xf;
   const binary = ((hmac.words[Math.floor(offset / 4)] >>> ((3 - (offset % 4)) * 8)) & 0x7fffffff);
   const otp = binary % 1000000;
-  
+
   return otp.toString().padStart(6, '0');
 };
 
@@ -86,7 +86,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
   const loadSettings = useCallback(async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -94,11 +94,11 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
-      
+
       if (data) {
         setSettings({
           isEnabled: data.is_enabled || false,
@@ -132,22 +132,22 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
       toast.error('Utilisateur non connecté');
       return;
     }
-    
+
     setGenerating(true);
     try {
       const secret = generateTOTPSecret();
       const codes = generateBackupCodes(10);
-      
+
       // Créer l'URL pour QR code
       const issuer = '224Solutions';
       const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
-      
+
       // Chiffrer le secret et les codes
       const encryptionKey = user.id.slice(0, 32);
       const iv = CryptoJS.lib.WordArray.random(16);
       const encryptedSecret = CryptoJS.AES.encrypt(secret, encryptionKey, { iv }).toString();
       const encryptedCodes = CryptoJS.AES.encrypt(JSON.stringify(codes), encryptionKey, { iv }).toString();
-      
+
       // Sauvegarder temporairement (non activé)
       const { error } = await supabase
         .from('user_2fa_settings')
@@ -161,13 +161,13 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           preferred_method: 'totp',
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
-      
+
       if (error) throw error;
-      
+
       setSecretKey(secret);
       setQrCodeUrl(otpauthUrl);
       setBackupCodes(codes);
-      
+
       toast.success('Secret 2FA généré. Scannez le QR code avec votre application.');
     } catch (error) {
       console.error('Erreur génération 2FA:', error);
@@ -182,13 +182,13 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
       toast.error('Configuration incomplète');
       return false;
     }
-    
+
     setVerifying(true);
     try {
       // Vérifier le code
       const expectedCode = calculateTOTP(secretKey);
       const isValid = code === expectedCode;
-      
+
       // Log de la tentative
       await supabase
         .from('totp_verification_attempts')
@@ -197,12 +197,12 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           success: isValid,
           failure_reason: isValid ? null : 'Code invalide'
         });
-      
+
       if (!isValid) {
         toast.error('Code incorrect. Veuillez réessayer.');
         return false;
       }
-      
+
       // Activer la 2FA
       const { error } = await supabase
         .from('user_2fa_settings')
@@ -212,9 +212,9 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       await loadSettings();
       toast.success('🔐 Authentification à deux facteurs activée !');
       return true;
@@ -229,7 +229,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
   const verifyCode = useCallback(async (code: string): Promise<boolean> => {
     if (!user?.id) return false;
-    
+
     setVerifying(true);
     try {
       // Récupérer le secret chiffré
@@ -238,12 +238,12 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
         .select('totp_secret_encrypted, totp_secret_iv')
         .eq('user_id', user.id)
         .single();
-      
+
       if (error || !data) {
         toast.error('2FA non configurée');
         return false;
       }
-      
+
       // Déchiffrer
       const encryptionKey = user.id.slice(0, 32);
       const decrypted = CryptoJS.AES.decrypt(
@@ -251,11 +251,11 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
         encryptionKey,
         { iv: CryptoJS.enc.Hex.parse(data.totp_secret_iv) }
       ).toString(CryptoJS.enc.Utf8);
-      
+
       // Vérifier
       const expectedCode = calculateTOTP(decrypted);
       const isValid = code === expectedCode;
-      
+
       // Log
       await supabase
         .from('totp_verification_attempts')
@@ -264,14 +264,14 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           success: isValid,
           failure_reason: isValid ? null : 'Code invalide'
         });
-      
+
       if (isValid) {
         await supabase
           .from('user_2fa_settings')
           .update({ last_used_at: new Date().toISOString() })
           .eq('user_id', user.id);
       }
-      
+
       return isValid;
     } catch (error) {
       console.error('Erreur vérification:', error);
@@ -283,13 +283,13 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
   const disable2FA = useCallback(async (code: string): Promise<boolean> => {
     if (!user?.id) return false;
-    
+
     const isValid = await verifyCode(code);
     if (!isValid) {
       toast.error('Code invalide');
       return false;
     }
-    
+
     try {
       const { error } = await supabase
         .from('user_2fa_settings')
@@ -302,14 +302,14 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       await loadSettings();
       setSecretKey(null);
       setQrCodeUrl(null);
       setBackupCodes(null);
-      
+
       toast.success('2FA désactivée');
       return true;
     } catch (error) {
@@ -321,13 +321,13 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
   const regenerateBackupCodes = useCallback(async (): Promise<string[] | null> => {
     if (!user?.id) return null;
-    
+
     try {
       const codes = generateBackupCodes(10);
       const encryptionKey = user.id.slice(0, 32);
       const iv = CryptoJS.lib.WordArray.random(16);
       const encrypted = CryptoJS.AES.encrypt(JSON.stringify(codes), encryptionKey, { iv }).toString();
-      
+
       const { error } = await supabase
         .from('user_2fa_settings')
         .update({
@@ -336,9 +336,9 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
-      
+
       if (error) throw error;
-      
+
       setBackupCodes(codes);
       toast.success('Nouveaux codes de récupération générés');
       return codes;

@@ -26,11 +26,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { 
-  ShoppingCart, 
-  Clock, 
-  CalendarDays, 
-  Calendar, 
+import {
+  ShoppingCart,
+  Clock,
+  CalendarDays,
+  Calendar,
   CalendarRange,
   CheckCircle,
   TrendingUp,
@@ -165,7 +165,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
 
   const handleDeletePurchase = async () => {
     if (!deletePurchase) return;
-    
+
     setIsDeleting(true);
     try {
       // Supprimer les items d'abord
@@ -222,7 +222,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
             {/* Tabs de période */}
             <Tabs value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
               <TabsList className="grid grid-cols-5 w-full">
-                {Object.entries(periodConfig).map(([key, { label, icon: Icon }]) => (
+                {Object.entries(periodConfig).map(([key, { _label, icon: Icon }]) => (
                   <TabsTrigger key={key} value={key} className="text-xs px-2">
                     <Icon className="h-3 w-3 mr-1 hidden sm:inline" />
                     {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'Année' : 'Tout'}

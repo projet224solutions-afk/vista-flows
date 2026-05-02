@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -76,7 +76,7 @@ export default function ProfessionalMessaging() {
   const { user, profile } = useAuth();
   const { endCall } = useAgora();
   const { userLanguage } = useAutoTranslation({ autoTranslate: true });
-  
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -91,7 +91,7 @@ export default function ProfessionalMessaging() {
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'audio' | 'video'>('audio');
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -123,7 +123,7 @@ export default function ProfessionalMessaging() {
 
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       const { data: participantsData, error } = await supabase
         .from('conversation_participants')
@@ -139,7 +139,7 @@ export default function ProfessionalMessaging() {
       const convs: Conversation[] = await Promise.all(
         (participantsData || []).map(async (p: any) => {
           const conv = p.conversations;
-          
+
           const { data: otherParticipant } = await supabase
             .from('conversation_participants')
             .select(`user_id, profiles!inner(first_name, last_name, avatar_url)`)
@@ -148,7 +148,7 @@ export default function ProfessionalMessaging() {
             .maybeSingle();
 
           const otherProfile = otherParticipant?.profiles as any;
-          
+
           // ✅ Calculer le nombre réel de messages non lus
           const { count: unreadCount } = await supabase
             .from('messages')
@@ -156,11 +156,11 @@ export default function ProfessionalMessaging() {
             .eq('conversation_id', conv.id)
             .neq('sender_id', user.id)
             .is('read_at', null);
-          
+
           return {
             id: conv.id,
-            name: conv.name || (otherProfile 
-              ? `${otherProfile.first_name} ${otherProfile.last_name}` 
+            name: conv.name || (otherProfile
+              ? `${otherProfile.first_name} ${otherProfile.last_name}`
               : 'Conversation'),
             avatar: otherProfile?.avatar_url,
             lastMessage: conv.last_message || '',
@@ -182,7 +182,7 @@ export default function ProfessionalMessaging() {
 
   const loadMessages = useCallback(async (conversationId: string) => {
     if (!user?.id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -509,7 +509,7 @@ export default function ProfessionalMessaging() {
               <Plus className="w-5 h-5" />
             </Button>
           </div>
-          
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -520,7 +520,7 @@ export default function ProfessionalMessaging() {
             />
           </div>
         </div>
-        
+
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
             {isLoading ? (
@@ -554,7 +554,7 @@ export default function ProfessionalMessaging() {
                       <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
                     )}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
@@ -581,7 +581,7 @@ export default function ProfessionalMessaging() {
           </div>
         </ScrollArea>
       </div>
-      
+
       {/* Zone de chat */}
       <div className={cn(
         "flex-1 flex flex-col bg-background",
@@ -593,19 +593,19 @@ export default function ProfessionalMessaging() {
               <Button variant="ghost" size="icon" onClick={() => setShowMobileChat(false)} className="md:hidden h-9 w-9">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              
+
               <Avatar className="w-10 h-10">
                 <AvatarImage src={activeConversation.avatar} />
                 <AvatarFallback className="bg-primary/10 text-primary">
                   {activeConversation.name?.charAt(0)?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{activeConversation.name}</h2>
                 {activeConversation.isOnline && <p className="text-xs text-green-500">En ligne</p>}
               </div>
-              
+
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" onClick={() => handleStartCall('audio')} className="h-9 w-9">
                   <Phone className="w-4 h-4" />
@@ -618,7 +618,7 @@ export default function ProfessionalMessaging() {
                 </Button>
               </div>
             </div>
-            
+
             <ScrollArea className="flex-1 p-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -650,7 +650,7 @@ export default function ProfessionalMessaging() {
                             <AvatarFallback className="text-xs">{msg.sender_name?.charAt(0) || '?'}</AvatarFallback>
                           </Avatar>
                         )}
-                        
+
                         <div className={cn(
                           "max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm min-w-0",
                           msg.isOwn ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
@@ -659,7 +659,7 @@ export default function ProfessionalMessaging() {
                             <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                           )}
                           {msg.type === 'file' && msg.file_url && (
-                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
+                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-2 text-sm underline mb-2">
                               <Paperclip className="w-4 h-4" />
                               {msg.file_name || 'Fichier'}
@@ -690,7 +690,7 @@ export default function ProfessionalMessaging() {
                 </>
               )}
             </ScrollArea>
-            
+
             <div className="p-3 border-t border-border bg-card">
               {selectedFile && (
                 <div className="flex items-center gap-2 mb-2 p-2 bg-muted rounded-lg">
@@ -701,13 +701,13 @@ export default function ProfessionalMessaging() {
                   </Button>
                 </div>
               )}
-              
+
               <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex items-center gap-2">
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,.pdf,.doc,.docx" />
                 <Button type="button" variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-10 w-10 flex-shrink-0">
                   <Paperclip className="w-5 h-5" />
                 </Button>
-                
+
                 <Input
                   ref={inputRef}
                   value={newMessage}
@@ -716,7 +716,7 @@ export default function ProfessionalMessaging() {
                   className="flex-1 bg-muted/50 border-0"
                   disabled={isSending}
                 />
-                
+
                 <Button type="submit" size="icon" disabled={(!newMessage.trim() && !selectedFile) || isSending} className="h-10 w-10 flex-shrink-0 rounded-full">
                   {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </Button>

@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Phone, Map, Navigation, CheckCircle, ExternalLink, MapPin, Video } from 'lucide-react';
+import { AlertTriangle, Phone, Map, Navigation, CheckCircle, _ExternalLink, MapPin, _Video } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
 import { supabase } from '@/integrations/supabase/client';
 import type { SOSAlert } from '@/types/sos.types';
@@ -42,21 +42,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   // Charger au montage et rafraîchir périodiquement
   useEffect(() => {
     loadSOSAlerts();
-    
+
     // Rafraîchissement automatique toutes les 5 secondes
     const interval = setInterval(() => {
       if (autoRefresh) {
         loadSOSAlerts();
       }
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [bureauId, autoRefresh]);
 
   // Écouter les nouvelles alertes SOS en temps réel via Supabase
   useEffect(() => {
     console.log('🔔 Configuration Realtime SOS...');
-    
+
     const channel = supabase
       .channel('sos-alerts-realtime-' + Date.now())
       .on(
@@ -68,7 +68,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         },
         (payload) => {
           console.log('🚨 NOUVELLE ALERTE SOS REÇUE EN TEMPS RÉEL:', payload);
-          
+
           // Notification sonore et visuelle IMPORTANTE
           toast.error('🚨 ALERTE SOS D\'URGENCE!', {
             description: `${payload.new.driver_name || 'Un conducteur'} a besoin d'aide immédiate!`,
@@ -126,18 +126,18 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
+
         oscillator.frequency.value = 800;
         oscillator.type = 'sine';
         gainNode.gain.value = 0.3;
-        
+
         oscillator.start();
         setTimeout(() => oscillator.stop(), 500);
       });
-    } catch (error) {
+    } catch (_error) {
       console.log('Son non disponible');
     }
   };
@@ -224,15 +224,15 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'À l\'instant';
     if (diffMins === 1) return 'Il y a 1 min';
     if (diffMins < 60) return `Il y a ${diffMins} min`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours === 1) return 'Il y a 1 heure';
     if (diffHours < 24) return `Il y a ${diffHours} heures`;
-    
+
     return then.toLocaleDateString('fr-FR');
   };
 
@@ -260,7 +260,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
             Gestion des alertes d'urgence en temps réel
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Badge variant={autoRefresh ? 'default' : 'outline'} className="h-8">
             {autoRefresh ? '🟢 Temps réel actif' : '⏸️ Pause'}
@@ -398,7 +398,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     <Phone className="w-4 h-4 mr-2" />
                     Appeler
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"

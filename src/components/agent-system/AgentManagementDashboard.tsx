@@ -17,13 +17,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Users, UserPlus, Settings, DollarSign, TrendingUp, 
+  Users, UserPlus, Settings, DollarSign, _TrendingUp,
   Eye, Edit, Trash2, Mail, Phone, Shield, Crown,
-  BarChart3, PieChart, Activity, Calendar, RefreshCw,
+  BarChart3, PieChart, Activity, _Calendar, RefreshCw,
   CheckCircle, XCircle, AlertTriangle, Plus, Search,
-  Filter, Download, Upload, MoreVertical, Star, MessageSquare
+  Filter, _Download, _Upload, _MoreVertical, _Star, _MessageSquare
 } from "lucide-react";
-import { useAgentManagement, usePDGManagement, useCommissionManagement, useAgentSystemOverview } from "@/hooks/useAgentSystem";
+import { useAgentManagement, _usePDGManagement, useCommissionManagement, useAgentSystemOverview } from "@/hooks/useAgentSystem";
 import { toast } from "sonner";
 import ProfessionalMessaging from "@/components/messaging/ProfessionalMessaging";
 
@@ -36,10 +36,10 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isCreateAgentOpen, setIsCreateAgentOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [_isSettingsOpen, _setIsSettingsOpen] = useState(false);
 
   // Hooks pour les données
-  const { agents, loading: agentsLoading, createAgent, updateAgent, deleteAgent } = useAgentManagement(pdgId);
+  const { agents, loading: agentsLoading, createAgent, _updateAgent, deleteAgent } = useAgentManagement(pdgId);
   const { settings, updateSetting } = useCommissionManagement();
   const { overview, loading: overviewLoading } = useAgentSystemOverview(pdgId);
 
@@ -56,7 +56,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          agent.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || 
+    const matchesStatus = filterStatus === "all" ||
                          (filterStatus === "active" && agent.is_active) ||
                          (filterStatus === "inactive" && !agent.is_active);
     return matchesSearch && matchesStatus;
@@ -253,7 +253,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <Switch
                       id="can_create_sub_agent"
                       checked={newAgent.can_create_sub_agent}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         setNewAgent(prev => ({ ...prev, can_create_sub_agent: checked }))
                       }
                     />
@@ -331,7 +331,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <span className="text-sm">Agents Actifs</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
-                        <div 
+                        <div
                           className="h-full bg-green-500 rounded-full"
                           style={{ width: `${(overview.activeAgents / overview.totalAgents) * 100}%` }}
                         />
@@ -345,7 +345,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <span className="text-sm">Avec Sous-Agents</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
-                        <div 
+                        <div
                           className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${(agents.filter(a => a.can_create_sub_agent).length / overview.totalAgents) * 100}%` }}
                         />
@@ -359,7 +359,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <span className="text-sm">Performance Élevée</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
-                        <div 
+                        <div
                           className="h-full bg-purple-500 rounded-full"
                           style={{ width: `${(agents.filter(a => a.total_commissions_earned > 100000).length / overview.totalAgents) * 100}%` }}
                         />
@@ -488,8 +488,8 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                           <Button variant="ghost" size="sm">
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => deleteAgent(agent.id)}
                           >
@@ -534,8 +534,8 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold text-lg">
-                            {setting.setting_key === 'base_user_commission' 
-                              ? '💰 Commission Agent sur Achats' 
+                            {setting.setting_key === 'base_user_commission'
+                              ? '💰 Commission Agent sur Achats'
                               : setting.description || 'Configuration'}
                           </h4>
                           {setting.setting_key === 'base_user_commission' && (
@@ -547,7 +547,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                             ? 'Pourcentage du montant net vendeur versé à l\'agent créateur du client acheteur'
                             : `Clé: ${setting.setting_key || 'N/A'}`}
                         </p>
-                        
+
                         {/* Exemple de calcul */}
                         <div className="bg-white p-3 rounded border border-blue-200 text-sm">
                           <p className="font-medium text-blue-900 mb-1">📊 Exemple de calcul :</p>
@@ -558,7 +558,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3 ml-6">
                         <div className="text-right">
                           <p className="text-3xl font-bold text-blue-600">
@@ -625,7 +625,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                   </AlertDescription>
                 </Alert>
               )}
-              
+
               {/* Aide contextuelle */}
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                 <h5 className="font-medium mb-2 flex items-center gap-2">

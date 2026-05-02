@@ -7,7 +7,7 @@ import { Calendar, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { VendorSubscriptionPlanSelector } from "./VendorSubscriptionPlanSelector";
-import { toast } from "sonner";
+import { _toast } from "sonner";
 
 interface SimpleSubscription {
   subscription_id: string | null;
@@ -27,14 +27,15 @@ export function VendorSubscriptionSimple() {
     if (user?.id) {
       loadSubscription();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // ✅ Dépendance stable
 
   const loadSubscription = async () => {
     if (!user?.id) return;
-    
+
     try {
       setLoading(true);
-      
+
       // ✅ Utilise la table 'subscriptions' qui existe réellement
       const { data, error } = await supabase
         .from('subscriptions')
@@ -90,7 +91,7 @@ export function VendorSubscriptionSimple() {
     return date.toLocaleDateString('fr-FR');
   };
 
-  const daysRemaining = subscription?.current_period_end 
+  const daysRemaining = subscription?.current_period_end
     ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0;
 
@@ -130,8 +131,8 @@ export function VendorSubscriptionSimple() {
             </Button>
           </div>
         </CardContent>
-        <VendorSubscriptionPlanSelector 
-          open={showPlanSelector} 
+        <VendorSubscriptionPlanSelector
+          open={showPlanSelector}
           onOpenChange={setShowPlanSelector}
           onSuccess={loadSubscription}
         />
@@ -155,7 +156,7 @@ export function VendorSubscriptionSimple() {
           {/* Statut */}
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Statut</span>
-            <Badge 
+            <Badge
               variant={isActive ? "default" : isExpired ? "destructive" : "secondary"}
               className="gap-1"
             >
@@ -182,8 +183,8 @@ export function VendorSubscriptionSimple() {
           {/* Compteur jours restants */}
           {daysRemaining > 0 && (
             <div className={`p-4 rounded-lg border ${
-              daysRemaining <= 7 
-                ? 'bg-orange-50 border-orange-200' 
+              daysRemaining <= 7
+                ? 'bg-orange-50 border-orange-200'
                 : 'bg-blue-50 border-blue-200'
             }`}>
               <div className="flex items-center justify-center gap-2">
@@ -219,8 +220,8 @@ export function VendorSubscriptionSimple() {
 
           {/* Boutons */}
           <div className="flex gap-2 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={() => setShowPlanSelector(true)}
             >
@@ -230,8 +231,8 @@ export function VendorSubscriptionSimple() {
         </CardContent>
       </Card>
 
-      <VendorSubscriptionPlanSelector 
-        open={showPlanSelector} 
+      <VendorSubscriptionPlanSelector
+        open={showPlanSelector}
         onOpenChange={setShowPlanSelector}
         onSuccess={loadSubscription}
       />

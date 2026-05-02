@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
  *
  * IMPORTANT: Ce composant vérifie maintenant la colonne `has_password` en BDD
  * au lieu de localStorage pour une persistance fiable.
- * 
+ *
  * WORKFLOW:
  * - Utilisateur OAuth sans mot de passe → Rediriger vers /auth/set-password
  * - Utilisateur OAuth avec mot de passe (has_password=true) → Laisser passer
@@ -20,7 +20,7 @@ export default function OAuthPasswordGate() {
   const { user, session, loading, profile, profileLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isChecking, setIsChecking] = useState(false);
+  const [isChecking, _setIsChecking] = useState(false);
 
   useEffect(() => {
     const checkPasswordStatus = async () => {
@@ -44,12 +44,12 @@ export default function OAuthPasswordGate() {
       // COMMENT l'utilisateur s'est connecté dans cette session
       const amr = (session.user as any)?.amr as Array<{ method?: string }> | undefined;
       const currentAuthMethod = amr?.[0]?.method;
-      
+
       // ✅ Si l'utilisateur s'est connecté avec email/password, il a DÉJÀ un mot de passe
       // → Ne PAS afficher la page de définition de mot de passe
       if (currentAuthMethod === "password") {
         console.log("🔐 [OAuthPasswordGate] Connexion par mot de passe détectée, bypass de la gate");
-        
+
         // Marquer has_password = true en BDD (async, non-bloquant)
         if (profile && profile.has_password !== true) {
           supabase
@@ -60,7 +60,7 @@ export default function OAuthPasswordGate() {
               console.log("✅ [OAuthPasswordGate] has_password mis à jour en BDD");
             });
         }
-        
+
         // Nettoyer les flags localStorage et marquer comme traité
         localStorage.removeItem("needs_oauth_password");
         localStorage.setItem(`oauth_password_set_${user.id}`, "true");
@@ -83,8 +83,8 @@ export default function OAuthPasswordGate() {
       }
 
       // Vérifier si la méthode actuelle est OAuth
-      const isCurrentSessionOAuth = currentAuthMethod === "oauth" || 
-        appProvider === "google" || 
+      const isCurrentSessionOAuth = currentAuthMethod === "oauth" ||
+        appProvider === "google" ||
         appProvider === "facebook";
 
       // Si l'utilisateur ne s'est pas connecté via OAuth dans cette session, ignorer

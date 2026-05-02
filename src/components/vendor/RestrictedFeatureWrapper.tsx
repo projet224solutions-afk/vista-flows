@@ -11,19 +11,19 @@ interface RestrictedFeatureWrapperProps {
   fallbackMessage?: string;
 }
 
-export function RestrictedFeatureWrapper({ 
-  children, 
+export function RestrictedFeatureWrapper({
+  children,
   feature,
-  fallbackMessage 
+  fallbackMessage
 }: RestrictedFeatureWrapperProps) {
   const navigate = useNavigate();
   const { hasAccess, isExpired, loading } = useVendorSubscription();
-  
+
   // En cours de chargement
   if (loading) {
     return <div className="animate-pulse bg-muted h-20 rounded" />;
   }
-  
+
   // ✅ Accès autorisé si abonnement actif
   if (hasAccess && !isExpired) {
     return <>{children}</>;
@@ -51,7 +51,7 @@ export function RestrictedFeatureWrapper({
             Cette fonctionnalité est temporairement désactivée car votre abonnement a expiré ou est inactif.
             Renouvelez votre abonnement pour retrouver un accès complet.
           </p>
-          <Button 
+          <Button
             onClick={() => navigate('/vendeur/subscription')}
             className="bg-orange-600 hover:bg-orange-700"
           >

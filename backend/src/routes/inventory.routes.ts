@@ -1,13 +1,13 @@
 /**
  * 📊 INVENTORY ROUTES - Phase 4
- * 
+ *
  * Gestion du stock 100% côté backend Node.js.
- * 
+ *
  * Tables utilisées :
  *   - `products` : stock_quantity (source de vérité)
  *   - `inventory_history` : journal des mouvements
  *   - `vendors` : résolution vendeur
- * 
+ *
  * Opérations :
  *   - Consultation stock
  *   - Ajustement manuel (avec raison obligatoire)
@@ -127,7 +127,7 @@ router.get('/stock', verifyJWT, async (req: AuthenticatedRequest, res: Response)
 /**
  * POST /api/inventory/adjust
  * Ajustement de stock (unitaire ou par lot)
- * 
+ *
  * Chaque ajustement :
  *   1. Vérifie que le produit appartient au vendeur
  *   2. Vérifie que le stock résultant ne sera pas négatif

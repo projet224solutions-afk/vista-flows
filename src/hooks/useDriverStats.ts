@@ -48,7 +48,7 @@ export function useDriverStats(driverId: string | null): UseDriverStatsReturn {
 
       const totalRides = allRides?.length || 0;
 
-      const { data: currentDriver, error: driverError } = await supabase
+      const { data: _currentDriver, error: driverError } = await supabase
         .from('taxi_drivers')
         .select('rating, total_rides, online_since')
         .eq('id', driverId)
@@ -60,7 +60,7 @@ export function useDriverStats(driverId: string | null): UseDriverStatsReturn {
 
       const rating = 0; // TODO: Add rating column to taxi_drivers table
 
-      let onlineTime = '0h 0m';
+      const onlineTime = '0h 0m';
       // TODO: Add online_since column to taxi_drivers table
       // if (currentDriver?.online_since) {
       //   const onlineSince = new Date(currentDriver.online_since);

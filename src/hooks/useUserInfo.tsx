@@ -26,7 +26,7 @@ export const useUserInfo = () => {
         .single();
 
       if (error) throw error;
-      
+
       // Formater les données pour correspondre à l'interface UserInfo
       if (data) {
         setUserInfo({

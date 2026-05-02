@@ -4,27 +4,27 @@
  * Vue temps réel avec notifications et actions rapides
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { 
-  Calendar, Clock, Users, Phone, Mail, CheckCircle, XCircle, 
-  User, RefreshCw, Bell, Eye, MessageSquare, CreditCard,
+import {
+  Calendar, Clock, Users, Phone, Mail, CheckCircle, XCircle,
+  User, RefreshCw, _Bell, Eye, MessageSquare, _CreditCard,
   CalendarDays, Filter, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { _Textarea } from '@/components/ui/textarea';
+import { _supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRestaurantReservations, RestaurantReservation } from '@/hooks/useRestaurantReservations';
 
@@ -33,15 +33,15 @@ interface RestaurantReservationsManagerProps {
 }
 
 export function RestaurantReservationsManager({ serviceId }: RestaurantReservationsManagerProps) {
-  const { 
-    reservations, 
-    loading, 
-    refresh, 
-    updateReservationStatus, 
+  const {
+    reservations,
+    loading,
+    refresh,
+    updateReservationStatus,
     cancelReservation,
-    getReservationStats 
+    getReservationStats
   } = useRestaurantReservations(serviceId);
-  
+
   const [activeTab, setActiveTab] = useState('today');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -50,7 +50,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
 
   // Statistiques
   const stats = getReservationStats();
-  
+
   // Filtrer les réservations
   const filterReservations = (reservationList: RestaurantReservation[]) => {
     return reservationList.filter(r => {
@@ -63,12 +63,12 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
           return false;
         }
       }
-      
+
       // Filtre par statut
       if (statusFilter !== 'all' && r.status !== statusFilter) {
         return false;
       }
-      
+
       return true;
     });
   };
@@ -78,14 +78,14 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
   const todayReservations = filterReservations(
     reservations.filter(r => r.reservation_date === today)
   );
-  
+
   const upcomingReservations = filterReservations(
     reservations.filter(r => {
       const date = r.reservation_date;
       return date > today && !['cancelled', 'no_show', 'completed'].includes(r.status);
     })
   );
-  
+
   const pastReservations = filterReservations(
     reservations.filter(r => {
       const date = r.reservation_date;
@@ -123,7 +123,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
     try {
       await updateReservationStatus(id, newStatus);
       toast.success(`Réservation ${getStatusConfig(newStatus).label.toLowerCase()}`);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -133,7 +133,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
       await cancelReservation(id);
       toast.success('Réservation annulée');
       setShowDetailModal(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'annulation');
     }
   };
@@ -141,7 +141,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
   const ReservationCard = ({ reservation }: { reservation: RestaurantReservation }) => {
     const statusConfig = getStatusConfig(reservation.status);
     const StatusIcon = statusConfig.icon;
-    
+
     return (
       <Card className="hover:shadow-lg transition-all cursor-pointer border-l-4"
             style={{ borderLeftColor: `var(--${statusConfig.color.replace('bg-', '')})` }}
@@ -167,7 +167,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                   </div>
                 </div>
               </div>
-              
+
               {/* Contact */}
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 {reservation.customer_phone && (
@@ -198,7 +198,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                 <StatusIcon className="w-3 h-3 mr-1" />
                 {statusConfig.label}
               </Badge>
-              
+
               {reservation.table_number && (
                 <Badge variant="outline">Table {reservation.table_number}</Badge>
               )}
@@ -209,8 +209,8 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
           {(reservation.status === 'pending' || reservation.status === 'confirmed') && (
             <div className="flex gap-2 mt-3 pt-3 border-t">
               {reservation.status === 'pending' && (
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -222,8 +222,8 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                 </Button>
               )}
               {reservation.status === 'confirmed' && (
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -234,8 +234,8 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                   Installer
                 </Button>
               )}
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -409,7 +409,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
           <DialogHeader>
             <DialogTitle>Détails de la réservation</DialogTitle>
           </DialogHeader>
-          
+
           {selectedReservation && (
             <div className="space-y-4">
               {/* Info client */}
@@ -491,7 +491,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
           <DialogFooter className="flex-col sm:flex-row gap-2">
             {selectedReservation?.status === 'pending' && (
               <>
-                <Button 
+                <Button
                   className="flex-1"
                   onClick={() => {
                     handleStatusChange(selectedReservation.id, 'confirmed');
@@ -501,7 +501,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Confirmer
                 </Button>
-                <Button 
+                <Button
                   variant="destructive"
                   onClick={() => handleCancel(selectedReservation.id)}
                 >
@@ -512,7 +512,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
             )}
             {selectedReservation?.status === 'confirmed' && (
               <>
-                <Button 
+                <Button
                   className="flex-1"
                   onClick={() => {
                     handleStatusChange(selectedReservation.id, 'seated');
@@ -522,7 +522,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                   <Users className="w-4 h-4 mr-2" />
                   Installer à table
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
                     handleStatusChange(selectedReservation.id, 'no_show');
@@ -534,7 +534,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
               </>
             )}
             {selectedReservation?.status === 'seated' && (
-              <Button 
+              <Button
                 className="flex-1"
                 onClick={() => {
                   handleStatusChange(selectedReservation.id, 'completed');

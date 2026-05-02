@@ -7,9 +7,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Upload, 
+import {
+  ArrowLeft,
+  Upload,
   FileText,
   Image as ImageIcon,
   Loader2,
@@ -158,16 +158,16 @@ const categoryConfig: Record<ProductCategory, {
 type FormStep = 'mode' | 'details' | 'pricing' | 'media' | 'review';
 
 export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create', initialProduct }: DigitalProductFormProps) {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const { user } = useAuth();
   const config = categoryConfig[category];
-  
+
   // Hook pour upload vers GCS
   const { uploadFile: uploadToGCS } = useStorageUpload();
-  
+
   // Pour physique_affilie, on saute l'étape mode car seule l'affiliation est disponible
   const initialStep: FormStep = category === 'physique_affilie' ? 'details' : 'mode';
-  
+
   const [currentStep, setCurrentStep] = useState<FormStep>(initialStep);
   const [loading, setLoading] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -339,7 +339,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       lessons,
     };
   });
-  
+
   // Données d'affiliation
   const [affiliateData, setAffiliateData] = useState<AffiliateFormData>(() => ({
     affiliateUrl: initialProduct?.affiliate_url || '',
@@ -353,7 +353,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     displayPrice: initialProduct?.price ? String(initialProduct.price) : '',
     displayCurrency: initialProduct?.currency || 'USD'
   }));
-  
+
   // Données de vente directe
   const [directData, setDirectData] = useState<DirectSaleFormData>(() => ({
     price: initialProduct?.price ? String(initialProduct.price) : '',
@@ -371,7 +371,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     instantDelivery: true,
     accessDuration: (initialProduct?.access_duration as DirectSaleFormData['accessDuration']) || 'lifetime'
   }));
-  
+
   // Médias
   const [images, setImages] = useState<string[]>(() => initialProduct?.images || []);
   const [deliverableFiles, setDeliverableFiles] = useState<string[]>(() => initialProduct?.file_urls || []);
@@ -463,10 +463,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     if (!files || !user) return;
 
     const uploadedUrls: string[] = [];
-    
+
     for (const file of Array.from(files)) {
       console.log(`[DigitalProductForm] Uploading image to GCS...`);
-      
+
       const uploadResult = await uploadToGCS(file, {
         folder: 'products',
         subfolder: user.id,
@@ -487,10 +487,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
     setUploadingFiles(true);
     const uploadedUrls: string[] = [];
-    
+
     for (const file of Array.from(files)) {
       console.log(`[DigitalProductForm] Uploading deliverable file...`, file.name, file.size);
-      
+
       try {
         // Use digital-products bucket with Supabase fallback preferred for reliability
         const uploadResult = await uploadToGCS(file, {
@@ -634,7 +634,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       toast.error('Veuillez attendre la fin des uploads avant de publier');
       return;
     }
-    
+
     setLoading(true);
     try {
       // Récupérer le vendor_id
@@ -649,7 +649,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       if (videoFile) {
         setUploadingVideo(true);
         console.log(`[DigitalProductForm] Uploading video to GCS...`);
-        
+
         const uploadResult = await uploadToGCS(videoFile, {
           folder: 'videos',
           subfolder: user.id,
@@ -758,8 +758,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
         if (error) throw error;
 
-        toast.success(salesMode === 'affiliate' 
-          ? 'Produit affilié créé avec succès!' 
+        toast.success(salesMode === 'affiliate'
+          ? 'Produit affilié créé avec succès!'
           : 'Produit en vente directe créé!'
         );
       }
@@ -775,7 +775,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
   const renderStepContent = () => {
     console.log('[DigitalProductForm] Rendering step:', currentStep, 'salesMode:', salesMode);
-    
+
     switch (currentStep) {
       case 'mode':
         console.log('[DigitalProductForm] Rendering SalesModeSelector');
@@ -790,7 +790,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
             hideDirectSale={category === 'physique_affilie'}
           />
         );
-      
+
       case 'details':
         return (
           <div className="space-y-4">
@@ -801,7 +801,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                   Informations du produit
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  {salesMode === 'affiliate' 
+                  {salesMode === 'affiliate'
                     ? 'Décrivez le produit partenaire que vous promouvez'
                     : 'Présentez votre produit aux acheteurs potentiels'
                   }
@@ -816,7 +816,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     id="title"
                     value={baseData.title}
                     onChange={(e) => setBaseData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder={salesMode === 'affiliate' 
+                    placeholder={salesMode === 'affiliate'
                       ? "Ex: Formation Marketing Digital - Systeme.io"
                       : "Ex: Ma Formation Complète React.js"
                     }
@@ -1045,7 +1045,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
             </Card>
           </div>
         );
-      
+
       case 'pricing':
         return salesMode === 'affiliate' ? (
           <AffiliateForm
@@ -1058,7 +1058,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
             onChange={(updates) => setDirectData(prev => ({ ...prev, ...updates }))}
           />
         );
-      
+
       case 'media':
         return (
           <div className="space-y-4">
@@ -1219,7 +1219,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
             </Card>
           </div>
         );
-      
+
       case 'review':
         return (
           <div className="space-y-4">
@@ -1253,7 +1253,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     {salesMode === 'affiliate' ? 'Commission' : 'Prix'}
                   </span>
                   <span className="text-sm font-medium text-primary">
-                    {salesMode === 'affiliate' 
+                    {salesMode === 'affiliate'
                       ? `${affiliateData.commissionRate || '0'}%`
                       : `${parseFloat(directData.price || '0').toLocaleString()} GNF`
                     }
@@ -1316,8 +1316,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       <header className="sticky top-0 z-40 border-b border-[#dce7fb] bg-white/92 backdrop-blur-xl shadow-[0_10px_30px_rgba(4,67,158,0.06)]">
         <div className="px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={handleBack}
               className="h-11 w-11 shrink-0 rounded-2xl border border-[#dbe6fb] bg-white text-[#04439e] hover:bg-[#f5f9ff]"

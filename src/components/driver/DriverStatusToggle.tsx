@@ -5,7 +5,7 @@
 
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Power, Pause, Navigation } from 'lucide-react';
 import { useState } from 'react';
 import { useCurrentLocation } from '@/hooks/useGeolocation';
@@ -38,10 +38,10 @@ export function DriverStatusToggle({
         console.log('[DriverStatusToggle] 📍 Demande GPS automatique...');
         const currentPos = await getCurrentLocation();
         console.log('[DriverStatusToggle] 📍 Position obtenue:', currentPos);
-        
+
         if (currentPos) {
           await onGoOnline({ lat: currentPos.latitude, lng: currentPos.longitude });
-          
+
           // Démarrer le suivi GPS continu
           const id = watchLocation();
           if (id) {

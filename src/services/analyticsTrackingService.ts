@@ -29,9 +29,9 @@ function generateFingerprintHash(): string {
     navigator.hardwareConcurrency?.toString() || '',
     navigator.platform || ''
   ];
-  
+
   const fingerprint = components.join('|');
-  
+
   // Simple hash function
   let hash = 0;
   for (let i = 0; i < fingerprint.length; i++) {
@@ -39,7 +39,7 @@ function generateFingerprintHash(): string {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32bit integer
   }
-  
+
   return Math.abs(hash).toString(36);
 }
 
@@ -78,7 +78,7 @@ async function detectGeoLocation(): Promise<GeoData> {
  */
 function detectDeviceType(): string {
   const userAgent = navigator.userAgent.toLowerCase();
-  
+
   if (/tablet|ipad|playbook|silk/.test(userAgent)) {
     return 'tablet';
   }
@@ -104,7 +104,7 @@ function getSessionId(): string {
  * Enregistre une vue de produit
  */
 export async function trackProductView(
-  productId: string, 
+  productId: string,
   vendorId: string,
   options?: {
     source?: string;
@@ -117,12 +117,12 @@ export async function trackProductView(
       detectGeoLocation(),
       supabase.auth.getUser()
     ]);
-    
+
     const userId = authResult.data?.user?.id || null;
     const sessionId = getSessionId();
     const deviceType = detectDeviceType();
     const fingerprintHash = generateFingerprintHash();
-    
+
     const { error } = await supabase
       .from('product_views_raw')
       .insert({
@@ -166,12 +166,12 @@ export async function trackShopVisit(
       detectGeoLocation(),
       supabase.auth.getUser()
     ]);
-    
+
     const userId = authResult.data?.user?.id || null;
     const sessionId = getSessionId();
     const deviceType = detectDeviceType();
     const fingerprintHash = generateFingerprintHash();
-    
+
     const { error } = await supabase
       .from('shop_visits_raw')
       .insert({

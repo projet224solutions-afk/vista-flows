@@ -104,11 +104,11 @@ export function useVendorCopilot() {
         .filter(o => o.status === 'completed' || o.status === 'delivered')
         .reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
-      const pendingOrders = orders.filter(o => 
+      const pendingOrders = orders.filter(o =>
         o.status === 'pending' || o.status === 'processing'
       ).length;
 
-      const lowStockProducts = products.filter(p => 
+      const lowStockProducts = products.filter(p =>
         (p.stock_quantity || 0) < 10
       );
 
@@ -220,7 +220,7 @@ export function useVendorCopilot() {
 
       // Extraire la réponse - gérer différents formats
       let responseContent = '';
-      
+
       if (data?.reply) {
         responseContent = data.reply;
       } else if (data?.message) {
@@ -246,13 +246,13 @@ export function useVendorCopilot() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      
+
       return responseContent;
 
     } catch (err: any) {
       console.error('Erreur processQuery:', err);
       setError(err.message);
-      
+
       // Construire un message d'erreur informatif
       let errorContent = '❌ ';
       if (err.message?.includes('402')) {
@@ -264,7 +264,7 @@ export function useVendorCopilot() {
       } else {
         errorContent += err.message || 'Une erreur est survenue lors de la communication avec l\'IA.';
       }
-      
+
       // Ajouter un message d'erreur
       const errorMessage: CopilotMessage = {
         id: (Date.now() + 1).toString(),
@@ -274,9 +274,9 @@ export function useVendorCopilot() {
         type: 'error'
       };
       setMessages(prev => [...prev, errorMessage]);
-      
+
       toast.error(err.message || 'Erreur lors de la communication avec le Copilote');
-      
+
       return null;
     } finally {
       setLoading(false);

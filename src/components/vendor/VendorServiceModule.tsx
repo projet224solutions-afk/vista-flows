@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Plus, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw, _Plus, Clock, XCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useVendorServices } from '@/hooks/useVendorServices';
@@ -19,17 +19,17 @@ import { VendorShopDashboard } from '@/components/vendor/VendorShopDashboard';
 
 export default function VendorServiceModule() {
   const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
-  const { 
+  const {
     services,
     selectedService,
     selectedServiceId,
     selectService,
-    hasMultipleServices,
-    loading: servicesLoading, 
+    _hasMultipleServices,
+    loading: servicesLoading,
     error,
-    refresh
+    _refresh
   } = useVendorServices();
-  
+
   const [showAddService, setShowAddService] = useState(false);
 
   const loading = vendorLoading || servicesLoading;
@@ -82,8 +82,8 @@ export default function VendorServiceModule() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => window.location.reload()}
             className="gap-2"
           >
@@ -96,9 +96,9 @@ export default function VendorServiceModule() {
   }
 
   // Déterminer le nom de la boutique
-  const businessName = selectedService?.business_name 
-    || profile?.business_name 
-    || profile?.first_name 
+  const businessName = selectedService?.business_name
+    || profile?.business_name
+    || profile?.first_name
     || 'Ma Boutique';
 
   return (
@@ -109,8 +109,8 @@ export default function VendorServiceModule() {
           <div>
             <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
             <p className="text-sm text-muted-foreground">
-              {services.length > 1 
-                ? 'Sélectionnez le service à gérer' 
+              {services.length > 1
+                ? 'Sélectionnez le service à gérer'
                 : `Service actif: ${selectedService?.service_type?.name || 'Non défini'}`}
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function VendorServiceModule() {
         </Alert>
       )}
 
-      {/* 
+      {/*
         ⚡ CHANGEMENT MAJEUR: Afficher TOUJOURS la vue boutique
         - Si un service professionnel est sélectionné: utiliser ServiceModuleManager
         - Sinon: utiliser VendorShopDashboard par défaut (vue boutique de base)
@@ -157,15 +157,15 @@ export default function VendorServiceModule() {
         />
       ) : (
         // 🆕 Vue boutique par défaut pour les vendeurs sans service professionnel
-        <VendorShopDashboard 
-          vendorId={vendorId} 
+        <VendorShopDashboard
+          vendorId={vendorId}
           businessName={businessName}
           onCreateService={() => setShowAddService(true)}
         />
       )}
 
-      <AddServiceModal 
-        open={showAddService} 
+      <AddServiceModal
+        open={showAddService}
         onOpenChange={setShowAddService}
       />
     </div>

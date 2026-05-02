@@ -36,7 +36,7 @@ export class TaxiMotoKYCService {
       const fileName = `${driverId}/${documentType}_${Date.now()}.${fileExt}`;
 
       // Upload vers Supabase Storage
-      const { data, error } = await supabase.storage
+      const { _data, error } = await supabase.storage
         .from('taxi-kyc-documents')
         .upload(fileName, file);
 
@@ -85,14 +85,14 @@ export class TaxiMotoKYCService {
 
       const requiredDocs = ['permis', 'carte_identite', 'assurance', 'carte_grise'];
       const uploadedTypes = new Set(documents?.map((d: any) => d.document_type) || []);
-      
+
       const completionPercentage = Math.round(
         (uploadedTypes.size / requiredDocs.length) * 100
       );
 
       const allVerified = documents?.every((d: any) => d.status === 'approved') || false;
       const hasRejected = documents?.some((d: any) => d.status === 'rejected') || false;
-      
+
       let status: KYCStatus['status'] = 'pending';
       if (allVerified && completionPercentage === 100) {
         status = 'approved';

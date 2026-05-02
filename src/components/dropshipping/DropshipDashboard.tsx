@@ -6,10 +6,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  ShoppingCart, 
-  TrendingUp, 
+import {
+  Package,
+  ShoppingCart,
+  TrendingUp,
   DollarSign,
   Truck,
   AlertTriangle,
@@ -120,8 +120,8 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           ) : (
             <div className="space-y-4">
               {recentOrders.slice(0, 5).map((order) => (
-                <div 
-                  key={order.id} 
+                <div
+                  key={order.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-4">

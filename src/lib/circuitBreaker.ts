@@ -109,7 +109,7 @@ export class CircuitBreakerManager {
       return result;
     } catch (error) {
       this.recordFailure(circuit, error);
-      
+
       // Utiliser fallback si disponible
       if (fallback) {
         console.warn(`⚠️ [CircuitBreaker:${name}] Failed - Using fallback`);
@@ -299,8 +299,8 @@ export class CircuitBreakerManager {
       halfOpenCircuits: circuits.filter(c => c.state === 'HALF_OPEN').length,
       totalRequests,
       totalFailures,
-      overallHealthScore: totalRequests > 0 
-        ? Math.round(((totalRequests - totalFailures) / totalRequests) * 100) 
+      overallHealthScore: totalRequests > 0
+        ? Math.round(((totalRequests - totalFailures) / totalRequests) * 100)
         : 100
     };
   }

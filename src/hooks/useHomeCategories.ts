@@ -36,7 +36,7 @@ export const useHomeCategories = () => {
 
         // Compter les produits actifs par catégorie
         const categoryArray: CategoryCount[] = [];
-        
+
         for (const cat of (categoriesData || [])) {
           const { count, error: countError } = await supabase
             .from('products')

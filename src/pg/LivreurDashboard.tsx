@@ -1,13 +1,13 @@
 ﻿/**
- * LIVREUR - INTERFACE COMPL├êTE RESPONSIVE
- * 224Solutions Delivery System  
- * Toutes les fonctionnalit├®s du Taxi-Moto int├®gr├®es + Responsive
+ * LIVREUR - INTERFACE COMPLÈTE RESPONSIVE
+ * 224Solutions Delivery System
+ * Toutes les fonctionnalités du Taxi-Moto intégrées + Responsive
  */
 
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,12 +16,12 @@ import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
-import { supabase } from "@/integrations/supabase/client";
+import { _supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { useDriver } from "@/hooks/useDriver";
 import { useResponsive } from "@/hooks/useResponsive";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { _ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
@@ -30,7 +30,7 @@ import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 // Lazy loading des composants lourds
 const NearbyDeliveriesPanel = lazy(() => import('@/components/delivery/NearbyDeliveriesPanel').then(m => ({ default: m.NearbyDeliveriesPanel })));
 const DriverSubscriptionBanner = lazy(() => import('@/components/driver/DriverSubscriptionBanner').then(m => ({ default: m.DriverSubscriptionBanner })));
-const DriverSubscriptionButton = lazy(() => import('@/components/driver/DriverSubscriptionButton').then(m => ({ default: m.DriverSubscriptionButton })));
+const _DriverSubscriptionButton = lazy(() => import('@/components/driver/DriverSubscriptionButton').then(m => ({ default: m.DriverSubscriptionButton })));
 const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
 const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
 const NearbyDeliveriesListener = lazy(() => import('@/components/delivery/NearbyDeliveriesListener').then(m => ({ default: m.NearbyDeliveriesListener })));
@@ -38,19 +38,19 @@ const DriverStatusToggle = lazy(() => import('@/components/driver/DriverStatusTo
 const EarningsDisplay = lazy(() => import('@/components/driver/EarningsDisplay').then(m => ({ default: m.EarningsDisplay })));
 const DeliveryProofUpload = lazy(() => import('@/components/driver/DeliveryProofUpload').then(m => ({ default: m.DeliveryProofUpload })));
 const ResponsiveContainer = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveContainer })));
-const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
-const MobileBottomNav = lazy(() => import("@/components/responsive/MobileBottomNav").then(m => ({ default: m.MobileBottomNav })));
-const CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
+const _ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
+const _MobileBottomNav = lazy(() => import("@/components/responsive/MobileBottomNav").then(m => ({ default: m.MobileBottomNav })));
+const _CommunicationWidget = lazy(() => import("@/components/communication/CommunicationWidget"));
 const DriverLayout = lazy(() => import('@/components/driver/DriverLayout').then(m => ({ default: m.DriverLayout })));
 const DeliveryChat = lazy(() => import('@/components/delivery/DeliveryChat'));
 const DeliveryGPSNavigation = lazy(() => import('@/components/delivery/DeliveryGPSNavigation').then(m => ({ default: m.DeliveryGPSNavigation })));
-const DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
+const _DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile, _isTablet } = useResponsive();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('missions');
@@ -58,14 +58,14 @@ export default function LivreurDashboard() {
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Gestion des erreurs centralis├®e
+  // Gestion des erreurs centralisée
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
-  // V├®rification subscription et KYC
-  const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
+  // Vérification subscription et KYC
+  const { hasAccess, _subscription, loading: _subscriptionLoading, _isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
-  const { driver, stats, goOnline, goOffline, pause, updateLocation, uploadProof } = useDriver();
+  const { driver, stats, goOnline, goOffline, pause, updateLocation, _uploadProof } = useDriver();
 
   // Hook pour les livraisons
   const {
@@ -74,9 +74,9 @@ export default function LivreurDashboard() {
     nearbyDeliveries,
     trackingPoints,
     loading: deliveryLoading,
-    error: deliveryError,
+    error: _deliveryError,
     findNearbyDeliveries,
-    loadTracking,
+    _loadTracking,
     subscribeToTracking,
     trackPosition: trackDeliveryPosition,
     processPayment: processDeliveryPayment,
@@ -84,7 +84,7 @@ export default function LivreurDashboard() {
     loadCurrentDelivery
   } = useDelivery();
 
-  // Hook pour les actions de livraison (logique m├®tier extraite)
+  // Hook pour les actions de livraison (logique métier extraite)
   const {
     acceptDelivery,
     startDelivery,
@@ -101,20 +101,20 @@ export default function LivreurDashboard() {
       }
     },
     onDeliveryCompleted: () => {
-      console.log('­ƒôÑ [LivreurDashboard] onDeliveryCompleted callback triggered');
+      console.log('📥 [LivreurDashboard] onDeliveryCompleted callback triggered');
       setShowProofUpload(false);
-      // setCurrentDelivery(null); // Comment├® car setCurrentDelivery n'existe pas
-      
-      // Recharger toutes les donn├®es
+      // setCurrentDelivery(null); // Commenté car setCurrentDelivery n'existe pas
+
+      // Recharger toutes les données
       loadCurrentDelivery();
       loadDeliveryHistory();
-      
+
       // Recharger les livraisons disponibles
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       }
-      
-      // Basculer vers l'historique apr├¿s un court d├®lai
+
+      // Basculer vers l'historique après un court délai
       setTimeout(() => {
         setActiveTab('history');
       }, 1000);
@@ -144,12 +144,12 @@ export default function LivreurDashboard() {
     currentRide,
     rideHistory,
     loading: rideLoading,
-    acceptRide: acceptRideFn,
+    acceptRide: _acceptRideFn,
     startRide: startRideFn,
     completeRide: completeRideFn,
-    cancelRide,
+    _cancelRide,
     trackPosition: trackRidePosition,
-    processPayment: processRidePayment
+    processPayment: _processRidePayment
   } = useTaxiRides();
 
   const loading = deliveryLoading || rideLoading;
@@ -158,11 +158,11 @@ export default function LivreurDashboard() {
   useEffect(() => {
     getCurrentLocation().catch(err => {
       console.error('[LivreurDashboard] GPS error:', err);
-      captureError('gps', 'Impossible d\'acc├®der ├á votre position GPS', err);
+      captureError('gps', 'Impossible d\'accéder à votre position GPS', err);
     });
   }, [getCurrentLocation, captureError]);
 
-  // Mettre ├á jour la position du driver toutes les 30 secondes si en ligne
+  // Mettre à jour la position du driver toutes les 30 secondes si en ligne
   useEffect(() => {
     if (!driver?.is_online || !location) return;
 
@@ -179,30 +179,30 @@ export default function LivreurDashboard() {
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       } else {
-        // Charger toutes les livraisons m├¬me sans GPS
+        // Charger toutes les livraisons même sans GPS
         findNearbyDeliveries(0, 0, 99999);
       }
     }
   }, [activeTab, location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // Charger les livraisons ├á proximit├® quand la position change OU au montage
+  // Charger les livraisons à proximité quand la position change OU au montage
   useEffect(() => {
     // Charger sans filtrage GPS au montage si pas de location
     if (!currentDelivery && !currentRide) {
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       } else {
-        // Charger toutes les livraisons m├¬me sans GPS
+        // Charger toutes les livraisons même sans GPS
         findNearbyDeliveries(0, 0, 99999);
       }
     }
   }, [location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // S'abonner au tracking en temps r├®el pour livraison ou course
+  // S'abonner au tracking en temps réel pour livraison ou course
   useEffect(() => {
     if (currentDelivery) {
       const unsubscribe = subscribeToTracking(currentDelivery.id);
-      
+
       // Envoyer la position toutes les 10 secondes
       const intervalId = setInterval(() => {
         if (location) {
@@ -241,7 +241,7 @@ export default function LivreurDashboard() {
   /**
    * Accepter une livraison
    */
-  const handleAcceptDelivery = async (deliveryId: string) => {
+  const _handleAcceptDelivery = async (deliveryId: string) => {
     try {
       await acceptDelivery(deliveryId);
     } catch (error) {
@@ -250,14 +250,14 @@ export default function LivreurDashboard() {
   };
 
   /**
-   * D├®marrer une livraison
+   * Démarrer une livraison
    */
   const handleStartDelivery = async () => {
     if (!currentDelivery) return;
     try {
       await startDelivery(currentDelivery.id);
     } catch (error) {
-      captureError('network', 'Impossible de d├®marrer la livraison', error);
+      captureError('network', 'Impossible de démarrer la livraison', error);
     }
   };
 
@@ -276,7 +276,7 @@ export default function LivreurDashboard() {
   /**
    * Annuler une livraison
    */
-  const handleCancelDelivery = async (reason: string) => {
+  const _handleCancelDelivery = async (reason: string) => {
     if (!currentDelivery) return;
     try {
       await cancelDelivery(currentDelivery.id, reason);
@@ -286,11 +286,11 @@ export default function LivreurDashboard() {
   };
 
   /**
-   * Signaler un probl├¿me
+   * Signaler un problème
    */
   const handleReportProblem = () => {
     if (!currentDelivery) return;
-    reportProblem(currentDelivery.id, 'Probl├¿me signal├® par le livreur');
+    reportProblem(currentDelivery.id, 'Problème signalé par le livreur');
   };
 
   /**
@@ -323,13 +323,13 @@ export default function LivreurDashboard() {
       </div>
     }>
     <>
-      {/* Banni├¿re d'abonnement */}
+      {/* Bannière d'abonnement */}
       <DriverSubscriptionBanner />
-      
+
       <DriverLayout currentPage="dashboard">
     <div className="p-responsive bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
-      {/* Listener temps r├®el pour nouvelles livraisons */}
-      <NearbyDeliveriesListener 
+      {/* Listener temps réel pour nouvelles livraisons */}
+      <NearbyDeliveriesListener
         enabled={!currentDelivery && !currentRide}
         onNewDelivery={() => {
           if (location) {
@@ -377,12 +377,12 @@ export default function LivreurDashboard() {
           </div>
         )}
 
-        {/* En-t├¬te avec informations utilisateur - Responsive */}
+        {/* En-tête avec informations utilisateur - Responsive */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h1 className={`font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
-                ­ƒÜ┤ {t('delivery.dashboard')}
+                🚴 {t('delivery.dashboard')}
               </h1>
             </div>
             <p className="text-sm md:text-base text-muted-foreground">
@@ -392,20 +392,20 @@ export default function LivreurDashboard() {
               <UserIdDisplay />
             </div>
             {(currentDelivery || currentRide) && (
-              <Badge 
-                variant="default" 
+              <Badge
+                variant="default"
                 className="mt-2 gap-1"
                 style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
               >
-                ÔÜí {currentDelivery ? t('delivery.inProgressDelivery') : t('taxi.dashboard')}
+                ⚠ {currentDelivery ? t('delivery.inProgressDelivery') : t('taxi.dashboard')}
               </Badge>
             )}
           </div>
-          
+
           {/* Bouton de navigation */}
           <Button
             onClick={() => navigate('/delivery-request')}
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
               color: 'white'
             }}
@@ -420,45 +420,45 @@ export default function LivreurDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-4' : 'grid-cols-5'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
-              ­ƒôª {isMobile ? 'Missions' : 'Missions disponibles'}
+              📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white">
-              ­ƒÜÜ {isMobile ? 'Active' : 'En cours'}
+              🚚 {isMobile ? 'Active' : 'En cours'}
               {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-green-600">1</Badge>}
             </TabsTrigger>
             <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
-              ­ƒôï {isMobile ? 'Historique' : 'Historique'}
+              📋 {isMobile ? 'Historique' : 'Historique'}
               {(deliveryHistory.length + rideHistory.length) > 0 && (
                 <Badge variant="outline" className="ml-1 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
               )}
             </TabsTrigger>
             {!isMobile && (
               <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
-                ­ƒøÆ Mes Achats
+                🛒 Mes Achats
               </TabsTrigger>
             )}
             <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">
-              ­ƒÆ░ {isMobile ? 'Wallet' : 'Portefeuille'}
+              💰 {isMobile ? 'Wallet' : 'Portefeuille'}
             </TabsTrigger>
           </TabsList>
 
-          {/* ­ƒôª Liste des livraisons disponibles */}
+          {/* 📦 Liste des livraisons disponibles */}
           <TabsContent value="missions" className="space-y-3">
-            {/* Panneau des colis ├á proximit├® */}
+            {/* Panneau des colis à proximité */}
             <NearbyDeliveriesPanel />
 
-            {/* Alerte GPS si non activ├® */}
+            {/* Alerte GPS si non activé */}
             {!location && (
               <Card className="p-4 bg-yellow-500/10 border-yellow-500/30">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
                   <div>
-                    <p className="font-medium text-yellow-700">GPS d├®sactiv├®</p>
+                    <p className="font-medium text-yellow-700">GPS désactivé</p>
                     <p className="text-sm text-yellow-600">
-                      Activez le GPS pour voir les missions ├á proximit├® et filtrer par distance
+                      Activez le GPS pour voir les missions à proximité et filtrer par distance
                     </p>
                   </div>
                 </div>
@@ -467,7 +467,7 @@ export default function LivreurDashboard() {
 
           </TabsContent>
 
-          {/* ­ƒÜÜ Livraison en cours */}
+          {/* 🚚 Livraison en cours */}
           <TabsContent value="active">
             {currentDelivery ? (
               <Card className="shadow-lg border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-green-600/5">
@@ -475,11 +475,11 @@ export default function LivreurDashboard() {
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <Badge 
+                        <Badge
                           variant="default"
                           style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
                         >
-                          ÔÜí Livraison en cours
+                          ⚠ Livraison en cours
                         </Badge>
                         <Badge variant="outline" className="border-orange-500">{currentDelivery.status}</Badge>
                       </div>
@@ -492,8 +492,8 @@ export default function LivreurDashboard() {
                           <div className="flex-1">
                             <p className="font-medium">Point de collecte</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {typeof currentDelivery.pickup_address === 'string' 
-                                ? currentDelivery.pickup_address 
+                              {typeof currentDelivery.pickup_address === 'string'
+                                ? currentDelivery.pickup_address
                                 : JSON.stringify(currentDelivery.pickup_address)}
                             </p>
                           </div>
@@ -503,17 +503,17 @@ export default function LivreurDashboard() {
                           <div className="flex-1">
                             <p className="font-medium">Destination</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {typeof currentDelivery.delivery_address === 'string' 
-                                ? currentDelivery.delivery_address 
+                              {typeof currentDelivery.delivery_address === 'string'
+                                ? currentDelivery.delivery_address
                                 : JSON.stringify(currentDelivery.delivery_address)}
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="p-5 bg-gradient-to-r from-orange-500/20 to-green-600/20 rounded-xl border border-orange-500/30">
-                      <p className="text-sm text-muted-foreground mb-2 font-medium">­ƒÆ░ Votre r├®mun├®ration</p>
+                      <p className="text-sm text-muted-foreground mb-2 font-medium">💰 Votre rémunération</p>
                       <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
                         {(currentDelivery.delivery_fee || 0).toLocaleString()} GNF
                       </p>
@@ -526,73 +526,73 @@ export default function LivreurDashboard() {
                           Tracking GPS
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {trackingPoints.length} points enregistr├®s
+                          {trackingPoints.length} points enregistrés
                         </p>
                       </div>
                     )}
 
                     <div className="flex flex-col gap-2 pt-2">
-                      {/* Composant de Navigation GPS avec donn├®es r├®elles */}
-                      <DeliveryGPSNavigation 
+                      {/* Composant de Navigation GPS avec données réelles */}
+                      <DeliveryGPSNavigation
                         activeDelivery={currentDelivery as any}
                         currentLocation={location ? { latitude: location.latitude, longitude: location.longitude } : null}
                         onContactCustomer={(phone) => window.open(`tel:${phone}`, '_self')}
                       />
 
                       {currentDelivery.status === 'picked_up' && (
-                        <Button 
-                          onClick={handleStartDelivery} 
+                        <Button
+                          onClick={handleStartDelivery}
                           disabled={loading}
                           className="w-full text-white"
                           size="lg"
                           style={{ background: 'linear-gradient(135deg, hsl(220 97% 27%), hsl(220 96% 32%))' }}
                         >
-                          <Truck className="w-5 h-5 mr-2" /> 
-                          ­ƒÜÇ D├®marrer la livraison
+                          <Truck className="w-5 h-5 mr-2" />
+                          🚀 Démarrer la livraison
                         </Button>
                       )}
-                      
+
                       <div className="grid grid-cols-2 gap-2">
-                        <Button 
-                          onClick={() => setShowChat(true)} 
+                        <Button
+                          onClick={() => setShowChat(true)}
                           variant="outline"
                           className="w-full border-blue-500 text-blue-600 hover:bg-blue-50"
                         >
-                          <MessageSquare className="w-4 h-4 mr-2" /> 
+                          <MessageSquare className="w-4 h-4 mr-2" />
                           Chat
                         </Button>
-                        <Button 
-                          onClick={() => setShowProofUpload(true)} 
+                        <Button
+                          onClick={() => setShowProofUpload(true)}
                           disabled={loading}
                           className="w-full text-white"
                           style={{ background: 'linear-gradient(135deg, hsl(145 65% 35%), hsl(145 65% 45%))' }}
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" /> 
+                          <CheckCircle className="w-4 h-4 mr-2" />
                           Terminer
                         </Button>
                       </div>
 
-                      {/* Bouton de paiement - 5 m├®thodes disponibles */}
+                      {/* Bouton de paiement - 5 méthodes disponibles */}
                       {currentDelivery.status === 'delivered' && (currentDelivery as any).payment_status !== 'paid' && (
-                        <Button 
-                          onClick={handleProcessPayment} 
+                        <Button
+                          onClick={handleProcessPayment}
                           className="w-full text-white"
                           size="lg"
                           style={{ background: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))' }}
                         >
-                          <Wallet className="w-5 h-5 mr-2" /> 
-                          ­ƒÆ│ Traiter le paiement
+                          <Wallet className="w-5 h-5 mr-2" />
+                          💳 Traiter le paiement
                         </Button>
                       )}
-                      
-                      <Button 
-                        onClick={handleReportProblem} 
+
+                      <Button
+                        onClick={handleReportProblem}
                         variant="outline"
                         disabled={loading}
                         className="w-full border-red-500 text-red-600 hover:bg-red-50"
                       >
-                        <AlertTriangle className="w-4 h-4 mr-2" /> 
-                        Signaler un probl├¿me
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Signaler un problème
                       </Button>
                     </div>
                   </div>
@@ -615,10 +615,10 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Point de d├®part</p>
+                            <p className="font-medium">Point de départ</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {typeof currentRide.pickup_address === 'string' 
-                                ? currentRide.pickup_address 
+                              {typeof currentRide.pickup_address === 'string'
+                                ? currentRide.pickup_address
                                 : 'Adresse non disponible'}
                             </p>
                           </div>
@@ -628,15 +628,15 @@ export default function LivreurDashboard() {
                           <div className="flex-1">
                             <p className="font-medium">Destination</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {typeof currentRide.dropoff_address === 'string' 
-                                ? currentRide.dropoff_address 
+                              {typeof currentRide.dropoff_address === 'string'
+                                ? currentRide.dropoff_address
                                 : 'Adresse non disponible'}
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="p-4 bg-yellow-500/10 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Prix de la course</p>
                       <p className="text-3xl font-bold text-yellow-600">
@@ -646,40 +646,40 @@ export default function LivreurDashboard() {
 
                     <div className="flex flex-col gap-2 pt-2">
                       {currentRide.status === 'accepted' && (
-                        <Button 
-                          onClick={() => startRideFn(currentRide.id)} 
+                        <Button
+                          onClick={() => startRideFn(currentRide.id)}
                           disabled={loading}
                           className="w-full bg-blue-600 hover:bg-blue-700"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" /> 
-                          Client r├®cup├®r├®
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Client récupéré
                         </Button>
                       )}
                       {(currentRide.status === 'picked_up' || currentRide.status === 'in_transit') && (
-                        <Button 
-                          onClick={() => completeRideFn(currentRide.id)} 
+                        <Button
+                          onClick={() => completeRideFn(currentRide.id)}
                           disabled={loading}
                           className="w-full bg-green-600 hover:bg-green-700"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" /> 
+                          <CheckCircle className="w-4 h-4 mr-2" />
                           Terminer la course
                         </Button>
                       )}
-                      <Button 
+                      <Button
                         onClick={(e) => {
                           e.preventDefault();
-                          const problem = prompt("D├®crivez le probl├¿me:");
+                          const problem = prompt("Décrivez le problème:");
                           if (problem && currentRide) {
-                            toast.info('Probl├¿me signal├® pour la course #' + currentRide.id.slice(0, 8));
+                            toast.info('Problème signalé pour la course #' + currentRide.id.slice(0, 8));
                             // TODO: Implement ride problem reporting via TaxiMotoService
                           }
-                        }} 
+                        }}
                         variant="destructive"
                         disabled={loading}
                         className="w-full"
                       >
-                        <AlertTriangle className="w-4 h-4 mr-2" /> 
-                        Signaler un probl├¿me
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Signaler un problème
                       </Button>
                     </div>
                   </div>
@@ -696,32 +696,32 @@ export default function LivreurDashboard() {
             )}
           </TabsContent>
 
-          {/* ­ƒôï Historique unifi├® */}
+          {/* 📋 Historique unifié */}
           <TabsContent value="history" className="space-y-3">
             {deliveryHistory.length === 0 && rideHistory.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="font-medium">Aucun historique</p>
-                  <p className="text-sm mt-1">Vos livraisons et courses termin├®es appara├«tront ici</p>
+                  <p className="text-sm mt-1">Vos livraisons et courses terminées apparaëtront ici</p>
                 </div>
               </Card>
             ) : (
               <>
-                {/* Livraisons termin├®es */}
+                {/* Livraisons terminées */}
                 {deliveryHistory.map((delivery) => {
                   const getStatusLabel = (status: string) => {
                     switch(status) {
-                      case 'delivered': return 'Livr├®e';
-                      case 'cancelled': return 'Annul├®e';
+                      case 'delivered': return 'Livrée';
+                      case 'cancelled': return 'Annulée';
                       case 'pending': return 'En attente';
-                      case 'assigned': return 'Assign├®e';
-                      case 'picked_up': return 'R├®cup├®r├®e';
+                      case 'assigned': return 'Assignée';
+                      case 'picked_up': return 'Récupérée';
                       case 'in_transit': return 'En transit';
                       default: return status;
                     }
                   };
-                  
+
                   return (
                     <Card key={delivery.id} className="shadow-sm">
                       <CardContent className="p-4">
@@ -733,8 +733,8 @@ export default function LivreurDashboard() {
                                 Livraison #{delivery.id.slice(0, 8)}
                               </p>
                               <Badge variant={
-                                delivery.status === 'delivered' ? 'default' : 
-                                delivery.status === 'cancelled' ? 'destructive' : 
+                                delivery.status === 'delivered' ? 'default' :
+                                delivery.status === 'cancelled' ? 'destructive' :
                                 'secondary'
                               }>
                                 {getStatusLabel(delivery.status)}
@@ -742,12 +742,12 @@ export default function LivreurDashboard() {
                             </div>
                             {(delivery as any).vendor_name && (
                               <p className="text-sm text-foreground">
-                                ­ƒÅ¬ {(delivery as any).vendor_name}
+                                🏪 {(delivery as any).vendor_name}
                               </p>
                             )}
                             {(delivery as any).customer_name && (
                               <p className="text-sm text-muted-foreground">
-                                ­ƒæñ {(delivery as any).customer_name}
+                                👤 {(delivery as any).customer_name}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground">
@@ -775,17 +775,17 @@ export default function LivreurDashboard() {
                     </Card>
                   );
                 })}
-                
-                {/* Courses taxi termin├®es */}
+
+                {/* Courses taxi terminées */}
                 {rideHistory.map((ride) => {
                   const getRideStatusLabel = (status: string) => {
                     switch(status) {
-                      case 'completed': return 'Termin├®e';
-                      case 'cancelled': return 'Annul├®e';
+                      case 'completed': return 'Terminée';
+                      case 'cancelled': return 'Annulée';
                       default: return status;
                     }
                   };
-                  
+
                   return (
                     <Card key={ride.id} className="shadow-sm border-yellow-500/20">
                       <CardContent className="p-4">
@@ -795,8 +795,8 @@ export default function LivreurDashboard() {
                               <Car className="h-4 w-4 text-yellow-500" />
                               <p className="font-medium">Course #{ride.id.slice(0, 8)}</p>
                               <Badge variant={
-                                ride.status === 'completed' ? 'default' : 
-                                ride.status === 'cancelled' ? 'destructive' : 
+                                ride.status === 'completed' ? 'default' :
+                                ride.status === 'cancelled' ? 'destructive' :
                                 'secondary'
                               }>
                                 {getRideStatusLabel(ride.status)}
@@ -826,7 +826,7 @@ export default function LivreurDashboard() {
             )}
           </TabsContent>
 
-          {/* ­ƒÆ░ Portefeuille */}
+          {/* 💰 Portefeuille */}
           <TabsContent value="wallet">
             <div className="space-y-4">
               <WalletBalanceWidget />
@@ -849,7 +849,7 @@ export default function LivreurDashboard() {
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                      <span className="text-sm font-medium">Livraisons termin├®es</span>
+                      <span className="text-sm font-medium">Livraisons terminées</span>
                       <Badge variant="outline">
                         {deliveryHistory.filter(d => d.status === 'delivered').length}
                       </Badge>
@@ -857,7 +857,7 @@ export default function LivreurDashboard() {
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                       <span className="text-sm font-medium">Statut GPS</span>
                       <Badge variant={location ? 'default' : 'secondary'}>
-                        {location ? 'Ô£ô Actif' : 'Inactif'}
+                        {location ? '✓ Actif' : 'Inactif'}
                       </Badge>
                     </div>
                   </div>
@@ -866,13 +866,13 @@ export default function LivreurDashboard() {
             </div>
           </TabsContent>
 
-          {/* ­ƒøÆ Mes Achats */}
+          {/* 🛒 Mes Achats */}
           <TabsContent value="my-purchases">
             <MyPurchasesOrdersList title="Mes Achats Personnels" />
           </TabsContent>
         </Tabs>
       </ResponsiveContainer>
-      
+
       {/* Dialog de chat pour communication avec client/vendeur */}
       <Dialog open={showChat} onOpenChange={setShowChat}>
         <DialogContent className="max-w-2xl h-[600px] p-0">
@@ -891,7 +891,7 @@ export default function LivreurDashboard() {
           )}
         </DialogContent>
       </Dialog>
-      
+
       {/* Modal de preuve de livraison */}
       {showProofUpload && currentDelivery && (
         <DeliveryProofUpload
@@ -910,53 +910,53 @@ export default function LivreurDashboard() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Montant ├á encaisser</p>
+                <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
                 <p className="text-3xl font-bold text-primary">
-                  {currentDelivery 
-                    ? (currentDelivery.delivery_fee || 0).toLocaleString() 
+                  {currentDelivery
+                    ? (currentDelivery.delivery_fee || 0).toLocaleString()
                     : (currentRide?.price_total || 0).toLocaleString()
                   } GNF
                 </p>
               </div>
               <div className="space-y-2">
-                <Button 
+                <Button
                   onClick={() => {
                     if (currentDelivery) {
                       processDeliveryPayment(currentDelivery.id, 'cash');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement en esp├¿ces enregistr├®');
+                    toast.success('Paiement en espèces enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ­ƒÆÁ Paiement en esp├¿ces
+                  💵 Paiement en espèces
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     if (currentDelivery) {
                       processDeliveryPayment(currentDelivery.id, 'mobile_money');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement mobile money enregistr├®');
+                    toast.success('Paiement mobile money enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ­ƒô▒ Mobile Money
+                  📱 Mobile Money
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     if (currentDelivery) {
                       processDeliveryPayment(currentDelivery.id, 'wallet');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement wallet enregistr├®');
+                    toast.success('Paiement wallet enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ­ƒÆ░ Wallet 224Solutions
+                  💰 Wallet 224Solutions
                 </Button>
               </div>
               <Button onClick={() => setShowPaymentModal(false)} variant="ghost" className="w-full">

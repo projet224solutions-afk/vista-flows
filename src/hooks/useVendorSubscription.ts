@@ -30,14 +30,15 @@ export function useVendorSubscription() {
       setSubscription(null);
       setHasAccess(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadSubscriptionData = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Requête directe pour récupérer l'abonnement actif avec le plan
       const { data: subData, error: subError } = await supabase
         .from('subscriptions')
@@ -91,7 +92,7 @@ export function useVendorSubscription() {
         .order('display_order');
 
       setPlans((plansData || []) as Plan[]);
-      
+
     } catch (error) {
       console.error('❌ Erreur chargement abonnement:', error);
     } finally {

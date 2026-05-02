@@ -2,7 +2,7 @@
  * 🚀 AWS LAMBDA - AUTH GATEWAY
  * Fonction Lambda pour API Gateway
  * Point d'entrée centralisé pour l'authentification Cognito
- * 
+ *
  * Déploiement: AWS Lambda + API Gateway (HTTP API)
  * Runtime: Node.js 20.x
  */

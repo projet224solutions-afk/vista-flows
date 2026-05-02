@@ -1,15 +1,15 @@
 ﻿/**
- * PAGE MES COMMANDES - Suivi unifi├® Restaurant + Taxi-Moto
- * Le client voit l'├®volution de ses commandes en temps r├®el
+ * PAGE MES COMMANDES - Suivi unifié Restaurant + Taxi-Moto
+ * Le client voit l'évolution de ses commandes en temps réel
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, _Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import QuickFooter from '@/components/QuickFooter';
@@ -17,27 +17,27 @@ import QuickFooter from '@/components/QuickFooter';
 // Status configs
 const restaurantStatusConfig: Record<string, { label: string; color: string; icon: any; step: number }> = {
   pending: { label: 'En attente', color: 'bg-yellow-500', icon: Clock, step: 1 },
-  confirmed: { label: 'Confirm├®e', color: 'bg-blue-500', icon: CheckCircle2, step: 2 },
-  preparing: { label: 'En pr├®paration', color: 'bg-orange-500', icon: ChefHat, step: 3 },
-  ready: { label: 'Pr├¬te', color: 'bg-green-500', icon: Package, step: 4 },
-  delivered: { label: 'Livr├®e', color: 'bg-emerald-600', icon: CheckCircle2, step: 5 },
-  completed: { label: 'Termin├®e', color: 'bg-primary', icon: CheckCircle2, step: 6 },
-  cancelled: { label: 'Annul├®e', color: 'bg-destructive', icon: XCircle, step: 0 },
+  confirmed: { label: 'Confirmée', color: 'bg-blue-500', icon: CheckCircle2, step: 2 },
+  preparing: { label: 'En préparation', color: 'bg-orange-500', icon: ChefHat, step: 3 },
+  ready: { label: 'Prête', color: 'bg-green-500', icon: Package, step: 4 },
+  delivered: { label: 'Livrée', color: 'bg-emerald-600', icon: CheckCircle2, step: 5 },
+  completed: { label: 'Terminée', color: 'bg-primary', icon: CheckCircle2, step: 6 },
+  cancelled: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
 };
 
 const taxiStatusConfig: Record<string, { label: string; color: string; icon: any; step: number }> = {
   requested: { label: 'Recherche chauffeur', color: 'bg-yellow-500', icon: Clock, step: 1 },
   accepted: { label: 'Chauffeur en route', color: 'bg-blue-500', icon: Bike, step: 2 },
-  arrived: { label: 'Chauffeur arriv├®', color: 'bg-indigo-500', icon: MapPin, step: 3 },
+  arrived: { label: 'Chauffeur arrivé', color: 'bg-indigo-500', icon: MapPin, step: 3 },
   picked_up: { label: 'En course', color: 'bg-orange-500', icon: Bike, step: 4 },
-  completed: { label: 'Termin├®e', color: 'bg-green-500', icon: CheckCircle2, step: 5 },
-  cancelled: { label: 'Annul├®e', color: 'bg-destructive', icon: XCircle, step: 0 },
-  cancelled_by_customer: { label: 'Annul├®e', color: 'bg-destructive', icon: XCircle, step: 0 },
-  cancelled_by_driver: { label: 'Annul├®e par chauffeur', color: 'bg-destructive', icon: XCircle, step: 0 },
+  completed: { label: 'Terminée', color: 'bg-green-500', icon: CheckCircle2, step: 5 },
+  cancelled: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
+  cancelled_by_customer: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
+  cancelled_by_driver: { label: 'Annulée par chauffeur', color: 'bg-destructive', icon: XCircle, step: 0 },
 };
 
-const restaurantSteps = ['En attente', 'Confirm├®e', 'Pr├®paration', 'Pr├¬te', 'Livr├®e', 'Termin├®e'];
-const taxiSteps = ['Demand├®e', 'Accept├®e', 'Arriv├®', 'En course', 'Termin├®e'];
+const restaurantSteps = ['En attente', 'Confirmée', 'Préparation', 'Prête', 'Livrée', 'Terminée'];
+const taxiSteps = ['Demandée', 'Acceptée', 'Arrivé', 'En course', 'Terminée'];
 
 interface RestaurantOrderTracking {
   id: string;
@@ -81,7 +81,7 @@ function StatusStepper({ steps, currentStep, isCancelled }: { steps: string[]; c
         <div className="w-6 h-6 rounded-full bg-destructive flex items-center justify-center">
           <XCircle className="w-4 h-4 text-destructive-foreground" />
         </div>
-        <span className="text-sm font-medium text-destructive">Commande annul├®e</span>
+        <span className="text-sm font-medium text-destructive">Commande annulée</span>
       </div>
     );
   }
@@ -109,7 +109,7 @@ function StatusStepper({ steps, currentStep, isCancelled }: { steps: string[]; c
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
-                {isActive ? 'Ô£ô' : index + 1}
+                {isActive ? '✓' : index + 1}
               </div>
               <span className={`text-[10px] mt-1 text-center max-w-[60px] leading-tight ${isCurrent ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
                 {step}
@@ -128,9 +128,9 @@ function RestaurantOrderCard({ order }: { order: RestaurantOrderTracking }) {
   const isCancelled = order.status === 'cancelled';
 
   const orderTypeLabels: Record<string, string> = {
-    dine_in: '­ƒì¢´©Å Sur place',
-    delivery: '­ƒÜÜ Livraison',
-    takeaway: '­ƒôª ├Ç emporter',
+    dine_in: '🍽️ Sur place',
+    delivery: '🚚 Livraison',
+    takeaway: '📦 À emporter',
   };
 
   return (
@@ -171,7 +171,7 @@ function RestaurantOrderCard({ order }: { order: RestaurantOrderTracking }) {
             )}
           </div>
           <p className="font-bold text-base">
-            {order.total ? `${order.total.toLocaleString()} GNF` : 'ÔÇö'}
+            {order.total ? `${order.total.toLocaleString()} GNF` : '-'}
           </p>
         </div>
 
@@ -233,7 +233,7 @@ function TaxiTripCard({ trip }: { trip: TaxiTripTracking }) {
             {trip.duration_min && <span>~{Math.round(trip.duration_min)} min</span>}
           </div>
           <p className="font-bold text-base">
-            {trip.price_total ? `${trip.price_total.toLocaleString()} GNF` : 'ÔÇö'}
+            {trip.price_total ? `${trip.price_total.toLocaleString()} GNF` : '-'}
           </p>
         </div>
       </CardContent>
@@ -399,7 +399,7 @@ export default function MesCommandes() {
                 </div>
                 <p className="text-muted-foreground font-medium">Aucune commande</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Vos commandes restaurant et courses taxi appara├«tront ici
+                  Vos commandes restaurant et courses taxi apparaëtront ici
                 </p>
               </div>
             ) : (

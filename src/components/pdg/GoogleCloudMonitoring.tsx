@@ -22,7 +22,7 @@ interface ApiTest {
 }
 
 export default function GoogleCloudMonitoring() {
-  const { getCurrentLocation, location, loading: geoLoading } = useCurrentLocation();
+  const { getCurrentLocation, location, loading: _geoLoading } = useCurrentLocation();
   const [testAddress, setTestAddress] = useState('Tour Eiffel, Paris');
   const [tests, setTests] = useState<Record<string, ApiTest>>({
     geocoding: { name: 'Geocoding API', status: 'idle' },
@@ -41,11 +41,11 @@ export default function GoogleCloudMonitoring() {
   const testGeocoding = async () => {
     updateTest('geocoding', { status: 'loading' });
     const startTime = Date.now();
-    
+
     try {
       const results = await mapService.geocodeAddress(testAddress);
       const latency = Date.now() - startTime;
-      
+
       if (results.length > 0) {
         updateTest('geocoding', {
           status: 'success',
@@ -67,7 +67,7 @@ export default function GoogleCloudMonitoring() {
         status: 'error',
         error: error.message
       });
-      toast.error('Erreur de géocodage', { 
+      toast.error('Erreur de géocodage', {
         description: 'Vérifiez que la clé API Google Cloud est configurée et que les APIs sont activées'
       });
     }
@@ -77,7 +77,7 @@ export default function GoogleCloudMonitoring() {
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/test-google-cloud-api`, {
         method: 'POST',
         headers: {
@@ -87,7 +87,7 @@ export default function GoogleCloudMonitoring() {
       });
 
       const data = await response.json();
-      
+
       if (data.status === 'success') {
         toast.success('Configuration API validée', {
           description: data.message
@@ -98,7 +98,7 @@ export default function GoogleCloudMonitoring() {
           description: data.message,
           duration: 10000
         });
-        
+
         if (data.instructions) {
           console.error('Instructions de configuration:', data.instructions);
         }
@@ -115,12 +115,12 @@ export default function GoogleCloudMonitoring() {
   const testReverseGeocoding = async () => {
     updateTest('reverseGeocoding', { status: 'loading' });
     const startTime = Date.now();
-    
+
     try {
       // Paris coordinates
       const address = await mapService.reverseGeocode(48.8566, 2.3522);
       const latency = Date.now() - startTime;
-      
+
       updateTest('reverseGeocoding', {
         status: 'success',
         latency,
@@ -141,7 +141,7 @@ export default function GoogleCloudMonitoring() {
   const testDirections = async () => {
     updateTest('directions', { status: 'loading' });
     const startTime = Date.now();
-    
+
     try {
       // Paris to Lyon
       const route = await mapService.calculateRoute(
@@ -149,7 +149,7 @@ export default function GoogleCloudMonitoring() {
         { latitude: 45.7640, longitude: 4.8357 }
       );
       const latency = Date.now() - startTime;
-      
+
       updateTest('directions', {
         status: 'success',
         latency,
@@ -170,11 +170,11 @@ export default function GoogleCloudMonitoring() {
   const testGeolocation = async () => {
     updateTest('geolocation', { status: 'loading' });
     const startTime = Date.now();
-    
+
     try {
       const pos = await getCurrentLocation();
       const latency = Date.now() - startTime;
-      
+
       updateTest('geolocation', {
         status: 'success',
         latency,
@@ -202,7 +202,7 @@ export default function GoogleCloudMonitoring() {
       });
       return;
     }
-    
+
     await testGeolocation();
     await testGeocoding();
     await testReverseGeocoding();
@@ -367,7 +367,7 @@ export default function GoogleCloudMonitoring() {
                     )}
                     {tests.directions.result && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Distance: {tests.directions.result.distance.toFixed(1)}km, 
+                        Distance: {tests.directions.result.distance.toFixed(1)}km,
                         Durée: {tests.directions.result.duration}min
                       </p>
                     )}

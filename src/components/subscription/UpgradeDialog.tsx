@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Crown, Lock, Zap, Check } from 'lucide-react';
+import { Crown, _Lock, _Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,7 +35,7 @@ const PLAN_COLORS: Record<string, string> = {
   'premium': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
 };
 
-const PLAN_DESCRIPTIONS: Record<string, string> = {
+const _PLAN_DESCRIPTIONS: Record<string, string> = {
   'free': "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
   'basic': "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
   'pro': "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
@@ -74,15 +74,15 @@ const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
   ],
 };
 
-export function UpgradeDialog({ 
-  open, 
-  onOpenChange, 
+export function UpgradeDialog({
+  open,
+  onOpenChange,
   feature,
-  moduleName 
+  moduleName
 }: UpgradeDialogProps) {
   const { getPlanName, isActive } = useSubscriptionFeatures();
   const [showPlanSelector, setShowPlanSelector] = useState(false);
-  
+
   const currentPlan = getPlanName();
   const minPlan = feature ? FEATURE_MIN_PLAN[feature] : 'basic';
   const minPlanDisplay = PLAN_DISPLAY_NAMES[minPlan] || minPlan;
@@ -158,14 +158,14 @@ export function UpgradeDialog({
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
               Plus tard
             </Button>
-            <Button 
+            <Button
               onClick={handleUpgrade}
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
             >
@@ -176,8 +176,8 @@ export function UpgradeDialog({
         </DialogContent>
       </Dialog>
 
-      <VendorSubscriptionPlanSelector 
-        open={showPlanSelector} 
+      <VendorSubscriptionPlanSelector
+        open={showPlanSelector}
         onOpenChange={setShowPlanSelector}
         onSuccess={handleSubscriptionSuccess}
       />

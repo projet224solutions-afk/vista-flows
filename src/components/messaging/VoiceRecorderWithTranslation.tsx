@@ -33,15 +33,15 @@ export function VoiceRecorderWithTranslation({
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const { 
-    sendVoiceMessage, 
-    isSending, 
+  const {
+    sendVoiceMessage,
+    isSending,
     translationStatus,
     subscribeToTranslationStatus
   } = useVoiceMessageWithTranslation();
@@ -74,22 +74,22 @@ export function VoiceRecorderWithTranslation({
   // Démarrer l'enregistrement
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
           sampleRate: 48000,
           echoCancellation: true,
           noiseSuppression: true
-        } 
+        }
       });
-      
+
       streamRef.current = stream;
       audioChunksRef.current = [];
 
       // iOS/Safari: utiliser mp4/aac en priorité
       // Autres navigateurs: utiliser webm/opus
       let mimeType: string;
-      
+
       if (isIOSDevice() || isSafariBrowser()) {
         // iOS Safari supporte uniquement mp4 ou wav
         if (MediaRecorder.isTypeSupported('audio/mp4')) {
@@ -127,7 +127,7 @@ export function VoiceRecorderWithTranslation({
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
-        
+
         // Arrêter les pistes audio
         stream.getTracks().forEach(track => track.stop());
       };
@@ -151,7 +151,7 @@ export function VoiceRecorderWithTranslation({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -180,7 +180,7 @@ export function VoiceRecorderWithTranslation({
 
     if (result.success && result.messageId) {
       onMessageSent?.(result.messageId, result.audioUrl || '');
-      
+
       // Écouter les mises à jour de traduction
       if (result.needsTranslation) {
         subscribeToTranslationStatus(result.messageId, (status, data) => {
@@ -256,12 +256,12 @@ export function VoiceRecorderWithTranslation({
           >
             <X className="h-5 w-5" />
           </Button>
-          
+
           <div className="flex items-center gap-2 flex-1">
             <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
             <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
           </div>
-          
+
           <Button
             variant="default"
             size="icon"
@@ -285,12 +285,12 @@ export function VoiceRecorderWithTranslation({
           >
             <X className="h-5 w-5" />
           </Button>
-          
+
           <div className="flex-1 flex items-center gap-2">
             {audioUrl && (
-              <audio 
-                src={audioUrl} 
-                controls 
+              <audio
+                src={audioUrl}
+                controls
                 className="h-8 max-w-[150px]"
               />
             )}
@@ -299,7 +299,7 @@ export function VoiceRecorderWithTranslation({
             </span>
             <TranslationIndicator />
           </div>
-          
+
           <Button
             variant="default"
             size="icon"
@@ -327,11 +327,11 @@ export function VoiceRecorderWithTranslation({
           >
             <X className="h-5 w-5" />
           </Button>
-          
+
           <span className="flex-1 text-sm text-muted-foreground text-center">
             Appuyez pour enregistrer
           </span>
-          
+
           <Button
             variant="default"
             size="icon"

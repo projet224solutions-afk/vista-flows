@@ -12,7 +12,7 @@ export const COMMERCE_TOPICS = {
   ORDERS_CANCELLED: 'orders-cancelled',
   ORDERS_PREPARING: 'orders-preparing',
   ORDERS_READY: 'orders-ready',
-  
+
   // Inventory
   INVENTORY_UPDATED: 'inventory-updated',
   INVENTORY_LOW_STOCK: 'inventory-low-stock',
@@ -29,11 +29,11 @@ export const LOGISTICS_TOPICS = {
   DELIVERY_DELIVERED: 'delivery-delivered',
   DELIVERY_FAILED: 'delivery-failed',
   DELIVERY_RETURNED: 'delivery-returned',
-  
+
   // Location
   LOCATION_UPDATED: 'location-updated',
   DELIVERY_ETA_UPDATED: 'delivery-eta-updated',
-  
+
   // Routes
   ROUTE_OPTIMIZED: 'route-optimized',
   ROUTE_CHANGED: 'route-changed',
@@ -46,17 +46,17 @@ export const FINANCIAL_TOPICS = {
   PAYMENTS_COMPLETED: 'payments-completed',
   PAYMENTS_FAILED: 'payments-failed',
   PAYMENTS_REFUNDED: 'payments-refunded',
-  
+
   // Wallet
   WALLET_CREDITED: 'wallet-credited',
   WALLET_DEBITED: 'wallet-debited',
   WALLET_TRANSFER: 'wallet-transfer',
   WALLET_LOCKED: 'wallet-locked',
-  
+
   // Commissions
   COMMISSION_CALCULATED: 'commission-calculated',
   COMMISSION_PAID: 'commission-paid',
-  
+
   // Escrow
   ESCROW_CREATED: 'escrow-created',
   ESCROW_RELEASED: 'escrow-released',
@@ -72,12 +72,12 @@ export const ANALYTICS_TOPICS = {
   USER_PURCHASE: 'user-purchase',
   USER_SEARCH: 'user-search',
   USER_CART_ACTION: 'user-cart-action',
-  
+
   // Business metrics
   METRICS_SALES: 'metrics-sales',
   METRICS_REVENUE: 'metrics-revenue',
   METRICS_USERS: 'metrics-users',
-  
+
   // Performance
   PERFORMANCE_API: 'performance-api',
   PERFORMANCE_ERROR: 'performance-error',
@@ -90,12 +90,12 @@ export const SYSTEM_TOPICS = {
   NOTIFICATIONS_SMS: 'notifications-sms',
   NOTIFICATIONS_PUSH: 'notifications-push',
   NOTIFICATIONS_IN_APP: 'notifications-in-app',
-  
+
   // System events
   SYSTEM_HEALTH: 'system-health',
   SYSTEM_ERROR: 'system-error',
   SYSTEM_MAINTENANCE: 'system-maintenance',
-  
+
   // Audit
   AUDIT_LOG: 'audit-log',
   SECURITY_ALERT: 'security-alert',

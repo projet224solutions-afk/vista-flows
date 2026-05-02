@@ -5,7 +5,7 @@
  * Élimine le problème N+1 (3 requêtes × N produits).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { VendorCertificationStatus } from '@/types/vendorCertification';
 

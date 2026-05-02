@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DeliveryPaymentService } from "@/services/delivery/DeliveryPaymentService";
-import { SecureButton } from "@/components/ui/SecureButton";
+import { _SecureButton } from "@/components/ui/SecureButton";
 import { StripeCardPaymentModal } from "@/components/pos/StripeCardPaymentModal";
 import { Button } from "@/components/ui/button";
 
@@ -56,6 +56,7 @@ export default function DeliveryPaymentModal({
     if (open && customerId) {
       loadWalletBalance();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, customerId]);
 
   const loadWalletBalance = async () => {
@@ -190,7 +191,7 @@ export default function DeliveryPaymentModal({
 
   const handleStripeSuccess = async (paymentIntentId: string) => {
     console.log('[DeliveryPayment] Stripe payment success:', paymentIntentId);
-    
+
     toast.success('Paiement par carte réussi !', {
       description: `${amount.toLocaleString()} GNF payés par carte`
     });
@@ -335,7 +336,7 @@ export default function DeliveryPaymentModal({
                   </>
                 ) : (
                   paymentMethod === 'card' ? 'Payer par carte' :
-                  paymentMethod === 'cash' ? 'Confirmer' : 
+                  paymentMethod === 'cash' ? 'Confirmer' :
                   `Payer ${amount.toLocaleString()} GNF`
                 )}
               </Button>

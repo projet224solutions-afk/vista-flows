@@ -66,7 +66,7 @@ export interface SubscriptionStats {
 // ============================================
 
 export class UnifiedSubscriptionService {
-  
+
   /**
    * Récupérer tous les plans actifs
    */
@@ -131,7 +131,7 @@ export class UnifiedSubscriptionService {
 
       // Si c'est un tableau, prendre le premier élément
       const subscription = Array.isArray(data) ? data[0] : data;
-      
+
       return subscription as unknown as UnifiedSubscription;
     } catch (error) {
       console.error('❌ Exception récupération abonnement:', error);
@@ -198,13 +198,13 @@ export class UnifiedSubscriptionService {
     if (billingCycle === 'yearly' && plan.yearly_price_gnf) {
       return plan.yearly_price_gnf;
     }
-    
+
     if (billingCycle === 'yearly') {
       // Calculer avec la réduction
       const discount = plan.yearly_discount_percentage || 5;
       return Math.round(plan.monthly_price_gnf * 12 * (1 - discount / 100));
     }
-    
+
     return plan.monthly_price_gnf;
   }
 
@@ -239,7 +239,7 @@ export class UnifiedSubscriptionService {
     try {
       const { error } = await supabase
         .from('subscriptions')
-        .update({ 
+        .update({
           auto_renew: false,
           updated_at: new Date().toISOString()
         })
@@ -264,7 +264,7 @@ export class UnifiedSubscriptionService {
     try {
       const { error } = await supabase
         .from('subscriptions')
-        .update({ 
+        .update({
           auto_renew: true,
           updated_at: new Date().toISOString()
         })

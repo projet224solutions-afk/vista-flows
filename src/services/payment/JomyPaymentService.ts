@@ -163,19 +163,19 @@ export class JomyPaymentService {
    * Note: Cette fonction est gérée par le webhook djomy-webhook
    */
   static async processSuccessfulPayment(
-    userId: string, 
-    amount: number, 
+    userId: string,
+    amount: number,
     transactionId: string,
-    description?: string
+    _description?: string
   ): Promise<boolean> {
     try {
       // Le webhook djomy-webhook gère automatiquement la mise à jour du wallet
       // Cette fonction est un fallback manuel si nécessaire
       console.log('[JomyPaymentService] Payment processed via webhook:', { userId, amount, transactionId });
-      
+
       // Émettre événement de mise à jour
       window.dispatchEvent(new CustomEvent('wallet-updated'));
-      
+
       return true;
     } catch (err) {
       console.error('[JomyPaymentService] Process payment error:', err);
@@ -192,7 +192,7 @@ export class JomyPaymentService {
       const { error } = await supabase.functions.invoke('djomy-payment', {
         body: { ping: true }
       });
-      
+
       return !error;
     } catch {
       return false;

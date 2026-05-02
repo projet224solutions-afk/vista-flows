@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MapPin, AlertTriangle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
+import { MapPin, AlertTriangle, _CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface GPSPermissionHelperProps {
@@ -16,6 +16,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
 
   useEffect(() => {
     checkPermission();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkPermission = async () => {
@@ -28,7 +29,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
       if ('permissions' in navigator) {
         const permission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         setPermissionState(permission.state as any);
-        
+
         permission.addEventListener('change', () => {
           setPermissionState(permission.state as any);
           if (permission.state === 'granted') {
@@ -46,7 +47,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
 
   const requestPermission = async () => {
     setIsRequesting(true);
-    
+
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
@@ -63,12 +64,12 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
       toast.success('GPS activé avec succès !', {
         description: `Position: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
       });
-      
+
       setPermissionState('granted');
       onLocationGranted();
     } catch (error: any) {
       console.error('Erreur GPS:', error);
-      
+
       let errorMessage = 'Impossible d\'obtenir votre position';
       let errorDetails = '';
 
@@ -157,7 +158,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
               Vous avez refusé l'accès à votre position. Pour utiliser cette fonctionnalité, vous devez autoriser l'accès au GPS.
             </AlertDescription>
           </Alert>
-          
+
           <div className="bg-blue-50 rounded-lg p-4 text-sm space-y-3">
             <p className="font-semibold text-blue-900">📱 Comment autoriser le GPS :</p>
             <ol className="list-decimal list-inside space-y-2 text-blue-800">
@@ -169,14 +170,14 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
           </div>
 
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={openSettings}
               variant="outline"
               className="flex-1"
             >
               Voir les instructions
             </Button>
-            <Button 
+            <Button
               onClick={() => window.location.reload()}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >

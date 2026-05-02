@@ -4,12 +4,12 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { 
-  audioTranslationService, 
+import {
+  audioTranslationService,
   AudioTranslationResult,
-  AudioMessage 
+  _AudioMessage
 } from '@/services/audioTranslationService';
-import { SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
+import { SupportedLanguage, _SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UseAudioTranslationOptions {
@@ -29,21 +29,21 @@ interface UseAudioTranslationReturn {
   isTranslating: boolean;
   currentPlayback: AudioPlaybackState;
   userLanguage: SupportedLanguage;
-  
+
   // Actions
   translateAudioMessage: (
     audioUrl: string,
     messageId?: string,
     sourceLanguage?: string
   ) => Promise<AudioTranslationResult>;
-  
+
   playAudioForMessage: (
     messageId: string,
     fallbackUrl: string
   ) => Promise<void>;
-  
+
   stopAudio: () => void;
-  
+
   getDisplayAudioUrl: (message: {
     id: string;
     file_url?: string;
@@ -51,12 +51,12 @@ interface UseAudioTranslationReturn {
     audio_translation_status?: string;
     target_language?: string;
   }) => string;
-  
+
   isAudioTranslated: (message: {
     audio_translation_status?: string;
     target_language?: string;
   }) => boolean;
-  
+
   // Transcription
   getTranscription: (messageId: string) => Promise<string | null>;
 }
@@ -64,7 +64,7 @@ interface UseAudioTranslationReturn {
 export function useAudioTranslation(
   options: UseAudioTranslationOptions = {}
 ): UseAudioTranslationReturn {
-  const { autoTranslate = true, context = 'general' } = options;
+  const { _autoTranslate = true, context = 'general' } = options;
 
   const [isTranslating, setIsTranslating] = useState(false);
   const [userLanguage, setUserLanguage] = useState<SupportedLanguage>('fr');
@@ -148,7 +148,7 @@ export function useAudioTranslation(
           isPlaying: true,
           isTranslated: false
         });
-        
+
         audio.onended = () => {
           setCurrentPlayback(prev => ({ ...prev, isPlaying: false }));
         };
@@ -156,14 +156,14 @@ export function useAudioTranslation(
       }
 
       // Obtenir l'audio approprié
-      const { audioUrl, isTranslated, transcribedText } = 
+      const { audioUrl, isTranslated, transcribedText } =
         await audioTranslationService.getAudioForUser(messageId, user.id);
 
       const urlToPlay = audioUrl || fallbackUrl;
       if (!urlToPlay) return;
 
       const audio = new Audio(urlToPlay);
-      
+
       // Gérer les événements
       audio.onplay = () => {
         setCurrentPlayback({

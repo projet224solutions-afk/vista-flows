@@ -17,19 +17,19 @@ export const SECURITY_CONFIG = {
   // Monitoring
   monitoringEnabled: true,
   healthCheckInterval: 60000, // 60 secondes
-  
+
   // Logging
   logLevel: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
   logRetention: 30, // jours
-  
+
   // CSP
   cspEnabled: true,
   cspReportOnly: false,
-  
+
   // Alerting
   alertingEnabled: true,
   criticalAlertChannels: ['email', 'push'] as const,
-  
+
   // Error Boundaries
   errorBoundariesEnabled: true,
   autoResetErrors: true,
@@ -98,7 +98,7 @@ export async function initializeSecurityServices(): Promise<void> {
 
   } catch (error) {
     console.error('❌ Erreur initialisation services sécurité:', error);
-    
+
     secureLogger.critical(
       'system',
       'Échec initialisation services sécurité',
@@ -191,7 +191,7 @@ export async function getSecurityStatus(): Promise<{
     ]);
 
     const cspViolations = cspService.getCriticalViolations();
-    
+
     return {
       overall: systemHealth.overall,
       monitoring: SECURITY_CONFIG.monitoringEnabled,
@@ -206,10 +206,10 @@ export async function getSecurityStatus(): Promise<{
       }
     };
   } catch (error) {
-    secureLogger.error('system', 'Erreur récupération statut sécurité', 
+    secureLogger.error('system', 'Erreur récupération statut sécurité',
       error instanceof Error ? error : undefined
     );
-    
+
     return {
       overall: 'unknown',
       monitoring: false,

@@ -43,13 +43,13 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
 
   const handleExportPDF = async () => {
     if (!printRef.current) return;
-    
+
     setIsExporting(true);
     toast.info('Génération du PDF en cours...');
 
     try {
       const element = printRef.current;
-      
+
       // Configuration haute résolution
       const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(element, {
@@ -70,7 +70,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
+
       // Ajouter l'image avec marges
       const margin = 5;
       pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth - (margin * 2), pdfHeight - (margin * 2));
@@ -78,7 +78,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       // Sauvegarder
       const fileName = `tickets-transport-${batchId?.slice(-8) || 'lot'}-${config.commune.toLowerCase()}.pdf`;
       pdf.save(fileName);
-      
+
       toast.success('PDF exporté avec succès');
     } catch (error) {
       console.error('Erreur export PDF:', error);
@@ -128,7 +128,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       </div>
 
       {/* Zone d'impression - Page A4 Paysage */}
-      <div 
+      <div
         ref={printRef}
         className="bg-white mx-auto print-area"
         style={{
@@ -139,7 +139,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
         }}
       >
         {/* Grille de tickets PAYSAGE (5 colonnes x 6 lignes = 30 tickets) */}
-        <div 
+        <div
           className="grid gap-[2mm]"
           style={{
             gridTemplateColumns: 'repeat(5, 1fr)', // 5 colonnes
@@ -148,7 +148,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
             height: '200mm',
           }}
         >
-          {ticketNumbers.map((ticketNumber, index) => (
+          {ticketNumbers.map((ticketNumber, _index) => (
             <SingleTransportTicket
               key={ticketNumber}
               ticketNumber={ticketNumber}

@@ -1,12 +1,12 @@
 /**
  * 🔑 HOOK UNIFIÉ POUR L'IDENTIFIANT PUBLIC UTILISATEUR
- * 
+ *
  * Ce hook garantit l'utilisation de profiles.public_id comme source unique
  * pour tous les identifiants utilisateur affichés dans l'application.
- * 
+ *
  * Remplace l'utilisation incohérente de:
  * - user_ids.custom_id
- * - vendors.vendor_code  
+ * - vendors.vendor_code
  * - taxi_drivers.driver_code
  * etc.
  */
@@ -121,6 +121,7 @@ export function useUserPublicIds(userIds: string[]): {
     };
 
     fetchPublicIds();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userIds.join(',')]); // Recalculer uniquement si la liste change
 
   return { publicIds, loading, error };

@@ -1,5 +1,5 @@
 ﻿/**
- * Page de d├®tail d'un produit num├®rique
+ * Page de détail d'un produit numérique
  */
 
 import { useEffect, useState } from "react";
@@ -76,7 +76,7 @@ export default function DigitalProductDetail() {
   // Utiliser l'ID depuis les params ou depuis le query string
   const productId = id || searchParams.get('id');
 
-  // V├®rifier si l'utilisateur actuel est le vendeur du produit
+  // Vérifier si l'utilisateur actuel est le vendeur du produit
   const isVendorOwner = user?.id && product?.merchant_id === user.id;
 
   useEffect(() => {
@@ -84,6 +84,7 @@ export default function DigitalProductDetail() {
       loadProduct();
       incrementViews();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   useEffect(() => {
@@ -127,28 +128,28 @@ export default function DigitalProductDetail() {
 
   const incrementViews = async () => {
     if (!productId) return;
-    
+
     const viewKey = `digital_product_view_${productId}`;
     const hasViewed = sessionStorage.getItem(viewKey);
-    
+
     if (hasViewed) return;
-    
+
     try {
       // Use RPC function to bypass RLS
       const { error } = await supabase.rpc('increment_digital_product_views', {
         p_product_id: productId
       });
-      
+
       if (!error) {
         sessionStorage.setItem(viewKey, 'true');
       }
     } catch (error) {
-      console.error('Erreur incr├®mentation vues:', error);
+      console.error('Erreur incrémentation vues:', error);
     }
   };
 
-  // formatPrice conserv├® pour les cas simples sans conversion
-  const formatPriceSimple = (price: number, currency: string = 'GNF') => {
+  // formatPrice conservé pour les cas simples sans conversion
+  const _formatPriceSimple = (price: number, currency: string = 'GNF') => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: currency,
@@ -166,7 +167,7 @@ export default function DigitalProductDetail() {
       return;
     }
 
-    // Pour les produits affili├®s, rediriger vers le lien
+    // Pour les produits affiliés, rediriger vers le lien
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
       window.open(product.affiliate_url, '_blank');
       return;
@@ -233,12 +234,12 @@ export default function DigitalProductDetail() {
         .insert({
           sender_id: user.id,
           recipient_id: recipientUserId,
-          content: `Bonjour, je suis int├®ress├® par votre produit num├®rique "${product.title}".`,
+          content: `Bonjour, je suis intéressé par votre produit numérique "${product.title}".`,
           type: 'text'
         });
 
       if (error) throw error;
-      toast.success('Message envoy├® au vendeur');
+      toast.success('Message envoyé au vendeur');
       navigate(`/messages?recipientId=${recipientUserId}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -262,15 +263,15 @@ export default function DigitalProductDetail() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-xl font-bold mb-4">Produit introuvable</h2>
-          <p className="text-muted-foreground mb-6">Ce produit num├®rique n'existe pas ou a ├®t├® supprim├®.</p>
-          <Button onClick={() => navigate('/digital-products')}>Retour aux produits num├®riques</Button>
+          <p className="text-muted-foreground mb-6">Ce produit numérique n'existe pas ou a été supprimé.</p>
+          <Button onClick={() => navigate('/digital-products')}>Retour aux produits numériques</Button>
         </Card>
       </div>
     );
   }
 
-  const images = product.images && product.images.length > 0 
-    ? product.images 
+  const images = product.images && product.images.length > 0
+    ? product.images
     : [];
   const mediaItems: Array<{ type: 'video' | 'image'; src: string }> = [
     ...(product.video_url ? [{ type: 'video' as const, src: product.video_url }] : []),
@@ -294,22 +295,22 @@ export default function DigitalProductDetail() {
       ? 'a vie'
       : 'mensuel';
   const accessLabelMap: Record<string, string> = {
-    lifetime: 'Acces a vie',
-    '1_year': 'Acces 1 an',
-    '6_months': 'Acces 6 mois',
-    '3_months': 'Acces 3 mois',
-    '1_month': 'Acces 1 mois',
+    lifetime: 'Accès à vie',
+    '1_year': 'Accès 1 an',
+    '6_months': 'Accès 6 mois',
+    '3_months': 'Accès 3 mois',
+    '1_month': 'Accès 1 mois',
   };
   const accessLabel = product.pricing_type === 'subscription'
     ? `Facturation ${intervalLabel}`
-    : accessLabelMap[product.access_duration || 'lifetime'] || 'Acces immediat';
+    : accessLabelMap[product.access_duration || 'lifetime'] || 'Accès immédiat';
   const ctaLabel = product.product_mode === 'affiliate'
     ? "Voir l'offre"
     : product.price > 0
       ? product.pricing_type === 'subscription'
         ? `S'abonner (${subscriptionLabel})`
         : 'Acheter maintenant'
-      : 'Acceder gratuitement';
+      : 'Accéder gratuitement';
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(4,67,158,0.08),transparent_32%),linear-gradient(180deg,#f7fbff_0%,#eef4ff_42%,#f9fbff_100%)] pb-32 md:pb-24">
@@ -319,10 +320,10 @@ export default function DigitalProductDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground flex-1">Produit num├®rique</h1>
+          <h1 className="text-xl font-bold text-foreground flex-1">Produit numérique</h1>
           <ShareButton
             title={product.title}
-            text={`D├®couvrez ${product.title} sur 224 Solutions`}
+            text={`Découvrez ${product.title} sur 224 Solutions`}
             url={`${window.location.origin}/digital-product/${product.id}`}
             resourceType="digital_product"
             resourceId={product.id}
@@ -356,7 +357,7 @@ export default function DigitalProductDetail() {
                   }}
                 />
               )}
-              
+
               {/* Badges */}
               <div className="absolute left-3 top-3 flex max-w-[85%] flex-wrap gap-2">
                 <Badge className="border-0 bg-slate-950/85 text-white backdrop-blur">
@@ -382,7 +383,7 @@ export default function DigitalProductDetail() {
                       <p className="font-semibold">Programme structure</p>
                       <p className="text-white/75">
                         {curriculum.length} module{curriculum.length > 1 ? 's' : ''}
-                        {trainingTotalMinutes > 0 ? ` ┬À ${Math.ceil(trainingTotalMinutes / 60)}h de contenu` : ''}
+                        {trainingTotalMinutes > 0 ? ` à ${Math.ceil(trainingTotalMinutes / 60)}h de contenu` : ''}
                       </p>
                     </div>
                     <PlayCircle className="h-10 w-10 text-white/90" />
@@ -461,7 +462,7 @@ export default function DigitalProductDetail() {
 
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{product.title}</h2>
-              
+
                   {product.short_description && (
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{product.short_description}</p>
                   )}
@@ -491,17 +492,17 @@ export default function DigitalProductDetail() {
                 <div className="flex flex-wrap items-end gap-3">
                   {product.price > 0 ? (
                     <>
-                      <LocalPrice 
-                        amount={product.price} 
-                        currency={product.currency || 'GNF'} 
+                      <LocalPrice
+                        amount={product.price}
+                        currency={product.currency || 'GNF'}
                         size="xl"
                         showOriginal={true}
                         className="text-primary"
                       />
                       {product.original_price && product.original_price > product.price && (
-                        <LocalPrice 
-                          amount={product.original_price} 
-                          currency={product.currency || 'GNF'} 
+                        <LocalPrice
+                          amount={product.original_price}
+                          currency={product.currency || 'GNF'}
                           size="md"
                           className="text-muted-foreground line-through"
                         />
@@ -638,7 +639,7 @@ export default function DigitalProductDetail() {
                         <div key={`${lesson.title}-${index}`} className="flex items-start justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900">
-                              {(lesson.order || index + 1).toString().padStart(2, '0')} ┬À {lesson.title}
+                              {(lesson.order || index + 1).toString().padStart(2, '0')} à {lesson.title}
                             </p>
                           </div>
                           {lesson.durationMinutes ? (

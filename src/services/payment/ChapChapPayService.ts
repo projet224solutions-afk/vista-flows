@@ -157,12 +157,12 @@ class ChapChapPayService {
    */
   async openPaymentPage(request: CCPEcommerceRequest): Promise<boolean> {
     const result = await this.createEcommercePayment(request);
-    
+
     if (result.success && result.paymentUrl) {
       window.open(result.paymentUrl, "_blank");
       return true;
     }
-    
+
     return false;
   }
 
@@ -170,31 +170,31 @@ class ChapChapPayService {
    * Poll payment status until completion
    */
   async pollStatus(
-    transactionId: string, 
-    options?: { 
-      maxAttempts?: number; 
+    transactionId: string,
+    options?: {
+      maxAttempts?: number;
       intervalMs?: number;
       onStatusChange?: (status: CCPStatusResult) => void;
     }
   ): Promise<CCPStatusResult> {
     const maxAttempts = options?.maxAttempts || 60; // 5 minutes max
     const intervalMs = options?.intervalMs || 5000; // 5 seconds
-    
+
     let attempts = 0;
-    
+
     return new Promise((resolve) => {
       const checkStatus = setInterval(async () => {
         attempts++;
-        
+
         const result = await this.checkStatus(transactionId);
-        
+
         if (options?.onStatusChange) {
           options.onStatusChange(result);
         }
-        
+
         if (
-          result.status === 'completed' || 
-          result.status === 'failed' || 
+          result.status === 'completed' ||
+          result.status === 'failed' ||
           result.status === 'cancelled' ||
           attempts >= maxAttempts
         ) {

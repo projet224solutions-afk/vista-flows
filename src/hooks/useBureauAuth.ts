@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import { 
-  isAccountLocked, 
-  recordFailedAttempt, 
+import {
+  isAccountLocked,
+  recordFailedAttempt,
   resetFailedAttempts,
-  formatRemainingTime 
+  formatRemainingTime
 } from '@/lib/security/accountLockout';
 
 interface BureauLoginResponse {
@@ -85,7 +85,7 @@ export const useBureauAuth = () => {
       if (!data.success) {
         // Enregistrer échec
         const lockResult = recordFailedAttempt(identifierValue);
-        
+
         if (lockResult.locked && lockResult.lockoutDuration) {
           const lockMinutes = Math.ceil(lockResult.lockoutDuration / 60);
           toast.error(
@@ -94,7 +94,7 @@ export const useBureauAuth = () => {
           );
         } else {
           toast.error(data.error || 'Identifiant ou mot de passe incorrect');
-          
+
           if (lockResult.remainingAttempts !== undefined) {
             toast.warning(
               `⚠️ ${lockResult.remainingAttempts} tentative(s) restante(s) avant verrouillage`,
@@ -102,7 +102,7 @@ export const useBureauAuth = () => {
             );
           }
         }
-        
+
         return false;
       }
 
@@ -114,7 +114,7 @@ export const useBureauAuth = () => {
         setRequiresOTP(true);
         setIdentifier(data.identifier || identifierValue);
         setOtpExpiresAt(data.otp_expires_at || '');
-        
+
         toast.success(data.message || 'Code de sécurité envoyé à votre email');
         return true;
       }
@@ -160,7 +160,7 @@ export const useBureauAuth = () => {
 
       if (!data.success) {
         toast.error(data.error || 'Code incorrect');
-        
+
         // Afficher tentatives restantes
         if (data.attempts_remaining !== undefined) {
           if (data.attempts_remaining === 0) {
@@ -170,7 +170,7 @@ export const useBureauAuth = () => {
             toast.warning(`⚠️ ${data.attempts_remaining} tentative(s) restante(s)`);
           }
         }
-        
+
         return false;
       }
 
@@ -185,17 +185,17 @@ export const useBureauAuth = () => {
           prefecture: data.user.prefecture,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h max
         };
-        
+
         // Utiliser sessionStorage par défaut (plus sécurisé - session fermée = données effacées)
         sessionStorage.setItem('bureau_session', JSON.stringify(sessionData));
-        
+
         toast.success(`Bienvenue Bureau ${data.user.bureau_code} - ${data.user.commune} !`);
-        
+
         // Redirection après 500ms
         setTimeout(() => {
           window.location.href = data.redirect_url || '/bureau';
         }, 500);
-        
+
         return true;
       }
 
@@ -223,7 +223,7 @@ export const useBureauAuth = () => {
       setRequiresOTP(false);
       setIdentifier('');
       setOtpExpiresAt('');
-      
+
     } catch (error) {
       console.error('[useBureauAuth] Erreur renvoi OTP:', error);
       toast.error('Erreur lors du renvoi du code');
@@ -252,7 +252,7 @@ export const useBureauAuth = () => {
   const isAuthenticated = (): boolean => {
     const sessionStr = sessionStorage.getItem('bureau_session') || localStorage.getItem('bureau_session');
     if (!sessionStr) return false;
-    
+
     try {
       const session = JSON.parse(sessionStr);
       // Vérifier expiration
@@ -273,7 +273,7 @@ export const useBureauAuth = () => {
   const getCurrentBureau = () => {
     const sessionStr = sessionStorage.getItem('bureau_session') || localStorage.getItem('bureau_session');
     if (!sessionStr) return null;
-    
+
     try {
       const session = JSON.parse(sessionStr);
       // Vérifier expiration

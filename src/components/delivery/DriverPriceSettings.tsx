@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { 
-  DollarSign, 
-  Loader2, 
+import {
+  DollarSign,
+  Loader2,
   Save,
   TrendingUp,
   Clock,
@@ -57,7 +57,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, _error } = await supabase
           .from('drivers')
           .select('metadata')
           .eq('id', driverId)
@@ -121,7 +121,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
 
   // Calculer exemple de gain
   const calculateExample = (distance: number) => {
-    let total = config.basePrice + (distance * config.pricePerKm);
+    const total = config.basePrice + (distance * config.pricePerKm);
     return total;
   };
 

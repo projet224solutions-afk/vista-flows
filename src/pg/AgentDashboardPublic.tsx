@@ -12,9 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  UserCheck, Users, Mail, Phone, AlertCircle, 
-  UserCog, Plus, Copy, Check, Wallet, Key, Shield
+import {
+  UserCheck, _Users, Mail, Phone, AlertCircle,
+  UserCog, Plus, Copy, Check, Wallet, Key, _Shield
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,11 +33,11 @@ import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useAgentPermissionsUnified } from '@/hooks/useAgentPermissionsUnified';
-import { AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
+import { _AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
 import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
-import { AgentPermissionsSelector } from '@/components/agent/AgentPermissionsSelector';
+import { _AgentPermissionsSelector } from '@/components/agent/AgentPermissionsSelector';
 
-// Sch├®ma de validation pour le sous-agent
+// Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(255),
@@ -71,7 +71,7 @@ interface SubAgent extends Agent {
 const SECTION_TITLES: Record<string, string> = {
   'overview': 'Tableau de bord',
   'wallet': 'Gestion du Wallet',
-  'create-user': 'Cr├®er un Utilisateur',
+  'create-user': 'Créer un Utilisateur',
   'sub-agents': 'Gestion des Sous-Agents',
   'users': 'Gestion des Utilisateurs',
   'products': 'Gestion des Produits',
@@ -116,22 +116,24 @@ export default function AgentDashboardPublic() {
     }
   });
 
-  // Hook pour les permissions unifi├®es (nouvelle table + legacy)
+  // Hook pour les permissions unifiées (nouvelle table + legacy)
   const { permissions: unifiedPermissions, hasPermission, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
 
   useEffect(() => {
     if (token) {
       loadAgentData();
     } else {
-      toast.error('Token d\'acc├¿s manquant');
+      toast.error('Token d\'accès manquant');
       navigate('/');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
     if (agent && (activeSection === 'users' || activeSection === 'sub-agents')) {
       loadSubAgents();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent?.id, activeSection]);
 
   // Real-time updates
@@ -150,7 +152,7 @@ export default function AgentDashboardPublic() {
         },
         (payload) => {
           setAgent(payload.new as Agent);
-          toast.success('Donn├®es mises ├á jour');
+          toast.success('Données mises à jour');
         }
       )
       .subscribe();
@@ -170,7 +172,7 @@ export default function AgentDashboardPublic() {
 
       if (agentError) throw agentError;
       if (!agentData) {
-        toast.error('Agent non trouv├®');
+        toast.error('Agent non trouvé');
         navigate('/');
         return;
       }
@@ -194,7 +196,7 @@ export default function AgentDashboardPublic() {
 
   const loadSubAgents = async () => {
     if (!agent) return;
-    
+
     try {
       setLoadingSubAgents(true);
       const { data, error } = await supabase
@@ -204,18 +206,18 @@ export default function AgentDashboardPublic() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       const subAgentsWithCounts = await Promise.all(
         (data || []).map(async (subAgent) => {
           const { count } = await supabase
             .from('agent_created_users')
             .select('*', { count: 'exact', head: true })
             .eq('agent_id', subAgent.id);
-          
+
           return { ...subAgent, total_users_created: count || 0 };
         })
       );
-      
+
       setSubAgents(subAgentsWithCounts as SubAgent[]);
     } catch (error) {
       console.error('Erreur chargement sous-agents:', error);
@@ -242,7 +244,7 @@ export default function AgentDashboardPublic() {
 
     try {
       setIsSubmitting(true);
-      
+
       const permissions = Object.entries(subAgentFormData.permissions)
         .filter(([_, value]) => value)
         .map(([key]) => key);
@@ -266,7 +268,7 @@ export default function AgentDashboardPublic() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Sous-agent cr├®├® avec succ├¿s');
+      toast.success('Sous-agent créé avec succès');
       setIsSubAgentDialogOpen(false);
       setSubAgentFormData({
         name: '', email: '', phone: '', agent_type: '', password: '',
@@ -276,8 +278,8 @@ export default function AgentDashboardPublic() {
       await loadAgentData();
       await loadSubAgents();
     } catch (error: any) {
-      console.error('Erreur cr├®ation sous-agent:', error);
-      toast.error(error.message || 'Erreur lors de la cr├®ation');
+      console.error('Erreur création sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setIsSubmitting(false);
     }
@@ -293,7 +295,7 @@ export default function AgentDashboardPublic() {
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Minimum 8 caract├¿res');
+      toast.error('Minimum 8 caractères');
       return;
     }
 
@@ -309,13 +311,13 @@ export default function AgentDashboardPublic() {
 
       if (error) throw error;
       if (data?.success) {
-        toast.success('Mot de passe modifi├®');
+        toast.success('Mot de passe modifié');
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
         toast.error(data?.error || 'Erreur');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors du changement');
     } finally {
       setIsChangingPassword(false);
@@ -325,7 +327,7 @@ export default function AgentDashboardPublic() {
   const handleLogout = () => {
     sessionStorage.clear();
     localStorage.removeItem('agent_token');
-    toast.success('D├®connexion r├®ussie');
+    toast.success('Déconnexion réussie');
     navigate('/login');
   };
 
@@ -338,9 +340,9 @@ export default function AgentDashboardPublic() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
       setCopiedId(subAgent.id);
-      toast.success('Lien copi├®!');
+      toast.success('Lien copié!');
       setTimeout(() => setCopiedId(null), 3000);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur de copie');
     }
   };
@@ -362,8 +364,8 @@ export default function AgentDashboardPublic() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Acc├¿s non autoris├®</h2>
-            <p className="text-muted-foreground">Token invalide ou expir├®</p>
+            <h2 className="text-xl font-bold mb-2">Accès non autorisé</h2>
+            <p className="text-muted-foreground">Token invalide ou expiré</p>
           </CardContent>
         </Card>
       </div>
@@ -376,7 +378,7 @@ export default function AgentDashboardPublic() {
         return (
           <div className="space-y-6">
             {/* Stats */}
-            <AgentStatsCards 
+            <AgentStatsCards
               stats={{
                 totalUsersCreated: agent.total_users_created || 0,
                 usersThisMonth: 0,
@@ -421,18 +423,18 @@ export default function AgentDashboardPublic() {
               </CardContent>
             </Card>
 
-            {/* Permissions - nouveau composant avec cat├®gories */}
-            <AgentPermissionsDisplay 
-              permissions={unifiedPermissions} 
-              loading={permissionsLoading} 
+            {/* Permissions - nouveau composant avec catégories */}
+            <AgentPermissionsDisplay
+              permissions={unifiedPermissions}
+              loading={permissionsLoading}
             />
           </div>
         );
 
       case 'wallet':
         return agent?.id ? (
-          <AgentWalletManagement 
-            agentId={agent.id} 
+          <AgentWalletManagement
+            agentId={agent.id}
             agentCode={agent.agent_code}
             showTransactions={true}
           />
@@ -449,11 +451,11 @@ export default function AgentDashboardPublic() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
-              <CardTitle>Cr├®er un Nouvel Utilisateur</CardTitle>
+              <CardTitle>Créer un Nouvel Utilisateur</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <CreateUserForm 
-                agentId={agent.id} 
+              <CreateUserForm
+                agentId={agent.id}
                 agentCode={agent.agent_code}
                 accessToken={token}
                 onUserCreated={loadAgentData}
@@ -476,7 +478,7 @@ export default function AgentDashboardPublic() {
                 </DialogTrigger>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Cr├®er un Sous-Agent</DialogTitle>
+                    <DialogTitle>Créer un Sous-Agent</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleCreateSubAgent} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -502,7 +504,7 @@ export default function AgentDashboardPublic() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>T├®l├®phone *</Label>
+                        <Label>Téléphone *</Label>
                         <Input
                           required
                           value={subAgentFormData.phone}
@@ -528,7 +530,7 @@ export default function AgentDashboardPublic() {
                           minLength={6}
                           value={subAgentFormData.password}
                           onChange={(e) => setSubAgentFormData({ ...subAgentFormData, password: e.target.value })}
-                          placeholder="Min. 6 caract├¿res"
+                          placeholder="Min. 6 caractères"
                         />
                       </div>
                       <div className="space-y-2">
@@ -542,45 +544,45 @@ export default function AgentDashboardPublic() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="border-t pt-4">
                       <Label className="text-base font-semibold mb-3 block">Permissions</Label>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          { key: 'create_users', label: 'Cr├®er utilisateurs' },
+                          { key: 'create_users', label: 'Créer utilisateurs' },
                           { key: 'view_reports', label: 'Voir rapports' },
-                          { key: 'manage_commissions', label: 'G├®rer commissions' },
-                          { key: 'manage_users', label: 'G├®rer utilisateurs' },
-                          { key: 'manage_products', label: 'G├®rer produits' },
-                          { key: 'create_sub_agents', label: 'Cr├®er sous-agents' }
+                          { key: 'manage_commissions', label: 'Gérer commissions' },
+                          { key: 'manage_users', label: 'Gérer utilisateurs' },
+                          { key: 'manage_products', label: 'Gérer produits' },
+                          { key: 'create_sub_agents', label: 'Créer sous-agents' }
                         ].map(({ key, label }) => {
                           const permKey = key as keyof typeof subAgentFormData.permissions;
                           return (
-                            <div 
-                              key={key} 
+                            <div
+                              key={key}
                               className="flex items-center gap-2 cursor-pointer"
                               onClick={() => {
                                 const currentValue = subAgentFormData.permissions[permKey];
                                 setSubAgentFormData(prev => ({
                                   ...prev,
-                                  permissions: { 
-                                    ...prev.permissions, 
-                                    [key]: !currentValue 
+                                  permissions: {
+                                    ...prev.permissions,
+                                    [key]: !currentValue
                                   }
                                 }));
                               }}
                             >
-                              <Checkbox 
+                              <Checkbox
                                 id={`perm-${key}`}
                                 checked={subAgentFormData.permissions[permKey]}
                                 onCheckedChange={(checked) => {
-                                  // Emp├¬cher la propagation et mettre ├á jour l'├®tat
+                                  // Empêcher la propagation et mettre à jour l'état
                                   if (typeof checked === 'boolean') {
                                     setSubAgentFormData(prev => ({
                                       ...prev,
-                                      permissions: { 
-                                        ...prev.permissions, 
-                                        [key]: checked 
+                                      permissions: {
+                                        ...prev.permissions,
+                                        [key]: checked
                                       }
                                     }));
                                   }
@@ -598,7 +600,7 @@ export default function AgentDashboardPublic() {
                         Annuler
                       </Button>
                       <Button type="submit" disabled={isSubmitting} className="flex-1">
-                        {isSubmitting ? 'Cr├®ation...' : 'Cr├®er'}
+                        {isSubmitting ? 'Création...' : 'Créer'}
                       </Button>
                     </div>
                   </form>
@@ -614,10 +616,10 @@ export default function AgentDashboardPublic() {
               <Card className="border-0 shadow-lg">
                 <CardContent className="py-16 text-center">
                   <UserCog className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">Aucun sous-agent cr├®├®</p>
+                  <p className="text-muted-foreground mb-4">Aucun sous-agent créé</p>
                   <Button onClick={() => setIsSubAgentDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Cr├®er votre premier sous-agent
+                    Créer votre premier sous-agent
                   </Button>
                 </CardContent>
               </Card>
@@ -650,7 +652,7 @@ export default function AgentDashboardPublic() {
                             onClick={() => copySubAgentLink(subAgent)}
                           >
                             {copiedId === subAgent.id ? (
-                              <><Check className="w-4 h-4 mr-1" /> Copi├®!</>
+                              <><Check className="w-4 h-4 mr-1" /> Copié!</>
                             ) : (
                               <><Copy className="w-4 h-4 mr-1" /> Lien</>
                             )}
@@ -681,12 +683,12 @@ export default function AgentDashboardPublic() {
         return hasPermission('manage_products') || agent.permissions.includes('manage_products') ? (
           <ManageProductsSection agentId={agent.id} />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accord├®e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'reports':
         return hasPermission('view_reports') || agent.permissions.includes('view_reports') ? (
-          <ViewReportsSection 
+          <ViewReportsSection
             agentId={agent.id}
             agentData={{
               total_users_created: agent.total_users_created,
@@ -695,18 +697,18 @@ export default function AgentDashboardPublic() {
             }}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accord├®e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'commissions':
         return hasPermission('manage_commissions') || agent.permissions.includes('manage_commissions') ? (
-          <ManageCommissionsSection 
+          <ManageCommissionsSection
             agentId={agent.id}
             totalCommissions={agent.total_commissions_earned || 0}
             commissionRate={agent.commission_rate}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accord├®e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'affiliate':
@@ -731,7 +733,7 @@ export default function AgentDashboardPublic() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
-        <AgentHeader 
+        <AgentHeader
           agentCode={agent.agent_code}
           pdgUserId={pdgUserId}
           sectionTitle={SECTION_TITLES[activeSection] || 'Dashboard'}

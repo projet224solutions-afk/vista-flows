@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   Shield,
   Database,
-  Zap,
+  _Zap,
   Activity,
   Server,
   Lock,
@@ -50,7 +50,7 @@ interface SystemTestDemoProps {
 
 export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoProps) {
   const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(-1);
+  const [_currentStep, setCurrentStep] = useState(-1);
   const [steps, setSteps] = useState<TestStep[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
   const [showResult, setShowResult] = useState(false);
@@ -68,14 +68,14 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
       status: 'pending',
       testFn: async () => {
         try {
-          const { data, error } = await supabase
+          const { _data, error } = await supabase
             .from('profiles')
             .select('id')
             .limit(1);
-          
+
           if (error) throw error;
           return { success: true, message: 'Connexion établie' };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Échec de connexion' };
         }
       },
@@ -93,16 +93,16 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .from('logic_rules')
             .select('*', { count: 'exact', head: true })
             .eq('enabled', true);
-          
+
           if (error) throw error;
-          
+
           const rulesCount = count || 0;
           // Warning si moins de 50 règles actives
           if (rulesCount < 50) {
             return { success: true, value: rulesCount, message: `${rulesCount} règles (recommandé: 50+)` };
           }
           return { success: true, value: rulesCount, message: `${rulesCount} règles actives` };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur chargement règles' };
         }
       },
@@ -120,16 +120,16 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .from('logic_anomalies')
             .select('*', { count: 'exact', head: true })
             .is('resolved_at', null);
-          
+
           if (error) throw error;
-          
+
           const anomaliesCount = count || 0;
           // Warning si anomalies non résolues
           if (anomaliesCount > 0) {
             return { success: true, value: anomaliesCount, message: `${anomaliesCount} anomalie(s) détectée(s)` };
           }
           return { success: true, value: 0, message: 'Aucune anomalie' };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur moteur détection' };
         }
       },
@@ -147,16 +147,16 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           const { count: aiDocs, error: aiError } = await supabase
             .from('ai_generated_documents')
             .select('*', { count: 'exact', head: true });
-          
+
           const { count: apiLogs, error: apiError } = await supabase
             .from('api_usage_logs')
             .select('*', { count: 'exact', head: true });
-          
+
           if (aiError || apiError) throw aiError || apiError;
-          
+
           const total = (aiDocs || 0) + (apiLogs || 0);
           return { success: true, value: total, message: `${total} opération(s) IA` };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Module IA non disponible' };
         }
       },
@@ -174,16 +174,16 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .from('api_connections')
             .select('*', { count: 'exact', head: true })
             .eq('status', 'active');
-          
+
           if (error) throw error;
-          
+
           const activeApis = count || 0;
           // Warning si aucune API active
           if (activeApis === 0) {
             return { success: true, value: 0, message: 'Aucune API active' };
           }
           return { success: true, value: activeApis, message: `${activeApis} API(s) active(s)` };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur surveillance réseau' };
         }
       },
@@ -202,26 +202,26 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .from('security_incidents')
             .select('*', { count: 'exact', head: true })
             .is('resolved_at', null);
-          
+
           // Vérifier les tentatives de connexion échouées récentes
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
-          
+
           const { count: failedLogins, error: loginError } = await supabase
             .from('auth_attempts_log')
             .select('*', { count: 'exact', head: true })
             .eq('success', false)
             .gte('attempted_at', yesterday.toISOString());
-          
+
           if (incError || loginError) throw incError || loginError;
-          
+
           const totalIssues = (incidents || 0) + (failedLogins || 0);
-          
+
           if (totalIssues > 5) {
             return { success: true, value: totalIssues, message: `${totalIssues} alerte(s) sécurité` };
           }
           return { success: true, value: totalIssues, message: 'Sécurité validée' };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur validation sécurité' };
         }
       },
@@ -237,17 +237,17 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
         try {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
-          
+
           const { count, error } = await supabase
             .from('audit_logs')
             .select('*', { count: 'exact', head: true })
             .gte('created_at', yesterday.toISOString());
-          
+
           if (error) throw error;
-          
+
           const logsCount = count || 0;
           return { success: true, value: logsCount, message: `${logsCount} événement(s) 24h` };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur analytics' };
         }
       },
@@ -267,15 +267,15 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .select('*', { count: 'exact', head: true })
             .eq('enabled', true)
             .eq('severity', 'CRITICAL');
-          
+
           if (error) throw error;
-          
+
           const criticalRules = count || 0;
           if (criticalRules > 0) {
             return { success: true, value: criticalRules, message: `${criticalRules} règle(s) critique(s) actives` };
           }
           return { success: true, value: 0, message: 'Protection standard active' };
-        } catch (err) {
+        } catch (_err) {
           return { success: false, message: 'Erreur protection' };
         }
       },
@@ -302,17 +302,17 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const runTest = useCallback(async () => {
     resetTest();
     setIsRunning(true);
-    
+
     const testSteps = createTestSteps();
     setSteps(testSteps);
-    
+
     let successCount = 0;
     let warningCount = 0;
     const details: Record<string, { value?: number; message?: string }> = {};
 
     for (let i = 0; i < testSteps.length; i++) {
       setCurrentStep(i);
-      
+
       // Set current step to running
       setSteps((prev) =>
         prev.map((s, idx) =>
@@ -322,7 +322,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
 
       // Exécuter le vrai test
       const result = await testSteps[i].testFn();
-      
+
       // Petit délai pour l'animation
       await new Promise((resolve) => setTimeout(resolve, testSteps[i].duration));
 
@@ -362,7 +362,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
     const baseScore = Math.round((successCount / totalSteps) * 100);
     const warningPenalty = warningCount * 3;
     const finalScore = Math.max(0, Math.min(100, baseScore - warningPenalty + (warningCount > 0 ? 0 : 5)));
-    
+
     setSystemScore(finalScore);
     setShowResult(true);
     setIsRunning(false);

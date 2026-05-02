@@ -88,7 +88,7 @@ export const usePDGAgentsData = () => {
             .single();
 
           if (createError) throw createError;
-          
+
           const pdg: PDGProfile = {
             id: newPdg.id,
             user_id: newPdg.user_id,
@@ -141,7 +141,7 @@ export const usePDGAgentsData = () => {
       // Récupérer les statistiques pour chaque agent
       // 🚀 Batch: load all agent IDs' stats in parallel instead of N+1
       const agentIds = (agentsData || []).map(a => a.id);
-      
+
       const [usersCountResult, commissionsResult] = await Promise.all([
         // Batch count users per agent
         supabase
@@ -256,7 +256,7 @@ export const usePDGAgentsData = () => {
     try {
       // Convertir le tableau permissions en jsonb si présent
       const permissionsJsonb = updates.permissions ? updates.permissions : undefined;
-      
+
       const { data, error } = await supabase
         .rpc('update_agent' as any, {
           p_agent_id: agentId,
@@ -271,7 +271,7 @@ export const usePDGAgentsData = () => {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de la mise à jour');
       }
@@ -321,7 +321,7 @@ export const usePDGAgentsData = () => {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors du changement de statut');
       }
@@ -345,6 +345,7 @@ export const usePDGAgentsData = () => {
       }
     };
     init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Recharger les agents quand le PDG change
@@ -352,6 +353,7 @@ export const usePDGAgentsData = () => {
     if (pdgProfile?.id) {
       loadAgents();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pdgProfile?.id]);
 
   // Écouter les changements en temps réel sur les agents

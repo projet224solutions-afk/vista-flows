@@ -14,19 +14,19 @@ interface ClientStats {
   active_orders: number;
   completed_orders: number;
   cancelled_orders: number;
-  
+
   // Financial
   total_spent: number;
   average_order_value: number;
   cart_value: number;
   pending_payments: number;
-  
+
   // Engagement
   favorites_count: number;
   reviews_submitted: number;
   refunds_requested: number;
   loyalty_points: number;
-  
+
   // Recent activity
   last_order_date: string | null;
   days_since_last_order: number;
@@ -68,16 +68,16 @@ export function useClientStats() {
       }
 
       const totalOrders = ordersData.length;
-      const activeOrders = ordersData.filter(o => 
+      const activeOrders = ordersData.filter(o =>
         ['pending', 'processing', 'shipped', 'confirmed'].includes(o.status)
       ).length;
-      const completedOrders = ordersData.filter(o => 
+      const completedOrders = ordersData.filter(o =>
         ['delivered', 'completed'].includes(o.status)
       ).length;
       const cancelledOrders = ordersData.filter(o => o.status === 'cancelled').length;
 
       // 2. FINANCIAL STATS
-      const totalSpent = ordersData.reduce((sum, o) => 
+      const totalSpent = ordersData.reduce((sum, o) =>
         o.status !== 'cancelled' ? sum + (o.total_amount || 0) : sum, 0
       );
       const paidOrders = completedOrders || totalOrders - cancelledOrders;
@@ -102,7 +102,7 @@ export function useClientStats() {
             (productsData || []).map(p => [p.id, p.price || 0])
           );
 
-          cartValue = cartItems.reduce((sum, item) => 
+          cartValue = cartItems.reduce((sum, item) =>
             sum + (item.quantity * (priceMap.get(item.product_id) || 0)), 0
           );
         }
@@ -117,7 +117,7 @@ export function useClientStats() {
           .eq('customer_id', customerId)
           .eq('payment_status', 'pending');
 
-        pendingPaymentsTotal = (pendingPayments || []).reduce((sum, o) => 
+        pendingPaymentsTotal = (pendingPayments || []).reduce((sum, o) =>
           sum + (o.total_amount || 0), 0
         );
       }
@@ -135,12 +135,12 @@ export function useClientStats() {
         .eq('user_id', user.id);
 
       // 7. LAST ORDER DATE
-      const lastOrder = ordersData.sort((a, b) => 
+      const lastOrder = ordersData.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0];
 
       const lastOrderDate = lastOrder?.created_at || null;
-      const daysSinceLastOrder = lastOrderDate 
+      const daysSinceLastOrder = lastOrderDate
         ? Math.floor((Date.now() - new Date(lastOrderDate).getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 

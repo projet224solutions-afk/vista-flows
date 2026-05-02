@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { _Card, _CardContent, _CardHeader, _CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Search, X, Navigation, Clock, User } from "lucide-react";
+import { _MapPin, Search, X, Navigation, Clock, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -45,7 +45,7 @@ export function UserTracker() {
       console.log('🔍 Recherche utilisateur:', userId);
 
       // 1. Vérifier si c'est un chauffeur taxi
-      const { data: driverData, error: driverError } = await supabase
+      const { data: driverData, error: _driverError } = await supabase
         .from('taxi_drivers')
         .select('*')
         .eq('user_id', userId)
@@ -53,7 +53,7 @@ export function UserTracker() {
 
       if (driverData) {
         console.log('✅ Chauffeur trouvé:', driverData);
-        
+
         // Charger le profil pour le nom
         const { data: profile } = await supabase
           .from('profiles')
@@ -80,7 +80,7 @@ export function UserTracker() {
       }
 
       // 2. Sinon chercher dans les profils généraux
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: _profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -205,8 +205,8 @@ export function UserTracker() {
                 className="font-mono text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && trackUser()}
               />
-              <Button 
-                onClick={trackUser} 
+              <Button
+                onClick={trackUser}
                 disabled={loading}
                 className="shrink-0"
               >
@@ -255,9 +255,9 @@ export function UserTracker() {
                   )}
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={stopTracking}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
@@ -285,13 +285,13 @@ export function UserTracker() {
                     {formatLastSeen(trackedUser.lastSeen)}
                   </div>
                 </div>
-                
+
                 <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100">
                   Lat: {trackedUser.lastLat.toFixed(6)}<br />
                   Lng: {trackedUser.lastLng.toFixed(6)}
                 </div>
 
-                <Button 
+                <Button
                   onClick={openInMaps}
                   className="w-full"
                   size="sm"

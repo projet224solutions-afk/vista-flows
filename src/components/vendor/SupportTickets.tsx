@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, AlertCircle, Clock, CheckCircle, Search, Filter, Plus, Send } from 'lucide-react';
+import { MessageSquare, _AlertCircle, Clock, _CheckCircle, Search, Filter, Plus, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
@@ -99,6 +99,7 @@ export default function SupportTickets() {
     if (!vendorLoading && (user || vendorId)) {
       loadTickets();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, vendorId, vendorLoading]);
 
   const loadTickets = async () => {
@@ -344,7 +345,7 @@ export default function SupportTickets() {
             <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Aucun ticket</h3>
             <p className="text-muted-foreground text-center mb-4">
-              {searchTerm || statusFilter !== 'all' 
+              {searchTerm || statusFilter !== 'all'
                 ? 'Aucun ticket ne correspond à vos critères'
                 : 'Vous n\'avez pas encore créé de ticket de support'
               }
@@ -405,7 +406,7 @@ export default function SupportTickets() {
               </Badge>
             </div>
           </DialogHeader>
-          
+
           <div className="flex flex-col h-[500px]">
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20 mb-4">

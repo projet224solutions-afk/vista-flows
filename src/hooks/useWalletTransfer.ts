@@ -11,6 +11,14 @@ export interface TransferPreview {
   fee_amount: number;
   amount_after_fee: number;
   rate_displayed: number;
+  official_rate?: number;
+  fx_margin?: number;
+  rate_source?: string | null;
+  rate_fetched_at?: string | null;
+  rate_source_type?: string | null;
+  rate_source_url?: string | null;
+  rate_is_official?: boolean;
+  rate_is_stale?: boolean;
   amount_received: number;
   currency_received: string;
   error?: string;
@@ -68,6 +76,14 @@ export function useWalletTransfer(): UseWalletTransferResult {
         fee_amount: previewData.fee_amount,
         amount_after_fee: previewData.amount_after_fee,
         rate_displayed: previewData.rate_displayed,
+        official_rate: previewData.official_rate,
+        fx_margin: previewData.fx_margin,
+        rate_source: previewData.rate_source,
+        rate_fetched_at: previewData.rate_fetched_at,
+        rate_source_type: previewData.rate_source_type,
+        rate_source_url: previewData.rate_source_url,
+        rate_is_official: previewData.rate_is_official,
+        rate_is_stale: previewData.rate_is_stale,
         amount_received: previewData.amount_received,
         currency_received: previewData.currency_received,
       };
@@ -102,10 +118,10 @@ export function useWalletTransfer(): UseWalletTransferResult {
 
       if (result.success) {
         toast.success('Transfert réussi!');
-        
+
         // Déclencher l'événement de mise à jour du wallet
         window.dispatchEvent(new CustomEvent('wallet-updated'));
-        
+
         setPreview(null);
         return {
           success: true,

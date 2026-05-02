@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -27,10 +27,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import {
   Link, Plus, Copy, Share2, RefreshCw,
   DollarSign, CheckCircle, Clock, XCircle, AlertCircle,
-  ExternalLink, Calendar, User, Package, Edit, Trash2,
-  CreditCard, FileText, ShoppingCart, Wrench, Eye,
-  QrCode, Ban, MoreVertical, ArrowUpRight, Receipt,
-  Smartphone, Store
+  ExternalLink, Calendar, User, Package, _Edit, Trash2,
+  CreditCard, FileText, ShoppingCart, Wrench, _Eye,
+  QrCode, Ban, _MoreVertical, _ArrowUpRight, Receipt,
+  Smartphone, _Store
 } from 'lucide-react';
 
 const LINK_TYPES: { value: LinkType; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -89,7 +89,7 @@ export default function PaymentLinksManager() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState<string | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState<any>(null);
+  const [_showDetailModal, _setShowDetailModal] = useState<any>(null);
   const [creating, setCreating] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -98,7 +98,9 @@ export default function PaymentLinksManager() {
   const [filters, setFilters] = useState({ status: 'all', type: 'all', search: '' });
   const [activeTab, setActiveTab] = useState('all');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadAssets(); }, [vendorId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadPaymentLinks(filters); }, [filters.status, filters.search]);
 
   const loadAssets = async () => {

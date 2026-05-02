@@ -67,7 +67,7 @@ export interface APIAnomaly {
   ip?: string;
 }
 
-type AnomalyType = 
+type AnomalyType =
   | 'rate_spike'
   | 'unusual_pattern'
   | 'sql_injection'
@@ -117,7 +117,7 @@ class WAAPService {
   async generateBotSignature(): Promise<BotSignature> {
     const canvas = this.getCanvasFingerprint();
     const webGL = this.getWebGLRenderer();
-    
+
     return {
       fingerprint: await this.generateFingerprint(),
       userAgent: navigator.userAgent,
@@ -156,7 +156,7 @@ class WAAPService {
     if (isKnownBot) totalScore += 30;
 
     // Headless browser detection
-    const isHeadless = !signature.webGLRenderer || 
+    const isHeadless = !signature.webGLRenderer ||
       signature.webGLRenderer.includes('SwiftShader') ||
       signature.plugins.length === 0;
     factors.push({
@@ -178,7 +178,7 @@ class WAAPService {
     if (hasWebDriver) totalScore += 40;
 
     // Résolution d'écran inhabituelle
-    const unusualResolution = signature.screenResolution === '0x0' || 
+    const unusualResolution = signature.screenResolution === '0x0' ||
       signature.screenResolution === '800x600';
     factors.push({
       name: 'unusual_resolution',
@@ -219,10 +219,10 @@ class WAAPService {
     });
     if (noHardware) totalScore += 10;
 
-    const recommendation = totalScore >= this.anomalyThreshold 
-      ? 'block' 
-      : totalScore >= this.challengeThreshold 
-        ? 'challenge' 
+    const recommendation = totalScore >= this.anomalyThreshold
+      ? 'block'
+      : totalScore >= this.challengeThreshold
+        ? 'challenge'
         : 'allow';
 
     return {
@@ -239,12 +239,12 @@ class WAAPService {
    * Enregistre une interaction utilisateur
    */
   recordInteraction(
-    sessionId: string, 
+    sessionId: string,
     type: 'mouse' | 'keyboard' | 'scroll' | 'click',
     details?: Partial<ClickPattern>
   ): void {
     let pattern = this.behaviorData.get(sessionId);
-    
+
     if (!pattern) {
       pattern = {
         mouseMovements: 0,
@@ -350,10 +350,10 @@ class WAAPService {
     });
     if (highFrequency) totalScore += 20;
 
-    const recommendation = totalScore >= this.anomalyThreshold 
-      ? 'block' 
-      : totalScore >= this.challengeThreshold 
-        ? 'challenge' 
+    const recommendation = totalScore >= this.anomalyThreshold
+      ? 'block'
+      : totalScore >= this.challengeThreshold
+        ? 'challenge'
         : 'allow';
 
     return {
@@ -504,15 +504,15 @@ class WAAPService {
   isBlocked(identifier: string, type: 'ip' | 'user' | 'fingerprint'): boolean {
     const key = `${type}:${identifier}`;
     const entity = this.blockedEntities.get(key);
-    
+
     if (!entity) return false;
-    
+
     // Vérifier expiration
     if (!entity.permanent && entity.expiresAt && new Date() > entity.expiresAt) {
       this.blockedEntities.delete(key);
       return false;
     }
-    
+
     return true;
   }
 
@@ -581,13 +581,13 @@ class WAAPService {
    */
   checkHoneypot(formData: Record<string, any>): boolean {
     const honeypotFields = ['website_url', 'phone_confirm', 'email_verify', 'fax', 'company_website'];
-    
+
     for (const field of honeypotFields) {
       if (formData[field] && formData[field].toString().trim() !== '') {
         return true; // Bot détecté
       }
     }
-    
+
     return false;
   }
 
@@ -627,7 +627,7 @@ class WAAPService {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return '';
-      
+
       ctx.textBaseline = 'top';
       ctx.font = "14px 'Arial'";
       ctx.textBaseline = 'alphabetic';
@@ -637,7 +637,7 @@ class WAAPService {
       ctx.fillText('WAAP-224Solutions', 2, 15);
       ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
       ctx.fillText('WAAP-224Solutions', 4, 17);
-      
+
       return canvas.toDataURL().slice(-50);
     } catch {
       return '';
@@ -649,10 +649,10 @@ class WAAPService {
       const canvas = document.createElement('canvas');
       const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       if (!gl) return '';
-      
+
       const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
       if (!debugInfo) return '';
-      
+
       return (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
     } catch {
       return '';
@@ -666,7 +666,7 @@ class WAAPService {
       const analyser = audioContext.createAnalyser();
       const gain = audioContext.createGain();
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      
+
       gain.gain.value = 0;
       oscillator.type = 'triangle';
       oscillator.connect(analyser);
@@ -674,15 +674,15 @@ class WAAPService {
       processor.connect(gain);
       gain.connect(audioContext.destination);
       oscillator.start(0);
-      
+
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const frequencyData = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(frequencyData);
-      
+
       oscillator.stop();
       audioContext.close();
-      
+
       return Array.from(frequencyData.slice(0, 10)).join(',');
     } catch {
       return '';
@@ -692,23 +692,23 @@ class WAAPService {
   private async detectFonts(): Promise<string[]> {
     const testFonts = ['Arial', 'Verdana', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia'];
     const detectedFonts: string[] = [];
-    
+
     const testString = 'mmmmmmmmmmlli';
     const baseFonts = ['monospace', 'sans-serif', 'serif'];
-    
+
     const span = document.createElement('span');
     span.style.position = 'absolute';
     span.style.left = '-9999px';
     span.style.fontSize = '72px';
     span.innerText = testString;
     document.body.appendChild(span);
-    
+
     const baseWidths: Record<string, number> = {};
     for (const baseFont of baseFonts) {
       span.style.fontFamily = baseFont;
       baseWidths[baseFont] = span.offsetWidth;
     }
-    
+
     for (const font of testFonts) {
       for (const baseFont of baseFonts) {
         span.style.fontFamily = `'${font}', ${baseFont}`;
@@ -718,7 +718,7 @@ class WAAPService {
         }
       }
     }
-    
+
     document.body.removeChild(span);
     return detectedFonts;
   }
@@ -733,17 +733,17 @@ class WAAPService {
 
   private detectRoboticClicks(clicks: ClickPattern[]): boolean {
     if (clicks.length < 5) return false;
-    
+
     // Vérifier si les intervalles entre clics sont trop réguliers
     const intervals: number[] = [];
     for (let i = 1; i < clicks.length; i++) {
       intervals.push(clicks[i].timestamp - clicks[i-1].timestamp);
     }
-    
+
     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
     const variance = intervals.reduce((acc, val) => acc + Math.pow(val - avgInterval, 2), 0) / intervals.length;
     const stdDev = Math.sqrt(variance);
-    
+
     // Si l'écart-type est très faible (clics trop réguliers), c'est suspect
     return stdDev < 50 && avgInterval < 500;
   }
@@ -752,12 +752,12 @@ class WAAPService {
     const key = `${identifier}:${endpoint}`;
     const now = Date.now();
     const windowMs = 60000; // 1 minute
-    
+
     let history = this.requestHistory.get(key) || [];
     history = history.filter(t => now - t < windowMs);
     history.push(now);
     this.requestHistory.set(key, history);
-    
+
     // Plus de 100 requêtes par minute = spike
     if (history.length > 100) {
       return {
@@ -768,7 +768,7 @@ class WAAPService {
         timestamp: new Date()
       };
     }
-    
+
     return null;
   }
 
@@ -779,7 +779,7 @@ class WAAPService {
 
   private async notifyAdmins(incident: SecurityIncident): Promise<void> {
     console.error('[WAAP] 🔴 ALERTE CRITIQUE:', incident);
-    
+
     // Créer une notification en base
     try {
       await supabase.from('notifications' as any).insert({

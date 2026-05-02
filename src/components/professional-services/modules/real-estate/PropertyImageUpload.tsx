@@ -2,7 +2,7 @@
  * Upload d'images pour les biens immobiliers
  */
 import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { _Button } from '@/components/ui/button';
 import { ImagePlus, X, Loader2, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

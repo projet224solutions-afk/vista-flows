@@ -130,7 +130,7 @@ export const useForensics = () => {
     setLoading(true);
     try {
       console.log('🔍 Reconstruction timeline pour incident:', incidentId);
-      
+
       // Récupérer tous les événements liés à cet incident depuis audit_logs
       const { data: auditLogs, error: auditError } = await supabase
         .from('audit_logs')
@@ -210,19 +210,19 @@ export const useForensics = () => {
       });
 
       // Trier par timestamp
-      timelineEvents.sort((a, b) => 
+      timelineEvents.sort((a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
 
       console.log('✅ Timeline reconstruite:', timelineEvents.length, 'événements');
       setTimeline(timelineEvents);
-      
+
       if (timelineEvents.length === 0) {
         toast.info('Aucun événement trouvé pour cet incident');
       } else {
         toast.success(`Timeline reconstruite avec ${timelineEvents.length} événements`);
       }
-      
+
       return { timeline: timelineEvents };
     } catch (error: any) {
       console.error('Erreur lors de la reconstruction:', error);
@@ -288,7 +288,7 @@ export const useForensics = () => {
       });
 
       if (error) throw error;
-      
+
       // Create download link
       const blob = new Blob([JSON.stringify(data.logs, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);

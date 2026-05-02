@@ -1,6 +1,6 @@
 ﻿/**
- * ­ƒöù PAGE DE REDIRECTION SHORT URL
- * R├®sout les liens courts via Edge Function serveur et redirige.
+ * 🔗 PAGE DE REDIRECTION SHORT URL
+ * Résout les liens courts via Edge Function serveur et redirige.
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -40,20 +40,20 @@ export default function ShortLinkRedirect() {
       return;
     }
 
-    console.log('­ƒöù [ShortLinkRedirect] Resolving via server:', shortCode);
+    console.log('🔗 [ShortLinkRedirect] Resolving via server:', shortCode);
 
     try {
       const result = await resolveShortLink(shortCode);
 
       if (!result) {
-        console.warn('­ƒöù [ShortLinkRedirect] Not found:', shortCode);
+        console.warn('🔗 [ShortLinkRedirect] Not found:', shortCode);
         setStatus('error');
-        setErrorMessage('Lien introuvable ou expir├®');
+        setErrorMessage('Lien introuvable ou expiré');
         return;
       }
 
       const targetPath = extractTargetPath(result.originalUrl);
-      console.log('­ƒöù [ShortLinkRedirect] Target path:', targetPath);
+      console.log('🔗 [ShortLinkRedirect] Target path:', targetPath);
 
       // Store link info for fallback UI
       setLinkInfo({
@@ -67,15 +67,15 @@ export default function ShortLinkRedirect() {
       // Navigate via React Router
       navigate(targetPath, { replace: true });
 
-      // Safety check ÔÇö if still on /s/ after 500ms, show fallback
+      // Safety check - if still on /s/ after 500ms, show fallback
       setTimeout(() => {
         if (window.location.pathname.includes('/s/')) {
-          console.log('­ƒöù [ShortLinkRedirect] Navigation stuck, showing fallback');
+          console.log('🔗 [ShortLinkRedirect] Navigation stuck, showing fallback');
           setStatus('fallback');
         }
       }, 500);
     } catch (err) {
-      console.error('­ƒöù [ShortLinkRedirect] Error:', err);
+      console.error('🔗 [ShortLinkRedirect] Error:', err);
       setStatus('error');
       setErrorMessage('Erreur inattendue');
     }
@@ -118,7 +118,7 @@ export default function ShortLinkRedirect() {
               Voir le Marketplace
             </Button>
             <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -134,7 +134,7 @@ export default function ShortLinkRedirect() {
           <CardHeader className="text-center">
             <CardTitle className="text-lg">{linkInfo.title}</CardTitle>
             <CardDescription>
-              Cliquez pour acc├®der ├á {linkInfo.type === 'shop' ? 'cette boutique' : (linkInfo.type === 'product' || linkInfo.type === 'digital_product') ? 'ce produit' : 'cette page'}
+              Cliquez pour accéder à {linkInfo.type === 'shop' ? 'cette boutique' : (linkInfo.type === 'product' || linkInfo.type === 'digital_product') ? 'ce produit' : 'cette page'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -143,7 +143,7 @@ export default function ShortLinkRedirect() {
               Ouvrir
             </Button>
             <Button variant="outline" onClick={() => navigate('/', { replace: true })} className="w-full">
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>

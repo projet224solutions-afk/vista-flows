@@ -151,7 +151,7 @@ export function SupplierFormDialog({
         .eq('is_active', true)
         .order('name')
         .limit(500);
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -163,7 +163,7 @@ export function SupplierFormDialog({
     queryKey: ['supplier-linked-products', editingSupplier?.id],
     queryFn: async () => {
       if (!editingSupplier?.id) return [];
-      
+
       const { data, error } = await supabase
         .from('vendor_supplier_products')
         .select(`
@@ -331,14 +331,14 @@ export function SupplierFormDialog({
           <DialogTitle className="text-xl font-semibold mb-4">
             {editingSupplier ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
           </DialogTitle>
-          
+
           {/* Stepper professionnel */}
           <div className="flex items-center justify-between">
             {visibleSteps.map((step, index) => {
               const StepIcon = step.icon;
               const isActive = currentStep === step.id;
               const isCompleted = currentStep > step.id;
-              
+
               return (
                 <div key={step.id} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">
@@ -364,7 +364,7 @@ export function SupplierFormDialog({
                       {step.title}
                     </span>
                   </div>
-                  
+
                   {index < visibleSteps.length - 1 && (
                     <div className={cn(
                       "flex-1 h-0.5 mx-4 rounded",
@@ -406,7 +406,7 @@ export function SupplierFormDialog({
                       className="h-11"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="category" className="text-sm font-medium">
                       Type de fournisseur
@@ -464,7 +464,7 @@ export function SupplierFormDialog({
                       className="h-11"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                     <Input
@@ -568,7 +568,7 @@ export function SupplierFormDialog({
                             const productImage = Array.isArray(product.images) && product.images.length > 0
                               ? product.images[0]
                               : null;
-                            
+
                             return (
                               <div
                                 key={product.id}
@@ -593,7 +593,7 @@ export function SupplierFormDialog({
                                     </div>
                                   )}
                                 </div>
-                                
+
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-sm line-clamp-1">
                                     {product.name}
@@ -648,7 +648,7 @@ export function SupplierFormDialog({
                   <Label className="text-sm font-medium">
                     Produits sélectionnés ({formData.linkedProducts.length})
                   </Label>
-                  
+
                   {formData.linkedProducts.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-lg bg-muted/10 min-h-[300px]">
                       <Package className="h-12 w-12 text-muted-foreground/30 mb-3" />
@@ -688,7 +688,7 @@ export function SupplierFormDialog({
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
-                            
+
                             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-primary/10">
                               <Label className="text-xs text-muted-foreground whitespace-nowrap">
                                 Quantité:
@@ -767,7 +767,7 @@ export function SupplierFormDialog({
                 </>
               )}
             </Button>
-            
+
             <div className="flex gap-2">
               {currentStep < totalSteps ? (
                 <Button onClick={handleNext} disabled={!canGoNext()}>

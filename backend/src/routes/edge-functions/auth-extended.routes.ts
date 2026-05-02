@@ -1,6 +1,8 @@
 ﻿import { Router, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import speakeasy from "speakeasy";
+import { verifyJWT, AuthenticatedRequest } from "../../middlewares/auth.middleware.js";
+import { requirePermissionOrRole } from "../../middlewares/permissions.middleware.js";
 
 const router = Router();
 const supabase = createClient(
@@ -8,7 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-// Helper: vÃ©rifier que l'utilisateur a un rÃ´le attendu
+// Helper: vérifier que l'utilisateur a un rôle attendu (pour les routes de login seulement)
 async function requireRole(userId: string, allowedRoles: string[]): Promise<{ ok: boolean; profile?: any }> {
   const { data: profile } = await supabase
     .from("profiles")
@@ -19,7 +21,7 @@ async function requireRole(userId: string, allowedRoles: string[]): Promise<{ ok
   return { ok: true, profile };
 }
 
-// Auth/Agency Functions â€” REAL Supabase auth calls
+// Auth/Agency Functions - REAL Supabase auth calls
 router.post("/auth-agent-bureau-login", async (req: Request, res: Response) => {
   try {
     const { email, password, bureau_id } = req.body || {};
@@ -30,7 +32,7 @@ router.post("/auth-agent-bureau-login", async (req: Request, res: Response) => {
     if (error || !data.user) return res.status(401).json({ success: false, error: "Identifiants invalides" });
     const { ok, profile } = await requireRole(data.user.id, ["agent", "admin"]);
     if (!ok || profile?.bureau_id !== bureau_id) {
-      return res.status(403).json({ success: false, error: "AccÃ¨s non autorisÃ© Ã  ce bureau" });
+      return res.status(403).json({ success: false, error: "Accès non autorisé à ce bureau" });
     }
     return res.json({ success: true, user: data.user, session: data.session, bureau_id });
   } catch (err: any) {
@@ -108,8 +110,17 @@ router.post("/universal-login", async (req: Request, res: Response) => {
 });
 
 // User/Agent Management — REAL Supabase Admin API
+// All routes below require JWT auth + permission check
 
-router.post("/agent-delete-user", async (req: Request, res: Response) => {
+const manageUsers = [verifyJWT, requirePermissionOrRole({ permissionKey: "manage_users", allowedRoles: ["admin", "pdg"] })];
+const manageAgents = [verifyJWT, requirePermissionOrRole({ permissionKey: "manage_agents", allowedRoles: ["admin", "pdg"] })];
+const createAgents = [verifyJWT, requirePermissionOrRole({ permissionKey: "create_agents", allowedRoles: ["admin", "pdg"] })];
+const manageBureaus = [verifyJWT, requirePermissionOrRole({ permissionKey: "manage_bureaus", allowedRoles: ["admin", "pdg"] })];
+const manageVendors = [verifyJWT, requirePermissionOrRole({ permissionKey: "manage_vendors", allowedRoles: ["admin", "pdg"] })];
+const createSubAgents = [verifyJWT, requirePermissionOrRole({ permissionKey: "create_sub_agents", allowedRoles: ["admin", "pdg"] })];
+const createUsers = [verifyJWT, requirePermissionOrRole({ permissionKey: "create_users", allowedRoles: ["admin", "pdg"] })];
+
+router.post("/agent-delete-user", ...manageUsers, async (req: Request, res: Response) => {
   try {
     const { user_id } = req.body || {};
     if (!user_id) return res.status(400).json({ success: false, error: "user_id requis" });
@@ -120,7 +131,7 @@ router.post("/agent-delete-user", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/agent-toggle-user-status", async (req: Request, res: Response) => {
+router.post("/agent-toggle-user-status", ...manageUsers, async (req: Request, res: Response) => {
   try {
     const { user_id, status } = req.body || {};
     if (!user_id || !status) return res.status(400).json({ success: false, error: "user_id et status requis" });
@@ -131,7 +142,7 @@ router.post("/agent-toggle-user-status", async (req: Request, res: Response) => 
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/agent-affiliate-link", async (req: Request, res: Response) => {
+router.post("/agent-affiliate-link", verifyJWT, async (req: Request, res: Response) => {
   try {
     const { agent_id } = req.body || {};
     if (!agent_id) return res.status(400).json({ success: false, error: "agent_id requis" });
@@ -145,7 +156,7 @@ router.post("/agent-affiliate-link", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/change-agent-email", async (req: Request, res: Response) => {
+router.post("/change-agent-email", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id, new_email } = req.body || {};
     if (!agent_id || !new_email) return res.status(400).json({ success: false, error: "agent_id et new_email requis" });
@@ -155,7 +166,7 @@ router.post("/change-agent-email", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/create-pdg-agent", async (req: Request, res: Response) => {
+router.post("/create-pdg-agent", ...createAgents, async (req: Request, res: Response) => {
   try {
     const { email, name, phone, vendor_id } = req.body || {};
     if (!email || !name) return res.status(400).json({ success: false, error: "email et name requis" });
@@ -166,7 +177,7 @@ router.post("/create-pdg-agent", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/create-sub-agent", async (req: Request, res: Response) => {
+router.post("/create-sub-agent", ...createSubAgents, async (req: Request, res: Response) => {
   try {
     const { parent_agent_id, email, name, phone } = req.body || {};
     if (!parent_agent_id || !email || !name) return res.status(400).json({ success: false, error: "parent_agent_id, email et name requis" });
@@ -177,7 +188,7 @@ router.post("/create-sub-agent", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/create-user-by-agent", async (req: Request, res: Response) => {
+router.post("/create-user-by-agent", ...createUsers, async (req: Request, res: Response) => {
   try {
     const { agent_id, email, name, phone, role = "customer" } = req.body || {};
     if (!agent_id || !email) return res.status(400).json({ success: false, error: "agent_id et email requis" });
@@ -188,7 +199,7 @@ router.post("/create-user-by-agent", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/create-vendor-agent", async (req: Request, res: Response) => {
+router.post("/create-vendor-agent", ...createAgents, async (req: Request, res: Response) => {
   try {
     const { vendor_id, email, name, phone } = req.body || {};
     if (!vendor_id || !email || !name) return res.status(400).json({ success: false, error: "vendor_id, email et name requis" });
@@ -199,7 +210,7 @@ router.post("/create-vendor-agent", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/delete-pdg-agent", async (req: Request, res: Response) => {
+router.post("/delete-pdg-agent", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id } = req.body || {};
     if (!agent_id) return res.status(400).json({ success: false, error: "agent_id requis" });
@@ -210,7 +221,7 @@ router.post("/delete-pdg-agent", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/pdg-delete-vendor", async (req: Request, res: Response) => {
+router.post("/pdg-delete-vendor", ...manageVendors, async (req: Request, res: Response) => {
   try {
     const { vendor_id } = req.body || {};
     if (!vendor_id) return res.status(400).json({ success: false, error: "vendor_id requis" });
@@ -219,7 +230,7 @@ router.post("/pdg-delete-vendor", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/pdg-update-agent-email", async (req: Request, res: Response) => {
+router.post("/pdg-update-agent-email", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id, new_email } = req.body || {};
     if (!agent_id || !new_email) return res.status(400).json({ success: false, error: "agent_id et new_email requis" });
@@ -229,7 +240,7 @@ router.post("/pdg-update-agent-email", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/pdg-mfa-verify", async (req: Request, res: Response) => {
+router.post("/pdg-mfa-verify", verifyJWT, async (req: Request, res: Response) => {
   try {
     const { agent_id, otp } = req.body || {};
     if (!agent_id || !otp) return res.status(400).json({ success: false, error: "agent_id et otp requis" });
@@ -241,7 +252,7 @@ router.post("/pdg-mfa-verify", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/reset-pdg-password", async (req: Request, res: Response) => {
+router.post("/reset-pdg-password", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id, new_password } = req.body || {};
     if (!agent_id || !new_password) return res.status(400).json({ success: false, error: "agent_id et new_password requis" });
@@ -251,7 +262,7 @@ router.post("/reset-pdg-password", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/restore-user", async (req: Request, res: Response) => {
+router.post("/restore-user", ...manageUsers, async (req: Request, res: Response) => {
   try {
     const { user_id } = req.body || {};
     if (!user_id) return res.status(400).json({ success: false, error: "user_id requis" });
@@ -261,7 +272,7 @@ router.post("/restore-user", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/delete-user", async (req: Request, res: Response) => {
+router.post("/delete-user", ...manageUsers, async (req: Request, res: Response) => {
   try {
     const { user_id } = req.body || {};
     if (!user_id) return res.status(400).json({ success: false, error: "user_id requis" });
@@ -271,7 +282,7 @@ router.post("/delete-user", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/update-bureau-email", async (req: Request, res: Response) => {
+router.post("/update-bureau-email", ...manageBureaus, async (req: Request, res: Response) => {
   try {
     const { bureau_id, new_email } = req.body || {};
     if (!bureau_id || !new_email) return res.status(400).json({ success: false, error: "bureau_id et new_email requis" });
@@ -280,7 +291,7 @@ router.post("/update-bureau-email", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/update-member-email", async (req: Request, res: Response) => {
+router.post("/update-member-email", ...manageUsers, async (req: Request, res: Response) => {
   try {
     const { member_id, new_email } = req.body || {};
     if (!member_id || !new_email) return res.status(400).json({ success: false, error: "member_id et new_email requis" });
@@ -290,7 +301,7 @@ router.post("/update-member-email", async (req: Request, res: Response) => {
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/update-vendor-agent-email", async (req: Request, res: Response) => {
+router.post("/update-vendor-agent-email", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id, new_email } = req.body || {};
     if (!agent_id || !new_email) return res.status(400).json({ success: false, error: "agent_id et new_email requis" });
@@ -300,7 +311,7 @@ router.post("/update-vendor-agent-email", async (req: Request, res: Response) =>
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/send-bureau-access-email", async (req: Request, res: Response) => {
+router.post("/send-bureau-access-email", ...manageBureaus, async (req: Request, res: Response) => {
   try {
     const { bureau_id, email } = req.body || {};
     if (!email) return res.status(400).json({ success: false, error: "email requis" });
@@ -310,7 +321,7 @@ router.post("/send-bureau-access-email", async (req: Request, res: Response) => 
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/create-bureau-with-auth", async (req: Request, res: Response) => {
+router.post("/create-bureau-with-auth", ...manageBureaus, async (req: Request, res: Response) => {
   try {
     const { bureau_name, email, phone } = req.body || {};
     if (!bureau_name || !email) return res.status(400).json({ success: false, error: "bureau_name et email requis" });

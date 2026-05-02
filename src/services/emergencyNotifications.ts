@@ -37,7 +37,7 @@ export const emergencyNotifications = {
   async sendPushNotification(payload: EmergencyNotificationPayload): Promise<void> {
     // Vérifier la permission
     const hasPermission = await this.requestPermission();
-    
+
     if (!hasPermission) {
       console.warn('Permission de notification refusée');
       // Fallback: toast notification
@@ -113,7 +113,7 @@ export const emergencyNotifications = {
       const audio = new Audio('/sounds/confirmation.mp3');
       audio.volume = 0.5;
       audio.play().catch(() => {});
-    } catch (error) {
+    } catch (_error) {
       console.log('Son de confirmation non disponible');
     }
   },
@@ -189,7 +189,7 @@ export const emergencyNotifications = {
    */
   async testNotification(): Promise<void> {
     const hasPermission = await this.requestPermission();
-    
+
     if (!hasPermission) {
       toast.error('Permission de notification refusée');
       return;
@@ -219,7 +219,7 @@ export const emergencyNotifications = {
 export const initializeEmergencyNotifications = async (): Promise<void> => {
   // Demander la permission au chargement
   const hasPermission = await emergencyNotifications.requestPermission();
-  
+
   if (hasPermission) {
     console.log('✅ Notifications d\'urgence activées');
   } else {

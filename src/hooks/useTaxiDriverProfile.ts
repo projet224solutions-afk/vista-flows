@@ -39,10 +39,10 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     console.log('🔄 [useTaxiDriverProfile] Chargement profil pour user:', userId);
-    
+
     try {
       // 🔒 SÉCURITÉ : Vérifier si le compte est actif et récupérer le custom_id
       const { data: profileData, error: profileError } = await supabase
@@ -80,7 +80,7 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
 
       if (error) {
         console.error('❌ [useTaxiDriverProfile] Erreur:', error);
-        
+
         // Si pas de profil existant, essayer de créer (seulement si compte actif)
         if (error.code === 'PGRST116') {
           console.log('📝 [useTaxiDriverProfile] Création profil conducteur...');
@@ -95,7 +95,7 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
             })
             .select()
             .single();
-          
+
           if (createError) {
             console.error('❌ [useTaxiDriverProfile] Erreur création:', createError);
             toast.error('Impossible de créer le profil conducteur');
@@ -141,7 +141,7 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
           last_seen: new Date().toISOString()
         })
         .eq('id', driverId);
-      
+
       console.log('✅ Position sauvegardée en DB');
     } catch (error) {
       console.error('❌ Erreur mise à jour position:', error);

@@ -26,6 +26,7 @@ export default function WalletMonthlyStats() {
     if (user?.id) {
       loadMonthlyStats();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadMonthlyStats = async () => {
@@ -33,7 +34,7 @@ export default function WalletMonthlyStats() {
 
     try {
       setLoading(true);
-      
+
       // Obtenir le premier et dernier jour du mois actuel
       const now = new Date();
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -53,7 +54,7 @@ export default function WalletMonthlyStats() {
       let totalReceived = 0;
       let totalSent = 0;
       const txArray = (transactions || []) as Array<{ receiver_id: string; sender_id: string; amount: number }>;
-      let transactionCount = txArray.length;
+      const transactionCount = txArray.length;
 
       txArray.forEach((tx) => {
         if (tx.receiver_id === user.id) {
@@ -146,8 +147,8 @@ export default function WalletMonthlyStats() {
 
         {/* Bilan du mois */}
         <div className={`mt-4 rounded-lg p-4 border ${
-          stats.netChange >= 0 
-            ? 'bg-green-50 dark:bg-green-950 border-green-200' 
+          stats.netChange >= 0
+            ? 'bg-green-50 dark:bg-green-950 border-green-200'
             : 'bg-red-50 dark:bg-red-950 border-red-200'
         }`}>
           <div className="flex items-center justify-between">

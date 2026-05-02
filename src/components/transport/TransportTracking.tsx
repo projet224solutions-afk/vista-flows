@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Clock, Navigation, Phone, MessageSquare, Camera, CheckCircle, AlertTriangle } from 'lucide-react';
+import { MapPin, Clock, _Navigation, Phone, MessageSquare, Camera, CheckCircle, AlertTriangle } from 'lucide-react';
 import TransportService, { TransportRequest, TransportUser } from '../../services/transport/TransportService';
 import GeolocationService from '../../services/geolocation/GeolocationService';
 
@@ -26,7 +26,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
   const [request, setRequest] = useState<TransportRequest | null>(null);
   const [transportUser, setTransportUser] = useState<TransportUser | null>(null);
   const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number; timestamp: number } | null>(null);
-  const [isTracking, setIsTracking] = useState(false);
+  const [_isTracking, setIsTracking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [estimatedArrival, setEstimatedArrival] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,15 +37,16 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
   const transportService = TransportService.getInstance();
   const geolocationService = GeolocationService.getInstance();
   const trackingInterval = useRef<NodeJS.Timeout | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
+  const _mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadRequest();
     startTracking();
-    
+
     return () => {
       stopTracking();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId]);
 
   const loadRequest = async () => {
@@ -55,7 +56,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       if (response.ok) {
         const requestData = await response.json();
         setRequest(requestData);
-        
+
         if (requestData.transportUserId) {
           const transportUserData = await fetch(`/api/transport/user/${requestData.transportUserId}`);
           if (transportUserData.ok) {
@@ -75,7 +76,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
   const startTracking = async () => {
     try {
       setIsTracking(true);
-      
+
       // Obtenir la position actuelle
       const position = await geolocationService.getCurrentPosition();
       setCurrentPosition({
@@ -126,24 +127,24 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         request.pickupPosition,
         request.deliveryPosition
       );
-      
+
       const pos1 = currentPosition ? {
         latitude: currentPosition.lat,
         longitude: currentPosition.lng,
         timestamp: currentPosition.timestamp || Date.now()
       } : request.pickupPosition;
-      
+
       const currentDistance = geolocationService.calculateDistance(
         pos1,
         request.deliveryPosition
       );
-      
-      const progressPercent = Math.max(0, Math.min(100, 
+
+      const progressPercent = Math.max(0, Math.min(100,
         ((startDistance - currentDistance) / startDistance) * 100
       ));
-      
+
       setProgress(progressPercent);
-      
+
       // Estimer l'arrivée
       const remainingDistance = currentDistance / 1000; // en km
       const estimatedMinutes = Math.ceil(remainingDistance * 2); // 2 min par km
@@ -153,7 +154,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
   const handleMarkAsPickedUp = async () => {
     if (!request) return;
-    
+
     try {
       setIsLoading(true);
       await transportService.markAsPickedUp(request.id);
@@ -168,24 +169,24 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
   const handleMarkAsDelivered = async () => {
     if (!request) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       const proofPos = currentPosition ? {
         latitude: currentPosition.lat,
         longitude: currentPosition.lng,
         timestamp: currentPosition.timestamp || Date.now()
       } : undefined;
-      
+
       const proofOfDelivery = {
         photo: proofPhoto,
         coordinates: proofPos,
         clientSignature: 'signature_client_' + Date.now()
       };
-      
+
       await transportService.markAsDelivered(request.id, proofOfDelivery);
-      
+
       if (onComplete) {
         onComplete();
       }
@@ -199,10 +200,10 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
   const handleOpenDispute = async () => {
     if (!request) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       await transportService.openDispute(
         request.id,
         'Problème de livraison',
@@ -213,7 +214,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
           coordinates: currentPosition ? [currentPosition] : []
         }
       );
-      
+
       if (onDispute) {
         onDispute();
       }
@@ -303,7 +304,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
             </div>
             <p className="text-sm text-blue-700">{request.pickupAddress}</p>
           </div>
-          
+
           <div className="p-4 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="w-4 h-4 text-green-600" />
@@ -355,7 +356,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
             <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             ></div>
@@ -394,7 +395,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 {isLoading ? 'Marquage...' : 'Marquer comme récupéré'}
               </button>
             )}
-            
+
             {request.status === 'picked_up' && (
               <div className="space-y-2">
                 <button
@@ -429,7 +430,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 </p>
               </div>
             )}
-            
+
             {request.status === 'picked_up' && (
               <div className="flex gap-2">
                 <button

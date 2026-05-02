@@ -84,7 +84,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
     const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
     const destination = `${target.latitude},${target.longitude}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-    
+
     window.open(mapsUrl, '_blank');
     toast.success("Navigation ouverte dans Google Maps");
   };
@@ -106,7 +106,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
   }
 
   const isGoingToPickup = activeRide.status === 'accepted' || activeRide.status === 'arriving';
-  const targetLocation = isGoingToPickup ? activeRide.pickup : activeRide.destination;
+  const _targetLocation = isGoingToPickup ? activeRide.pickup : activeRide.destination;
   const statusLabel = isGoingToPickup ? "Récupération du client" : "En direction de la destination";
 
   return (
@@ -204,7 +204,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
           )}
 
           {/* Bouton navigation Google Maps */}
-          <Button 
+          <Button
             onClick={openGoogleMaps}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2"
             size="lg"

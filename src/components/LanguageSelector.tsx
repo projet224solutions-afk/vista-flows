@@ -22,7 +22,7 @@ interface LanguageSelectorProps {
   className?: string;
 }
 
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ 
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   variant = 'default',
   className = ''
 }) => {
@@ -114,8 +114,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       </label>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full justify-between gap-2 h-11"
           >
             <span className="flex items-center gap-2">
@@ -125,8 +125,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             <ChevronDown className="h-4 w-4 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
-          align="start" 
+        <DropdownMenuContent
+          align="start"
           className="w-[var(--radix-dropdown-menu-trigger-width)] bg-background border border-border shadow-lg z-50"
         >
           <ScrollArea className="h-[300px]">

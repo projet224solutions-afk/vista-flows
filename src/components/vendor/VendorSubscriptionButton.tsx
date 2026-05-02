@@ -18,15 +18,15 @@ export function VendorSubscriptionButton() {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: fr });
-    } catch (error) {
+    } catch (_error) {
       return "Date invalide";
     }
   };
 
   const isActive = subscription?.status === 'active';
   const planName = subscription?.plan_display_name || 'Aucun';
-  const endDate = subscription?.current_period_end 
-    ? formatDate(subscription.current_period_end) 
+  const endDate = subscription?.current_period_end
+    ? formatDate(subscription.current_period_end)
     : 'N/A';
 
   return (
@@ -35,7 +35,7 @@ export function VendorSubscriptionButton() {
         <Calendar className="w-4 h-4 text-primary" />
         📅 Mon Abonnement
       </div>
-      
+
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="flex flex-col">
           <span className="text-muted-foreground">Statut</span>
@@ -43,12 +43,12 @@ export function VendorSubscriptionButton() {
             {isActive ? 'Actif' : 'Inactif'}
           </span>
         </div>
-        
+
         <div className="flex flex-col">
           <span className="text-muted-foreground">Plan actuel</span>
           <span className="font-medium">{planName}</span>
         </div>
-        
+
         <div className="flex flex-col col-span-2">
           <span className="text-muted-foreground">Date de fin</span>
           <span className="font-medium">{endDate}</span>

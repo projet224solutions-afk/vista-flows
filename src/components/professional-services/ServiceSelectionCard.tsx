@@ -33,11 +33,11 @@ export const ServiceSelectionCard = ({
               <Check className="w-5 h-5 text-primary-foreground" />
             </div>
           )}
-          
+
           <div className="text-5xl mb-3">{service.icon}</div>
-          
+
           <CardTitle className="text-xl font-bold">{service.name}</CardTitle>
-          
+
           <CardDescription className="text-sm mt-2">
             {service.description}
           </CardDescription>

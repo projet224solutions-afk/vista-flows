@@ -5,7 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export type ErrorPattern = 
+export type ErrorPattern =
   | 'dynamic_import_failed'
   | 'resource_load_error'
   | 'network_timeout'
@@ -88,11 +88,11 @@ class AutoErrorRecoveryService {
       autoFix: async () => {
         try {
           // Vérifier la connectivité
-          const response = await fetch('/api/health', { 
+          const response = await fetch('/api/health', {
             method: 'HEAD',
             cache: 'no-cache'
           }).catch(() => null);
-          
+
           return response?.ok ?? false;
         } catch {
           return false;
@@ -122,7 +122,7 @@ class AutoErrorRecoveryService {
         try {
           // Vérifier la session actuelle
           const { data: { session } } = await supabase.auth.getSession();
-          
+
           if (!session) {
             // IMPORTANT:
             // Une erreur RLS peut être attendue sur des pages publiques (marketplace, boutique, short links)
@@ -131,14 +131,14 @@ class AutoErrorRecoveryService {
             console.info('🔐 [AutoRecovery] RLS sans session (utilisateur non connecté) — pas de redirection automatique.');
             return false;
           }
-          
+
           // Rafraîchir la session si expirée
           const { error } = await supabase.auth.refreshSession();
           if (!error) {
             console.log('🔐 Session rafraîchie');
             return true;
           }
-          
+
           return false;
         } catch {
           return false;
@@ -164,7 +164,7 @@ class AutoErrorRecoveryService {
     // Gestionnaire pour erreurs non capturées
     window.addEventListener('unhandledrejection', (event) => {
       const message = event.reason?.message || String(event.reason);
-      
+
       if (message.includes('dynamically imported module') || message.includes('Importing a module script failed')) {
         this.handleError('dynamic_import_failed', message, 'react_error_boundary');
       } else if (message.includes('timeout') || message.includes('Timeout')) {
@@ -181,8 +181,8 @@ class AutoErrorRecoveryService {
    * Gérer une erreur détectée
    */
   async handleError(
-    type: ErrorPattern, 
-    message: string, 
+    type: ErrorPattern,
+    message: string,
     module?: string
   ): Promise<boolean> {
     const error: DetectedError = {
@@ -233,7 +233,7 @@ class AutoErrorRecoveryService {
     try {
       await supabase
         .from('system_errors')
-        .update({ 
+        .update({
           status: 'resolved',
           fix_applied: true,
           fixed_at: new Date().toISOString(),
@@ -271,9 +271,9 @@ class AutoErrorRecoveryService {
   /**
    * Obtenir les statistiques des erreurs récentes
    */
-  getStats(): { 
-    total: number; 
-    recovered: number; 
+  getStats(): {
+    total: number;
+    recovered: number;
     byType: Record<ErrorPattern, number>;
     recoveryRate: number;
   } {
@@ -297,8 +297,8 @@ class AutoErrorRecoveryService {
       total: this.recentErrors.length,
       recovered,
       byType,
-      recoveryRate: this.recentErrors.length > 0 
-        ? Math.round((recovered / this.recentErrors.length) * 100) 
+      recoveryRate: this.recentErrors.length > 0
+        ? Math.round((recovered / this.recentErrors.length) * 100)
         : 100
     };
   }
@@ -333,7 +333,7 @@ class AutoErrorRecoveryService {
     try {
       const { data, error } = await supabase
         .from('system_errors')
-        .update({ 
+        .update({
           status: 'resolved',
           fix_applied: true,
           fixed_at: new Date().toISOString(),
@@ -358,7 +358,7 @@ class AutoErrorRecoveryService {
     try {
       const { data, error } = await supabase
         .from('system_errors')
-        .update({ 
+        .update({
           status: 'resolved',
           fix_applied: true,
           fixed_at: new Date().toISOString(),

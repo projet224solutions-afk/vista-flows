@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, MapPin, Star, Award, TrendingUp, Bike } from 'lucide-react';
+import { _User, Mail, Phone, _MapPin, Star, Award, TrendingUp, Bike } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDriver } from '@/hooks/useDriver';
 import { DriverLayout } from '@/components/driver/DriverLayout';
@@ -26,7 +26,7 @@ export default function DriverProfile() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Mon Profil</h1>
-            <p className="text-muted-foreground">G├®rez vos informations personnelles</p>
+            <p className="text-muted-foreground">Gérez vos informations personnelles</p>
           </div>
           <Button>Modifier le profil</Button>
         </div>
@@ -36,7 +36,7 @@ export default function DriverProfile() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Informations personnelles</CardTitle>
-              <CardDescription>Vos donn├®es de livreur professionnel</CardDescription>
+              <CardDescription>Vos données de livreur professionnel</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Avatar & Nom */}
@@ -51,7 +51,7 @@ export default function DriverProfile() {
                   <h2 className="text-2xl font-bold">{driver?.full_name}</h2>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant={driver?.is_verified ? 'default' : 'secondary'}>
-                      {driver?.is_verified ? 'Ô£ô V├®rifi├®' : 'En attente de v├®rification'}
+                      {driver?.is_verified ? '✓ Vérifié' : 'En attente de vérification'}
                     </Badge>
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
@@ -75,20 +75,20 @@ export default function DriverProfile() {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    T├®l├®phone
+                    Téléphone
                   </Label>
                   <Input value={driver?.phone_number || ''} disabled />
                 </div>
               </div>
 
-              {/* Informations v├®hicule */}
+              {/* Informations véhicule */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Bike className="h-4 w-4" />
-                  Informations v├®hicule
+                  Informations véhicule
                 </Label>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <Input placeholder="Type de v├®hicule" value="Moto" disabled />
+                  <Input placeholder="Type de véhicule" value="Moto" disabled />
                   <Input placeholder="ID Livreur" value={driver?.id.slice(0, 8) || ''} disabled />
                 </div>
               </div>
@@ -153,15 +153,15 @@ export default function DriverProfile() {
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="p-4 border rounded-lg">
               <p className="font-medium">Permis de conduire</p>
-              <Badge variant="outline" className="mt-2">├Ç jour</Badge>
+              <Badge variant="outline" className="mt-2">À jour</Badge>
             </div>
             <div className="p-4 border rounded-lg">
-              <p className="font-medium">Assurance v├®hicule</p>
-              <Badge variant="outline" className="mt-2">├Ç jour</Badge>
+              <p className="font-medium">Assurance véhicule</p>
+              <Badge variant="outline" className="mt-2">À jour</Badge>
             </div>
             <div className="p-4 border rounded-lg">
-              <p className="font-medium">Contr├┤le technique</p>
-              <Badge variant="destructive" className="mt-2">Expire bient├┤t</Badge>
+              <p className="font-medium">Contrôle technique</p>
+              <Badge variant="destructive" className="mt-2">Expire bientôt</Badge>
             </div>
           </CardContent>
         </Card>

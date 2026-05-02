@@ -42,10 +42,10 @@ interface GoogleMapsNavigationProps {
   onContactCustomer?: (phone: string) => void;
 }
 
-export function GoogleMapsNavigation({ 
-  activeRide, 
-  currentLocation, 
-  onContactCustomer 
+export function GoogleMapsNavigation({
+  activeRide,
+  currentLocation,
+  onContactCustomer
 }: GoogleMapsNavigationProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -107,7 +107,7 @@ export function GoogleMapsNavigation({
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || !window.google || mapInitialized.current) return;
 
-    const center = currentLocation 
+    const center = currentLocation
       ? { lat: currentLocation.latitude, lng: currentLocation.longitude }
       : { lat: 9.5, lng: -13.7 }; // Conakry par défaut
 
@@ -308,7 +308,7 @@ export function GoogleMapsNavigation({
       const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
       const destination = `${target.latitude},${target.longitude}`;
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-      
+
       window.open(mapsUrl, '_blank');
       toast.success("Navigation ouverte dans Google Maps");
     } else {
@@ -348,8 +348,8 @@ export function GoogleMapsNavigation({
             <div className="flex items-center gap-2">
               {hasActiveRide && (
                 <Badge className="bg-blue-600 text-white">
-                  {activeRide!.status === 'accepted' || activeRide!.status === 'arriving' 
-                    ? "Récupération du client" 
+                  {activeRide!.status === 'accepted' || activeRide!.status === 'arriving'
+                    ? "Récupération du client"
                     : "En direction de la destination"}
                 </Badge>
               )}
@@ -373,13 +373,13 @@ export function GoogleMapsNavigation({
               </div>
             </div>
           ) : (
-            <div 
-              ref={mapRef} 
+            <div
+              ref={mapRef}
               className="w-full h-[400px]"
               style={{ minHeight: '400px' }}
             />
           )}
-          
+
           {/* Badge de statut sur la carte */}
           {showMap && !hasActiveRide && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
@@ -404,10 +404,10 @@ export function GoogleMapsNavigation({
                 </p>
               </div>
             </div>
-            
+
             {/* Bouton Google Maps toujours visible */}
             {!hasActiveRide && (
-              <Button 
+              <Button
                 onClick={openGoogleMapsExternal}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
               >
@@ -494,7 +494,7 @@ export function GoogleMapsNavigation({
           </div>
 
           {/* Bouton navigation externe */}
-          <Button 
+          <Button
             onClick={openGoogleMapsExternal}
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
           >
@@ -509,14 +509,14 @@ export function GoogleMapsNavigation({
                 '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
                 'Le client sera notifié et vous pourriez recevoir une pénalité.'
               );
-              
+
               if (confirmed) {
                 try {
                   console.log('🚫 Annulation de la course:', activeRide.id);
-                  
+
                   const { error } = await supabase
                     .from('taxi_trips')
-                    .update({ 
+                    .update({
                       status: 'cancelled',
                       cancel_reason: 'Annulée par le conducteur',
                       cancelled_at: new Date().toISOString(),
@@ -530,15 +530,15 @@ export function GoogleMapsNavigation({
                   }
 
                   console.log('✅ Course annulée dans la DB');
-                  
+
                   toast.success('✅ Course annulée avec succès');
-                  
+
                   // Nettoyer immédiatement la carte
                   if (directionsRenderer.current) {
                     directionsRenderer.current.setDirections({ routes: [] });
                   }
                   setRouteInfo(null);
-                  
+
                   // Recharger la page pour mettre à jour tous les composants
                   setTimeout(() => {
                     window.location.reload();

@@ -7,14 +7,14 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type StorageFolder = 
-  | 'avatars' 
-  | 'products' 
-  | 'videos' 
-  | 'audio' 
-  | 'documents' 
-  | 'stamps' 
-  | 'restaurant' 
+export type StorageFolder =
+  | 'avatars'
+  | 'products'
+  | 'videos'
+  | 'audio'
+  | 'documents'
+  | 'stamps'
+  | 'restaurant'
   | 'digital-products'
   | 'travel'
   | 'misc';
@@ -142,21 +142,21 @@ function resolveContentType(file: File, folder: StorageFolder): string {
 function isTypeAllowed(fileType: string, allowedTypes: string[]): boolean {
   // Extraire le type de base (sans les paramètres comme codecs)
   const baseType = fileType.split(';')[0].trim().toLowerCase();
-  
+
   // Vérification directe
   if (allowedTypes.includes(baseType)) {
     return true;
   }
-  
+
   // Pour l'audio, être plus flexible - accepter si le type commence par audio/
   if (baseType.startsWith('audio/')) {
     // Vérifier si le type de base (audio/mp4, audio/webm, etc.) est dans la liste
-    return allowedTypes.some(allowed => 
-      baseType === allowed || 
+    return allowedTypes.some(allowed =>
+      baseType === allowed ||
       baseType.startsWith(allowed.split('/')[0] + '/')
     );
   }
-  
+
   return false;
 }
 
@@ -185,26 +185,26 @@ export function useStorageUpload(): UseStorageUploadReturn {
     // Pour l'audio, utiliser une validation plus flexible
     if (folder === 'audio') {
       const baseType = file.type.split(';')[0].trim().toLowerCase();
-      const isAudioValid = baseType.startsWith('audio/') || 
+      const isAudioValid = baseType.startsWith('audio/') ||
                            file.name.match(/\.(mp3|wav|ogg|m4a|mp4|webm|aac|opus)$/i);
-      
+
       if (!isAudioValid) {
-        return { 
-          valid: false, 
-          error: `Type de fichier audio non autorisé. Formats acceptés: MP3, WAV, OGG, M4A, AAC, WebM` 
+        return {
+          valid: false,
+          error: `Type de fichier audio non autorisé. Formats acceptés: MP3, WAV, OGG, M4A, AAC, WebM`
         };
       }
     } else if (!isTypeAllowed(file.type, allowedTypes)) {
-      return { 
-        valid: false, 
-        error: `Type de fichier non autorisé. Types acceptés: ${allowedTypes.join(', ')}` 
+      return {
+        valid: false,
+        error: `Type de fichier non autorisé. Types acceptés: ${allowedTypes.join(', ')}`
       };
     }
 
     if (file.size > maxSize) {
-      return { 
-        valid: false, 
-        error: `Le fichier dépasse la taille maximale de ${formatMaxSizeLabel(maxSize)}` 
+      return {
+        valid: false,
+        error: `Le fichier dépasse la taille maximale de ${formatMaxSizeLabel(maxSize)}`
       };
     }
 
@@ -231,7 +231,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
 
     console.log(`[useStorageUpload] Uploading to Supabase bucket: ${bucket}, path: ${filePath}`);
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: _uploadData, error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
         contentType,
@@ -291,7 +291,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
 
       // Vérifier si l'utilisateur est authentifié
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         console.error('[useStorageUpload] Erreur session:', sessionError);
         // Fallback vers Supabase sans authentification
@@ -316,7 +316,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
       try {
         // Étape 1: Obtenir une URL signée pour l'upload
         console.log(`[useStorageUpload] Requesting signed URL for ${folderPath}/${file.name}`);
-        
+
         const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
           'gcs-signed-url',
           {
@@ -331,13 +331,13 @@ export function useStorageUpload(): UseStorageUploadReturn {
         );
 
         // Check for errors - both invoke errors AND error responses from the function
-        const hasError = signedUrlError || 
-                        signedUrlData?.error || 
-                        signedUrlData?.fallback || 
+        const hasError = signedUrlError ||
+                        signedUrlData?.error ||
+                        signedUrlData?.fallback ||
                         !signedUrlData?.signedUrl;
-        
+
         if (hasError) {
-          console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase:', 
+          console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase:',
             signedUrlError?.message || signedUrlData?.error || 'No signed URL received');
           const result = await uploadToSupabase(file, folder, subfolder, onProgress);
           setProgress(100);
@@ -425,7 +425,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
     options: UploadOptions
   ): Promise<UploadResult[]> => {
     const results: UploadResult[] = [];
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const result = await uploadFile(file, {

@@ -86,7 +86,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       await SecureStorage.setItem(`${userType}_session`, data.session);
 
       toast.success('Connexion réussie !');
-      
+
       // Redirection selon le rôle
       if (data.session.role === 'agent') {
         navigate('/agent-dashboard');
@@ -109,23 +109,23 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
   };
 
   const userTypes = [
-    { 
-      value: 'agent' as UserType, 
-      label: 'Agent', 
+    {
+      value: 'agent' as UserType,
+      label: 'Agent',
       icon: UserCheck,
       color: 'bg-blue-500',
       description: 'Accès agent principal ou sous-agent'
     },
-    { 
-      value: 'bureau' as UserType, 
-      label: 'Bureau Syndicat', 
+    {
+      value: 'bureau' as UserType,
+      label: 'Bureau Syndicat',
       icon: Building2,
       color: 'bg-green-500',
       description: 'Accès bureau syndical'
     },
-    { 
-      value: 'worker' as UserType, 
-      label: 'Travailleur', 
+    {
+      value: 'worker' as UserType,
+      label: 'Travailleur',
       icon: Users,
       color: 'bg-orange-500',
       description: 'Accès membre travailleur'

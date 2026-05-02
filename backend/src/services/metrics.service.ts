@@ -1,6 +1,6 @@
 /**
  * 📊 METRICS SERVICE - Phase 6
- * 
+ *
  * Lightweight metrics collection for observability.
  * Records to system_metrics table + in-memory for health endpoints.
  */

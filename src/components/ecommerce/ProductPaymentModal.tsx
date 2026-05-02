@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { createOrder } from '@/services/orderBackendService';
+import { getCartItemVendorId, getCartVendorEntries, groupCartItemsByVendor } from '@/lib/marketplace/checkout';
 
 const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
@@ -38,6 +39,7 @@ interface CartItem {
   name: string;
   price: number;
   vendorId?: string;
+  vendor_id?: string;
   quantity?: number;
 }
 
@@ -70,8 +72,9 @@ export default function ProductPaymentModal({
   currency = 'GNF'
 }: ProductPaymentModalProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const fc = useFormatCurrency();
-  const { convert, userCurrency } = usePriceConverter();
+  const { convert, _userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
 
   /** Affiche le montant converti en devise locale, avec l'original en dessous si conversion */
@@ -93,28 +96,51 @@ export default function ProductPaymentModal({
     const converted = convert(amount, cur);
     return converted.formatted;
   };
-  const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
+  const { initiatePullPayment, pollStatus, isLoading: _ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('select_method');
   const [showCardInline, setShowCardInline] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
+  const [_loadingBalance, setLoadingBalance] = useState(false);
   const [vendorCode, setVendorCode] = useState<string | null>(null);
-  const [loadingVendorCode, setLoadingVendorCode] = useState(false);
+  const [_loadingVendorCode, setLoadingVendorCode] = useState(false);
   const [codPhone, setCodPhone] = useState('');
   const [codCity, setCodCity] = useState('');
-  
+
   const [mobilePhone, setMobilePhone] = useState('');
   const [mobileProcessing, setMobileProcessing] = useState(false);
-  
-  const [sellerUserId, setSellerUserId] = useState<string>('');
-  
+
+  const [_sellerUserId, setSellerUserId] = useState<string>('');
+
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [loadingCommission, setLoadingCommission] = useState(false);
   const [commissionFee, setCommissionFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
+  const isCashOnDelivery = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
+  const effectiveCommissionFee = isCashOnDelivery ? 0 : commissionFee;
+  const effectiveGrandTotal = isCashOnDelivery ? totalAmount : grandTotal;
+  const isVendorDashboardRoute = location.pathname === '/vendeur' || location.pathname.startsWith('/vendeur/');
+  const isDigitalVendorDashboardRoute = location.pathname === '/vendeur-digital' || location.pathname.startsWith('/vendeur-digital/');
+
+  const postPurchasePath = useMemo(() => {
+    if (isDigitalVendorDashboardRoute) {
+      return '/vendeur-digital/my-purchases';
+    }
+
+    if (isVendorDashboardRoute) {
+      return '/vendeur/my-purchases';
+    }
+
+    return '/my-purchases';
+  }, [isDigitalVendorDashboardRoute, isVendorDashboardRoute]);
+
+  const finalizeSuccessfulCheckout = useCallback(() => {
+    onPaymentSuccess();
+    onClose();
+    navigate(postPurchasePath, { replace: true });
+  }, [navigate, onClose, onPaymentSuccess, postPurchasePath]);
 
   const createMarketplaceOrder = async ({
     vendorId,
@@ -128,7 +154,7 @@ export default function ProductPaymentModal({
   }: {
     vendorId: string;
     items: CartItem[];
-    paymentMethod: 'wallet' | 'card' | 'mobile_money' | 'cod';
+    paymentMethod: 'wallet' | 'card' | 'mobile_money' | 'cash';
     chargedAmount: number;
     paymentReference?: string;
     markAsPaid: boolean;
@@ -140,6 +166,9 @@ export default function ProductPaymentModal({
       country: string;
       postal_code?: string | null;
       notes?: string | null;
+      is_cod?: boolean;
+      cod_phone?: string | null;
+      cod_city?: string | null;
     };
     metadata?: Record<string, unknown>;
   }) => {
@@ -152,6 +181,12 @@ export default function ProductPaymentModal({
       })),
       payment_method: paymentMethod,
       payment_intent_id: paymentReference || null,
+      payment_confirmed: markAsPaid,
+      charged_amount: chargedAmount,
+      order_metadata: {
+        external_payment_id: paymentReference || null,
+        ...(metadata || {}),
+      },
       shipping_address: shippingAddress,
     });
 
@@ -159,25 +194,12 @@ export default function ProductPaymentModal({
       throw new Error(response.error || 'Erreur lors de la création de la commande');
     }
 
-    const order = response.data.order;
-    await supabase
-      .from('orders')
-      .update({
-        total_amount: chargedAmount,
-        payment_status: (markAsPaid ? 'paid' : order.payment_status) as "failed" | "paid" | "pending" | "refunded",
-        metadata: {
-          external_payment_id: paymentReference || null,
-          ...(metadata || {}),
-        },
-      })
-      .eq('id', order.id);
-
-    return order;
+    return response.data.order;
   };
 
   useEffect(() => {
     if (open && cartItems.length > 0) {
-      const vendorId = cartItems.find(item => item.vendorId)?.vendorId;
+      const vendorId = getCartItemVendorId(cartItems.find(item => getCartItemVendorId(item)) || {});
       if (vendorId) {
         supabase.from('vendors').select('user_id').eq('id', vendorId).single()
           .then(({ data }) => {
@@ -205,6 +227,7 @@ export default function ProductPaymentModal({
       loadWalletBalance();
       loadCommissionConfig();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, userId]);
 
   useEffect(() => {
@@ -214,6 +237,7 @@ export default function ProductPaymentModal({
       setCommissionFee(0);
       setGrandTotal(totalAmount);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalAmount, commissionConfig]);
 
   useEffect(() => {
@@ -222,6 +246,7 @@ export default function ProductPaymentModal({
     } else {
       setVendorCode(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, paymentMethod, cartItems]);
 
   useEffect(() => {
@@ -231,21 +256,38 @@ export default function ProductPaymentModal({
   const loadCommissionConfig = async () => {
     setLoadingCommission(true);
     try {
-      const { data: settingsData, error } = await supabase
+      const parseRate = (raw: unknown): number | null => {
+        const value = raw && typeof raw === 'object' && 'value' in raw
+          ? Number((raw as { value?: unknown }).value)
+          : Number(raw);
+        return Number.isFinite(value) && value >= 0 ? value : null;
+      };
+
+      const pdgKeys = ['commission_achats', 'purchase_commission_percentage'];
+      for (const key of pdgKeys) {
+        const { data } = await supabase
+          .from('pdg_settings')
+          .select('setting_value')
+          .eq('setting_key', key)
+          .maybeSingle();
+
+        const rate = parseRate(data?.setting_value);
+        if (rate !== null) {
+          setCommissionConfig({ commission_type: 'percentage', commission_value: rate });
+          return;
+        }
+      }
+
+      const { data: settingsData } = await supabase
         .from('system_settings')
         .select('setting_value')
         .eq('setting_key', 'purchase_fee_percent')
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
-      } else if (settingsData?.setting_value) {
-        setCommissionConfig({ commission_type: 'percentage', commission_value: Number(settingsData.setting_value) });
-      } else {
-        setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
-      }
+      const legacyRate = parseRate(settingsData?.setting_value);
+      setCommissionConfig({ commission_type: 'percentage', commission_value: legacyRate ?? 5 });
     } catch {
-      setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
+      setCommissionConfig({ commission_type: 'percentage', commission_value: 5 });
     } finally {
       setLoadingCommission(false);
     }
@@ -273,7 +315,7 @@ export default function ProductPaymentModal({
   const loadVendorCode = async () => {
     setLoadingVendorCode(true);
     try {
-      const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId;
+      const firstVendorId = getCartItemVendorId(cartItems.find(item => getCartItemVendorId(item)) || {});
       if (!firstVendorId) { setVendorCode(null); return; }
       const { data: vendorData, error: vendorError } = await supabase.from('vendors').select('user_id, vendor_code').eq('id', firstVendorId).single();
       if (vendorError || !vendorData) { setVendorCode(null); return; }
@@ -304,26 +346,25 @@ export default function ProductPaymentModal({
       }
     }
 
-    const itemsByVendor = cartItems.reduce((acc, item) => {
-      const vendorKey = item.vendorId || 'unknown';
-      if (!acc[vendorKey]) acc[vendorKey] = [];
-      acc[vendorKey].push(item);
-      return acc;
-    }, {} as Record<string, CartItem[]>);
+    const itemsByVendor = groupCartItemsByVendor(cartItems);
 
-    const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
+    const vendorCount = Object.keys(itemsByVendor).length;
     const commissionPerVendor = vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+    const createdOrders: string[] = [];
 
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
-      if (vendorId === 'unknown') continue;
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
       const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
-      const normalizedMethod = method === 'mtn_money' ? 'mobile_money' : method === 'orange_money' ? 'mobile_money' : method;
+      const normalizedMethod = method === 'mtn_money' || method === 'orange_money'
+        ? 'mobile_money'
+        : method === 'cash' || method === 'cash_on_delivery'
+          ? 'cash'
+          : method;
 
       const order = await createMarketplaceOrder({
         vendorId,
         items,
-        paymentMethod: normalizedMethod as 'wallet' | 'card' | 'mobile_money' | 'cod',
+        paymentMethod: normalizedMethod as 'wallet' | 'card' | 'mobile_money' | 'cash',
         chargedAmount: vendorTotalWithCommission,
         paymentReference: paymentId,
         markAsPaid: true,
@@ -339,14 +380,22 @@ export default function ProductPaymentModal({
         metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal },
       });
 
+      createdOrders.push(order.id);
+
       if (commissionPerVendor > 0) {
         await supabase.rpc('record_pdg_revenue', {
           p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
-          p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: paymentId,
+          p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: paymentId,
           p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
         });
       }
     }
+
+    if (createdOrders.length === 0) {
+      throw new Error('Le paiement a été confirmé mais aucune commande vendeur n\'a été créée');
+    }
+
+    return createdOrders;
   };
 
   // Handle Stripe escrow success (capture manuelle — fonds bloqués)
@@ -367,15 +416,8 @@ export default function ProductPaymentModal({
         }
       }
 
-      const itemsByVendor = cartItems.reduce((acc, item) => {
-        const vendorKey = item.vendorId || 'unknown';
-        if (!acc[vendorKey]) acc[vendorKey] = [];
-        acc[vendorKey].push(item);
-        return acc;
-      }, {} as Record<string, CartItem[]>);
+      const vendorEntries = getCartVendorEntries(cartItems);
 
-      const vendorEntries = Object.entries(itemsByVendor).filter(([k]) => k !== 'unknown');
-      
       if (vendorEntries.length === 0) {
         console.error('[ProductPayment] No vendor entries found! cartItems:', JSON.stringify(cartItems));
         toast.error('Erreur: aucun vendeur identifié pour cette commande');
@@ -401,7 +443,7 @@ export default function ProductPaymentModal({
             paymentMethod: 'card',
             chargedAmount: vendorTotalWithCommission,
             paymentReference: data.paymentIntentId,
-            markAsPaid: false,
+            markAsPaid: true,
             shippingAddress: {
               full_name: 'Client 224Solutions',
               phone: 'Non fourni',
@@ -415,7 +457,7 @@ export default function ProductPaymentModal({
               escrow_active: true,
               commission_fee: commissionPerVendor,
               product_total: vendorProductTotal,
-              commission_percent: commissionConfig?.commission_value || 10,
+              commission_percent: commissionConfig?.commission_value || 5,
             },
           });
         } catch (error: any) {
@@ -433,7 +475,7 @@ export default function ProductPaymentModal({
         if (commissionPerVendor > 0) {
           await supabase.rpc('record_pdg_revenue', {
             p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
-            p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: data.paymentIntentId,
+            p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: data.paymentIntentId,
             p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
           });
         }
@@ -451,9 +493,9 @@ export default function ProductPaymentModal({
 
       setPaymentStep('success');
       toast.success('Paiement sécurisé par escrow !', {
-        description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
+        description: `${fc(effectiveGrandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
-      setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
+      setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
     } catch (err) {
       console.error('[ProductPayment] Order creation after escrow payment failed:', err);
       toast.error('Paiement réussi mais erreur lors de la commande. Contactez le support.', {
@@ -498,8 +540,8 @@ export default function ProductPaymentModal({
         if (finalStatus.status === 'completed') {
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
-          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
-          setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
+          toast.success('Paiement mobile réussi !', { description: `${fc(effectiveGrandTotal, cur)} débité de votre compte` });
+          setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
           setPaymentStep('mobile_money_form');
@@ -508,7 +550,7 @@ export default function ProductPaymentModal({
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
         toast.success('Paiement initié avec succès !');
-        setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
+        setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
       }
     } catch (err) {
       console.error('Mobile money payment failed:', err);
@@ -540,86 +582,100 @@ export default function ProductPaymentModal({
       }
     }
 
-    const itemsByVendor = cartItems.reduce((acc, item) => {
-      const vendorKey = item.vendorId || 'unknown';
-      if (!acc[vendorKey]) acc[vendorKey] = [];
-      acc[vendorKey].push(item);
-      return acc;
-    }, {} as Record<string, CartItem[]>);
+    const itemsByVendor = groupCartItemsByVendor(cartItems);
 
-    const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
-    const commissionPerVendor = vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+    const vendorCount = Object.keys(itemsByVendor).length;
+    const commissionPerVendor = isCODMethod ? 0 : vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+
+    const createdOrders: string[] = [];
+    const errors: string[] = [];
 
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
-      if (vendorId === 'unknown') continue;
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-      const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
+      const vendorChargedAmount = vendorProductTotal + commissionPerVendor;
 
       if (paymentMethod === 'wallet') {
-        if (walletBalance !== null && walletBalance < grandTotal) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(grandTotal, cur)}` });
+        if (walletBalance !== null && walletBalance < effectiveGrandTotal) {
+          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(effectiveGrandTotal, cur)}` });
           setProcessing(false);
           return;
         }
       }
 
       const normalizedPaymentMethod = isCODMethod ? 'cash' : paymentMethod;
+      const shippingAddress = {
+        full_name: 'Client 224Solutions',
+        phone: isCODMethod && codPhone ? codPhone : 'Non fourni',
+        address_line: isCODMethod
+          ? `Adresse à confirmer par téléphone${codCity ? ` - ${codCity}` : ''}`
+          : 'Adresse de livraison',
+        city: isCODMethod && codCity ? codCity : 'Conakry',
+        country: 'Guinée',
+        postal_code: null,
+        notes: isCODMethod ? 'Paiement à la livraison' : null,
+        ...(isCODMethod
+          ? {
+              is_cod: true,
+              cod_phone: codPhone.trim(),
+              cod_city: codCity.trim(),
+            }
+          : {}),
+      };
 
       try {
         const order = await createMarketplaceOrder({
           vendorId,
           items,
-          paymentMethod: (isCODMethod ? 'cod' : normalizedPaymentMethod) as 'wallet' | 'card' | 'mobile_money' | 'cod',
-          chargedAmount: vendorTotalWithCommission,
+          paymentMethod: normalizedPaymentMethod as 'wallet' | 'card' | 'mobile_money' | 'cash',
+          chargedAmount: vendorChargedAmount,
           markAsPaid: paymentMethod === 'wallet',
-          shippingAddress: {
-            full_name: 'Client 224Solutions',
-            phone: isCODMethod && codPhone ? codPhone : 'Non fourni',
-            address_line: isCODMethod && codPhone ? codPhone : 'Adresse de livraison',
-            city: isCODMethod && codCity ? codCity : 'Conakry',
-            country: 'Guinée',
-            postal_code: null,
-            notes: isCODMethod ? 'Paiement à la livraison' : null,
-          },
+          shippingAddress,
           metadata: {
             commission_fee: commissionPerVendor,
             product_total: vendorProductTotal,
-            commission_percent: commissionConfig?.commission_value || 10,
+            commission_percent: commissionConfig?.commission_value || 5,
             ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {}),
           },
         });
 
+        createdOrders.push(order.id);
+
         if (paymentMethod === 'wallet' && commissionPerVendor > 0) {
-          await supabase.rpc('record_pdg_revenue', { p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor, p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: `wallet-${order.id}`, p_user_id: userId, p_metadata: { order_id: order.id, order_number: order.order_number, vendor_id: vendorId, product_total: vendorProductTotal } });
+          await supabase.rpc('record_pdg_revenue', { p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor, p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: `wallet-${order.id}`, p_user_id: userId, p_metadata: { order_id: order.id, order_number: order.order_number, vendor_id: vendorId, product_total: vendorProductTotal } });
         }
       } catch (error: any) {
+        errors.push(error?.message || 'Erreur inconnue');
         toast.error('Erreur création commande', { description: error?.message });
         continue;
       }
     }
 
-    if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
-    } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}. Redirection...` });
+    if (createdOrders.length === 0) {
+      throw new Error(errors[0] || 'Aucune commande vendeur n\'a été créée');
     }
 
-    onPaymentSuccess();
-    onClose();
-    navigate('/my-purchases');
-  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
+    if (paymentMethod === 'wallet') {
+      toast.success('Paiement sécurisé effectué !', { description: `${fc(effectiveGrandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
+    } else if (isCODMethod) {
+      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(effectiveGrandTotal, cur)}. Redirection...` });
+    }
 
-  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;
+    finalizeSuccessfulCheckout();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, effectiveGrandTotal, walletBalance, commissionConfig, codPhone, codCity, fc, finalizeSuccessfulCheckout]);
+
+  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < effectiveGrandTotal;
 
   const stripeExtraParams = useMemo(() => ({
-    cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId }))
+    cartItems: cartItems.map(i => {
+      const vendorId = getCartItemVendorId(i);
+      return { id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId, vendor_id: vendorId };
+    })
   }), [cartItems]);
 
   const handleStripeError = useCallback((error: string) => {
     toast.error(error);
   }, []);
-  const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId || '';
-
   // ======== RENDER: Success screen ========
   if (paymentStep === 'success') {
     return (
@@ -630,7 +686,7 @@ export default function ProductPaymentModal({
               <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
             <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
-            <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} — Votre commande a été créée</p>
+            <p className="text-muted-foreground text-center">{fc(effectiveGrandTotal, cur)} — Votre commande a été créée</p>
             <p className="text-sm text-muted-foreground animate-pulse">Redirection vers vos achats...</p>
           </div>
         </DialogContent>
@@ -678,14 +734,14 @@ export default function ProductPaymentModal({
               </DialogTitle>
             </div>
             <DialogDescription>
-              Un débit de {fc(grandTotal, cur)} sera envoyé sur votre téléphone
+              Un débit de {fc(effectiveGrandTotal, cur)} sera envoyé sur votre téléphone
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className={`p-4 rounded-lg border ${providerBg}`}>
               <div className="text-center space-y-1">
-                <p className="text-2xl font-bold">{fc(grandTotal, cur)}</p>
+                <p className="text-2xl font-bold">{fc(effectiveGrandTotal, cur)}</p>
                 <p className="text-sm text-muted-foreground">Montant à débiter</p>
               </div>
             </div>
@@ -706,7 +762,7 @@ export default function ProductPaymentModal({
             <Alert className={`${providerBg}`}>
               <Phone className={`h-4 w-4 ${providerColor}`} />
               <AlertDescription className="text-sm">
-                Après avoir cliqué sur "Payer", vous recevrez une demande de confirmation sur votre téléphone. 
+                Après avoir cliqué sur "Payer", vous recevrez une demande de confirmation sur votre téléphone.
                 Composez votre code PIN pour valider le paiement.
               </AlertDescription>
             </Alert>
@@ -723,7 +779,7 @@ export default function ProductPaymentModal({
                 {mobileProcessing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
                 ) : (
-                  <>Payer {fc(grandTotal, cur)}</>
+                  <>Payer {fc(effectiveGrandTotal, cur)}</>
                 )}
               </Button>
             </div>
@@ -750,13 +806,13 @@ export default function ProductPaymentModal({
                   <span>Sous-total produits:</span>
                   {renderPrice(totalAmount)}
                 </div>
-                {commissionFee > 0 && (
+                {effectiveCommissionFee > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground items-start">
                     <span className="flex items-center gap-1">
                       <Info className="w-3 h-3" />
-                      Frais de service ({commissionConfig?.commission_value || 1.5}%):
+                      Frais de service ({commissionConfig?.commission_value || 5}%):
                     </span>
-                    <span>+{priceText(commissionFee)}</span>
+                    <span>+{priceText(effectiveCommissionFee)}</span>
                   </div>
                 )}
                 {loadingCommission && (
@@ -766,7 +822,7 @@ export default function ProductPaymentModal({
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
                   <span>Total à payer:</span>
-                  {renderPrice(grandTotal, 'text-primary')}
+                  {renderPrice(effectiveGrandTotal, 'text-primary')}
                 </div>
               </div>
 
@@ -806,7 +862,7 @@ export default function ProductPaymentModal({
         {insufficientBalance && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0), cur)}.</AlertDescription>
+            <AlertDescription>Solde insuffisant. Il vous manque {fc(effectiveGrandTotal - (walletBalance || 0), cur)}.</AlertDescription>
           </Alert>
         )}
 
@@ -828,7 +884,7 @@ export default function ProductPaymentModal({
             })}
           </RadioGroup>
 
-          {paymentMethod === 'cash' && (
+          {isCashOnDelivery && (
             <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
               <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" /> Informations de contact
@@ -845,7 +901,7 @@ export default function ProductPaymentModal({
                 <Truck className="h-4 w-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal, cur)} en espèces.
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(effectiveGrandTotal, cur)} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -897,9 +953,9 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'card' ? `Payer maintenant ${priceText(grandTotal)}` :
+            {paymentMethod === 'card' ? `Payer maintenant ${priceText(effectiveGrandTotal)}` :
              paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
-             paymentMethod === 'wallet' ? `Payer ${priceText(grandTotal)}` : `Confirmer ${priceText(grandTotal)}`}
+             paymentMethod === 'wallet' ? `Payer ${priceText(effectiveGrandTotal)}` : `Confirmer ${priceText(effectiveGrandTotal)}`}
           </SecureButton>
         </div>
         </div>

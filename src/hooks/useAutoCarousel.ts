@@ -30,7 +30,7 @@ export function useAutoCarousel({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlayingVideo, setIsPlayingVideo] = useState(videos.length > 0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(enabled);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 

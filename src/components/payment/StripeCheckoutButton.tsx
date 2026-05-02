@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
-import { backendConfig } from '@/config/backend';
+import { resolveBackendUrl } from '@/config/backend';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,11 @@ interface StripeCheckoutButtonProps {
   creditWallet?: boolean;
   disabled?: boolean;
 }
+
+const NODE_ORDER_PAYMENT_FUNCTIONS = new Set([
+  'marketplace-escrow-payment',
+  'stripe-marketplace-payment',
+]);
 
 /** Inner form rendered inside <Elements> */
 function CheckoutForm({
@@ -253,7 +258,7 @@ export default function StripeCheckoutButton({
           let shouldFallbackToEdge = false;
 
           try {
-            const resp = await fetch(`${backendConfig.baseUrl}/api/pos/stripe-payment`, {
+            const resp = await fetch(resolveBackendUrl('/api/pos/stripe-payment'), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -295,10 +300,32 @@ export default function StripeCheckoutButton({
             functionName = 'stripe-deposit';
             body = { amount, currency: currency.toLowerCase() };
           }
-          const { data: invokeData, error: apiError } = await supabase.functions.invoke(functionName, { body });
-          if (!mountedRef.current) return;
-          if (apiError) throw new Error(apiError.message);
-          data = invokeData;
+          if (edgeFunction && NODE_ORDER_PAYMENT_FUNCTIONS.has(edgeFunction)) {
+            const { data: session } = await supabase.auth.getSession();
+            const token = session?.session?.access_token;
+            if (!token) throw new Error('Non authentifié - reconnectez-vous');
+
+            const response = await fetch(resolveBackendUrl(`/edge-functions/orders/${edgeFunction}`), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(body),
+            });
+
+            const backendData = await response.json();
+            if (!response.ok) {
+              throw new Error(backendData?.error || `Erreur backend ${response.status}`);
+            }
+
+            data = backendData;
+          } else {
+            const { data: invokeData, error: apiError } = await supabase.functions.invoke(functionName, { body });
+            if (!mountedRef.current) return;
+            if (apiError) throw new Error(apiError.message);
+            data = invokeData;
+          }
         }
 
         if (!mountedRef.current) return;

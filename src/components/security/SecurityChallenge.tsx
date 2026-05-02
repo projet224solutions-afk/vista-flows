@@ -41,7 +41,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
     const num2 = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : 50));
     const operators = ['+', '-', '*'];
     const op = operators[Math.floor(Math.random() * (difficulty === 'hard' ? 3 : 2))];
-    
+
     let result: number;
     switch (op) {
       case '+': result = num1 + num2; break;
@@ -63,7 +63,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
       { q: 'Quelle est la première lettre de "Guinée" ?', a: 'g' },
       { q: 'Écrivez le chiffre 5 en lettres', a: 'cinq' },
     ];
-    
+
     const textChallenge = textChallenges[Math.floor(Math.random() * textChallenges.length)];
     challenges.push({
       question: textChallenge.q,
@@ -82,7 +82,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
     if (!challenge || !userAnswer.trim()) return;
 
     setIsVerifying(true);
-    
+
     // Petit délai pour éviter le brute force
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -94,7 +94,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
     } else {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
-      
+
       if (newAttempts >= maxAttempts) {
         setStatus('failed');
         onFailure?.();

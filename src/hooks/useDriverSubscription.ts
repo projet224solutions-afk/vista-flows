@@ -85,7 +85,7 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
         const endDate = new Date(subData.end_date);
         const diffTime = endDate.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         setSubscription({
           ...subData,
           days_remaining: Math.max(0, diffDays),
@@ -152,7 +152,7 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
 
     try {
       // Utiliser la fonction RPC subscribe_driver pour le débit wallet
-      const { data, error } = await supabase.rpc('subscribe_driver', {
+      const { _data, error } = await supabase.rpc('subscribe_driver', {
         p_user_id: user.id,
         p_type: profile.role, // 'taxi' ou 'livreur' selon le rôle
         p_payment_method: paymentMethod,

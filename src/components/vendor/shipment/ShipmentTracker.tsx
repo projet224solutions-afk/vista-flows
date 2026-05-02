@@ -57,7 +57,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
 
   useEffect(() => {
     loadShipmentData();
-    
+
     // Configuration du temps réel pour les mises à jour de statut
     const channel = supabase
       .channel('shipment-updates')
@@ -98,6 +98,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shipmentId]);
 
   const loadShipmentData = async () => {

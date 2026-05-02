@@ -4,10 +4,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { translationService, SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { Message } from '@/types/communication.types';
-import { getLanguageForCountry } from '@/data/countryMappings';
+import { _getLanguageForCountry } from '@/data/countryMappings';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 interface UseAutoTranslationOptions {
@@ -22,10 +22,10 @@ interface TranslatedMessage extends Message {
 
 export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
   const { autoTranslate = true, context = 'general' } = options;
-  
+
   // Utiliser le contexte global de langue comme source de vérité
   const { language: globalLanguage } = useLanguage();
-  
+
   const [userLanguage, setUserLanguage] = useState<SupportedLanguage>(() => {
     // Initialiser avec la langue globale si supportée
     if (globalLanguage in SUPPORTED_LANGUAGES) {
@@ -67,7 +67,7 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
           setUserLanguage(lang);
           return;
         }
-        
+
         // Fallback: utiliser localStorage (geo-cache ou user-language)
         const geoCache = localStorage.getItem('geo_detection_cache');
         if (geoCache) {
@@ -203,12 +203,12 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
     }
 
     setIsLoading(true);
-    
+
     try {
       // Filtrer les messages qui ont besoin de traduction
-      const needsTranslation = messages.filter(msg => {
+      const _needsTranslation = messages.filter(msg => {
         const detectedLang = translationService.detectLanguage(msg.content);
-        return detectedLang !== userLanguage && 
+        return detectedLang !== userLanguage &&
                msg.translation_status !== 'completed' ||
                msg.target_language !== userLanguage;
       });
@@ -274,7 +274,7 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
 
     // Vérifier les deux noms de colonnes
     const existingTranslation = message.translated_text || message.translated_content;
-    
+
     return (
       existingTranslation !== null &&
       existingTranslation !== undefined &&

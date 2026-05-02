@@ -11,37 +11,37 @@ import { requestQueue, RequestPriority } from '@/lib/requestQueue';
 export interface RobustQueryOptions<T> {
   // Identification
   key: string;                          // Clé unique pour le circuit breaker
-  
+
   // Retry configuration
   retry?: Partial<RetryConfig>;
-  
+
   // Circuit breaker
   circuitBreaker?: {
     enabled?: boolean;
     failureThreshold?: number;
     timeout?: number;
   };
-  
+
   // Request queue
   queue?: {
     enabled?: boolean;
     priority?: RequestPriority;
     dedupe?: boolean;
   };
-  
+
   // Fallback
   fallback?: T | (() => T | Promise<T>);
-  
+
   // Stale-while-revalidate
   staleTime?: number;                   // Temps avant que les données soient stale (ms)
   cacheTime?: number;                   // Temps de cache (ms)
-  
+
   // Callbacks
   onSuccess?: (data: T) => void;
   onError?: (error: any) => void;
   onRetry?: (attempt: number, error: any) => void;
   onCircuitOpen?: () => void;
-  
+
   // Comportement
   enabled?: boolean;                    // Activer/désactiver la requête
   refetchOnMount?: boolean;
@@ -97,7 +97,7 @@ export function useRobustQuery<T>(
     // Initialiser avec les données en cache si disponibles
     const cached = cache.get(key);
     const now = Date.now();
-    
+
     if (cached && now - cached.timestamp < cacheTime) {
       return {
         data: cached.data,
@@ -166,7 +166,7 @@ export function useRobustQuery<T>(
     const queryWithRetry = async (): Promise<T> => {
       return retryWithBackoff(wrappedQuery, {
         ...retry,
-        onRetry: (attempt, error, nextDelay) => {
+        onRetry: (attempt, error, _nextDelay) => {
           if (isMountedRef.current) {
             setState(prev => ({ ...prev, retryCount: attempt }));
           }
@@ -239,7 +239,7 @@ export function useRobustQuery<T>(
       }
 
       const circuitState = circuitBreaker.getState(key);
-      
+
       if (circuitState === 'OPEN') {
         onCircuitOpen?.();
       }
@@ -259,6 +259,7 @@ export function useRobustQuery<T>(
       onError?.(error);
       return undefined;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, queryFn, enabled, retry, cbOptions, queueOptions, fallback, staleTime, onSuccess, onError, onRetry, onCircuitOpen]);
 
   /**
@@ -274,7 +275,7 @@ export function useRobustQuery<T>(
   const reset = useCallback(() => {
     cache.delete(key);
     circuitBreaker.reset(key);
-    
+
     setState({
       data: undefined,
       error: null,
@@ -294,13 +295,13 @@ export function useRobustQuery<T>(
    */
   const setData = useCallback((updater: T | ((prev: T | undefined) => T)) => {
     setState(prev => {
-      const newData = typeof updater === 'function' 
+      const newData = typeof updater === 'function'
         ? (updater as (prev: T | undefined) => T)(prev.data)
         : updater;
-      
+
       const now = Date.now();
       cache.set(key, { data: newData, timestamp: now });
-      
+
       return {
         ...prev,
         data: newData,
@@ -423,9 +424,9 @@ export function useRobustMutation<TData, TVariables>(
         result = await circuitBreaker.execute(
           options.key,
           mutationWithRetry,
-          options.fallback !== undefined 
-            ? () => (typeof options.fallback === 'function' 
-                ? (options.fallback as () => TData)() 
+          options.fallback !== undefined
+            ? () => (typeof options.fallback === 'function'
+                ? (options.fallback as () => TData)()
                 : options.fallback as TData)
             : undefined
         );

@@ -141,7 +141,7 @@ export default function MerchantOnboarding() {
     setSubmitting(true);
     try {
       let currentVendorId = vendorId;
-      
+
       if (vendorId) {
         const { error } = await supabase
           .from("vendors")
@@ -187,7 +187,7 @@ export default function MerchantOnboarding() {
 
       toast.success("Profil marchand enregistré avec succès !");
       setOpen(false);
-      
+
       // Rediriger vers le dashboard vendeur pour voir le module
       window.location.reload();
     } catch (e) {
@@ -224,9 +224,9 @@ export default function MerchantOnboarding() {
                 <FormItem>
                   <FormLabel>Nom de la boutique *</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ex: Boutique Diallo..." 
-                      {...field} 
+                    <Input
+                      placeholder="Ex: Boutique Diallo..."
+                      {...field}
                       disabled={submitting}
                       className="h-11"
                     />
@@ -264,9 +264,9 @@ export default function MerchantOnboarding() {
                   <FormItem>
                     <FormLabel>Téléphone *</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="+224 6xx xxx xxx" 
-                        {...field} 
+                      <Input
+                        placeholder="+224 6xx xxx xxx"
+                        {...field}
                         disabled={submitting}
                         className="h-11"
                       />
@@ -283,9 +283,9 @@ export default function MerchantOnboarding() {
                   <FormItem>
                     <FormLabel>Ville *</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Conakry, Kindia, Labé..." 
-                        {...field} 
+                      <Input
+                        placeholder="Conakry, Kindia, Labé..."
+                        {...field}
                         disabled={submitting}
                         className="h-11"
                       />
@@ -303,9 +303,9 @@ export default function MerchantOnboarding() {
                 <FormItem>
                   <FormLabel>Adresse</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Quartier, Commune, Repères..." 
-                      {...field} 
+                    <Input
+                      placeholder="Quartier, Commune, Repères..."
+                      {...field}
                       disabled={submitting}
                       className="h-11"
                     />
@@ -340,10 +340,10 @@ export default function MerchantOnboarding() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)} 
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
                 disabled={submitting}
               >
                 Plus tard

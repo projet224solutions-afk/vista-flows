@@ -14,9 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
-  Briefcase, FileText, Calculator, Users, DollarSign, Clock,
-  Plus, CheckCircle, AlertCircle, TrendingUp, Star,
-  Phone, Mail, Calendar, Timer, Receipt, FolderOpen
+  Briefcase, _FileText, _Calculator, Users, DollarSign, Clock,
+  Plus, _CheckCircle, AlertCircle, TrendingUp, Star,
+  Phone, Mail, _Calendar, Timer, _Receipt, FolderOpen
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -77,7 +77,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   basse: 'bg-green-500',
 };
 
-export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProps) {
+export function FreelanceModule({ _serviceId, businessName }: FreelanceModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNewMission, setShowNewMission] = useState(false);
 

@@ -78,7 +78,7 @@ export function usePOSItemDiscounts(): UsePOSItemDiscountsReturn {
     return calculateCartItemWithDiscount(itemId, name, quantity, unitPrice, costPrice, discount);
   }, [getDiscountForItem]);
 
-  const hasAnyDiscounts = itemDiscounts.size > 0 && 
+  const hasAnyDiscounts = itemDiscounts.size > 0 &&
     Array.from(itemDiscounts.values()).some(d => d.type !== null && d.value > 0);
 
   const totalDiscountAmount = useCallback((

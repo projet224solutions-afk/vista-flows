@@ -7,11 +7,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Truck, 
-  Store, 
-  Package, 
-  MapPin, 
+import {
+  Truck,
+  Store,
+  Package,
+  MapPin,
   CheckCircle2,
   Clock,
   Navigation,
@@ -59,7 +59,7 @@ interface DeliveryStatusTrackerProps {
   userRole: 'client' | 'vendor' | 'driver';
 }
 
-export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTrackerProps) {
+export function DeliveryStatusTracker({ deliveryId, _userRole }: DeliveryStatusTrackerProps) {
   const [delivery, setDelivery] = useState<DeliveryStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,7 +98,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
         (payload) => {
           console.log('Delivery status update:', payload);
           setDelivery(payload.new as DeliveryStatus);
-          
+
           // Notification sonore
           if ('Notification' in window && Notification.permission === 'granted') {
             const statusLabel = STATUS_STEPS.find(s => s.key === (payload.new as any).status)?.label;
@@ -114,6 +114,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryId]);
 
   const getCurrentStepIndex = () => {
@@ -224,8 +225,8 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
                   <div className="flex flex-col items-center">
                     <div className={`
                       w-8 h-8 rounded-full flex items-center justify-center
-                      ${isCompleted 
-                        ? 'bg-green-500 text-white' 
+                      ${isCompleted
+                        ? 'bg-green-500 text-white'
                         : 'bg-muted text-muted-foreground'}
                       ${isCurrent ? 'ring-2 ring-green-500 ring-offset-2' : ''}
                     `}>

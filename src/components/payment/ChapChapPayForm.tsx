@@ -35,23 +35,23 @@ interface PaymentStatus {
 }
 
 const PAYMENT_METHODS = [
-  { 
-    id: 'orange_money' as PaymentMethod, 
-    name: 'Orange Money', 
+  {
+    id: 'orange_money' as PaymentMethod,
+    name: 'Orange Money',
     icon: '🍊',
     color: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30',
     activeColor: 'ring-2 ring-orange-500 border-orange-500'
   },
-  { 
-    id: 'mtn_momo' as PaymentMethod, 
-    name: 'MTN Mobile Money', 
+  {
+    id: 'mtn_momo' as PaymentMethod,
+    name: 'MTN Mobile Money',
     icon: '💛',
     color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
     activeColor: 'ring-2 ring-yellow-500 border-yellow-500'
   },
-  { 
-    id: 'paycard' as PaymentMethod, 
-    name: 'PayCard', 
+  {
+    id: 'paycard' as PaymentMethod,
+    name: 'PayCard',
     icon: '💳',
     color: 'border-blue-500 bg-blue-50 dark:bg-blue-950/30',
     activeColor: 'ring-2 ring-blue-500 border-blue-500'
@@ -125,7 +125,7 @@ export function ChapChapPayForm({
           message: 'Paiement initié ! Validez sur votre téléphone.',
           transactionId: data.transactionId,
         });
-        
+
         toast.success('Paiement initié avec succès');
         onSuccess?.(data.transactionId);
       } else {
@@ -228,7 +228,7 @@ export function ChapChapPayForm({
           Payez facilement avec Orange Money, MTN MoMo ou PayCard
         </CardDescription>
       </CardHeader>
-      
+
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           {/* Montant */}
@@ -321,7 +321,7 @@ export function ChapChapPayForm({
               </>
             )}
           </Button>
-          
+
           {onCancel && (
             <Button
               type="button"
@@ -333,7 +333,7 @@ export function ChapChapPayForm({
               Annuler
             </Button>
           )}
-          
+
           <p className="text-xs text-muted-foreground text-center">
             🔒 Paiement sécurisé via ChapChapPay
           </p>

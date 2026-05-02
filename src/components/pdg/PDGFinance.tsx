@@ -1,12 +1,13 @@
 // @ts-nocheck
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Crown, Shield, Bike, Sparkles, Building2, ArrowUpDown, AlertTriangle, Globe2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, _Crown, Shield, Bike, Sparkles, Building2, ArrowUpDown, AlertTriangle, Globe2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -16,7 +17,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer
+  _ResponsiveContainer
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useFinanceData } from '@/hooks/useFinanceData';
@@ -31,6 +32,7 @@ const PDGServiceSubscriptions = lazy(() => import('./PDGServiceSubscriptions'));
 const PDGTransferLimits = lazy(() => import('./PDGTransferLimits'));
 
 export default function PDGFinance() {
+  const navigate = useNavigate();
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
   const [activeFinanceTab, setActiveFinanceTab] = useState('overview');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
@@ -97,6 +99,7 @@ export default function PDGFinance() {
   useEffect(() => {
     console.log('🔄 PDGFinance monté - rafraîchissement des données');
     refetch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Log des stats pour debug
@@ -260,7 +263,7 @@ export default function PDGFinance() {
         Object.keys(csvData[0] || {}).join(','),
         ...csvData.map(row => Object.values(row).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -268,7 +271,7 @@ export default function PDGFinance() {
       a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Export réussi');
     } catch (error) {
       console.error('Erreur export:', error);
@@ -351,7 +354,7 @@ export default function PDGFinance() {
 
       <TabsContent value="overview" className="space-y-6">
         <PlatformRevenueOverview />
-        
+
         {/* FX Commission Management Card */}
         <Card className="border-border/40 bg-gradient-to-br from-blue-500/5 to-purple-500/5 backdrop-blur-sm">
           <CardHeader>
@@ -419,11 +422,11 @@ export default function PDGFinance() {
                 </div>
               </div>
             )}
-            
+
             <div className="flex flex-wrap gap-2 pt-2">
-              <Button 
-                type="button" 
-                variant="default" 
+              <Button
+                type="button"
+                variant="default"
                 className="gap-2 flex-1"
                 onClick={openFxMarginDialog}
                 disabled={marginUpdateLoading || !fxHealth}
@@ -439,9 +442,9 @@ export default function PDGFinance() {
                 <AlertTriangle className="w-4 h-4" />
                 {alertCheckLoading ? 'Vérification...' : 'Alerte changement < 1h'}
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="gap-2"
                 onClick={loadFxHealth}
                 disabled={fxLoading}
@@ -526,9 +529,9 @@ export default function PDGFinance() {
                 </Badge>
               )}
             </div>
-            <Button 
-              type="button" 
-              variant="default" 
+            <Button
+              type="button"
+              variant="default"
               className="gap-2"
               onClick={openFxMarginDialog}
               disabled={marginUpdateLoading || !fxHealth}
@@ -780,7 +783,7 @@ export default function PDGFinance() {
           </CardContent>
         </Card>
 
-        <Card 
+        <Card
           className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
           onClick={() => setShowWalletsDialog(true)}
         >
@@ -801,6 +804,19 @@ export default function PDGFinance() {
               <p className="text-xs text-muted-foreground">
                 Cliquez pour voir les détails
               </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-3 gap-2"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigate('/wallet');
+                }}
+              >
+                <ArrowUpDown className="w-4 h-4" />
+                Transférer
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -823,10 +839,10 @@ export default function PDGFinance() {
                 <XAxis dataKey="date" className="text-xs" />
                 <YAxis className="text-xs" />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="hsl(var(--primary))" 
+                <Line
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={3}
                   dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                 />
@@ -906,13 +922,13 @@ export default function PDGFinance() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      trans.status === 'completed' ? 'bg-green-500/10' : 
-                      trans.status === 'pending' ? 'bg-orange-500/10' : 
+                      trans.status === 'completed' ? 'bg-green-500/10' :
+                      trans.status === 'pending' ? 'bg-orange-500/10' :
                       'bg-red-500/10'
                     }`}>
                       <DollarSign className={`w-6 h-6 ${
-                        trans.status === 'completed' ? 'text-green-500' : 
-                        trans.status === 'pending' ? 'text-orange-500' : 
+                        trans.status === 'completed' ? 'text-green-500' :
+                        trans.status === 'pending' ? 'text-orange-500' :
                         'text-red-500'
                       }`} />
                     </div>
@@ -921,9 +937,9 @@ export default function PDGFinance() {
                         {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{trans.id.slice(0, 8)}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(trans.created_at).toLocaleDateString('fr-FR', { 
-                          day: '2-digit', 
-                          month: 'long', 
+                        {new Date(trans.created_at).toLocaleDateString('fr-FR', {
+                          day: '2-digit',
+                          month: 'long',
                           year: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
@@ -1085,7 +1101,7 @@ export default function PDGFinance() {
               Liste complète de tous les wallets avec leurs informations détaillées
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 mt-4">
             {!wallets || wallets.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -1121,7 +1137,7 @@ export default function PDGFinance() {
                               <span className="font-medium">{wallet.profiles.email}</span>
                             </div>
                           )}
-                          
+
                           {wallet.profiles?.phone && (
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="w-4 h-4 text-muted-foreground" />
@@ -1152,7 +1168,7 @@ export default function PDGFinance() {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-muted-foreground">Statut:</span>
-                            <Badge 
+                            <Badge
                               variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
                               className={wallet.wallet_status === 'active' ? 'bg-green-500' : ''}
                             >

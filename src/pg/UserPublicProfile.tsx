@@ -1,5 +1,5 @@
 ﻿/**
- * ­ƒæñ PROFIL PUBLIC UTILISATEUR - 224SOLUTIONS
+ * 👤 PROFIL PUBLIC UTILISATEUR - 224SOLUTIONS
  * Page de profil public d'un utilisateur
  */
 
@@ -42,6 +42,7 @@ export default function UserPublicProfile() {
     if (userId) {
       loadProfile();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const loadProfile = async () => {
@@ -57,13 +58,13 @@ export default function UserPublicProfile() {
 
       if (fetchError) {
         console.error('Erreur chargement profil:', fetchError);
-        setError('Utilisateur non trouv├®');
+        setError('Utilisateur non trouvé');
         return;
       }
 
       setProfile(data);
 
-      // Charger l'adresse par d├®faut
+      // Charger l'adresse par défaut
       const { data: addrData } = await supabase
         .from('user_addresses')
         .select('street, city, country')
@@ -74,7 +75,7 @@ export default function UserPublicProfile() {
       if (addrData) {
         setAddress(addrData);
       } else {
-        // Fallback: premi├¿re adresse disponible
+        // Fallback: première adresse disponible
         const { data: anyAddr } = await supabase
           .from('user_addresses')
           .select('street, city, country')
@@ -130,7 +131,7 @@ export default function UserPublicProfile() {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center">
               <User className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="text-muted-foreground">{error || 'Utilisateur non trouv├®'}</p>
+              <p className="text-muted-foreground">{error || 'Utilisateur non trouvé'}</p>
               <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>
                 Retour
               </Button>
@@ -162,15 +163,15 @@ export default function UserPublicProfile() {
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              
+
               <h2 className="text-xl font-bold">{getDisplayName()}</h2>
-              
+
               {profile.public_id && (
                 <Badge variant="outline" className="mt-2 font-mono">
                   ID: {profile.public_id}
                 </Badge>
               )}
-              
+
               <Badge variant="secondary" className="mt-2">
                 Client
               </Badge>
@@ -192,7 +193,7 @@ export default function UserPublicProfile() {
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Phone className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">T├®l├®phone</p>
+                  <p className="text-xs text-muted-foreground">Téléphone</p>
                   <p className="text-sm">{profile.phone}</p>
                 </div>
               </div>
@@ -221,8 +222,8 @@ export default function UserPublicProfile() {
 
             {/* Actions */}
             <div className="pt-4">
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={() => navigate(`/messages?recipientId=${profile.id}`)}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />

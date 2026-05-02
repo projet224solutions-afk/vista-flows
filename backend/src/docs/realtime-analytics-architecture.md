@@ -65,13 +65,13 @@ const THRESHOLDS = {
 function checkForSpike(vendorId, eventType) {
   const current = getHourlyCount(vendorId, eventType);
   const baseline = getBaseline(vendorId, eventType, hourOfDay);
-  
+
   // Skip if not enough data
   if (current < MIN_EVENTS_FOR_DETECTION) return;
   if (current < MIN_ABSOLUTE_THRESHOLD) return;
-  
+
   const ratio = baseline > 0 ? current / baseline : current;
-  
+
   if (ratio >= 2.5) {
     triggerNotification('spike', vendorId, eventType, { current, baseline, ratio });
   } else if (ratio >= 1.5) {

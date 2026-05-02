@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import offlineDB from '@/lib/offlineDB';
 
 const SYNC_INTERVAL = 30000; // 30 secondes
-const MAX_BATCH_SIZE = 10;
+const _MAX_BATCH_SIZE = 10;
 const MAX_RETRY_COUNT = 5;
 
 export interface SyncStats {
@@ -53,7 +53,7 @@ export const useOfflineSync = () => {
   const syncEventToSupabase = useCallback(async (event: any): Promise<boolean> => {
     try {
       const { type, data, vendor_id } = event;
-      
+
       switch (type) {
         case 'sale': {
           // Utiliser la nouvelle table sales
@@ -75,7 +75,7 @@ export const useOfflineSync = () => {
               metadata: { original_date: data.sale_date },
               created_at: data.sale_date || new Date().toISOString()
             });
-          
+
           if (error) {
             console.error('Erreur sync sale:', error);
             return false;
@@ -83,7 +83,7 @@ export const useOfflineSync = () => {
           console.log('✅ Vente synchronisée vers sales');
           return true;
         }
-          
+
         case 'payment': {
           // Utiliser la nouvelle table vendor_transactions
           const { error } = await supabase
@@ -103,7 +103,7 @@ export const useOfflineSync = () => {
               },
               created_at: data.payment_date || new Date().toISOString()
             });
-          
+
           if (error) {
             console.error('Erreur sync payment:', error);
             return false;
@@ -111,7 +111,7 @@ export const useOfflineSync = () => {
           console.log('✅ Paiement synchronisé vers vendor_transactions');
           return true;
         }
-          
+
         case 'invoice': {
           // Utiliser la bonne structure pour invoices
           const invoiceRef = data.invoice_number || `INV-${Date.now().toString(36).toUpperCase()}`;
@@ -132,7 +132,7 @@ export const useOfflineSync = () => {
               due_date: data.due_date,
               notes: data.notes || 'Créée en mode hors-ligne'
             });
-          
+
           if (error) {
             console.error('Erreur sync invoice:', error);
             return false;
@@ -140,18 +140,18 @@ export const useOfflineSync = () => {
           console.log('✅ Facture synchronisée vers invoices');
           return true;
         }
-          
+
         case 'receipt':
         case 'upload':
           // Ces types sont gérés séparément ou stockés localement
           console.log(`📄 ${type} stocké localement:`, data);
           return true;
-          
+
         default:
           console.warn('Type d\'événement non géré:', type);
           return true;
       }
-      
+
     } catch (error) {
       console.error('Erreur sync événement:', error);
       return false;
@@ -188,7 +188,7 @@ export const useOfflineSync = () => {
       for (const event of pendingEvents) {
         try {
           const success = await syncEventToSupabase(event);
-          
+
           if (success) {
             await offlineDB.markEventAsSynced(event.client_event_id);
             syncedCount++;
@@ -220,12 +220,12 @@ export const useOfflineSync = () => {
             // Convertir base64 en blob et uploader vers Supabase Storage
             const base64Response = await fetch(fileData.data);
             const blob = await base64Response.blob();
-            
+
             const filePath = `offline/${fileData.event_id}/${fileData.name}`;
             const { error } = await supabase.storage
               .from('uploads')
               .upload(filePath, blob, { upsert: true });
-            
+
             if (!error) {
               await offlineDB.deleteStoredFile(fileData.id);
               syncedCount++;
@@ -297,7 +297,7 @@ export const useOfflineSync = () => {
         vendor_id: eventData.vendor_id,
         created_at: new Date().toISOString()
       }, true); // Toujours crypter
-      
+
       await updateSyncStats();
 
       // Si en ligne, essayer de synchroniser immédiatement
@@ -362,7 +362,7 @@ export const useOfflineSync = () => {
   useEffect(() => {
     if (!isInitialized.current) {
       isInitialized.current = true;
-      
+
       // Initialiser la base de données
       offlineDB.initDB().then(() => {
         updateSyncStats();
@@ -421,7 +421,7 @@ export const useOfflineSync = () => {
         }
       }
       await updateSyncStats();
-      
+
       if (isOnline) {
         await syncAllPendingEvents();
       }

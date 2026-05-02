@@ -44,7 +44,7 @@ export function encryptApiKey(apiKey: string): EncryptedData {
   try {
     // Générer un IV aléatoire
     const iv = CryptoJS.lib.WordArray.random(16);
-    
+
     // Chiffrer avec AES-256-CBC
     const encrypted = CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY, {
       iv: iv,
@@ -74,7 +74,7 @@ export function decryptApiKey(encryptedData: string, iv: string): string {
   try {
     // Convertir l'IV en WordArray
     const ivWordArray = CryptoJS.enc.Base64.parse(iv);
-    
+
     // Déchiffrer
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY, {
       iv: ivWordArray,
@@ -83,7 +83,7 @@ export function decryptApiKey(encryptedData: string, iv: string): string {
     });
 
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-    
+
     if (!plaintext) {
       throw new Error('Déchiffrement invalide');
     }
@@ -101,10 +101,10 @@ export function decryptApiKey(encryptedData: string, iv: string): string {
 export function validateApiKey(apiKey: string): boolean {
   // Vérifier longueur minimale
   if (apiKey.length < 20) return false;
-  
+
   // Vérifier que ce n'est pas vide ou seulement des espaces
   if (!apiKey.trim()) return false;
-  
+
   return true;
 }
 
@@ -115,10 +115,10 @@ export function maskApiKey(apiKey: string): string {
   if (apiKey.length <= 8) {
     return '****';
   }
-  
+
   const start = apiKey.substring(0, 4);
   const end = apiKey.substring(apiKey.length - 4);
   const middle = '*'.repeat(Math.min(apiKey.length - 8, 12));
-  
+
   return `${start}${middle}${end}`;
 }

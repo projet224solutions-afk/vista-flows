@@ -59,7 +59,7 @@ export const cachedQueries = {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       const { data, error } = await q;
       if (error) throw error;
       return data;

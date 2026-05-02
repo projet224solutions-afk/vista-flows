@@ -18,9 +18,9 @@ interface ServiceIdBadgeProps {
 }
 
 export function ServiceIdBadge({ serviceId, compact = false, className }: ServiceIdBadgeProps) {
-  const { user, profile } = useAuth();
+  const { user, _profile } = useAuth();
   const [publicId, setPublicId] = useState<string | null>(null);
-  const [serviceName, setServiceName] = useState<string | null>(null);
+  const [_serviceName, setServiceName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +29,7 @@ export function ServiceIdBadge({ serviceId, compact = false, className }: Servic
       return;
     }
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, serviceId]);
 
   const loadData = async () => {

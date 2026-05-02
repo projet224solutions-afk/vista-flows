@@ -23,7 +23,7 @@ export function DriverVehicleInfo({
 }: DriverVehicleInfoProps) {
   // Afficher même avec juste l'ID du chauffeur
   const hasInfo = driverId || vehiclePlate || giletNumber || serialNumber;
-  
+
   if (!hasInfo) {
     return null;
   }
@@ -49,7 +49,7 @@ export function DriverVehicleInfo({
     )}>
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5" />
-      
+
       <div className="relative">
         {/* Header compact */}
         <div className="flex items-center gap-2 mb-2">

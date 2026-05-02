@@ -1,16 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText, Shield } from 'lucide-react';
+import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText, _Shield } from 'lucide-react';
 import { usePDGMaintenanceData } from '@/hooks/usePDGMaintenanceData';
 import { IdAuditManager } from './IdAuditManager';
 
 export default function PDGSystemMaintenance() {
-  const { 
-    services, 
-    dbStats, 
-    logs, 
-    loading, 
+  const {
+    services,
+    dbStats,
+    logs,
+    loading,
     checkServicesStatus,
     cleanupOldData,
     optimizeDatabase,

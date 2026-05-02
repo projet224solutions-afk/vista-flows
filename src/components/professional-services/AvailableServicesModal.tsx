@@ -18,31 +18,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Store, 
-  Sparkles, 
-  ArrowRight, 
-  Search, 
-  Plus,
-  Mail,
+import {
   AlertCircle,
+  ArrowRight,
   Loader2,
-  Utensils,
-  Scissors,
-  Car,
-  Truck,
-  ShoppingBag,
-  Briefcase,
-  Heart,
-  GraduationCap,
-  Wrench,
-  Camera
+  Search,
+  Sparkles,
+  Store,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getServiceVisual } from '@/config/serviceVisuals';
 
 interface ServiceType {
   id: string;
@@ -59,44 +48,11 @@ interface AvailableServicesModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Map icon names to Lucide icons
-const getIconComponent = (iconName: string | null) => {
-  const iconMap: Record<string, React.ReactNode> = {
-    'store': <Store className="w-6 h-6" />,
-    'utensils': <Utensils className="w-6 h-6" />,
-    'scissors': <Scissors className="w-6 h-6" />,
-    'car': <Car className="w-6 h-6" />,
-    'truck': <Truck className="w-6 h-6" />,
-    'shopping-bag': <ShoppingBag className="w-6 h-6" />,
-    'briefcase': <Briefcase className="w-6 h-6" />,
-    'heart': <Heart className="w-6 h-6" />,
-    'graduation-cap': <GraduationCap className="w-6 h-6" />,
-    'wrench': <Wrench className="w-6 h-6" />,
-    'camera': <Camera className="w-6 h-6" />,
-  };
-  return iconMap[iconName || ''] || <Store className="w-6 h-6" />;
-};
-
-// Get gradient color based on category
-const getCategoryGradient = (category: string | null) => {
-  const gradients: Record<string, string> = {
-    'commerce': 'from-primary to-secondary',
-    'food': 'from-accent to-destructive',
-    'services': 'from-emerald-500 to-teal-500',
-    'transport': 'from-violet-500 to-purple-500',
-    'health': 'from-pink-500 to-rose-500',
-    'education': 'from-amber-500 to-yellow-500',
-    'tech': 'from-cyan-500 to-blue-500',
-    'creative': 'from-fuchsia-500 to-pink-500',
-  };
-  return gradients[category || ''] || 'from-primary to-primary/70';
-};
-
 export function AvailableServicesModal({ open, onOpenChange }: AvailableServicesModalProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
-  
+  const { _t } = useTranslation();
+
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +79,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         .order('name');
 
       if (error) throw error;
-      
+
       // Get count of services for each type
       const typesWithCount = await Promise.all(
         (data || []).map(async (type) => {
@@ -132,11 +88,11 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
             .select('id', { count: 'exact', head: true })
             .eq('service_type_id', type.id)
             .eq('status', 'active');
-          
+
           return { ...type, services_count: count || 0 };
         })
       );
-      
+
       setServiceTypes(typesWithCount);
     } catch (error) {
       console.error('Error fetching service types:', error);
@@ -188,17 +144,17 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         sessionStorage.setItem('selected_service_type_id', selectedServiceType.id);
         sessionStorage.setItem('selected_service_type_name', selectedServiceType.name);
       }
-      
+
       toast.success('Email enregistré ! Vous allez être redirigé vers la création de service.');
       onOpenChange(false);
-      
+
       // Navigate to service selection with the pre-selected service type
-      navigate('/service-selection', { 
-        state: { 
+      navigate('/service-selection', {
+        state: {
           serviceEmail: newEmail,
           selectedServiceTypeId: selectedServiceType?.id,
-          fromServicesModal: true 
-        } 
+          fromServicesModal: true
+        }
       });
     } catch (error) {
       console.error('Error:', error);
@@ -233,13 +189,26 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
     <div className="space-y-6">
       <div className="text-center">
         {selectedServiceType && (
-          <div className={cn(
-            'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4',
-            'bg-gradient-to-br text-white',
-            getCategoryGradient(selectedServiceType.category)
-          )}>
-            {getIconComponent(selectedServiceType.icon)}
-          </div>
+          (() => {
+            const visual = getServiceVisual({
+              code: selectedServiceType.icon || selectedServiceType.name,
+              name: selectedServiceType.name,
+              category: selectedServiceType.category,
+            });
+            const Icon = visual.icon;
+
+            return (
+              <div
+                className={cn(
+                  'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4',
+                  'text-white'
+                )}
+                style={{ backgroundColor: visual.accent }}
+              >
+                <Icon className="w-6 h-6" />
+              </div>
+            );
+          })()
         )}
         <h3 className="font-semibold text-foreground mb-2">
           Créer votre {selectedServiceType?.name || 'service'}
@@ -287,15 +256,15 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       </div>
 
       <div className="flex gap-3">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handleBackToList}
           className="flex-1"
           disabled={isSubmitting}
         >
           Retour
         </Button>
-        <Button 
+        <Button
           onClick={handleEmailSubmit}
           className="flex-1 gap-2"
           disabled={isSubmitting || !newEmail}
@@ -333,37 +302,49 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         ) : (
           <div className="grid grid-cols-2 landscape:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {filteredServiceTypes.map((serviceType) => (
+              (() => {
+                const visual = getServiceVisual({
+                  code: serviceType.icon || serviceType.name,
+                  name: serviceType.name,
+                  category: serviceType.category,
+                });
+                const Icon = visual.icon;
+
+                return (
               <Card
                 key={serviceType.id}
                 className={cn(
                   'cursor-pointer transition-all duration-200 group',
                   'hover:border-primary/50 hover:shadow-lg hover:scale-[1.02]',
-                  'border-2 border-transparent bg-gradient-to-br from-card to-muted/30'
+                  'border-2 border-transparent bg-gradient-to-br from-card to-muted/30 overflow-hidden'
                 )}
                 onClick={() => handleServiceTypeClick(serviceType)}
               >
+                <div className="relative h-24 overflow-hidden border-b border-border/50">
+                  <img
+                    src={visual.image}
+                    alt={serviceType.name}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+                  <div
+                    className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-lg"
+                    style={{ backgroundColor: visual.accent }}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                </div>
                 <CardContent className="p-2.5 sm:p-4">
                   <div className="flex flex-col items-center text-center gap-2">
-                    {/* Icon with gradient - smaller on mobile */}
-                    <div className={cn(
-                      'w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center',
-                      'bg-gradient-to-br text-white shadow-lg',
-                      'group-hover:scale-110 transition-transform duration-200',
-                      getCategoryGradient(serviceType.category)
-                    )}>
-                      <div className="scale-75 sm:scale-100">
-                        {getIconComponent(serviceType.icon)}
-                      </div>
-                    </div>
-                    
                     {/* Content - compact on mobile */}
                     <div className="space-y-0.5 sm:space-y-1 min-w-0 w-full">
                       <h4 className="font-semibold text-foreground text-xs sm:text-sm leading-tight line-clamp-2">
                         {serviceType.name}
                       </h4>
                       {serviceType.category && (
-                        <Badge 
-                          variant="secondary" 
+                        <Badge
+                          variant="secondary"
                           className="text-[10px] sm:text-xs capitalize px-1.5 py-0"
                         >
                           {serviceType.category}
@@ -383,6 +364,8 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
                   </div>
                 </CardContent>
               </Card>
+                );
+              })()
             ))}
           </div>
         )}
@@ -403,7 +386,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
             </span>
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
-            {showCreateForm 
+            {showCreateForm
               ? 'Configurez votre nouveau service professionnel'
               : 'Choisissez le type de service que vous souhaitez créer'
             }

@@ -37,19 +37,19 @@ const createDomainConfigs = (): DomainConfig[] => [
     fetchMetric: async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       // Sessions actives = profils mis à jour dans les 24h
       const { count: sessionsCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .gte('updated_at', yesterday.toISOString());
-      
+
       // + tentatives de connexion récentes
       const { count: authCount } = await supabase
         .from('auth_attempts_log')
         .select('*', { count: 'exact', head: true })
         .gte('attempted_at', yesterday.toISOString());
-      
+
       return (sessionsCount || 0) + (authCount || 0);
     },
   },
@@ -86,17 +86,17 @@ const createDomainConfigs = (): DomainConfig[] => [
     fetchMetric: async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const { count: txCount } = await supabase
         .from('transactions')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString());
-      
+
       const { count: finTxCount } = await supabase
         .from('financial_transactions')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString());
-      
+
       return (txCount || 0) + (finTxCount || 0);
     },
   },
@@ -108,12 +108,12 @@ const createDomainConfigs = (): DomainConfig[] => [
     fetchMetric: async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const { count: ordersCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString());
-      
+
       return ordersCount || 0;
     },
   },
@@ -152,7 +152,7 @@ const createDomainConfigs = (): DomainConfig[] => [
       const { count: logCount } = await supabase
         .from('agent_commissions_log')
         .select('*', { count: 'exact', head: true });
-      
+
       return logCount || 0;
     },
   },
@@ -165,11 +165,11 @@ const createDomainConfigs = (): DomainConfig[] => [
       const { count: docsCount } = await supabase
         .from('ai_generated_documents')
         .select('*', { count: 'exact', head: true });
-      
+
       const { count: usageCount } = await supabase
         .from('api_usage_logs')
         .select('*', { count: 'exact', head: true });
-      
+
       return (docsCount || 0) + (usageCount || 0);
     },
   },
@@ -183,12 +183,12 @@ const createDomainConfigs = (): DomainConfig[] => [
         .from('security_incidents')
         .select('*', { count: 'exact', head: true })
         .is('resolved_at', null);
-      
+
       // fraud_detection_logs peut avoir des contraintes de type, on récupère juste le count
       const { count: fraudCount } = await supabase
         .from('fraud_detection_logs')
         .select('*', { count: 'exact', head: true });
-      
+
       return (incidentsCount || 0) + (fraudCount || 0);
     },
   },
@@ -228,12 +228,12 @@ const createDomainConfigs = (): DomainConfig[] => [
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('read', false);
-      
+
       const { count: adminNotifs } = await supabase
         .from('admin_notifications')
         .select('*', { count: 'exact', head: true })
         .eq('is_read', false);
-      
+
       return (userNotifs || 0) + (adminNotifs || 0);
     },
   },
@@ -260,13 +260,13 @@ const createDomainConfigs = (): DomainConfig[] => [
       const { count: apiCount } = await supabase
         .from('api_connections')
         .select('*', { count: 'exact', head: true });
-      
+
       // Compter les déploiements récents
       const { count: deployCount } = await supabase
         .from('deployment_logs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'success');
-      
+
       return (apiCount || 0) + (deployCount || 0);
     },
   },
@@ -304,12 +304,12 @@ const createDomainConfigs = (): DomainConfig[] => [
     fetchMetric: async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const { count } = await supabase
         .from('audit_logs')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', yesterday.toISOString());
-      
+
       return count || 0;
     },
   },
@@ -474,7 +474,7 @@ export function useFeatureHealth() {
       }
 
       toast.success(`✅ ${anomalies.length} anomalie(s) corrigée(s) pour ${domain}`);
-      
+
       // Recharger les données
       await fetchHealthData();
     } catch (err) {

@@ -13,8 +13,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { supabase } from '@/lib/supabaseClient';
-import { 
-  Search, Users, MapPin, Star, Phone, Mail, Eye, 
+import {
+  Search, Users, MapPin, Star, Phone, Mail, _Eye,
   CheckCircle, Clock, XCircle, AlertTriangle, RefreshCw,
   TrendingUp, ShoppingBag, Store
 } from 'lucide-react';
@@ -107,7 +107,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
     pending: filtered.filter(p => p.status === 'pending').length,
     totalRevenue: filtered.reduce((s, p) => s + (p.total_revenue || 0), 0),
     totalOrders: filtered.reduce((s, p) => s + (p.total_orders || 0), 0),
-    avgRating: filtered.length > 0 
+    avgRating: filtered.length > 0
       ? (filtered.reduce((s, p) => s + (p.rating || 0), 0) / filtered.filter(p => p.rating > 0).length || 0).toFixed(1)
       : '0',
   }), [filtered]);
@@ -177,8 +177,8 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <CardTitle className="text-lg">
-                {activeServiceTab !== 'all' 
-                  ? `Prestataires — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}` 
+                {activeServiceTab !== 'all'
+                  ? `Prestataires — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
                   : 'Tous les Prestataires'}
               </CardTitle>
               <CardDescription>{filtered.length} prestataire(s)</CardDescription>

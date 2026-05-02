@@ -9,12 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
  * Types
  */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
-export type LogCategory = 
-  | 'auth' 
-  | 'payment' 
-  | 'security' 
-  | 'api' 
-  | 'database' 
+export type LogCategory =
+  | 'auth'
+  | 'payment'
+  | 'security'
+  | 'api'
+  | 'database'
   | 'emergency'
   | 'performance'
   | 'user_action'
@@ -365,7 +365,7 @@ class SecureLogger {
           entry.message,
           entry.context
         );
-      } catch (error) {
+      } catch (_error) {
         // Ignorer si monitoring service indisponible
       }
     }

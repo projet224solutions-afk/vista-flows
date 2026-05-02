@@ -17,6 +17,11 @@ const FEE_KEY_ALIASES: Record<string, string[]> = {
   commission_achats: ["purchase_commission_percentage"],
 };
 
+const STRIPE_ZERO_DECIMAL_CURRENCIES = new Set([
+  "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF",
+  "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
+
 type PayPalAuthResponse = {
   access_token?: string;
 };
@@ -51,6 +56,101 @@ async function getPdgFeeRatePercent(settingKey: string): Promise<number> {
   } catch {
     return defaultValue;
   }
+}
+
+function toStripeAmount(amount: number, currency: string): number {
+  return STRIPE_ZERO_DECIMAL_CURRENCIES.has(String(currency || "").toUpperCase())
+    ? Math.round(amount)
+    : Math.round(amount * 100);
+}
+
+function getCartItemVendorId(item: any): string | null {
+  return item?.vendorId || item?.vendor_id || null;
+}
+
+// Montant maximum autorisé par commande (protection anti-abus)
+const MAX_ORDER_AMOUNT = 100_000_000; // 100M GNF
+
+function buildVendorSummary(cartItems: any[], realPrices: Map<string, number>): Record<string, number> {
+  return cartItems.reduce((summary: Record<string, number>, item: any) => {
+    const vendorId = getCartItemVendorId(item) || "unknown";
+    const id = item?.id || item?.product_id;
+    // Utiliser le prix réel de la DB, jamais le prix frontend
+    const realPrice = realPrices.get(id) ?? Number(item?.price || 0);
+    const itemAmount = realPrice * Number(item?.quantity || 1);
+    summary[vendorId] = (summary[vendorId] || 0) + itemAmount;
+    return summary;
+  }, {});
+}
+
+/**
+ * Recalcule le montant total depuis les prix réels en base de données.
+ * Cherche dans products puis digital_products.
+ * Retourne null si aucun article valide trouvé (cartItems vide = pas de vérification possible).
+ */
+async function recalculateAmountFromDB(
+  cartItems: any[]
+): Promise<{ amount: number; realPrices: Map<string, number> } | null> {
+  if (!cartItems.length) return null;
+
+  const ids: string[] = cartItems
+    .map((i: any) => i?.id || i?.product_id)
+    .filter((id: any): id is string => typeof id === "string" && id.length > 0);
+
+  if (!ids.length) return null;
+
+  // Chercher dans products (physiques)
+  const { data: physicalProducts } = await supabaseAdmin
+    .from("products")
+    .select("id, price")
+    .in("id", ids);
+
+  const realPrices = new Map<string, number>();
+  for (const p of physicalProducts || []) {
+    realPrices.set(p.id, Number(p.price));
+  }
+
+  // Chercher dans digital_products pour les IDs non trouvés
+  const missingIds = ids.filter((id) => !realPrices.has(id));
+  if (missingIds.length) {
+    const { data: digitalProducts } = await supabaseAdmin
+      .from("digital_products")
+      .select("id, price")
+      .in("id", missingIds);
+    for (const p of digitalProducts || []) {
+      realPrices.set(p.id, Number(p.price));
+    }
+  }
+
+  if (realPrices.size === 0) return null;
+
+  let total = 0;
+  for (const item of cartItems) {
+    const id = item?.id || item?.product_id;
+    const realPrice = realPrices.get(id);
+    if (realPrice === undefined) continue;
+    const qty = Math.max(1, Number(item?.quantity || 1));
+    total += realPrice * qty;
+  }
+
+  return { amount: Math.round(total), realPrices };
+}
+
+async function resolvePrimarySellerId(cartItems: any[], fallbackUserId: string): Promise<string> {
+  const vendorIds = Array.from(
+    new Set(cartItems.map(getCartItemVendorId).filter((id): id is string => Boolean(id)))
+  );
+
+  if (vendorIds.length === 0) return fallbackUserId;
+
+  const { data: vendors, error } = await supabaseAdmin
+    .from("vendors")
+    .select("id, user_id")
+    .in("id", vendorIds);
+
+  if (error || !vendors?.length) return fallbackUserId;
+
+  return vendors.find((vendor: any) => Boolean(vendor.user_id))?.user_id || fallbackUserId;
 }
 
 function getBearerToken(req: any): string | null {
@@ -215,65 +315,101 @@ router.post("/marketplace-escrow-payment", validateBearerToken, async (req: any,
 
     const { amount, currency = "gnf", cartItems, description } = req.body;
 
-    if (!amount || !cartItems || cartItems.length === 0) {
-      return res.status(400).json({ success: false, error: "Missing required fields" });
+    if (!amount) {
+      return res.status(400).json({ success: false, error: "amount is required" });
     }
 
-    // Get user profile
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("user_id")
-      .eq("user_id", req.user.id)
-      .single();
+    const buyerId = req.user.id;
+    const frontendAmount = Number(amount);
+    if (!Number.isFinite(frontendAmount) || frontendAmount <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid amount" });
+    }
+    const normalizedCurrency = String(currency || "gnf").toUpperCase();
+    const effectiveCartItems = Array.isArray(cartItems) && cartItems.length > 0 ? cartItems : [];
 
+    // Recalcul obligatoire depuis la DB — le frontend ne peut pas être source de vérité du prix
+    const dbRecalc = await recalculateAmountFromDB(effectiveCartItems);
+    const sourceAmount = dbRecalc ? dbRecalc.amount : frontendAmount;
+    const realPrices = dbRecalc?.realPrices ?? new Map<string, number>();
+
+    // Limiter le montant max par commande
+    if (sourceAmount > MAX_ORDER_AMOUNT) {
+      return res.status(400).json({ success: false, error: "Montant dépasse la limite autorisée" });
+    }
+
+    // Empêcher l'auto-achat
+    const primarySellerId = await resolvePrimarySellerId(effectiveCartItems, buyerId);
+    if (primarySellerId === buyerId && effectiveCartItems.length > 0) {
+      return res.status(400).json({ success: false, error: "Vous ne pouvez pas acheter vos propres produits" });
+    }
+
+    const vendorSummary = buildVendorSummary(effectiveCartItems, realPrices);
     const commissionRatePercent = await getPdgFeeRatePercent("commission_achats");
     const commissionRate = commissionRatePercent / 100;
-    const commissionAmount = amount * commissionRate;
-    const totalAmount = amount + commissionAmount;
+    const commissionAmount = Math.round(sourceAmount * commissionRate);
+    const totalAmount = sourceAmount + commissionAmount;
 
-    // Create Stripe PaymentIntent with manual capture (escrow)
+    // Create Stripe PaymentIntent with automatic capture (DB escrow handles the hold logic)
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // Convert to cents
-      currency: currency.toLowerCase(),
-      payment_method_types: ["card"],
-      capture_method: "manual", // Escrow mode
-      statement_descriptor: "Vista Flows Marketplace",
+      amount: toStripeAmount(totalAmount, normalizedCurrency),
+      currency: normalizedCurrency.toLowerCase(),
+      automatic_payment_methods: { enabled: true },
+      capture_method: "automatic",
+      statement_descriptor_suffix: "224SOLUTIONS",
       metadata: {
-        buyer_id: profile?.user_id,
+        source: "marketplace_escrow",
+        buyer_id: buyerId,
         order_type: "escrow",
-        cart_items: cartItems.length.toString(),
+        cart_items: effectiveCartItems.length.toString(),
+        product_amount: sourceAmount.toString(),
+        commission_rate: commissionRatePercent.toString(),
+        commission_amount: commissionAmount.toString(),
+        total_amount: totalAmount.toString(),
+        vendor_count: Object.keys(vendorSummary).filter((id) => id !== "unknown").length.toString(),
+        vendor_summary: JSON.stringify(vendorSummary).slice(0, 500),
       },
     });
 
     // Store in stripe_transactions
-    await supabaseAdmin
+    const { data: transaction, error: insertError } = await supabaseAdmin
       .from("stripe_transactions")
       .insert({
-        user_id: profile?.user_id,
-        amount,
-        currency,
-        status: "pending",
-        payment_method: "stripe",
+        stripe_payment_intent_id: paymentIntent.id,
         payment_intent_id: paymentIntent.id,
+        buyer_id: buyerId,
+        seller_id: primarySellerId,
+        amount: totalAmount,
+        currency: normalizedCurrency,
+        status: "PENDING",
+        payment_method: "card",
+        commission_rate: commissionRatePercent,
+        commission_amount: commissionAmount,
+        seller_net_amount: sourceAmount,
         metadata: {
-          cart_items: cartItems,
-          vendor_summary: cartItems.map((item: any) => ({
-            vendor_id: item.vendorId,
-            amount: item.price * item.quantity,
-          })),
-          commission_rate: commissionRate,
+          cart_items: effectiveCartItems,
+          vendor_summary: vendorSummary,
+          commission_rate: commissionRatePercent,
           commission_amount: commissionAmount,
           escrow_mode: true,
+          source: "marketplace_escrow",
+          product_amount: sourceAmount,
+          total_amount: totalAmount,
         },
         created_at: new Date().toISOString(),
-      });
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      console.error("marketplace-escrow-payment stripe transaction insert error:", insertError.message);
+    }
 
     return res.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-      transactionId: paymentIntent.id,
-      commissionRate,
+      transactionId: transaction?.id ?? paymentIntent.id,
+      commissionRate: commissionRatePercent,
       commissionAmount,
       totalAmount,
     });
@@ -296,63 +432,94 @@ router.post("/stripe-marketplace-payment", validateBearerToken, async (req: any,
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
-    // Get user profile
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("user_id")
-      .eq("user_id", req.user.id)
-      .single();
+    const buyerId = req.user.id;
+    const frontendAmount = Number(amount);
+    if (!Number.isFinite(frontendAmount) || frontendAmount <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid amount" });
+    }
+    const normalizedCurrency = String(currency || "gnf").toUpperCase();
 
+    // Recalcul obligatoire depuis la DB
+    const dbRecalc = await recalculateAmountFromDB(cartItems);
+    const sourceAmount = dbRecalc ? dbRecalc.amount : frontendAmount;
+    const realPrices = dbRecalc?.realPrices ?? new Map<string, number>();
+
+    if (sourceAmount > MAX_ORDER_AMOUNT) {
+      return res.status(400).json({ success: false, error: "Montant dépasse la limite autorisée" });
+    }
+
+    const primarySellerId = await resolvePrimarySellerId(cartItems, buyerId);
+    if (primarySellerId === buyerId) {
+      return res.status(400).json({ success: false, error: "Vous ne pouvez pas acheter vos propres produits" });
+    }
+
+    const vendorSummary = buildVendorSummary(cartItems, realPrices);
     const commissionRatePercent = await getPdgFeeRatePercent("commission_achats");
     const commissionRate = commissionRatePercent / 100;
-    const commissionAmount = amount * commissionRate;
-    const totalAmount = amount + commissionAmount;
+    const commissionAmount = Math.round(sourceAmount * commissionRate);
+    const totalAmount = sourceAmount + commissionAmount;
 
     // Create Stripe PaymentIntent with automatic capture
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100),
-      currency: currency.toLowerCase(),
+      amount: toStripeAmount(totalAmount, normalizedCurrency),
+      currency: normalizedCurrency.toLowerCase(),
       payment_method_types: ["card"],
       capture_method: "automatic",
-      statement_descriptor: "Vista Flows Marketplace",
+      statement_descriptor_suffix: "224SOLUTIONS",
       metadata: {
-        buyer_id: profile?.user_id,
+        source: "marketplace",
+        buyer_id: buyerId,
         order_type: "standard",
         cart_items: cartItems.length.toString(),
+        product_amount: sourceAmount.toString(),
+        commission_rate: commissionRatePercent.toString(),
+        commission_amount: commissionAmount.toString(),
+        total_amount: totalAmount.toString(),
+        vendor_count: Object.keys(vendorSummary).filter((id) => id !== "unknown").length.toString(),
+        vendor_summary: JSON.stringify(vendorSummary).slice(0, 500),
       },
     });
 
     // Store in stripe_transactions
-    const { data: transaction } = await supabaseAdmin
+    const { data: transaction, error: insertError } = await supabaseAdmin
       .from("stripe_transactions")
       .insert({
-        user_id: profile?.user_id,
-        amount,
-        currency,
-        status: "pending",
-        payment_method: "stripe",
+        stripe_payment_intent_id: paymentIntent.id,
         payment_intent_id: paymentIntent.id,
+        buyer_id: buyerId,
+        seller_id: primarySellerId,
+        amount: totalAmount,
+        currency: normalizedCurrency,
+        status: "PENDING",
+        payment_method: "card",
+        commission_rate: commissionRatePercent,
+        commission_amount: commissionAmount,
+        seller_net_amount: sourceAmount,
         metadata: {
           cart_items: cartItems,
-          vendor_summary: cartItems.map((item: any) => ({
-            vendor_id: item.vendorId,
-            amount: item.price * item.quantity,
-          })),
-          commission_rate: commissionRate,
+          vendor_summary: vendorSummary,
+          commission_rate: commissionRatePercent,
           commission_amount: commissionAmount,
           escrow_mode: false,
+          source: "marketplace",
+          product_amount: sourceAmount,
+          total_amount: totalAmount,
         },
         created_at: new Date().toISOString(),
       })
       .select()
       .single();
 
+    if (insertError) {
+      console.error("stripe-marketplace-payment stripe transaction insert error:", insertError.message);
+    }
+
     return res.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
       transactionId: transaction?.id,
-      commissionRate,
+      commissionRate: commissionRatePercent,
       commissionAmount,
       totalAmount,
       productAmount: amount,
@@ -541,12 +708,17 @@ router.post("/confirm-delivery", validateBearerToken, async (req: any, res: any)
 
     if (error) throw error;
 
-    // Update order status
+    // orders.delivered_at does not exist in the current schema.
+    // Persist delivery confirmation in metadata while keeping the delivered status.
     await supabaseAdmin
       .from("orders")
       .update({
         status: "delivered",
-        delivered_at: new Date().toISOString(),
+        metadata: {
+          ...(order.metadata || {}),
+          delivered_at: new Date().toISOString(),
+          buyer_confirmed_delivery: true,
+        },
       })
       .eq("id", order_id);
 

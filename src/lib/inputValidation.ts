@@ -84,10 +84,10 @@ export const addressSchema = z.object({
 /**
  * Utilitaire de validation avec messages d'erreur personnalisés
  */
-export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): { 
-  success: boolean; 
-  data?: T; 
-  errors?: string[] 
+export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): {
+  success: boolean;
+  data?: T;
+  errors?: string[]
 } {
   try {
     const validatedData = schema.parse(data);

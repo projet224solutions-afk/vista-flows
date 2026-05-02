@@ -6,10 +6,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { 
-  precisionGeoService, 
-  PreciseLocation, 
-  GPS_CONFIG 
+import {
+  precisionGeoService,
+  PreciseLocation,
+  GPS_CONFIG
 } from '@/services/gps/PrecisionGeolocationService';
 
 export interface DriverGPSState {
@@ -84,13 +84,13 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
       }
     } else {
       invalidGPSCountRef.current++;
-      
+
       // Log mais ne pas afficher de toast sauf si vraiment critique
       console.warn(`[DriverGPS] Précision GPS: ${location.accuracy.toFixed(0)}m (tentative ${invalidGPSCountRef.current}/${MAX_INVALID_GPS_ATTEMPTS})`);
-      
+
       // On met quand même à jour la position même si imprécise
       onLocationUpdate?.(location);
-      
+
       // Notification seulement toutes les 5 tentatives
       if (invalidGPSCountRef.current % 5 === 0 && invalidGPSCountRef.current < MAX_INVALID_GPS_ATTEMPTS) {
         toast.info(
@@ -98,7 +98,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
           { description: 'La navigation continue normalement' }
         );
       }
-      
+
       // Ne pas déconnecter automatiquement - laisser le conducteur continuer
       // Seulement prévenir si vraiment critique
       if (invalidGPSCountRef.current >= MAX_INVALID_GPS_ATTEMPTS) {
@@ -112,7 +112,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
    */
   const handleGPSError = useCallback(async (error: Error) => {
     console.error('[DriverGPS] Erreur GPS:', error.message);
-    
+
     setState(prev => ({
       ...prev,
       error: error.message,
@@ -125,7 +125,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
       description: 'La course continue. Essayez de vous déplacer vers un espace dégagé.',
       duration: 5000,
     });
-    
+
     // Log pour debug mais ne pas déconnecter
     console.warn('[DriverGPS] Erreur GPS ignorée pour éviter déconnexion:', error.message);
   }, []);
@@ -145,23 +145,23 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
 
       // Obtenir une position initiale - plus tolérant
       toast.info('Acquisition GPS en cours...');
-      
+
       let location: PreciseLocation;
       try {
         location = await precisionGeoService.getCurrentPosition(true);
-      } catch (gpsError: any) {
+      } catch (_gpsError: any) {
         // Essayer en mode moins précis
         console.warn('[DriverGPS] Haute précision échouée, essai mode rapide...');
         try {
           location = await precisionGeoService.getCurrentPosition(false);
-        } catch (fallbackError: any) {
+        } catch (_fallbackError: any) {
           toast.error('GPS indisponible', {
             description: 'Veuillez autoriser l\'accès GPS dans les paramètres du navigateur'
           });
           return false;
         }
       }
-      
+
       // Accepter même une précision moins bonne pour démarrer
       if (location.accuracy > GPS_CONFIG.MIN_ACCURACY_METERS) {
         toast.warning(
@@ -181,7 +181,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
       // Démarrer le heartbeat
       heartbeatRef.current = setInterval(async () => {
         const { location: currentLocation, isGPSValid: valid } = state;
-        
+
         if (currentLocation && valid && updateServerPosition) {
           try {
             await updateServerPosition(currentLocation);
@@ -208,6 +208,7 @@ export function useDriverGPS(options: UseDriverGPSOptions = {}) {
       setState(prev => ({ ...prev, error: error.message }));
       return false;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGPSValid, handleLocationUpdate, handleGPSError, updateServerPosition, state]);
 
   /**

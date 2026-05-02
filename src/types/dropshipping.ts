@@ -34,11 +34,11 @@ export interface DropshipSupplier {
 }
 
 // ==================== PRODUITS ====================
-export type ProductAvailabilityStatus = 
-  | 'available' 
-  | 'low_stock' 
-  | 'out_of_stock' 
-  | 'temporarily_unavailable' 
+export type ProductAvailabilityStatus =
+  | 'available'
+  | 'low_stock'
+  | 'out_of_stock'
+  | 'temporarily_unavailable'
   | 'discontinued';
 
 export interface DropshipProduct {

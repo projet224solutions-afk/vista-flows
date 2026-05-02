@@ -76,7 +76,7 @@ export default function TaxiMotoTracking({
     const [driverLocation, setDriverLocation] = useState<LocationCoordinates | null>(null);
     const [estimatedArrival, setEstimatedArrival] = useState<string>('');
     const [rideProgress, setRideProgress] = useState(0);
-    const [rideDetails, setRideDetails] = useState<any>(null);
+    const [_rideDetails, setRideDetails] = useState<any>(null);
     const [driverInfo, setDriverInfo] = useState<any>(null);
     const [showPayment, setShowPayment] = useState(false);
 
@@ -85,6 +85,7 @@ export default function TaxiMotoTracking({
         if (currentRide?.id) {
             loadRideDetails();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentRide?.id]);
 
     // Écouter les mises à jour en temps réel
@@ -115,7 +116,7 @@ export default function TaxiMotoTracking({
                         latitude: (payload.new as any).latitude,
                         longitude: (payload.new as any).longitude
                     });
-                    
+
                     // Estimer le temps d'arrivée basé sur la distance
                     if (userLocation) {
                         const distance = calculateDistance(
@@ -142,7 +143,7 @@ export default function TaxiMotoTracking({
             const details = await RidesService.getRideDetails(currentRide.id);
             setRideDetails(details);
             updateRideProgress(details);
-            
+
             // Charger les infos du conducteur si assigné
             if (details.driver_id && !currentRide.driver) {
                 loadDriverInfo(details.driver_id);
@@ -192,7 +193,7 @@ export default function TaxiMotoTracking({
             'cancelled': 0
         };
         setRideProgress(statusProgress[ride.status as keyof typeof statusProgress] || 0);
-        
+
         // Afficher le paiement si la course est terminée
         if (ride.status === 'completed' && !ride.payment_status) {
             setShowPayment(true);
@@ -393,7 +394,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                         {(() => {
                             const driver = currentRide.driver || driverInfo;
                             if (!driver) return null;
-                            
+
                             return (
                                 <>
                                     <div className="flex items-center gap-4 mb-4">

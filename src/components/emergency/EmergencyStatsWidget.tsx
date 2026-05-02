@@ -7,14 +7,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  AlertTriangle, 
-  Activity, 
-  CheckCircle, 
-  XCircle, 
+import {
+  AlertTriangle,
+  Activity,
+  CheckCircle,
+  XCircle,
   Clock,
-  TrendingUp,
-  TrendingDown
+  _TrendingUp,
+  _TrendingDown
 } from 'lucide-react';
 import { emergencyService } from '@/services/emergencyService';
 import type { EmergencyStats } from '@/types/emergency';
@@ -79,7 +79,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
 
   if (compact) {
     return (
-      <Card 
+      <Card
         className={`cursor-pointer transition-all hover:shadow-lg ${
           hasActiveAlerts ? 'border-red-500 border-2' : ''
         }`}
@@ -170,7 +170,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
                   <span className="text-sm">Temps Moyen</span>
                 </div>
                 <p className="text-xl font-bold text-blue-600">
-                  {stats.avg_resolution_time 
+                  {stats.avg_resolution_time
                     ? `${Math.round(parseInt(stats.avg_resolution_time) / 60)}min`
                     : 'N/A'}
                 </p>
@@ -190,7 +190,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
         )}
 
         {/* Bouton d'action */}
-        <Button 
+        <Button
           onClick={() => navigate('/emergency')}
           className="w-full"
           variant={hasActiveAlerts ? 'destructive' : 'default'}

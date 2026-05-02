@@ -5,7 +5,7 @@
  */
 
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
-import { getCurrencyForCountry } from "@/data/countryMappings";
+import { _getCurrencyForCountry } from "@/data/countryMappings";
 
 interface CurrencyContextType {
   currency: string;
@@ -18,6 +18,22 @@ const CURRENCY_STORAGE_KEY = 'app_currency';
 const CURRENCY_MANUAL_KEY = 'app_currency_manual'; // Flag explicite pour choix manuel
 const GEO_CACHE_KEY = 'geo_detection_cache';
 
+function safeGetLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorageItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore storage failures in embedded/local preview contexts
+  }
+}
+
 const CurrencyContext = createContext<CurrencyContextType>({
   currency: "GNF",
   setCurrency: () => {},
@@ -27,13 +43,13 @@ const CurrencyContext = createContext<CurrencyContextType>({
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(() => {
-    // Vérifier d'abord le choix manuel
-    const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
-    const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
-    if (hasManualChoice && stored) return stored;
-
-    // Sinon, essayer de récupérer depuis le cache géo (ignorer les fallback)
     try {
+      // Vérifier d'abord le choix manuel
+      const hasManualChoice = safeGetLocalStorageItem(CURRENCY_MANUAL_KEY) === 'true';
+      const stored = safeGetLocalStorageItem(CURRENCY_STORAGE_KEY);
+      if (hasManualChoice && stored) return stored;
+
+      // Sinon, essayer de récupérer depuis le cache géo (ignorer les fallback)
       const geoCache = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCache) {
         const parsed = JSON.parse(geoCache);
@@ -59,7 +75,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
 
     // Vérifier si une devise a été choisie manuellement (flag explicite)
-    const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+    const hasManualChoice = safeGetLocalStorageItem(CURRENCY_MANUAL_KEY) === 'true';
     if (hasManualChoice) {
       console.log('💱 Devise choisie manuellement, pas de sync auto');
       setLoading(false);
@@ -68,7 +84,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
     // Lire depuis le cache de géo-détection (peuplé par useGeoDetection)
     try {
-      const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+      const geoCacheRaw = safeGetLocalStorageItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         const geoCache = JSON.parse(geoCacheRaw);
         // Ignorer les résultats fallback (GN/GNF par défaut — pas fiable)
@@ -94,11 +110,11 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const syncFromGeoCache = () => {
       // Ne pas écraser si choix manuel explicite
-      const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+      const hasManualChoice = safeGetLocalStorageItem(CURRENCY_MANUAL_KEY) === 'true';
       if (hasManualChoice) return;
 
       try {
-        const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+        const geoCacheRaw = safeGetLocalStorageItem(GEO_CACHE_KEY);
         if (!geoCacheRaw) return;
 
         const geoCache = JSON.parse(geoCacheRaw);
@@ -131,8 +147,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   // Fonction pour changer manuellement la devise
   const setCurrency = useCallback((newCurrency: string) => {
     setCurrencyState(newCurrency);
-    localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
-    localStorage.setItem(CURRENCY_MANUAL_KEY, 'true'); // Marquer comme choix manuel
+    safeSetLocalStorageItem(CURRENCY_STORAGE_KEY, newCurrency);
+    safeSetLocalStorageItem(CURRENCY_MANUAL_KEY, 'true'); // Marquer comme choix manuel
     console.log('💱 Devise changée manuellement:', newCurrency);
   }, []);
 

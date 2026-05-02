@@ -1,6 +1,6 @@
 /**
  * 🛡️ PER-ROUTE RATE LIMITER - Phase 6
- * 
+ *
  * Redis-backed rate limiting for critical endpoints.
  * Falls back to in-memory if Redis unavailable.
  * Configurable per-route with IP + user + API key dimensions.
@@ -70,7 +70,7 @@ export function routeRateLimit(config: RateLimitConfig) {
 
     // Try Redis first, fall back to memory
     const result = await redisRateLimit.check(key, maxRequests, windowSeconds);
-    
+
     // If Redis unavailable, use memory
     if (result.resetAt === 0) {
       const memResult = memoryRateLimit(key, maxRequests, windowSeconds * 1000);
@@ -140,6 +140,11 @@ export const authRateLimit = routeRateLimit({
 /** Create order: 5 req / min per user */
 export const orderCreateRateLimit = routeRateLimit({
   maxRequests: 5, windowSeconds: 60, keyPrefix: 'order:create', perUser: true, perIp: true,
+});
+
+/** Manage existing orders: 10 req / min per user */
+export const orderManageRateLimit = routeRateLimit({
+  maxRequests: 10, windowSeconds: 60, keyPrefix: 'order:manage', perUser: true, perIp: true,
 });
 
 /** Payment endpoints: 10 req / min per user */

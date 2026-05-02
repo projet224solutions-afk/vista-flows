@@ -103,10 +103,10 @@ function getPlanLabel(plan: Plan): string {
   return plan.display_name;
 }
 
-export function VendorSubscriptionPlanSelector({ 
-  open, 
+export function VendorSubscriptionPlanSelector({
+  open,
   onOpenChange,
-  onSuccess 
+  onSuccess
 }: VendorSubscriptionPlanSelectorProps) {
   const { user } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -121,6 +121,7 @@ export function VendorSubscriptionPlanSelector({
       void loadPlans();
       void loadWalletBalance();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const loadPlans = async () => {

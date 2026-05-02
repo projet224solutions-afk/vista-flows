@@ -100,7 +100,7 @@ export class SOSMediaRecorder {
       mediaRecorder.onstop = async () => {
         console.log('⏹️ Enregistrement arrêté, upload en cours...');
         await this.uploadRecording(sosId, recordedChunks, finalConfig);
-        
+
         // Nettoyer stream
         mediaStream.getTracks().forEach(track => track.stop());
         this.activeRecordings.delete(sosId);
@@ -133,7 +133,7 @@ export class SOSMediaRecorder {
 
     } catch (error: any) {
       console.error('❌ Erreur démarrage enregistrement SOS:', error);
-      
+
       // Gestion erreurs permissions
       if (error.name === 'NotAllowedError') {
         console.error('⛔ Permissions média refusées par utilisateur');
@@ -159,7 +159,7 @@ export class SOSMediaRecorder {
 
     console.log('⏹️ Arrêt enregistrement SOS:', sosId);
     recording.duration = Date.now() - recording.startTime;
-    
+
     if (recording.mediaRecorder && recording.mediaRecorder.state !== 'inactive') {
       recording.mediaRecorder.stop();
     }
@@ -210,16 +210,16 @@ export class SOSMediaRecorder {
             cacheControl: '3600',
             upsert: true
           });
-        
+
         if (fallbackResult.error) {
           throw fallbackResult.error;
         }
         console.log('✅ Upload réussi (fallback documents):', fallbackResult.data?.path);
-        
+
         const { data: fallbackUrl } = supabase.storage
           .from('documents')
           .getPublicUrl(`sos-media/${sosId}/${fileName}`);
-        
+
         // Mettre à jour sos_alerts avec l'URL
         await supabase
           .from('sos_alerts')
@@ -228,7 +228,7 @@ export class SOSMediaRecorder {
             recording_stopped_at: new Date().toISOString()
           })
           .eq('id', sosId);
-        
+
         return;
       }
 

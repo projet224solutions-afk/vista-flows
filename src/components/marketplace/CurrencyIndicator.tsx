@@ -49,9 +49,9 @@ function clearAllGeoCaches() {
   } catch {}
 }
 
-export function CurrencyIndicator({ 
+export function CurrencyIndicator({
   variant = 'default',
-  showToggle = true 
+  showToggle = true
 }: CurrencyIndicatorProps) {
   const { userCurrency, userCountry, loading, lastUpdated, refreshRates } = usePriceConverter();
   const { forceRefresh: forceGeoRefresh, loading: geoLoading } = useGeoDetection();
@@ -64,15 +64,15 @@ export function CurrencyIndicator({
   const handleToggleCurrency = () => {
     const newCurrency = displayCurrency === 'GNF' ? userCurrency : 'GNF';
     setGlobalCurrency(newCurrency);
-    window.dispatchEvent(new CustomEvent('currencyChanged', { 
-      detail: { currency: newCurrency } 
+    window.dispatchEvent(new CustomEvent('currencyChanged', {
+      detail: { currency: newCurrency }
     }));
   };
 
   const handleSelectCurrency = (currency: string) => {
     setGlobalCurrency(currency);
-    window.dispatchEvent(new CustomEvent('currencyChanged', { 
-      detail: { currency } 
+    window.dispatchEvent(new CustomEvent('currencyChanged', {
+      detail: { currency }
     }));
   };
 
@@ -82,7 +82,7 @@ export function CurrencyIndicator({
     await forceGeoRefresh();
     await refreshRates();
     toast.success(t('marketplace.geoRefreshed') || 'Localisation actualisée');
-    
+
     // Recharger la page pour appliquer les changements
     window.location.reload();
   };
@@ -104,8 +104,8 @@ export function CurrencyIndicator({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="cursor-pointer hover:bg-primary/10"
               onClick={showToggle ? handleToggleCurrency : undefined}
             >
@@ -170,15 +170,15 @@ export function CurrencyIndicator({
           </Button>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         {/* Pays détecté */}
         <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3 h-3" />
           <span>{t('marketplace.detectedCountry') || 'Pays'}: {userCountry}</span>
         </div>
-        
+
         <DropdownMenuSeparator />
-        
+
         {/* Devise locale détectée */}
         {userCurrency !== 'GNF' && (
           <DropdownMenuItem

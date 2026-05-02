@@ -12,12 +12,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Star, 
-  MessageSquare, 
-  Send, 
-  Sparkles, 
-  Loader2, 
+import {
+  Star,
+  MessageSquare,
+  Send,
+  Sparkles,
+  Loader2,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -53,7 +53,7 @@ export default function ReviewsManagement() {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [_vendorId, setVendorId] = useState<string | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [response, setResponse] = useState('');
   const [generatingAI, setGeneratingAI] = useState(false);
@@ -64,6 +64,7 @@ export default function ReviewsManagement() {
     if (user?.id) {
       loadVendorAndReviews();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadVendorAndReviews = async () => {

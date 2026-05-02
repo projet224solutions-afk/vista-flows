@@ -49,7 +49,7 @@ export const useMLFraudDetection = () => {
     params: CheckTransactionParams
   ): Promise<MLFraudCheckResult | null> => {
     setLoading(true);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('ml-fraud-detection', {
         body: {

@@ -31,7 +31,7 @@ import { AgricultureModule } from './AgricultureModule';
 import { ConstructionModule } from './ConstructionModule';
 import { DropshippingModule } from './DropshippingModule';
 import { CateringModule } from './stubs';
-import { normalizeServiceCode } from '@/config/serviceTypesConfig';
+import { _normalizeServiceCode } from '@/config/serviceTypesConfig';
 
 interface ServiceModuleManagerProps {
   serviceId: string;
@@ -51,7 +51,7 @@ const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: st
   'reparation': RepairModule,           // Réparation - Électro & mécanique
   'menage': CleaningModule,             // Nettoyage - Ménage & pressing
   'informatique': DeveloperModule,      // Informatique - Tech & dépannage
-  
+
   // ===== Services Professionnels (8) =====
   'sport': FitnessModule,               // Sport & Fitness - Coaching
   'location': RealEstateModule,         // Immobilier - Location & vente
@@ -61,13 +61,13 @@ const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: st
   'freelance': FreelanceModule,         // Administratif - Secrétariat
   'sante': HealthModule,                // Santé & Bien-être - Pharmacie & soins
   'maison': HomeDecorModule,            // Maison & Déco - Intérieur
-  
+
   // ===== Autres Services (4) =====
   'education': EducationModule,         // Formation - Cours & coaching
   'livraison': DeliveryModule,          // Livraison - Coursier & colis
   'voyage': TransportModule,            // Voyage - Tourisme & voyages
   'ecommerce': EcommerceModule,         // Boutique - E-commerce
-  
+
   // ===== Extensions legacy (compatibilité) =====
   'mode': FashionModule,
   'electronique': ElectronicsModule,
@@ -83,9 +83,9 @@ export function ServiceModuleManager({
   serviceTypeCode,
   businessName
 }: ServiceModuleManagerProps) {
-  
+
   const props = { serviceId, businessName };
-  
+
   // Debug logging
   console.log('🔍 ServiceModuleManager - Props reçus:', {
     serviceId,
@@ -94,19 +94,19 @@ export function ServiceModuleManager({
     serviceTypeCode,
     businessName
   });
-  
+
   // Essayer d'abord avec le code
   if (serviceTypeCode && MODULE_MAP[serviceTypeCode]) {
     console.log('✅ Module trouvé par code:', serviceTypeCode);
     const ModuleComponent = MODULE_MAP[serviceTypeCode];
     return <ModuleComponent {...props} />;
   }
-  
+
   console.log('⚠️ Code non trouvé dans MODULE_MAP, utilisation du fallback par nom:', serviceTypeName);
-  
+
   // Fallback basé sur le nom du service type
   const nameLower = serviceTypeName.toLowerCase();
-  
+
   if (nameLower.includes('restaurant') || nameLower.includes('restauration')) {
     return <RestaurantModule {...props} />;
   }
@@ -170,7 +170,7 @@ export function ServiceModuleManager({
   if (nameLower.includes('admin') || nameLower.includes('freelance') || nameLower.includes('administratif')) {
     return <FreelanceModule {...props} />;
   }
-  
+
   // Module par défaut
   return (
     <div className="text-center py-16">

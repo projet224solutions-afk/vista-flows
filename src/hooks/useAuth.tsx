@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (v === 'vendor_agent') return 'vendor_agent';
       return null;
     };
-    
+
     // Clé de cache pour le profil
     const profileCacheKey = `profile_cache_${user.id}`;
 
@@ -339,7 +339,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (cachedProfile && !profileRef.current) {
         try {
           setProfile(JSON.parse(cachedProfile) as Profile);
-        } catch (e) {}
+        } catch (_e) {}
       }
       setProfileLoading(false);
     }, 4000);
@@ -354,14 +354,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const parsed = JSON.parse(cachedProfile) as Profile;
             console.log('✅ Profil restauré depuis cache:', parsed.role);
             setProfile(parsed);
-          } catch (e) {
+          } catch (_e) {
             console.warn('⚠️ Erreur parsing profil cache');
           }
         }
         setProfileLoading(false);
         return;
       }
-      
+
       // Récupérer les flags OAuth
       const intendedRoleRaw = localStorage.getItem('oauth_intent_role') || '';
       const intendedRole = intendedRoleRaw ? mapAccountTypeToRole(intendedRoleRaw) : null;
@@ -385,7 +385,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const parsedProfile = JSON.parse(cachedProfile) as Profile;
               setProfile(parsedProfile);
               console.log('[PROFILE LOADED]', { source: 'cache_after_network_error', role: parsedProfile.role });
-            } catch (e) {}
+            } catch (_e) {}
           }
           setProfileLoading(false);
           return;
@@ -410,7 +410,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // mais l'utilisateur avait choisi un rôle différent → mettre à jour le rôle
         if (isNewOAuthSignup && intendedRole && intendedRole !== 'client' && current.role === 'client') {
           console.log('🔄 Mise à jour du rôle OAuth:', current.role, '→', intendedRole);
-          
+
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ role: intendedRole as any })
@@ -420,14 +420,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const updatedProfile = { ...current, role: intendedRole } as Profile;
             setProfile(updatedProfile);
             localStorage.setItem(profileCacheKey, JSON.stringify(updatedProfile));
-            
+
             // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
             if (intendedRole === 'vendeur') {
               void createVendorForOAuth(user);
             } else if (intendedRole === 'prestataire') {
               void createServiceForOAuthPrestataire(user);
             }
-            
+
             const roleLabels: Record<string, string> = {
               client: 'Client',
               vendeur: 'Marchand',
@@ -448,7 +448,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setProfile(current);
             localStorage.setItem(profileCacheKey, JSON.stringify(current));
           }
-          
+
           localStorage.removeItem('oauth_intent_role');
           localStorage.removeItem('oauth_is_new_signup');
           return;
@@ -457,7 +457,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Si l'utilisateur essayait de créer un compte mais le profil existait DÉJÀ avant
         if (isNewOAuthSignup) {
           console.log('⚠️ Tentative d\'inscription mais compte existe déjà');
-          
+
           toast.warning(
             `Cet email est déjà enregistré ! Vous avez été connecté à votre compte ${current.role} existant.`,
             {
@@ -626,6 +626,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const durationMs = Math.round(performance.now() - refreshStartedAt);
       console.log('🧭 [useAuth] refreshProfile:end', { userId: user.id, durationMs });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -775,6 +776,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       subscription.unsubscribe();
       stopSessionMonitor();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch profile when user changes
@@ -794,14 +796,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (ensuredSetupForUserRef.current === user.id) return;
 
     ensuredSetupForUserRef.current = user.id;
-    
+
     // Lancer le setup en arrière-plan après 2s pour ne pas bloquer le rendu
     const timer = setTimeout(() => {
       ensureUserSetup().catch((err) => {
         console.warn('⚠️ Setup arrière-plan échoué (non bloquant):', err);
       });
     }, 2000);
-    
+
     return () => clearTimeout(timer);
   }, [user, profile, profileLoading, ensureUserSetup]);
 
@@ -812,22 +814,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setProfile(null);
       stopSessionMonitor();
-      
+
       // Essayer de déconnecter côté Supabase
       const { error } = await supabase.auth.signOut();
-      
+
       // Si la session n'existait pas côté serveur, ce n'est pas grave
       // L'important est que l'état local soit nettoyé
       if (error && error.message !== 'Session not found') {
         console.error('Erreur déconnexion Supabase:', error);
       }
-      
+
       // Nettoyer aussi le localStorage de façon explicite
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
       localStorage.removeItem('agent_token');
       sessionStorage.clear();
-      
+
       console.log('✅ Déconnexion réussie');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);

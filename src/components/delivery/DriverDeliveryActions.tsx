@@ -11,12 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Navigation, 
-  Phone, 
-  Package, 
-  CheckCircle2, 
-  Camera, 
+import {
+  Navigation,
+  Phone,
+  Package,
+  CheckCircle2,
+  Camera,
   QrCode,
   MapPin,
   Store,
@@ -74,7 +74,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   const [clientSignature, setClientSignature] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureMode, setCaptureMode] = useState<'photo' | 'signature' | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -125,7 +125,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   };
 
   // Ouvrir la navigation GPS
-  const openNavigation = (lat: number, lng: number, label: string) => {
+  const openNavigation = (lat: number, lng: number, _label: string) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
     window.open(url, '_blank');
   };
@@ -140,11 +140,11 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
       // Compresser et convertir en base64
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        
+        const _base64 = e.target?.result as string;
+
         // Upload vers Supabase Storage
         const fileName = `delivery-proof/${delivery.id}-${Date.now()}.jpg`;
-        const { data, error } = await supabase.storage
+        const { _data, error } = await supabase.storage
           .from('documents')
           .upload(fileName, file, {
             contentType: 'image/jpeg',
@@ -179,14 +179,14 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     isDrawing.current = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    
+
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -195,14 +195,14 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     if (!isDrawing.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    
+
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -223,15 +223,15 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   const saveSignature = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     setIsCapturing(true);
     try {
       const dataUrl = canvas.toDataURL('image/png');
-      
+
       // Convertir base64 en blob
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-      
+
       // Upload vers Supabase Storage
       const fileName = `delivery-signatures/${delivery.id}-${Date.now()}.png`;
       const { error } = await supabase.storage
@@ -284,7 +284,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
           .select('full_name, phone')
           .eq('id', user.id)
           .single();
-        
+
         if (profile) {
           driverName = profile.full_name || 'Livreur';
           driverPhone = profile.phone || '';
@@ -343,7 +343,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   const isAtVendor = ['driver_arrived_vendor'].includes(delivery.status);
   const isAtClient = ['driver_arrived'].includes(delivery.status);
   const isEnRouteToVendor = ['assigned', 'driver_on_way_to_vendor'].includes(delivery.status);
-  const isEnRouteToClient = ['picked_up', 'in_transit', 'driver_5min_away'].includes(delivery.status);
+  const _isEnRouteToClient = ['picked_up', 'in_transit', 'driver_5min_away'].includes(delivery.status);
 
   return (
     <div className="space-y-4">
@@ -446,7 +446,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               <Package className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm">{delivery.package_description || 'Colis standard'}</span>
             </div>
-            <Badge 
+            <Badge
               variant={delivery.payment_method === 'cod' ? 'secondary' : 'default'}
               className={delivery.payment_method === 'cod' ? 'bg-yellow-100 text-yellow-800' : ''}
             >
@@ -522,8 +522,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                   <div className="space-y-4 py-4">
                     {/* Capture Photo */}
                     <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full h-20 border-dashed"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isCapturing}
@@ -543,9 +543,9 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                         )}
                       </Button>
                       {proofPhoto && (
-                        <img 
-                          src={proofPhoto} 
-                          alt="Preuve" 
+                        <img
+                          src={proofPhoto}
+                          alt="Preuve"
                           className="w-full h-32 object-cover rounded-lg"
                         />
                       )}
@@ -569,16 +569,16 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                             onTouchEnd={stopDrawing}
                           />
                           <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={clearSignature}
                               className="flex-1"
                             >
                               Effacer
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               onClick={saveSignature}
                               disabled={isCapturing}
                               className="flex-1"
@@ -592,8 +592,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                           </div>
                         </div>
                       ) : (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="w-full h-16"
                           onClick={() => setCaptureMode('signature')}
                         >
@@ -611,9 +611,9 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                         </Button>
                       )}
                       {clientSignature && !captureMode && (
-                        <img 
-                          src={clientSignature} 
-                          alt="Signature" 
+                        <img
+                          src={clientSignature}
+                          alt="Signature"
                           className="w-full h-20 object-contain bg-white rounded-lg border p-2"
                         />
                       )}
@@ -630,8 +630,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                     )}
 
                     {/* Bouton confirmation finale */}
-                    <Button 
-                      onClick={completeDelivery} 
+                    <Button
+                      onClick={completeDelivery}
                       className="w-full bg-green-600 hover:bg-green-700"
                       disabled={updating || (!proofPhoto && !clientSignature)}
                     >

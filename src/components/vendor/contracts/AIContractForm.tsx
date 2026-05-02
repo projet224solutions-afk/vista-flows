@@ -63,7 +63,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
 
   const handlePhoneChange = async (phone: string) => {
     setClientPhone(phone);
-    
+
     if (phone.length >= 8) {
       setSearchingClient(true);
       try {
@@ -85,7 +85,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
             description: 'Les informations ont été automatiquement remplies',
           });
         }
-      } catch (error) {
+      } catch (_error) {
         // Client not found, no problem
       } finally {
         setSearchingClient(false);
@@ -139,13 +139,13 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
           title: 'Contrat généré avec succès',
           description: 'Le contrat a été créé et peut maintenant être modifié',
         });
-        
+
         // Reset form
         setContractType('');
         setClientName('');
         setClientPhone('');
         setClientAddress('');
-        
+
         onSuccess(data.contract.id);
       } else {
         throw new Error('Erreur lors de la génération du contrat');

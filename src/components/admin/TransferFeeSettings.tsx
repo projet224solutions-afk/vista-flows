@@ -25,7 +25,7 @@ export default function TransferFeeSettings() {
         .single();
 
       if (error) throw error;
-      
+
       const fee = parseFloat(data.setting_value);
       setCurrentFee(fee);
       setNewFee(fee.toString());
@@ -72,7 +72,7 @@ export default function TransferFeeSettings() {
 
   const handleUpdateFee = async () => {
     const fee = parseFloat(newFee);
-    
+
     if (isNaN(fee) || fee < 0 || fee > 100) {
       toast.error('Taux invalide. Doit être entre 0 et 100%');
       return;
@@ -80,10 +80,10 @@ export default function TransferFeeSettings() {
 
     try {
       setSaving(true);
-      
+
       const { error } = await supabase
         .from('system_settings')
-        .update({ 
+        .update({
           setting_value: fee.toString(),
           updated_at: new Date().toISOString()
         })
@@ -93,7 +93,7 @@ export default function TransferFeeSettings() {
 
       setCurrentFee(fee);
       toast.success(`✅ Taux de commission mis à jour : ${fee}%`);
-      
+
       // Recharger pour confirmation
       await fetchCurrentFee();
       await fetchFeesStats();
@@ -133,7 +133,7 @@ export default function TransferFeeSettings() {
             </p>
             <p className="text-xs text-green-600 mt-1">{transactionsCount} transactions</p>
           </div>
-          
+
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
             <div className="flex items-center gap-2 mb-1">
               <Settings className="w-4 h-4 text-blue-600" />
@@ -142,9 +142,9 @@ export default function TransferFeeSettings() {
             <p className="text-2xl font-bold text-blue-900">
               {loading ? '...' : `${currentFee}%`}
             </p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => { fetchCurrentFee(); fetchFeesStats(); }}
               disabled={loading}
               className="mt-1 h-6 px-2 text-xs"

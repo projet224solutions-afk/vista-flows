@@ -16,7 +16,7 @@ export default function TaxiMotoRouter() {
   useEffect(() => {
     // Éviter les redirections multiples
     if (hasRedirected) return;
-    
+
     // Attendre que le chargement soit terminé
     if (loading || profileLoading) return;
 

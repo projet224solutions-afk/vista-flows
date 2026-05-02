@@ -5,8 +5,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Package, AlertTriangle, TrendingUp, Users,
-  ShoppingCart, Pill, Clock, Activity
+  _Package, AlertTriangle, TrendingUp, Users,
+  ShoppingCart, Pill, Clock, _Activity
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { ServiceHealthStats } from '@/hooks/useServiceHealthStats';

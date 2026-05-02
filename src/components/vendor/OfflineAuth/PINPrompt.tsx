@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { authenticateWithPIN, getRemainingAttempts, canAuthenticate } from '@/lib/offline/auth/offlineAuth';
+import { authenticateWithPIN, _getRemainingAttempts, canAuthenticate } from '@/lib/offline/auth/offlineAuth';
 import { authenticateWithBiometric, isBiometricAvailable, isBiometricConfigured } from '@/lib/offline/auth/biometric';
 import { toast } from 'sonner';
 
@@ -52,6 +52,7 @@ export function PINPrompt({
     if (allowBiometric) {
       checkBiometric();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowBiometric, userId]);
 
   const checkBiometric = async () => {

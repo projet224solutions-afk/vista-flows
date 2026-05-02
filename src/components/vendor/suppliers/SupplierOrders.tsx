@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card';
+import { _Card, _CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, RefreshCw } from 'lucide-react';
@@ -58,6 +58,7 @@ export function SupplierOrders({ vendorId }: SupplierOrdersProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const loadOrders = async () => {

@@ -2,10 +2,10 @@
  * DROPSHIP MARKETPLACE INTEGRATION SERVICE
  * Service pour intégrer les produits dropshipping dans le marketplace
  * sans révéler leur nature aux clients
- * 
+ *
  * IMPORTANT: Le client ne voit JAMAIS que le produit est dropshipping
  * Flag interne isDropship = true réservé aux admins/vendeurs
- * 
+ *
  * @module DropshipMarketplaceService
  * @version 1.0.1
  * @author 224Solutions
@@ -89,7 +89,7 @@ function sanitizeForClient(product: DropshipProductInternal): MarketplaceProduct
     _lastSyncAt,
     ...clientProduct
   } = product;
-  
+
   return clientProduct;
 }
 
@@ -104,7 +104,7 @@ function calculateDropshipDeliveryTime(connector: string): string {
     '1688': '25-45 jours',
     'PRIVATE': '7-21 jours', // Fournisseurs locaux/privés
   };
-  
+
   return deliveryTimes[connector] || '15-30 jours';
 }
 
@@ -116,7 +116,7 @@ function mapDropshipToMarketplace(
   vendorInfo: any
 ): DropshipProductInternal {
   const connector = dropshipProduct.source_connector || 'ALIEXPRESS';
-  
+
   return {
     id: dropshipProduct.id,
     title: dropshipProduct.title,
@@ -141,7 +141,7 @@ function mapDropshipToMarketplace(
     isPremium: dropshipProduct.is_premium || false,
     isNew: isProductNew(dropshipProduct.created_at),
     tags: dropshipProduct.tags || [],
-    
+
     // Champs internes
     _isDropship: true,
     _sourceConnector: connector,
@@ -179,16 +179,16 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export class DropshipMarketplaceService {
   private static instance: DropshipMarketplaceService;
-  
+
   private constructor() {}
-  
+
   static getInstance(): DropshipMarketplaceService {
     if (!DropshipMarketplaceService.instance) {
       DropshipMarketplaceService.instance = new DropshipMarketplaceService();
     }
     return DropshipMarketplaceService.instance;
   }
-  
+
   /**
    * Récupère les produits marketplace (inclut dropship par défaut)
    * Les produits dropship sont indistinguables des produits normaux côté client
@@ -206,20 +206,20 @@ export class DropshipMarketplaceService {
       limit = 20,
       includeDropship = true
     } = options;
-    
+
     try {
       // 0. Récupérer la liste des vendors actifs pour filtrer les produits
       const vendorsTable = supabase.from('vendors') as any;
       const { data: activeVendors } = await vendorsTable
         .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified, is_active')
         .eq('is_active', true);
-      
+
       // Créer des maps pour accès rapide
       const activeVendorIds = new Set((activeVendors || []).map((v: any) => v.id));
       const activeVendorUserIds = new Set((activeVendors || []).map((v: any) => v.user_id));
       const vendorByIdMap = new Map((activeVendors || []).map((v: any) => [v.id, v]));
       const vendorByUserIdMap = new Map((activeVendors || []).map((v: any) => [v.user_id, v]));
-      
+
       // 1. Récupérer les produits classiques - sans jointure complexe
       // Use 'as any' to avoid deep type instantiation issues with Supabase client
       const productsTable = supabase.from('products') as any;
@@ -227,7 +227,7 @@ export class DropshipMarketplaceService {
         .select('*', { count: 'exact' })
         .eq('is_active', true)
         .limit(limit * 3); // Récupérer plus pour compenser le filtrage
-      
+
       // Appliquer les filtres
       if (vendorId) classicQuery = classicQuery.eq('vendor_id', vendorId);
       if (priceMin) classicQuery = classicQuery.gte('price', priceMin);
@@ -235,28 +235,28 @@ export class DropshipMarketplaceService {
       if (searchQuery) {
         classicQuery = classicQuery.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
-      
+
       const { data: classicProducts, error: classicError } = await classicQuery;
-      
+
       if (classicError) {
         console.error('[DropshipMarketplace] Classic products error:', classicError);
       }
-      
+
       // Filtrer les produits classiques dont le vendor est actif
-      const filteredClassicProducts = (classicProducts || []).filter((p: any) => 
+      const filteredClassicProducts = (classicProducts || []).filter((p: any) =>
         activeVendorIds.has(p.vendor_id) || activeVendorUserIds.has(p.vendor_id)
       );
-      
+
       // 2. Récupérer les produits dropship si activé
       let dropshipProducts: any[] = [];
-      
+
       if (includeDropship) {
         let dropshipQuery = supabase
           .from('dropship_products')
           .select('*', { count: 'exact' })
           .eq('is_published', true)
           .eq('is_available', true);
-        
+
         // Appliquer les mêmes filtres
         if (category) dropshipQuery = dropshipQuery.eq('category', category);
         if (subcategory) dropshipQuery = dropshipQuery.eq('subcategory', subcategory);
@@ -266,17 +266,17 @@ export class DropshipMarketplaceService {
         if (searchQuery) {
           dropshipQuery = dropshipQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
         }
-        
+
         const { data: dropship, error: dropshipError } = await dropshipQuery;
-        
+
         if (dropshipError) {
           console.error('[DropshipMarketplace] Dropship products error:', dropshipError);
         } else {
           // Filtrer les produits dropship dont le vendor est actif
-          dropshipProducts = (dropship || []).filter(p => 
+          dropshipProducts = (dropship || []).filter(p =>
             activeVendorUserIds.has(p.vendor_id) || activeVendorIds.has(p.vendor_id)
           );
-          
+
           // Mapper les infos vendeur
           dropshipProducts = dropshipProducts.map(p => ({
             ...p,
@@ -284,7 +284,7 @@ export class DropshipMarketplaceService {
           }));
         }
       }
-      
+
       // 3. Mapper les produits au format marketplace
       const mappedClassic: MarketplaceProduct[] = filteredClassicProducts.map((p: any) => {
         const vendorInfo = vendorByIdMap.get(p.vendor_id) || vendorByUserIdMap.get(p.vendor_id) as any;
@@ -314,14 +314,14 @@ export class DropshipMarketplaceService {
           tags: p.tags || [],
         };
       });
-      
-      const mappedDropship: MarketplaceProduct[] = dropshipProducts.map(p => 
+
+      const mappedDropship: MarketplaceProduct[] = dropshipProducts.map(p =>
         sanitizeForClient(mapDropshipToMarketplace(p, p.vendor))
       );
-      
+
       // 4. Combiner et trier
       let allProducts = [...mappedClassic, ...mappedDropship];
-      
+
       switch (sortBy) {
         case 'price_asc':
           allProducts.sort((a, b) => a.price - b.price);
@@ -340,13 +340,13 @@ export class DropshipMarketplaceService {
           allProducts = shuffleArray(allProducts);
           break;
       }
-      
+
       // 5. Pagination
       const total = allProducts.length;
       const totalPages = Math.ceil(total / limit);
       const startIndex = (page - 1) * limit;
       const paginatedProducts = allProducts.slice(startIndex, startIndex + limit);
-      
+
       return {
         products: paginatedProducts,
         total,
@@ -354,13 +354,13 @@ export class DropshipMarketplaceService {
         totalPages,
         hasMore: page < totalPages
       };
-      
+
     } catch (error) {
       console.error('[DropshipMarketplace] Error fetching products:', error);
       throw error;
     }
   }
-  
+
   /**
    * Récupère un produit par son ID (classique ou dropship)
    */
@@ -373,7 +373,7 @@ export class DropshipMarketplaceService {
         .eq('id', productId)
         .eq('status', 'active')
         .single();
-      
+
       if (classicProduct && !classicError) {
         // Vérifier si le vendor est actif
         const vendorsTable = supabase.from('vendors') as any;
@@ -382,13 +382,13 @@ export class DropshipMarketplaceService {
           .or(`id.eq.${classicProduct.vendor_id},user_id.eq.${classicProduct.vendor_id}`)
           .eq('is_active', true)
           .single();
-        
+
         // Si le vendor n'est pas actif, ne pas retourner le produit
         if (!vendorInfo) {
           console.log('[DropshipMarketplace] Product vendor is not active:', productId);
           return null;
         }
-        
+
         return {
           id: classicProduct.id,
           title: classicProduct.name || 'Produit',
@@ -415,7 +415,7 @@ export class DropshipMarketplaceService {
           tags: classicProduct.tags || [],
         };
       }
-      
+
       // Sinon, essayer les produits dropship
       const { data: dropshipProduct, error: dropshipError } = await supabase
         .from('dropship_products')
@@ -423,7 +423,7 @@ export class DropshipMarketplaceService {
         .eq('id', productId)
         .eq('is_published', true)
         .single();
-      
+
       if (dropshipProduct && !dropshipError) {
         // Récupérer les infos vendeur depuis vendors et vérifier qu'il est actif
         const vendorsTable = supabase.from('vendors') as any;
@@ -432,24 +432,24 @@ export class DropshipMarketplaceService {
           .eq('user_id', dropshipProduct.vendor_id)
           .eq('is_active', true)
           .single();
-        
+
         // Si le vendor n'est pas actif, ne pas retourner le produit
         if (!vendorInfo) {
           console.log('[DropshipMarketplace] Dropship product vendor is not active:', productId);
           return null;
         }
-        
+
         return sanitizeForClient(mapDropshipToMarketplace(dropshipProduct, vendorInfo));
       }
-      
+
       return null;
-      
+
     } catch (error) {
       console.error('[DropshipMarketplace] Error fetching product:', error);
       return null;
     }
   }
-  
+
   /**
    * Vérifie si un produit est un dropship (pour admin/vendeur uniquement)
    */
@@ -459,10 +459,10 @@ export class DropshipMarketplaceService {
       .select('id')
       .eq('id', productId)
       .single();
-    
+
     return !error && data !== null;
   }
-  
+
   /**
    * Récupère les infos dropship d'un produit (admin/vendeur seulement)
    */
@@ -472,19 +472,19 @@ export class DropshipMarketplaceService {
       .select('*')
       .eq('id', productId)
       .single();
-    
+
     if (error || !data) return null;
-    
+
     // Récupérer les infos vendeur depuis vendors
     const { data: vendorInfo } = await supabase
       .from('vendors')
       .select('id, user_id, business_name, city, country, rating, total_reviews, is_verified')
       .eq('user_id', data.vendor_id)
       .single();
-    
+
     return mapDropshipToMarketplace(data, vendorInfo);
   }
-  
+
   /**
    * Récupère les produits recommandés (mix classique + dropship)
    */
@@ -498,12 +498,12 @@ export class DropshipMarketplaceService {
       limit: limit + 1, // +1 pour exclure le produit courant
       sortBy: 'popular'
     });
-    
+
     return result.products
       .filter(p => p.id !== currentProductId)
       .slice(0, limit);
   }
-  
+
   /**
    * Recherche produits (unifie classique + dropship)
    */
@@ -512,7 +512,7 @@ export class DropshipMarketplaceService {
       searchQuery: query,
       limit
     });
-    
+
     return result.products;
   }
 }

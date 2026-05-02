@@ -19,6 +19,9 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+const isUuid = (value?: string | null) =>
+  !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
 serve(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -392,6 +395,30 @@ serve(async (req) => {
             }
           }
 
+          try {
+            const commissionTransactionId = isUuid(transaction.order_id) ? transaction.order_id : transaction.id;
+            const { error: agentCommissionError } = await supabase.rpc('credit_agent_commission', {
+              p_user_id: transaction.buyer_id,
+              p_amount: transaction.amount,
+              p_source_type: 'achat_produit',
+              p_transaction_id: commissionTransactionId,
+              p_metadata: {
+                currency: transaction.currency || 'GNF',
+                order_id: transaction.order_id,
+                stripe_transaction_id: transaction.id,
+                source: 'stripe-webhook-edge',
+              },
+            });
+
+            if (agentCommissionError) {
+              logStep('Agent commission error', { error: agentCommissionError.message });
+            } else {
+              logStep('Agent commission processed for marketplace payment');
+            }
+          } catch (commissionErr) {
+            logStep('Agent commission exception', { error: String(commissionErr) });
+          }
+
         } else {
           // Paiement POS standard
           logStep('Processing POS payment');
@@ -481,6 +508,30 @@ serve(async (req) => {
               })
               .eq('id', orderId);
             logStep('✅ Order updated', { orderId });
+          }
+
+          try {
+            const commissionTransactionId = isUuid(orderId) ? orderId : transaction.id;
+            const { error: agentCommissionError } = await supabase.rpc('credit_agent_commission', {
+              p_user_id: transaction.buyer_id,
+              p_amount: transaction.amount,
+              p_source_type: 'achat_produit',
+              p_transaction_id: commissionTransactionId,
+              p_metadata: {
+                currency: transaction.currency || 'GNF',
+                order_id: orderId || transaction.order_id,
+                stripe_transaction_id: transaction.id,
+                source: 'stripe-webhook-edge',
+              },
+            });
+
+            if (agentCommissionError) {
+              logStep('Agent commission error', { error: agentCommissionError.message });
+            } else {
+              logStep('Agent commission processed for payment');
+            }
+          } catch (commissionErr) {
+            logStep('Agent commission exception', { error: String(commissionErr) });
           }
         }
 

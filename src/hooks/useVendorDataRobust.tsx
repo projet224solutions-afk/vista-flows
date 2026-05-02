@@ -99,7 +99,7 @@ export function useVendorStatsRobust() {
 
   const cacheRef = useRef<CacheEntry<VendorStats> | null>(null);
   const circuitName = 'vendor-stats';
-  
+
   // Subscribe to circuit state changes
   useEffect(() => {
     const unsubscribe = circuitBreaker.subscribe(circuitName, setCircuitState);
@@ -133,7 +133,7 @@ export function useVendorStatsRobust() {
           if (!vendor) throw new Error('Profil vendeur non trouvé');
 
           // Fetch all stats in parallel
-          const [ordersResult, productsResult, lowStockResult, overdueResult, customersResult] = 
+          const [ordersResult, productsResult, lowStockResult, overdueResult, customersResult] =
             await Promise.all([
               supabase
                 .from('orders')
@@ -185,7 +185,7 @@ export function useVendorStatsRobust() {
     } catch (err: any) {
       console.error('❌ Erreur stats vendeur:', err);
       setError(err.message);
-      
+
       // Utiliser le cache stale en cas d'erreur
       if (cacheRef.current) {
         setStats(cacheRef.current.data);
@@ -206,10 +206,10 @@ export function useVendorStatsRobust() {
     return () => clearInterval(interval);
   }, [fetchStats]);
 
-  return { 
-    stats, 
-    loading, 
-    error, 
+  return {
+    stats,
+    loading,
+    error,
     refetch: fetchStats,
     circuitState,
     isHealthy: circuitState === 'CLOSED'
@@ -373,12 +373,12 @@ export function useProspectsRobust() {
     fetchProspects();
   }, [fetchProspects]);
 
-  return { 
-    prospects, 
-    loading, 
-    error, 
+  return {
+    prospects,
+    loading,
+    error,
     processing,
-    createProspect, 
+    createProspect,
     updateProspect,
     deleteProspect,
     refetch: fetchProspects
@@ -510,10 +510,10 @@ export function usePromoCodesRobust() {
     fetchPromoCodes();
   }, [fetchPromoCodes]);
 
-  return { 
-    promoCodes, 
-    loading, 
-    error, 
+  return {
+    promoCodes,
+    loading,
+    error,
     processing,
     createPromoCode,
     togglePromoCode,
@@ -609,10 +609,10 @@ export function useSupportTicketsRobust() {
     fetchTickets();
   }, [fetchTickets]);
 
-  return { 
-    tickets, 
-    loading, 
-    error, 
+  return {
+    tickets,
+    loading,
+    error,
     processing,
     updateTicketStatus,
     refetch: fetchTickets

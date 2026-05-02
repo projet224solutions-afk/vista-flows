@@ -69,7 +69,7 @@ export async function trackActivity(
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     await (supabase.from('user_activity') as any).insert({
       user_id: user?.id || null,
       session_id: user ? null : getSessionId(),

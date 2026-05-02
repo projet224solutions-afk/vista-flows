@@ -22,6 +22,8 @@ interface RateRow {
   from_currency?: string | null;
   to_currency?: string | null;
   rate?: number | null;
+  final_rate_usd?: number | null;
+  final_rate_eur?: number | null;
   margin?: number | null;
   source_type?: string | null;
   source_url?: string | null;
@@ -80,6 +82,32 @@ function shouldPreferRateRow(candidate: RateRow, current: RateRow): boolean {
   return parseTimestampMs(candidate.retrieved_at) > parseTimestampMs(current.retrieved_at);
 }
 
+function resolveDisplayedRate(row: RateRow): number {
+  const from = String(row.from_currency || '').toUpperCase();
+  const to = String(row.to_currency || '').toUpperCase();
+  const finalByBase = from === 'USD'
+    ? Number(row.final_rate_usd)
+    : from === 'EUR'
+      ? Number(row.final_rate_eur)
+      : to === 'USD'
+        ? Number(row.final_rate_usd)
+        : to === 'EUR'
+          ? Number(row.final_rate_eur)
+      : Number.NaN;
+
+  if (Number.isFinite(finalByBase) && finalByBase > 0) {
+    return finalByBase;
+  }
+
+  const rawRate = Number(row.rate || 0);
+  const margin = Number(row.margin || 0);
+  if (Number.isFinite(rawRate) && rawRate > 0) {
+    return rawRate * (Number.isFinite(margin) && margin > 0 ? 1 + margin : 1);
+  }
+
+  return Number.NaN;
+}
+
 /**
  * Charge tous les taux actifs depuis la DB en une seule requête.
  * Résultat mis en cache 5 min côté client.
@@ -98,7 +126,7 @@ async function loadAllRates(): Promise<Map<string, number>> {
     try {
       const { data, error } = await (supabase as any)
         .from('currency_exchange_rates')
-        .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+        .select('from_currency, to_currency, rate, final_rate_usd, final_rate_eur, margin, source_type, source_url, retrieved_at')
         .eq('is_active', true)
         .order('retrieved_at', { ascending: false });
 
@@ -109,7 +137,7 @@ async function loadAllRates(): Promise<Map<string, number>> {
         for (const row of data as RateRow[]) {
           const from = String(row.from_currency || '').toUpperCase();
           const to = String(row.to_currency || '').toUpperCase();
-          const rate = Number(row.rate || 0);
+          const rate = resolveDisplayedRate(row);
 
           if (!from || !to || !Number.isFinite(rate) || rate <= 0) {
             continue;

@@ -36,7 +36,7 @@ export const TranslatedMessage: React.FC<TranslatedMessageProps> = ({
     <div className={`relative ${className}`}>
       {/* Contenu du message */}
       <p className="whitespace-pre-wrap break-words">{displayContent}</p>
-      
+
       {/* Indicateur de traduction */}
       {isTranslated && !isShowingOriginal && (
         <div className="flex items-center gap-1 mt-1">
@@ -85,20 +85,20 @@ export const LanguageBadge: React.FC<LanguageBadgeProps> = ({
   size = 'sm'
 }) => {
   if (!languageCode) return null;
-  
+
   const getLanguageName = (code: string): string => {
     return SUPPORTED_LANGUAGES[code as SupportedLanguage] || code.toUpperCase();
   };
 
-  const sizeClasses = size === 'sm' 
-    ? 'text-[10px] px-1.5 py-0.5' 
+  const sizeClasses = size === 'sm'
+    ? 'text-[10px] px-1.5 py-0.5'
     : 'text-xs px-2 py-1';
 
   return (
-    <span 
+    <span
       className={`inline-flex items-center gap-1 rounded-full ${sizeClasses} ${
-        isTranslated 
-          ? 'bg-blue-500/20 text-blue-300' 
+        isTranslated
+          ? 'bg-blue-500/20 text-blue-300'
           : 'bg-gray-500/20 text-gray-400'
       }`}
     >

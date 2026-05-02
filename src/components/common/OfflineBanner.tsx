@@ -72,7 +72,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
             </span>
           </div>
         </div>
-        
+
         <button
           onClick={handleRetry}
           disabled={isChecking}

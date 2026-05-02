@@ -37,7 +37,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
         .limit(20);
 
       if (error) throw error;
-      
+
       setNotifications(data || []);
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (error) {
@@ -74,6 +74,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bureauId]);
 
   const markAsRead = async (notificationId: string) => {
@@ -101,7 +102,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
         .eq('is_read', false);
 
       if (error) throw error;
-      
+
       toast.success('Toutes les notifications ont été marquées comme lues');
       loadNotifications();
     } catch (error) {
@@ -172,7 +173,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
                 className={`p-4 rounded-lg border transition-colors ${
                   notification.is_read
                     ? 'bg-background border-border'
-                    : notification.is_critical 
+                    : notification.is_critical
                       ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900'
                       : 'bg-primary/5 border-primary/20'
                 }`}
@@ -198,7 +199,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
                     </p>
                     <div className="flex items-center justify-between pt-2">
                       <span className="text-xs text-muted-foreground">
-                        {notification.created_at 
+                        {notification.created_at
                           ? new Date(notification.created_at).toLocaleString('fr-FR')
                           : 'Date inconnue'
                         }

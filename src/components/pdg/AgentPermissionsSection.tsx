@@ -23,10 +23,10 @@ const CATEGORY_TITLES: Record<string, string> = {
   special: '🎯 Spécial',
 };
 
-export function AgentPermissionsSection({ 
-  permissions, 
+export function AgentPermissionsSection({
+  permissions,
   onPermissionChange,
-  loading 
+  loading
 }: AgentPermissionsSectionProps) {
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['💰 Finance', '📋 Gestion']));
 
@@ -67,9 +67,9 @@ export function AgentPermissionsSection({
         <div className="space-y-2 pb-2">
           {permissionCategories.map(({ title: category, keys }) => {
             const activeCount = getActiveCategoryCount(keys);
-            
+
             return (
-              <Collapsible 
+              <Collapsible
                 key={category}
                 open={openCategories.has(category)}
                 onOpenChange={() => toggleCategory(category)}

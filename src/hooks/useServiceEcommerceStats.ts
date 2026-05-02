@@ -145,19 +145,19 @@ export function useServiceEcommerceStats(serviceId?: string) {
         .select('user_id')
         .eq('id', serviceId)
         .single();
-      
+
       const userId = serviceData?.user_id;
       console.log('👤 User ID du service:', userId);
 
       // 3. Charger les produits - PRIORITÉ: table products (vendor) + service_products
       let allProducts: any[] = [];
-      
+
       // 3a. Charger depuis service_products (liés au service professionnel)
       const { data: serviceProductsData } = await supabase
         .from('service_products')
         .select('id, is_available, stock_quantity')
         .eq('professional_service_id', serviceId);
-      
+
       if (serviceProductsData) {
         allProducts = [...serviceProductsData];
         console.log('📦 Service products trouvés:', serviceProductsData.length);
@@ -171,13 +171,13 @@ export function useServiceEcommerceStats(serviceId?: string) {
           .select('id')
           .eq('user_id', userId)
           .single();
-        
+
         if (vendorData?.id) {
           const { data: vendorProducts } = await supabase
             .from('products')
             .select('id, is_active, stock_quantity')
             .eq('vendor_id', vendorData.id);
-          
+
           if (vendorProducts) {
             // Convertir au même format
             const normalizedVendorProducts = vendorProducts.map(p => ({
@@ -202,14 +202,14 @@ export function useServiceEcommerceStats(serviceId?: string) {
 
       // 4. Charger les commandes depuis la table orders (pour service e-commerce uniquement)
       let allOrders = [...bookings];
-      
+
       if (userId) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id')
           .eq('user_id', userId)
           .single();
-        
+
         if (vendorData?.id) {
           // Charger les commandes e-commerce depuis la table orders
           const { data: legacyOrders } = await supabase
@@ -217,7 +217,7 @@ export function useServiceEcommerceStats(serviceId?: string) {
             .select('id, status, total_amount, created_at, payment_status, customer_id, source')
             .eq('vendor_id', vendorData.id)
             .order('created_at', { ascending: false });
-          
+
           if (legacyOrders) {
             // Convertir au format compatible
             const normalizedOrders = legacyOrders.map(o => ({
@@ -233,7 +233,7 @@ export function useServiceEcommerceStats(serviceId?: string) {
       // Recalculer les stats avec toutes les commandes e-commerce
       const allOrderStats = calculateOrderStats(allOrders);
       const allSalesStats = calculateSalesStats(allOrders, startOfDay, startOfWeek, startOfMonth);
-      
+
       // Séparer POS vs Online pour les commandes legacy
       const posOrders = allOrders.filter(o => (o as any).source === 'pos');
       const onlineOrders = allOrders.filter(o => (o as any).source !== 'pos');

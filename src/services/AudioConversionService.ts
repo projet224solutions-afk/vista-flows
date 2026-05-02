@@ -79,8 +79,8 @@ export async function convertAudioForIOS(
     }
 
     // Format déjà compatible ou conversion non disponible
-    return { 
-      converted: false, 
+    return {
+      converted: false,
       url: audioUrl,
       error: data.message || 'Conversion not needed or not available'
     };
@@ -114,7 +114,7 @@ export function getAudioUrlForPlatform(message: {
 /**
  * Convertit automatiquement les messages audio non-iOS et met à jour la BDD
  * Utile pour un batch processing ou un webhook
- * Note: Cette fonction utilise 'any' car les colonnes file_url_ios peuvent 
+ * Note: Cette fonction utilise 'any' car les colonnes file_url_ios peuvent
  * ne pas exister dans le schema TypeScript généré
  */
 export async function batchConvertAudioMessages(): Promise<{
@@ -141,8 +141,8 @@ export async function batchConvertAudioMessages(): Promise<{
     // Filtrer côté client pour les formats à convertir
     const needsConversion = (data || []).filter(m => {
       const fileName = m.file_name?.toLowerCase() || '';
-      return fileName.endsWith('.webm') || 
-             fileName.endsWith('.ogg') || 
+      return fileName.endsWith('.webm') ||
+             fileName.endsWith('.ogg') ||
              fileName.endsWith('.opus');
     });
 
@@ -194,7 +194,7 @@ export async function autoConvertIfNeeded(
   }
 
   console.log('[AudioConvert] Auto-converting audio for iOS compatibility...');
-  
+
   // Lancer la conversion en arrière-plan (ne pas bloquer)
   convertAudioForIOS(fileUrl, fileName, messageId)
     .then(result => {

@@ -5,21 +5,21 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Plus, Edit2, Trash2, UtensilsCrossed, Tag, 
-  Clock, Flame, Leaf, Star, Eye, EyeOff,
-  GripVertical, Search, Filter, Upload, X, Loader2, Image as ImageIcon
+  Plus, Edit2, Trash2, UtensilsCrossed, Tag,
+  Clock, _Flame, _Leaf, Star, Eye, EyeOff,
+  _GripVertical, Search, _Filter, Upload, X, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import { useRestaurantMenu, MenuCategory, MenuItem } from '@/hooks/useRestaurantMenu';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,19 +40,19 @@ const DIETARY_TAGS = [
   { value: 'bio', label: 'Bio', icon: '🌿' },
 ];
 
-const ALLERGENS = [
-  'Gluten', 'Lactose', 'Œufs', 'Poisson', 'Crustacés', 
+const _ALLERGENS = [
+  'Gluten', 'Lactose', 'Œufs', 'Poisson', 'Crustacés',
   'Arachides', 'Soja', 'Fruits à coque', 'Céleri', 'Moutarde',
   'Sésame', 'Sulfites', 'Lupin', 'Mollusques'
 ];
 
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
   const formatCurrency = useFormatCurrency();
-  const { 
-    categories, 
-    menuItems, 
-    loading, 
-    error,
+  const {
+    categories,
+    menuItems,
+    loading,
+    _error,
     createCategory,
     updateCategory,
     deleteCategory,
@@ -60,10 +60,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     updateMenuItem,
     deleteMenuItem,
     toggleItemAvailability,
-    refresh
+    _refresh
   } = useRestaurantMenu(serviceId);
 
-  const [activeTab, setActiveTab] = useState('items');
+  const [_activeTab, _setActiveTab] = useState('items');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showItemDialog, setShowItemDialog] = useState(false);
@@ -196,20 +196,20 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
-    
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error("L'image ne doit pas dépasser 5MB");
       return;
     }
-    
+
     try {
       setUploadingImage(true);
-      
+
       const fileExt = file.name.split('.').pop();
       const fileName = `dish_${serviceId}_${Date.now()}.${fileExt}`;
       const filePath = `restaurant-dishes/${fileName}`;
-      
-      const { error: uploadError } = await supabase
+
+      const { error: _uploadError } = await supabase
         .from('professional_services')
         .select('id')
         .eq('id', serviceId)
@@ -256,7 +256,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     }
   };
 
-  const handleDeleteCategory = async (id: string) => {
+  const _handleDeleteCategory = async (id: string) => {
     if (!confirm('Supprimer cette catégorie ?')) return;
     try {
       await deleteCategory(id);
@@ -419,9 +419,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <div className="border-2 border-dashed rounded-lg p-4 text-center">
                     {itemForm.image_url ? (
                       <div className="relative inline-block">
-                        <img 
-                          src={itemForm.image_url} 
-                          alt="Plat" 
+                        <img
+                          src={itemForm.image_url}
+                          alt="Plat"
                           className="w-32 h-24 object-cover rounded-lg"
                         />
                         <button
@@ -620,7 +620,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                       {formatCurrency(item.price)}
                     </span>
                   </div>
-                  
+
                   {item.description && (
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                       {item.description}

@@ -54,11 +54,11 @@ export default function QuickFooter() {
   ];
 
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 bg-card/98 backdrop-blur-md border-t border-border z-[100] shadow-lg" 
-      role="navigation" 
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-card/98 backdrop-blur-md border-t border-border z-[100] shadow-lg"
+      role="navigation"
       aria-label="Navigation principale"
-      style={{ 
+      style={{
         paddingTop: '0.5rem',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
       }}
@@ -93,8 +93,8 @@ export default function QuickFooter() {
                 <Icon size={18} />
                 {/* Badge de notification */}
                 {item.badge > 0 && (
-                  <Badge 
-                    variant="destructive" 
+                  <Badge
+                    variant="destructive"
                     className="absolute -top-2 -right-2 h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
                   >
                     {item.badge > 99 ? '99+' : item.badge}

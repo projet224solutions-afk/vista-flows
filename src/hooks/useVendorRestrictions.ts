@@ -43,8 +43,9 @@ export function useVendorRestrictions() {
 
     loadRestrictions();
     const cleanup = setupRealtimeSubscription();
-    
+
     return cleanup;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadRestrictions = async () => {
@@ -88,7 +89,7 @@ export function useVendorRestrictions() {
       const now = new Date();
       const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : new Date(0);
       const daysDiff = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Vérifier si vraiment actif (status + date de fin dans le futur)
       const isReallyActive = subscription.status === 'active' && periodEnd > now;
       const isExpired = !isReallyActive || subscription.status === 'expired' || subscription.status === 'past_due' || subscription.status === 'cancelled';

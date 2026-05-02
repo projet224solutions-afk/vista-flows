@@ -151,7 +151,7 @@ export default function DigitalProducts() {
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const query = searchQuery.toLowerCase().trim();
-    return allProducts.filter(product => 
+    return allProducts.filter(product =>
       product.title?.toLowerCase().includes(query) ||
       product.short_description?.toLowerCase().includes(query) ||
       product.description?.toLowerCase().includes(query)
@@ -246,8 +246,8 @@ export default function DigitalProducts() {
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={() => navigate(isVendorWorkspace ? '/vendeur-digital/dashboard' : '/')}
               className="shrink-0"
@@ -325,15 +325,15 @@ export default function DigitalProducts() {
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filteredProducts.map((product) => (
-                <Card 
+                <Card
                   key={product.id}
                   className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
                   onClick={() => handleProductClick(product)}
                 >
                   <div className="relative aspect-square bg-muted">
                     {product.images && product.images[0] ? (
-                      <img 
-                        src={product.images[0]} 
+                      <img
+                        src={product.images[0]}
                         alt={product.title}
                         className="w-full h-full object-cover"
                       />
@@ -354,7 +354,7 @@ export default function DigitalProducts() {
                         <ShoppingCart className="w-10 h-10" />
                       </div>
                     )}
-                    
+
                     {/* Badges */}
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
                       {product.video_url && (
@@ -382,7 +382,7 @@ export default function DigitalProducts() {
                     <h3 className="font-medium text-sm text-foreground line-clamp-2 mb-1">
                       {product.title}
                     </h3>
-                    
+
                     {product.short_description && (
                       <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
                         {product.short_description}
@@ -390,9 +390,9 @@ export default function DigitalProducts() {
                     )}
 
                     <div className="flex items-center justify-between">
-                      <LocalPrice 
-                        amount={product.price} 
-                        currency={product.currency || 'GNF'} 
+                      <LocalPrice
+                        amount={product.price}
+                        currency={product.currency || 'GNF'}
                         size="sm"
                         className="font-bold text-primary"
                       />

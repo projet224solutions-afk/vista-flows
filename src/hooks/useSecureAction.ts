@@ -22,7 +22,7 @@ interface UseSecureActionReturn<T> {
 
 /**
  * Hook sécurisé pour les actions financières critiques
- * 
+ *
  * Garantit:
  * - INP < 200ms (UI mise à jour avant l'action)
  * - Protection anti-double clic
@@ -33,7 +33,7 @@ export function useSecureAction<T = void>(
   options: UseSecureActionOptions = {}
 ): UseSecureActionReturn<T> {
   const { debounceMs = 500, onError, onSuccess } = options;
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const lastExecutionRef = useRef<number>(0);

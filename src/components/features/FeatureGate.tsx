@@ -15,12 +15,12 @@ interface FeatureGateProps {
   showUpgradeButton?: boolean;
 }
 
-export function FeatureGate({ 
-  featureKey, 
-  children, 
-  fallbackTitle, 
+export function FeatureGate({
+  featureKey,
+  children,
+  fallbackTitle,
   fallbackMessage,
-  showUpgradeButton = true 
+  showUpgradeButton = true
 }: FeatureGateProps) {
   const { hasAccess, checkAndLogAccess, restrictions, userPlan } = useFeatureAccess();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export function FeatureGate({
 
   const handleFeatureClick = async () => {
     await checkAndLogAccess(featureKey);
-    
+
     if (!access) {
       toast({
         title: 'Fonctionnalité non disponible',
@@ -54,7 +54,7 @@ export function FeatureGate({
       </div>
 
       {/* Overlay de blocage */}
-      <div 
+      <div
         className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm cursor-pointer"
         onClick={handleFeatureClick}
       >
@@ -85,7 +85,7 @@ export function FeatureGate({
 
             {showUpgradeButton && (
               <div className="space-y-2">
-                <Button 
+                <Button
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate('/vendeur/subscription');
@@ -96,7 +96,7 @@ export function FeatureGate({
                   <Crown className="w-4 h-4 mr-2" />
                   Mettre à niveau mon plan
                 </Button>
-                
+
                 <p className="text-xs text-muted-foreground">
                   Débloquez toutes les fonctionnalités premium
                 </p>

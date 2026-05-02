@@ -16,7 +16,7 @@ interface RideNotification {
 }
 
 export function useRideNotifications(userId: string | undefined, onNotification?: (notification: RideNotification) => void) {
-  
+
   const handleRideUpdate = useCallback((payload: any) => {
     if (!payload.new) return;
 
@@ -99,7 +99,7 @@ export function useRideNotifications(userId: string | undefined, onNotification?
     if (!payload.new) return;
 
     const tracking = payload.new;
-    
+
     // Notification silencieuse pour la mise à jour de position
     const notification: RideNotification = {
       type: 'driver_location_update',

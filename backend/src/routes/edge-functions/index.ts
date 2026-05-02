@@ -1,7 +1,7 @@
 /**
  * EDGE FUNCTIONS INDEX
  * Central routing for all migrated Edge Functions
- * 
+ *
  * Structure:
  * /edge-functions/auth/*        - Authentication (13 functions)
  * /edge-functions/payments/*    - Payments & Escrow (45 functions)

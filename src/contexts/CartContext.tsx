@@ -46,8 +46,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Utiliser le hook de persistence universel avec sauvegarde automatique
-  const { 
-    items: cartItems, 
+  const {
+    items: cartItems,
     addItem,
     removeItem,
     updateItem,
@@ -59,11 +59,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
+    if (item.item_type === 'digital_product') {
+      toast.info('Les produits numériques ne passent pas par le panier. Utilisez le bouton Acheter.');
+      return;
+    }
+
     const existingItem = cartItems.find(i => i.id === item.id);
-    
+
     // 🧠 Track pour recommandations
     trackCartAdd(item.id);
-    
+
     if (existingItem) {
       updateItem(item.id, { quantity: existingItem.quantity + 1 });
       toast.success('Quantité augmentée dans le panier');

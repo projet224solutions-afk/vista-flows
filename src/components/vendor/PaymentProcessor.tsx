@@ -12,8 +12,8 @@ import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CreditCard, Smartphone, Building, Globe, CheckCircle, XCircle,
-  Clock, AlertTriangle, Plus, Download, Eye, RefreshCw, Send
+  CreditCard, Smartphone, Building, _Globe, CheckCircle, XCircle,
+  _Clock, AlertTriangle, Plus, _Download, Eye, RefreshCw, Send
 } from "lucide-react";
 
 interface PaymentMethod {
@@ -131,6 +131,7 @@ export default function PaymentProcessor() {
   useEffect(() => {
     if (!user) return;
     fetchTransactions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchTransactions = async () => {
@@ -168,7 +169,7 @@ export default function PaymentProcessor() {
         }));
 
       setTransactions(formatted);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les transactions.",
@@ -241,7 +242,7 @@ export default function PaymentProcessor() {
       setShowPaymentDialog(false);
       setPaymentData({ amount: '', method: '', customer_email: '', notes: '' });
       toast({ title: "Paiement initié", description: "Le traitement du paiement a été initié." });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de traiter le paiement.",
@@ -259,7 +260,7 @@ export default function PaymentProcessor() {
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'processing' } : t));
       toast({ title: "Nouvelle tentative", description: "Une nouvelle tentative de paiement a été initiée." });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de relancer le paiement.",
@@ -277,7 +278,7 @@ export default function PaymentProcessor() {
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'refunded' } : t));
       toast({ title: "Remboursement effectué", description: "Le remboursement a été traité avec succès." });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de traiter le remboursement.",

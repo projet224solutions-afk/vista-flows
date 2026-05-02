@@ -35,9 +35,9 @@ interface Message {
   is_read: boolean;
 }
 
-export default function DeliveryChat({ 
-  deliveryId, 
-  recipientId, 
+export default function DeliveryChat({
+  deliveryId,
+  recipientId,
   recipientName,
   recipientRole,
   recipientAvatar,
@@ -131,6 +131,7 @@ export default function DeliveryChat({
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, deliveryId]);
 
   // Auto-scroll
@@ -159,14 +160,14 @@ export default function DeliveryChat({
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
-        
+
         <Avatar className="w-10 h-10">
           <AvatarImage src={recipientAvatar} />
           <AvatarFallback className="bg-primary/10 text-primary font-medium">
             {recipientName.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="font-semibold truncate">{recipientName}</h2>
@@ -178,7 +179,7 @@ export default function DeliveryChat({
             Livraison #{deliveryId.slice(0, 8)}
           </p>
         </div>
-        
+
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-9 w-9">
             <Phone className="w-4 h-4" />
@@ -212,8 +213,8 @@ export default function DeliveryChat({
                   <div
                     className={cn(
                       "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm",
-                      isOwn 
-                        ? "bg-primary text-primary-foreground rounded-br-md" 
+                      isOwn
+                        ? "bg-primary text-primary-foreground rounded-br-md"
                         : "bg-muted rounded-bl-md"
                     )}
                   >
@@ -250,8 +251,8 @@ export default function DeliveryChat({
             className="flex-1 bg-muted/50 border-0"
             disabled={loading}
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             size="icon"
             disabled={loading || !newMessage.trim()}
             className="h-10 w-10 flex-shrink-0 rounded-full"

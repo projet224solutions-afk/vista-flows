@@ -29,6 +29,40 @@ type TransferExecutionOptions = {
   feeAmount?: number;
 };
 
+type TransferWallet = {
+  id: string;
+  balance: number;
+  is_blocked?: boolean | null;
+  currency?: string | null;
+};
+
+async function ensureWalletForTransfer(userId: string, fallbackCurrency = 'GNF'): Promise<TransferWallet | null> {
+  const { data: existingWallet, error: existingError } = await supabaseAdmin
+    .from('wallets')
+    .select('id, balance, is_blocked, currency')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingWallet) return existingWallet as TransferWallet;
+
+  if (existingError) {
+    logger.warn(`[Wallet] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
+  }
+
+  const { data: createdWallet, error: createError } = await supabaseAdmin
+    .from('wallets')
+    .insert({ user_id: userId, balance: 0, currency: fallbackCurrency })
+    .select('id, balance, is_blocked, currency')
+    .single();
+
+  if (createError || !createdWallet) {
+    logger.error(`[Wallet] Wallet auto-create failed for ${userId}: ${createError?.message || 'no wallet returned'}`);
+    return null;
+  }
+
+  return createdWallet as TransferWallet;
+}
+
 function smartRoundTransferAmount(amount: number, currency: string): number {
   if (!Number.isFinite(amount)) return 0;
   return ZERO_DECIMAL_CURRENCIES.has(String(currency || '').toUpperCase())
@@ -440,31 +474,18 @@ export async function transferBetweenWallets(
       return { success: true };
     }
 
-    // Record idempotency key early to prevent duplicate transfers on crash/retry
-    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
-
     const suspect = await detectSuspiciousActivity(senderId, amount);
     if (suspect.shouldBlock) {
       return { success: false, error: 'Transfert bloqué pour activité suspecte' };
     }
 
-    const { data: senderWallet, error: senderErr } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance, is_blocked, currency')
-      .eq('user_id', senderId)
-      .single();
-
-    if (senderErr || !senderWallet) return { success: false, error: 'Wallet expéditeur introuvable' };
+    const senderWallet = await ensureWalletForTransfer(senderId, options.senderCurrency || 'GNF');
+    if (!senderWallet) return { success: false, error: 'Wallet expéditeur indisponible' };
     if (senderWallet.is_blocked) return { success: false, error: 'Wallet expéditeur bloqué' };
     if (Number(senderWallet.balance) < amount) return { success: false, error: 'Solde insuffisant' };
 
-    const { data: receiverWallet, error: receiverErr } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance, currency')
-      .eq('user_id', receiverId)
-      .single();
-
-    if (receiverErr || !receiverWallet) return { success: false, error: 'Wallet destinataire introuvable' };
+    const receiverWallet = await ensureWalletForTransfer(receiverId, options.receiverCurrency || senderWallet.currency || 'GNF');
+    if (!receiverWallet) return { success: false, error: 'Wallet destinataire indisponible' };
 
     const senderCurrency = String(options.senderCurrency || senderWallet.currency || 'GNF').toUpperCase();
     const receiverCurrency = String(options.receiverCurrency || receiverWallet.currency || senderCurrency).toUpperCase();
@@ -516,6 +537,7 @@ export async function transferBetweenWallets(
           rateSource,
           feeAmount,
         });
+        await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
         logger.info(`[Wallet] Transfer via RPC: sender=${senderId}, receiver=${receiverId}, debit=${amount}, credit=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
         return { success: true, transactionId: txId };
       }
@@ -567,6 +589,7 @@ export async function transferBetweenWallets(
       rateSource,
       feeAmount,
     });
+    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
     logger.info(`[Wallet] Transfer manual: sender=${senderId}, receiver=${receiverId}, debit=${amount}, credit=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
     return { success: true };
   } catch (err: any) {

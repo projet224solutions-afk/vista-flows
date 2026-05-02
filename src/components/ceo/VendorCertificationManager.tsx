@@ -6,23 +6,23 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Shield,
+  CheckCircle2,
+  XCircle,
   AlertTriangle,
   Search,
-  Filter,
-  FileText,
-  TrendingUp,
+  _Filter,
+  _FileText,
+  _TrendingUp,
   Users
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { _Badge } from '@/components/ui/badge';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -52,7 +52,7 @@ export function VendorCertificationManager() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<VendorCertificationStatus | 'ALL'>('ALL');
-  
+
   // Dialog state
   const [selectedVendor, setSelectedVendor] = useState<VendorWithCertification | null>(null);
   const [dialogAction, setDialogAction] = useState<'CERTIFY' | 'SUSPEND' | 'REJECT' | null>(null);
@@ -86,12 +86,12 @@ export function VendorCertificationManager() {
       }
 
       // Fetch certifications separately (may fail due to RLS - that's ok)
-      let certificationsMap: Record<string, any> = {};
+      const certificationsMap: Record<string, any> = {};
       try {
         const { data: certsData, error: certsError } = await supabase
           .from('vendor_certifications')
           .select('*');
-        
+
         if (!certsError && certsData) {
           certsData.forEach(cert => {
             certificationsMap[cert.vendor_id] = cert;
@@ -164,7 +164,7 @@ export function VendorCertificationManager() {
 
     // Status filter
     if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(vendor => 
+      filtered = filtered.filter(vendor =>
         vendor.certification?.status === statusFilter ||
         (!vendor.certification && statusFilter === 'NON_CERTIFIE')
       );
@@ -191,10 +191,10 @@ export function VendorCertificationManager() {
       if (error) throw error;
 
       toast.success(data.message);
-      
+
       // Reload vendors
       await loadVendors();
-      
+
       // Close dialog
       setSelectedVendor(null);
       setDialogAction(null);
@@ -364,8 +364,8 @@ export function VendorCertificationManager() {
                     {/* Avatar */}
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white font-bold flex-shrink-0">
                       {vendor.avatar_url ? (
-                        <img 
-                          src={vendor.avatar_url} 
+                        <img
+                          src={vendor.avatar_url}
                           alt={vendor.full_name}
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -379,7 +379,7 @@ export function VendorCertificationManager() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{vendor.full_name}</h3>
                         {vendor.certification && (
-                          <CertifiedVendorBadge 
+                          <CertifiedVendorBadge
                             status={vendor.certification.status}
                           />
                         )}
@@ -388,7 +388,7 @@ export function VendorCertificationManager() {
                       <p className="text-xs text-muted-foreground mt-1">
                         Inscrit le {new Date(vendor.created_at).toLocaleDateString('fr-FR')}
                       </p>
-                      
+
                       {/* Notes internes */}
                       {vendor.certification?.internal_notes && (
                         <div className="mt-2 p-2 bg-muted rounded text-xs">
@@ -396,7 +396,7 @@ export function VendorCertificationManager() {
                           {vendor.certification.internal_notes}
                         </div>
                       )}
-                      
+
                       {/* Raison rejet */}
                       {vendor.certification?.rejection_reason && (
                         <div className="mt-2 p-2 bg-red-50 text-red-700 rounded text-xs">
@@ -420,7 +420,7 @@ export function VendorCertificationManager() {
                         Certifier
                       </Button>
                     )}
-                    
+
                     {vendor.certification?.status === 'CERTIFIE' && (
                       <Button
                         size="sm"
@@ -431,7 +431,7 @@ export function VendorCertificationManager() {
                         Suspendre
                       </Button>
                     )}
-                    
+
                     {vendor.certification && vendor.certification.status !== 'NON_CERTIFIE' && (
                       <Button
                         size="sm"
@@ -509,7 +509,7 @@ export function VendorCertificationManager() {
               onClick={handleCertificationAction}
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason)}
               className={
-                dialogAction === 'CERTIFY' 
+                dialogAction === 'CERTIFY'
                   ? 'bg-green-600 hover:bg-green-700'
                   : dialogAction === 'SUSPEND'
                   ? 'bg-red-600 hover:bg-red-700'

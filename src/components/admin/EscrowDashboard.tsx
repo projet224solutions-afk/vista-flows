@@ -89,10 +89,10 @@ export function EscrowDashboard() {
             notes: `Libération manuelle par admin - Commission ${commissionPercent}%`
           }
         });
-        
+
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de la libération');
-        
+
         toast.success("Fonds libérés avec succès");
       } else if (actionType === "refund") {
         // Utiliser la fonction Edge pour rembourser l'escrow
@@ -102,10 +102,10 @@ export function EscrowDashboard() {
             notes: 'Remboursement manuel par admin'
           }
         });
-        
+
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors du remboursement');
-        
+
         toast.success("Remboursement effectué");
       } else if (actionType === "hold") {
         // Utiliser la fonction Edge pour ouvrir un litige
@@ -115,13 +115,13 @@ export function EscrowDashboard() {
             reason: 'Litige ouvert par admin'
           }
         });
-        
+
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de l\'ouverture du litige');
-        
+
         toast.success("Escrow mis en litige");
       }
-      
+
       await loadEscrows();
       setSelectedEscrow(null);
       setActionType(null);

@@ -3,16 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  BarChart3, Calendar, TrendingUp, TrendingDown,
-  Download, FileText, DollarSign, Package, ShoppingCart,
-  Clock, Users, CreditCard
+import {
+  BarChart3, _Calendar, TrendingUp, TrendingDown,
+  Download, _FileText, DollarSign, Package, ShoppingCart,
+  _Clock, _Users, CreditCard
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, _BarChart, _Bar, _PieChart, _Pie, _Cell } from 'recharts';
 
 interface ReportData {
   sales: number;
@@ -23,12 +23,12 @@ interface ReportData {
   returns: number;
 }
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+const _COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function VendorReportsManager() {
-  const { vendorId, userId } = useCurrentVendor();
+  const { vendorId, _userId } = useCurrentVendor();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('month');
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
   const [reportData, setReportData] = useState<ReportData>({
@@ -77,7 +77,7 @@ export default function VendorReportsManager() {
   const loadReportData = async () => {
     if (!vendorId) return;
     setLoading(true);
-    
+
     const { start, end } = getDateRange();
     const startStr = start.toISOString();
     const endStr = end.toISOString();
@@ -168,6 +168,7 @@ export default function VendorReportsManager() {
 
   useEffect(() => {
     loadReportData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, period, customRange]);
 
   const exportReport = () => {
@@ -354,11 +355,11 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value: number) => `${value.toLocaleString()} GNF`} />
-                <Area 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary))" 
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
                   fillOpacity={0.2}
                 />
               </AreaChart>

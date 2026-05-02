@@ -13,9 +13,9 @@ interface SearchBarProps {
   onCameraCapture?: (file: File) => void;
 }
 
-export default function SearchBar({ 
-  value, 
-  onChange, 
+export default function SearchBar({
+  value,
+  onChange,
   placeholder = "Rechercher des produits, services...",
   onFilter,
   showFilter = false,
@@ -48,7 +48,7 @@ export default function SearchBar({
           className="pl-10 pr-4 h-11"
         />
       </div>
-      
+
       {showCamera && (
         <>
           <input
@@ -59,8 +59,8 @@ export default function SearchBar({
             onChange={handleFileChange}
             className="hidden"
           />
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="icon"
             onClick={handleCameraClick}
             className="h-11 w-11 shrink-0 border-primary/30 hover:bg-primary/10"
@@ -70,10 +70,10 @@ export default function SearchBar({
           </Button>
         </>
       )}
-      
+
       {showFilter && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="icon"
           onClick={onFilter}
           className="h-11 w-11 shrink-0"

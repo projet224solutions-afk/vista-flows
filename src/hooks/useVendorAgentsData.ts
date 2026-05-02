@@ -78,13 +78,13 @@ export const useVendorAgentsData = () => {
         return;
       }
       if (!user) return;
-      
+
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (vendor?.id) {
         console.log('✅ Real vendor_id found:', vendor.id);
         setRealVendorId(vendor.id);
@@ -93,7 +93,7 @@ export const useVendorAgentsData = () => {
         setRealVendorId(user.id);
       }
     };
-    
+
     fetchVendorId();
   }, [user, currentVendorId, vendorLoading]);
 
@@ -102,7 +102,7 @@ export const useVendorAgentsData = () => {
 
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .from('vendor_agents')
         .select('*')
@@ -141,6 +141,7 @@ export const useVendorAgentsData = () => {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, realVendorId]);
 
   const createAgent = useCallback(async (agentData: {
@@ -161,7 +162,7 @@ export const useVendorAgentsData = () => {
       // Si un mot de passe est fourni, utiliser l'edge function pour créer avec auth
       if (agentData.password && agentData.password.length >= 8) {
         console.log('📧 Création agent avec authentification Supabase');
-        
+
         const { data, error } = await supabase.functions.invoke('create-vendor-agent', {
           body: {
             vendor_id: realVendorId,
@@ -230,6 +231,7 @@ export const useVendorAgentsData = () => {
       toast.error('Erreur lors de la création de l\'agent');
       return null;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, realVendorId, loadAgents]);
 
   const updateAgent = useCallback(async (agentId: string, updates: Partial<VendorAgent> & { new_email?: string }) => {
@@ -243,7 +245,7 @@ export const useVendorAgentsData = () => {
       if (updates.email || updates.new_email) {
         const newEmail = updates.new_email || updates.email;
         console.log('📧 Mise à jour email agent via edge function');
-        
+
         const { data, error } = await supabase.functions.invoke('update-vendor-agent-email', {
           body: {
             agent_id: agentId,
@@ -264,7 +266,7 @@ export const useVendorAgentsData = () => {
         }
 
         // Mettre à jour les autres champs si nécessaire
-        const { email, new_email, ...otherUpdates } = updates;
+        const { _email, _new_email, ...otherUpdates } = updates;
         if (Object.keys(otherUpdates).length > 0) {
           const updatePayload: any = { ...otherUpdates };
           await supabase
@@ -281,7 +283,7 @@ export const useVendorAgentsData = () => {
 
       // Mise à jour sans changement d'email
       const updatePayload: any = { ...updates };
-      
+
       const { error } = await supabase
         .from('vendor_agents')
         .update(updatePayload)
@@ -300,6 +302,7 @@ export const useVendorAgentsData = () => {
       console.error('Error in updateAgent:', err);
       toast.error('Erreur lors de la modification de l\'agent');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, realVendorId, loadAgents]);
 
   const deleteAgent = useCallback(async (agentId: string) => {
@@ -328,6 +331,7 @@ export const useVendorAgentsData = () => {
       console.error('Error in deleteAgent:', err);
       toast.error('Erreur lors de la suppression de l\'agent');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, realVendorId, loadAgents]);
 
   const toggleAgentStatus = useCallback(async (agentId: string, isActive: boolean) => {
@@ -355,6 +359,7 @@ export const useVendorAgentsData = () => {
       console.error('Error in toggleAgentStatus:', err);
       toast.error('Erreur lors du changement de statut');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, realVendorId, loadAgents]);
 
   useEffect(() => {

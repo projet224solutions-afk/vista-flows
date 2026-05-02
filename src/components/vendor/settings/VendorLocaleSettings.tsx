@@ -12,7 +12,7 @@ import { CurrencySelect } from '@/components/ui/currency-select';
 import { useToast } from '@/hooks/use-toast';
 
 export default function VendorLocaleSettings() {
-  const { language, currency, setCurrency, country, loading, refreshGeo } = useLocale();
+  const { _language, currency, setCurrency, country, loading, refreshGeo } = useLocale();
   const { toast } = useToast();
 
   const handleRefreshGeo = async () => {
@@ -23,9 +23,9 @@ export default function VendorLocaleSettings() {
     localStorage.removeItem('app_currency');
     localStorage.removeItem('user_country');
     localStorage.removeItem('geo_detection_cache');
-    
+
     await refreshGeo();
-    
+
     toast({
       title: "Position actualisée",
       description: "La langue et la devise ont été mises à jour selon votre position.",

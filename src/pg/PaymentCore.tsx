@@ -1,7 +1,7 @@
 ﻿/**
- * ­ƒÆ│ PAGE DE PAIEMENT PAYMENT CORE 224SOLUTIONS
+ * 💳 PAGE DE PAIEMENT PAYMENT CORE 224SOLUTIONS
  * Accessible via /payment-core
- * G├¿re tous types de paiements via le Payment Core centralis├®
+ * Gère tous types de paiements via le Payment Core centralisé
  */
 
 import React, { useState, useEffect } from 'react';
@@ -37,16 +37,16 @@ const paymentTypeLabels: Record<PaymentType, string> = {
 
 export default function PaymentCorePage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
-  // Param├¿tres URL
+  const _navigate = useNavigate();
+
+  // Paramètres URL
   const urlType = searchParams.get('type') as PaymentType | null;
   const urlAmount = searchParams.get('amount');
   const urlRef = searchParams.get('ref');
   const urlVendor = searchParams.get('vendor');
   const urlDesc = searchParams.get('desc');
 
-  // ├ëtats du formulaire
+  // États du formulaire
   const [showForm, setShowForm] = useState(!!urlType && !!urlAmount && !!urlRef);
   const [type, setType] = useState<PaymentType>(urlType || 'WALLET_TOPUP');
   const [amount, setAmount] = useState(urlAmount ? parseInt(urlAmount) : 10000);
@@ -54,7 +54,7 @@ export default function PaymentCorePage() {
   const [vendorId, setVendorId] = useState(urlVendor || '');
   const [description, setDescription] = useState(urlDesc || '');
 
-  // Si param├¿tres URL complets, afficher directement le formulaire
+  // Si paramètres URL complets, afficher directement le formulaire
   useEffect(() => {
     if (urlType && urlAmount && urlRef) {
       setShowForm(true);
@@ -85,8 +85,8 @@ export default function PaymentCorePage() {
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/30 py-8 px-4">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setShowForm(false)}
             >
@@ -124,15 +124,15 @@ export default function PaymentCorePage() {
             <Shield className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium text-primary">Payment Core 224Solutions</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Syst├¿me de Paiement Unifi├®</h1>
+          <h1 className="text-3xl font-bold mb-2">Système de Paiement Unifié</h1>
           <p className="text-muted-foreground">
-            Initiez un paiement s├®curis├® via Orange Money, MTN MoMo ou Carte
+            Initiez un paiement sécurisé via Orange Money, MTN MoMo ou Carte
           </p>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Types de paiements support├®s</CardTitle>
+            <CardTitle className="text-lg">Types de paiements supportés</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -142,8 +142,8 @@ export default function PaymentCorePage() {
                   onClick={() => setType(t)}
                   className={`
                     flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all
-                    ${type === t 
-                      ? 'border-primary bg-primary/5' 
+                    ${type === t
+                      ? 'border-primary bg-primary/5'
                       : 'border-muted hover:border-primary/50'
                     }
                   `}
@@ -188,7 +188,7 @@ export default function PaymentCorePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>R├®f├®rence unique</Label>
+              <Label>Référence unique</Label>
               <Input
                 value={referenceId}
                 onChange={(e) => setReferenceId(e.target.value)}
@@ -214,21 +214,21 @@ export default function PaymentCorePage() {
               />
             </div>
 
-            <Button 
-              onClick={handleStartPayment} 
+            <Button
+              onClick={handleStartPayment}
               className="w-full"
               size="lg"
               disabled={amount <= 0 || !referenceId}
             >
               <CreditCard className="mr-2 h-5 w-5" />
-              D├®marrer le paiement de {formatCurrency(amount)}
+              Démarrer le paiement de {formatCurrency(amount)}
             </Button>
           </CardContent>
         </Card>
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-lg">Int├®gration API</CardTitle>
+            <CardTitle className="text-lg">Intégration API</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-3">

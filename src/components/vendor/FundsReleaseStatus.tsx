@@ -7,26 +7,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  _Table,
+  _TableBody,
+  _TableCell,
+  _TableHead,
+  _TableHeader,
+  _TableRow,
 } from '@/components/ui/table';
-import { 
-  Clock, 
-  CheckCircle, 
+import {
+  Clock,
+  CheckCircle,
   AlertTriangle,
   Shield,
   TrendingUp,
@@ -62,11 +62,11 @@ export function FundsReleaseStatus() {
   const [releases, setReleases] = useState<FundsRelease[]>([]);
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [_userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUserData();
-    
+
     // Rafraîchir toutes les minutes
     const interval = setInterval(fetchUserData, 60000);
     return () => clearInterval(interval);
@@ -76,7 +76,7 @@ export function FundsReleaseStatus() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
+
       setUserId(user.id);
 
       // Récupérer le wallet avec gestion robuste des colonnes
@@ -91,7 +91,7 @@ export function FundsReleaseStatus() {
         setLoading(false);
         return;
       }
-      
+
       setWalletBalance({ ...wallet, total_received: 0, total_sent: 0 } as any);
 
       // Récupérer les libérations en cours
@@ -120,12 +120,12 @@ export function FundsReleaseStatus() {
         console.error('Releases error:', releasesError);
         return;
       }
-      
+
       // Valider et filtrer les données
       const validReleases = (releasesData || []).filter(release => {
         return release.stripe_transaction != null;
       }) as FundsRelease[];
-      
+
       setReleases(validReleases);
     } catch (error) {
       console.error('Error fetching funds release status:', error);
@@ -263,7 +263,7 @@ export function FundsReleaseStatus() {
             {releases.map((release) => {
               const isScheduled = release.status === 'SCHEDULED';
               const isPending = release.status === 'PENDING';
-              const progress = isScheduled 
+              const progress = isScheduled
                 ? calculateProgress(release.held_at, release.scheduled_release_at)
                 : 0;
 
@@ -358,8 +358,8 @@ export function FundsReleaseStatus() {
                 Système de protection des paiements
               </p>
               <p className="text-sm text-blue-700">
-                Pour votre sécurité, tous les paiements font l'objet d'une vérification automatique 
-                avant libération des fonds. Les paiements à faible risque sont libérés automatiquement 
+                Pour votre sécurité, tous les paiements font l'objet d'une vérification automatique
+                avant libération des fonds. Les paiements à faible risque sont libérés automatiquement
                 après un délai de 30 minutes à 2 heures.
               </p>
             </div>

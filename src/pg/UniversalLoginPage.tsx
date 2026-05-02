@@ -1,6 +1,6 @@
 ﻿/**
- * Page d'Authentification Am├®lior├®e
- * Connexion sociale + Email/T├®l├®phone
+ * Page d'Authentification Améliorée
+ * Connexion sociale + Email/Téléphone
  * Support: Client, Marchand, Livreur, Taxi Moto, Transitaire
  */
 

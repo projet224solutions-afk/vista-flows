@@ -27,8 +27,66 @@ async function ignoreSupabaseError(operation: PromiseLike<unknown> | unknown): P
   await Promise.resolve(operation).catch(() => undefined);
 }
 
+function isValidStripePublishableKey(key: string | undefined | null): key is string {
+  return Boolean(key?.trim().match(/^pk_(test|live)_[A-Za-z0-9]{20,}$/));
+}
+
+async function getConfiguredStripePublishableKey(): Promise<string | null> {
+  const envKey = (
+    process.env.STRIPE_PUBLISHABLE_KEY ||
+    process.env.STRIPE_PUBLIC_KEY ||
+    process.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+    ''
+  ).trim();
+
+  if (isValidStripePublishableKey(envKey)) {
+    return envKey;
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('stripe_config')
+      .select('stripe_publishable_key')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.warn(`[Stripe Config] stripe_config inaccessible: ${error.message}`);
+      return null;
+    }
+
+    const dbKey = data?.stripe_publishable_key?.trim();
+    return isValidStripePublishableKey(dbKey) ? dbKey : null;
+  } catch (error: any) {
+    logger.warn(`[Stripe Config] fallback stripe_config échoué: ${error?.message || 'unknown'}`);
+    return null;
+  }
+}
+
 // Apply payment rate limit to all payment routes
 router.use(paymentRateLimit);
+
+/**
+ * GET /api/payments/stripe/config
+ * Expose uniquement la clé publique Stripe au frontend.
+ * La clé secrète reste strictement côté backend.
+ */
+router.get('/stripe/config', async (_req, res: Response) => {
+  const publishableKey = await getConfiguredStripePublishableKey();
+
+  if (!publishableKey) {
+    res.status(503).json({
+      success: false,
+      error: 'Clé publique Stripe non configurée',
+    });
+    return;
+  }
+
+  res.json({
+    success: true,
+    publishableKey,
+  });
+});
 
 /**
  * GET /api/payments/link/:paymentId

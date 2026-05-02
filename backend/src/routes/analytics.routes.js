@@ -1,6 +1,6 @@
 /**
  * 📊 ANALYTICS ROUTES
- * 
+ *
  * Endpoints for analytics tracking and retrieval:
  * - POST /track/product-view    (public/semi-public)
  * - POST /track/shop-visit      (public/semi-public)
@@ -9,7 +9,7 @@
  */
 
 import { Router } from 'express';
-import { 
+import {
   handleProductView,
   handleShopVisit,
   handleGetVendorAnalytics,
@@ -72,20 +72,20 @@ router.post(
  * @query   period - 'today' | 'week' | 'month' | 'custom' (default: 'week')
  * @query   startDate - ISO date (required if period='custom')
  * @query   endDate - ISO date (required if period='custom')
- * 
+ *
  * @returns {
  *   success: boolean,
  *   data: {
  *     vendor: { id, name },
- *     shopVisits: { 
- *       total: number, 
- *       unique: number, 
+ *     shopVisits: {
+ *       total: number,
+ *       unique: number,
  *       trend: number (percentage change vs previous period),
  *       byDevice: { desktop, mobile, tablet }
  *     },
- *     productViews: { 
- *       total: number, 
- *       unique: number, 
+ *     productViews: {
+ *       total: number,
+ *       unique: number,
  *       trend: number,
  *       byDevice: { desktop, mobile, tablet }
  *     },
@@ -130,7 +130,7 @@ router.get(
  * @query   offset? - Pagination offset (default 0)
  * @query   sortBy? - 'views_total' | 'views_unique' | 'views_trend' | 'name' (default: 'views_total')
  * @query   sortDir? - 'asc' | 'desc' (default: 'desc')
- * 
+ *
  * @returns {
  *   success: boolean,
  *   data: {
@@ -147,11 +147,11 @@ router.get(
  *       countryBreakdown: { US: 10, FR: 5, ... },
  *       peakHour: number (0-23)
  *     }],
- *     pagination: { 
- *       limit: number, 
- *       offset: number, 
+ *     pagination: {
+ *       limit: number,
+ *       offset: number,
  *       total: number,
- *       hasMore: boolean 
+ *       hasMore: boolean
  *     },
  *     generatedAt: ISO date
  *   }

@@ -112,9 +112,9 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              {status === 'ok' && <CheckCircle className="h-5 w-5 text-green-500" />} 
-              {status === 'degraded' && <AlertTriangle className="h-5 w-5 text-orange-500" />} 
-              {status === 'down' && <XCircle className="h-5 w-5 text-red-500" />} 
+              {status === 'ok' && <CheckCircle className="h-5 w-5 text-green-500" />}
+              {status === 'degraded' && <AlertTriangle className="h-5 w-5 text-orange-500" />}
+              {status === 'down' && <XCircle className="h-5 w-5 text-red-500" />}
               <span className="text-2xl font-bold">
                 {status === 'ok' && 'Opérationnel'}
                 {status === 'degraded' && 'Dégradé'}

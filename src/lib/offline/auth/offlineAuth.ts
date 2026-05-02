@@ -60,7 +60,7 @@ export interface AuthResult {
 /**
  * Vérifier si un utilisateur est verrouillé
  */
-function isUserLocked(userId: string, config: OfflineAuthConfig = DEFAULT_CONFIG): {
+function isUserLocked(userId: string, _config: OfflineAuthConfig = DEFAULT_CONFIG): {
   locked: boolean;
   lockedUntil?: Date;
 } {

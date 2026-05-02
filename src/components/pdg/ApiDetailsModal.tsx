@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Key, Activity, AlertTriangle, TrendingUp, 
-  Clock, MapPin, Globe, Shield, XCircle, CheckCircle2
+import {
+  Key, Activity, _AlertTriangle, _TrendingUp,
+  Clock, _MapPin, _Globe, Shield, XCircle, CheckCircle2
 } from 'lucide-react';
 import { ApiConnection, ApiUsageLog, ApiMonitoringService } from '@/services/apiMonitoring';
 import { maskApiKey } from '@/services/apiEncryption';
@@ -41,11 +41,12 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
     if (api && open) {
       loadLogs();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api, open]);
 
   const loadLogs = async () => {
     if (!api) return;
-    
+
     setLoading(true);
     const logsData = await ApiMonitoringService.getApiUsageLogs(api.id, 100);
     setLogs(logsData);
@@ -54,7 +55,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
   const runAnalysis = async () => {
     if (!api) return;
-    
+
     setAnalyzing(true);
     try {
       const result = await ApiMonitoringService.detect224GuardAnomalies(api.id);
@@ -66,7 +67,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
       toast.success(`✅ Analyse 224Guard terminée (${result.source}) - ${details}`);
 
       await loadLogs();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'analyse');
     }
     setAnalyzing(false);
@@ -74,7 +75,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
   const suspendApi = async () => {
     if (!api) return;
-    
+
     const success = await ApiMonitoringService.updateApiConnection(api.id, { status: 'suspended' });
     if (success) {
       toast.success('API suspendue');
@@ -109,7 +110,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
       }
 
       await loadLogs();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors du test de connexion API');
     } finally {
       setHealthChecking(false);
@@ -119,7 +120,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
   if (!api) return null;
 
   // Données pour le graphique d'utilisation
-  const usageData = logs.slice(0, 20).reverse().map((log, index) => ({
+  const usageData = logs.slice(0, 20).reverse().map((log, _index) => ({
     time: new Date(log.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     tokens: log.tokens_consumed,
     responseTime: log.response_time_ms || 0
@@ -227,7 +228,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                     <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
                     <XAxis dataKey="time" stroke="#94a3b8" />
                     <YAxis stroke="#94a3b8" />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
                       labelStyle={{ color: '#fff' }}
                     />

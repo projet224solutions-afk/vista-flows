@@ -13,7 +13,7 @@ let messaging: Messaging | null = null;
 let currentToken: string | null = null;
 
 // VAPID Key pour les notifications web (à configurer dans Firebase Console)
-const VAPID_KEY = 'YOUR_VAPID_KEY'; // Sera récupéré via edge function
+const _VAPID_KEY = 'YOUR_VAPID_KEY'; // Sera récupéré via edge function
 
 /**
  * Initialise Firebase Cloud Messaging
@@ -21,11 +21,11 @@ const VAPID_KEY = 'YOUR_VAPID_KEY'; // Sera récupéré via edge function
 export async function initializeMessaging(): Promise<boolean> {
   try {
     console.log('[FCM] 🚀 Début initialisation FCM...');
-    
+
     // Attendre que Firebase soit prêt
     const firebaseReady = await waitForFirebase();
     console.log('[FCM] Firebase ready:', firebaseReady);
-    
+
     if (!firebaseReady) {
       console.warn('⚠️ Firebase non disponible, FCM désactivé');
       return false;
@@ -71,11 +71,11 @@ export async function initializeMessaging(): Promise<boolean> {
 export async function requestNotificationPermission(): Promise<string | null> {
   try {
     console.log('[FCM] 📢 Demande permission notification...');
-    
+
     // Demander la permission
     const permission = await Notification.requestPermission();
     console.log('[FCM] Permission reçue:', permission);
-    
+
     if (permission !== 'granted') {
       console.warn('⚠️ Permission notification refusée');
       return null;
@@ -90,14 +90,14 @@ export async function requestNotificationPermission(): Promise<string | null> {
     console.log('[FCM] 🌐 Récupération config Firebase...');
     // Récupérer la config Firebase et VAPID key depuis l'edge function
     const { data: config, error: configError } = await supabase.functions.invoke('firebase-config');
-    
+
     if (configError) {
       console.error('❌ Erreur appel firebase-config:', configError);
       return null;
     }
-    
+
     console.log('[FCM] Config reçue:', { configured: config?.configured, hasVapidKey: !!config?.vapidKey });
-    
+
     if (!config?.configured) {
       console.warn('⚠️ Config Firebase non disponible:', config);
       return null;
@@ -109,9 +109,9 @@ export async function requestNotificationPermission(): Promise<string | null> {
       console.warn('La VAPID key doit être la "Web Push certificates key pair" depuis Firebase Console > Project Settings > Cloud Messaging');
       return null;
     }
-    
+
     console.log('[FCM] ✅ VAPID key présente, longueur:', vapidKey.length);
-    
+
     // Vérifier le format de la VAPID key (devrait être ~87-88 caractères base64)
     if (vapidKey.length < 80) {
       console.error('❌ VAPID key invalide - format incorrect (trop courte). Longueur:', vapidKey.length);
@@ -127,7 +127,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
       console.log('[FCM] Aucun SW trouvé, enregistrement...');
       registration = await navigator.serviceWorker.register('/service-worker.js');
     }
-    
+
     console.log('[FCM] ✅ Service Worker:', registration.active?.state);
 
     // Attendre que le SW soit prêt
@@ -299,7 +299,7 @@ function playNotificationSound(type: 'emergency' | 'transaction' | 'message' | '
     const audio = new Audio(soundMap[type] || soundMap.default);
     audio.volume = type === 'emergency' ? 0.8 : 0.5;
     audio.play().catch(() => {});
-  } catch (error) {
+  } catch (_error) {
     console.warn('Son non disponible');
   }
 }

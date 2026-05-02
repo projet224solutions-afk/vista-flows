@@ -13,9 +13,9 @@ interface TransitaireKYCStatusProps {
   className?: string;
 }
 
-export function TransitaireKYCStatus({ 
-  status = 'unverified', 
-  className = '' 
+export function TransitaireKYCStatus({
+  status = 'unverified',
+  className = ''
 }: TransitaireKYCStatusProps) {
   const navigate = useNavigate();
 

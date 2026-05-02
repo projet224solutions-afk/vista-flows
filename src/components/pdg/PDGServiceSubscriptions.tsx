@@ -20,11 +20,11 @@ import {
 } from '@/services/serviceSubscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
-import { 
-  DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift,
+import {
+  DollarSign, History, TrendingUp, Users, _Edit, RefreshCw, Gift,
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
-  BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
+  BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, _Filter,
   Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2, ClipboardCheck, UserCheck
 } from 'lucide-react';
 import { PDGServiceProvidersList } from './services/PDGServiceProvidersList';
@@ -116,13 +116,14 @@ export default function PDGServiceSubscriptions() {
   });
   const { toast } = useToast();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       console.log('[PDGServiceSubscriptions] Loading data...');
-      
+
       const [plansData, historyData, statsData, subsData] = await Promise.all([
         ServiceSubscriptionService.getPlans(),
         ServiceSubscriptionService.getPriceHistory(),
@@ -165,7 +166,7 @@ export default function PDGServiceSubscriptions() {
   // Stats per service type
   const serviceTypeStats = useMemo(() => {
     const statsMap: Record<string, { active: number; expired: number; cancelled: number; total: number; revenue: number; name: string; code: string }> = {};
-    
+
     serviceTypes.forEach(st => {
       statsMap[st.id] = { active: 0, expired: 0, cancelled: 0, total: 0, revenue: 0, name: st.name, code: st.code };
     });
@@ -186,7 +187,7 @@ export default function PDGServiceSubscriptions() {
   // Filtered subscriptions
   const filteredSubscriptions = useMemo(() => {
     if (activeServiceTab === 'all') return subscriptions;
-    return subscriptions.filter(sub => 
+    return subscriptions.filter(sub =>
       sub.professional_services?.service_type_id === activeServiceTab
     );
   }, [subscriptions, activeServiceTab]);
@@ -340,9 +341,9 @@ export default function PDGServiceSubscriptions() {
     );
   }
 
-  const currentStats = activeServiceTab === 'all' 
-    ? stats 
-    : serviceTypeStats[activeServiceTab] 
+  const currentStats = activeServiceTab === 'all'
+    ? stats
+    : serviceTypeStats[activeServiceTab]
       ? {
           total_subscriptions: serviceTypeStats[activeServiceTab].total,
           active_subscriptions: serviceTypeStats[activeServiceTab].active,
@@ -466,8 +467,8 @@ export default function PDGServiceSubscriptions() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {currentStats.total_subscriptions > 0 
-                  ? ((currentStats.active_subscriptions / currentStats.total_subscriptions) * 100).toFixed(0) 
+                {currentStats.total_subscriptions > 0
+                  ? ((currentStats.active_subscriptions / currentStats.total_subscriptions) * 100).toFixed(0)
                   : 0}%
               </div>
             </CardContent>
@@ -481,11 +482,11 @@ export default function PDGServiceSubscriptions() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {activeServiceTab === 'all' 
+                {activeServiceTab === 'all'
                   ? ServiceSubscriptionService.formatAmount(stats.monthly_revenue || 0)
                   : ServiceSubscriptionService.formatAmount(
-                      currentStats.total_subscriptions > 0 
-                        ? Math.round(currentStats.total_revenue / currentStats.total_subscriptions) 
+                      currentStats.total_subscriptions > 0
+                        ? Math.round(currentStats.total_revenue / currentStats.total_subscriptions)
                         : 0
                     )
                 }
@@ -504,7 +505,7 @@ export default function PDGServiceSubscriptions() {
               {activeServiceTypes.map(st => {
                 const stStats = serviceTypeStats[st.id];
                 const colorClass = SERVICE_COLORS[st.code] || 'from-gray-500/20 to-gray-600/10 border-gray-500/30';
-                
+
                 return (
                   <Card
                     key={st.id}
@@ -603,7 +604,7 @@ export default function PDGServiceSubscriptions() {
                   : 'Tous les Abonnements Services'}
               </CardTitle>
               <CardDescription>
-                {filteredSubscriptions.length} abonnement(s) 
+                {filteredSubscriptions.length} abonnement(s)
                 {activeServiceTab !== 'all' && ` pour ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`}
               </CardDescription>
             </CardHeader>
@@ -707,7 +708,7 @@ export default function PDGServiceSubscriptions() {
                   : "Plans d'Abonnement — Tous les Services"}
               </CardTitle>
               <CardDescription>
-                {activeServiceTab !== 'all' 
+                {activeServiceTab !== 'all'
                   ? `Plans spécifiques au service ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
                   : 'Plans unifiés pour tous les types de services professionnels'}
               </CardDescription>

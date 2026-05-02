@@ -60,7 +60,7 @@ export const usePDGCopilot = () => {
     } catch (err: any) {
       console.error('[usePDGCopilot] Erreur:', err);
       setError(err.message || 'Erreur lors de l\'analyse');
-      
+
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: `❌ Erreur: ${err.message || 'Impossible de traiter votre demande'}`,
@@ -81,7 +81,7 @@ export const usePDGCopilot = () => {
 
     try {
       const analysis = await PDGCopilotService.analyzeVendor(vendorId);
-      
+
       if (!analysis) {
         throw new Error('Vendeur non trouvé');
       }
@@ -114,7 +114,7 @@ export const usePDGCopilot = () => {
 
     try {
       const analysis = await PDGCopilotService.analyzeCustomer(customerId);
-      
+
       if (!analysis) {
         throw new Error('Client non trouvé');
       }
@@ -147,7 +147,7 @@ export const usePDGCopilot = () => {
 
     try {
       const summary = await PDGCopilotService.getFinancialSummary(startDate, endDate);
-      
+
       if (!summary) {
         throw new Error('Impossible de récupérer le résumé financier');
       }
@@ -202,7 +202,7 @@ export const usePDGCopilot = () => {
  */
 function formatVendorAnalysis(analysis: VendorAnalysis): string {
   const riskEmoji = analysis.risk_level === 'high' ? '🔴' : analysis.risk_level === 'medium' ? '🟡' : '🟢';
-  
+
   return `
 📊 **ANALYSE VENDEUR**
 
@@ -261,7 +261,7 @@ ${generateVendorRecommendations(analysis)}
  */
 function formatCustomerAnalysis(analysis: CustomerAnalysis): string {
   const riskEmoji = analysis.risk_level === 'high' ? '🔴' : analysis.risk_level === 'medium' ? '🟡' : '🟢';
-  
+
   return `
 👤 **ANALYSE CLIENT**
 
@@ -315,12 +315,12 @@ function formatFinancialSummary(summary: FinancialSummary): string {
 • Paiements échoués: ${summary.failed_payments}
 
 **Moyens de paiement**
-${summary.payment_methods.map(pm => 
+${summary.payment_methods.map(pm =>
   `• ${pm.method}: ${pm.count} transactions (${pm.amount.toLocaleString()} FCFA)`
 ).join('\n')}
 
 **Top 10 Vendeurs**
-${summary.top_vendors.map((v, i) => 
+${summary.top_vendors.map((v, i) =>
   `${i + 1}. ${v.shop_name}: ${v.revenue.toLocaleString()} FCFA`
 ).join('\n')}
   `.trim();

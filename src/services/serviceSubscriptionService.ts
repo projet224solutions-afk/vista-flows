@@ -114,7 +114,7 @@ export class ServiceSubscriptionService {
         const features = plan.features;
         return {
           ...plan,
-          features: Array.isArray(features) 
+          features: Array.isArray(features)
             ? (features as string[])
             : (typeof features === 'string' ? JSON.parse(features) : [])
         };
@@ -145,7 +145,7 @@ export class ServiceSubscriptionService {
       const features = subscription.features;
       return {
         ...subscription,
-        features: Array.isArray(features) 
+        features: Array.isArray(features)
           ? features as string[]
           : (typeof features === 'string' ? JSON.parse(features) : [])
       } as ActiveServiceSubscription;
@@ -321,7 +321,7 @@ export class ServiceSubscriptionService {
       // Mettre à jour le prix
       const { error: updateError } = await supabase
         .from('service_plans')
-        .update({ 
+        .update({
           monthly_price_gnf: newPrice,
           updated_at: new Date().toISOString()
         })
@@ -405,7 +405,7 @@ export class ServiceSubscriptionService {
     try {
       const { error } = await supabase
         .from('service_subscriptions')
-        .update({ 
+        .update({
           status: 'cancelled',
           auto_renew: false,
           cancelled_at: new Date().toISOString(),
@@ -432,7 +432,7 @@ export class ServiceSubscriptionService {
     try {
       const { data, error } = await supabase
         .from('service_subscriptions')
-        .update({ 
+        .update({
           status: 'expired',
           updated_at: new Date().toISOString()
         })

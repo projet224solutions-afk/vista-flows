@@ -8,7 +8,7 @@ import { formatCurrency as formatCurrencyLib } from '@/lib/formatters';
 // PAYMENT STATUS & TYPES
 // =====================================================
 
-export type PaymentStatus = 
+export type PaymentStatus =
   | 'PENDING'
   | 'PROCESSING'
   | 'SUCCEEDED'
@@ -17,19 +17,19 @@ export type PaymentStatus =
   | 'REFUNDED'
   | 'DISPUTED';
 
-export type TransactionType = 
+export type TransactionType =
   | 'PAYMENT'
   | 'COMMISSION'
   | 'WITHDRAWAL'
   | 'REFUND'
   | 'CHARGEBACK';
 
-export type WalletStatus = 
+export type WalletStatus =
   | 'ACTIVE'
   | 'FROZEN'
   | 'SUSPENDED';
 
-export type WithdrawalStatus = 
+export type WithdrawalStatus =
   | 'PENDING'
   | 'PROCESSING'
   | 'COMPLETED'
@@ -44,42 +44,42 @@ export interface StripeTransaction {
   id: string;
   stripe_payment_intent_id: string;
   stripe_charge_id: string | null;
-  
+
   // Utilisateurs
   buyer_id: string;
   seller_id: string;
-  
+
   // Montants (en centimes)
   amount: number;
   currency: string;
-  
+
   // Commission
   commission_rate: number;
   commission_amount: number;
   seller_net_amount: number;
-  
+
   // Statut
   status: PaymentStatus;
-  
+
   // Metadata
   order_id: string | null;
   service_id: string | null;
   product_id: string | null;
   metadata: Record<string, any>;
-  
+
   // Paiement
   payment_method: string | null;
   last4: string | null;
   card_brand: string | null;
-  
+
   // 3D Secure
   requires_3ds: boolean;
   three_ds_status: string | null;
-  
+
   // Erreurs
   error_code: string | null;
   error_message: string | null;
-  
+
   // Dates
   paid_at: string | null;
   refunded_at: string | null;
@@ -94,24 +94,24 @@ export interface StripeTransaction {
 export interface Wallet {
   id: string;
   user_id: string;
-  
+
   // Soldes (en centimes)
   available_balance: number;
   pending_balance: number;
   frozen_balance: number;
-  
+
   currency: string;
   status: WalletStatus;
-  
+
   // Stats
   total_earned: number;
   total_withdrawn: number;
   total_transactions: number;
-  
+
   // Vérification
   is_verified: boolean;
   verification_level: string | null;
-  
+
   created_at: string;
   updated_at: string;
 }
@@ -123,22 +123,22 @@ export interface Wallet {
 export interface WalletTransaction {
   id: string;
   wallet_id: string;
-  
+
   type: TransactionType;
   amount: number;
   currency: string;
-  
+
   description: string | null;
-  
+
   // Références
   stripe_transaction_id: string | null;
   order_id: string | null;
   service_id: string | null;
-  
+
   // Solde avant/après
   balance_before: number;
   balance_after: number;
-  
+
   metadata: Record<string, any>;
   created_at: string;
 }
@@ -151,30 +151,30 @@ export interface Withdrawal {
   id: string;
   wallet_id: string;
   user_id: string;
-  
+
   amount: number;
   currency: string;
   status: WithdrawalStatus;
-  
+
   destination_type: string; // bank_account, mobile_money, stripe_payout
   destination_details: Record<string, any>;
-  
+
   stripe_payout_id: string | null;
   external_reference: string | null;
-  
+
   fee_amount: number;
   net_amount: number;
-  
+
   requested_at: string;
   processed_at: string | null;
   completed_at: string | null;
-  
+
   error_message: string | null;
-  
+
   requires_approval: boolean;
   approved_by: string | null;
   approved_at: string | null;
-  
+
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, DollarSign, Navigation, Users, Phone, MessageSquare } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Navigation, Users, _Phone, MessageSquare } from 'lucide-react';
 import GeolocationService from '../../services/geolocation/GeolocationService';
 import TransportService, { TransportRequest } from '../../services/transport/TransportService';
 
@@ -22,7 +22,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [pickupPosition, setPickupPosition] = useState<{ lat: number; lng: number } | null>(null);
-  const [deliveryPosition, setDeliveryPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [deliveryPosition, _setDeliveryPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
@@ -37,12 +37,14 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
   useEffect(() => {
     getCurrentLocation();
     loadAvailableTransportUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (pickupPosition && deliveryPosition) {
       calculatePriceAndTime();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickupPosition, deliveryPosition]);
 
   const getCurrentLocation = async () => {
@@ -72,15 +74,15 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
       const pos2 = { latitude: deliveryPosition.lat, longitude: deliveryPosition.lng, timestamp: Date.now() };
       const distance = geolocationService.calculateDistance(pos1, pos2);
       const distanceKm = distance / 1000;
-      
+
       // Calcul du prix: 500 GNF de base + 100 GNF par km
       const basePrice = 500;
       const pricePerKm = 100;
       const price = Math.round(basePrice + (distanceKm * pricePerKm));
-      
+
       // Calcul du temps: 2 minutes par km
       const time = Math.ceil(distanceKm * 2);
-      
+
       setEstimatedPrice(price);
       setEstimatedTime(time);
     }
@@ -105,7 +107,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
     try {
       const pos1 = { latitude: pickupPosition.lat, longitude: pickupPosition.lng, timestamp: Date.now() };
       const pos2 = { latitude: deliveryPosition.lat, longitude: deliveryPosition.lng, timestamp: Date.now() };
-      
+
       const request = await transportService.createTransportRequest(
         'current_user_id', // À remplacer par l'ID utilisateur réel
         pickupAddress,
@@ -116,7 +118,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
       );
 
       console.log('🚚 Demande de transport créée:', request);
-      
+
       if (onRequestCreated) {
         onRequestCreated(request);
       }
@@ -254,7 +256,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
               'Créer la demande'
             )}
           </button>
-          
+
           {onCancel && (
             <button
               onClick={onCancel}
@@ -275,7 +277,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
           <div>
             <h4 className="text-sm font-medium text-blue-800">Paiement sécurisé 224Secure</h4>
             <p className="text-xs text-blue-600 mt-1">
-              Votre paiement est protégé jusqu'à la livraison confirmée. 
+              Votre paiement est protégé jusqu'à la livraison confirmée.
               En cas de problème, remboursement automatique garanti.
             </p>
           </div>

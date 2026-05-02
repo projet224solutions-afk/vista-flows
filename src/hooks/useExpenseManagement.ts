@@ -89,7 +89,7 @@ export function useExpenseManagement(vendorId?: string) {
   const updateExpense = useCallback(async (id: string, updates: Partial<VendorExpense>) => {
     try {
       const updatedExpense = await expenseService.updateExpense(id, updates);
-      setExpenses(prev => prev.map(expense => 
+      setExpenses(prev => prev.map(expense =>
         expense.id === id ? updatedExpense : expense
       ));
       toast.success('Dépense mise à jour avec succès');

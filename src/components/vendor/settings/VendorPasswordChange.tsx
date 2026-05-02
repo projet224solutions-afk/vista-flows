@@ -33,18 +33,18 @@ export default function VendorPasswordChange() {
     const checkAuthMethod = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (user) {
           // Vérifier les identités de l'utilisateur (OAuth providers)
           const identities = user.identities || [];
-          const oauthIdentity = identities.find(id => 
-            id.provider === 'google' || 
-            id.provider === 'facebook' || 
+          const oauthIdentity = identities.find(id =>
+            id.provider === 'google' ||
+            id.provider === 'facebook' ||
             id.provider === 'twitter' ||
             id.provider === 'github' ||
             id.provider === 'apple'
           );
-          
+
           if (oauthIdentity) {
             setIsOAuthUser(true);
             setOauthProvider(oauthIdentity.provider);
@@ -136,16 +136,16 @@ export default function VendorPasswordChange() {
         return;
       }
 
-      toast.success(isOAuthUser 
+      toast.success(isOAuthUser
         ? "Mot de passe défini avec succès ! Vous pouvez maintenant vous connecter avec email + mot de passe."
         : "Mot de passe modifié avec succès"
       );
-      
+
       // Réinitialiser les champs
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       // Si c'était un utilisateur OAuth, il a maintenant un mot de passe
       if (isOAuthUser) {
         setIsOAuthUser(false);
@@ -213,7 +213,7 @@ export default function VendorPasswordChange() {
           {isOAuthUser ? 'Définir un mot de passe' : 'Modifier le mot de passe'}
         </CardTitle>
         <CardDescription>
-          {isOAuthUser 
+          {isOAuthUser
             ? 'Vous êtes connecté via ' + getProviderName() + '. Définissez un mot de passe pour pouvoir aussi vous connecter par email.'
             : 'Changez votre mot de passe de connexion'
           }
@@ -316,8 +316,8 @@ export default function VendorPasswordChange() {
             </div>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={loading || !allChecksPass || (!isOAuthUser && !currentPassword)}
             className="w-full"
           >

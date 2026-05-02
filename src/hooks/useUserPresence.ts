@@ -31,7 +31,7 @@ export function useUserPresence() {
   const activityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mettre à jour le statut de présence dans la DB
-  const updatePresenceInDB = useCallback(async (status: 'online' | 'away' | 'busy' | 'offline') => {
+  const updatePresenceInDB = useCallback(async (_status: 'online' | 'away' | 'busy' | 'offline') => {
     if (!user?.id) return;
 
     try {
@@ -99,9 +99,9 @@ export function useUserPresence() {
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         console.log('🟢 Sync présence:', Object.keys(state).length, 'utilisateurs');
-        
+
         const newOnlineUsers = new Map<string, UserPresenceState>();
-        
+
         Object.entries(state).forEach(([key, presences]) => {
           if (Array.isArray(presences) && presences.length > 0) {
             const presence = presences[0] as unknown as PresencePayload;
@@ -113,7 +113,7 @@ export function useUserPresence() {
             });
           }
         });
-        
+
         setOnlineUsers(newOnlineUsers);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
@@ -201,7 +201,7 @@ export function useUserPresence() {
 
     return () => {
       console.log('🔴 Nettoyage présence');
-      
+
       // Nettoyer le channel
       if (channelRef.current) {
         channelRef.current.untrack();
@@ -244,7 +244,7 @@ export function useUserPresence() {
     if (!user?.id) return;
 
     setMyStatus(status);
-    
+
     if (channelRef.current) {
       await channelRef.current.track({
         user_id: user.id,

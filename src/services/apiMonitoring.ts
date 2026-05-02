@@ -97,7 +97,7 @@ export class ApiMonitoringService {
         .single();
 
       if (error) throw error;
-      
+
       toast.success(`✅ API ${connection.api_name} ajoutée avec succès`);
       return data as ApiConnection;
     } catch (error) {
@@ -118,7 +118,7 @@ export class ApiMonitoringService {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast.success('✅ API mise à jour');
       return true;
     } catch (error) {
@@ -139,7 +139,7 @@ export class ApiMonitoringService {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast.success('✅ API supprimée');
       return true;
     } catch (error) {
@@ -243,7 +243,7 @@ export class ApiMonitoringService {
         .insert([alert as any]);
 
       if (error) throw error;
-      
+
       // Afficher une notification selon la sévérité
       if (alert.severity === 'critical') {
         toast.error(`🚨 ${alert.title}`);
@@ -305,7 +305,7 @@ export class ApiMonitoringService {
     try {
       // Récupérer les derniers logs
       const logs = await this.getApiUsageLogs(apiConnectionId, 100);
-      
+
       if (logs.length === 0) {
         return {
           apiId: apiConnectionId,
@@ -324,7 +324,7 @@ export class ApiMonitoringService {
       // Analyse 1: Taux d'erreur élevé (> 30%)
       const errorCount = logs.filter(log => log.status_code && log.status_code >= 400).length;
       const errorRate = (errorCount / logs.length) * 100;
-      
+
       if (errorRate > 30) {
         const created = await this.createAlert({
           api_connection_id: apiConnectionId,
@@ -344,7 +344,7 @@ export class ApiMonitoringService {
       const avgResponseTime = logs
         .filter(log => log.response_time_ms)
         .reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / logs.length;
-      
+
       if (avgResponseTime > 5000) { // > 5 secondes
         const created = await this.createAlert({
           api_connection_id: apiConnectionId,
@@ -418,10 +418,10 @@ export class ApiMonitoringService {
 
       for (const api of apis) {
         const expiresAt = new Date(api.expires_at!);
-        
+
         if (expiresAt < sevenDaysFromNow && expiresAt > now) {
           const daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          
+
           await this.createAlert({
             api_connection_id: api.id,
             alert_type: 'expiring_soon',

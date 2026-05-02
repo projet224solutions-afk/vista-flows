@@ -61,11 +61,11 @@ export function useSyndicatUltraProData() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Essayer d'abord la session bureau locale (authentification personnalisée)
       let currentBureauId: string | null = null;
       let currentBureauName: string | null = null;
-      
+
       const bureauSession = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
       if (bureauSession) {
         try {
@@ -76,7 +76,7 @@ export function useSyndicatUltraProData() {
               .select('id, commune, prefecture')
               .eq('id', session.bureauId)
               .single();
-            
+
             if (bureauData) {
               currentBureauId = bureauData.id;
               currentBureauName = `Syndicat de ${bureauData.commune} - ${bureauData.prefecture}`;
@@ -86,7 +86,7 @@ export function useSyndicatUltraProData() {
           console.error('Erreur parsing session bureau:', e);
         }
       }
-      
+
       // Si pas de session bureau, essayer avec l'utilisateur Supabase
       if (!currentBureauId) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -119,20 +119,20 @@ export function useSyndicatUltraProData() {
           .from('syndicate_workers')
           .select('*', { count: 'exact' })
           .eq('bureau_id', currentBureauId),
-        
+
         // Chauffeurs taxi-moto liés au bureau (utilise maintenant bureau_id)
         supabase
           .from('taxi_drivers')
           .select('*', { count: 'exact' })
           .eq('bureau_id', currentBureauId),
-        
+
         // Wallet du bureau (utiliser bureau_wallets au lieu de wallets)
         supabase
           .from('bureau_wallets')
           .select('balance')
           .eq('bureau_id', currentBureauId)
           .single(),
-        
+
         // Alertes actives
         supabase
           .from('syndicate_alerts')

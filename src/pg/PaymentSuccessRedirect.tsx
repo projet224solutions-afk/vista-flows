@@ -1,7 +1,7 @@
 ﻿/**
- * PAGE DE REDIRECTION APR├êS 3D SECURE
- * Stripe redirige ici apr├¿s authentification 3D Secure.
- * Cette page v├®rifie le statut du paiement et redirige vers /my-purchases.
+ * PAGE DE REDIRECTION APRÈS 3D SECURE
+ * Stripe redirige ici après authentification 3D Secure.
+ * Cette page vérifie le statut du paiement et redirige vers /my-purchases.
  */
 
 import { useEffect, useState } from 'react';
@@ -22,21 +22,21 @@ export default function PaymentSuccessRedirect() {
 
     if (redirectStatus === 'succeeded' || redirectStatus === 'requires_capture') {
       setStatus('success');
-      toast.success('Paiement confirm├® ! Redirection vers vos achatsÔÇª');
+      toast.success('Paiement confirmé ! Redirection vers vos achats...');
       const timer = setTimeout(() => navigate('/my-purchases', { replace: true }), 2000);
       return () => clearTimeout(timer);
     } else if (redirectStatus === 'failed') {
       setStatus('failed');
-      toast.error('Le paiement a ├®chou├®.');
+      toast.error('Le paiement a échoué.');
     } else {
-      // No redirect_status or unknown ÔÇö assume success if payment_intent exists
+      // No redirect_status or unknown - assume success if payment_intent exists
       if (paymentIntentId) {
         setStatus('success');
-        toast.success('Paiement trait├® ! Redirection vers vos achatsÔÇª');
+        toast.success('Paiement traité ! Redirection vers vos achats...');
         const timer = setTimeout(() => navigate('/my-purchases', { replace: true }), 2000);
         return () => clearTimeout(timer);
       } else {
-        // No payment info at all ÔÇö redirect home
+        // No payment info at all - redirect home
         navigate('/', { replace: true });
       }
     }
@@ -49,7 +49,7 @@ export default function PaymentSuccessRedirect() {
           {status === 'checking' && (
             <div className="text-center space-y-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-              <p className="text-muted-foreground">V├®rification du paiementÔÇª</p>
+              <p className="text-muted-foreground">Vérification du paiement...</p>
             </div>
           )}
 
@@ -60,9 +60,9 @@ export default function PaymentSuccessRedirect() {
                   <CheckCircle2 className="w-12 h-12 text-green-600" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-green-600">Paiement confirm├® !</h3>
+              <h3 className="text-xl font-semibold text-green-600">Paiement confirmé !</h3>
               <p className="text-sm text-muted-foreground animate-pulse">
-                Redirection vers vos achatsÔÇª
+                Redirection vers vos achats...
               </p>
             </div>
           )}
@@ -74,9 +74,9 @@ export default function PaymentSuccessRedirect() {
                   <XCircle className="w-12 h-12 text-red-600" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-red-600">Paiement ├®chou├®</h3>
+              <h3 className="text-xl font-semibold text-red-600">Paiement échoué</h3>
               <p className="text-sm text-muted-foreground">
-                Votre paiement n'a pas pu ├¬tre trait├®. Veuillez r├®essayer.
+                Votre paiement n'a pas pu être traité. Veuillez réessayer.
               </p>
               <Button onClick={() => navigate(-1)} className="mt-4">
                 Retour

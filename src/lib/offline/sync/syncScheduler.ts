@@ -278,7 +278,7 @@ export class SyncScheduler {
   /**
    * Synchroniser toutes les entités d'une priorité donnée
    */
-  private syncAll(priority: SyncPriority): void {
+  private syncAll(_priority: SyncPriority): void {
     Object.entries(SYNC_FREQUENCIES).forEach(([entity]) => {
       this.syncEntity(entity as SyncableEntity);
     });

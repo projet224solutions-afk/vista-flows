@@ -195,7 +195,7 @@ export async function modifyIamPolicyWithRetry(
       // Step 2: Modify policy in memory
       console.log(`[IAM] Modifying policy (etag: ${currentPolicy.etag})...`);
       const modifiedPolicy = modifyPolicy({ ...currentPolicy });
-      
+
       // Preserve the etag from the read
       modifiedPolicy.etag = currentPolicy.etag;
 
@@ -217,7 +217,7 @@ export async function modifyIamPolicyWithRetry(
       };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Check if this is a concurrent modification error
       if (isConcurrentModificationError(error)) {
         if (attempt < retryConfig.maxRetries) {
@@ -263,7 +263,7 @@ export async function addIamBinding(
     (policy) => {
       const bindings = [...(policy.bindings || [])];
       const existingBinding = bindings.find(b => b.role === role);
-      
+
       if (existingBinding) {
         if (!existingBinding.members.includes(member)) {
           existingBinding.members.push(member);
@@ -271,7 +271,7 @@ export async function addIamBinding(
       } else {
         bindings.push({ role, members: [member] });
       }
-      
+
       return { ...policy, bindings };
     },
     config
@@ -305,7 +305,7 @@ export async function removeIamBinding(
         }
         return binding;
       }).filter(binding => binding.members.length > 0);
-      
+
       return { ...policy, bindings };
     },
     config

@@ -35,7 +35,7 @@ export default function WebRTCCallButton({
 
   const handleCall = async () => {
     if (isInCall || disabled) return;
-    
+
     await startCall(userId, {
       name: userName,
       avatar: userAvatar,

@@ -9,8 +9,8 @@
  */
 
 import { useState } from 'react';
-import { 
-  ArrowLeft, Plane, Link2, Percent, Tag, 
+import {
+  ArrowLeft, Plane, Link2, Percent, Tag,
   Upload, X, DollarSign, MapPin, Loader2,
   Zap, Image as ImageIcon
 } from 'lucide-react';
@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CurrencySelect } from '@/components/ui/currency-select';
@@ -39,10 +39,10 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
-  
+
   // Hook pour upload vers GCS
   const { uploadFile: uploadToGCS } = useStorageUpload();
-  
+
   const [formData, setFormData] = useState({
     airlineName: '',
     title: '',
@@ -65,11 +65,11 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
 
     setUploadingImage(true);
     const uploadedUrls: string[] = [];
-    
+
     try {
       for (const file of Array.from(files)) {
         console.log(`[AirlineAffiliateForm] Uploading image to GCS...`);
-        
+
         const uploadResult = await uploadToGCS(file, {
           folder: 'products',
           subfolder: `${user.id}/airlines`,
@@ -232,8 +232,8 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={onBack}
             >
@@ -291,8 +291,8 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
             <div className="grid grid-cols-4 gap-2">
               {formData.images.map((url, idx) => (
                 <div key={idx} className="relative group aspect-square">
-                  <img 
-                    src={url} 
+                  <img
+                    src={url}
                     alt=""
                     className="w-full h-full object-cover rounded-lg"
                   />
@@ -305,7 +305,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
                   </button>
                 </div>
               ))}
-              
+
               {/* Upload button */}
               <label className={cn(
                 "aspect-square border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors",
@@ -395,7 +395,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               <Label className="text-xs">Type de vol</Label>
               <Select
                 value={formData.flightType}
-                onValueChange={(v: 'all' | 'one-way' | 'round-trip') => 
+                onValueChange={(v: 'all' | 'one-way' | 'round-trip') =>
                   setFormData(prev => ({ ...prev, flightType: v }))}
               >
                 <SelectTrigger className="mt-1">
@@ -409,10 +409,10 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               </Select>
             </div>
 
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={generateTitle}
               className="w-full"
             >
@@ -549,7 +549,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
         <Alert className="bg-blue-500/5 border-blue-500/20">
           <Plane className="w-4 h-4 text-blue-500" />
           <AlertDescription className="text-xs text-blue-600">
-            Votre lien d'affiliation sera affiché sur le marketplace. 
+            Votre lien d'affiliation sera affiché sur le marketplace.
             Les visiteurs seront redirigés vers le site de la compagnie via votre lien de tracking.
           </AlertDescription>
         </Alert>

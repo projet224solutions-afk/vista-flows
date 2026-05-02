@@ -9,13 +9,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, 
-  Navigation, 
-  Clock, 
-  DollarSign, 
-  Package, 
-  Store, 
+import {
+  MapPin,
+  Navigation,
+  Clock,
+  DollarSign,
+  Package,
+  Store,
   Phone,
   CreditCard,
   Truck,
@@ -107,7 +107,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
             <Truck className="h-5 w-5 text-orange-600" />
             Nouvelle livraison disponible
           </CardTitle>
-          <Badge 
+          <Badge
             variant={timeLeft > 30 ? "default" : "destructive"}
             className="animate-pulse"
           >
@@ -172,7 +172,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
               Tarification vendeur
             </span>
           </div>
-          
+
           {offer.basePrice && offer.distancePrice ? (
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
@@ -207,10 +207,10 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
               <p className="font-bold text-xl">{formatCurrency(driverEarning)}</p>
             </div>
           </div>
-          <Badge 
-            variant="secondary" 
-            className={offer.paymentMethod === 'cod' 
-              ? 'bg-yellow-100 text-yellow-800' 
+          <Badge
+            variant="secondary"
+            className={offer.paymentMethod === 'cod'
+              ? 'bg-yellow-100 text-yellow-800'
               : 'bg-green-100 text-green-800'
             }
           >

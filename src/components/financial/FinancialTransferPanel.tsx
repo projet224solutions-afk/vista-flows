@@ -42,6 +42,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
 
   useEffect(() => {
     loadVirtualCards();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const loadVirtualCards = async () => {

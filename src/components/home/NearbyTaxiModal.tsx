@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Car, MapPin, RefreshCw, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
+import { Car, _MapPin, RefreshCw, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +43,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
 
   const runRpcSearch = async (lat: number, lng: number, radiusKm: number) => {
     console.log(`[NearbyTaxi] RPC search: lat=${lat}, lng=${lng}, radius=${radiusKm}km`);
-    
+
     const { data, error: rpcError } = await supabase.rpc('find_nearby_taxi_drivers', {
       p_lat: lat,
       p_lng: lng,
@@ -55,9 +55,9 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       console.error('[NearbyTaxi] RPC error:', rpcError);
       throw rpcError;
     }
-    
+
     console.log(`[NearbyTaxi] RPC found ${data?.length || 0} drivers`);
-    
+
     // RPC already filters for online drivers, just sort by distance and limit to 3
     const sortedData = (data || [])
       .sort((a: any, b: any) => {
@@ -66,7 +66,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
         return distA - distB;
       })
       .slice(0, 3);
-    
+
     return sortedData as any[];
   };
 
@@ -215,6 +215,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
     if (open) {
       getUserLocation();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleRefresh = () => {
@@ -272,15 +273,15 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 Il n'y a pas de chauffeur disponible dans un rayon de {usedRadiusKm} km autour de votre position.
               </p>
               <div className="flex flex-col gap-2 w-full max-w-xs">
-                <Button 
+                <Button
                   onClick={handleRefresh}
                   className="w-full bg-taxi-primary hover:bg-taxi-primary/90"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Nouvelle recherche
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => onOpenChange(false)}
                   className="w-full"
                 >
@@ -350,7 +351,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
               </div>
 
               {/* Action button */}
-              <Button 
+              <Button
                 onClick={handleOrderTaxi}
                 className="w-full bg-taxi-primary hover:bg-taxi-primary/90"
                 size="lg"

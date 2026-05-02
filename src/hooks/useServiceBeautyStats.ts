@@ -113,7 +113,7 @@ export function useServiceBeautyStats(serviceId?: string) {
         .select('user_id')
         .eq('id', serviceId)
         .single();
-      
+
       const userId = serviceData?.user_id;
       console.log('👤 User ID du service beauté:', userId);
 
@@ -137,7 +137,7 @@ export function useServiceBeautyStats(serviceId?: string) {
         .select('id, status, total_amount, scheduled_date, client_id')
         .eq('professional_service_id', serviceId)
         .order('scheduled_date', { ascending: false });
-      
+
       if (bookingsData && bookingsData.length > 0) {
         const normalizedBookings = bookingsData.map(b => ({
           id: b.id,
@@ -157,18 +157,18 @@ export function useServiceBeautyStats(serviceId?: string) {
       const salesStats = calculateSalesStats(appointments, startOfDay, startOfWeek, startOfMonth);
 
       // Aujourd'hui et à venir
-      const today = appointments.filter(a => 
+      const today = appointments.filter(a =>
         new Date(a.appointment_date).toDateString() === now.toDateString() &&
         ['pending', 'confirmed'].includes(a.status)
       );
-      const upcoming = appointments.filter(a => 
+      const upcoming = appointments.filter(a =>
         new Date(a.appointment_date) > now &&
         ['pending', 'confirmed'].includes(a.status)
       );
 
       // 2. Charger les services (beauty_services + service_products + products)
       let services: any[] = [];
-      
+
       // 2a. Depuis beauty_services
       const { data: servicesData, error: servicesError } = await supabase
         .from('beauty_services')
@@ -178,7 +178,7 @@ export function useServiceBeautyStats(serviceId?: string) {
       if (servicesError) {
         console.log('⚠️ Table beauty_services peut ne pas exister:', servicesError.message);
       }
-      
+
       if (servicesData) {
         services = [...servicesData];
       }
@@ -188,7 +188,7 @@ export function useServiceBeautyStats(serviceId?: string) {
         .from('service_products')
         .select('id, is_available')
         .eq('professional_service_id', serviceId);
-      
+
       if (serviceProducts) {
         const normalized = serviceProducts.map(p => ({
           id: p.id,
@@ -204,20 +204,20 @@ export function useServiceBeautyStats(serviceId?: string) {
           .select('id')
           .eq('user_id', userId)
           .single();
-        
+
         if (vendorData?.id) {
           const { data: vendorProducts } = await supabase
             .from('products')
             .select('id, is_active')
             .eq('vendor_id', vendorData.id);
-          
+
           if (vendorProducts) {
             services = [...services, ...vendorProducts];
             console.log('📦 Vendor products (beauté) trouvés:', vendorProducts.length);
           }
         }
       }
-      
+
       console.log('💇 Total services beauté:', services.length);
 
       // 3. Charger le personnel

@@ -68,32 +68,32 @@ export { EmergencyPage, EmergencyAlertDetailPage } from '@/pages/EmergencyPage';
 export const EMERGENCY_CONFIG = {
   // Intervalle de tracking GPS (millisecondes)
   GPS_TRACKING_INTERVAL: 2000,
-  
+
   // Cooldown du bouton SOS (secondes)
   SOS_BUTTON_COOLDOWN: 5,
-  
+
   // Durée de rafraîchissement des statistiques (millisecondes)
   STATS_REFRESH_INTERVAL: 30000,
-  
+
   // Nombre maximum de points GPS à conserver
   MAX_GPS_POINTS: 50,
-  
+
   // Durée de conservation des 30 dernières secondes (millisecondes)
   RECENT_GPS_DURATION: 30000,
-  
+
   // Priorité des notifications
   NOTIFICATION_PRIORITY: {
     CRITICAL: 'critical',
     HIGH: 'high',
     NORMAL: 'normal'
   },
-  
+
   // Sons
   SOUNDS: {
     EMERGENCY: '/sounds/emergency-alert.mp3',
     CONFIRMATION: '/sounds/confirmation.mp3'
   },
-  
+
   // Statuts d'alerte
   STATUS: {
     ACTIVE: 'active',
@@ -101,7 +101,7 @@ export const EMERGENCY_CONFIG = {
     RESOLVED: 'resolved',
     FALSE_ALERT: 'false_alert'
   },
-  
+
   // Types d'action
   ACTION_TYPES: {
     CALL_DRIVER: 'call_driver',
@@ -123,13 +123,13 @@ export const EMERGENCY_CONFIG = {
 export function formatTimeSinceAlert(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (mins > 60) {
     const hours = Math.floor(mins / 60);
     const remainingMins = mins % 60;
     return `${hours}h ${remainingMins}min`;
   }
-  
+
   return mins > 0 ? `${mins}min ${secs}s` : `${secs}s`;
 }
 

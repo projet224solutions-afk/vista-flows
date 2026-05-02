@@ -12,13 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTwoFactorAuth } from '@/hooks/useTwoFactorAuth';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  Shield, 
-  Smartphone, 
-  Key, 
-  CheckCircle2, 
-  XCircle, 
-  Copy, 
+import {
+  Shield,
+  Smartphone,
+  Key,
+  CheckCircle2,
+  XCircle,
+  Copy,
   Download,
   RefreshCw,
   AlertTriangle,
@@ -79,7 +79,7 @@ export const TwoFactorSetup: React.FC = () => {
       toast.error('Le code doit contenir 6 chiffres');
       return;
     }
-    
+
     const success = await verifyAndEnable(verificationCode);
     if (success) {
       setStep('backup');
@@ -143,8 +143,8 @@ export const TwoFactorSetup: React.FC = () => {
           </Alert>
 
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={regenerateBackupCodes}
               className="flex-1"
             >
@@ -183,8 +183,8 @@ export const TwoFactorSetup: React.FC = () => {
                     <Button variant="outline" onClick={() => setShowDisableDialog(false)} className="flex-1">
                       Annuler
                     </Button>
-                    <Button 
-                      variant="destructive" 
+                    <Button
+                      variant="destructive"
                       onClick={handleDisable}
                       disabled={disableCode.length !== 6 || verifying}
                       className="flex-1"
@@ -345,8 +345,8 @@ export const TwoFactorSetup: React.FC = () => {
               <Button variant="outline" onClick={() => setStep('setup')} className="flex-1">
                 Retour
               </Button>
-              <Button 
-                onClick={handleVerify} 
+              <Button
+                onClick={handleVerify}
                 disabled={verificationCode.length !== 6 || verifying}
                 className="flex-1"
               >

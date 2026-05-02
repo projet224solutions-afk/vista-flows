@@ -1,5 +1,5 @@
 ﻿/**
- * ­ƒôÜ MES ACHATS NUM├ëRIQUES - Vue unifi├®e achats + abonnements
+ * 📚 MES ACHATS NUMÉRIQUES - Vue unifiée achats + abonnements
  */
 
 import { useEffect, useState } from 'react';
@@ -10,9 +10,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Download, Package, ArrowLeft, ShoppingBag, 
+import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Download, Package, ArrowLeft, _ShoppingBag,
   Calendar, Loader2, FileText, Clock, CheckCircle,
   AlertTriangle, RefreshCw, Infinity
 } from 'lucide-react';
@@ -50,6 +50,7 @@ export default function MyDigitalPurchases() {
 
   useEffect(() => {
     if (user?.id) loadAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadAll = async () => {
@@ -147,9 +148,9 @@ export default function MyDigitalPurchases() {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
-  const filteredItems = activeTab === 'all' 
-    ? items 
-    : activeTab === 'purchases' 
+  const filteredItems = activeTab === 'all'
+    ? items
+    : activeTab === 'purchases'
       ? items.filter(i => i.type === 'purchase')
       : items.filter(i => i.type === 'subscription');
 
@@ -173,9 +174,9 @@ export default function MyDigitalPurchases() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-foreground">Mes Achats Num├®riques</h1>
+            <h1 className="text-lg font-bold text-foreground">Mes achats numériques</h1>
             <p className="text-xs text-muted-foreground">
-              {totalPurchases} achat{totalPurchases > 1 ? 's' : ''} ┬À {activeSubscriptions} abonnement{activeSubscriptions > 1 ? 's' : ''} actif{activeSubscriptions > 1 ? 's' : ''}
+              {totalPurchases} achat{totalPurchases > 1 ? 's' : ''} à {activeSubscriptions} abonnement{activeSubscriptions > 1 ? 's' : ''} actif{activeSubscriptions > 1 ? 's' : ''}
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={loadAll} disabled={loading}>
@@ -200,18 +201,18 @@ export default function MyDigitalPurchases() {
             <CardContent className="p-12 text-center">
               <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">Aucun achat</h3>
-              <p className="text-muted-foreground mb-4">Vous n'avez pas encore achet├® de produit num├®rique.</p>
+              <p className="text-muted-foreground mb-4">Vous n'avez pas encore acheté de produit numérique.</p>
               <Button onClick={() => navigate('/marketplace')}>
-                D├®couvrir le marketplace
+                Découvrir le marketplace
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {filteredItems.map(item => (
-              <PurchaseCard 
-                key={`${item.type}-${item.id}`} 
-                item={item} 
+              <PurchaseCard
+                key={`${item.type}-${item.id}`}
+                item={item}
                 getDaysRemaining={getDaysRemaining}
                 onNavigate={() => navigate(`/digital-purchase/${item.product_id}`)}
                 onManageSub={() => navigate('/my-digital-subscriptions')}
@@ -226,10 +227,10 @@ export default function MyDigitalPurchases() {
   );
 }
 
-function PurchaseCard({ 
-  item, getDaysRemaining, onNavigate, onManageSub 
-}: { 
-  item: PurchaseItem; 
+function PurchaseCard({
+  item, getDaysRemaining, onNavigate, onManageSub
+}: {
+  item: PurchaseItem;
   getDaysRemaining: (d: string) => number;
   onNavigate: () => void;
   onManageSub: () => void;
@@ -240,7 +241,7 @@ function PurchaseCard({
   const totalDays = item.billing_cycle === 'yearly' ? 365 : 30;
   const progressPercent = isSubscription ? Math.min(100, (daysLeft / totalDays) * 100) : 100;
 
-  const cycleLabel: Record<string, string> = { monthly: 'Mensuel', yearly: 'Annuel', lifetime: '├Ç vie' };
+  const cycleLabel: Record<string, string> = { monthly: 'Mensuel', yearly: 'Annuel', lifetime: 'À vie' };
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -249,8 +250,8 @@ function PurchaseCard({
           {/* Image */}
           <div className="w-24 shrink-0">
             {item.product_image ? (
-              <img 
-                src={item.product_image} 
+              <img
+                src={item.product_image}
                 alt={item.product_title}
                 className="w-full h-full object-cover min-h-[100px]"
               />
@@ -267,18 +268,18 @@ function PurchaseCard({
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold text-sm truncate text-foreground">{item.product_title}</h3>
                 {isSubscription ? (
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={
-                      isActive 
-                        ? 'bg-green-500/10 text-green-600 border-green-500/20 shrink-0' 
-                        : item.status === 'cancelled' 
+                      isActive
+                        ? 'bg-green-500/10 text-green-600 border-green-500/20 shrink-0'
+                        : item.status === 'cancelled'
                           ? 'bg-muted text-muted-foreground border-border shrink-0'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0'
                     }
                   >
                     {isActive ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}
-                    {isActive ? 'Actif' : item.status === 'cancelled' ? 'Annul├®' : 'Expir├®'}
+                    {isActive ? 'Actif' : item.status === 'cancelled' ? 'Annulé' : 'Expiré'}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 shrink-0">
@@ -291,7 +292,7 @@ function PurchaseCard({
               <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {new Date(item.created_at).toLocaleDateString('fr-FR')}
-                <span className="mx-1">┬À</span>
+                <span className="mx-1">•</span>
                 <LocalPrice amount={item.amount} currency={item.product_currency} className="text-xs font-medium" />
                 {isSubscription && item.billing_cycle && (
                   <span className="text-muted-foreground">/ {cycleLabel[item.billing_cycle]?.toLowerCase()}</span>
@@ -308,12 +309,12 @@ function PurchaseCard({
                     {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
                   </span>
                   <span className="text-muted-foreground">
-                    {item.auto_renew ? '­ƒöä Renouvellement auto' : ''}
+                    {item.auto_renew ? 'Renouvellement auto' : ''}
                   </span>
                 </div>
-                <Progress 
-                  value={progressPercent} 
-                  className="h-1.5" 
+                <Progress
+                  value={progressPercent}
+                  className="h-1.5"
                 />
               </div>
             )}
@@ -322,29 +323,29 @@ function PurchaseCard({
             {!isSubscription && (
               <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                 <Download className="w-3 h-3" />
-                {item.download_count || 0} t├®l├®chargement{(item.download_count || 0) > 1 ? 's' : ''}
+                {item.download_count || 0} téléchargement{(item.download_count || 0) > 1 ? 's' : ''}
                 {item.max_downloads && <span> / {item.max_downloads} max</span>}
               </div>
             )}
 
             {/* Actions */}
             <div className="flex items-center gap-2 mt-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); onNavigate(); }}
               >
                 <Download className="w-3 h-3 mr-1" />
-                {isSubscription ? 'Acc├®der' : 'T├®l├®charger'}
+                {isSubscription ? 'Accéder' : 'Télécharger'}
               </Button>
               {isSubscription && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="text-xs h-7"
                   onClick={(e) => { e.stopPropagation(); onManageSub(); }}
                 >
-                  G├®rer
+                  Gérer
                 </Button>
               )}
             </div>

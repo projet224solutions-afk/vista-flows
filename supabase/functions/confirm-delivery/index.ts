@@ -7,6 +7,54 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function getVendorReceivableAmount(payload: unknown, fallbackAmount: number): number {
+  if (payload && typeof payload === "object" && "vendor_amount" in payload) {
+    const vendorAmount = Number((payload as Record<string, unknown>).vendor_amount);
+    if (Number.isFinite(vendorAmount)) {
+      return vendorAmount;
+    }
+  }
+
+  return fallbackAmount;
+}
+
+async function getOrCreateWallet(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  currency: string,
+) {
+  const { data: existingWallet, error: walletError } = await supabase
+    .from("wallets")
+    .select("id, user_id, balance, currency, wallet_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (walletError) {
+    throw walletError;
+  }
+
+  if (existingWallet) {
+    return existingWallet;
+  }
+
+  const { data: createdWallet, error: createWalletError } = await supabase
+    .from("wallets")
+    .insert({
+      user_id: userId,
+      balance: 0,
+      currency,
+      wallet_status: "active",
+    })
+    .select("id, user_id, balance, currency, wallet_status")
+    .single();
+
+  if (createWalletError || !createdWallet) {
+    throw createWalletError || new Error("Unable to create wallet");
+  }
+
+  return createdWallet;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -123,6 +171,41 @@ serve(async (req) => {
       );
     }
 
+    // Idempotence: if funds were already released during a previous attempt,
+    // treat the action as successful and only ensure the order state is aligned.
+    if (escrow.status === 'released') {
+      const isCashOnDelivery = order.payment_method === 'cash' && order.shipping_address?.is_cod === true;
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ 
+          status: 'completed',
+          payment_status: isCashOnDelivery ? 'paid' : order.payment_status,
+          metadata: {
+            ...(order.metadata || {}),
+            delivered_at: order.metadata?.delivered_at || new Date().toISOString(),
+            buyer_confirmed_delivery: true,
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", order_id);
+
+      if (updateError) {
+        console.error("❌ Error aligning already released order:", updateError);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          already_confirmed: true,
+          message: "Delivery already confirmed",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Check escrow status
     if (escrow.status !== 'pending' && escrow.status !== 'held') {
       return new Response(
@@ -139,26 +222,135 @@ serve(async (req) => {
 
     console.log(`💰 Releasing escrow: ${escrow.id}`);
 
-    // Call the database function to release funds with 2.5% commission
-    const { data: releaseData, error: releaseError } = await supabase.rpc("confirm_delivery_and_release_escrow", {
-      p_escrow_id: escrow.id,
-      p_customer_id: user.id,
-      p_notes: "Livraison confirmée par le client",
-    });
+    const vendorUserId = escrow.receiver_id || escrow.seller_id;
+    if (!vendorUserId) {
+      throw new Error("Seller user ID missing on escrow transaction");
+    }
 
-    if (releaseError) {
-      console.error("❌ Error releasing escrow:", releaseError);
-      throw releaseError;
+    const escrowAmount = Number(escrow.amount || 0);
+    const commissionAmount = Number(
+      escrow.commission_amount && Number.isFinite(Number(escrow.commission_amount))
+        ? escrow.commission_amount
+        : escrowAmount * 0.025,
+    );
+    const vendorAmount = Math.max(escrowAmount - commissionAmount, 0);
+    const currency = escrow.currency || "GNF";
+
+    const vendorWallet = await getOrCreateWallet(supabase, vendorUserId, currency);
+
+    const { error: vendorWalletUpdateError } = await supabase
+      .from("wallets")
+      .update({
+        balance: Number(vendorWallet.balance || 0) + vendorAmount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", vendorWallet.id);
+
+    if (vendorWalletUpdateError) {
+      console.error("❌ Error crediting vendor wallet:", vendorWalletUpdateError);
+      throw vendorWalletUpdateError;
+    }
+
+    const { data: activePdg } = await supabase
+      .from("pdg_management")
+      .select("user_id")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (activePdg?.user_id && commissionAmount > 0) {
+      const pdgWallet = await getOrCreateWallet(supabase, activePdg.user_id, currency);
+      const { error: pdgWalletUpdateError } = await supabase
+        .from("wallets")
+        .update({
+          balance: Number(pdgWallet.balance || 0) + commissionAmount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", pdgWallet.id);
+
+      if (pdgWalletUpdateError) {
+        console.error("⚠️ Error crediting PDG wallet:", pdgWalletUpdateError);
+      }
+    }
+
+    const txId = `ESC-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const { error: walletTxError } = await supabase
+      .from("wallet_transactions")
+      .insert({
+        transaction_id: txId,
+        receiver_wallet_id: vendorWallet.id,
+        receiver_user_id: vendorUserId,
+        amount: escrowAmount,
+        fee: commissionAmount,
+        net_amount: vendorAmount,
+        currency,
+        transaction_type: "payment",
+        status: "completed",
+        description: `Libération escrow commande ${order.order_number}`,
+        reference_id: escrow.id,
+        metadata: {
+          escrow_id: escrow.id,
+          order_id,
+          order_number: order.order_number,
+          confirmed_by: user.id,
+          release_source: "confirm-delivery",
+        },
+      });
+
+    if (walletTxError) {
+      console.error("❌ Error creating wallet transaction:", walletTxError);
+      throw walletTxError;
+    }
+
+    const { error: escrowUpdateError } = await supabase
+      .from("escrow_transactions")
+      .update({
+        status: "released",
+        released_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        notes: "Livraison confirmée par le client",
+      })
+      .eq("id", escrow.id);
+
+    if (escrowUpdateError) {
+      console.error("❌ Error updating escrow:", escrowUpdateError);
+      throw escrowUpdateError;
+    }
+
+    const { error: escrowLogError } = await supabase
+      .from("escrow_logs")
+      .insert({
+        escrow_id: escrow.id,
+        action: "customer_release",
+        performed_by: user.id,
+        note: "Livraison confirmée par le client",
+        metadata: {
+          order_id,
+          order_number: order.order_number,
+          vendor_amount: vendorAmount,
+          commission_amount: commissionAmount,
+          transaction_id: txId,
+        },
+      });
+
+    if (escrowLogError) {
+      console.error("⚠️ Error creating escrow log:", escrowLogError);
     }
 
     const isCashOnDelivery = order.payment_method === 'cash' && order.shipping_address?.is_cod === true;
 
-    // Update order status to completed once the buyer confirms reception.
+    // orders.delivered_at does not exist in the current schema.
+    // Persist the confirmation inside metadata while marking the order completed.
     const { error: updateError } = await supabase
       .from("orders")
       .update({ 
         status: 'completed',
         payment_status: isCashOnDelivery ? 'paid' : order.payment_status,
+        metadata: {
+          ...(order.metadata || {}),
+          delivered_at: new Date().toISOString(),
+          buyer_confirmed_delivery: true,
+        },
         updated_at: new Date().toISOString()
       })
       .eq("id", order_id);
@@ -169,27 +361,40 @@ serve(async (req) => {
 
     console.log(`✅ Delivery confirmed for order: ${order_id}`);
 
-    // Send notification to vendor using receiver_id from escrow (which is the vendor's user_id)
-    // NOTE: order.vendor_id is the ID in the vendors table, NOT the user_id
-    await supabase.from("communication_notifications").insert({
-      user_id: escrow.receiver_id, // This is the vendor's user_id
-      type: "delivery_confirmed",
-      title: "Livraison confirmée",
-      body: `Le client a confirmé la réception de la commande #${order.order_number}. Les fonds ont été libérés.`,
-      metadata: {
-        order_id,
-        order_number: order.order_number,
-        escrow_id: escrow.id,
-        amount: escrow.amount,
-      },
-    });
+    const releasedVendorAmount = getVendorReceivableAmount({ vendor_amount: vendorAmount }, escrowAmount);
 
-    console.log("📧 Notification sent to vendor (user_id:", escrow.receiver_id, ")");
+    if (!vendorUserId) {
+      console.warn("⚠️ Vendor user ID missing on escrow transaction, skipping vendor notification");
+    } else {
+      const { error: vendorNotificationError } = await supabase.from("vendor_notifications").insert({
+        vendor_id: vendorUserId,
+        type: "order",
+        title: "Livraison confirmée",
+        message: `Le client a confirmé la réception de la commande #${order.order_number}. ${releasedVendorAmount} ${escrow.currency || 'GNF'} ont été libérés.`,
+        data: {
+          order_id,
+          order_number: order.order_number,
+          escrow_id: escrow.id,
+          amount: releasedVendorAmount,
+          currency: escrow.currency || 'GNF',
+          source: 'confirm-delivery',
+        },
+        read: false,
+      });
+
+      if (vendorNotificationError) {
+        console.error("⚠️ Vendor notification failed after successful release:", vendorNotificationError);
+      } else {
+        console.log("📧 Vendor notification sent (vendor_id:", vendorUserId, ")");
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Delivery confirmed and funds released",
+        vendor_amount: releasedVendorAmount,
+        currency: escrow.currency || 'GNF',
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

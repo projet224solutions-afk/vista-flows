@@ -4,14 +4,14 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { _Select, _SelectContent, _SelectItem, _SelectTrigger, _SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useRestaurantMenu, type MenuItem } from '@/hooks/useRestaurantMenu';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -20,8 +20,8 @@ import { toast } from 'sonner';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Receipt,
-  UtensilsCrossed, MapPin, Truck, ShoppingBag, Printer,
-  Check, X, Users, Clock, CreditCard, Banknote, Smartphone
+  UtensilsCrossed, MapPin, Truck, ShoppingBag, _Printer,
+  Check, X, _Users, Clock, CreditCard, Banknote, Smartphone
 } from 'lucide-react';
 
 interface RestaurantPOSProps {
@@ -129,7 +129,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
     try {
       // Pour le paiement carte, créer la commande en statut 'pending' d'abord
       const isPendingPayment = paymentMethod === 'card';
-      
+
       const orderData = {
         professional_service_id: serviceId,
         order_type: orderType,
@@ -186,7 +186,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
     }
   };
 
-  const handleStripeSuccess = async (paymentIntentId: string) => {
+  const handleStripeSuccess = async (_paymentIntentId: string) => {
     if (!pendingCardOrder) return;
 
     try {

@@ -29,7 +29,7 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Vous devez être connecté');
       return;
@@ -57,7 +57,7 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const { _data, error } = await supabase
         .from('debts')
         .insert({
           vendor_id: vendorId,
@@ -86,7 +86,7 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
       );
 
       toast.success('Dette créée avec succès');
-      
+
       // Reset form
       setFormData({
         customer_name: '',

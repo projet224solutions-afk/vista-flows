@@ -1,9 +1,9 @@
 /**
  * 📦 BATCH PROCESSOR SERVICE
- * 
+ *
  * Handles async batch processing of analytics events
  * Reduces PostgreSQL write pressure by batching inserts
- * 
+ *
  * PERFORMANCE:
  * - Processes batches every 5 seconds or when queue reaches 100 events
  * - Uses multi-row INSERT for efficiency
@@ -43,38 +43,38 @@ async function processBatch() {
     logger.debug('Batch processor already running, skipping...');
     return;
   }
-  
+
   isProcessing = true;
-  
+
   try {
     const events = await redis.getBatchEvents(CONFIG.BATCH_SIZE);
-    
+
     if (events.length === 0) {
       return;
     }
-    
+
     logger.info(`📦 Processing batch of ${events.length} analytics events`);
-    
+
     // Separate events by type
     const productViews = events.filter(e => e.type === 'product_view');
     const shopVisits = events.filter(e => e.type === 'shop_visit');
-    
+
     // Process in parallel
     const results = await Promise.allSettled([
       productViews.length > 0 ? insertProductViews(productViews) : Promise.resolve({ success: true }),
       shopVisits.length > 0 ? insertShopVisits(shopVisits) : Promise.resolve({ success: true })
     ]);
-    
+
     // Handle failures
     const failures = results.filter(r => r.status === 'rejected' || !r.value?.success);
-    
+
     if (failures.length > 0) {
       logger.error(`Batch processing had ${failures.length} failures`);
       // Events are already removed from queue, failures are logged
     }
-    
+
     logger.info(`✅ Batch processed: ${events.length} events`);
-    
+
   } catch (error) {
     logger.error(`Batch processing error: ${error.message}`);
   } finally {
@@ -85,7 +85,7 @@ async function processBatch() {
 /**
  * Insert product views using multi-row INSERT
  * Much more efficient than individual inserts
- * 
+ *
  * @param {Array} views - Array of product view events
  * @returns {Promise<{success: boolean, inserted: number}>}
  */
@@ -93,7 +93,7 @@ async function insertProductViews(views) {
   if (views.length === 0) {
     return { success: true, inserted: 0 };
   }
-  
+
   try {
     // Use ON CONFLICT for deduplication at DB level
     const { data, error } = await supabaseAdmin
@@ -117,14 +117,14 @@ async function insertProductViews(views) {
           ignoreDuplicates: true
         }
       );
-    
+
     if (error) {
       logger.error(`Product views insert error: ${error.message}`);
       return { success: false, error: error.message };
     }
-    
+
     return { success: true, inserted: views.length };
-    
+
   } catch (error) {
     logger.error(`Product views insert exception: ${error.message}`);
     return { success: false, error: error.message };
@@ -140,7 +140,7 @@ async function insertShopVisits(visits) {
   if (visits.length === 0) {
     return { success: true, inserted: 0 };
   }
-  
+
   try {
     const { data, error } = await supabaseAdmin
       .from('shop_visits_raw')
@@ -163,14 +163,14 @@ async function insertShopVisits(visits) {
           ignoreDuplicates: true
         }
       );
-    
+
     if (error) {
       logger.error(`Shop visits insert error: ${error.message}`);
       return { success: false, error: error.message };
     }
-    
+
     return { success: true, inserted: visits.length };
-    
+
   } catch (error) {
     logger.error(`Shop visits insert exception: ${error.message}`);
     return { success: false, error: error.message };
@@ -190,12 +190,12 @@ export function startBatchProcessor() {
     logger.warn('Batch processor already running');
     return;
   }
-  
+
   logger.info('🚀 Starting analytics batch processor');
-  
+
   // Initial processing
   processBatch();
-  
+
   // Set up interval
   processorInterval = setInterval(processBatch, CONFIG.PROCESS_INTERVAL);
 }
@@ -208,10 +208,10 @@ export async function stopBatchProcessor() {
   if (processorInterval) {
     clearInterval(processorInterval);
     processorInterval = null;
-    
+
     // Process any remaining events
     await processBatch();
-    
+
     logger.info('Batch processor stopped');
   }
 }
@@ -229,7 +229,7 @@ export async function flushBatch() {
  */
 export async function getProcessorStatus() {
   const queueLength = await redis.getQueueLength();
-  
+
   return {
     isRunning: processorInterval !== null,
     isProcessing,

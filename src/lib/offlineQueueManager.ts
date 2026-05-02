@@ -8,7 +8,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { encryptData, decryptData } from './encryption';
 
 // Types
-export type OperationType = 
+export type OperationType =
   | 'create_order'
   | 'update_order'
   | 'create_product'
@@ -79,7 +79,7 @@ const PRIORITY_ORDER: Record<Priority, number> = {
 };
 
 // Configuration retry avec backoff exponentiel
-const RETRY_CONFIG = {
+const _RETRY_CONFIG = {
   base_delay: 1000, // 1 seconde
   max_delay: 300000, // 5 minutes
   multiplier: 2
@@ -99,7 +99,7 @@ async function initDB(): Promise<IDBPDatabase<OfflineQueueSchema>> {
   db = await openDB<OfflineQueueSchema>('224Solutions-OfflineQueue', 2, {
     upgrade(database, oldVersion) {
       console.log(`[OfflineQueue] Upgrading DB from v${oldVersion}`);
-      
+
       if (!database.objectStoreNames.contains('operations')) {
         const store = database.createObjectStore('operations', { keyPath: 'id' });
         store.createIndex('by-status', 'status');
@@ -249,7 +249,7 @@ export async function getPendingOperations(
   }
 ): Promise<QueuedOperation[]> {
   const database = await initDB();
-  
+
   let operations = await database.getAllFromIndex('operations', 'by-status', 'pending');
 
   // Filtrer
@@ -466,7 +466,7 @@ export async function cleanupOldOperations(
 ): Promise<number> {
   const database = await initDB();
   const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-  
+
   const allOps = await database.getAll('operations');
   let deleted = 0;
 

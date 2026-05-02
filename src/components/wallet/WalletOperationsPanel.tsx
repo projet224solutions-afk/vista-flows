@@ -45,10 +45,10 @@ export function WalletOperationsPanel() {
   // États formulaires
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState('card');
-  
+
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('card');
-  
+
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
   const [transferDescription, setTransferDescription] = useState('');

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, CheckCircle, _AlertCircle, Clock } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ export function OfflineStatusBar({
   pendingSyncCount = 0,
   lastSyncTime
 }: OfflineStatusBarProps) {
-  const { isOnline, wasOffline, lastOnline, offlineDuration } = useOnlineStatus();
+  const { isOnline, wasOffline, _lastOnline, offlineDuration } = useOnlineStatus();
 
   // Afficher brièvement la notification de reconnexion
   if (isOnline && wasOffline) {

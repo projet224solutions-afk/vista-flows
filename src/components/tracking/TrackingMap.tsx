@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,16 +9,16 @@ import { MapPin, Navigation, Play, Square, RefreshCw, Clock, CheckCircle, XCircl
 import { useToast } from '@/hooks/use-toast';
 
 export const TrackingMap = () => {
-  const { user } = useAuth();
-  const { 
-    trackingData, 
-    currentLocation, 
-    isTracking, 
-    loading, 
-    startTracking, 
-    stopTracking, 
+  const { _user } = useAuth();
+  const {
+    trackingData,
+    currentLocation,
+    isTracking,
+    loading,
+    startTracking,
+    stopTracking,
     getCurrentPosition,
-    calculateDistance 
+    calculateDistance
   } = useTracking();
   const { toast } = useToast();
   const [selectedTracking, setSelectedTracking] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export const TrackingMap = () => {
           description: `Lat: ${position.latitude.toFixed(6)}, Lng: ${position.longitude.toFixed(6)}`,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible d'obtenir votre position",
@@ -99,7 +99,7 @@ export const TrackingMap = () => {
                 {isTracking ? 'Suivi activé' : 'Suivi désactivé'}
               </div>
               <div className="text-sm text-muted-foreground">
-                {currentLocation 
+                {currentLocation
                   ? `Position: ${formatLocation(currentLocation.latitude, currentLocation.longitude)}`
                   : 'Position inconnue'
                 }
@@ -175,7 +175,7 @@ export const TrackingMap = () => {
                           {getStatusLabel(tracking.status)}
                         </Badge>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div>
                           Position: {formatLocation(tracking.latitude, tracking.longitude)}

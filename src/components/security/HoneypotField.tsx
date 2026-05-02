@@ -10,13 +10,13 @@ interface HoneypotFieldProps {
   tabIndex?: number;
 }
 
-export const HoneypotField: React.FC<HoneypotFieldProps> = ({ 
-  name, 
+export const HoneypotField: React.FC<HoneypotFieldProps> = ({
+  name,
   onChange,
-  tabIndex = -1 
+  tabIndex = -1
 }) => {
   return (
-    <div 
+    <div
       style={{
         position: 'absolute',
         left: '-9999px',
@@ -60,7 +60,7 @@ export const HoneypotFieldGroup: React.FC<{
   register?: (name: string) => any;
 }> = ({ onBotDetected, register }) => {
   const honeypotNames = ['website_url', 'phone_confirm', 'email_verify', 'fax_number'];
-  
+
   const handleChange = (value: string) => {
     if (value && value.trim() !== '') {
       console.warn('[Honeypot] Bot détecté!');
@@ -71,9 +71,9 @@ export const HoneypotFieldGroup: React.FC<{
   return (
     <>
       {honeypotNames.map(name => (
-        <HoneypotField 
-          key={name} 
-          name={name} 
+        <HoneypotField
+          key={name}
+          name={name}
           onChange={handleChange}
           {...(register ? register(name) : {})}
         />

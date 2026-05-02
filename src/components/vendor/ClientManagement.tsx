@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, _CardHeader, _CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useToast } from "@/hooks/use-toast";
 import { listVendorClients, type VendorCustomerLink } from '@/services/campaignBackendService';
-import { 
-  Users, Search, Filter, Eye, Star, ShoppingCart, 
-  CreditCard, Calendar, Mail, Phone, MapPin, 
+import {
+  Users, Search, Filter, Eye, _Star, ShoppingCart,
+  CreditCard, _Calendar, Mail, Phone, _MapPin,
   TrendingUp, Award, Clock, MessageSquare
 } from "lucide-react";
 
@@ -73,6 +73,7 @@ export default function ClientManagement() {
   useEffect(() => {
     if (!currentVendorId || vendorContextLoading) return;
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVendorId, vendorContextLoading]);
 
   const getClientDisplayName = (client: Client) => {
@@ -121,7 +122,7 @@ export default function ClientManagement() {
       const totalOrders = processedClients.reduce((sum, client) => sum + client.total_orders, 0);
       const totalRevenue = processedClients.reduce((sum, client) => sum + client.total_spent, 0);
 
-      const newClientsThisMonth = processedClients.filter(client => 
+      const newClientsThisMonth = processedClients.filter(client =>
         new Date(client.created_at) >= thisMonthStart).length;
 
       const vipClients = processedClients.filter(client => {
@@ -145,7 +146,7 @@ export default function ClientManagement() {
       });
 
       setClients(processedClients);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les données clients.",
@@ -200,7 +201,7 @@ export default function ClientManagement() {
   };
 
   const filteredClients = clients.filter(client => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       getClientDisplayName(client).toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.profile?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.profile?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -494,8 +495,8 @@ export default function ClientManagement() {
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucun client trouvé</h3>
               <p className="text-muted-foreground">
-                {searchTerm || clientTypeFilter !== 'all' 
-                  ? 'Aucun client ne correspond aux critères de recherche.' 
+                {searchTerm || clientTypeFilter !== 'all'
+                  ? 'Aucun client ne correspond aux critères de recherche.'
                   : 'Vous n\'avez pas encore de clients.'}
               </p>
             </div>
@@ -560,7 +561,7 @@ export default function ClientManagement() {
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">
-                      {selectedClient.total_orders > 0 
+                      {selectedClient.total_orders > 0
                         ? Math.round(selectedClient.total_spent / selectedClient.total_orders).toLocaleString()
                         : 0}
                     </p>

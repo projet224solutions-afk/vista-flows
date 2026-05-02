@@ -32,7 +32,7 @@ export interface VendorCustomerLink {
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'queued' | 'sending' | 'sent' | 'partial' | 'failed' | 'cancelled';
 export type CampaignChannel = 'in_app' | 'push' | 'email' | 'sms';
-export type CampaignTargetType = 
+export type CampaignTargetType =
   | 'all_clients' | 'digital_only' | 'physical_only' | 'hybrid'
   | 'active' | 'inactive' | 'recent_buyers' | 'dormant'
   | 'vip' | 'by_store' | 'by_product_category' | 'custom';

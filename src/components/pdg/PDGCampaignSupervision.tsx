@@ -14,9 +14,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Megaphone, Search, ShieldAlert, Users, Send, XCircle,
-  BarChart3, RefreshCw, AlertTriangle, CheckCircle, Eye,
-  Ban, TrendingUp, Clock
+  _Megaphone, Search, ShieldAlert, Users, Send, _XCircle,
+  _BarChart3, RefreshCw, AlertTriangle, _CheckCircle, Eye,
+  Ban, _TrendingUp, _Clock
 } from 'lucide-react';
 import {
   listAllCampaignsAdmin, suspendCampaignAdmin, getCampaignAnalytics,
@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PDGCampaignSupervision() {
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const { toast } = useToast();
 
   const [campaigns, setCampaigns] = useState<(VendorCampaign & { vendors?: { business_name: string } })[]>([]);

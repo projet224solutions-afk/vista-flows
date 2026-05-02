@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  FileSpreadsheet, 
-  Download, 
-  Plus,
+import {
+  FileSpreadsheet,
+  _Download,
+  _Plus,
   BarChart3,
   TrendingUp,
   Users,
@@ -143,8 +143,8 @@ export function CustomReportBuilder() {
                     <Card
                       key={type.value}
                       className={`cursor-pointer transition-all hover:shadow-md ${
-                        template.report_type === type.value 
-                          ? 'ring-2 ring-primary' 
+                        template.report_type === type.value
+                          ? 'ring-2 ring-primary'
                           : ''
                       }`}
                       onClick={() => setTemplate({ ...template, report_type: type.value })}
@@ -187,7 +187,7 @@ export function CustomReportBuilder() {
             <p className="text-sm text-muted-foreground mb-4">
               Choisissez le format d'export
             </p>
-            
+
             {exportFormats.map((format) => (
               <Button
                 key={format.value}

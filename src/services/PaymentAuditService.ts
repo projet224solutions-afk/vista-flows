@@ -292,7 +292,7 @@ export class PaymentAuditService {
 
       if (!recentError && recentUnpaid && recentUnpaid.length > 0) {
         const conversionRate = await this.calculateConversionRate();
-        
+
         if (conversionRate < 0.1) { // Moins de 10% de conversion
           issues.push({
             severity: 'medium',

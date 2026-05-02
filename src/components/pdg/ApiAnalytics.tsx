@@ -5,18 +5,18 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { _Badge } from '@/components/ui/badge';
+import { _Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import { ApiConnection, ApiUsageLog, ApiMonitoringService } from '@/services/apiMonitoring';
-import { 
-  TrendingUp, TrendingDown, Activity, Zap, 
-  Clock, AlertTriangle, CheckCircle2, DollarSign 
+import {
+  _TrendingUp, _TrendingDown, Activity, Zap,
+  Clock, AlertTriangle, CheckCircle2, _DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,18 +25,19 @@ interface ApiAnalyticsProps {
 }
 
 export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+  const [_timeRange, _setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
   const [loading, setLoading] = useState(false);
   const [allLogs, setAllLogs] = useState<ApiUsageLog[]>([]);
 
   useEffect(() => {
     loadAllLogs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apis]);
 
   const loadAllLogs = async () => {
     setLoading(true);
     try {
-      const logsPromises = apis.map(api => 
+      const logsPromises = apis.map(api =>
         ApiMonitoringService.getApiUsageLogs(api.id, 500)
       );
       const logsArrays = await Promise.all(logsPromises);
@@ -53,7 +54,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
   // Calculer les statistiques
   const stats = {
     totalRequests: allLogs.length,
-    successRate: allLogs.length > 0 
+    successRate: allLogs.length > 0
       ? ((allLogs.filter(log => log.status_code && log.status_code < 400).length / allLogs.length) * 100).toFixed(1)
       : '0',
     avgResponseTime: allLogs.length > 0
@@ -80,7 +81,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
   const timeSeriesData = getLast30Days().map(date => {
     const nextDate = new Date(date);
     nextDate.setDate(nextDate.getDate() + 1);
-    
+
     const dayLogs = allLogs.filter(log => {
       const logDate = new Date(log.created_at);
       return logDate >= date && logDate < nextDate;
@@ -116,7 +117,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
     const successRate = apiLogs.length > 0
       ? (apiLogs.filter(log => log.status_code && log.status_code < 400).length / apiLogs.length) * 100
       : 0;
-    
+
     return {
       api: api.api_name.substring(0, 15),
       fiabilite: Math.round(successRate),
@@ -132,7 +133,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
     { name: '5xx Serveur', value: allLogs.filter(log => log.status_code && log.status_code >= 500).length, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const _COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
   if (loading) {
     return (

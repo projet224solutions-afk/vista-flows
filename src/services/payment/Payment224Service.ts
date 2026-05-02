@@ -158,12 +158,12 @@ export class Payment224Service {
       // Normaliser le numéro: 9 chiffres -> 00224XXXXXXXXX
       const compact = phoneNumber.replace(/\s/g, '');
       // Normaliser le numéro pour ChapChapPay: format 224XXXXXXXXX
-      const customerPhone = compact.startsWith('00') 
-        ? compact.substring(2) 
-        : compact.startsWith('+') 
-          ? compact.substring(1) 
-          : compact.length === 9 
-            ? `224${compact}` 
+      const customerPhone = compact.startsWith('00')
+        ? compact.substring(2)
+        : compact.startsWith('+')
+          ? compact.substring(1)
+          : compact.length === 9
+            ? `224${compact}`
             : compact;
 
       const paymentMethod = provider === 'orange_money' ? 'orange_money' : 'mtn_momo';
@@ -221,9 +221,9 @@ export class Payment224Service {
    * Confirmer un paiement en espèces
    */
   static async confirmCashPayment(
-    deliveryId: string,
-    amount: number,
-    driverId: string
+    _deliveryId: string,
+    _amount: number,
+    _driverId: string
   ): Promise<boolean> {
     try {
       // Enregistrer le paiement en espèces dans les métadonnées

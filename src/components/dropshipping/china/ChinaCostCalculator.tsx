@@ -15,10 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Calculator, 
-  DollarSign, 
-  Truck, 
+import {
+  Calculator,
+  DollarSign,
+  Truck,
   Ship,
   Plane,
   Package,
@@ -29,7 +29,7 @@ import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 
 export function ChinaCostCalculator() {
   const { calculateFullCosts, settings } = useDropshippingChina();
-  
+
   const [supplierPrice, setSupplierPrice] = useState('10');
   const [currency, setCurrency] = useState('USD');
   const [transportMethod, setTransportMethod] = useState('express');
@@ -49,7 +49,7 @@ export function ChinaCostCalculator() {
     const totalRevenue = selling * qty;
     const profit = totalRevenue - totalCostLocal;
     const marginPercent = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0;
-    
+
     return {
       profit,
       marginPercent,
@@ -259,8 +259,8 @@ export function ChinaCostCalculator() {
                   key={opt.value}
                   onClick={() => setTransportMethod(opt.value)}
                   className={`p-4 rounded-lg border text-left transition-all ${
-                    transportMethod === opt.value 
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                    transportMethod === opt.value
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
                       : 'hover:border-muted-foreground/50'
                   }`}
                 >

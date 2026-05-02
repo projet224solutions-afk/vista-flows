@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Shield, Clock, Users, Activity, AlertTriangle, CheckCircle, 
-  XCircle, RefreshCw, Phone, Mail, UserCheck, Eye, FileText 
+import {
+  Shield, Clock, Users, _Activity, AlertTriangle, CheckCircle,
+  _XCircle, RefreshCw, Phone, _Mail, _UserCheck, Eye, FileText
 } from "lucide-react";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { useSecurityOps } from "@/hooks/useSecurityOps";
@@ -43,7 +43,7 @@ interface Investigation {
 }
 
 export function EnhancedSOCDashboard() {
-  const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
+  const { _incidents, _alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
   const [analysts, setAnalysts] = useState<SOCAnalyst[]>([]);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [loadingAnalysts, setLoadingAnalysts] = useState(true);
@@ -54,7 +54,7 @@ export function EnhancedSOCDashboard() {
         .from('soc_analysts')
         .select('*')
         .order('analyst_role', { ascending: false });
-      
+
       if (error) throw error;
       setAnalysts(data || []);
     } catch (error) {
@@ -69,7 +69,7 @@ export function EnhancedSOCDashboard() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       setInvestigations(data || []);
     } catch (error) {
@@ -142,8 +142,8 @@ export function EnhancedSOCDashboard() {
                 Surveillance et réponse aux incidents 24/7 avec analyse humaine proactive
               </CardDescription>
             </div>
-            <Button 
-              onClick={handleRefresh} 
+            <Button
+              onClick={handleRefresh}
               disabled={loading || loadingAnalysts}
               variant="outline"
               size="sm"
@@ -160,7 +160,7 @@ export function EnhancedSOCDashboard() {
               <span className="font-semibold">SOC Opérationnel - Couverture 24/7</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {activeAnalysts} analystes actifs • {onCallAnalysts} analystes de garde • 
+              {activeAnalysts} analystes actifs • {onCallAnalysts} analystes de garde •
               Capacité: {currentLoad}/{totalCapacity} cas ({loadPercentage.toFixed(0)}%)
             </p>
             <Progress value={loadPercentage} className="h-2 mt-2" />
@@ -240,8 +240,8 @@ export function EnhancedSOCDashboard() {
                   </div>
                   <div className="flex gap-1">
                     <Badge className={getStatusColor(analyst.status)}>
-                      {analyst.status === 'available' ? 'Disponible' : 
-                       analyst.status === 'busy' ? 'Occupé' : 
+                      {analyst.status === 'available' ? 'Disponible' :
+                       analyst.status === 'busy' ? 'Occupé' :
                        analyst.status === 'on_call' ? 'De garde' : 'Hors ligne'}
                     </Badge>
                     {analyst.is_on_call && (
@@ -251,7 +251,7 @@ export function EnhancedSOCDashboard() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-1">
                   {analyst.specialization?.map((spec, i) => (
                     <Badge key={i} variant="outline" className="text-xs">
@@ -259,18 +259,18 @@ export function EnhancedSOCDashboard() {
                     </Badge>
                   ))}
                 </div>
-                
+
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span>Charge de travail</span>
                     <span>{analyst.current_cases}/{analyst.max_cases} cas</span>
                   </div>
-                  <Progress 
-                    value={(analyst.current_cases / analyst.max_cases) * 100} 
-                    className="h-1.5" 
+                  <Progress
+                    value={(analyst.current_cases / analyst.max_cases) * 100}
+                    className="h-1.5"
                   />
                 </div>
-                
+
                 <div className="flex gap-2 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3" />
                   <span>Shift: {analyst.shift_start} - {analyst.shift_end}</span>

@@ -1,9 +1,9 @@
 // @ts-nocheck
-import { useState } from 'react';
+import {} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Shield, AlertTriangle, Activity, Eye, CheckCircle, RefreshCw, Clock, TrendingUp } from 'lucide-react';
+import { Shield, AlertTriangle, Activity, Eye, CheckCircle, RefreshCw, Clock, _TrendingUp } from 'lucide-react';
 import { useSecurityData } from '@/hooks/useSecurityData';
 
 export default function PDGSecurity() {
@@ -193,8 +193,8 @@ export default function PDGSecurity() {
                       </div>
                     </div>
                     {!fraud.reviewed && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => markFraudAsReviewed(fraud.id)}
                         className="gap-2"

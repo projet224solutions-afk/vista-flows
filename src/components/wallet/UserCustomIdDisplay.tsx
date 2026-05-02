@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { User } from 'lucide-react';
-import { toast } from 'sonner';
+import { _toast } from 'sonner';
 
 export const UserCustomIdDisplay = () => {
   const { user } = useAuth();
@@ -15,6 +15,7 @@ export const UserCustomIdDisplay = () => {
     if (user?.id) {
       loadStandardId();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadStandardId = async () => {
@@ -68,7 +69,7 @@ export const UserCustomIdDisplay = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-center">
-          <StandardIdBadge 
+          <StandardIdBadge
             standardId={standardId}
             variant="default"
             size="lg"

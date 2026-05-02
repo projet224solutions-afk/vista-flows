@@ -1,6 +1,6 @@
 ﻿/**
  * INTERFACE BUREAU SYNDICAT ULTRA-PROFESSIONNELLE
- * Toutes les fonctionnalit├®s int├®gr├®es et op├®rationnelles
+ * Toutes les fonctionnalités intégrées et opérationnelles
  * 224Solutions - Syndicate Dashboard Ultra Pro
  */
 
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, _DialogTrigger } from "@/components/ui/dialog";
 import {
     Building2,
     Users,
@@ -30,7 +30,7 @@ import {
     Download,
     RefreshCw,
     Eye,
-    Plus,
+    _Plus,
     Receipt,
     Star,
     Bell,
@@ -51,7 +51,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauSyndicatSOSDashboard';
 import { SyndicateWorkersManagement } from '@/components/bureau/SyndicateWorkersManagement';
-interface SyndicateMember {
+interface _SyndicateMember {
     id: string;
     name: string;
     email: string;
@@ -63,7 +63,7 @@ interface SyndicateMember {
     joined_date: string;
 }
 
-interface TaxiMotard {
+interface _TaxiMotard {
     id: string;
     name: string;
     phone: string;
@@ -83,25 +83,25 @@ export default function SyndicatDashboardUltraPro() {
     const navigate = useNavigate();
     useRoleRedirect();
 
-    // ├ëtats principaux
+    // États principaux
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [loading, setLoading] = useState(false);
+    const [_loading, setLoading] = useState(false);
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
-    // Donn├®es du bureau
-    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
+    // Données du bureau
+    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, _error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
 
     useEffect(() => {
         setLoading(dataLoading);
     }, [dataLoading]);
 
     /**
-     * Charge les donn├®es du bureau syndicat
+     * Charge les données du bureau syndicat
      */
     const loadSyndicateData = async () => { await refresh(); };
 
     /**
-     * D├®connexion
+     * Déconnexion
      */
     const handleSignOut = async () => {
         await signOut();
@@ -111,7 +111,7 @@ export default function SyndicatDashboardUltraPro() {
     /**
      * Formate la date
      */
-    const formatDate = (dateString: string) => {
+    const _formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('fr-FR', {
             day: '2-digit',
             month: '2-digit',
@@ -120,9 +120,9 @@ export default function SyndicatDashboardUltraPro() {
     };
 
     /**
-     * Obtient la couleur du r├┤le
+     * Obtient la couleur du rôle
      */
-    const getRoleColor = (role: string) => {
+    const _getRoleColor = (role: string) => {
         switch (role) {
             case 'president': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'secretary': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -132,12 +132,12 @@ export default function SyndicatDashboardUltraPro() {
     };
 
     /**
-     * Obtient le libell├® du r├┤le
+     * Obtient le libellé du rôle
      */
     const getRoleLabel = (role: string) => {
         switch (role) {
-            case 'president': return 'Pr├®sident';
-            case 'secretary': return 'Secr├®taire';
+            case 'president': return 'Président';
+            case 'secretary': return 'Secrétaire';
             case 'member': return 'Membre';
             default: return role;
         }
@@ -183,7 +183,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">T├®l├®charger</span> App
+                                <span className="hidden sm:inline">Télécharger</span> App
                             </Button>
 
                             <Button
@@ -193,7 +193,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">D├®connexion</span>
+                                <span className="hidden sm:inline">Déconnexion</span>
                             </Button>
                         </div>
                     </div>
@@ -202,7 +202,7 @@ export default function SyndicatDashboardUltraPro() {
 
             {/* Contenu principal - Mobile Optimized */}
             <div className="max-w-7xl mx-auto p-3 sm:p-6 pb-20 sm:pb-6">
-                {/* Statistiques en temps r├®el - 2x2 grid on mobile */}
+                {/* Statistiques en temps réel - 2x2 grid on mobile */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                         <CardContent className="p-3 sm:p-6">
@@ -333,7 +333,7 @@ export default function SyndicatDashboardUltraPro() {
                             <Card className="border-0 shadow-xl rounded-2xl border-red-200">
                                 <CardContent className="p-12 text-center">
                                     <Siren className="w-16 h-16 mx-auto mb-4 text-red-400" />
-                                    <p className="text-gray-600">Chargement du syst├¿me SOS...</p>
+                                    <p className="text-gray-600">Chargement du système SOS...</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -342,20 +342,20 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Dashboard */}
                     <TabsContent value="dashboard" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Activit├® r├®cente */}
+                            {/* Activite recente */}
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Activity className="w-5 h-5" />
-                                        Activit├® R├®cente
+                                        Activité récente
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     {syndicateMembers.length === 0 && taxiMotards.length === 0 ? (
                                         <div className="text-center py-8 text-gray-500">
                                             <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                            <p>Aucune activit├® r├®cente</p>
-                                            <p className="text-sm">Les donn├®es appara├«tront ici quand le bureau sera actif</p>
+                                            <p>Aucune activité récente</p>
+                                            <p className="text-sm">Les données apparaîtront ici quand le bureau sera actif</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
@@ -405,7 +405,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        G├®rer les Taxi-Motards
+                                        Gérer les Taxi-Motards
                                     </Button>
 
                                     <Button
@@ -414,7 +414,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        G├®rer les Membres Bureau
+                                        Gérer les Membres Bureau
                                     </Button>
 
                                     <Button
@@ -423,7 +423,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
                                         <Wallet className="w-4 h-4 mr-2" />
-                                        G├®rer la Tr├®sorerie
+                                        Gérer la Trésorerie
                                     </Button>
 
                                     <Button
@@ -432,7 +432,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
                                     >
                                         <Settings className="w-4 h-4 mr-2" />
-                                        Param├¿tres Bureau
+                                        Paramètres Bureau
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -442,8 +442,8 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Membres - Avec gestion des permissions */}
                     <TabsContent value="members" className="space-y-6">
                         {bureauId ? (
-                            <SyndicateWorkersManagement 
-                                bureauId={bureauId} 
+                            <SyndicateWorkersManagement
+                                bureauId={bureauId}
                                 bureauName={bureauName}
                             />
                         ) : (
@@ -528,7 +528,7 @@ export default function SyndicatDashboardUltraPro() {
                                                     </Button>
                                                     <Button size="sm" variant="outline" className="flex-1 rounded-lg">
                                                         <Eye className="w-3 h-3 mr-1" />
-                                                        D├®tails
+                                                        Détails
                                                     </Button>
                                                 </div>
                                             </CardContent>
@@ -549,15 +549,15 @@ export default function SyndicatDashboardUltraPro() {
                         )}
                     </TabsContent>
 
-                    {/* Onglet Gestion - MAINTENANT OP├ëRATIONNEL */}
+                    {/* Onglet Gestion - MAINTENANT OPÉRATIONNEL */}
                     <TabsContent value="gestion" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Param├¿tres du Bureau */}
+                            {/* Paramètres du Bureau */}
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Settings className="w-5 h-5" />
-                                        Param├¿tres du Bureau
+                                        Paramètres du Bureau
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
@@ -567,7 +567,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
                                         <Shield className="w-4 h-4 mr-2" />
-                                        G├®rer les Membres & Permissions
+                                        Gérer les Membres & Permissions
                                     </Button>
 
                                     <Button
@@ -585,7 +585,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <Bell className="w-4 h-4 mr-2" />
-                                        Param├¿tres Notifications
+                                        Paramètres Notifications
                                     </Button>
 
                                     <Button
@@ -594,7 +594,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
                                     >
                                         <Download className="w-4 h-4 mr-2" />
-                                        T├®l├®charger Applications
+                                        Télécharger Applications
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -611,12 +611,12 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => {
                                             loadSyndicateData();
-                                            toast.success('Donn├®es synchronis├®es !');
+                                            toast.success('Données synchronisées !');
                                         }}
                                         className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/40"
                                     >
                                         <RefreshCw className="w-4 h-4 mr-2" />
-                                        Synchroniser les Donn├®es
+                                        Synchroniser les Données
                                     </Button>
 
                                     <Button
@@ -655,15 +655,15 @@ export default function SyndicatDashboardUltraPro() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader>
-                                    <CardTitle className="text-xl font-bold text-gray-800">Statistiques G├®n├®rales</CardTitle>
+                                    <CardTitle className="text-xl font-bold text-gray-800">Statistiques Générales</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                                            <span className="font-medium text-gray-700">Taux d'activit├® membres</span>
+                                            <span className="font-medium text-gray-700">Taux d'activité membres</span>
                                             <span className="font-bold text-blue-600">
-                                                {syndicateStats.total_members > 0 
-                                                    ? `${Math.round((syndicateStats.active_members / syndicateStats.total_members) * 100)}%` 
+                                                {syndicateStats.total_members > 0
+                                                    ? `${Math.round((syndicateStats.active_members / syndicateStats.total_members) * 100)}%`
                                                     : '0%'}
                                             </span>
                                         </div>
@@ -692,8 +692,8 @@ export default function SyndicatDashboardUltraPro() {
                                 <CardContent>
                                     <div className="text-center py-8">
                                         <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                        <p className="text-gray-600">Graphiques d├®taill├®s disponibles</p>
-                                        <p className="text-sm text-gray-500">Analyse des performances en temps r├®el</p>
+                                        <p className="text-gray-600">Graphiques détaillés disponibles</p>
+                                        <p className="text-sm text-gray-500">Analyse des performances en temps réel</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -703,9 +703,9 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Tickets de Transport */}
                     <TabsContent value="tickets" className="space-y-6">
                         {bureauId ? (
-                            <TransportTicketGenerator 
-                                bureauId={bureauId} 
-                                bureauName={bureauName || undefined} 
+                            <TransportTicketGenerator
+                                bureauId={bureauId}
+                                bureauName={bureauName || undefined}
                             />
                         ) : (
                             <Card className="border-0 shadow-xl rounded-2xl">
@@ -719,18 +719,18 @@ export default function SyndicatDashboardUltraPro() {
                 </Tabs>
             </div>
 
-            {/* Dialog de t├®l├®chargement */}
+            {/* Dialog de téléchargement */}
             <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
                 <DialogContent className="max-w-6xl rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            T├®l├®charger 224Solutions
+                            Télécharger 224Solutions
                         </DialogTitle>
                     </DialogHeader>
                     <AutoDownloadDetector />
                 </DialogContent>
             </Dialog>
-            
+
             {/* Widget de communication flottant */}
             <CommunicationWidget position="bottom-right" showNotifications={true} />
         </div>

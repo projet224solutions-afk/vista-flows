@@ -26,7 +26,7 @@ export interface BureauUpdate {
     timestamp: string;
 }
 
-export function useRealtimeSync(bureauId?: string) {
+export function useRealtimeSync(_bureauId?: string) {
     const [stats, setStats] = useState<RealtimeStats>({
         totalBureaus: 0,
         activeBureaus: 0,
@@ -149,6 +149,7 @@ export function useRealtimeSync(bureauId?: string) {
                 subscription.unsubscribe();
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loadInitialStats]);
 
     // Gérer les mises à jour des bureaux

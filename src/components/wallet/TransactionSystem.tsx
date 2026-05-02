@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,14 +25,14 @@ export const TransactionSystem = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [_selectedTransaction, _setSelectedTransaction] = useState(null);
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const { 
-    transactions, 
-    loading: transactionsLoading, 
-    createWalletTransaction, 
+  const {
+    transactions,
+    loading: transactionsLoading,
+    createWalletTransaction,
     createEscrowTransaction,
     searchTransactions,
     refetch
@@ -50,18 +50,18 @@ export const TransactionSystem = () => {
 
     try {
       setLoading(true);
-      
+
       if (method === 'wallet') {
         await createWalletTransaction(receiverEmail, parseFloat(amount), currency, description);
       } else if (method === 'escrow') {
         await createEscrowTransaction(receiverEmail, parseFloat(amount), currency, description);
       }
-      
+
       // Reset form
       setReceiverEmail('');
       setAmount('');
       setDescription('');
-    } catch (error) {
+    } catch (_error) {
       // Error handled in hook
     } finally {
       setLoading(false);
@@ -167,7 +167,7 @@ export const TransactionSystem = () => {
                     onChange={(e) => setReceiverEmail(e.target.value)}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="amount">Montant *</Label>
@@ -241,7 +241,7 @@ export const TransactionSystem = () => {
                   />
                 </div>
 
-                <Button 
+                <Button
                   onClick={handleSendMoney}
                   className="w-full bg-vendeur-gradient text-white"
                   disabled={loading}
@@ -270,7 +270,7 @@ export const TransactionSystem = () => {
                       <p className="text-xs text-vendeur">ID unique généré automatiquement</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
                     <Shield className="w-5 h-5 text-blue-600" />
                     <div>
@@ -365,7 +365,7 @@ export const TransactionSystem = () => {
                         </TableCell>
                         <TableCell>
                           {transaction.sender_id === user?.id ? 'À' : 'De'} {
-                            transaction.sender_id === user?.id 
+                            transaction.sender_id === user?.id
                               ? transaction.receiver_id.substring(0, 8) + '...'
                               : transaction.sender_id.substring(0, 8) + '...'
                           }

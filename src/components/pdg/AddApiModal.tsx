@@ -47,7 +47,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.api_name || !formData.api_provider || !formData.api_key) {
       toast.error('Veuillez remplir tous les champs requis');
       return;
@@ -84,7 +84,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
       };
 
       const result = await ApiMonitoringService.addApiConnection(apiConnection);
-      
+
       if (result) {
         const healthCheck = await backendFetch(`/api/core/supervision/api-connections/${result.id}/health-check`, {
           method: 'POST',
@@ -109,7 +109,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
         toast.success('✅ API ajoutée avec succès');
         onSuccess();
         onClose();
-        
+
         // Réinitialiser le formulaire
         setFormData({
           api_name: '',

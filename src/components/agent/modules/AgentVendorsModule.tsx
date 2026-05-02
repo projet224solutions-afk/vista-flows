@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Store, CheckCircle, XCircle, RefreshCw, Eye, 
-  Search, Shield, TrendingUp, Users
+import {
+  Store, CheckCircle, XCircle, RefreshCw, Eye,
+  Search, Shield, _TrendingUp, _Users
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,7 +46,7 @@ interface Vendor {
   };
 }
 
-export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsModuleProps) {
+export function AgentVendorsModule({ _agentId, canManage = false }: AgentVendorsModuleProps) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,7 +86,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
 
       const vendorsList = (data || []) as Vendor[];
       setVendors(vendorsList);
-      
+
       setStats({
         total: vendorsList.length,
         active: vendorsList.filter(v => v.is_active).length,
@@ -116,7 +116,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
       if (error) throw error;
       toast.success(currentStatus ? 'Vendeur désactivé' : 'Vendeur activé');
       loadVendors();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la modification');
     }
   };
@@ -284,7 +284,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
               {selectedVendor?.business_name}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedVendor && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

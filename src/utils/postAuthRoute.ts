@@ -186,7 +186,7 @@ export async function resolvePostAuthRoute(opts: PostAuthRouteOptions): Promise<
         'vendor_agents_any',
         { data: null, error: null } as any,
       );
-      
+
       return vaAny?.access_token ? `/vendor-agent/${vaAny.access_token}` : '/home';
     }
 

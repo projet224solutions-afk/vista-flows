@@ -41,14 +41,14 @@ export function useFinancialTransactions() {
 
   // Transfert carte virtuelle → Orange Money
   const transferCardToOrangeMoney = async (
-    cardId: string,
-    phoneNumber: string,
-    amount: number
+    _cardId: string,
+    _phoneNumber: string,
+    _amount: number
   ) => {
     setLoading(true);
     try {
       console.log('💳→📱 Lancement transfert carte vers Orange Money');
-      
+
       // TODO: La Edge Function 'card-to-orange-money' n'est pas encore déployée
       toast.error('Le transfert carte → Orange Money est temporairement indisponible');
       return { success: false, error: 'Service temporairement indisponible' };
@@ -83,10 +83,10 @@ export function useFinancialTransactions() {
 
       toast.success('✅ Carte virtuelle rechargée avec succès !');
       await loadTransactions();
-      
+
       // Émettre événement pour mettre à jour les soldes
       window.dispatchEvent(new Event('wallet-updated'));
-      
+
       return { success: true, transactionId: data };
     } catch (error: any) {
       console.error('Erreur recharge carte:', error);
@@ -119,10 +119,10 @@ export function useFinancialTransactions() {
 
       toast.success('✅ Wallet rechargé avec succès !');
       await loadTransactions();
-      
+
       // Émettre événement pour mettre à jour les soldes
       window.dispatchEvent(new Event('wallet-updated'));
-      
+
       return { success: true, transactionId: data };
     } catch (error: any) {
       console.error('Erreur recharge wallet:', error);

@@ -133,9 +133,9 @@ export function AgentOverviewProfessional({
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-sm px-3 py-1.5 bg-white shadow-sm">
             <Calendar className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-            {new Date().toLocaleDateString('fr-FR', { 
+            {new Date().toLocaleDateString('fr-FR', {
               weekday: 'short',
-              day: 'numeric', 
+              day: 'numeric',
               month: 'short'
             })}
           </Badge>
@@ -163,8 +163,8 @@ export function AgentOverviewProfessional({
                 <CreditCard className="w-6 h-6" />
               </div>
             </div>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="mt-4 w-full bg-white/20 hover:bg-white/30 text-white border-0"
               onClick={() => onNavigate('wallet')}
             >
@@ -241,10 +241,10 @@ export function AgentOverviewProfessional({
           </div>
           <h2 className="font-semibold text-slate-900">Actions Rapides</h2>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {quickActions.map((action, index) => (
-            <Card 
+            <Card
               key={index}
               className={cn(
                 "border-0 shadow-lg cursor-pointer transition-all duration-300",
@@ -325,9 +325,9 @@ export function AgentOverviewProfessional({
                 {Math.min(Math.round((stats.totalCommissions / 1000000) * 100), 100)}%
               </span>
             </div>
-            <Progress 
-              value={Math.min((stats.totalCommissions / 1000000) * 100, 100)} 
-              className="h-2" 
+            <Progress
+              value={Math.min((stats.totalCommissions / 1000000) * 100, 100)}
+              className="h-2"
             />
             <p className="text-xs text-slate-500">
               Objectif: 1,000,000 GNF
@@ -369,8 +369,8 @@ export function AgentOverviewProfessional({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="bg-white text-slate-900 hover:bg-slate-100"
                 onClick={() => onNavigate('reports')}
               >

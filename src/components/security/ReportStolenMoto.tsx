@@ -11,17 +11,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { 
-    AlertTriangle, 
-    Shield, 
-    Send, 
-    CheckCircle, 
+import { _Badge } from '@/components/ui/badge';
+import {
+    AlertTriangle,
+    Shield,
+    Send,
+    CheckCircle,
     XCircle,
     Loader2,
-    MapPin,
-    Calendar,
-    FileText
+    _MapPin,
+    _Calendar,
+    _FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,16 +32,16 @@ interface ReportStolenMotoProps {
     className?: string;
 }
 
-export default function ReportStolenMoto({ 
-    defaultNumero = '', 
+export default function ReportStolenMoto({
+    defaultNumero = '',
     onSuccess,
-    className 
+    className
 }: ReportStolenMotoProps) {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    
+
     const [formData, setFormData] = useState({
         numero_serie: defaultNumero,
         vin: '',
@@ -52,7 +52,7 @@ export default function ReportStolenMoto({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!formData.numero_serie || !formData.ville) {
             setError('Numéro de série et ville sont obligatoires');
             return;
@@ -63,7 +63,7 @@ export default function ReportStolenMoto({
 
         try {
             console.log('🚨 DÉCLARATION DE VOL - Envoi...');
-            
+
             const response = await fetch('/api/moto-security/report-stolen', {
                 method: 'POST',
                 headers: {
@@ -89,7 +89,7 @@ export default function ReportStolenMoto({
                     description: `Alerte créée: ${result.alert.id}`,
                     duration: 8000
                 });
-                
+
                 // Réinitialiser le formulaire
                 setFormData({
                     numero_serie: '',
@@ -134,7 +134,7 @@ export default function ReportStolenMoto({
                     <p className="text-green-700 mb-4">
                         Votre déclaration a été enregistrée et les bureaux concernés ont été alertés.
                     </p>
-                    <Button 
+                    <Button
                         onClick={() => setSuccess(false)}
                         variant="outline"
                         className="border-green-300 text-green-700 hover:bg-green-100"
@@ -157,7 +157,7 @@ export default function ReportStolenMoto({
                     Cette déclaration sera transmise à tous les bureaux syndicats et au PDG
                 </p>
             </CardHeader>
-            
+
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (

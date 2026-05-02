@@ -7,7 +7,7 @@
 import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Package, ShoppingCart, Users, BarChart3, CreditCard, 
+  Package, ShoppingCart, Users, BarChart3, CreditCard,
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
@@ -63,9 +63,9 @@ export function VendorSidebar() {
   const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading: badgesLoading } = useVendorBadges();
   const { canAccessModule, getMinPlanForFeature, loading: subscriptionLoading } = useSubscriptionFeatures();
-  const { profile } = useVendorOptimized();
-  const { hasProducts: hasDigitalProducts, loading: digitalProductsLoading } = useHasDigitalProducts();
-  
+  const { _profile } = useVendorOptimized();
+  const { hasProducts: hasDigitalProducts, loading: _digitalProductsLoading } = useHasDigitalProducts();
+
   // State pour le dialog d'upgrade
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [targetFeature, setTargetFeature] = useState<SubscriptionFeature | undefined>();
@@ -81,7 +81,7 @@ export function VendorSidebar() {
 
   const getBadgeValue = (path: string): string | null => {
     if (badgesLoading) return null;
-    
+
     switch (path) {
       case 'pos':
         return 'HOT'; // Badge HOT permanent pour le POS
@@ -101,7 +101,7 @@ export function VendorSidebar() {
   const handleNavigation = (path: string, title: string) => {
     const feature = MODULE_FEATURE_MAP[path];
     const hasAccess = !feature || canAccessModule(path);
-    
+
     if (hasAccess) {
       navigate(`/vendeur/${path}`);
       if (isMobile) {
@@ -126,20 +126,20 @@ export function VendorSidebar() {
     const items = [
       { title: t('sidebar.products'), icon: Package, path: "products" },
     ];
-    
+
     // Afficher "Produits Numériques" seulement si le vendeur en a créé
     if (hasDigitalProducts) {
-      items.push({ title: "Produits Numériques", icon: Laptop, path: "digital-products" });
+      items.push({ title: t('sidebar.digitalProducts'), icon: Laptop, path: "digital-products" });
     }
-    
+
     items.push(
       { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
       { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
-      { title: "Ajustements Stock", icon: AlertTriangle, path: "stock-adjustments" },
+      { title: t('sidebar.stockAdjustments'), icon: AlertTriangle, path: "stock-adjustments" },
       { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
       { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
     );
-    
+
     return items;
   }, [t, hasDigitalProducts]);
 
@@ -151,7 +151,7 @@ export function VendorSidebar() {
         { title: t('sidebar.dashboard'), icon: BarChart3, path: "dashboard" },
         { title: t('sidebar.analytics'), icon: TrendingUp, path: "analytics" },
         { title: t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
-        { title: "Module Métier", icon: Briefcase, path: "service-module" },
+        { title: t('sidebar.businessModule'), icon: Briefcase, path: "service-module" },
       ]
     },
     {
@@ -167,7 +167,7 @@ export function VendorSidebar() {
         { title: t('sidebar.agents'), icon: Users, path: "agents" },
         { title: t('sidebar.prospects'), icon: Target, path: "prospects" },
         { title: t('sidebar.marketing'), icon: Megaphone, path: "marketing" },
-        { title: "Campagnes", icon: Megaphone, path: "campaigns" },
+        { title: t('sidebar.campaigns'), icon: Megaphone, path: "campaigns" },
       ]
     },
     {
@@ -175,12 +175,12 @@ export function VendorSidebar() {
       icon: Wallet,
       items: [
         { title: t('sidebar.wallet'), icon: Wallet, path: "wallet" },
-        { title: "Comptes Encaissement", icon: Wallet, path: "accounts" },
+        { title: t('sidebar.collectionAccounts'), icon: Wallet, path: "accounts" },
         { title: t('sidebar.virtualCard'), icon: Smartphone, path: "virtual-card" },
         { title: t('sidebar.quotesInvoices'), icon: FileText, path: "quotes-invoices" },
         { title: t('sidebar.payments'), icon: CreditCard, path: "payments" },
-        { title: "Paiements Échelonnés", icon: CreditCard, path: "installments" },
-        { title: "Ventes Avancées", icon: ShoppingCart, path: "advanced-sales" },
+        { title: t('sidebar.installmentPayments'), icon: CreditCard, path: "installments" },
+        { title: t('sidebar.advancedSales'), icon: ShoppingCart, path: "advanced-sales" },
         { title: t('sidebar.paymentLinks'), icon: DollarSign, path: "payment-links" },
         { title: t('sidebar.expenses'), icon: Receipt, path: "expenses" },
         { title: t('sidebar.debts'), icon: AlertTriangle, path: "debts" },
@@ -192,10 +192,10 @@ export function VendorSidebar() {
       label: t('sidebar.services'),
       icon: Truck,
       items: [
-        { title: "Mes Achats", icon: ShoppingCart, path: "my-purchases" },
+        { title: t('sidebar.myPurchases'), icon: ShoppingCart, path: "my-purchases" },
         { title: t('sidebar.deliveries'), icon: Truck, path: "delivery" },
         { title: t('sidebar.ratings'), icon: Star, path: "ratings" },
-        { title: "Avis Clients", icon: MessagesSquare, path: "reviews" },
+        { title: t('sidebar.customerReviews'), icon: MessagesSquare, path: "reviews" },
         { title: t('sidebar.support'), icon: HeadphonesIcon, path: "support" },
         { title: t('sidebar.messages'), icon: MessageSquare, path: "communication" },
         { title: t('sidebar.reports'), icon: FileText, path: "reports" },
@@ -227,11 +227,11 @@ export function VendorSidebar() {
                     {section.label}
                   </SidebarGroupLabel>
                 )}
-                
+
                 {collapsed && sectionIndex > 0 && (
                   <div className="h-px bg-white/15 mx-2 my-2" />
                 )}
-                
+
                 <SidebarGroupContent>
                   <SidebarMenu className="space-y-0.5 px-2">
                     {section.items.map((item: { title: string; icon: any; path: string; isPOS?: boolean }) => {
@@ -240,7 +240,7 @@ export function VendorSidebar() {
                       const isPOS = item.isPOS;
                       const hasAccess = subscriptionLoading ? true : canAccessModule(item.path);
                       const requiredPlan = getRequiredPlan(item.path);
-                      
+
                       const menuItem = (
                         <SidebarMenuItem key={item.path}>
                           <div
@@ -283,7 +283,7 @@ export function VendorSidebar() {
                                 !hasAccess && "text-white/40"
                               )} />
                             </div>
-                            
+
                             {/* Texte et Badge */}
                             {!collapsed && (
                               <>
@@ -294,10 +294,10 @@ export function VendorSidebar() {
                                 )}>
                                   {item.title}
                                 </span>
-                                
+
                                 {/* Badge de contenu */}
                                 {badgeValue && hasAccess && (
-                                  <Badge 
+                                  <Badge
                                     variant={badgeValue === "HOT" ? "destructive" : "secondary"}
                                     className={cn(
                                       "text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0 mr-3 font-bold",
@@ -307,12 +307,12 @@ export function VendorSidebar() {
                                     {badgeValue}
                                   </Badge>
                                 )}
-                                
+
                                 {/* Icône de verrouillage si pas accès */}
                                 {!hasAccess && requiredPlan && (
                                   <div className="flex items-center gap-1">
                                     <Lock className="w-3 h-3 text-white/40" />
-                                    <Badge 
+                                    <Badge
                                       className={cn(
                                         "text-[8px] px-1 py-0 h-4 text-white flex-shrink-0",
                                         PLAN_BADGE_COLORS[requiredPlan] || 'bg-gray-500'
@@ -322,23 +322,23 @@ export function VendorSidebar() {
                                     </Badge>
                                   </div>
                                 )}
-                                
+
                                 {active && hasAccess && (
                                   <ChevronRight className="w-3 h-3 text-primary/60 flex-shrink-0" />
                                 )}
                               </>
                             )}
-                            
+
                             {/* Badge en mode collapsed */}
                             {collapsed && !hasAccess && (
                               <Lock className="absolute -top-1 -right-1 w-3 h-3 text-muted-foreground bg-background rounded-full p-0.5" />
                             )}
-                            
+
                             {collapsed && badgeValue && hasAccess && (
                               <span className={cn(
                                 "absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] flex items-center justify-center font-bold",
-                                badgeValue === "HOT" 
-                                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse" 
+                                badgeValue === "HOT"
+                                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse"
                                   : "bg-primary text-primary-foreground"
                               )}>
                                 {badgeValue === "HOT" ? "!" : badgeValue.length > 2 ? "+" : badgeValue}
@@ -358,7 +358,7 @@ export function VendorSidebar() {
                             <TooltipContent side="right">
                               <p className="font-medium">{item.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                {t('sidebar.requires')} {PLAN_DISPLAY_NAMES[requiredPlan || ''] || 'un abonnement supérieur'}
+                                {t('sidebar.requires')} {PLAN_DISPLAY_NAMES[requiredPlan || ''] || t('sidebar.higherPlan')}
                               </p>
                             </TooltipContent>
                           </Tooltip>

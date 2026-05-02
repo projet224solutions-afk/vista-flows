@@ -2,7 +2,7 @@
  * CHINA PRODUCT IMPORT DIALOG
  * Dialog pour importer un produit depuis Alibaba, AliExpress ou 1688
  * Extension du module dropshipping existant
- * 
+ *
  * @module ChinaProductImportDialog
  * @version 1.0.0
  */
@@ -14,12 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
+  _DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { _Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +33,7 @@ import {
   Link,
   Loader2,
   Package,
-  DollarSign,
+  _DollarSign,
   Truck,
   Clock,
   AlertTriangle,
@@ -51,7 +51,7 @@ import type {
   ChinaProductImport,
   ChinaCostBreakdown
 } from '@/types/china-dropshipping';
-import { CHINA_PLATFORMS, TRANSPORT_METHODS } from '@/types/china-dropshipping';
+import { CHINA_PLATFORMS, _TRANSPORT_METHODS } from '@/types/china-dropshipping';
 
 // ==================== INTERFACES ====================
 
@@ -118,11 +118,11 @@ export function ChinaProductImportDialog({
     try {
       setLoading(true);
       const result = await onImport(url, platform);
-      
+
       if (result) {
         setImportedProduct(result);
         setCurrentStep('preview');
-        
+
         // Calculer les coûts automatiquement
         const costs = await onCalculateCosts(result.id, quantity);
         if (costs) {
@@ -138,7 +138,7 @@ export function ChinaProductImportDialog({
 
   const handleRecalculateCosts = useCallback(async () => {
     if (!importedProduct) return;
-    
+
     setLoading(true);
     try {
       const costs = await onCalculateCosts(importedProduct.id, quantity);
@@ -163,7 +163,7 @@ export function ChinaProductImportDialog({
     try {
       setLoading(true);
       const productId = await onConvert(importedProduct.id, margin);
-      
+
       if (productId) {
         toast.success('Produit ajouté à votre catalogue !');
         handleReset();
@@ -174,6 +174,7 @@ export function ChinaProductImportDialog({
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [importedProduct, margin, onConvert, onOpenChange]);
 
   const handleReset = useCallback(() => {
@@ -194,7 +195,7 @@ export function ChinaProductImportDialog({
       <Alert className="bg-blue-50 border-blue-200">
         <Info className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-800">
-          Collez le lien d'un produit depuis <strong>Alibaba</strong>, <strong>AliExpress</strong> ou <strong>1688</strong> 
+          Collez le lien d'un produit depuis <strong>Alibaba</strong>, <strong>AliExpress</strong> ou <strong>1688</strong>
           pour l'importer automatiquement dans votre catalogue.
         </AlertDescription>
       </Alert>
@@ -204,7 +205,7 @@ export function ChinaProductImportDialog({
         {(Object.entries(CHINA_PLATFORMS) as [ChinaPlatformType, typeof CHINA_PLATFORMS[ChinaPlatformType]][])
           .filter(([key]) => key !== 'PRIVATE')
           .map(([key, info]) => (
-            <Card 
+            <Card
               key={key}
               className={`cursor-pointer transition-all hover:shadow-md ${
                 platform === key ? 'ring-2 ring-primary border-primary' : ''
@@ -252,8 +253,8 @@ export function ChinaProductImportDialog({
       </div>
 
       {/* Bouton import */}
-      <Button 
-        onClick={handleStartImport} 
+      <Button
+        onClick={handleStartImport}
         disabled={!url || !platform || loading}
         className="w-full"
         size="lg"
@@ -286,8 +287,8 @@ export function ChinaProductImportDialog({
           <div className="space-y-4">
             <div className="aspect-square rounded-lg overflow-hidden bg-muted">
               {importedProduct.images?.[0] ? (
-                <img 
-                  src={importedProduct.images[0]} 
+                <img
+                  src={importedProduct.images[0]}
                   alt={importedProduct.original_title}
                   className="w-full h-full object-cover"
                 />
@@ -297,7 +298,7 @@ export function ChinaProductImportDialog({
                 </div>
               )}
             </div>
-            
+
             {importedProduct.images && importedProduct.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
                 {importedProduct.images.slice(1, 5).map((img, i) => (
@@ -427,16 +428,16 @@ export function ChinaProductImportDialog({
                 <div className="flex items-center justify-between">
                   <Label>Quantité simulée</Label>
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     >
                       -
                     </Button>
                     <span className="w-12 text-center font-medium">{quantity}</span>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setQuantity(quantity + 1)}
                     >
@@ -476,9 +477,9 @@ export function ChinaProductImportDialog({
                     <span className="text-muted-foreground">Frais plateforme</span>
                     <span>${costBreakdown.platform_fee?.toFixed(2)}</span>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between font-medium">
                     <span>Coût total USD</span>
                     <span>${costBreakdown.total_cost_usd?.toFixed(2)}</span>
@@ -601,8 +602,8 @@ export function ChinaProductImportDialog({
             <div className="flex gap-4">
               <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                 {importedProduct.images?.[0] ? (
-                  <img 
-                    src={importedProduct.images[0]} 
+                  <img
+                    src={importedProduct.images[0]}
                     alt=""
                     className="w-full h-full object-cover"
                   />
@@ -698,8 +699,8 @@ export function ChinaProductImportDialog({
           {['url', 'preview', 'pricing', 'confirm'].map((step, index) => (
             <div key={step} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                currentStep === step 
-                  ? 'bg-primary text-primary-foreground' 
+                currentStep === step
+                  ? 'bg-primary text-primary-foreground'
                   : index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
                     ? 'bg-green-500 text-white'
                     : 'bg-muted text-muted-foreground'

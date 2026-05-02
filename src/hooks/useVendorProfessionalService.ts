@@ -61,8 +61,8 @@ export function useVendorProfessionalService() {
 
         if (data) {
           // Gérer le cas où service_type peut être un tableau (Supabase)
-          const serviceType = Array.isArray(data.service_type) 
-            ? data.service_type[0] 
+          const serviceType = Array.isArray(data.service_type)
+            ? data.service_type[0]
             : data.service_type;
 
           setProfessionalService({

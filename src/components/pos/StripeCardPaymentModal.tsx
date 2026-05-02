@@ -308,7 +308,7 @@ export function StripeCardPaymentModal({
   // ✅ Initialiser le paiement seulement quand le modal s'ouvre avec un nouveau orderId
   useEffect(() => {
     if (!isOpen || !orderId) return;
-    
+
     // Éviter la réinitialisation si on a déjà un clientSecret pour cette commande
     if (clientSecret) return;
 
@@ -321,7 +321,7 @@ export function StripeCardPaymentModal({
         if (isOffline()) {
           throw new Error('Mode hors ligne - paiement indisponible. Veuillez vous reconnecter à Internet.');
         }
-        
+
         if (!stripe) {
           const stripeInstance = await getStripe();
           if (!stripeInstance) {

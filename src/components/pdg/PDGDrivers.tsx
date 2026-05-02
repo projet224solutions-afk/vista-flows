@@ -44,13 +44,13 @@ export default function PDGDrivers() {
       if (error) throw error;
 
       setDrivers(data || []);
-      
+
       const online = data?.filter(d => d.is_online).length || 0;
       const offline = data?.filter(d => !d.is_online).length || 0;
       const verified = data?.filter(d => d.is_verified).length || 0;
-      
-      setStats({ 
-        online, 
+
+      setStats({
+        online,
         offline,
         total: data?.length || 0,
         verified
@@ -93,7 +93,7 @@ export default function PDGDrivers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">En ligne</CardTitle>

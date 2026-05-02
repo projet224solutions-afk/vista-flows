@@ -13,11 +13,11 @@ interface GoOnlineButtonProps {
   onToggle: () => void;
 }
 
-export function GoOnlineButton({ 
-  isOnline, 
-  isLoading, 
+export function GoOnlineButton({
+  isOnline,
+  isLoading,
   hasSubscription,
-  onToggle 
+  onToggle
 }: GoOnlineButtonProps) {
   return (
     <div className="flex flex-col items-center justify-center py-4 space-y-4">
@@ -30,15 +30,15 @@ export function GoOnlineButton({
             <div className="absolute -inset-2 rounded-full bg-emerald-500/10 animate-pulse" />
           </>
         )}
-        
+
         {/* Glow effect */}
         <div className={cn(
           "absolute -inset-2 rounded-full blur-xl transition-all duration-500",
-          isOnline 
-            ? "bg-emerald-500/30 opacity-100" 
+          isOnline
+            ? "bg-emerald-500/30 opacity-100"
             : "bg-gray-500/20 opacity-50"
         )} />
-        
+
         {/* Main Button - taille réduite pour mobile */}
         <button
           onClick={onToggle}
@@ -52,19 +52,19 @@ export function GoOnlineButton({
             "disabled:opacity-60 disabled:cursor-not-allowed",
             isLoading && "animate-pulse",
             !isLoading && !isOnline && hasSubscription && "hover:scale-105 active:scale-95",
-            isOnline 
-              ? "bg-emerald-500 text-white shadow-emerald-500/60" 
+            isOnline
+              ? "bg-emerald-500 text-white shadow-emerald-500/60"
               : "bg-gray-800 text-gray-300 shadow-black/50 border border-gray-600"
           )}
         >
           {/* Inner subtle overlay */}
           <div className={cn(
             "absolute inset-1 rounded-full transition-opacity duration-300",
-            isOnline 
-              ? "bg-black/10" 
+            isOnline
+              ? "bg-black/10"
               : "bg-black/15"
           )} />
-          
+
           {/* Icon */}
           <div className="relative z-10">
             {isLoading ? (
@@ -75,7 +75,7 @@ export function GoOnlineButton({
               <Power className="w-10 h-10" />
             )}
           </div>
-          
+
           {/* Text */}
           <span className="relative z-10 text-xs font-black tracking-widest">
             {isLoading ? '...' : isOnline ? 'EN LIGNE' : 'GO'}
@@ -87,8 +87,8 @@ export function GoOnlineButton({
       <div className={cn(
         "flex items-center gap-2 px-3 py-1.5 rounded-full",
         "text-xs font-medium transition-all duration-300",
-        isOnline 
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+        isOnline
+          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
           : "bg-gray-800/50 text-gray-400 border border-gray-700/50"
       )}>
         {isOnline ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ interface TaxiFormData {
 
 export default function TaxiMotoRequestForm() {
   // Utiliser la persistence pour les données du formulaire
-  const { values, updateField, resetForm, isRestored } = useFormPersistence<TaxiFormData>(
+  const { values, updateField, resetForm, _isRestored } = useFormPersistence<TaxiFormData>(
     'taxi_moto_request',
     {
       pickupLat: '',

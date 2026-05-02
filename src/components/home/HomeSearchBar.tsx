@@ -96,7 +96,7 @@ export function HomeSearchBar({
               'focus-visible:ring-0 focus-visible:ring-offset-0'
             )}
           />
-          
+
           {/* Clear button */}
           {value && (
             <Button

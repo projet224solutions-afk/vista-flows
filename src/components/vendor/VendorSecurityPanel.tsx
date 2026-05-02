@@ -127,7 +127,7 @@ export function VendorSecurityPanel() {
             )}
           </div>
         ) : showKYCForm ? (
-          <VendorKYCForm 
+          <VendorKYCForm
             onSuccess={() => {
               setShowKYCForm(false);
               reload();
@@ -158,7 +158,7 @@ export function VendorSecurityPanel() {
               <div key={activity.id} className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant={
-                    activity.severity === 'critical' ? 'destructive' : 
+                    activity.severity === 'critical' ? 'destructive' :
                     activity.severity === 'high' ? 'destructive' :
                     'secondary'
                   }>

@@ -11,11 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useWallet } from '@/hooks/useWallet';
-import { 
-  Wallet, 
-  TrendingUp, 
-  Clock, 
-  Lock, 
+import {
+  Wallet,
+  TrendingUp,
+  Clock,
+  Lock,
   RefreshCw,
   Eye,
   EyeOff,
@@ -30,14 +30,14 @@ interface WalletDisplayProps {
   compact?: boolean;
 }
 
-export function WalletDisplay({ 
+export function WalletDisplay({
   showActions = true,
   onWithdraw,
-  compact = false 
+  compact = false
 }: WalletDisplayProps) {
-  const { 
-    wallet, 
-    loading, 
+  const {
+    wallet,
+    loading,
     balance,
     currency,
     isBlocked,
@@ -202,7 +202,7 @@ export function WalletDisplay({
         {/* Actions */}
         {showActions && (
           <div className="flex space-x-2 pt-2">
-            <Button 
+            <Button
               onClick={onWithdraw}
               disabled={balance === 0 || !isActive}
               className="flex-1"
@@ -210,7 +210,7 @@ export function WalletDisplay({
               <ArrowUpRight className="w-4 h-4 mr-2" />
               Retirer
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={handleRefresh}
               disabled={loading}

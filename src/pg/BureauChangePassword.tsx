@@ -30,10 +30,10 @@ const BureauChangePassword = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Charger les donn├®es du bureau (depuis MFA ou token)
+  // Charger les données du bureau (depuis MFA ou token)
   useEffect(() => {
     const loadBureauData = async () => {
-      // V├®rifier d'abord si on a une session MFA
+      // Vérifier d'abord si on a une session MFA
       if (bureauAuth?.bureau) {
         setBureauData(bureauAuth.bureau);
         setLoading(false);
@@ -61,15 +61,15 @@ const BureauChangePassword = () => {
         }
       }
 
-      // Aucune session trouv├®e
-      toast.error('Session expir├®e. Veuillez vous reconnecter.');
+      // Aucune session trouvée
+      toast.error('Session expirée. Veuillez vous reconnecter.');
       navigate('/bureau/login');
     };
 
     loadBureauData();
   }, [bureauAuth, navigate]);
 
-  // Handlers optimis├®s - state local uniquement, pas de validation lourde
+  // Handlers optimisés - state local uniquement, pas de validation lourde
   const handlePasswordChange = useCallback((field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
@@ -88,7 +88,7 @@ const BureauChangePassword = () => {
     }
 
     if (formData.newPassword.length < 8) {
-      toast.error("Le nouveau mot de passe doit contenir au moins 8 caract├¿res");
+      toast.error("Le nouveau mot de passe doit contenir au moins 8 caractères");
       return;
     }
 
@@ -103,7 +103,7 @@ const BureauChangePassword = () => {
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      toast.error("Le nouveau mot de passe doit ├¬tre diff├®rent de l'ancien");
+      toast.error("Le nouveau mot de passe doit être différent de l'ancien");
       return;
     }
 
@@ -125,14 +125,14 @@ const BureauChangePassword = () => {
       }
 
       if (data && data.success) {
-        toast.success("Mot de passe modifi├® avec succ├¿s !");
+        toast.success("Mot de passe modifié avec succès !");
         setFormData({
           currentPassword: "",
           newPassword: "",
           confirmPassword: ""
         });
-        
-        // Rediriger selon le mode d'acc├¿s
+
+        // Rediriger selon le mode d'accès
         setTimeout(() => {
           const returnToken = localStorage.getItem('bureau_return_token');
           if (returnToken) {
@@ -186,7 +186,7 @@ const BureauChangePassword = () => {
               Changement de mot de passe
             </CardTitle>
             <CardDescription className="text-center">
-              S├®curisez votre compte avec un nouveau mot de passe
+              Sécurisez votre compte avec un nouveau mot de passe
             </CardDescription>
           </CardHeader>
 
@@ -196,11 +196,11 @@ const BureauChangePassword = () => {
               <AlertDescription className="text-green-800">
                 <strong>Exigences du mot de passe :</strong>
                 <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                  <li>Au moins 8 caract├¿res</li>
+                  <li>Au moins 8 caractères</li>
                   <li>Au moins une lettre majuscule</li>
                   <li>Au moins une lettre minuscule</li>
                   <li>Au moins un chiffre</li>
-                  <li>Au moins un caract├¿re sp├®cial (!@#$%^&*)</li>
+                  <li>Au moins un caractère spécial (!@#$%^&*)</li>
                 </ul>
               </AlertDescription>
             </Alert>
@@ -254,7 +254,7 @@ const BureauChangePassword = () => {
                   className="border-green-200 focus:border-green-500"
                   required
                 />
-                
+
                 {/* Indicateur de correspondance */}
                 {formData.confirmPassword && (
                   <div className="text-sm">

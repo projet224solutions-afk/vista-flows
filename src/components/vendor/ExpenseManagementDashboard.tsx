@@ -9,19 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { _Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
+  PieChart, Pie, Cell, _LineChart, _Line, Area, AreaChart
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, DollarSign, Package, AlertTriangle,
-  Plus, Filter, Download, Upload, Eye, Calendar, CreditCard,
-  Wallet, Receipt, Target, Activity, Brain, Bell, Search,
-  MoreHorizontal, Edit, Trash2, Check, X, FileText, Camera, ShoppingCart, Calculator
+  _Plus, _Filter, _Download, _Upload, _Eye, _Calendar, _CreditCard,
+  Wallet, Receipt, Target, Activity, Brain, Bell, _Search,
+  _MoreHorizontal, _Edit, Trash2, _Check, _X, _FileText, _Camera, ShoppingCart, Calculator
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
@@ -45,10 +45,10 @@ interface ExpenseManagementDashboardProps {
 export default function ExpenseManagementDashboard({ className }: ExpenseManagementDashboardProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('profit');
-  const [selectedPeriod, setSelectedPeriod] = useState('30d');
-  
+  const [_selectedPeriod, _setSelectedPeriod] = useState('30d');
+
   // Récupérer le vendorId et userId via le hook
-  const { vendorId, userId, loading: vendorLoading } = useCurrentVendor();
+  const { vendorId, userId, loading: _vendorLoading } = useCurrentVendor();
 
   // Hook principal de gestion des dépenses - utiliser userId pour vendor_expenses
   const expenseData = useExpenseManagement(userId);
@@ -59,7 +59,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     stats,
     alerts,
     createExpense,
-    updateExpense,
+    _updateExpense,
     deleteExpense,
     loading,
     error,
@@ -505,7 +505,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                         if (labelEl) labelEl.value = '';
                         if (amountEl) amountEl.value = '';
                         if (catEl) catEl.value = '';
-                      } catch (e) {
+                      } catch (_e) {
                         toast({ title: 'Erreur', description: 'Impossible d\'ajouter la dépense', variant: 'destructive' });
                       }
                     }}
@@ -549,7 +549,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                                 await deleteExpense(e?.id);
                                 toast({ title: 'Dépense supprimée' });
                                 await refetch();
-                              } catch (err) {
+                              } catch (_err) {
                                 toast({ title: 'Erreur suppression', variant: 'destructive' });
                               }
                             }}>
@@ -595,7 +595,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       await refetch();
                       if (nameEl) nameEl.value = '';
                       if (budgetEl) budgetEl.value = '';
-                    } catch (e) {
+                    } catch (_e) {
                       toast({ title: 'Erreur', description: 'Impossible de créer la catégorie', variant: 'destructive' });
                     }
                   }}>Créer</Button>

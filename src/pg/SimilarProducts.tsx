@@ -37,7 +37,7 @@ export default function SimilarProducts() {
           </div>
         ) : !products || products.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
-            <p className="text-lg">{t('marketplace.noSimilarProducts') || 'Aucun produit similaire trouv├®'}</p>
+            <p className="text-lg">{t('marketplace.noSimilarProducts') || 'Aucun produit similaire trouvé'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

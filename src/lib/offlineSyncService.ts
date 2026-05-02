@@ -9,9 +9,9 @@ import { encryptData, decryptData } from './encryption';
 import { toast } from 'sonner';
 
 // Types de données à synchroniser
-export type SyncableEntity = 
-  | 'products' 
-  | 'orders' 
+export type SyncableEntity =
+  | 'products'
+  | 'orders'
   | 'cart_items'
   | 'user_addresses'
   | 'favorites'
@@ -432,8 +432,8 @@ export class OfflineSyncService {
 
         for (const record of toUpload) {
           try {
-            const localData = config.encryptLocally 
-              ? decryptData(record.local_data) 
+            const localData = config.encryptLocally
+              ? decryptData(record.local_data)
               : record.local_data;
 
             const { data, error } = await (supabase as any)
@@ -554,8 +554,8 @@ export class OfflineSyncService {
     config: SyncConfig
   ): Promise<void> {
     const database = await initSyncDB();
-    const localData = config.encryptLocally 
-      ? decryptData(localRecord.local_data) 
+    const localData = config.encryptLocally
+      ? decryptData(localRecord.local_data)
       : localRecord.local_data;
 
     const conflictId = `conflict:${localRecord.id}:${Date.now()}`;
@@ -581,7 +581,7 @@ export class OfflineSyncService {
         // Fusionner les données (stratégie simple: prendre les valeurs les plus récentes)
         const merged = { ...serverRecord };
         for (const key of Object.keys(localData)) {
-          if (localData[key] !== undefined && 
+          if (localData[key] !== undefined &&
               new Date(localRecord.local_modified_at) > new Date(serverRecord[config.lastModifiedColumn])) {
             merged[key] = localData[key];
           }
@@ -689,7 +689,7 @@ export class OfflineSyncService {
     console.log('[OfflineSync] Starting full sync...');
 
     const entities = Array.from(this.configs.keys());
-    
+
     for (const entity of entities) {
       await this.syncEntity(entity);
     }

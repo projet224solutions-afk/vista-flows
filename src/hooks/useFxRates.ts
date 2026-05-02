@@ -41,6 +41,7 @@ export function useFxRates({ base, symbols }: UseFxRatesParams) {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, symbolsKey]);
 
   // Chargement initial
@@ -57,6 +58,7 @@ export function useFxRates({ base, symbols }: UseFxRatesParams) {
     getLastUpdated().then((ts) => { if (!cancelled) setLastUpdated(ts); });
 
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, symbolsKey]);
 
   return { rates, lastUpdated, loading, refresh };

@@ -35,9 +35,9 @@ export function VendorDebtManagement({ vendorId }: VendorDebtManagementProps) {
           </TabsContent>
 
           <TabsContent value="create" className="mt-4">
-            <CreateDebtForm 
-              vendorId={vendorId} 
-              onSuccess={() => setActiveTab('list')} 
+            <CreateDebtForm
+              vendorId={vendorId}
+              onSuccess={() => setActiveTab('list')}
             />
           </TabsContent>
         </Tabs>

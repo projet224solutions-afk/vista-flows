@@ -47,11 +47,11 @@ export function useCachedProducts(vendorId?: string) {
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-      
+
       if (vendorId) {
         query = query.eq('vendor_id', vendorId);
       }
-      
+
       const { data, error } = await query.limit(100);
       if (error) throw error;
       return data;
@@ -108,8 +108,8 @@ export function useCachedProfile(userId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    { 
-      cacheKey: `profile:${userId}`, 
+    {
+      cacheKey: `profile:${userId}`,
       ttl: 120,
       queryOptions: { enabled: !!userId }
     }

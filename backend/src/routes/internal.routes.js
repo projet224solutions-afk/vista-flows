@@ -19,11 +19,11 @@ router.use(authenticateInternal);
 router.post('/trigger-job', async (req, res) => {
   try {
     const { jobType, payload } = req.body;
-    
+
     logger.info(`Internal job triggered: ${jobType}`);
-    
+
     // TODO: Implémenter le système de jobs
-    
+
     res.json({
       success: true,
       message: 'Job triggered successfully',
@@ -46,11 +46,11 @@ router.post('/trigger-job', async (req, res) => {
 router.post('/process-batch', async (req, res) => {
   try {
     const { data, operation } = req.body;
-    
+
     logger.info(`Batch processing started: ${operation}`);
-    
+
     // TODO: Implémenter traitement batch
-    
+
     res.json({
       success: true,
       message: 'Batch processed',

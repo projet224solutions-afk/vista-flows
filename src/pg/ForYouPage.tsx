@@ -1,10 +1,10 @@
 ﻿/**
- * ­ƒÄ» PAGE "POUR VOUS" - Style Alibaba Feed
- * Page d├®di├®e de recommandations personnalis├®es par IA
+ * 🎯 PAGE "POUR VOUS" - Style Alibaba Feed
+ * Page dediee de recommandations personnalisees par IA
  */
 
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, TrendingUp, Clock, Zap } from "lucide-react";
+import { ArrowLeft, Sparkles, _TrendingUp, _Clock, _Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAIPersonalized, useAITrending, useAIContextual } from "@/hooks/useAIRecommendations";
@@ -43,7 +43,7 @@ export default function ForYouPage() {
                 {t('marketplace.forYou') || 'Pour vous'}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {t('marketplace.aiPowered') || 'Propuls├® par IA'}
+                {t('marketplace.aiPowered') || 'Propulsé par IA'}
               </p>
             </div>
           </div>
@@ -51,10 +51,10 @@ export default function ForYouPage() {
       </div>
 
       <div className="px-4 space-y-6 mt-4">
-        {/* S├®lection personnalis├®e */}
+        {/* Selection personnalisee */}
         <AIRecommendationSection
-          title={t('marketplace.selectedForYou') || 'S├®lection pour vous'}
-          subtitle={t('marketplace.basedOnBehavior') || 'Bas├® sur votre activit├® r├®cente'}
+          title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
+          subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
           products={personalized}
           isLoading={loadingPersonalized}
           icon="sparkles"
@@ -75,8 +75,8 @@ export default function ForYouPage() {
 
         {/* Contextuel */}
         <AIRecommendationSection
-          title={t('marketplace.contextualPicks') || 'Recommand├®s maintenant'}
-          subtitle={t('marketplace.contextualSubtitle') || 'Adapt├® ├á votre moment'}
+          title={t('marketplace.contextualPicks') || 'Recommandés maintenant'}
+          subtitle={t('marketplace.contextualSubtitle') || 'Adapté à votre moment'}
           products={contextual}
           isLoading={loadingContextual}
           icon="clock"

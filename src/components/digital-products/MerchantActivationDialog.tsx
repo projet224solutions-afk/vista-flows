@@ -37,15 +37,15 @@ export function MerchantActivationDialog({
       // Rediriger vers la page d'inscription pour créer un compte marchand séparé
       // On passe l'email actuel pour éviter qu'il soit réutilisé
       const currentEmail = user.email || '';
-      
+
       toast.info('Vous allez être redirigé vers la page d\'inscription pour créer un compte marchand séparé');
-      
+
       // Attendre un peu pour que l'utilisateur lise le message
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // Rediriger vers la page d'auth avec les paramètres nécessaires
       window.location.href = `/auth?mode=signup&role=merchant&currentEmail=${encodeURIComponent(currentEmail)}`;
-      
+
       onSuccess();
     } catch (error) {
       console.error('Erreur redirection marchand:', error);
@@ -75,7 +75,7 @@ export function MerchantActivationDialog({
               Compte Marchand Séparé Requis
             </h4>
             <p className="text-xs text-amber-800 dark:text-amber-200">
-              ⚠️ Vous devez créer un nouveau compte avec une <strong>adresse email différente</strong> de celle de votre compte client actuel ({user?.email}). 
+              ⚠️ Vous devez créer un nouveau compte avec une <strong>adresse email différente</strong> de celle de votre compte client actuel ({user?.email}).
               Les deux comptes resteront indépendants.
             </p>
           </div>

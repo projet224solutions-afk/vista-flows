@@ -1,11 +1,11 @@
 /**
  * 🔄 HOOK DE STATUT DE SYNCHRONISATION PDG
- * 
+ *
  * Fournit un accès temps réel à l'état de synchronisation des données PDG
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { pdgSyncService, DataConsistencyCheck, SyncResult } from '@/services/pdg/PDGSyncService';
+import { pdgSyncService, DataConsistencyCheck, _SyncResult } from '@/services/pdg/PDGSyncService';
 import { toast } from 'sonner';
 
 export interface SyncStatus {
@@ -29,10 +29,10 @@ export function usePDGSyncStatus() {
 
   const checkStatus = useCallback(async () => {
     setStatus(prev => ({ ...prev, loading: true }));
-    
+
     try {
       const report = await pdgSyncService.generateSyncReport();
-      
+
       const isHealthy = report.consistency.every(c => c.status !== 'error');
       const hasWarnings = report.consistency.some(c => c.status === 'warning');
 
@@ -50,8 +50,8 @@ export function usePDGSyncStatus() {
       }
     } catch (error) {
       console.error('Erreur vérification sync:', error);
-      setStatus(prev => ({ 
-        ...prev, 
+      setStatus(prev => ({
+        ...prev,
         loading: false,
         isHealthy: false,
         recommendations: ['Erreur lors de la vérification - Veuillez réessayer']
@@ -65,10 +65,10 @@ export function usePDGSyncStatus() {
     totalErrors: number;
   }> => {
     setStatus(prev => ({ ...prev, syncing: true }));
-    
+
     try {
       const result = await pdgSyncService.runFullSync();
-      
+
       if (result.totalErrors === 0) {
         toast.success(`Synchronisation réussie: ${result.totalSynced} éléments mis à jour`);
       } else {

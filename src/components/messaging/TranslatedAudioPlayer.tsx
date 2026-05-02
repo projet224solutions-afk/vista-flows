@@ -31,11 +31,11 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const {
-    playAudioForMessage,
-    stopAudio,
+    _playAudioForMessage,
+    _stopAudio,
     isAudioTranslated,
     getDisplayAudioUrl,
-    getTranscription,
+    _getTranscription,
     isTranslating
   } = useAudioTranslation();
 
@@ -130,8 +130,8 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
           disabled={isLoading || isTranslating}
           className={cn(
             'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors',
-            isPlaying 
-              ? 'bg-red-500 hover:bg-red-600' 
+            isPlaying
+              ? 'bg-red-500 hover:bg-red-600'
               : 'bg-blue-500 hover:bg-blue-600',
             (isLoading || isTranslating) && 'opacity-50 cursor-not-allowed'
           )}
@@ -230,7 +230,7 @@ export const CompactAudioPlayer: React.FC<{
   message: Message;
   onPlay?: () => void;
 }> = ({ message, onPlay }) => {
-  const { isAudioTranslated, getDisplayAudioUrl } = useAudioTranslation();
+  const { isAudioTranslated, _getDisplayAudioUrl } = useAudioTranslation();
   const isTranslated = isAudioTranslated(message);
 
   return (
@@ -241,7 +241,7 @@ export const CompactAudioPlayer: React.FC<{
       >
         <Play className="w-4 h-4 text-white ml-0.5" />
       </button>
-      
+
       <div className="flex-1">
         <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
           <div className="h-full w-0 bg-blue-500" />

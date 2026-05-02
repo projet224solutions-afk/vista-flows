@@ -44,6 +44,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     if (productId) {
       loadReviews();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const loadReviews = async () => {
@@ -89,7 +90,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
 
       const profilesMap = new Map(
         (profilesData || []).map(p => [
-          p.id, 
+          p.id,
           p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Client'
         ])
       );
@@ -175,7 +176,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
         <h3 className="text-lg font-semibold mb-4">
           Avis clients {productName ? `sur ${productName}` : ''}
         </h3>
-        
+
         <div className="flex items-start gap-6 mb-6">
           {/* Note moyenne */}
           <div className="text-center">
@@ -197,7 +198,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                   <div
                     className="h-full bg-yellow-400"
                     style={{
-                      width: stats.totalReviews > 0 
+                      width: stats.totalReviews > 0
                         ? `${(stats.distribution[stars] / stats.totalReviews) * 100}%`
                         : '0%'
                     }}
@@ -217,7 +218,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
       {/* Liste des avis */}
       <div className="space-y-4">
         <h4 className="font-medium">Tous les avis ({reviews.length})</h4>
-        
+
         {reviews.map((review) => (
           <Card key={review.id} className="border-border/50">
             <CardContent className="p-4">

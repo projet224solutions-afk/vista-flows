@@ -69,6 +69,7 @@ export const useProductRecommendations = (limit: number = 10) => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadRecommendations(); }, [limit]);
   return { recommendations, loading, reload: loadRecommendations };
 };

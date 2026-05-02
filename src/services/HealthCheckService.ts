@@ -80,7 +80,7 @@ class HealthCheckService {
    * Effectuer tous les health checks
    */
   async performHealthChecks(): Promise<SystemHealthReport> {
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     const checks: HealthCheckResult[] = await Promise.all([
       this.checkDatabase(),
@@ -131,7 +131,7 @@ class HealthCheckService {
     const startTime = Date.now();
 
     try {
-      const { data, error } = await supabase
+      const { _data, error } = await supabase
         .from('profiles')
         .select('id')
         .limit(1)
@@ -201,7 +201,7 @@ class HealthCheckService {
         timestamp: new Date().toISOString(),
         details: { authenticated: !!session }
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         name: 'Authentication',
         status: 'degraded',
@@ -243,7 +243,7 @@ class HealthCheckService {
         responseTime,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         name: 'Storage',
         status: 'degraded',
@@ -310,7 +310,7 @@ class HealthCheckService {
       // 🚀 Instead of creating a channel (expensive, leaky), check existing WS state
       const channels = supabase.getChannels();
       const responseTime = Date.now() - startTime;
-      
+
       // If there are active channels, realtime is working
       if (channels.length > 0) {
         return {
@@ -326,12 +326,12 @@ class HealthCheckService {
       // Just do a quick TCP reachability check
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 2000);
-      
+
       await fetch(
         `https://uakkxaibujzxdiqzpnpr.supabase.co/realtime/v1/`,
         { method: 'HEAD', mode: 'no-cors', signal: controller.signal, keepalive: true }
       ).catch(() => null);
-      
+
       clearTimeout(timeout);
       const finalResponseTime = Date.now() - startTime;
 
@@ -377,7 +377,7 @@ class HealthCheckService {
         responseTime,
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         name: 'LocalStorage',
         status: 'critical',
@@ -406,7 +406,7 @@ class HealthCheckService {
         timestamp: new Date().toISOString(),
         details: { online }
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         name: 'Network',
         status: 'unknown',
@@ -428,7 +428,7 @@ class HealthCheckService {
     if (criticalCount >= 2) return 'critical';
     // Dégradé seulement si 1 critique ou 3+ dégradés
     if (criticalCount === 1 || degradedCount >= 3) return 'degraded';
-    
+
     return 'healthy';
   }
 
@@ -438,7 +438,7 @@ class HealthCheckService {
   private async alertUnhealthy(report: SystemHealthReport): Promise<void> {
     try {
       const { monitoringService } = await import('./MonitoringService');
-      
+
       const failedChecks = report.checks.filter(
         c => c.status === 'critical' || c.status === 'degraded'
       );
@@ -477,7 +477,7 @@ class HealthCheckService {
           timestamp: report.timestamp
         }
       ]);
-    } catch (error) {
+    } catch (_error) {
       // Ignorer si table n'existe pas
       console.warn('Table health_check_reports non disponible');
     }

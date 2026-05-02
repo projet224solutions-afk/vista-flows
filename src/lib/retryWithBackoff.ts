@@ -53,7 +53,7 @@ export async function retryWithBackoff<T>(
   }
 
   const finalConfig: RetryConfig = { ...DEFAULT_CONFIG, ...normalizedConfig };
-  const startTime = Date.now();
+  const _startTime = Date.now();
   let lastError: any;
 
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {

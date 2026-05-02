@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PdgRevenueService, type RevenueStats, type PdgRevenue, type PdgSetting } from '@/services/pdgRevenueService';
 import { supabase } from '@/lib/supabaseClient';
-import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar, ArrowDownToLine, ArrowUpFromLine, Globe } from 'lucide-react';
+import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, _Calendar, ArrowDownToLine, ArrowUpFromLine, Globe } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -17,7 +17,7 @@ export default function PDGRevenueAnalytics() {
   const [revenues, setRevenues] = useState<PdgRevenue[]>([]);
   const [settings, setSettings] = useState<PdgSetting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
+  const [dateRange, _setDateRange] = useState<{ start: Date; end: Date }>({
     start: subDays(new Date(), 30),
     end: new Date(),
   });
@@ -61,6 +61,7 @@ export default function PDGRevenueAnalytics() {
     return () => {
       revenueChannel.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange]);
 
   // Calculer les données pour les graphiques
@@ -73,7 +74,7 @@ export default function PDGRevenueAnalytics() {
   const timelineData = revenues.reduce((acc: any[], rev) => {
     const date = format(new Date(rev.created_at), 'dd MMM', { locale: fr });
     const existing = acc.find(item => item.date === date);
-    
+
     if (existing) {
       existing.wallet += rev.source_type === 'frais_transaction_wallet' ? Number(rev.amount) : 0;
       existing.purchase += rev.source_type === 'frais_achat_commande' ? Number(rev.amount) : 0;
@@ -86,7 +87,7 @@ export default function PDGRevenueAnalytics() {
         total: Number(rev.amount),
       });
     }
-    
+
     return acc;
   }, []).slice(-30).reverse();
 
@@ -384,41 +385,41 @@ export default function PDGRevenueAnalytics() {
               {settings.map((setting) => {
                 const value = setting.setting_value?.value || 0;
                 const iconConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
-                  wallet_transaction_fee_percentage: { 
-                    icon: <Wallet className="h-5 w-5" />, 
-                    color: 'text-purple-600', 
-                    bg: 'bg-purple-100 dark:bg-purple-900/30' 
+                  wallet_transaction_fee_percentage: {
+                    icon: <Wallet className="h-5 w-5" />,
+                    color: 'text-purple-600',
+                    bg: 'bg-purple-100 dark:bg-purple-900/30'
                   },
-                  purchase_commission_percentage: { 
-                    icon: <ShoppingBag className="h-5 w-5" />, 
-                    color: 'text-pink-600', 
-                    bg: 'bg-pink-100 dark:bg-pink-900/30' 
+                  purchase_commission_percentage: {
+                    icon: <ShoppingBag className="h-5 w-5" />,
+                    color: 'text-pink-600',
+                    bg: 'bg-pink-100 dark:bg-pink-900/30'
                   },
-                  service_commissions: { 
-                    icon: <Settings className="h-5 w-5" />, 
-                    color: 'text-blue-600', 
-                    bg: 'bg-blue-100 dark:bg-blue-900/30' 
+                  service_commissions: {
+                    icon: <Settings className="h-5 w-5" />,
+                    color: 'text-blue-600',
+                    bg: 'bg-blue-100 dark:bg-blue-900/30'
                   },
-                  deposit_fee_percentage: { 
-                    icon: <ArrowDownToLine className="h-5 w-5" />, 
-                    color: 'text-green-600', 
-                    bg: 'bg-green-100 dark:bg-green-900/30' 
+                  deposit_fee_percentage: {
+                    icon: <ArrowDownToLine className="h-5 w-5" />,
+                    color: 'text-green-600',
+                    bg: 'bg-green-100 dark:bg-green-900/30'
                   },
-                  withdrawal_fee_percentage: { 
-                    icon: <ArrowUpFromLine className="h-5 w-5" />, 
-                    color: 'text-orange-600', 
-                    bg: 'bg-orange-100 dark:bg-orange-900/30' 
+                  withdrawal_fee_percentage: {
+                    icon: <ArrowUpFromLine className="h-5 w-5" />,
+                    color: 'text-orange-600',
+                    bg: 'bg-orange-100 dark:bg-orange-900/30'
                   },
-                  international_transfer_fee_percentage: { 
-                    icon: <Globe className="h-5 w-5" />, 
-                    color: 'text-indigo-600', 
-                    bg: 'bg-indigo-100 dark:bg-indigo-900/30' 
+                  international_transfer_fee_percentage: {
+                    icon: <Globe className="h-5 w-5" />,
+                    color: 'text-indigo-600',
+                    bg: 'bg-indigo-100 dark:bg-indigo-900/30'
                   },
                 };
-                const config = iconConfig[setting.setting_key] || { 
-                  icon: <Settings className="h-5 w-5" />, 
-                  color: 'text-gray-600', 
-                  bg: 'bg-gray-100 dark:bg-gray-800' 
+                const config = iconConfig[setting.setting_key] || {
+                  icon: <Settings className="h-5 w-5" />,
+                  color: 'text-gray-600',
+                  bg: 'bg-gray-100 dark:bg-gray-800'
                 };
 
                 return (
@@ -515,7 +516,7 @@ export default function PDGRevenueAnalytics() {
                           <Label className="text-base font-semibold">{labelConfig.title}</Label>
                           <p className="text-xs text-muted-foreground mt-1">{labelConfig.desc}</p>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Input
@@ -578,8 +579,8 @@ export default function PDGRevenueAnalytics() {
                   <div>
                     <p className="font-medium text-amber-800 dark:text-amber-200">Important</p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Les modifications de taux s'appliquent immédiatement à toutes les nouvelles transactions. 
-                      Les transactions en cours conservent leur taux d'origine. L'historique des modifications 
+                      Les modifications de taux s'appliquent immédiatement à toutes les nouvelles transactions.
+                      Les transactions en cours conservent leur taux d'origine. L'historique des modifications
                       est conservé pour audit.
                     </p>
                   </div>

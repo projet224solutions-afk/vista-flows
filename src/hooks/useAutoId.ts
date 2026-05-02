@@ -13,7 +13,7 @@ export function useAutoId(roleType: RoleType, shouldGenerate: boolean = false) {
   const generateId = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const newId = await generateUniqueId(roleType);
       setId(newId);
@@ -32,6 +32,7 @@ export function useAutoId(roleType: RoleType, shouldGenerate: boolean = false) {
     if (shouldGenerate && !id) {
       generateId();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldGenerate]);
 
   return {

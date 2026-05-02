@@ -17,7 +17,7 @@ export default function ServiceSelection() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [redirectChecked, setRedirectChecked] = useState(false);
 
-  // Si l'utilisateur a d├®j├á un service, rediriger vers son dashboard
+  // Si l'utilisateur a déjà un service, rediriger vers son dashboard
   useEffect(() => {
     if (!loading && userServices.length > 0 && !redirectChecked) {
       setRedirectChecked(true);
@@ -27,17 +27,17 @@ export default function ServiceSelection() {
     }
   }, [loading, userServices, navigate, redirectChecked]);
 
-  // Grouper les services par cat├®gorie
+  // Grouper les services par catégorie
   const categories = [
     { value: 'all', label: 'Tous les services', count: serviceTypes.length },
     { value: 'services', label: 'Services', count: serviceTypes.filter(s => s.category === 'services').length },
     { value: 'commerce', label: 'Commerce', count: serviceTypes.filter(s => s.category === 'commerce').length },
     { value: 'transport', label: 'Transport', count: serviceTypes.filter(s => s.category === 'transport').length },
     { value: 'food', label: 'Restauration', count: serviceTypes.filter(s => s.category === 'food').length },
-    { value: 'health', label: 'Sant├®', count: serviceTypes.filter(s => s.category === 'health').length },
-    { value: 'education', label: '├ëducation', count: serviceTypes.filter(s => s.category === 'education').length },
+    { value: 'health', label: 'Santé', count: serviceTypes.filter(s => s.category === 'health').length },
+    { value: 'education', label: 'Éducation', count: serviceTypes.filter(s => s.category === 'education').length },
     { value: 'tech', label: 'Technologie', count: serviceTypes.filter(s => s.category === 'tech').length },
-    { value: 'creative', label: 'Cr├®atif', count: serviceTypes.filter(s => s.category === 'creative').length },
+    { value: 'creative', label: 'Créatif', count: serviceTypes.filter(s => s.category === 'creative').length },
   ].filter(cat => cat.count > 0 || cat.value === 'all');
 
   // Filtrer les services
@@ -62,7 +62,7 @@ export default function ServiceSelection() {
     });
 
     if (service) {
-      // Rediriger vers le dashboard du service cr├®├®
+      // Rediriger vers le dashboard du service créé
       navigate(`/dashboard/service/${service.id}`);
     }
   };
@@ -80,7 +80,7 @@ export default function ServiceSelection() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header - opaque pour ├®viter le texte fant├┤me */}
+      {/* Header - opaque pour éviter le texte fantôme */}
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="px-4 py-4">
           <Button
@@ -101,8 +101,8 @@ export default function ServiceSelection() {
               </h1>
             </div>
             <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto px-2">
-              S├®lectionnez le type de service que vous souhaitez cr├®er. 
-              Chaque service dispose d'outils professionnels complets inspir├®s des meilleurs standards internationaux.
+              Sélectionnez le type de service que vous souhaitez créer.
+              Chaque service dispose d'outils professionnels complets inspirés des meilleurs standards internationaux.
             </p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function ServiceSelection() {
           />
         </div>
 
-        {/* Filtres par cat├®gorie - scrollable horizontalement sur mobile */}
+        {/* Filtres par catégorie - scrollable horizontalement sur mobile */}
         <div className="mb-6 -mx-4 px-4">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
             {categories.map((category) => (
@@ -144,7 +144,7 @@ export default function ServiceSelection() {
         {filteredServices.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-sm">
-              Aucun service trouv├® pour "{searchQuery}"
+              Aucun service trouvé pour "{searchQuery}"
             </p>
           </div>
         ) : (

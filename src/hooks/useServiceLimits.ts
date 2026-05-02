@@ -1,7 +1,7 @@
 /**
  * Hook pour vérifier et appliquer les limites d'abonnement de service
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useServiceSubscription } from './useServiceSubscription';
 
 interface ServiceLimits {

@@ -3,6 +3,7 @@
  * Permet de noter chaque produit individuellement après livraison
  */
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -41,10 +42,11 @@ export default function ProductRatingDialog({
   open,
   onOpenChange,
   orderId,
-  vendorId,
+  _vendorId,
   vendorName,
   onRatingSubmitted
 }: ProductRatingDialogProps) {
+  const queryClient = useQueryClient();
   const [products, setProducts] = useState<OrderProduct[]>([]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [rating, setRating] = useState(0);
@@ -58,6 +60,7 @@ export default function ProductRatingDialog({
     if (open && orderId) {
       loadOrderProducts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, orderId]);
 
   const loadOrderProducts = async () => {
@@ -95,7 +98,7 @@ export default function ProductRatingDialog({
         const product = item.products as any;
         const images = product?.images;
         const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
-        
+
         return {
           id: item.id,
           product_id: item.product_id,
@@ -154,9 +157,38 @@ export default function ProductRatingDialog({
 
       if (error) throw error;
 
+      const { data: productReviewStats, error: productReviewStatsError } = await supabase
+        .from('product_reviews')
+        .select('rating')
+        .eq('product_id', currentProduct.product_id)
+        .eq('is_approved', true);
+
+      if (productReviewStatsError) {
+        throw productReviewStatsError;
+      }
+
+      const reviewCount = productReviewStats?.length || 0;
+      const averageRating = reviewCount > 0
+        ? productReviewStats.reduce((sum, current) => sum + Number(current.rating || 0), 0) / reviewCount
+        : rating;
+
+      await supabase
+        .from('products')
+        .update({
+          rating: Math.round(averageRating * 10) / 10,
+          reviews_count: reviewCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentProduct.product_id);
+
       toast.success(`Avis soumis pour ${currentProduct.product_name}`, {
         description: `${rating}/5 étoiles`
       });
+
+      queryClient.invalidateQueries({ queryKey: ['ai-recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['discovery-products'] });
+      queryClient.invalidateQueries({ queryKey: ['smart-recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
 
       // Marquer comme noté
       const updatedProducts = [...products];
@@ -226,12 +258,12 @@ export default function ProductRatingDialog({
               Merci pour vos avis !
             </DialogTitle>
             <DialogDescription>
-              Vous avez noté tous les produits de cette commande.
+              Vous avez note tous les produits de cette commande.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 text-center">
             <p className="text-muted-foreground">
-              Vos avis aident les autres clients à faire leurs choix.
+              Vos avis aident les autres clients a faire leurs choix.
             </p>
           </div>
           <DialogFooter>
@@ -342,7 +374,7 @@ export default function ProductRatingDialog({
                 </button>
               ))}
             </div>
-            
+
             {rating > 0 && (
               <p className="text-sm text-muted-foreground">
                 {rating === 1 && 'Très insatisfait'}

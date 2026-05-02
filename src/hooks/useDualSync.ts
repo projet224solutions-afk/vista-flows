@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import dualSyncManager, { SYNC_CONFIGS } from '@/lib/dualSyncManager';
+import dualSyncManager, { _SYNC_CONFIGS } from '@/lib/dualSyncManager';
 
 export interface DualSyncStatus {
   isFirestoreConnected: boolean;
@@ -65,7 +65,7 @@ export function useDualSync() {
 
     try {
       const result = await dualSyncManager.fullSync(direction);
-      
+
       setStatus(prev => ({
         ...prev,
         isSyncing: false,
@@ -105,7 +105,7 @@ export function useDualSync() {
   ) => {
     try {
       const result = await dualSyncManager.syncBidirectional(configKey, data, source);
-      
+
       if (result.success) {
         setStatus(prev => ({
           ...prev,

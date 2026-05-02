@@ -30,18 +30,18 @@ export default function SEOHead({
 }: SEOHeadProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
-  
+
   // Ensure image URL is absolute
   const safeImage = image || DEFAULT_IMAGE;
-  const absoluteImage = safeImage.startsWith('http') 
-    ? safeImage 
+  const absoluteImage = safeImage.startsWith('http')
+    ? safeImage
     : `https://224solution.net${safeImage.startsWith('/') ? '' : '/'}${safeImage}`;
 
   return (
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
-      
+
       {/* Open Graph */}
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
@@ -51,13 +51,13 @@ export default function SEOHead({
       <meta property="og:image:height" content="630" />
       <meta property="og:site_name" content={SITE_NAME} />
       {currentUrl && <meta property="og:url" content={currentUrl} />}
-      
+
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />
-      
+
       {/* Product specific */}
       {type === 'product' && price && (
         <>
@@ -65,7 +65,7 @@ export default function SEOHead({
           <meta property="product:price:currency" content={currency} />
         </>
       )}
-      
+
       <link rel="canonical" href={currentUrl} />
     </Helmet>
   );

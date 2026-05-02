@@ -12,8 +12,8 @@ import type { Database } from '@/integrations/supabase/types';
 // TYPES ET INTERFACES
 // =====================================================
 
-type DbWallet = Database['public']['Tables']['wallets']['Row'];
-type DbTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
+type _DbWallet = Database['public']['Tables']['wallets']['Row'];
+type _DbTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
 
 export interface Wallet {
   id: string;
@@ -56,16 +56,42 @@ export interface WalletStats {
 
 class WalletService {
   // Récupérer le wallet d'un utilisateur
+  /**
+   * Récupère le wallet d'un utilisateur, le crée si inexistant ou inactif
+   */
   async getUserWallet(userId: string): Promise<Wallet | null> {
+    if (!userId) {
+      console.error('getUserWallet: userId manquant');
+      return null;
+    }
     try {
-      const { data, error } = await supabase
+      // eslint-disable-next-line prefer-const
+      let { data: wallet, error } = await supabase
         .from('wallets')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+
+      // Si le wallet n'existe pas, le créer
+      if (!wallet) {
+        const { data: created, error: createError } = await supabase
+          .from('wallets')
+          .insert({ user_id: userId, balance: 0, currency: 'GNF', wallet_status: 'active' })
+          .select('*')
+          .maybeSingle();
+        if (createError) throw createError;
+        wallet = created;
+      }
+
+      // Si le wallet est bloqué ou inactif, log et refuse l'accès
+      if (wallet.is_blocked || wallet.wallet_status !== 'active') {
+        console.error('getUserWallet: wallet bloqué ou inactif', wallet);
+        return null;
+      }
+
+      return wallet;
     } catch (error) {
       console.error('❌ Erreur récupération wallet:', error);
       return null;
@@ -162,12 +188,12 @@ class WalletService {
   // Effectuer un transfert entre wallets
   // ⚠️ DÉPRÉCIÉ: Utiliser l'Edge Function wallet-transfer à la place
   // Cette méthode n'est PAS sécurisée (pas de HMAC, pas d'audit, race conditions)
-  async transferFunds(fromWalletId: string, toWalletId: string, amount: number, description: string): Promise<boolean> {
+  async transferFunds(_fromWalletId: string, _toWalletId: string, _amount: number, _description: string): Promise<boolean> {
     console.error('⚠️ ATTENTION: walletService.transferFunds() est déprécié!');
     console.error('➡️ Utilisez plutôt: supabase.functions.invoke("wallet-transfer")');
-    
+
     throw new Error('Cette méthode est désactivée. Utilisez l\'Edge Function wallet-transfer à la place.');
-    
+
     /* CODE DÉSACTIVÉ - CONSERVER POUR RÉFÉRENCE
     try {
       // Vérifier le solde du wallet source

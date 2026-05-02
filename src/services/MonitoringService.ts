@@ -163,7 +163,7 @@ class MonitoringService {
       const errorCount = securityErrors || 0;
       if (errorCount > 10) return 'critical';
       if (errorCount > 5) return 'degraded';
-      
+
       return 'healthy';
     } catch (error) {
       // En cas d'erreur, retourner healthy au lieu de unknown (plus stable)
@@ -178,7 +178,7 @@ class MonitoringService {
   private async checkDatabaseHealth(): Promise<HealthStatus> {
     try {
       const startTime = Date.now();
-      
+
       // Test simple de connexion
       const { error } = await supabase
         .from('profiles')
@@ -191,7 +191,7 @@ class MonitoringService {
       if (error) return 'critical';
       if (responseTime > 1000) return 'degraded';
       if (responseTime > 500) return 'degraded';
-      
+
       return 'healthy';
     } catch (error) {
       console.error('Erreur vérification database:', error);
@@ -205,17 +205,17 @@ class MonitoringService {
   private async checkAPIHealth(): Promise<HealthStatus> {
     try {
       const startTime = Date.now();
-      
+
       // Test API Supabase
       const { data, error } = await (supabase.rpc as any)('get_system_health_api', {});
-      
+
       const responseTime = Date.now() - startTime;
 
       if (error || !data) return 'degraded';
       if (responseTime > 2000) return 'degraded';
-      
+
       return 'healthy';
-    } catch (error) {
+    } catch (_error) {
       // Fonction RPC peut ne pas exister, ce n'est pas critique
       return 'healthy';
     }
@@ -228,13 +228,13 @@ class MonitoringService {
     try {
       // Vérifier erreurs frontend récentes
       const recentErrors = this.alerts.filter(
-        alert => alert.type === 'frontend_error' && 
+        alert => alert.type === 'frontend_error' &&
         new Date(alert.timestamp) > new Date(Date.now() - 300000) // 5 minutes
       );
 
       if (recentErrors.length > 20) return 'critical';
       if (recentErrors.length > 10) return 'degraded';
-      
+
       return 'healthy';
     } catch (error) {
       console.error('Erreur vérification frontend:', error);
@@ -248,7 +248,7 @@ class MonitoringService {
   private calculateOverallHealth(statuses: HealthStatus[]): HealthStatus {
     const criticalCount = statuses.filter(s => s === 'critical').length;
     const degradedCount = statuses.filter(s => s === 'degraded').length;
-    
+
     // Critique seulement si 2+ systèmes critiques
     if (criticalCount >= 2) return 'critical';
     // Dégradé si critique ou 2+ dégradés
@@ -271,7 +271,7 @@ class MonitoringService {
 
       if (error) return 0;
       return count || 0;
-    } catch (error) {
+    } catch (_error) {
       return 0;
     }
   }
@@ -290,7 +290,7 @@ class MonitoringService {
 
       if (error) return 0;
       return count || 0;
-    } catch (error) {
+    } catch (_error) {
       return 0;
     }
   }
@@ -308,7 +308,7 @@ class MonitoringService {
 
       if (error) return 0;
       return count || 0;
-    } catch (error) {
+    } catch (_error) {
       return 0;
     }
   }
@@ -342,7 +342,7 @@ class MonitoringService {
           timestamp: health.timestamp
         }
       ]);
-    } catch (error) {
+    } catch (_error) {
       // Si la table n'existe pas, l'ignorer (sera créée par migration)
       console.warn('Table system_health_logs non disponible');
     }

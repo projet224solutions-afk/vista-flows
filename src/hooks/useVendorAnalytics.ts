@@ -63,8 +63,8 @@ export const useVendorAnalytics = () => {
       const posOrders = todayOrders?.filter(o => o.source === 'pos').length || 0;
       const onlineOrders = todayOrders?.filter(o => o.source !== 'pos').length || 0;
       // Taux de conversion = commandes payées / commandes totales
-      const conversionRate = todayOrdersCount > 0 
-        ? (paidOrders / todayOrdersCount) * 100 
+      const conversionRate = todayOrdersCount > 0
+        ? (paidOrders / todayOrdersCount) * 100
         : 0;
       // Récupérer les ventes des 7 derniers jours groupées par jour
       const { data: weekOrders, error: weekError } = await supabase
@@ -78,7 +78,7 @@ export const useVendorAnalytics = () => {
 
       // Grouper par jour pour les 7 derniers jours
       const weekDataMap = new Map<string, { total_sales: number; total_orders: number }>();
-      
+
       // Initialiser tous les jours de la semaine
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -86,7 +86,7 @@ export const useVendorAnalytics = () => {
         const dateStr = d.toISOString().split('T')[0];
         weekDataMap.set(dateStr, { total_sales: 0, total_orders: 0 });
       }
-      
+
       // Agréger les ventes par jour
       weekOrders?.forEach(order => {
         const dateStr = new Date(order.created_at).toISOString().split('T')[0];
@@ -209,6 +209,7 @@ export const useVendorAnalytics = () => {
     if (vendorId && !vendorLoading) {
       loadAnalytics();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
   return {

@@ -2,7 +2,7 @@
  * 🎤 HOOK WEBRTC AUDIO CALL - 224SOLUTIONS
  * Appels audio 1-to-1 WebRTC natif sans Agora
  * Compatible réseaux mobiles africains
- * 
+ *
  * ARCHITECTURE:
  * - Ce hook est instancié UNE SEULE FOIS dans WebRTCCallProvider.
  * - Tous les composants utilisent useWebRTCCallContext().
@@ -211,7 +211,7 @@ export function useWebRTCAudioCall() {
   // ─── Envoyer un message au canal du DESTINATAIRE ───
   const sendToUser = useCallback(async (targetUserId: string, message: SignalingMessage) => {
     const targetChannelName = `webrtc-signal-${targetUserId}`;
-    
+
     // Créer un canal éphémère pour envoyer au destinataire
     const ch = supabase.channel(targetChannelName, {
       config: { broadcast: { self: false } },
@@ -451,6 +451,7 @@ export function useWebRTCAudioCall() {
         cleanup();
       }
     }, CALL_TIMEOUT_MS);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, createPeerConnection, playRingtone, cleanup, toast, sendToUser, flushPendingCandidates]);
 
   // ═══════════ ACTIONS PUBLIQUES ═══════════

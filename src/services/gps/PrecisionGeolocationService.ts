@@ -318,7 +318,7 @@ class PrecisionGeolocationService {
       return null;
     } catch (error) {
       console.error('[PrecisionGeo] Erreur calcul route:', error);
-      
+
       // Fallback: calcul à vol d'oiseau (Haversine)
       const distance = this.calculateHaversineDistance(
         origin.latitude, origin.longitude,
@@ -373,7 +373,7 @@ class PrecisionGeolocationService {
     const url = destinationName
       ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinationName)}&destination_place_id=&travelmode=driving`
       : `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}&travelmode=driving`;
-    
+
     window.open(url, '_blank');
   }
 

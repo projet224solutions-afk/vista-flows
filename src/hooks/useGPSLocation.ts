@@ -43,7 +43,7 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<GPSError | null>(null);
   const [isWatching, setIsWatching] = useState(false);
-  
+
   const watchIdRef = useRef<number | null>(null);
 
   /**
@@ -139,17 +139,17 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp
           };
-          
+
           setLocation(loc);
           setLoading(false);
-          
+
           if (onLocationChange) onLocationChange(loc);
           resolve(loc);
         })
-        .catch(err => {
+        .catch(_err => {
           // Si haute précision échoue, essayer mode rapide
           console.warn('[useGPSLocation] High accuracy failed, trying fast mode...');
-          
+
           tryGetPosition(false, 5000)
             .then(position => {
               const loc: GPSLocation = {
@@ -158,12 +158,12 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
                 accuracy: position.coords.accuracy,
                 timestamp: position.timestamp
               };
-              
+
               setLocation(loc);
               setLoading(false);
-              
+
               toast.warning('Position obtenue en mode rapide (précision réduite)');
-              
+
               if (onLocationChange) onLocationChange(loc);
               resolve(loc);
             })
@@ -171,7 +171,7 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
               const gpsError = handleGeolocationError(fallbackErr);
               setError(gpsError);
               setLoading(false);
-              
+
               if (onError) onError(gpsError);
               reject(gpsError);
             });
@@ -211,7 +211,7 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
           accuracy: position.coords.accuracy,
           timestamp: position.timestamp
         };
-        
+
         setLocation(loc);
         setError(null); // Effacer les erreurs précédentes quand on a une position
         if (onLocationChange) onLocationChange(loc);
@@ -233,6 +233,7 @@ export function useGPSLocation(options: UseGPSLocationOptions = {}) {
     );
 
     console.log('[useGPSLocation] Started watching position:', watchIdRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableHighAccuracy, timeout, maximumAge, onLocationChange, onError, handleGeolocationError]);
 
   /**

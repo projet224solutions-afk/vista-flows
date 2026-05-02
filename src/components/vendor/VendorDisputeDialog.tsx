@@ -22,7 +22,7 @@ interface VendorDisputeDialogProps {
   onSuccess?: () => void;
 }
 
-type DisputeReason = 
+type DisputeReason =
   | 'client_no_response'
   | 'payment_issue'
   | 'delivery_dispute'
@@ -64,15 +64,15 @@ export function VendorDisputeDialog({
     try {
       const fullReason = `[${disputeReasons[reason]}] ${description}`;
       await disputeEscrow(escrowId, fullReason);
-      
+
       toast.success('Litige ouvert avec succès', {
         description: 'Un administrateur examinera votre demande.'
       });
-      
+
       // Reset form
       setReason('client_no_response');
       setDescription('');
-      
+
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
@@ -100,7 +100,7 @@ export function VendorDisputeDialog({
             Ouvrir un litige
           </DialogTitle>
           <DialogDescription>
-            {orderNumber 
+            {orderNumber
               ? `Signaler un problème avec la commande ${orderNumber}`
               : 'Signaler un problème avec cette transaction'
             }
@@ -167,8 +167,8 @@ export function VendorDisputeDialog({
             >
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant="destructive"
               className="flex-1"
               disabled={loading || description.length < 20}

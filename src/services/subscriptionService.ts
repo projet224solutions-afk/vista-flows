@@ -173,7 +173,7 @@ export class SubscriptionService {
 
       if (error) {
         console.error('❌ Erreur RPC:', error);
-        
+
         // Propager l'erreur avec un message clair
         if (error.message) {
           throw new Error(error.message);
@@ -185,7 +185,7 @@ export class SubscriptionService {
       return data;
     } catch (error: any) {
       console.error('❌ Exception enregistrement paiement:', error);
-      
+
       // Propager l'erreur pour que le composant puisse l'afficher
       throw error;
     }
@@ -278,7 +278,7 @@ export class SubscriptionService {
     try {
       const { data, error } = await supabase
         .from('subscriptions')
-        .update({ 
+        .update({
           status: 'cancelled',
           auto_renew: false,
           updated_at: new Date().toISOString()
@@ -322,18 +322,18 @@ export class SubscriptionService {
       // Garder seulement le dernier abonnement par utilisateur
       const uniqueSubscriptions = subscriptions.reduce((acc: any[], sub) => {
         const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
-        
+
         if (existingIndex === -1) {
           acc.push(sub);
         } else {
           const existingDate = new Date(acc[existingIndex].created_at);
           const currentDate = new Date(sub.created_at);
-          
+
           if (currentDate > existingDate) {
             acc[existingIndex] = sub;
           }
         }
-        
+
         return acc;
       }, []);
 

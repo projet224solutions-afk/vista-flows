@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,11 +18,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  Smartphone, 
-  CreditCard, 
-  Shield, 
-  Loader2, 
+import {
+  Smartphone,
+  CreditCard,
+  Shield,
+  Loader2,
   AlertCircle,
   CheckCircle,
   ArrowRight
@@ -114,11 +114,11 @@ export function ChapChapPayButton({
   showMethodSelector = true,
   defaultMethod = 'orange_money'
 }: ChapChapPayButtonProps) {
-  const { 
-    createEcommercePayment, 
-    initiatePullPayment, 
+  const {
+    createEcommercePayment,
+    initiatePullPayment,
     pollStatus,
-    isLoading 
+    isLoading
   } = useChapChapPay();
 
   const [open, setOpen] = useState(false);
@@ -127,7 +127,7 @@ export function ChapChapPayButton({
   const [otp, setOtp] = useState('');
   const [processing, setProcessing] = useState(false);
   const [requiresOtp, setRequiresOtp] = useState(false);
-  const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
+  const [_currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
 
   const selectedOption = paymentMethodOptions.find(m => m.id === selectedMethod);
@@ -144,7 +144,7 @@ export function ChapChapPayButton({
 
     try {
       // Mode E-Commerce (redirection) ou PULL (débit direct)
-      const effectiveMode = mode === 'auto' 
+      const effectiveMode = mode === 'auto'
         ? (selectedMethod === 'card' ? 'ecommerce' : 'pull')
         : mode;
 
@@ -167,7 +167,7 @@ export function ChapChapPayButton({
 
         // Le redirect est automatique
         setPaymentStatus('success');
-        
+
       } else {
         // PULL: Débit direct du client
         const result = await initiatePullPayment({
@@ -248,7 +248,7 @@ export function ChapChapPayButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
+        <Button
           className={cn(
             "bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-600/40",
             buttonClassName
@@ -316,17 +316,17 @@ export function ChapChapPayButton({
                       processing && "opacity-50 cursor-not-allowed"
                     )}
                   >
-                    <RadioGroupItem 
-                      value={method.id} 
+                    <RadioGroupItem
+                      value={method.id}
                       id={method.id}
                       disabled={processing}
                       className="border-2 flex-shrink-0"
                     />
-                    
+
                     <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
                       {method.icon}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <span className="font-medium block text-sm">{method.name}</span>
                       <span className="text-xs text-muted-foreground block">{method.description}</span>

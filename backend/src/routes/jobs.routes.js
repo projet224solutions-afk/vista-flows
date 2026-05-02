@@ -19,11 +19,11 @@ router.use(authenticateToken);
 router.post('/process-images', requireRole('admin', 'vendeur'), async (req, res) => {
   try {
     const { images, operations } = req.body;
-    
+
     logger.info(`Image processing job started by ${req.user.id}`);
-    
+
     // TODO: Implémenter traitement d'images avec Sharp
-    
+
     res.json({
       success: true,
       message: 'Images queued for processing',
@@ -46,11 +46,11 @@ router.post('/process-images', requireRole('admin', 'vendeur'), async (req, res)
 router.post('/generate-reports', requireRole('admin', 'vendeur'), async (req, res) => {
   try {
     const { reportType, dateRange, filters } = req.body;
-    
+
     logger.info(`Report generation started: ${reportType} by ${req.user.id}`);
-    
+
     // TODO: Implémenter génération de rapports
-    
+
     res.json({
       success: true,
       message: 'Report generation started',
@@ -73,9 +73,9 @@ router.post('/generate-reports', requireRole('admin', 'vendeur'), async (req, re
 router.get('/:jobId/status', async (req, res) => {
   try {
     const { jobId } = req.params;
-    
+
     // TODO: Implémenter vérification de statut avec Redis/Bull
-    
+
     res.json({
       success: true,
       jobId,

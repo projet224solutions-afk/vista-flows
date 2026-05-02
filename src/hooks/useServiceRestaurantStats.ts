@@ -130,7 +130,7 @@ export function useServiceRestaurantStats(serviceId?: string) {
         .select('user_id')
         .eq('id', serviceId)
         .single();
-      
+
       const userId = serviceData?.user_id;
       console.log('👤 User ID du service restaurant:', userId);
 
@@ -145,7 +145,7 @@ export function useServiceRestaurantStats(serviceId?: string) {
         console.log('⚠️ Table restaurant_orders peut ne pas exister:', ordersError.message);
       }
 
-      let orders = ordersData || [];
+      const orders = ordersData || [];
       console.log('📦 Commandes restaurant (service) trouvées:', orders.length);
 
       // 2b. NE PAS charger les commandes legacy depuis orders
@@ -172,7 +172,7 @@ export function useServiceRestaurantStats(serviceId?: string) {
 
       // 3. Charger les éléments du menu (service_products + products)
       let menuItems: any[] = [];
-      
+
       // 3a. Depuis service_products
       const { data: menuData, error: menuError } = await supabase
         .from('service_products')
@@ -182,7 +182,7 @@ export function useServiceRestaurantStats(serviceId?: string) {
       if (menuError) {
         console.log('⚠️ Erreur chargement menu:', menuError.message);
       }
-      
+
       if (menuData) {
         menuItems = [...menuData];
       }
@@ -191,7 +191,7 @@ export function useServiceRestaurantStats(serviceId?: string) {
       // Les plats du menu restaurant sont UNIQUEMENT dans service_products avec professional_service_id
       // La table products est réservée aux produits e-commerce
       console.log('ℹ️ Restaurant: n\'utilise PAS les produits legacy (table products)')
-      
+
       console.log('🍔 Total items menu:', menuItems.length);
 
       // 3. Charger le stock restaurant

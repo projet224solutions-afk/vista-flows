@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TaxiMotoService, type NearbyDriver } from '@/services/taxi/TaxiMotoService';
-import { TaxiMotoRealtimeService } from '@/services/taxi/TaxiMotoRealtimeService';
+import { _TaxiMotoRealtimeService } from '@/services/taxi/TaxiMotoRealtimeService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
@@ -15,7 +15,7 @@ type TaxiTrip = Database['public']['Tables']['taxi_trips']['Row'];
 export function useTaxiRides() {
   const [currentRide, setCurrentRide] = useState<TaxiTrip | null>(null);
   const [rideHistory, setRideHistory] = useState<TaxiTrip[]>([]);
-  const [nearbyDrivers, setNearbyDrivers] = useState<NearbyDriver[]>([]);
+  const [nearbyDrivers, _setNearbyDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -198,7 +198,7 @@ export function useTaxiRides() {
     try {
       setLoading(true);
       const result = await TaxiMotoService.processPayment(rideId, paymentMethod);
-      
+
       if (result.success) {
         toast.success('Paiement effectué avec succès!');
         await loadRideHistory();
@@ -206,7 +206,7 @@ export function useTaxiRides() {
       } else {
         toast.error(result.error || 'Erreur lors du paiement');
       }
-      
+
       return result;
     } catch (err) {
       console.error('[useTaxiRides] Error processing payment:', err);

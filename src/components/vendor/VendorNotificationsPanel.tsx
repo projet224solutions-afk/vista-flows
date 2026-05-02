@@ -37,10 +37,10 @@ export function VendorNotificationsPanel() {
     );
   }
 
-  const visibleNotifications = showAll 
-    ? notifications 
+  const visibleNotifications = showAll
+    ? notifications
     : notifications.slice(0, INITIAL_VISIBLE_COUNT);
-  
+
   const hiddenCount = notifications.length - INITIAL_VISIBLE_COUNT;
 
   return (
@@ -67,8 +67,8 @@ export function VendorNotificationsPanel() {
           const colorClass = notificationColors[notification.type] || 'text-muted-foreground';
 
           return (
-            <Card 
-              key={notification.id} 
+            <Card
+              key={notification.id}
               className={`p-4 cursor-pointer transition-colors ${
                 !notification.read ? 'bg-primary/5 border-primary' : ''
               }`}
@@ -85,9 +85,9 @@ export function VendorNotificationsPanel() {
                   </div>
                   <p className="text-sm text-muted-foreground">{notification.message}</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {formatDistanceToNow(new Date(notification.created_at), { 
-                      addSuffix: true, 
-                      locale: fr 
+                    {formatDistanceToNow(new Date(notification.created_at), {
+                      addSuffix: true,
+                      locale: fr
                     })}
                   </p>
                 </div>
@@ -105,9 +105,9 @@ export function VendorNotificationsPanel() {
 
         {/* Bouton pour afficher plus / moins */}
         {hiddenCount > 0 && (
-          <Button 
-            variant="ghost" 
-            className="w-full mt-2" 
+          <Button
+            variant="ghost"
+            className="w-full mt-2"
             onClick={() => setShowAll(!showAll)}
           >
             {showAll ? (

@@ -29,7 +29,7 @@ import {
   Minus,
   Trash2,
   Percent,
-  DollarSign,
+  _DollarSign,
   AlertTriangle,
   Edit2,
   ShoppingBag,
@@ -89,7 +89,7 @@ export function POSCartSection({
   onClearCart,
   onUpdateDiscount,
   formatCurrency,
-  isMobile,
+  _isMobile,
   subtotal,
   globalDiscountValue,
   tax,
@@ -159,7 +159,7 @@ export function POSCartSection({
   const calculateItemFinancials = (item: POSCartItem) => {
     const unitPrice = item.price;
     const costPrice = item.costPrice || 0;
-    
+
     let discountPerUnit = 0;
     if (item.discount.type === 'percent') {
       discountPerUnit = (unitPrice * item.discount.value) / 100;
@@ -236,7 +236,7 @@ export function POSCartSection({
               <div className="space-y-1">
                 {cart.map(item => {
                   const financials = calculateItemFinancials(item);
-                  
+
                   return (
                     <div
                       key={`${item.id}-${item.saleType || 'unit'}`}
@@ -277,7 +277,7 @@ export function POSCartSection({
                         </div>
                         {/* Profit/Loss indicator */}
                         <p className={`text-[8px] ${financials.isLoss ? 'text-destructive' : 'text-green-600'}`}>
-                          {financials.isLoss 
+                          {financials.isLoss
                             ? `Perte: ${formatCurrency(Math.abs(financials.totalProfit))}`
                             : `Profit: +${formatCurrency(financials.totalProfit)}`
                           }

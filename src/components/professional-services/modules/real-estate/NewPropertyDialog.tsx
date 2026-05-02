@@ -193,8 +193,8 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
           {/* Titre */}
           <div className="space-y-2">
             <Label>Titre de l'annonce *</Label>
-            <Input 
-              placeholder="Ex: Appartement 3 pièces vue mer - Kaloum" 
+            <Input
+              placeholder="Ex: Appartement 3 pièces vue mer - Kaloum"
               value={form.title}
               onChange={e => updateField('title', e.target.value)}
             />
@@ -253,7 +253,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
           {/* Description */}
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea 
+            <Textarea
               placeholder="Décrivez le bien en détail : état, proximité, avantages..."
               rows={4}
               value={form.description}

@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Smartphone, Laptop, Tv, Headphones, Watch, Camera, DollarSign, Package, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { _toast } from 'sonner';
 
 interface ElectronicsModuleProps {
   serviceId: string;
@@ -29,7 +29,7 @@ const CATEGORIES = [
   { id: 'cameras', name: 'Photo & Vidéo', icon: Camera }
 ];
 
-export function ElectronicsModule({ serviceId, businessName }: ElectronicsModuleProps) {
+export function ElectronicsModule({ _serviceId, businessName }: ElectronicsModuleProps) {
   const [activeTab, setActiveTab] = useState('catalog');
   const [stats] = useState({ products: 243, orders: 67, revenue: 18500000, rating: 4.5 });
 

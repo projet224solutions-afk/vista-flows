@@ -4,8 +4,8 @@
  */
 
 import { useState } from 'react';
-import { 
-  Wallet, Users, UserPlus, UserCog, BarChart3, 
+import {
+  Wallet, Users, UserPlus, UserCog, BarChart3,
   DollarSign, Package, Home, ChevronLeft, ChevronRight,
   Key, LogOut, Shield, Menu, Link2
 } from 'lucide-react';
@@ -69,63 +69,63 @@ export default function AgentSidebar({
   console.log('🔐 Permissions legacy:', agent.permissions);
 
   const navItems: NavItem[] = [
-    { 
-      id: 'overview', 
-      label: 'Tableau de bord', 
+    {
+      id: 'overview',
+      label: 'Tableau de bord',
       icon: Home,
       gradient: 'from-blue-500 to-indigo-500'
     },
-    { 
-      id: 'wallet', 
-      label: 'Wallet', 
+    {
+      id: 'wallet',
+      label: 'Wallet',
       icon: Wallet,
       gradient: 'from-emerald-500 to-teal-500'
     },
-    { 
-      id: 'create-user', 
-      label: 'Créer Utilisateur', 
+    {
+      id: 'create-user',
+      label: 'Créer Utilisateur',
       icon: UserPlus,
       permission: 'create_users',
       gradient: 'from-green-500 to-lime-500'
     },
-    { 
-      id: 'sub-agents', 
-      label: 'Sous-Agents', 
+    {
+      id: 'sub-agents',
+      label: 'Sous-Agents',
       icon: UserCog,
       permission: 'create_sub_agents',
       gradient: 'from-purple-500 to-pink-500'
     },
-    { 
-      id: 'users', 
-      label: 'Utilisateurs', 
+    {
+      id: 'users',
+      label: 'Utilisateurs',
       icon: Users,
       permission: 'manage_users',
       gradient: 'from-orange-500 to-amber-500'
     },
-    { 
-      id: 'products', 
-      label: 'Produits', 
+    {
+      id: 'products',
+      label: 'Produits',
       icon: Package,
       permission: 'manage_products',
       gradient: 'from-cyan-500 to-blue-500'
     },
-    { 
-      id: 'reports', 
-      label: 'Rapports', 
+    {
+      id: 'reports',
+      label: 'Rapports',
       icon: BarChart3,
       permission: 'view_reports',
       gradient: 'from-violet-500 to-purple-500'
     },
-    { 
-      id: 'commissions', 
-      label: 'Commissions', 
+    {
+      id: 'commissions',
+      label: 'Commissions',
       icon: DollarSign,
       permission: 'manage_commissions',
       gradient: 'from-yellow-500 to-orange-500'
     },
-    { 
-      id: 'affiliate', 
-      label: 'Affiliation', 
+    {
+      id: 'affiliate',
+      label: 'Affiliation',
       icon: Link2,
       gradient: 'from-pink-500 to-rose-500',
       badge: 'Nouveau'
@@ -135,12 +135,12 @@ export default function AgentSidebar({
   const filteredNavItems = navItems.filter(item => {
     // Toujours afficher les items sans permission requise
     if (!item.permission) return true;
-    
+
     // Pour les sous-agents, vérifier plusieurs permissions
     if (item.id === 'sub-agents') {
       return agent.can_create_sub_agent || hasPermission('create_sub_agents') || hasPermission('manage_agents');
     }
-    
+
     // Vérifier la permission spécifique
     const hasPerm = hasPermission(item.permission);
     console.log(`📋 Item "${item.label}" - permission "${item.permission}": ${hasPerm}`);
@@ -192,10 +192,10 @@ export default function AgentSidebar({
               </div>
             )}
           </div>
-          
+
           {!collapsed && (
-            <Badge 
-              variant={agent.is_active ? "default" : "secondary"} 
+            <Badge
+              variant={agent.is_active ? "default" : "secondary"}
               className={cn(
                 "mt-3 w-full justify-center",
                 agent.is_active ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : ""
@@ -218,8 +218,8 @@ export default function AgentSidebar({
                 onClick={() => onSectionChange(item.id)}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
-                  isActive 
-                    ? `bg-gradient-to-r ${item.gradient} text-white shadow-lg` 
+                  isActive
+                    ? `bg-gradient-to-r ${item.gradient} text-white shadow-lg`
                     : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                 )}
               >
@@ -281,7 +281,7 @@ export default function AgentSidebar({
 
       {/* Mobile Overlay */}
       {!collapsed && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setCollapsed(true)}
         />

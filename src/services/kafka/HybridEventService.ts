@@ -67,7 +67,7 @@ class HybridEventService {
 
     const eventId = crypto.randomUUID();
     const errors: string[] = [];
-    
+
     const event: HybridEvent<T> = {
       id: eventId,
       type: eventType,
@@ -153,7 +153,7 @@ class HybridEventService {
     callback: (event: HybridEvent) => void
   ): EventSubscription {
     const channelName = `events:${eventType}`;
-    
+
     if (this.subscriptions.has(channelName)) {
       this.subscriptions.get(channelName)?.unsubscribe();
     }
@@ -185,7 +185,7 @@ class HybridEventService {
   unsubscribeFromEvents(eventType: string): void {
     const channelName = `events:${eventType}`;
     const subscription = this.subscriptions.get(channelName);
-    
+
     if (subscription) {
       subscription.unsubscribe();
       console.log(`🔇 Unsubscribed from ${eventType} events`);

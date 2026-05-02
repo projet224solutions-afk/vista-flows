@@ -29,6 +29,14 @@ export interface InternationalPreviewData {
   amount_received: number;
   currency_received: string;
   is_international: boolean;
+  official_rate?: number;
+  fx_margin?: number;
+  rate_source?: string | null;
+  rate_fetched_at?: string | null;
+  rate_source_type?: string | null;
+  rate_source_url?: string | null;
+  rate_is_official?: boolean;
+  rate_is_stale?: boolean;
   sender_country: string;
   receiver_country: string;
   commission_conversion: number;
@@ -97,6 +105,7 @@ export function InternationalTransferConfirmation({
   if (!preview) return null;
 
   const progressPercent = (secondsLeft / lockDuration) * 100;
+  const marginPercent = typeof preview.fx_margin === 'number' ? preview.fx_margin * 100 : null;
 
   const countryFlag = (code: string) => {
     const flags: Record<string, string> = {
@@ -160,9 +169,23 @@ export function InternationalTransferConfirmation({
                 </div>
 
                 {preview.currency_sent !== preview.currency_received && (
-                  <div className="flex justify-between text-sm text-blue-600 dark:text-blue-400">
-                    <span>💱 Taux de change</span>
-                    <span className="font-medium">1 {preview.currency_sent} = {preview.rate_displayed.toFixed(4)} {preview.currency_received}</span>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-blue-600 dark:text-blue-400">
+                      <span>💱 Taux appliqué</span>
+                      <span className="font-medium">1 {preview.currency_sent} = {preview.rate_displayed.toFixed(4)} {preview.currency_received}</span>
+                    </div>
+                    {typeof preview.official_rate === 'number' && preview.official_rate > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Taux officiel banque</span>
+                        <span>1 {preview.currency_sent} = {preview.official_rate.toFixed(4)} {preview.currency_received}</span>
+                      </div>
+                    )}
+                    {marginPercent !== null && marginPercent > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Marge conversion</span>
+                        <span>{marginPercent.toFixed(2)}%</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -188,6 +211,21 @@ export function InternationalTransferConfirmation({
                   </div>
                   {!expired && (
                     <Progress value={progressPercent} className="h-2" />
+                  )}
+                </div>
+              )}
+
+              {preview.is_international && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border text-xs text-muted-foreground space-y-1">
+                  <div>
+                    Source taux : {preview.rate_is_official ? 'banque/source officielle' : 'source secondaire'}
+                    {preview.rate_source_url ? ` (${preview.rate_source_url})` : ''}
+                  </div>
+                  {preview.rate_fetched_at && (
+                    <div>Mise à jour : {new Date(preview.rate_fetched_at).toLocaleString('fr-FR')}</div>
+                  )}
+                  {preview.rate_is_stale && (
+                    <div className="text-red-600 dark:text-red-400">Taux marqué comme ancien par le backend.</div>
                   )}
                 </div>
               )}

@@ -42,7 +42,7 @@ export function useAutoFillGps() {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        const updates: Promise<unknown>[] = [];
+        const _updates: Promise<unknown>[] = [];
 
         for (const v of vendorsToFix) {
           try {

@@ -12,11 +12,11 @@ interface BureauWalletDisplayProps {
   compact?: boolean;
 }
 
-export function BureauWalletDisplay({ 
-  bureauId, 
+export function BureauWalletDisplay({
+  bureauId,
   bureauCode,
-  className = '', 
-  compact = false 
+  className = '',
+  compact = false
 }: BureauWalletDisplayProps) {
   const [balance, setBalance] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('GNF');
@@ -77,6 +77,7 @@ export function BureauWalletDisplay({
         channel.unsubscribe();
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bureauId]);
 
   const formatAmount = useFormatCurrency();

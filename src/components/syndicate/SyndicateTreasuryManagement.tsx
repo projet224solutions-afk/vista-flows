@@ -4,20 +4,20 @@
  * 224Solutions - Bureau Syndicat System
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { _Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, PieChart, Download } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, PieChart, _Download } from "lucide-react";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface SyndicateTreasuryManagementProps {
     bureauId: string;
 }
 
-export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreasuryManagementProps) {
+export default function SyndicateTreasuryManagement({ _bureauId }: SyndicateTreasuryManagementProps) {
     const fc = useFormatCurrency();
-    const [treasuryData, setTreasuryData] = useState({
+    const [treasuryData, _setTreasuryData] = useState({
         balance: 1850000,
         monthlyIncome: 225000,
         monthlyExpenses: 75000,

@@ -49,7 +49,7 @@ export function usePDGManagement() {
       user_id: user.id,
       ...data
     });
-    
+
     setPdgData(newPDG);
     return newPDG;
   }, [user]);
@@ -103,14 +103,14 @@ export function useAgentManagement(pdgId?: string) {
       pdg_id: pdgId,
       ...data
     });
-    
+
     setAgents(prev => [newAgent, ...prev]);
     return newAgent;
   }, [pdgId]);
 
   const updateAgent = useCallback(async (agentId: string, updates: Partial<AgentManagement>) => {
     await agentService.updateAgent(agentId, updates, pdgId);
-    setAgents(prev => prev.map(agent => 
+    setAgents(prev => prev.map(agent =>
       agent.id === agentId ? { ...agent, ...updates } : agent
     ));
   }, [pdgId]);
@@ -171,7 +171,7 @@ export function useSubAgentManagement(agentId?: string) {
       parent_agent_id: agentId,
       ...data
     });
-    
+
     setSubAgents(prev => [newSubAgent, ...prev]);
     return newSubAgent;
   }, [agentId]);
@@ -226,7 +226,7 @@ export function useAgentCreatedUsers(creatorId?: string) {
       email: data.email,
       phone: data.phone
     });
-    
+
     setUsers(prev => [newUser, ...prev]);
     return newUser;
   }, [creatorId]);
@@ -284,22 +284,22 @@ export function useCommissionManagement(recipientId?: string, recipientType?: 'a
       if (typeof value !== 'number') {
         throw new Error('La valeur doit être un nombre');
       }
-      
+
       const { data, error } = await supabase
         .from('commission_settings')
-        .update({ 
+        .update({
           setting_value: value,
           updated_at: new Date().toISOString()
         })
         .eq('setting_key', settingKey)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       // Rafraîchir settings
       await fetchSettings();
-      
+
       console.log('✅ Paramètre mis à jour:', settingKey, value);
       return data;
     } catch (err) {
@@ -395,13 +395,13 @@ export function useUserActivation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const activateUser = useCallback(async (invitationToken: string, deviceType: 'mobile' | 'pc' | 'tablet') => {
+  const activateUser = useCallback(async (invitationToken: string, _deviceType: 'mobile' | 'pc' | 'tablet') => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result: unknown = await agentService.activateUser(invitationToken);
-      
+
       // Retourner un objet par défaut
       return result || { success: true };
     } catch (err) {
@@ -427,7 +427,7 @@ export function useUserActivation() {
 export function useAgentSystemOverview(pdgId?: string) {
   const { agents, loading: agentsLoading } = useAgentManagement(pdgId);
   const { settings, loading: settingsLoading } = useCommissionManagement();
-  
+
   const [overview, setOverview] = useState({
     totalAgents: 0,
     activeAgents: 0,
@@ -443,7 +443,7 @@ export function useAgentSystemOverview(pdgId?: string) {
       const totalSubAgents = agents.reduce((sum, a) => sum + (a.total_users_created || 0), 0);
       const totalUsers = agents.reduce((sum, a) => sum + (a.total_users_created || 0), 0);
       const totalCommissions = agents.reduce((sum, a) => sum + (a.total_commissions_earned || 0), 0);
-      
+
       const baseCommissionSetting: unknown = settings.find((s: unknown) => (s.setting_key || s.key) === 'base_user_commission');
       const averageCommissionRate = baseCommissionSetting ? ((baseCommissionSetting.setting_value || baseCommissionSetting.value || 0.2) * 100) : 20;
 

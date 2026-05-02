@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Brain, 
-  Shield, 
-  AlertTriangle, 
-  TrendingUp, 
+import {
+  Brain,
+  Shield,
+  AlertTriangle,
+  TrendingUp,
   Activity,
   RefreshCw,
   Eye,
@@ -17,19 +17,19 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
+  _BarChart,
+  _Bar,
   Legend
 } from 'recharts';
 
@@ -112,9 +112,9 @@ export const MLFraudDashboard: React.FC = () => {
       const high = analyses.filter(a => a.risk_level === 'high').length;
       const medium = analyses.filter(a => a.risk_level === 'medium').length;
       const low = analyses.filter(a => a.risk_level === 'low').length;
-      
-      const avgConf = analyses.length > 0 
-        ? analyses.reduce((sum, a) => sum + a.ml_confidence, 0) / analyses.length 
+
+      const avgConf = analyses.length > 0
+        ? analyses.reduce((sum, a) => sum + a.ml_confidence, 0) / analyses.length
         : 0;
 
       setStats({
@@ -280,15 +280,15 @@ export const MLFraudDashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis domain={[0, 100]} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => [`${value}`, 'Score']}
                   labelFormatter={(label) => `Date: ${label}`}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="#8884d8" 
-                  fill="#8884d8" 
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#8884d8"
+                  fill="#8884d8"
                   fillOpacity={0.3}
                 />
               </AreaChart>
@@ -375,8 +375,8 @@ export const MLFraudDashboard: React.FC = () => {
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{analysis.risk_score}</span>
-                          <Progress 
-                            value={analysis.risk_score} 
+                          <Progress
+                            value={analysis.risk_score}
                             className="w-16 h-2"
                           />
                         </div>
@@ -428,7 +428,7 @@ export const MLFraudDashboard: React.FC = () => {
             <div>
               <h3 className="font-semibold text-lg">Modèle ML Actif</h3>
               <p className="text-sm text-muted-foreground">
-                <span className="font-mono">lovable-gemini-2.5-flash-v1</span> • 
+                <span className="font-mono">lovable-gemini-2.5-flash-v1</span> •
                 Analyse comportementale prédictive avec extraction de features en temps réel
               </p>
               <div className="flex gap-4 mt-2 text-sm">

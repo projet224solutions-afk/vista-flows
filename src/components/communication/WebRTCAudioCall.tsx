@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useWebRTCCallContext } from './WebRTCCallProvider';
-import { 
-  Phone, 
-  Mic, 
-  MicOff, 
-  PhoneOff, 
+import {
+  Phone,
+  Mic,
+  MicOff,
+  PhoneOff,
   Wifi,
   Clock,
   Loader2
@@ -23,12 +23,12 @@ import { cn } from '@/lib/utils';
 
 export default function WebRTCAudioCall() {
   // UTILISE LE CONTEXTE — pas useWebRTCAudioCall() directement
-  const { 
-    callState, 
-    acceptCall, 
-    rejectCall, 
-    endCall, 
-    toggleMute 
+  const {
+    callState,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleMute
   } = useWebRTCCallContext();
 
   const formatDuration = (seconds: number) => {
@@ -99,7 +99,7 @@ export default function WebRTCAudioCall() {
               <h3 className="text-2xl font-semibold">{callState.remoteUserInfo?.name}</h3>
               <p className="text-muted-foreground">Appel vocal</p>
             </div>
-            
+
             <div className="flex gap-4 justify-center">
               <Button
                 onClick={acceptCall}
@@ -145,7 +145,7 @@ export default function WebRTCAudioCall() {
               <h3 className="text-2xl font-semibold">{callState.remoteUserInfo?.name}</h3>
               <p className="text-muted-foreground animate-pulse">Sonnerie...</p>
             </div>
-            
+
             <div className="flex justify-center">
               <Button
                 onClick={endCall}
@@ -202,7 +202,7 @@ export default function WebRTCAudioCall() {
           </div>
 
           <div className="text-center">
-            <Badge 
+            <Badge
               variant={callState.isConnected ? "default" : "secondary"}
               className={cn(
                 "text-sm",

@@ -9,14 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Package, User, Phone, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Package, User, Phone, Navigation, _Loader2 } from 'lucide-react';
 import { PricingService, type PriceEstimate } from '@/services/pricing/PricingService';
 import { PriceEstimatorCard } from './PriceEstimatorCard';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 interface DeliveryRequestUberStyleProps {
@@ -26,18 +26,18 @@ interface DeliveryRequestUberStyleProps {
 export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestUberStyleProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<'address' | 'confirm' | 'payment'>('address');
-  const [loading, setLoading] = useState(false);
-  
+  const [_loading, setLoading] = useState(false);
+
   // Form data
   const [pickupAddress, setPickupAddress] = useState('');
-  const [pickupCoords, setPickupCoords] = useState({ lat: 9.5, lng: -13.7 });
+  const [pickupCoords, _setPickupCoords] = useState({ lat: 9.5, lng: -13.7 });
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [deliveryCoords, setDeliveryCoords] = useState({ lat: 9.52, lng: -13.68 });
+  const [deliveryCoords, _setDeliveryCoords] = useState({ lat: 9.52, lng: -13.68 });
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  
+
   // Price estimate
   const [priceEstimate, setPriceEstimate] = useState<PriceEstimate | null>(null);
   const [estimating, setEstimating] = useState(false);
@@ -47,6 +47,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
     if (pickupCoords && deliveryCoords) {
       estimatePrice();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickupCoords, deliveryCoords]);
 
   const estimatePrice = async () => {
@@ -172,7 +173,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 size="lg"
                 onClick={() => setStep('confirm')}
                 disabled={!pickupAddress || !deliveryAddress || !customerName || !customerPhone}
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
                   color: 'white'
                 }}
@@ -236,7 +237,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               onClick={() => setStep('payment')}
               className="flex-1"
               size="lg"
-              style={{ 
+              style={{
                 background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
                 color: 'white'
               }}

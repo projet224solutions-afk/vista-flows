@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownCircle, Loader2, Shield, CreditCard } from "lucide-react";
+import { ArrowDownCircle, _Loader2, Shield, CreditCard } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 
@@ -19,7 +19,7 @@ interface StripeWalletDepositProps {
   onSuccess?: () => void;
 }
 
-export default function StripeWalletDeposit({ userId, walletId, onSuccess }: StripeWalletDepositProps) {
+export default function StripeWalletDeposit({ _userId, _walletId, onSuccess }: StripeWalletDepositProps) {
   const [depositAmount, setDepositAmount] = useState("");
   const [showStripe, setShowStripe] = useState(false);
 
@@ -28,7 +28,7 @@ export default function StripeWalletDeposit({ userId, walletId, onSuccess }: Str
   const numAmount = parseFloat(depositAmount);
   const isValid = numAmount >= 5;
 
-  const handleSuccess = (data: { paymentIntentId: string; amount: number; currency: string }) => {
+  const handleSuccess = (_data: { paymentIntentId: string; amount: number; currency: string }) => {
     setShowStripe(false);
     setDepositAmount("");
     window.dispatchEvent(new Event("wallet-updated"));
@@ -102,7 +102,7 @@ export default function StripeWalletDeposit({ userId, walletId, onSuccess }: Str
               description="Dépôt wallet 224Solutions"
               onSuccess={handleSuccess}
               onCancel={() => setShowStripe(false)}
-              onError={(err) => setShowStripe(false)}
+              onError={(_err) => setShowStripe(false)}
               creditWallet
             />
           </div>

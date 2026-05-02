@@ -33,7 +33,7 @@ interface BugBountyStats {
 }
 
 export function BugBountyProgram() {
-  const { isMobile } = useResponsive();
+  const { _isMobile } = useResponsive();
   const navigate = useNavigate();
   const [reports, setReports] = useState<BountyReport[]>([]);
   const [stats, setStats] = useState<BugBountyStats>({
@@ -106,6 +106,7 @@ export function BugBountyProgram() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

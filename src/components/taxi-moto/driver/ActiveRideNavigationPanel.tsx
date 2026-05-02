@@ -4,12 +4,12 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Navigation, 
-  Phone, 
-  MapPin, 
-  Clock, 
-  ArrowRight, 
+import {
+  Navigation,
+  Phone,
+  MapPin,
+  Clock,
+  ArrowRight,
   ExternalLink,
   User,
   Route,
@@ -60,7 +60,7 @@ export function ActiveRideNavigationPanel({
 }: ActiveRideNavigationPanelProps) {
   const [distance, setDistance] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [_isCalculating, setIsCalculating] = useState(false);
 
   // Calculer la route
   const calculateRoute = useCallback(async () => {
@@ -78,7 +78,7 @@ export function ActiveRideNavigationPanel({
 
       setDistance(routeInfo.distance);
       setDuration(routeInfo.duration);
-    } catch (error) {
+    } catch (_error) {
       // Fallback calcul simple
       const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
         ? activeRide.pickup.coords
@@ -117,7 +117,7 @@ export function ActiveRideNavigationPanel({
     const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
     const destination = `${target.latitude},${target.longitude}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-    
+
     window.open(mapsUrl, '_blank');
   };
 
@@ -381,8 +381,8 @@ export function ActiveRideNavigationPanel({
             disabled={isLoading}
             className={cn(
               "w-full h-14 text-lg font-semibold gap-3",
-              statusConfig.nextAction === 'completed' 
-                ? 'bg-emerald-500 hover:bg-emerald-600' 
+              statusConfig.nextAction === 'completed'
+                ? 'bg-emerald-500 hover:bg-emerald-600'
                 : 'bg-blue-600 hover:bg-blue-700'
             )}
           >

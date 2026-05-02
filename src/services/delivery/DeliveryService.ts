@@ -59,15 +59,15 @@ export class DeliveryService {
         .limit(20);
 
       if (error) throw error;
-      
+
       console.log('[DeliveryService] Raw deliveries found:', data?.length || 0);
 
       // Transformer les données pour extraire les adresses
       const deliveries = (data || []).map((delivery: any) => {
-        const pickupAddr = typeof delivery.pickup_address === 'string' 
-          ? delivery.pickup_address 
+        const pickupAddr = typeof delivery.pickup_address === 'string'
+          ? delivery.pickup_address
           : delivery.pickup_address?.address || JSON.stringify(delivery.pickup_address);
-        
+
         const deliveryAddr = typeof delivery.delivery_address === 'string'
           ? delivery.delivery_address
           : delivery.delivery_address?.address || JSON.stringify(delivery.delivery_address);
@@ -113,7 +113,7 @@ export class DeliveryService {
   static async acceptDelivery(deliveryId: string): Promise<Delivery> {
     try {
       console.log('[DeliveryService] Accepting delivery:', deliveryId);
-      
+
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 

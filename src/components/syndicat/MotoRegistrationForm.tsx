@@ -7,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { _Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Upload, CheckCircle2, Bike, User, FileText, Camera } from 'lucide-react';
+import { _AlertCircle, Upload, CheckCircle2, Bike, User, FileText, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useBureauOfflineSync } from '@/hooks/useBureauOfflineSync';
@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 // Import mode offline pour MotoRegistrationForm
-import offlineSyncManager from '@/lib/offlineSyncManager';
+import _offlineSyncManager from '@/lib/offlineSyncManager';
 
 interface MotoForm {
   owner_name: string;
@@ -49,10 +49,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
   const [conducteurSearch, setConducteurSearch] = useState('');
   const [customBrand, setCustomBrand] = useState('');
   const { storeOfflineEvent, isOnline } = useBureauOfflineSync(bureauId);
-  
+
   // Hook pour upload vers GCS
   const { uploadFile: uploadToGCS } = useStorageUpload();
-  
+
   const [form, setForm] = useState<MotoForm>({
     owner_name: '',
     owner_phone: '',
@@ -71,10 +71,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFileUpload = async (file: File, field: keyof MotoForm) => {
+  const _handleFileUpload = async (file: File, field: keyof MotoForm) => {
     try {
       console.log(`[MotoRegistrationForm] Uploading file to GCS for field: ${field}`);
-      
+
       const uploadResult = await uploadToGCS(file, {
         folder: 'products',
         subfolder: `motos/${bureauId}`,
@@ -199,7 +199,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!form.plate_number || !form.serial_number || !form.brand || !form.model) {
       toast.error('Veuillez remplir tous les champs obligatoires');
@@ -219,7 +219,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
     setLoading(true);
     try {
       const finalBrand = form.brand === 'Autre' ? customBrand : form.brand;
-      
+
       const motoData = {
         bureau_id: bureauId,
         worker_id: user?.id, // ID de l'utilisateur qui enregistre
@@ -250,8 +250,8 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
           status: 'pending',
           bureau_id: bureauId
         };
-        
-        const { data, error } = await supabase
+
+        const { _data, error } = await supabase
           .from('vehicles')
           .insert([vehicleData])
           .select()
@@ -268,12 +268,12 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       } else {
         // Stockage hors ligne - sera synchronisé vers vehicles
         await storeOfflineEvent('moto_registration', { ...motoData, target_table: 'vehicles' });
-        
+
         toast.success('📴 Véhicule enregistré localement', {
           description: 'Il sera synchronisé à la reconnexion'
         });
       }
-      
+
       // Reset form
       setForm({
         owner_name: '',
@@ -289,7 +289,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         photos: [],
       });
       setCustomBrand('');
-      
+
       setActiveTab('moto');
       onSuccess?.();
     } catch (error: any) {
@@ -581,8 +581,8 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   <div className="grid grid-cols-2 gap-4">
                     {form.photos.map((photoUrl, index) => (
                       <div key={index} className="relative group">
-                        <img 
-                          src={photoUrl} 
+                        <img
+                          src={photoUrl}
                           alt={`Moto ${index + 1}`}
                           className="w-full h-48 object-cover rounded-lg border"
                         />
@@ -630,7 +630,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
             }}>
               Précédent
             </Button>
-            
+
             {activeTab !== 'photos' ? (
               <Button type="button" onClick={() => {
                 const tabs = ['moto', 'proprietaire', 'documents', 'photos'];

@@ -1,7 +1,7 @@
 ﻿/**
- * ­ƒöÉ Page d├®di├®e de r├®initialisation de mot de passe
+ * 🔐 Page dédiée de réinitialisation de mot de passe
  * Route: /reset-password
- * D├®tecte les tokens dans l'URL (hash ou query), ├®tablit la session,
+ * Détecte les tokens dans l'URL (hash ou query), établit la session,
  * et affiche le formulaire de nouveau mot de passe.
  */
 
@@ -22,7 +22,7 @@ type PageState = "loading" | "form" | "expired" | "success";
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { _t } = useTranslation();
 
   const [state, setState] = useState<PageState>("loading");
   const [newPassword, setNewPassword] = useState("");
@@ -44,7 +44,7 @@ export default function ResetPassword() {
       // Check for error in URL
       const errorDesc = hashParams.get("error_description") || queryParams.get("error_description");
       if (errorDesc) {
-        console.error("ÔØî [ResetPassword] Error in URL:", errorDesc);
+        console.error("✕ [ResetPassword] Error in URL:", errorDesc);
         setState("expired");
         setError(decodeURIComponent(errorDesc));
         window.history.replaceState({}, document.title, "/reset-password");
@@ -58,7 +58,7 @@ export default function ResetPassword() {
       const tokenHash = queryParams.get("token_hash");
       const type = hashParams.get("type") || queryParams.get("type");
 
-      console.log("­ƒöì [ResetPassword] Detecting tokens:", {
+      console.log("🔍 [ResetPassword] Detecting tokens:", {
         hasAccessToken: !!accessToken,
         hasRefreshToken: !!refreshToken,
         hasCode: !!code,
@@ -73,13 +73,13 @@ export default function ResetPassword() {
           if (codeError) throw codeError;
 
           if (data.session) {
-            console.log("Ô£à [ResetPassword] Session established from code");
+            console.log("✓ [ResetPassword] Session established from code");
             setState("form");
             window.history.replaceState({}, document.title, "/reset-password");
             return;
           }
         } catch (e) {
-          console.error("ÔØî [ResetPassword] exchangeCodeForSession failed:", e);
+          console.error("✕ [ResetPassword] exchangeCodeForSession failed:", e);
         }
       }
 
@@ -94,13 +94,13 @@ export default function ResetPassword() {
           if (otpError) throw otpError;
 
           if (data.session) {
-            console.log("Ô£à [ResetPassword] Session established from token_hash");
+            console.log("✓ [ResetPassword] Session established from token_hash");
             setState("form");
             window.history.replaceState({}, document.title, "/reset-password");
             return;
           }
         } catch (e) {
-          console.error("ÔØî [ResetPassword] verifyOtp failed:", e);
+          console.error("✕ [ResetPassword] verifyOtp failed:", e);
         }
       }
 
@@ -115,13 +115,13 @@ export default function ResetPassword() {
           if (sessionError) throw sessionError;
 
           if (data.session) {
-            console.log("Ô£à [ResetPassword] Session established");
+            console.log("✓ [ResetPassword] Session established");
             setState("form");
             window.history.replaceState({}, document.title, "/reset-password");
             return;
           }
         } catch (e) {
-          console.error("ÔØî [ResetPassword] setSession failed:", e);
+          console.error("✕ [ResetPassword] setSession failed:", e);
         }
       }
 
@@ -129,7 +129,7 @@ export default function ResetPassword() {
       // (Supabase may have auto-processed the hash)
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.log("Ô£à [ResetPassword] Existing session found");
+        console.log("✓ [ResetPassword] Existing session found");
         setState("form");
         window.history.replaceState({}, document.title, "/reset-password");
         return;
@@ -138,7 +138,7 @@ export default function ResetPassword() {
       // Also listen for PASSWORD_RECOVERY event briefly
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
         if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && type === "recovery")) {
-          console.log("­ƒöÉ [ResetPassword] PASSWORD_RECOVERY event");
+          console.log("🔐 [ResetPassword] PASSWORD_RECOVERY event");
           setState("form");
           window.history.replaceState({}, document.title, "/reset-password");
           subscription.unsubscribe();
@@ -164,7 +164,7 @@ export default function ResetPassword() {
   }, []);
 
   const validatePassword = (pwd: string): string | null => {
-    if (pwd.length < 8) return "Le mot de passe doit faire au moins 8 caract├¿res";
+    if (pwd.length < 8) return "Le mot de passe doit faire au moins 8 caractères";
     if (!/[A-Z]/.test(pwd)) return "Le mot de passe doit contenir au moins une majuscule";
     if (!/[a-z]/.test(pwd)) return "Le mot de passe doit contenir au moins une minuscule";
     if (!/[0-9]/.test(pwd)) return "Le mot de passe doit contenir au moins un chiffre";
@@ -186,7 +186,7 @@ export default function ResetPassword() {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error("Session expir├®e. Veuillez demander un nouveau lien.");
+        throw new Error("Session expirée. Veuillez demander un nouveau lien.");
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -195,12 +195,12 @@ export default function ResetPassword() {
 
       if (updateError) throw updateError;
 
-      console.log("Ô£à [ResetPassword] Password updated");
+      console.log("✓ [ResetPassword] Password updated");
       await supabase.auth.signOut();
       setState("success");
 
       toast({
-        title: "Mot de passe mis ├á jour",
+        title: "Mot de passe mis à jour",
         description: "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
       });
 
@@ -225,8 +225,8 @@ export default function ResetPassword() {
       });
       if (error) throw error;
       toast({
-        title: "Lien envoy├®",
-        description: "Un nouveau lien de r├®initialisation a ├®t├® envoy├® ├á votre adresse email.",
+        title: "Lien envoyé",
+        description: "Un nouveau lien de réinitialisation a été envoyé à votre adresse email.",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'envoi");
@@ -258,14 +258,14 @@ export default function ResetPassword() {
           </div>
           <CardTitle className="text-xl font-bold text-foreground">
             {state === "success"
-              ? "Mot de passe mis ├á jour !"
+              ? "Mot de passe mis à jour !"
               : state === "expired"
-              ? "Lien expir├®"
+              ? "Lien expiré"
               : "Nouveau mot de passe"}
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            {state === "loading" && "V├®rification du lien..."}
-            {state === "form" && "Choisissez un nouveau mot de passe s├®curis├®"}
+            {state === "loading" && "Vérification du lien..."}
+            {state === "form" && "Choisissez un nouveau mot de passe sécurisé"}
             {state === "expired" && "Ce lien n'est plus valide. Demandez-en un nouveau."}
             {state === "success" && "Redirection vers la connexion..."}
           </CardDescription>
@@ -276,7 +276,7 @@ export default function ResetPassword() {
           {state === "loading" && (
             <div className="flex flex-col items-center py-8 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">V├®rification en cours...</p>
+              <p className="text-sm text-muted-foreground">Vérification en cours...</p>
             </div>
           )}
 
@@ -311,7 +311,7 @@ export default function ResetPassword() {
                 {resending ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Envoi...</>
                 ) : (
-                  "Renvoyer un lien de r├®initialisation"
+                  "Renvoyer un lien de réinitialisation"
                 )}
               </Button>
               <Button
@@ -319,7 +319,7 @@ export default function ResetPassword() {
                 className="w-full"
                 onClick={() => navigate("/auth")}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" /> Retour ├á la connexion
+                <ArrowLeft className="w-4 h-4 mr-2" /> Retour à la connexion
               </Button>
             </div>
           )}
@@ -342,7 +342,7 @@ export default function ResetPassword() {
                     type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                    placeholder="••••••••"
                     className="pr-10"
                     required
                     autoFocus
@@ -369,16 +369,16 @@ export default function ResetPassword() {
                 )}
                 <ul className="text-xs text-muted-foreground space-y-0.5 mt-1">
                   <li className={newPassword.length >= 8 ? "text-green-600" : ""}>
-                    ÔÇó Au moins 8 caract├¿res
+                    • Au moins 8 caractères
                   </li>
                   <li className={/[A-Z]/.test(newPassword) ? "text-green-600" : ""}>
-                    ÔÇó Une majuscule
+                    • Une majuscule
                   </li>
                   <li className={/[a-z]/.test(newPassword) ? "text-green-600" : ""}>
-                    ÔÇó Une minuscule
+                    • Une minuscule
                   </li>
                   <li className={/[0-9]/.test(newPassword) ? "text-green-600" : ""}>
-                    ÔÇó Un chiffre
+                    • Un chiffre
                   </li>
                 </ul>
               </div>
@@ -391,7 +391,7 @@ export default function ResetPassword() {
                     type={showConfirm ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                    placeholder="••••••••"
                     className="pr-10"
                     required
                   />
@@ -411,9 +411,9 @@ export default function ResetPassword() {
 
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mise ├á jour...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mise à jour...</>
                 ) : (
-                  "Mettre ├á jour le mot de passe"
+                  "Mettre à jour le mot de passe"
                 )}
               </Button>
             </form>

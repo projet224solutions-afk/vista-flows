@@ -9,16 +9,16 @@ interface PWAInstallButtonProps {
   size?: 'default' | 'sm' | 'lg';
 }
 
-export default function PWAInstallButton({ 
-  className, 
+export default function PWAInstallButton({
+  className,
   variant = 'default',
-  size = 'default' 
+  size = 'default'
 }: PWAInstallButtonProps) {
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
 
   const handleClick = async () => {
     const installed = await promptInstall();
-    
+
     if (installed) {
       toast.success('🎉 Application installée!', {
         description: 'Ouvrez 224Solutions depuis votre écran d\'accueil'

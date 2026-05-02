@@ -6,6 +6,8 @@ import { supabaseAdmin } from '../config/supabase.js';
 const PIN_LENGTH = 6;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
+const PIN_RESET_MAX_FAILED_ATTEMPTS = 5;
+const PIN_RESET_LOCKOUT_MINUTES = 30;
 const WALLET_PIN_SCHEMA_MISSING_MESSAGE = 'Le schéma PIN wallet n’est pas encore appliqué en base. Exécutez la migration 20260408193000_wallet_pin_schema_compat.sql.';
 const ACCOUNT_PASSWORD_REQUIRED_MESSAGE = 'Entrez le mot de passe de votre compte pour réinitialiser le PIN.';
 const ACCOUNT_PASSWORD_INVALID_MESSAGE = 'Mot de passe du compte incorrect.';
@@ -13,6 +15,23 @@ const ACCOUNT_PASSWORD_RESET_UNAVAILABLE_MESSAGE = 'Réinitialisation du PIN ind
 
 function validatePinFormat(pin: string): boolean {
   return /^\d{6}$/.test(pin);
+}
+
+function isWeakPin(pin: string): boolean {
+  if (/^(\d)\1{5}$/.test(pin)) return true;
+  if (['012345', '123456', '234567', '345678', '456789', '987654', '876543', '765432', '654321'].includes(pin)) return true;
+  if (['000000', '111111', '222222', '333333', '444444', '555555', '666666', '777777', '888888', '999999'].includes(pin)) return true;
+  return false;
+}
+
+function assertPinPolicy(pin: string, label = 'Le code PIN') {
+  if (!validatePinFormat(pin)) {
+    throw new Error(`${label} doit contenir exactement 6 chiffres`);
+  }
+
+  if (isWeakPin(pin)) {
+    throw new Error(`${label} est trop simple. Choisissez 6 chiffres non répétitifs et non séquentiels.`);
+  }
 }
 
 function isWalletPinSchemaMissingError(error: unknown): boolean {
@@ -101,7 +120,7 @@ async function persistWalletPinUpdate(
   }
 }
 
-async function verifyAccountPassword(email: string | null | undefined, password: string) {
+async function verifyAccountPassword(expectedUserId: string, email: string | null | undefined, password: string) {
   if (!password || !password.trim()) {
     throw new Error(ACCOUNT_PASSWORD_REQUIRED_MESSAGE);
   }
@@ -124,9 +143,68 @@ async function verifyAccountPassword(email: string | null | undefined, password:
 
   await authClient.auth.signOut().catch(() => undefined);
 
-  if (error || !data.user) {
+  if (error || !data.user || data.user.id !== expectedUserId) {
     throw new Error(ACCOUNT_PASSWORD_INVALID_MESSAGE);
   }
+}
+
+async function countRecentFailedPinResets(userId: string): Promise<number> {
+  const since = new Date(Date.now() - PIN_RESET_LOCKOUT_MINUTES * 60 * 1000).toISOString();
+  const { count, error } = await supabaseAdmin
+    .from('security_audit_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_type', 'wallet_pin_reset')
+    .eq('user_id', userId)
+    .eq('success', false)
+    .gte('created_at', since);
+
+  if (error) {
+    return 0;
+  }
+
+  return count || 0;
+}
+
+async function logWalletPinSecurityEvent(params: {
+  userId: string;
+  action: 'setup' | 'change' | 'reset';
+  success: boolean;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  reason?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}) {
+  await supabaseAdmin
+    .from('security_audit_logs')
+    .insert({
+      event_type: `wallet_pin_${params.action}`,
+      user_id: params.userId,
+      ip_address: params.ipAddress || null,
+      user_agent: params.userAgent || null,
+      resource_type: 'wallet',
+      resource_id: params.userId,
+      action: params.action,
+      success: params.success,
+      severity: params.severity || (params.success ? 'medium' : 'high'),
+      details: {
+        reason: params.reason || null,
+        source: 'wallet-pin-service',
+      },
+    })
+    .then(() => undefined, () => undefined);
+}
+
+async function notifyWalletPinReset(userId: string) {
+  await supabaseAdmin
+    .from('notifications')
+    .insert({
+      user_id: userId,
+      title: 'Code PIN wallet réinitialisé',
+      message: 'Votre code PIN wallet vient d’être réinitialisé. Si vous n’êtes pas à l’origine de cette action, contactez immédiatement le support.',
+      type: 'security_alert',
+      read: false,
+    })
+    .then(() => undefined, () => undefined);
 }
 
 function hashPin(pin: string, salt?: string): string {
@@ -199,9 +277,7 @@ export async function ensureWalletExistsForPin(userId: string) {
 }
 
 export async function setupWalletPin(userId: string, pin: string) {
-  if (!validatePinFormat(pin)) {
-    throw new Error('Le code PIN doit contenir exactement 6 chiffres');
-  }
+  assertPinPolicy(pin, 'Le code PIN');
 
   try {
     await ensureWalletExistsForPin(userId);
@@ -263,13 +339,50 @@ export async function resetWalletPinWithPassword(
   email: string | null | undefined,
   accountPassword: string,
   newPin: string,
+  options: { ipAddress?: string | null; userAgent?: string | null } = {},
 ) {
-  if (!validatePinFormat(newPin)) {
-    throw new Error('Le nouveau code PIN doit contenir exactement 6 chiffres');
+  assertPinPolicy(newPin, 'Le nouveau code PIN');
+
+  const recentFailures = await countRecentFailedPinResets(userId);
+  if (recentFailures >= PIN_RESET_MAX_FAILED_ATTEMPTS) {
+    await logWalletPinSecurityEvent({
+      userId,
+      action: 'reset',
+      success: false,
+      severity: 'high',
+      reason: 'reset_rate_limited',
+      ipAddress: options.ipAddress,
+      userAgent: options.userAgent,
+    });
+    throw new Error(`Trop de tentatives de réinitialisation. Réessayez dans ${PIN_RESET_LOCKOUT_MINUTES} minutes.`);
   }
 
-  await verifyAccountPassword(email, accountPassword);
+  try {
+    await verifyAccountPassword(userId, email, accountPassword);
+  } catch (error: any) {
+    await logWalletPinSecurityEvent({
+      userId,
+      action: 'reset',
+      success: false,
+      severity: 'high',
+      reason: error?.message || 'password_verification_failed',
+      ipAddress: options.ipAddress,
+      userAgent: options.userAgent,
+    });
+    throw error;
+  }
+
   await setupWalletPin(userId, newPin);
+  await logWalletPinSecurityEvent({
+    userId,
+    action: 'reset',
+    success: true,
+    severity: 'high',
+    reason: 'account_password_verified',
+    ipAddress: options.ipAddress,
+    userAgent: options.userAgent,
+  });
+  await notifyWalletPinReset(userId);
 }
 
 export async function verifyWalletPin(userId: string, pin: string): Promise<{ valid: boolean; error?: string; lockedUntil?: string | null }> {
@@ -349,5 +462,7 @@ export function getWalletPinPolicy() {
     pinLength: PIN_LENGTH,
     maxFailedAttempts: MAX_FAILED_ATTEMPTS,
     lockoutMinutes: LOCKOUT_MINUTES,
+    resetMaxFailedAttempts: PIN_RESET_MAX_FAILED_ATTEMPTS,
+    resetLockoutMinutes: PIN_RESET_LOCKOUT_MINUTES,
   };
 }

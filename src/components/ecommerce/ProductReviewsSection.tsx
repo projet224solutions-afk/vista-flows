@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, ThumbsUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { _toast } from 'sonner';
 
 interface Review {
   id: string;
@@ -35,6 +35,7 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
 
   useEffect(() => {
     loadReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const loadReviews = async () => {
@@ -61,13 +62,13 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
       // Récupérer les profils
       const userIds = [...new Set((reviewsData || []).map(r => r.user_id))];
       let profilesMap = new Map();
-      
+
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('id, full_name, first_name, last_name, avatar_url')
           .in('id', userIds);
-        
+
         profilesMap = new Map(
           (profilesData || []).map(p => [p.id, p])
         );

@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import { 
-  isAccountLocked, 
-  recordFailedAttempt, 
+import {
+  isAccountLocked,
+  recordFailedAttempt,
   resetFailedAttempts,
-  formatRemainingTime 
+  formatRemainingTime
 } from '@/lib/security/accountLockout';
 import { getCSRFToken } from '@/lib/security/csrf';
-import { 
-  logSecurityEvent, 
-  detectSQLInjection, 
+import {
+  logSecurityEvent,
+  detectSQLInjection,
   detectXSS,
-  monitorRateLimitExceeded 
+  _monitorRateLimitExceeded
 } from '@/lib/security/securityMonitoring';
-import { 
+import {
   isValidIdentifier,
-  sanitizeNoSQLInput 
+  sanitizeNoSQLInput
 } from '@/lib/security/inputSanitizer';
 
 interface AgentLoginResponse {
@@ -65,7 +65,7 @@ export const useAgentAuth = () => {
         setIsLoading(false);
         return false;
       }
-      
+
       // Détection tentatives d'injection
       if (detectSQLInjection(identifierValue) || detectSQLInjection(password)) {
         await logSecurityEvent({
@@ -78,7 +78,7 @@ export const useAgentAuth = () => {
         setIsLoading(false);
         return false;
       }
-      
+
       if (detectXSS(identifierValue)) {
         await logSecurityEvent({
           type: 'xss_attempt',
@@ -90,19 +90,19 @@ export const useAgentAuth = () => {
         setIsLoading(false);
         return false;
       }
-      
+
       // Vérifier si compte verrouillé AVANT tentative
       const lockStatus = isAccountLocked(identifierValue);
       if (lockStatus.locked && lockStatus.remainingTime) {
         const timeStr = formatRemainingTime(lockStatus.remainingTime);
-        
+
         await logSecurityEvent({
           type: 'account_locked',
           severity: 'medium',
           identifier: identifierValue,
           details: { remainingTime: lockStatus.remainingTime }
         });
-        
+
         toast.error(
           `🔒 Compte verrouillé pour ${timeStr} suite à trop de tentatives échouées`,
           { duration: 6000 }
@@ -110,10 +110,10 @@ export const useAgentAuth = () => {
         setIsLoading(false);
         return false;
       }
-      
+
       // Sanitize input
       const sanitizedIdentifier = sanitizeNoSQLInput(identifierValue);
-      
+
       // Obtenir token CSRF
       const csrfToken = getCSRFToken();
 
@@ -150,13 +150,13 @@ export const useAgentAuth = () => {
             reason: data.error || 'invalid_credentials'
           }
         });
-        
+
         // Enregistrer échec de connexion
         const lockResult = recordFailedAttempt(identifierValue);
-        
+
         if (lockResult.locked && lockResult.lockoutDuration) {
           const lockMinutes = Math.ceil(lockResult.lockoutDuration / 60);
-          
+
           await logSecurityEvent({
             type: 'account_locked',
             severity: 'high',
@@ -166,14 +166,14 @@ export const useAgentAuth = () => {
               reason: 'multiple_failed_attempts'
             }
           });
-          
+
           toast.error(
             `🔒 Trop de tentatives échouées. Compte verrouillé pour ${lockMinutes} minutes.`,
             { duration: 8000 }
           );
         } else {
           toast.error(data.error || 'Identifiant ou mot de passe incorrect');
-          
+
           if (lockResult.remainingAttempts !== undefined) {
             toast.warning(
               `⚠️ ${lockResult.remainingAttempts} tentative(s) restante(s) avant verrouillage`,
@@ -181,7 +181,7 @@ export const useAgentAuth = () => {
             );
           }
         }
-        
+
         return false;
       }
 
@@ -193,7 +193,7 @@ export const useAgentAuth = () => {
         setRequiresOTP(true);
         setIdentifier(data.identifier || identifierValue);
         setOtpExpiresAt(data.otp_expires_at || '');
-        
+
         toast.success(data.message || 'Code de sécurité envoyé à votre email');
         return true;
       }
@@ -239,7 +239,7 @@ export const useAgentAuth = () => {
 
       if (!data.success) {
         toast.error(data.error || 'Code incorrect');
-        
+
         // Afficher tentatives restantes
         if (data.attempts_remaining !== undefined) {
           if (data.attempts_remaining === 0) {
@@ -249,7 +249,7 @@ export const useAgentAuth = () => {
             toast.warning(`⚠️ ${data.attempts_remaining} tentative(s) restante(s)`);
           }
         }
-        
+
         return false;
       }
 
@@ -258,22 +258,22 @@ export const useAgentAuth = () => {
         // Ajouter expiration (24 heures)
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
-        
+
         const userWithExpiry = {
           ...data.user,
           expires_at: expiresAt.toISOString()
         };
-        
+
         sessionStorage.setItem('agent_session', data.session_token);
         sessionStorage.setItem('agent_user', JSON.stringify(userWithExpiry));
-        
+
         toast.success(`Bienvenue ${data.user.first_name} ${data.user.last_name} !`);
-        
+
         // Redirection après 500ms
         setTimeout(() => {
           window.location.href = data.redirect_url || '/agent';
         }, 500);
-        
+
         return true;
       }
 
@@ -301,12 +301,12 @@ export const useAgentAuth = () => {
       // Note: Pour renvoyer OTP, on doit redemander à l'utilisateur de se reconnecter
       // OU créer une edge function dédiée "resend-otp"
       // Pour simplifier, on réinitialise et demande de ressaisir mot de passe
-      
+
       toast.warning('Veuillez vous reconnecter pour recevoir un nouveau code');
       setRequiresOTP(false);
       setIdentifier('');
       setOtpExpiresAt('');
-      
+
     } catch (error) {
       console.error('[useAgentAuth] Erreur renvoi OTP:', error);
       toast.error('Erreur lors du renvoi du code');
@@ -342,7 +342,7 @@ export const useAgentAuth = () => {
   const getCurrentAgent = () => {
     const userStr = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
     if (!userStr) return null;
-    
+
     try {
       return JSON.parse(userStr);
     } catch {

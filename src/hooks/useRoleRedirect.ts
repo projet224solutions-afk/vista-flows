@@ -64,7 +64,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
 
   // Normaliser le rôle (pdg/ceo/admin -> pdg)
   const normalizedRole = role.toLowerCase();
-  
+
   const roleRoutes: Record<string, string> = {
     pdg: '/pdg',
     admin: '/pdg',
@@ -88,8 +88,8 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
 /**
  * Hook pour rediriger automatiquement l'utilisateur vers son dashboard
  * en fonction de son rôle après connexion
- * 
- * ⚡ OPTIMISÉ: 
+ *
+ * ⚡ OPTIMISÉ:
  * - Redirection immédiate depuis /, /home, /auth vers le dashboard
  * - Pas de redirection si déjà sur le bon dashboard ou une route publique autorisée
  * - Utilise un ref pour éviter les redirections multiples
@@ -129,33 +129,33 @@ export const useRoleRedirect = () => {
       if (profile.role === 'vendor_agent') {
         // Rediriger depuis /, /auth, /home, /profil, /client vers l'interface agent
         const vendorAgentRedirectRoutes = [...REDIRECT_TRIGGER_ROUTES, '/home', '/profil', '/profile', '/client'];
-        const shouldRedirectVendorAgent = vendorAgentRedirectRoutes.some(route => 
+        const shouldRedirectVendorAgent = vendorAgentRedirectRoutes.some(route =>
           currentPath === route || currentPath === route + '/'
         );
-        
+
         // Ne pas rediriger si déjà sur l'interface vendor-agent
         if (currentPath.startsWith('/vendor-agent')) {
           return;
         }
-        
+
         if (shouldRedirectVendorAgent) {
           const redirectVendorAgent = async () => {
             try {
               console.log('🔍 [useRoleRedirect] Recherche access_token pour vendor_agent user_id:', user.id);
-              
+
               const { data: vendorAgent, error: vaError } = await supabase
                 .from('vendor_agents')
                 .select('access_token')
                 .eq('user_id', user.id)
                 .eq('is_active', true)
                 .maybeSingle();
-              
+
               console.log('📋 [useRoleRedirect] Résultat vendor_agent:', { vendorAgent, vaError });
-              
+
               if (vaError) {
                 console.error('❌ [useRoleRedirect] Erreur query vendor_agents:', vaError);
               }
-              
+
               if (vendorAgent?.access_token) {
                 console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/[token-masque]');
                 navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
@@ -167,9 +167,9 @@ export const useRoleRedirect = () => {
                   .select('access_token, is_active')
                   .eq('user_id', user.id)
                   .maybeSingle();
-                
+
                 console.log('📋 [useRoleRedirect] Résultat vendor_agent (sans filtre):', { vendorAgentAny, vaError2 });
-                
+
                 if (vendorAgentAny?.access_token) {
                   navigate(`/vendor-agent/${vendorAgentAny.access_token}`, { replace: true });
                 } else {
@@ -184,14 +184,14 @@ export const useRoleRedirect = () => {
         }
         return;
       }
-      
+
       const targetRoute = getDashboardRoute(profile.role);
-      
+
       // Vérifier si on est sur une route qui déclenche une redirection
-      const isOnRedirectTriggerRoute = REDIRECT_TRIGGER_ROUTES.some(route => 
+      const isOnRedirectTriggerRoute = REDIRECT_TRIGGER_ROUTES.some(route =>
         currentPath === route || currentPath === route + '/'
       );
-      
+
       // ⚡ TOUJOURS rediriger depuis les pages d'entrée (/, /auth) vers le dashboard
       if (isOnRedirectTriggerRoute) {
         // ✅ FIX: Pour les vendeurs, vérifier le business_type avant de rediriger
@@ -202,7 +202,7 @@ export const useRoleRedirect = () => {
               .select('business_type')
               .eq('user_id', user.id)
               .maybeSingle();
-            
+
             let finalRoute = targetRoute;
             if (vendor?.business_type === 'digital') {
               finalRoute = '/vendeur-digital';
@@ -213,7 +213,7 @@ export const useRoleRedirect = () => {
           redirectVendor();
           return;
         }
-        
+
         // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
         if ((profile.role as string) === 'prestataire') {
           const redirectPrestataire = async () => {
@@ -223,7 +223,7 @@ export const useRoleRedirect = () => {
               .eq('user_id', user.id)
               .limit(1)
               .maybeSingle();
-            
+
             const finalRoute = proService ? `/dashboard/service/${proService.id}` : '/service-selection';
             console.log(`🚀 [useRoleRedirect] Redirection prestataire depuis ${currentPath} vers ${finalRoute}`);
             navigate(finalRoute, { replace: true });
@@ -231,12 +231,12 @@ export const useRoleRedirect = () => {
           redirectPrestataire();
           return;
         }
-        
+
         console.log(`🚀 [useRoleRedirect] Redirection depuis ${currentPath} vers ${targetRoute} (rôle: ${profile.role})`);
         navigate(targetRoute, { replace: true });
         return;
       }
-      
+
       // ✅ Pour les prestataires sur /service-selection, rediriger vers leur dashboard
       // NOTE: /home est exclu pour permettre aux prestataires de naviguer librement sur l'accueil
       if ((profile.role as string) === 'prestataire' && currentPath === '/service-selection') {
@@ -247,7 +247,7 @@ export const useRoleRedirect = () => {
             .eq('user_id', user.id)
             .limit(1)
             .maybeSingle();
-          
+
           if (proService) {
             const finalRoute = `/dashboard/service/${proService.id}`;
             console.log(`🚀 [useRoleRedirect] Prestataire sur ${currentPath} → redirection vers ${finalRoute}`);
@@ -257,23 +257,23 @@ export const useRoleRedirect = () => {
         redirectPrestaFromHome();
         return;
       }
-      
+
       // Ne pas rediriger si l'utilisateur est déjà sur la bonne route
       if (currentPath.startsWith(targetRoute)) {
         console.log('✅ [useRoleRedirect] Déjà sur la bonne route:', currentPath);
         return;
       }
-      
+
       // Ne pas rediriger si l'utilisateur est sur une route publique autorisée
-      const isOnPublicRoute = PUBLIC_ROUTES.some(route => 
+      const isOnPublicRoute = PUBLIC_ROUTES.some(route =>
         currentPath === route || currentPath.startsWith(route + '/')
       );
-      
+
       if (isOnPublicRoute) {
         console.log('📍 [useRoleRedirect] Route publique autorisée:', currentPath);
         return;
       }
-      
+
       console.log('📍 [useRoleRedirect] Sur une autre route:', currentPath);
     } else if (user && !profile && !profileLoading) {
       // L'utilisateur est connecté mais n'a pas de profil (rare)

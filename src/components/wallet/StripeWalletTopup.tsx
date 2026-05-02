@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, ArrowDownCircle, Shield } from "lucide-react";
-import { toast } from "sonner";
+import { _toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 
@@ -19,7 +19,7 @@ interface StripeWalletTopupProps {
   onSuccess?: () => void;
 }
 
-export default function StripeWalletTopup({ userId, walletId, onSuccess }: StripeWalletTopupProps) {
+export default function StripeWalletTopup({ _userId, _walletId, onSuccess }: StripeWalletTopupProps) {
   const [amount, setAmount] = useState("");
   const [showStripe, setShowStripe] = useState(false);
 

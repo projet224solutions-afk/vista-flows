@@ -86,11 +86,11 @@ export const useWalletRobust = () => {
   // Protection contre les doubles transactions
   const pendingOperationsRef = useRef<Set<string>>(new Set());
   const operationLockRef = useRef<Map<string, number>>(new Map());
-  
+
   // Circuit breaker names
   const queryCircuitName = 'wallet-query';
   const transactionCircuitName = 'wallet-transaction';
-  
+
   // Subscribe to circuit state changes
   useEffect(() => {
     const unsubscribe = circuitBreaker.subscribe(transactionCircuitName, (state) => {
@@ -115,13 +115,13 @@ export const useWalletRobust = () => {
   const isOperationLocked = useCallback((key: string): boolean => {
     const lockTime = operationLockRef.current.get(key);
     if (!lockTime) return false;
-    
+
     // Verrou expiré après 60 secondes
     if (Date.now() - lockTime > 60000) {
       operationLockRef.current.delete(key);
       return false;
     }
-    
+
     return true;
   }, []);
 
@@ -152,6 +152,7 @@ export const useWalletRobust = () => {
 
       const walletData = await circuitBreaker.execute(queryCircuitName, async () => {
         return await retryWithBackoff(async () => {
+          // eslint-disable-next-line prefer-const
           let { data: existingWallet, error: walletError } = await supabase
             .from('wallets')
             .select('*')
@@ -164,9 +165,9 @@ export const useWalletRobust = () => {
           // Créer le wallet si inexistant
           if (!existingWallet) {
             console.log('📝 Initialisation wallet via RPC...');
-            const { data: initResult, error: rpcError } = await supabase
+            const { data: _initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: user.id });
-            
+
             if (rpcError) throw rpcError;
 
             // Recharger après création
@@ -197,11 +198,11 @@ export const useWalletRobust = () => {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        const totalReceived = txData?.filter(t => 
+        const totalReceived = txData?.filter(t =>
           t.transaction_type === 'deposit' || t.transaction_type === 'mobile_money_in'
         ).reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
-        const totalSent = txData?.filter(t => 
+        const totalSent = txData?.filter(t =>
           t.transaction_type === 'withdrawal' || t.transaction_type === 'mobile_money_out'
         ).reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
@@ -275,7 +276,7 @@ export const useWalletRobust = () => {
     }
 
     const idempotencyKey = generateIdempotencyKey(operationType, amount, recipientId);
-    
+
     // Vérifier les opérations en attente
     if (pendingOperationsRef.current.has(idempotencyKey)) {
       releaseOperationLock(operationKey);
@@ -300,7 +301,7 @@ export const useWalletRobust = () => {
 
       // Recharger les données après succès
       await Promise.all([loadWallet(), loadTransactions()]);
-      
+
       // Émettre l'événement de mise à jour
       window.dispatchEvent(new Event('wallet-updated'));
 
@@ -312,7 +313,7 @@ export const useWalletRobust = () => {
     } catch (error: any) {
       console.error(`❌ Erreur ${operationType}:`, error);
       setLastError(error.message);
-      
+
       return {
         success: false,
         error: error.message || `Erreur lors de ${operationType}`
@@ -504,19 +505,19 @@ export const useWalletRobust = () => {
     wallet,
     transactions,
     stats,
-    
+
     // États
     loading,
     processing,
     operationInProgress,
     lastError,
-    
+
     // Opérations
     deposit,
     withdraw,
     transfer,
     refresh,
-    
+
     // Helpers
     balance: wallet?.balance || 0,
     currency: wallet?.currency || 'GNF',

@@ -52,22 +52,22 @@ export function buildCSPHeader(nonce?: string): string {
 export const SECURITY_HEADERS = {
   // Content Security Policy - Mode strict
   'Content-Security-Policy': buildCSPHeader(),
-  
+
   // Empêcher le navigateur de deviner le MIME type
   'X-Content-Type-Options': 'nosniff',
-  
+
   // Protection XSS intégrée du navigateur
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Empêcher l'affichage dans une iframe (clickjacking)
   'X-Frame-Options': 'DENY',
-  
+
   // Force HTTPS
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  
+
   // Contrôle ce que le navigateur envoie comme referrer
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Politique de permissions
   'Permissions-Policy': [
     'geolocation=(self)',
@@ -91,11 +91,11 @@ export const getEdgeFunctionSecurityHeaders = (origin?: string) => {
     'http://localhost:8080',
     'http://localhost:5173'
   ];
-  
-  const corsOrigin = origin && ALLOWED_ORIGINS.includes(origin) 
-    ? origin 
+
+  const corsOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+    ? origin
     : ALLOWED_ORIGINS[0];
-  
+
   return {
     ...SECURITY_HEADERS,
     'Access-Control-Allow-Origin': corsOrigin,
@@ -115,10 +115,10 @@ export const getEdgeFunctionSecurityHeaders = (origin?: string) => {
  */
 export const applySecurityHeaders = (response: Response, origin?: string): Response => {
   const headers = getEdgeFunctionSecurityHeaders(origin);
-  
+
   Object.entries(headers).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
-  
+
   return response;
 };

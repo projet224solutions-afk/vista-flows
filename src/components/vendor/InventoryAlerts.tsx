@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, CheckCircle, Eye, _EyeOff } from "lucide-react";
 import { InventoryAlert } from "@/hooks/useInventoryService";
 
 interface InventoryAlertsProps {
@@ -20,7 +20,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
     }
   };
 
-  const getAlertIcon = (type: string) => {
+  const getAlertIcon = (_type: string) => {
     return <AlertTriangle className="w-5 h-5" />;
   };
 
@@ -70,18 +70,18 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
                       </Badge>
                     )}
                   </div>
-                  
+
                   <p className="font-semibold mb-1">
                     {alert.message}
                   </p>
-                  
+
                   {alert.product && (
                     <p className="text-sm opacity-80">
                       Produit: {alert.product.name}
                       {alert.product.sku && ` (${alert.product.sku})`}
                     </p>
                   )}
-                  
+
                   <p className="text-xs opacity-70 mt-2">
                     {new Date(alert.created_at).toLocaleString('fr-FR')}
                   </p>

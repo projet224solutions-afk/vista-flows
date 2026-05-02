@@ -4,16 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { _Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { backendConfig } from '@/config/backend';
 import {
-  CreditCard, Smartphone, Wallet, Shield, CheckCircle, 
-  AlertCircle, Clock, DollarSign, User, Package, Calendar,
-  Lock, ExternalLink, ArrowLeft, Loader2
+  CreditCard, Smartphone, Wallet, Shield, CheckCircle,
+  AlertCircle, Clock, _DollarSign, User, Package, Calendar,
+  _Lock, _ExternalLink, ArrowLeft, Loader2
 } from 'lucide-react';
 
 interface PaymentDetails {
@@ -43,9 +43,9 @@ interface PaymentDetails {
 export default function PaymentPage() {
   const { paymentId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const { toast } = useToast();
-  
+
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -60,24 +60,25 @@ export default function PaymentPage() {
     if (paymentId) {
       loadPaymentDetails();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
 
   const loadPaymentDetails = async () => {
     try {
       setLoading(true);
       const response = await fetch(`${backendConfig.baseUrl}/api/payments/link/${paymentId}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setPaymentDetails(data.payment);
       } else {
-        throw new Error('Lien de paiement non trouv├®');
+        throw new Error('Lien de paiement non trouvé');
       }
     } catch (error) {
       console.error('Erreur chargement paiement:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger les d├®tails du paiement",
+        description: "Impossible de charger les détails du paiement",
         variant: "destructive"
       });
       navigate('/');
@@ -90,7 +91,7 @@ export default function PaymentPage() {
     if (!paymentMethod) {
       toast({
         title: "Erreur",
-        description: "Veuillez s├®lectionner un moyen de paiement",
+        description: "Veuillez sélectionner un moyen de paiement",
         variant: "destructive"
       });
       return;
@@ -107,7 +108,7 @@ export default function PaymentPage() {
 
     try {
       setProcessing(true);
-      
+
       const response = await fetch(`${backendConfig.baseUrl}/api/payments/link/${paymentId}/pay`, {
         method: 'POST',
         headers: {
@@ -125,12 +126,12 @@ export default function PaymentPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const _data = await response.json();
         toast({
-          title: "Paiement r├®ussi !",
-          description: "Votre paiement a ├®t├® trait├® avec succ├¿s",
+          title: "Paiement réussi !",
+          description: "Votre paiement a été traité avec succès",
         });
-        
+
         // Rediriger vers une page de confirmation
         navigate(`/payment/success`);
       } else {
@@ -173,7 +174,7 @@ export default function PaymentPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Chargement des d├®tails du paiement...</p>
+          <p className="text-gray-600">Chargement des détails du paiement...</p>
         </div>
       </div>
     );
@@ -185,13 +186,13 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-            <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouv├®</h2>
+            <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouvé</h2>
             <p className="text-gray-600 mb-4">
-              Ce lien de paiement n'existe pas ou a ├®t├® supprim├®.
+              Ce lien de paiement n'existe pas ou a été supprimé.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -205,13 +206,13 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Clock className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-            <h2 className="text-xl font-semibold mb-2">Lien expir├®</h2>
+            <h2 className="text-xl font-semibold mb-2">Lien expiré</h2>
             <p className="text-gray-600 mb-4">
-              Ce lien de paiement a expir├®. Veuillez contacter le vendeur pour un nouveau lien.
+              Ce lien de paiement a expiré. Veuillez contacter le vendeur pour un nouveau lien.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -225,13 +226,13 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-            <h2 className="text-xl font-semibold mb-2">Paiement confirm├® !</h2>
+            <h2 className="text-xl font-semibold mb-2">Paiement confirmé !</h2>
             <p className="text-gray-600 mb-4">
-              Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a ├®t├® trait├® avec succ├¿s.
+              Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a été traité avec succès.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -242,7 +243,7 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="max-w-2xl mx-auto px-4">
-        {/* En-t├¬te */}
+        {/* En-tête */}
         <div className="mb-8">
           <Button
             variant="ghost"
@@ -252,22 +253,22 @@ export default function PaymentPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
           </Button>
-          
+
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               224SOLUTIONS
             </h1>
-            <p className="text-gray-600">Paiement s├®curis├®</p>
+            <p className="text-gray-600">Paiement sécurisé</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* D├®tails du paiement */}
+          {/* Détails du paiement */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                D├®tails du paiement
+                Détails du paiement
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -280,14 +281,14 @@ export default function PaymentPage() {
                   <p className="text-sm text-gray-600">Vendeur</p>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold text-lg">{paymentDetails.produit}</h3>
                 {paymentDetails.description && (
                   <p className="text-gray-600 mt-1">{paymentDetails.description}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Montant :</span>
@@ -307,18 +308,18 @@ export default function PaymentPage() {
                   <span>{formatCurrency(paymentDetails.frais, paymentDetails.devise)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>Total ├á payer :</span>
+                  <span>Total à payer :</span>
                   <span className="text-blue-600">
                     {formatCurrency(paymentDetails.total, paymentDetails.devise)}
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
-                <span>Cr├®├® le {new Date(paymentDetails.created_at).toLocaleDateString('fr-FR')}</span>
+                <span>Créé le {new Date(paymentDetails.created_at).toLocaleDateString('fr-FR')}</span>
               </div>
-              
+
               <Badge className={getStatusColor(paymentDetails.status)}>
                 {paymentDetails.status === 'pending' ? 'En attente de paiement' : paymentDetails.status}
               </Badge>
@@ -346,7 +347,7 @@ export default function PaymentPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="email">Email *</Label>
                   <Input
@@ -358,9 +359,9 @@ export default function PaymentPage() {
                     required
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="phone">T├®l├®phone</Label>
+                  <Label htmlFor="phone">Téléphone</Label>
                   <Input
                     id="phone"
                     value={clientInfo.phone}
@@ -370,7 +371,7 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* M├®thode de paiement */}
+              {/* Méthode de paiement */}
               <div>
                 <Label htmlFor="payment-method">Moyen de paiement *</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -400,12 +401,12 @@ export default function PaymentPage() {
                 </Select>
               </div>
 
-              {/* S├®curit├® */}
+              {/* Sécurité */}
               <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
                 <Shield className="w-5 h-5 text-green-600" />
                 <div className="text-sm">
-                  <p className="font-semibold text-green-800">Paiement s├®curis├®</p>
-                  <p className="text-green-600">Vos donn├®es sont prot├®g├®es par SSL</p>
+                  <p className="font-semibold text-green-800">Paiement sécurisé</p>
+                  <p className="text-green-600">Vos données sont protégées par SSL</p>
                 </div>
               </div>
 

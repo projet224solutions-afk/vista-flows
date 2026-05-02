@@ -44,6 +44,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PROD = NODE_ENV === 'production';
+const isVercelRuntime = Boolean(process.env.VERCEL);
 
 /**
  * Trust proxy:
@@ -174,6 +175,8 @@ app.use(rateLimiter);
  * Health check public
  */
 app.use('/health', healthRoutes);
+app.use('/healthz', healthRoutes);
+app.use('/healthz.json', healthRoutes);
 
 /**
  * Routes publiques
@@ -213,19 +216,30 @@ app.use(errorHandler);
 /**
  * ==================== SERVEUR ====================
  */
-const server = app.listen(PORT, () => {
-  logger.info(`🚀 Backend Node.js started on port ${PORT}`);
+let server = null;
+
+function logReady() {
   logger.info(`📍 Environment: ${NODE_ENV}`);
   logger.info(`🔐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
   logger.info('✅ Ready to handle requests');
-});
+}
 
-/**
- * Timeouts serveur
- * utiles pour éviter les connexions qui restent bloquées trop longtemps
- */
-server.keepAliveTimeout = 65000;
-server.headersTimeout = 66000;
+if (isVercelRuntime) {
+  logger.info('⚡ Backend Node.js running in Vercel serverless mode');
+  logReady();
+} else {
+  server = app.listen(PORT, () => {
+    logger.info(`🚀 Backend Node.js started on port ${PORT}`);
+    logReady();
+  });
+
+  /**
+   * Timeouts serveur
+   * utiles pour éviter les connexions qui restent bloquées trop longtemps
+   */
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 66000;
+}
 
 /**
  * ==================== GRACEFUL SHUTDOWN ====================
@@ -237,6 +251,11 @@ function shutdown(signal, exitCode = 0) {
   isShuttingDown = true;
 
   logger.info(`${signal} signal received: closing HTTP server`);
+
+  if (!server) {
+    process.exit(exitCode);
+    return;
+  }
 
   server.close((err) => {
     if (err) {

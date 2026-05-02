@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { GeolocationService } from '@/services/taxi/GeolocationService';
+import { _GeolocationService } from '@/services/taxi/GeolocationService';
 
 interface UseDriverTrackingProps {
   activeRide: any;
@@ -8,13 +8,13 @@ interface UseDriverTrackingProps {
 
 export function useDriverTracking({ activeRide, location }: UseDriverTrackingProps) {
   const [navigationActive, setNavigationActive] = useState(false);
-  const [currentStep, setCurrentStep] = useState('');
-  const [nextInstruction, setNextInstruction] = useState('');
+  const [currentStep, _setCurrentStep] = useState('');
+  const [nextInstruction, _setNextInstruction] = useState('');
   const [distanceToDestination, setDistanceToDestination] = useState(0);
   const [timeToDestination, setTimeToDestination] = useState(0);
-  const [routeSteps, setRouteSteps] = useState<any[]>([]);
+  const [routeSteps, _setRouteSteps] = useState<any[]>([]);
 
-  const startNavigation = useCallback(async (destination: { latitude: number; longitude: number }) => {
+  const startNavigation = useCallback(async (_destination: { latitude: number; longitude: number }) => {
     if (!location) {
       console.error('Position GPS non disponible');
       return;
@@ -51,7 +51,7 @@ export function useDriverTracking({ activeRide, location }: UseDriverTrackingPro
     if (!navigationActive || !location || !activeRide) return;
 
     const interval = setInterval(() => {
-      const targetCoords = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
+      const _targetCoords = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
         ? activeRide.destination.coords
         : activeRide.pickup.coords;
 

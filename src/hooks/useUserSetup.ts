@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserCompleteInfo {
@@ -218,7 +218,7 @@ export const useUserSetup = () => {
             const id = letters + numbers;
 
             // Vérifier l'unicité
-            const { data, error } = await supabase
+            const { _data, error } = await supabase
                 .from('user_ids')
                 .select('custom_id')
                 .eq('custom_id', id)

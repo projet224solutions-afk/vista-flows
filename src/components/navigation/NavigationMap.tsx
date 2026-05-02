@@ -7,21 +7,21 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Navigation, 
-  MapPin, 
-  AlertCircle, 
+import {
+  Navigation,
+  MapPin,
+  AlertCircle,
   X,
   Volume2,
   VolumeX,
   Maximize2,
   Minimize2
 } from 'lucide-react';
-import { 
-  navigationService, 
-  NavigationState, 
+import {
+  navigationService,
+  NavigationState,
   NavigationRoute,
-  GPSPosition 
+  GPSPosition
 } from '@/services/navigation/NavigationService';
 import { cn } from '@/lib/utils';
 
@@ -51,17 +51,18 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
   // 🎯 Initialiser la navigation
   useEffect(() => {
     initializeNavigation();
-    
+
     return () => {
       navigationService.stopNavigation();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startAddress, endAddress]);
 
   // 📍 S'abonner aux mises à jour GPS
   useEffect(() => {
     const unsubscribe = navigationService.subscribe('navigation-map', (state) => {
       setNavigationState(state);
-      
+
       // Synthèse vocale des instructions
       if (!isMuted && state.distanceToNextStep < 100 && state.distanceToNextStep > 50) {
         speakInstruction(state.nextInstruction);
@@ -89,15 +90,15 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
 
       // 2️⃣ Géocoder destination (si adresse fournie)
       let destination: GPSPosition;
-      
+
       if (endAddress) {
         console.log(`🗺️ Géocodage destination: "${endAddress}"`);
         const results = await navigationService.geocodeAddress(endAddress, 'GN');
-        
+
         if (results.length === 0) {
           throw new Error(`Destination "${endAddress}" introuvable`);
         }
-        
+
         destination = results[0];
         setEndPosition(destination);
         console.log('✅ Destination trouvée:', destination);
@@ -179,7 +180,7 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
   return (
     <div className={cn('relative w-full h-full', className)}>
       {/* Carte (placeholder - intégrer Mapbox/Google Maps ici) */}
-      <div 
+      <div
         ref={mapRef}
         className={cn(
           'w-full bg-slate-100 dark:bg-slate-900 relative overflow-hidden',
@@ -211,13 +212,13 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
                   <h3 className="font-semibold">Erreur navigation</h3>
                   <p className="text-sm text-muted-foreground">{error}</p>
                   <div className="flex gap-2 mt-4">
-                    <Button 
+                    <Button
                       onClick={initializeNavigation}
                       size="sm"
                     >
                       Réessayer
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleStopNavigation}
                       variant="outline"
                       size="sm"
@@ -364,8 +365,8 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
               >
                 <div className={cn(
                   'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold',
-                  navigationState?.currentStep === index 
-                    ? 'bg-primary text-primary-foreground' 
+                  navigationState?.currentStep === index
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
                 )}>
                   {index + 1}

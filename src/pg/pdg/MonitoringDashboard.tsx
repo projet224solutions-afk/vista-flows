@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
-  Activity, AlertTriangle, CheckCircle, XCircle, Clock, 
+  Activity, AlertTriangle, CheckCircle, XCircle, Clock,
   RefreshCw, Shield, Database, Server, Wifi, Search,
   Bell, Eye, CheckCheck, Zap, Globe, Smartphone,
   TrendingUp, ArrowLeft
 } from 'lucide-react';
-import { useMonitoringRealtime, type MonitoringAlert, type ServiceStatus } from '@/hooks/useMonitoringRealtime';
+import { useMonitoringRealtime, type MonitoringAlert, type _ServiceStatus } from '@/hooks/useMonitoringRealtime';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -50,7 +50,7 @@ const serviceIcons: Record<string, React.ReactNode> = {
 
 export default function MonitoringDashboard() {
   const navigate = useNavigate();
-  const { alerts, services, stats, loading, lastRefresh, acknowledgeAlert, resolveAlert, forceHealthCheck, refreshData } = useMonitoringRealtime();
+  const { alerts, services, stats, _loading, lastRefresh, acknowledgeAlert, resolveAlert, forceHealthCheck, refreshData } = useMonitoringRealtime();
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
 
@@ -66,18 +66,18 @@ export default function MonitoringDashboard() {
 
   const handleAcknowledge = async (id: string) => {
     const ok = await acknowledgeAlert(id);
-    if (ok) toast.success('Alerte acquitt├®e');
+    if (ok) toast.success('Alerte acquittée');
   };
 
   const handleResolve = async (id: string) => {
     const ok = await resolveAlert(id);
-    if (ok) toast.success('Alerte r├®solue');
+    if (ok) toast.success('Alerte résolue');
   };
 
   const handleForceCheck = async () => {
     toast.info('Health check en cours...');
     await forceHealthCheck();
-    toast.success('Health check termin├®');
+    toast.success('Health check terminé');
   };
 
   const overallBg = stats.overallStatus === 'healthy' ? 'bg-green-500/10 border-green-500/30'
@@ -96,11 +96,11 @@ export default function MonitoringDashboard() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="h-6 w-6 text-primary" />
-              Monitoring Temps R├®el
+              Monitoring Temps Réel
             </h1>
             <p className="text-sm text-muted-foreground">
-              Derni├¿re MAJ: {formatDistanceToNow(lastRefresh, { addSuffix: true, locale: fr })}
-              {' ┬À '}Realtime actif
+              Dernière MAJ: {formatDistanceToNow(lastRefresh, { addSuffix: true, locale: fr })}
+              {' à '}Realtime actif
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function MonitoringDashboard() {
             <Zap className="h-4 w-4 mr-1" /> Health Check
           </Button>
           <Button variant="outline" size="sm" onClick={refreshData}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Rafra├«chir
+            <RefreshCw className="h-4 w-4 mr-1" /> Rafraëchir
           </Button>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function MonitoringDashboard() {
         <div className="flex items-center gap-3">
           {statusIcons[stats.overallStatus]}
           <span className="font-semibold text-lg">
-            Syst├¿me {stats.overallStatus === 'healthy' ? 'Op├®rationnel' : stats.overallStatus === 'degraded' ? 'D├®grad├®' : stats.overallStatus === 'critical' ? 'Critique' : 'Inconnu'}
+            Système {stats.overallStatus === 'healthy' ? 'Opérationnel' : stats.overallStatus === 'degraded' ? 'Dégradé' : stats.overallStatus === 'critical' ? 'Critique' : 'Inconnu'}
           </span>
           <span className="text-sm text-muted-foreground ml-auto">
             {stats.healthyServices}/{stats.totalServices} services OK
@@ -149,7 +149,7 @@ export default function MonitoringDashboard() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
-            <div className="text-xs text-muted-foreground">Services d├®grad├®s</div>
+            <div className="text-xs text-muted-foreground">Services dégradés</div>
             <div className="text-2xl font-bold text-yellow-500">{stats.degradedServices + stats.criticalServices}</div>
           </CardContent>
         </Card>
@@ -159,7 +159,7 @@ export default function MonitoringDashboard() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Server className="h-4 w-4" /> Sant├® des services
+            <Server className="h-4 w-4" /> Santé des services
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -221,10 +221,10 @@ export default function MonitoringDashboard() {
                 Ouvertes ({openAlerts.length})
               </TabsTrigger>
               <TabsTrigger value="acknowledged" className="text-xs">
-                Acquitt├®es ({acknowledgedAlerts.length})
+                Acquittées ({acknowledgedAlerts.length})
               </TabsTrigger>
               <TabsTrigger value="resolved" className="text-xs">
-                R├®solues ({resolvedAlerts.length})
+                Résolues ({resolvedAlerts.length})
               </TabsTrigger>
             </TabsList>
 
@@ -266,7 +266,7 @@ function AlertList({ alerts, onAcknowledge, onResolve, showActions, showResolve 
             <div className="font-medium text-sm">{alert.title}</div>
             <div className="text-xs text-muted-foreground truncate">{alert.message}</div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              {alert.occurrence_count > 1 && `├ù${alert.occurrence_count} ┬À `}
+              {alert.occurrence_count > 1 && `×${alert.occurrence_count} à `}
               {formatDistanceToNow(new Date(alert.last_seen_at), { addSuffix: true, locale: fr })}
             </div>
           </div>
@@ -278,7 +278,7 @@ function AlertList({ alerts, onAcknowledge, onResolve, showActions, showResolve 
             )}
             {(showActions || showResolve) && onResolve && (
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onResolve(alert.id)}>
-                <CheckCheck className="h-3 w-3 mr-1" /> R├®soudre
+                <CheckCheck className="h-3 w-3 mr-1" /> Résoudre
               </Button>
             )}
           </div>

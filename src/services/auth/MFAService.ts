@@ -304,7 +304,7 @@ export class MFAService {
       if (challengeError) throw challengeError;
 
       // Vérifier le code
-      const { data, error } = await supabase.auth.mfa.verify({
+      const { _data, error } = await supabase.auth.mfa.verify({
         factorId,
         challengeId: challenge.id,
         code
@@ -536,7 +536,7 @@ export class MFAService {
   private generateBackupCodes(count: number = 10): string[] {
     const codes: string[] = [];
     for (let i = 0; i < count; i++) {
-      const code = Array.from({ length: 8 }, () => 
+      const code = Array.from({ length: 8 }, () =>
         'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
       ).join('');
       codes.push(code);
@@ -561,7 +561,7 @@ export class MFAService {
 
   private async sendSMSCode(factorId: string, phoneNumber: string, code?: string): Promise<void> {
     const otp = code || this.generateOTP();
-    
+
     // Sauvegarder le challenge
     if (!code) {
       await mfaDb
@@ -584,7 +584,7 @@ export class MFAService {
 
   private async sendEmailCode(factorId: string, email: string, code?: string): Promise<void> {
     const otp = code || this.generateOTP();
-    
+
     // Sauvegarder le challenge
     if (!code) {
       await mfaDb

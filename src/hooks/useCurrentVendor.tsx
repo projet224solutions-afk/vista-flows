@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { cacheData, getCachedData } from '@/lib/offlineDB';
 
@@ -64,7 +64,7 @@ export const useCurrentVendor = () => {
   const agentVendorId = agentContext.vendorId;
   const hasAgent = !!agentContext.agent;
   const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
-  
+
   // Le loading global inclut le chargement du profil auth
   const loading = auth.loading || auth.profileLoading || internalLoading;
 
@@ -74,7 +74,7 @@ export const useCurrentVendor = () => {
       console.log('⏳ useCurrentVendor: En attente du profil auth...');
       return;
     }
-    
+
     try {
       setInternalLoading(true);
       setError(null);
@@ -82,7 +82,7 @@ export const useCurrentVendor = () => {
       // CAS 1: On est dans un contexte AGENT (prioritaire)
       if (hasAgent && agentVendorId) {
         console.log('🔄 Mode Agent - Chargement données vendeur:', agentVendorId);
-        
+
         let vendorInfo = null;
 
         try {
@@ -100,11 +100,11 @@ export const useCurrentVendor = () => {
           if (vendorInfo) {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`, vendorInfo, CACHE_TTL_VENDOR);
           }
-        } catch (agentVendorError) {
+        } catch (_agentVendorError) {
           console.log('📴 Requête vendeur agent indisponible - récupération cache');
           vendorInfo = await getCachedData<{business_type: string; user_id: string}>(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`);
         }
-        
+
         const vendorAuthUserId = vendorInfo?.user_id || agentVendorId;
         setVendorData({
           vendorId: agentVendorId,
@@ -115,7 +115,7 @@ export const useCurrentVendor = () => {
           profile: null,
           businessType: vendorInfo?.business_type as 'physical' | 'digital' | 'hybrid' | 'online' | undefined
         });
-        
+
         console.log('✅ Données vendeur chargées (mode agent):', {
           vendorId: agentVendorId,
           userId: vendorInfo?.user_id,
@@ -126,11 +126,11 @@ export const useCurrentVendor = () => {
         setInternalLoading(false);
         return;
       }
-      
+
       // CAS 2: On est dans un contexte VENDEUR DIRECT
       if (authUserId) {
         console.log('🔄 Mode Vendeur Direct - Utilisation user actuel:', authUserId);
-        
+
         let vendorProfile = null;
 
         try {
@@ -149,7 +149,7 @@ export const useCurrentVendor = () => {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`, vendorProfile, CACHE_TTL_VENDOR);
             console.log('💾 Profil vendeur mis en cache');
           }
-        } catch (vendorProfileError) {
+        } catch (_vendorProfileError) {
           console.log('📴 Requête vendeur indisponible - récupération cache');
           vendorProfile = await getCachedData<{id: string; business_type: string}>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
 
@@ -170,7 +170,7 @@ export const useCurrentVendor = () => {
           profile: auth.profile,
           businessType: businessType || 'hybrid' // Default pour nouveaux vendeurs
         });
-        
+
         console.log('✅ Données vendeur chargées (mode direct):', { vendorId, userId: authUserId, businessType, fromCache: !vendorProfile });
       } else if (!hasAgent) {
         // CAS 3: Aucun contexte valide (ni agent ni vendeur)
@@ -179,7 +179,7 @@ export const useCurrentVendor = () => {
       }
     } catch (error: any) {
       console.error('❌ Erreur chargement vendeur:', error);
-      
+
       // En cas d'erreur, essayer le cache si disponible
       if (authUserId) {
         console.log('🔄 Tentative récupération cache après erreur...');
@@ -202,11 +202,12 @@ export const useCurrentVendor = () => {
           console.error('❌ Erreur récupération cache:', cacheError);
         }
       }
-      
+
       setError(error.message || 'Erreur lors du chargement des données');
     } finally {
       setInternalLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authProfileId, agentVendorId, hasAgent, auth.user, auth.profile, agentContext.agent, auth.loading, auth.profileLoading]);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createVendorBoost, getVendorBoosts, getVendorVisibilitySummary } from '@/services/marketplaceVisibilityService';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { _Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { TrendingUp, Target, Package } from 'lucide-react';
@@ -18,7 +18,7 @@ export function VendorAnalyticsDashboard() {
   const [boostTargetId, setBoostTargetId] = useState('');
   const [boostScore, setBoostScore] = useState(20);
   const [boostDays, setBoostDays] = useState(7);
-  const [creatingBoost, setCreatingBoost] = useState(false);
+  const [_creatingBoost, setCreatingBoost] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -37,7 +37,7 @@ export function VendorAnalyticsDashboard() {
     };
   }, []);
 
-  const handleCreateBoost = async () => {
+  const _handleCreateBoost = async () => {
     if (!boostTargetId.trim()) {
       toast.error('Renseignez un ID cible pour le boost');
       return;
@@ -194,21 +194,21 @@ export function VendorAnalyticsDashboard() {
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={analytics.week}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                 tick={{ fontSize: 12 }}
               />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip 
+              <Tooltip
                 formatter={(value: number) => `${value.toFixed(2)} GNF`}
                 labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR')}
               />
-              <Area 
-                type="monotone" 
-                dataKey="total_sales" 
-                stroke="hsl(var(--primary))" 
-                fill="hsl(var(--primary))" 
+              <Area
+                type="monotone"
+                dataKey="total_sales"
+                stroke="hsl(var(--primary))"
+                fill="hsl(var(--primary))"
                 fillOpacity={0.2}
               />
             </AreaChart>

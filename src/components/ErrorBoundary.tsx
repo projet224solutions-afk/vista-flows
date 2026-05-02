@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  allowOfflineFallback?: boolean;
 }
 
 interface State {
@@ -105,7 +106,7 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      const offline = isOfflineError(this.state.error);
+      const offline = this.props.allowOfflineFallback && isOfflineError(this.state.error);
       const stripeErr = isStripeError(this.state.error);
 
       // UI spéciale pour mode hors ligne
@@ -124,7 +125,7 @@ class ErrorBoundary extends Component<Props, State> {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  {stripeErr 
+                  {stripeErr
                     ? "Les paiements nécessitent une connexion internet active."
                     : "Cette fonctionnalité nécessite une connexion internet. Veuillez vous reconnecter et réessayer."
                   }

@@ -224,8 +224,8 @@ export default function PaymentMethodStep({
                 <Button
                     onClick={handleConfirm}
                     disabled={
-                        !selectedMethod || 
-                        isLoading || 
+                        !selectedMethod ||
+                        isLoading ||
                         (selectedMethod === 'wallet' && !isWalletSufficient) ||
                         (selectedMethod === 'orange_money' && phoneNumber.length < 9)
                     }

@@ -23,12 +23,6 @@ export function registerServiceWorker(options?: { force?: boolean }) {
 function registerSW() {
   setTimeout(async () => {
     try {
-      if (!navigator.onLine) {
-        console.log("[PWA] Offline — will register SW when online");
-        window.addEventListener('online', () => registerSW(), { once: true });
-        return;
-      }
-
       const registration = await navigator.serviceWorker.register("/service-worker.js", {
         updateViaCache: 'none' as any
       });
@@ -61,9 +55,7 @@ function registerSW() {
       // Check for updates every 30 min (more aggressive for PWA)
       const interval = isPWAStandalone() ? 30 * 60 * 1000 : 60 * 60 * 1000;
       setInterval(() => {
-        if (navigator.onLine) {
-          registration.update().catch(() => {});
-        }
+        registration.update().catch(() => {});
       }, interval);
 
     } catch (error) {
@@ -72,7 +64,7 @@ function registerSW() {
   }, 500);
 }
 
-function showUpdateMessage() {
+function _showUpdateMessage() {
   if (document.getElementById("pwa-update-banner")) return;
 
   const alertBox = document.createElement("div");

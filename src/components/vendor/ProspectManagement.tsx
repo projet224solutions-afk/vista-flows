@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useProspects, Prospect } from "@/hooks/useVendorData";
-import { Plus, Phone, Mail, Calendar, TrendingUp, Target } from "lucide-react";
+import { Plus, Phone, Mail, _Calendar, TrendingUp, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
@@ -76,7 +76,7 @@ export default function ProspectManagement() {
       }
       setIsDialogOpen(false);
       resetForm();
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'enregistrement.",
@@ -107,7 +107,7 @@ export default function ProspectManagement() {
         title: "Statut mis à jour",
         description: `Le statut du prospect a été changé vers "${statusLabels[newStatus]}".`
       });
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut.",
@@ -117,8 +117,8 @@ export default function ProspectManagement() {
   };
 
   const totalValue = prospects.reduce((acc, p) => acc + p.estimated_value, 0);
-  const avgProbability = prospects.length > 0 
-    ? prospects.reduce((acc, p) => acc + p.success_probability, 0) / prospects.length 
+  const avgProbability = prospects.length > 0
+    ? prospects.reduce((acc, p) => acc + p.success_probability, 0) / prospects.length
     : 0;
 
   if (loading) return <div className="p-4">Chargement des prospects...</div>;
@@ -205,8 +205,8 @@ export default function ProspectManagement() {
               </div>
               <div>
                 <Label htmlFor="status">Statut</Label>
-                <Select 
-                  value={formData.status} 
+                <Select
+                  value={formData.status}
                   onValueChange={(value: Prospect['status']) => setFormData(prev => ({ ...prev, status: value }))}
                 >
                   <SelectTrigger>
@@ -285,8 +285,8 @@ export default function ProspectManagement() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{prospect.name}</CardTitle>
-                <Select 
-                  value={prospect.status} 
+                <Select
+                  value={prospect.status}
                   onValueChange={(value: Prospect['status']) => updateStatus(prospect, value)}
                 >
                   <SelectTrigger className="w-auto">
@@ -312,7 +312,7 @@ export default function ProspectManagement() {
                   {prospect.estimated_value.toLocaleString()} GNF
                 </span>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Probabilité</span>

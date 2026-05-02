@@ -57,7 +57,7 @@ export function useTaxiRideRequests(
     let customerName = 'Client';
     let customerPhone = '+224 600 00 00 00';
     let customerRating = 4.5;
-    
+
     try {
       const { data: customerProfile } = await supabase
         .from('profiles')
@@ -75,7 +75,7 @@ export function useTaxiRideRequests(
         .from('taxi_ratings')
         .select('stars')
         .eq('customer_id', String(ride.customer_id));
-      
+
       if (ratingsData && Array.isArray(ratingsData) && ratingsData.length > 0) {
         customerRating = ratingsData.reduce((sum: number, r: any) => sum + (r.stars || 0), 0) / ratingsData.length;
       }
@@ -94,13 +94,13 @@ export function useTaxiRideRequests(
       distance: ride.distance_km || 0,
       estimatedEarnings: ride.driver_share || Math.round((ride.price_total || 0) * 0.85),
       estimatedDuration: ride.duration_min || 0,
-      pickupCoords: { 
-        latitude: ride.pickup_lat || 0, 
-        longitude: ride.pickup_lng || 0 
+      pickupCoords: {
+        latitude: ride.pickup_lat || 0,
+        longitude: ride.pickup_lng || 0
       },
-      destinationCoords: { 
-        latitude: ride.dropoff_lat || 0, 
-        longitude: ride.dropoff_lng || 0 
+      destinationCoords: {
+        latitude: ride.dropoff_lat || 0,
+        longitude: ride.dropoff_lng || 0
       },
       requestTime: ride.created_at
     };
@@ -162,13 +162,13 @@ export function useTaxiRideRequests(
   // Accepter une demande de course
   const acceptRideRequest = useCallback(async (request: RideRequest) => {
     console.log('🎯 Tentative d\'acceptation de course:', request.id);
-    
+
     if (acceptingRideId) {
       console.log('⏳ Une acceptation est déjà en cours:', acceptingRideId);
       toast.info('Veuillez patienter, une course est en cours d\'acceptation...');
       return null;
     }
-    
+
     if (!driverId) {
       console.error('❌ Pas de driverId disponible');
       toast.error('Profil conducteur non trouvé');
@@ -191,7 +191,7 @@ export function useTaxiRideRequests(
           .select('phone')
           .eq('id', request.customerId)
           .single();
-        
+
         if (customerProfile?.phone) {
           customerPhone = customerProfile.phone;
           console.log('📱 Téléphone client chargé:', customerPhone);
@@ -202,7 +202,7 @@ export function useTaxiRideRequests(
 
       // Vider les demandes de courses
       setRideRequests([]);
-      
+
       toast.success('✅ Course acceptée ! Navigation vers le client...');
 
       return {
@@ -226,7 +226,7 @@ export function useTaxiRideRequests(
       };
     } catch (error: any) {
       console.error('❌ Erreur acceptation course:', error);
-      
+
       if (error.message?.includes('LOCKED') || error.message?.includes('déjà en cours')) {
         toast.warning('⏳ Cette course est déjà en cours d\'attribution par un autre conducteur.');
       } else if (error.message?.includes('ALREADY_ASSIGNED') || error.message?.includes('déjà attribuée')) {
@@ -279,32 +279,32 @@ export function useTaxiRideRequests(
         async (payload) => {
           console.log('📲 [useTaxiRideRequests] Nouvelle entrée taxi_trips détectée:', payload);
           const ride = payload.new as any;
-          
+
           if (ride.status !== 'requested') {
             console.log('⚠️ Course ignorée, status:', ride.status);
             return;
           }
-          
+
           if (ride.driver_id) {
             console.log('⚠️ Course déjà assignée à un driver:', ride.driver_id);
             return;
           }
-          
+
           const declinedDrivers = ride.declined_drivers || [];
           if (declinedDrivers.includes(driverId)) {
             console.log('⚠️ Course déjà refusée par ce conducteur, ignorée');
             return;
           }
-          
+
           console.log('🔊 Affichage notification + son pour course:', ride.id);
-          const priceDisplay = typeof ride.price_total === 'number' && !isNaN(ride.price_total) 
-            ? formatCurrency(ride.price_total) 
+          const priceDisplay = typeof ride.price_total === 'number' && !isNaN(ride.price_total)
+            ? formatCurrency(ride.price_total)
             : '0';
           toast.success('🚗 Nouvelle course disponible!', {
             description: `De ${ride.pickup_address || 'Adresse inconnue'} - ${priceDisplay}`,
             duration: 10000
           });
-          
+
           // Audio notification
           try {
             if (!audioRef.current) {
@@ -314,11 +314,11 @@ export function useTaxiRideRequests(
             audioRef.current.pause();
             audioRef.current.currentTime = 0;
             audioRef.current.play().catch(() => {});
-          } catch (e) {}
-          
+          } catch (_e) {}
+
           console.log('✅ Ajout course à la liste des demandes');
           await addRideRequestFromDB(ride);
-          
+
           if (location && ride.pickup_lat && ride.pickup_lng) {
             const distance = calculateDistance(
               location.latitude,

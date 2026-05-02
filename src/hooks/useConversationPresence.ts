@@ -3,7 +3,7 @@
  * Affiche les indicateurs en ligne/hors ligne pour chaque contact
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { PresenceStatus } from '@/types/communication.types';
@@ -44,19 +44,19 @@ export function useConversationPresence(): UseConversationPresenceReturn {
   // Formater la dernière connexion
   const formatLastSeen = useCallback((dateStr: string | null): string => {
     if (!dateStr) return 'Inconnu';
-    
+
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffMins < 1) return 'À l\'instant';
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     if (diffHours < 24) return `Il y a ${diffHours}h`;
     if (diffDays < 7) return `Il y a ${diffDays}j`;
-    
+
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   }, []);
 
@@ -97,9 +97,9 @@ export function useConversationPresence(): UseConversationPresenceReturn {
       for (const row of (data || []) as any[]) {
         const lastActive = row.last_active ? new Date(row.last_active).getTime() : 0;
         const timeSinceActive = now - lastActive;
-        
+
         // Déterminer si vraiment en ligne (actif dans les 45 dernières secondes)
-        const isReallyOnline = timeSinceActive < OFFLINE_THRESHOLD_MS && 
+        const isReallyOnline = timeSinceActive < OFFLINE_THRESHOLD_MS &&
           ['online', 'away', 'busy'].includes(row.status);
 
         newPresences.set(row.user_id, {

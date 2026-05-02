@@ -12,11 +12,11 @@ import { supabase } from '@/lib/supabaseClient';
 import { formatCurrency } from '@/lib/utils';
 import { cancelOrder as cancelOrderRequest, confirmCashOnDeliveryOrder, listMyOrders } from '@/services/orderBackendService';
 import { toast } from 'sonner';
-import { 
-  Package, CheckCircle, Clock, Truck, XCircle, 
+import {
+  Package, CheckCircle, Clock, Truck, XCircle,
   Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,12 +74,20 @@ interface EscrowStatus {
   id: string;
   status: string;
   amount: number;
+  commission_amount?: number | null;
+  metadata?: Record<string, any> | null;
   currency?: string;
 }
 
 const getVendorReceivableAmount = (order: Order, escrow?: EscrowStatus | null): number => {
+  const metadataVendorAmount = Number(escrow?.metadata?.vendor_amount);
+  if (Number.isFinite(metadataVendorAmount)) {
+    return metadataVendorAmount;
+  }
+
   if (typeof escrow?.amount === 'number' && Number.isFinite(escrow.amount)) {
-    return escrow.amount;
+    const commissionAmount = Number(escrow.commission_amount);
+    return Math.max(escrow.amount - (Number.isFinite(commissionAmount) ? commissionAmount : 0), 0);
   }
 
   return typeof order.total_amount === 'number' && Number.isFinite(order.total_amount)
@@ -144,7 +152,7 @@ export default function ClientOrdersList() {
   useEffect(() => {
     if (user) {
       loadOrders();
-      
+
       // Configurer l'écoute en temps réel pour les commandes ET les escrows
       const ordersChannel = supabase
         .channel('client-orders-realtime')
@@ -184,6 +192,7 @@ export default function ClientOrdersList() {
         supabase.removeChannel(escrowChannel);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -313,7 +322,14 @@ export default function ClientOrdersList() {
         throw new Error(response.error || 'Erreur lors de l\'annulation');
       }
 
-      toast.success('Commande annulée avec succès');
+      const refund = (response as any).refund;
+      if (refund?.refunded && refund.amount > 0) {
+        toast.success('Commande annulée — remboursement effectué', {
+          description: `${refund.amount.toLocaleString()} ${refund.currency} remboursés dans votre portefeuille`,
+        });
+      } else {
+        toast.success('Commande annulée avec succès');
+      }
 
       // Recharger les commandes
       await loadOrders();
@@ -353,7 +369,7 @@ export default function ClientOrdersList() {
       });
 
       if (error) throw error;
-      
+
       if (!data?.success) {
         throw new Error(data?.error || 'Erreur lors de la demande de remboursement');
       }
@@ -530,7 +546,7 @@ export default function ClientOrdersList() {
                   const escrow = escrows[order.id];
                   const isCODOrder = isCashOnDelivery(order);
                   const requiresEscrowRelease = order.payment_method !== 'cash';
-                  const escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
+                  const _escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
                   const isDeliveryPending = order.status === 'in_transit' || order.status === 'shipped' || order.status === 'ready';
                   const isDeliveredAwaitingConfirmation = order.status === 'delivered' && (requiresEscrowRelease ? escrow?.status !== 'released' && escrow?.status !== 'refunded' : true);
                   const canConfirmDelivery = order.status !== 'cancelled' && order.status !== 'completed' && (isDeliveryPending || isDeliveredAwaitingConfirmation);
@@ -726,7 +742,7 @@ export default function ClientOrdersList() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelivery}>
+            <AlertDialogAction onClick={() => void confirmDelivery()}>
               Confirmer la réception
             </AlertDialogAction>
           </AlertDialogFooter>

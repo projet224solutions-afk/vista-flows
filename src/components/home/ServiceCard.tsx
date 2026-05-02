@@ -23,7 +23,7 @@ interface HomeServiceCardProps {
 }
 
 export function HomeServiceCard({
-  id,
+  _id,
   icon,
   title,
   subtitle,
@@ -125,7 +125,7 @@ export function HomeServiceCard({
           )}
         >
           {icon}
-          
+
           {/* Pulse ring on hover */}
           <div className="absolute inset-0 rounded-2xl border-2 border-current opacity-0 group-hover:opacity-20 group-hover:animate-ping" />
         </div>

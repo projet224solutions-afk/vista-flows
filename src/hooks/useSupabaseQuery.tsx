@@ -53,6 +53,7 @@ export const useSupabaseQuery = <T,>(
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ...dependencies]);
 
   // Set up refetch interval if specified
@@ -80,6 +81,7 @@ export const useSupabaseQuery = <T,>(
     }, refetchInterval);
 
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refetchInterval, enabled]);
 
   const refetch = async () => {

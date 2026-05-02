@@ -149,8 +149,8 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading}
               className="bg-gradient-to-r from-emerald-600 to-teal-600"
             >
@@ -259,8 +259,8 @@ export function ChangeEmailDialog({ open, onOpenChange, bureauId, currentEmail, 
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Annuler
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading}
               className="bg-gradient-to-r from-blue-600 to-indigo-600"
             >

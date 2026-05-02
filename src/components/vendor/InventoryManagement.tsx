@@ -41,7 +41,7 @@ interface Warehouse {
 }
 
 export default function InventoryManagement() {
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const { toast } = useToast();
   const {
     inventory,
@@ -60,7 +60,7 @@ export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string; price: number }>>([]);
-  
+
   // États pour le mode offline
   const [isOnline, setIsOnline] = useState(offlinePOSManager.isOnline());
 
@@ -113,20 +113,20 @@ export default function InventoryManagement() {
   useEffect(() => {
     const cleanup = offlinePOSManager.onNetworkChange((online) => {
       setIsOnline(online);
-      
+
       if (online) {
         toast({ title: 'Connexion rétablie', description: 'Inventaire en ligne' });
         // Recharger l'inventaire
         refresh();
       } else {
-        toast({ 
-          title: 'Mode hors ligne', 
+        toast({
+          title: 'Mode hors ligne',
           description: 'Inventaire en lecture seule',
           variant: 'default'
         });
       }
     });
-    
+
     return cleanup;
   }, [refresh, toast]);
 
@@ -157,12 +157,12 @@ export default function InventoryManagement() {
   });
 
   const filteredInventory = allProductsWithStock.filter(item => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       item.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.lot_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter = stockFilter === 'all' || 
+    const matchesFilter = stockFilter === 'all' ||
       (stockFilter === 'low' && item.quantity <= item.minimum_stock && item.quantity > 0) ||
       (stockFilter === 'out' && item.quantity === 0);
 
@@ -173,14 +173,14 @@ export default function InventoryManagement() {
   const lowStockItems = allProductsWithStock.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = allProductsWithStock.filter(item => item.quantity === 0);
   const totalProducts = products.length; // Total des produits du vendeur
-  
+
   // Calcul intelligent de la valeur totale du stock
   const calculatedTotalValue = allProductsWithStock.reduce((acc, item) => {
     const price = item.product?.price || 0;
     const quantity = item.quantity || 0;
     return acc + (price * quantity);
   }, 0);
-  
+
   const totalValue = calculatedTotalValue;
   const totalCost = stats?.total_cost || 0;
   const potentialProfit = stats?.potential_profit || (totalValue - totalCost);
@@ -192,10 +192,10 @@ export default function InventoryManagement() {
   const [addQty, setAddQty] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [warehouseOpen, setWarehouseOpen] = useState(false);
-  const [newWarehouse, setNewWarehouse] = useState({ 
-    country: '', 
-    city: '', 
-    name: '', 
+  const [newWarehouse, setNewWarehouse] = useState({
+    country: '',
+    city: '',
+    name: '',
     address: '',
     manager_name: '',
     manager_phone: '',
@@ -288,7 +288,7 @@ export default function InventoryManagement() {
       setWarehouseOpen(false);
       setNewWarehouse({ country: '', city: '', name: '', address: '', manager_name: '', manager_phone: '', manager_email: '' });
       await fetchWarehouses();
-      
+
       // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
@@ -307,7 +307,7 @@ export default function InventoryManagement() {
 
       toast({ title: '✅ Statut mis à jour' });
       await fetchWarehouses();
-      
+
       // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
@@ -317,7 +317,7 @@ export default function InventoryManagement() {
 
   const handleRestock = async () => {
     if (!restockItem) return;
-    
+
     const qty = parseInt(restockQty || '0', 10);
     if (qty <= 0) {
       toast({ title: 'Quantité invalide', variant: 'destructive' });
@@ -354,11 +354,11 @@ export default function InventoryManagement() {
         .eq('id', editingWarehouse.id);
 
       if (error) throw error;
-      
+
       setEditingWarehouse(null);
       await fetchWarehouses();
       toast({ title: '✅ Entrepôt modifié avec succès' });
-      
+
       // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
@@ -376,11 +376,11 @@ export default function InventoryManagement() {
         .eq('id', deletingWarehouse.id);
 
       if (error) throw error;
-      
+
       setDeletingWarehouse(null);
       await fetchWarehouses();
       toast({ title: '✅ Entrepôt supprimé avec succès' });
-      
+
       // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
@@ -398,11 +398,11 @@ export default function InventoryManagement() {
               <h2 className="text-lg md:text-2xl font-bold truncate">📦 Gestion des Stocks</h2>
               <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisé en temps réel</p>
             </div>
-            
+
             {/* Indicateur de statut réseau */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
-              isOnline 
-                ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800' 
+              isOnline
+                ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
             }`}>
               {isOnline ? (
@@ -427,8 +427,8 @@ export default function InventoryManagement() {
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-shrink-0 h-9 px-3 text-xs md:text-sm"
                 disabled={!isOnline}
               >
@@ -461,10 +461,10 @@ export default function InventoryManagement() {
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
-                  <Input 
-                    type="number" 
-                    placeholder="Quantité" 
-                    value={addQty} 
+                  <Input
+                    type="number"
+                    placeholder="Quantité"
+                    value={addQty}
                     onChange={(e) => setAddQty(e.target.value)}
                     min="1"
                   />
@@ -642,10 +642,10 @@ export default function InventoryManagement() {
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
-                <Input 
-                  type="number" 
-                  placeholder="Quantité" 
-                  value={restockQty} 
+                <Input
+                  type="number"
+                  placeholder="Quantité"
+                  value={restockQty}
                   onChange={(e) => setRestockQty(e.target.value)}
                   min="1"
                 />
@@ -791,10 +791,10 @@ export default function InventoryManagement() {
           <div className="space-y-4">
             {filteredInventory.map((item) => {
               const availableStock = item.quantity - item.reserved_quantity;
-              const stockPercentage = item.minimum_stock > 0 
-                ? (item.quantity / item.minimum_stock) * 100 
+              const stockPercentage = item.minimum_stock > 0
+                ? (item.quantity / item.minimum_stock) * 100
                 : 100;
-              
+
               return (
                 <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
                   <div className="flex-1">
@@ -810,7 +810,7 @@ export default function InventoryManagement() {
                         <Badge className="bg-orange-100 text-orange-800">Stock faible</Badge>
                       )}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Stock total</p>
@@ -844,8 +844,8 @@ export default function InventoryManagement() {
                     )}
 
                     <div className="mt-2">
-                      <Progress 
-                        value={Math.min(stockPercentage, 100)} 
+                      <Progress
+                        value={Math.min(stockPercentage, 100)}
                         className={`h-2 ${stockPercentage <= 100 ? 'bg-red-100' : 'bg-green-100'}`}
                       />
                     </div>
@@ -865,7 +865,7 @@ export default function InventoryManagement() {
                       <Edit className="w-4 h-4" />
                     </Button>
                     {item.quantity <= item.minimum_stock && (
-                      <Button 
+                      <Button
                         size="sm"
                         onClick={() => {
                           setRestockItem(item);
@@ -886,8 +886,8 @@ export default function InventoryManagement() {
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucun produit trouvé</h3>
               <p className="text-muted-foreground">
-                {searchTerm || stockFilter !== 'all' 
-                  ? 'Aucun produit ne correspond aux critères de recherche.' 
+                {searchTerm || stockFilter !== 'all'
+                  ? 'Aucun produit ne correspond aux critères de recherche.'
                   : 'Votre inventaire est vide. Commencez par ajouter des produits.'}
               </p>
             </div>
@@ -930,7 +930,7 @@ export default function InventoryManagement() {
         </TabsContent>
 
         <TabsContent value="alerts">
-          <InventoryAlerts 
+          <InventoryAlerts
             alerts={alerts}
             onMarkAsRead={markAlertAsRead}
             onResolve={resolveAlert}

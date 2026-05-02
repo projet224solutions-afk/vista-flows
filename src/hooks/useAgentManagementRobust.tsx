@@ -76,7 +76,7 @@ export const useAgentManagementRobust = () => {
 
   // Circuit breaker name
   const circuitName = 'agent-management';
-  
+
   // Subscribe to circuit state changes
   useEffect(() => {
     const unsubscribe = circuitBreaker.subscribe(circuitName, (state) => {
@@ -107,7 +107,7 @@ export const useAgentManagementRobust = () => {
             .from('roles')
             .select('*')
             .order('name');
-            
+
           if (error) throw error;
 
           return (data || []).map((role: any) => ({
@@ -129,7 +129,7 @@ export const useAgentManagementRobust = () => {
     } catch (err: any) {
       console.error('❌ Erreur chargement rôles:', err);
       setError(err.message);
-      
+
       // Retourner les données du cache même si stale
       if (rolesCacheRef.current) {
         return rolesCacheRef.current.data;
@@ -173,7 +173,7 @@ export const useAgentManagementRobust = () => {
     } catch (err: any) {
       console.error('❌ Erreur chargement permissions:', err);
       setError(err.message);
-      
+
       if (permissionsCacheRef.current) {
         return permissionsCacheRef.current.data;
       }
@@ -235,7 +235,7 @@ export const useAgentManagementRobust = () => {
     } catch (err: any) {
       console.error('❌ Erreur chargement agents:', err);
       setError(err.message);
-      
+
       // Retourner le cache stale si disponible
       if (agentsCacheRef.current) {
         setAgents(agentsCacheRef.current.data);
@@ -296,10 +296,10 @@ export const useAgentManagementRobust = () => {
         };
 
         setAgents(prev => [newAgent, ...prev]);
-        
+
         // Invalider le cache
         agentsCacheRef.current = null;
-        
+
         toast.success('Agent créé avec succès');
         return newAgent;
       }
@@ -335,7 +335,7 @@ export const useAgentManagementRobust = () => {
       }, MUTATION_RETRY_CONFIG);
 
       // Mettre à jour localement
-      setAgents(prev => prev.map(agent => 
+      setAgents(prev => prev.map(agent =>
         agent.id === agentId ? { ...agent, status } : agent
       ));
 
@@ -411,9 +411,9 @@ export const useAgentManagementRobust = () => {
       const newRole = roles.find(r => r.id === roleId);
 
       // Mettre à jour localement
-      setAgents(prev => prev.map(agent => 
-        agent.id === agentId 
-          ? { ...agent, role_id: roleId, role: newRole } 
+      setAgents(prev => prev.map(agent =>
+        agent.id === agentId
+          ? { ...agent, role_id: roleId, role: newRole }
           : agent
       ));
 
@@ -445,7 +445,7 @@ export const useAgentManagementRobust = () => {
 
     const rolePerms = getRolePermissions(agent.role_id);
     const permission = rolePerms.find(p => p.action === action);
-    
+
     return permission?.allowed ?? false;
   }, [agents, getRolePermissions]);
 
@@ -488,27 +488,27 @@ export const useAgentManagementRobust = () => {
     agents,
     roles,
     permissions,
-    
+
     // États
     loading,
     error,
     processing,
     circuitState,
-    
+
     // Actions CRUD
     createAgent,
     updateAgentStatus,
     updateAgentRole,
     deleteAgent,
-    
+
     // Utilitaires
     getRolePermissions,
     hasPermission,
-    
+
     // Rafraîchissement
     refetch: () => loadAllData(true),
     invalidateCache,
-    
+
     // Helpers
     isHealthy: circuitState === 'CLOSED',
     agentCount: agents.length,

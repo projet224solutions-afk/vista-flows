@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,16 +38,16 @@ const SERVICE_TYPES = [
 ];
 
 // Composant Select natif stylisé
-function NativeSelect({ 
-  value, 
-  onChange, 
-  options, 
+function NativeSelect({
+  value,
+  onChange,
+  options,
   placeholder,
-  disabled = false 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
-  options: { value: string; label: string }[]; 
+  disabled = false
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string; disabled?: boolean }[];
   placeholder: string;
   disabled?: boolean;
 }) {
@@ -60,7 +61,7 @@ function NativeSelect({
       >
         <option value="" disabled>{placeholder}</option>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} disabled={opt.disabled}>
             {opt.label}
           </option>
         ))}
@@ -71,6 +72,7 @@ function NativeSelect({
 }
 
 export default function VendorLocationSettings({ vendorId }: VendorLocationSettingsProps) {
+  const location = useLocation();
   const [city, setCity] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [address, setAddress] = useState('');
@@ -82,13 +84,28 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   const [initialLoading, setInitialLoading] = useState(true);
   const [gettingLocation, setGettingLocation] = useState(false);
 
+  const isDigitalVendorWorkspace = location.pathname.startsWith('/vendeur-digital');
+  const businessTypeOptions = BUSINESS_TYPES.map((option) =>
+    isDigitalVendorWorkspace && option.value === 'hybrid'
+      ? { ...option, label: `${option.label} (verrouillé)`, disabled: true }
+      : option
+  );
+
   const normalizedCity = city.trim().toLowerCase();
   const selectedCity = GUINEA_CITIES.find((c) => c.name.toLowerCase() === normalizedCity);
   const neighborhoodOptions = selectedCity?.neighborhoods.map((n) => ({ value: n, label: n })) || [];
 
   useEffect(() => {
     loadVendorLocation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
+
+  useEffect(() => {
+    if (isDigitalVendorWorkspace && businessType === 'hybrid') {
+      setBusinessType('digital');
+      toast.info('Le type "Physique + En ligne" est verrouillé pour le compte vendeur digital.');
+    }
+  }, [businessType, isDigitalVendorWorkspace]);
 
   const loadVendorLocation = async () => {
     try {
@@ -165,18 +182,18 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     const attemptGeolocation = (highAccuracy: boolean, timeout: number, attempt: number): Promise<GeolocationPosition> => {
       return new Promise((resolve, reject) => {
         setGpsProgress(
-          highAccuracy 
-            ? `Recherche GPS haute précision... (essai ${attempt}/3)` 
+          highAccuracy
+            ? `Recherche GPS haute précision... (essai ${attempt}/3)`
             : 'Utilisation position approximative...'
         );
 
         navigator.geolocation.getCurrentPosition(
           resolve,
           reject,
-          { 
-            enableHighAccuracy: highAccuracy, 
-            timeout: timeout, 
-            maximumAge: highAccuracy ? 0 : 60000 
+          {
+            enableHighAccuracy: highAccuracy,
+            timeout: timeout,
+            maximumAge: highAccuracy ? 0 : 60000
           }
         );
       });
@@ -189,16 +206,16 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       try {
         setRetryCount(1);
         position = await attemptGeolocation(true, 20000, 1);
-      } catch (e1) {
+      } catch (_e1) {
         console.log('GPS essai 1 échoué, réessai...');
-        
+
         // Essai 2: Haute précision, 15 secondes
         try {
           setRetryCount(2);
           position = await attemptGeolocation(true, 15000, 2);
-        } catch (e2) {
+        } catch (_e2) {
           console.log('GPS essai 2 échoué, tentative basse précision...');
-          
+
           // Essai 3: Basse précision (fallback réseau/WiFi), 10 secondes
           try {
             setRetryCount(3);
@@ -216,9 +233,9 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
         setLatitude(lat);
         setLongitude(lng);
-        
+
         setGpsProgress('');
-        
+
         if (accuracy > 100) {
           toast.success(`Position récupérée (précision: ~${Math.round(accuracy)}m)`, {
             description: 'Position approximative - vous pouvez affiner manuellement'
@@ -228,15 +245,15 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
             description: `Précision: ~${Math.round(accuracy)}m`
           });
         }
-        
+
         void fillAddressFromCoords(lat, lng);
       }
     } catch (error) {
       console.error('Erreur géolocalisation après tous les essais:', error);
       const code = (error as GeolocationPositionError)?.code;
-      
+
       setGpsProgress('');
-      
+
       if (code === 1) {
         toast.error("Permission refusée", {
           description: "Autorisez la localisation dans les paramètres du navigateur puis rechargez la page"
@@ -263,7 +280,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!city) {
       toast.error('Veuillez sélectionner une ville');
       return;
@@ -272,6 +289,10 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     setLoading(true);
 
     try {
+      const finalBusinessType = isDigitalVendorWorkspace && businessType === 'hybrid'
+        ? 'digital'
+        : businessType;
+
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -280,7 +301,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           address,
           latitude,
           longitude,
-          business_type: businessType,
+          business_type: finalBusinessType,
           service_type: serviceType
         })
         .eq('id', vendorId);
@@ -390,7 +411,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
                   {retryCount > 0 && (
                     <div className="flex gap-1 mt-1">
                       {[1, 2, 3].map((i) => (
-                        <div 
+                        <div
                           key={i}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             i <= retryCount ? 'bg-primary' : 'bg-muted'
@@ -462,9 +483,14 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
               <NativeSelect
                 value={businessType}
                 onChange={setBusinessType}
-                options={BUSINESS_TYPES}
+                options={businessTypeOptions}
                 placeholder="Sélectionnez un type"
               />
+              {isDigitalVendorWorkspace && (
+                <p className="text-xs text-muted-foreground">
+                  L'option "Physique + En ligne" est verrouillée dans le compte vendeur digital.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

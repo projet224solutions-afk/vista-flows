@@ -6,25 +6,25 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Scissors, 
-  Users, 
+import {
+  Scissors,
+  Users,
   Calendar,
   Clock,
   Plus,
   Star,
   TrendingUp,
-  User,
+  _User,
   Gift,
-  Heart,
+  _Heart,
   Phone,
-  CheckCircle,
+  _CheckCircle,
   Sparkles,
   Crown
 } from 'lucide-react';
@@ -87,7 +87,7 @@ interface LoyaltyClient {
   favoriteService: string;
 }
 
-export function HairdresserModule({ serviceId, businessName }: HairdresserModuleProps) {
+export function HairdresserModule({ _serviceId, businessName }: HairdresserModuleProps) {
   const [activeTab, setActiveTab] = useState('agenda');
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
@@ -620,8 +620,8 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                       <span>Progression vers {client.tier === 'platinum' ? 'max' : 'niveau supérieur'}</span>
                       <span>{client.points} / {client.tier === 'bronze' ? 1000 : client.tier === 'silver' ? 2000 : client.tier === 'gold' ? 3000 : 5000}</span>
                     </div>
-                    <Progress 
-                      value={client.tier === 'platinum' ? 100 : (client.points / (client.tier === 'bronze' ? 1000 : client.tier === 'silver' ? 2000 : 3000)) * 100} 
+                    <Progress
+                      value={client.tier === 'platinum' ? 100 : (client.points / (client.tier === 'bronze' ? 1000 : client.tier === 'silver' ? 2000 : 3000)) * 100}
                       className="h-2"
                     />
                   </div>

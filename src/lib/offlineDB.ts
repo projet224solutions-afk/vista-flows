@@ -68,7 +68,7 @@ let dbInitPromise: Promise<IDBPDatabase<OfflineDBSchema>> | null = null;
 async function initDB(): Promise<IDBPDatabase<OfflineDBSchema>> {
   // Si déjà initialisé, retourner l'instance
   if (db) return db;
-  
+
   // Si une initialisation est en cours, attendre
   if (dbInitPromise) return dbInitPromise;
 
@@ -80,9 +80,9 @@ async function initDB(): Promise<IDBPDatabase<OfflineDBSchema>> {
       }
 
       db = await openDB<OfflineDBSchema>('224Solutions-OfflineDB', 3, {
-        upgrade(database, oldVersion, newVersion, transaction) {
+        upgrade(database, oldVersion, newVersion, _transaction) {
           console.log(`📦 Mise à jour DB offline: v${oldVersion} -> v${newVersion}`);
-          
+
           // Store pour les événements
           if (!database.objectStoreNames.contains('events')) {
             const eventStore = database.createObjectStore('events', {
@@ -180,7 +180,7 @@ async function storeEvent(
 async function getPendingEvents(): Promise<OfflineEvent[]> {
   const database = await initDB();
   const events = await database.getAllFromIndex('events', 'by-status', 'pending');
-  
+
   // Décrypter les données
   return events.map(event => ({
     ...event,
@@ -194,7 +194,7 @@ async function getPendingEvents(): Promise<OfflineEvent[]> {
 async function getFailedEvents(): Promise<OfflineEvent[]> {
   const database = await initDB();
   const events = await database.getAllFromIndex('events', 'by-status', 'failed');
-  
+
   return events.map(event => ({
     ...event,
     data: event.encrypted ? decryptData(event.data) : event.data
@@ -308,11 +308,11 @@ async function getEventStats(): Promise<{
 async function cacheData(key: string, data: any, ttlMs: number = 3600000, encrypt: boolean = true): Promise<void> {
   try {
     const database = await initDB();
-    
+
     // Crypter avec fallback
     let dataToStore = data;
     let wasEncrypted = encrypt;
-    
+
     if (encrypt) {
       try {
         dataToStore = encryptData(data);
@@ -321,7 +321,7 @@ async function cacheData(key: string, data: any, ttlMs: number = 3600000, encryp
         wasEncrypted = false;
       }
     }
-    
+
     const cachedData: CachedData = {
       key,
       data: dataToStore,
@@ -329,7 +329,7 @@ async function cacheData(key: string, data: any, ttlMs: number = 3600000, encryp
       ttl: ttlMs,
       encrypted: wasEncrypted
     };
-    
+
     await database.put('cache', cachedData);
     console.log('💾 Données mises en cache:', key);
   } catch (error: any) {
@@ -384,14 +384,14 @@ async function clearCache(): Promise<void> {
 async function getEvent(clientEventId: string): Promise<OfflineEvent | undefined> {
   const database = await initDB();
   const event = await database.get('events', clientEventId);
-  
+
   if (event && event.encrypted) {
     return {
       ...event,
       data: decryptData(event.data)
     };
   }
-  
+
   return event;
 }
 
@@ -409,7 +409,7 @@ async function deleteEvent(clientEventId: string): Promise<void> {
 async function storeFile(file: File, eventId: string): Promise<string> {
   const database = await initDB();
   const fileId = `file_${Date.now()}_${generateSecureToken().substring(0, 8)}`;
-  
+
   // Convertir le fichier en base64
   const base64 = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -417,7 +417,7 @@ async function storeFile(file: File, eventId: string): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
-  
+
   const offlineFile: OfflineFile = {
     id: fileId,
     event_id: eventId,
@@ -427,10 +427,10 @@ async function storeFile(file: File, eventId: string): Promise<string> {
     data: encryptData(base64), // Crypter le fichier
     created_at: new Date().toISOString()
   };
-  
+
   await database.put('files', offlineFile);
   console.log('📎 Fichier stocké offline:', fileId);
-  
+
   return fileId;
 }
 
@@ -440,14 +440,14 @@ async function storeFile(file: File, eventId: string): Promise<string> {
 async function getStoredFile(fileId: string): Promise<OfflineFile | undefined> {
   const database = await initDB();
   const file = await database.get('files', fileId);
-  
+
   if (file) {
     return {
       ...file,
       data: decryptData(file.data)
     };
   }
-  
+
   return file;
 }
 
@@ -457,7 +457,7 @@ async function getStoredFile(fileId: string): Promise<OfflineFile | undefined> {
 async function getFilesByEvent(eventId: string): Promise<OfflineFile[]> {
   const database = await initDB();
   const files = await database.getAllFromIndex('files', 'by-event', eventId);
-  
+
   return files.map(file => ({
     ...file,
     data: decryptData(file.data)
@@ -478,7 +478,7 @@ async function deleteStoredFile(fileId: string): Promise<void> {
 async function getAllStoredFiles(): Promise<OfflineFile[]> {
   const database = await initDB();
   const files = await database.getAll('files');
-  
+
   return files.map(file => ({
     ...file,
     data: decryptData(file.data)

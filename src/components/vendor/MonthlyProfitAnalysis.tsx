@@ -3,7 +3,7 @@
  * Calcul du profit basé sur les ventes, achats et coûts fixes (loyer, abonnement)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   TrendingUp,
-  TrendingDown,
+  _TrendingDown,
   DollarSign,
   Home,
   CreditCard,
@@ -51,17 +51,17 @@ import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  _AreaChart,
+  _Area,
+  _XAxis,
+  _YAxis,
+  _CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  Legend
+  _Legend
 } from 'recharts';
 
 interface FixedCost {
@@ -114,7 +114,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         .eq('vendor_id', userId)
         .eq('is_active', true)
         .order('cost_type');
-      
+
       if (error) throw error;
       return (data || []) as FixedCost[];
     },
@@ -298,7 +298,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     fixedCosts.forEach(cost => {
       costsByType[cost.cost_type] = (costsByType[cost.cost_type] || 0) + Number(cost.amount);
     });
-    
+
     return Object.entries(costsByType).map(([type, amount]) => ({
       name: COST_TYPE_LABELS[type]?.label || type,
       value: amount,
@@ -350,7 +350,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                 <Label>Type de coût</Label>
                 <Select
                   value={formData.cost_type}
-                  onValueChange={(value: FixedCost['cost_type']) => 
+                  onValueChange={(value: FixedCost['cost_type']) =>
                     setFormData(prev => ({ ...prev, cost_type: value }))
                   }
                 >
@@ -386,8 +386,8 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                   onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                 />
               </div>
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 className="w-full"
                 disabled={addCostMutation.isPending || updateCostMutation.isPending}
               >
@@ -541,12 +541,12 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="p-2 rounded-full" 
+                        <div
+                          className="p-2 rounded-full"
                           style={{ backgroundColor: `${typeInfo.color}20` }}
                         >
-                          {React.cloneElement(typeInfo.icon as React.ReactElement, { 
-                            style: { color: typeInfo.color } 
+                          {React.cloneElement(typeInfo.icon as React.ReactElement, {
+                            style: { color: typeInfo.color }
                           })}
                         </div>
                         <div>
@@ -623,9 +623,9 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
           <AlertDescription>
-            <strong>Attention !</strong> Votre profit net est négatif ce mois-ci. 
-            Vos dépenses ({formatCurrency(monthlyPurchases + totalFixedCosts)}) dépassent 
-            vos ventes ({formatCurrency(monthlySales)}). 
+            <strong>Attention !</strong> Votre profit net est négatif ce mois-ci.
+            Vos dépenses ({formatCurrency(monthlyPurchases + totalFixedCosts)}) dépassent
+            vos ventes ({formatCurrency(monthlySales)}).
             Considérez réduire vos coûts fixes ou augmenter vos ventes.
           </AlertDescription>
         </Alert>

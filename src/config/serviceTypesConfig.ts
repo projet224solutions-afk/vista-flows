@@ -250,7 +250,7 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
     name: 'Formation',
     category: 'Éducation',
     icon: '🎓',
-    description: 'Cours & coaching',
+    description: 'Cours et coaching',
     lucideIcon: 'GraduationCap',
     section: 'digital',
     legacyCodes: ['formation', 'teaching', 'cours', 'school'],
@@ -262,7 +262,7 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
     name: 'Voyage / Tourisme',
     category: 'Tourisme',
     icon: '✈️',
-    description: 'Agence & billetterie',
+    description: 'Agence et billetterie',
     lucideIcon: 'Plane',
     section: 'professional',
     legacyCodes: ['tourism', 'travel', 'agence_voyage'],
@@ -273,9 +273,9 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
 
 // ===== SERVICES DIGITAUX (extensions) =====
 export const DIGITAL_SERVICES: { code: string; name: string; icon: string; description: string }[] = [
-  { code: 'digital_logiciel', name: 'Logiciel', icon: '💻', description: 'Antivirus & SaaS' },
+  { code: 'digital_logiciel', name: 'Logiciel', icon: '💻', description: 'Antivirus et SaaS' },
   { code: 'dropshipping', name: 'Dropshipping', icon: '📦', description: 'Amazon, AliExpress' },
-  { code: 'digital_livre', name: 'Livres', icon: '📚', description: 'eBooks & affiliation' },
+  { code: 'digital_livre', name: 'Livres', icon: '📚', description: 'eBooks et affiliation' },
 ];
 
 // ===== HELPER FUNCTIONS =====
@@ -287,7 +287,7 @@ export function getServiceTypeByCode(code: string): ServiceTypeConfig | undefine
   // Chercher par code exact
   const exact = SERVICE_TYPES_CONFIG.find(s => s.code === code);
   if (exact) return exact;
-  
+
   // Chercher dans les codes legacy
   return SERVICE_TYPES_CONFIG.find(s => s.legacyCodes.includes(code));
 }

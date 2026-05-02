@@ -55,7 +55,7 @@ const validateAgentToken = async (agentToken: string) => {
       .select("id, vendor_id, user_id")
       .eq("token", agentToken)
       .single();
-    
+
     return agent;
   } catch (err) {
     return null;
@@ -66,14 +66,14 @@ const validateAgentToken = async (agentToken: string) => {
 router.post("/agent-get-products", async (req: any, res: any) => {
   try {
     const { agentToken } = req.body;
-    
+
     if (!agentToken) {
       return res.status(400).json({ success: false, error: "Missing agentToken" });
     }
-    
+
     const agent = await validateAgentToken(agentToken);
     if (!agent) return res.status(401).json({ success: false, error: "Invalid agent token" });
-    
+
     // Check manage_products permission
     const { data: permissions } = await supabaseAdmin
       .from("agent_permissions")
@@ -81,11 +81,11 @@ router.post("/agent-get-products", async (req: any, res: any) => {
       .eq("agent_id", agent.id)
       .eq("permission", "manage_products")
       .single();
-    
+
     if (!permissions) {
       return res.status(403).json({ success: false, error: "Missing manage_products permission" });
     }
-    
+
     // Get products with inventory
     const { data: products } = await supabaseAdmin
       .from("products")
@@ -95,13 +95,13 @@ router.post("/agent-get-products", async (req: any, res: any) => {
         category_name:product_categories(name)
       `)
       .eq("vendor_id", agent.vendor_id);
-    
+
     // Get categories
     const { data: categories } = await supabaseAdmin
       .from("product_categories")
       .select("id, name")
       .eq("vendor_id", agent.vendor_id);
-    
+
     return res.json({
       success: true,
       products: products || [],
@@ -127,29 +127,29 @@ router.post("/create-product", validateBearerToken, async (req: any, res: any) =
       stock_quantity: z.number().nonnegative().default(0),
       is_active: z.boolean().default(true),
     });
-    
+
     const input = schema.parse(req.body);
-    
+
     // Get vendor_id from user profile
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("user_id, role, vendor_id")
       .eq("user_id", req.user.id)
       .single();
-    
+
     if (!profile?.vendor_id) {
       return res.status(403).json({ success: false, error: "Not a vendor" });
     }
-    
+
     // Check product limit via RPC
     const { data: limitCheck } = await supabaseAdmin.rpc("check_product_limit", {
       p_user_id: req.user.id,
     });
-    
+
     if (!limitCheck || (limitCheck as any).can_add === false) {
       return res.status(403).json({ success: false, error: "Product limit exceeded" });
     }
-    
+
     // Insert product
     const { data: product, error } = await supabaseAdmin
       .from("products")
@@ -167,9 +167,9 @@ router.post("/create-product", validateBearerToken, async (req: any, res: any) =
       })
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     // Insert initial inventory batch
     if (input.stock_quantity > 0) {
       await supabaseAdmin
@@ -180,7 +180,7 @@ router.post("/create-product", validateBearerToken, async (req: any, res: any) =
           location: "main",
         });
     }
-    
+
     return res.json({
       success: true,
       product,
@@ -196,14 +196,14 @@ router.post("/create-product", validateBearerToken, async (req: any, res: any) =
 router.patch("/agent-update-product", async (req: any, res: any) => {
   try {
     const { agentToken, productId, updates } = req.body;
-    
+
     if (!agentToken || !productId || !updates) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
-    
+
     const agent = await validateAgentToken(agentToken);
     if (!agent) return res.status(401).json({ success: false, error: "Invalid agent token" });
-    
+
     // Check permission
     const { data: permissions } = await supabaseAdmin
       .from("agent_permissions")
@@ -211,11 +211,11 @@ router.patch("/agent-update-product", async (req: any, res: any) => {
       .eq("agent_id", agent.id)
       .eq("permission", "manage_products")
       .single();
-    
+
     if (!permissions) {
       return res.status(403).json({ success: false, error: "Missing manage_products permission" });
     }
-    
+
     // Update product
     const { error } = await supabaseAdmin
       .from("products")
@@ -225,9 +225,9 @@ router.patch("/agent-update-product", async (req: any, res: any) => {
       })
       .eq("id", productId)
       .eq("vendor_id", agent.vendor_id);
-    
+
     if (error) throw error;
-    
+
     return res.json({ success: true });
   } catch (err: any) {
     console.error("agent-update-product error:", err);
@@ -239,14 +239,14 @@ router.patch("/agent-update-product", async (req: any, res: any) => {
 router.delete("/agent-delete-product", async (req: any, res: any) => {
   try {
     const { agentToken, productId } = req.body;
-    
+
     if (!agentToken || !productId) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
-    
+
     const agent = await validateAgentToken(agentToken);
     if (!agent) return res.status(401).json({ success: false, error: "Invalid agent token" });
-    
+
     // Check permission
     const { data: permissions } = await supabaseAdmin
       .from("agent_permissions")
@@ -254,20 +254,20 @@ router.delete("/agent-delete-product", async (req: any, res: any) => {
       .eq("agent_id", agent.id)
       .eq("permission", "manage_products")
       .single();
-    
+
     if (!permissions) {
       return res.status(403).json({ success: false, error: "Missing manage_products permission" });
     }
-    
+
     // Delete product
     const { error } = await supabaseAdmin
       .from("products")
       .delete()
       .eq("id", productId)
       .eq("vendor_id", agent.vendor_id);
-    
+
     if (error) throw error;
-    
+
     return res.json({ success: true });
   } catch (err: any) {
     console.error("agent-delete-product error:", err);
@@ -279,14 +279,14 @@ router.delete("/agent-delete-product", async (req: any, res: any) => {
 router.patch("/agent-toggle-product-status", async (req: any, res: any) => {
   try {
     const { agentToken, productId, currentStatus } = req.body;
-    
+
     if (!agentToken || !productId || currentStatus === undefined) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
-    
+
     const agent = await validateAgentToken(agentToken);
     if (!agent) return res.status(401).json({ success: false, error: "Invalid agent token" });
-    
+
     // Check permission
     const { data: permissions } = await supabaseAdmin
       .from("agent_permissions")
@@ -294,11 +294,11 @@ router.patch("/agent-toggle-product-status", async (req: any, res: any) => {
       .eq("agent_id", agent.id)
       .eq("permission", "manage_products")
       .single();
-    
+
     if (!permissions) {
       return res.status(403).json({ success: false, error: "Missing manage_products permission" });
     }
-    
+
     // Toggle status
     const { error } = await supabaseAdmin
       .from("products")
@@ -308,9 +308,9 @@ router.patch("/agent-toggle-product-status", async (req: any, res: any) => {
       })
       .eq("id", productId)
       .eq("vendor_id", agent.vendor_id);
-    
+
     if (error) throw error;
-    
+
     return res.json({ success: true });
   } catch (err: any) {
     console.error("agent-toggle-product-status error:", err);
@@ -322,22 +322,22 @@ router.patch("/agent-toggle-product-status", async (req: any, res: any) => {
 router.post("/vendor-agent-get-products", async (req: any, res: any) => {
   try {
     const { agentToken } = req.body;
-    
+
     if (!agentToken) {
       return res.status(400).json({ success: false, error: "Missing agentToken" });
     }
-    
+
     // Validate vendor agent token
     const { data: vendorAgent } = await supabaseAdmin
       .from("vendor_agents")
       .select("id, vendor_id")
       .eq("token", agentToken)
       .single();
-    
+
     if (!vendorAgent) {
       return res.status(401).json({ success: false, error: "Invalid vendor agent token" });
     }
-    
+
     // Get products
     const { data: products } = await supabaseAdmin
       .from("products")
@@ -347,13 +347,13 @@ router.post("/vendor-agent-get-products", async (req: any, res: any) => {
         category_name:product_categories(name)
       `)
       .eq("vendor_id", vendorAgent.vendor_id);
-    
+
     // Get categories
     const { data: categories } = await supabaseAdmin
       .from("product_categories")
       .select("id, name")
       .eq("vendor_id", vendorAgent.vendor_id);
-    
+
     return res.json({
       success: true,
       products: products || [],
@@ -370,35 +370,35 @@ router.post("/vendor-agent-get-products", async (req: any, res: any) => {
 router.delete("/pdg-delete-service-product", validateBearerToken, async (req: any, res: any) => {
   try {
     const { productId } = req.body;
-    
+
     if (!productId) {
       return res.status(400).json({ success: false, error: "Missing productId" });
     }
-    
+
     // Check PDG or admin/CEO role
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("user_id", req.user.id)
       .single();
-    
+
     if (profile?.role !== "pdg" && profile?.role !== "admin" && profile?.role !== "ceo") {
       return res.status(403).json({ success: false, error: "Unauthorized" });
     }
-    
+
     // Delete service product
     const { error } = await supabaseAdmin
       .from("service_products")
       .delete()
       .eq("id", productId);
-    
+
     if (error) {
       if (error.code === "PGRST116") {
         return res.json({ success: true, message: "Déjà supprimé" });
       }
       throw error;
     }
-    
+
     return res.json({ success: true, message: "Product deleted" });
   } catch (err: any) {
     console.error("pdg-delete-service-product error:", err);
@@ -411,16 +411,16 @@ router.post("/generate-product-description", async (req: any, res: any) => {
   try {
     const { name, productName, category, price, productType } = req.body;
     const productNameValue = name || productName;
-    
+
     if (!productNameValue) {
       return res.status(400).json({ success: false, error: "Missing product name" });
     }
-    
+
     const openaiApiKey = process.env.OPENAI_API_KEY;
     if (!openaiApiKey) {
       return res.status(500).json({ success: false, error: "OpenAI API key not configured" });
     }
-    
+
     const prompt = `Generate French e-commerce descriptions for the following product:
 - Product Name: ${productNameValue}
 - Category: ${category || "General"}
@@ -478,16 +478,16 @@ Descriptions should be professional, engaging, and suitable for a Guinean e-comm
 router.post("/generate-product-image", async (req: any, res: any) => {
   try {
     const { productName, category, description } = req.body;
-    
+
     if (!productName) {
       return res.status(400).json({ success: false, error: "Missing productName" });
     }
-    
+
     const lovableApiKey = process.env.LOVABLE_API_KEY;
     if (!lovableApiKey) {
       return res.status(500).json({ success: false, error: "Lovable API key not configured" });
     }
-    
+
     const prompt = `Generate a professional product photography image for:
 - Product: ${productName}
 - Category: ${category || "General"}

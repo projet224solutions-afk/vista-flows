@@ -79,6 +79,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                 map.current = null;
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Mettre à jour le centre de la carte
@@ -97,7 +98,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         existingMarkers.forEach(marker => marker.remove());
 
         // Ajouter les marqueurs des livreurs
-        deliveryUsers.forEach((user, index) => {
+        deliveryUsers.forEach((user, _index) => {
             if (!user.currentPosition) return;
 
             // Créer l'élément du marqueur
@@ -136,7 +137,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             <p class="text-sm ${user.isAvailable ? 'text-green-600' : 'text-red-600'}">
               ${user.isAvailable ? 'Disponible' : 'Occupé'}
             </p>
-            <button 
+            <button
               class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
               onclick="window.deliveryUserClick('${user.id}')"
             >

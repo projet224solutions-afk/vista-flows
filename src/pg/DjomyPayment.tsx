@@ -8,8 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 export default function DjomyPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  
+  const { _user } = useAuth();
+
   // Get payment params from URL
   const amount = parseInt(searchParams.get('amount') || '0', 10);
   const orderId = searchParams.get('orderId') || undefined;
@@ -17,7 +17,7 @@ export default function DjomyPayment() {
   const description = searchParams.get('description') || undefined;
   const returnUrl = searchParams.get('returnUrl') || '/';
 
-  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [_paymentComplete, setPaymentComplete] = useState(false);
 
   const handleSuccess = (transactionId: string) => {
     setPaymentComplete(true);
@@ -42,7 +42,7 @@ export default function DjomyPayment() {
           <h1 className="text-xl font-semibold text-destructive">Montant invalide</h1>
           <p className="text-muted-foreground">Le montant du paiement n'est pas valide.</p>
           <Button onClick={() => navigate('/')} variant="outline">
-            Retour ├á l'accueil
+            Retour à l'accueil
           </Button>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function DjomyPayment() {
           </div>
           <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
             <Shield className="w-4 h-4" />
-            <span className="text-xs font-medium">S├®curis├®</span>
+            <span className="text-xs font-medium">Sécurisé</span>
           </div>
         </div>
       </div>
@@ -89,12 +89,12 @@ export default function DjomyPayment() {
         <div className="mt-8 text-center space-y-2">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Shield className="w-4 h-4" />
-            <span>Paiement s├®curis├® 100% local</span>
+            <span>Paiement sécurisé 100% local</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Vos donn├®es de paiement ne transitent jamais par nos serveurs.
+            Vos données de paiement ne transitent jamais par nos serveurs.
             <br />
-            Paiement trait├® par Djomy.
+            Paiement traité par Djomy.
           </p>
         </div>
       </div>

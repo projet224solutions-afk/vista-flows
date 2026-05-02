@@ -95,7 +95,7 @@ export const useAgentStats = (agentId: string | undefined) => {
 
       const totalCommissions = totalCommRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
       const commissionsThisMonth = monthCommRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
-      
+
       const totalUsersCreated = (totalUsersRes.count || 0) + subAgentUsersTotal;
       const usersThisMonth = (monthUsersRes.count || 0) + subAgentUsersMonth;
 

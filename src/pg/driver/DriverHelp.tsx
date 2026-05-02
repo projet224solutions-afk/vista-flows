@@ -20,27 +20,27 @@ export default function DriverHelp() {
   const faqItems = [
     {
       question: "Comment accepter une livraison ?",
-      answer: "Pour accepter une livraison, allez dans l'onglet 'Missions', consultez les livraisons disponibles et cliquez sur 'Accepter' sur celle qui vous convient. Assurez-vous d'├¬tre en ligne avec le GPS activ├®."
+      answer: "Pour accepter une livraison, allez dans l'onglet 'Missions', consultez les livraisons disponibles et cliquez sur 'Accepter' sur celle qui vous convient. Assurez-vous d'être en ligne avec le GPS activé."
     },
     {
-      question: "Comment mettre ├á jour ma position GPS ?",
-      answer: "Votre position GPS est mise ├á jour automatiquement toutes les 30 secondes lorsque vous ├¬tes en ligne. Assurez-vous que l'autorisation de localisation est activ├®e dans les param├¿tres de votre appareil."
+      question: "Comment mettre à jour ma position GPS ?",
+      answer: "Votre position GPS est mise à jour automatiquement toutes les 30 secondes lorsque vous êtes en ligne. Assurez-vous que l'autorisation de localisation est activée dans les paramètres de votre appareil."
     },
     {
-      question: "Que faire si j'ai un probl├¿me avec une livraison ?",
-      answer: "Utilisez le bouton 'Signaler un probl├¿me' dans l'interface de livraison active, ou contactez le support directement via le chat. Notre ├®quipe vous r├®pondra dans les plus brefs d├®lais."
+      question: "Que faire si j'ai un problème avec une livraison ?",
+      answer: "Utilisez le bouton 'Signaler un problème' dans l'interface de livraison active, ou contactez le support directement via le chat. Notre équipe vous répondra dans les plus brefs délais."
     },
     {
-      question: "Comment sont calcul├®s mes gains ?",
-      answer: "Vos gains sont calcul├®s ├á partir des frais de livraison moins la commission de 1.5%. Vous pouvez consulter vos gains en temps r├®el dans l'onglet 'Portefeuille' et dans les statistiques."
+      question: "Comment sont calculés mes gains ?",
+      answer: "Vos gains sont calculés à partir des frais de livraison moins la commission de 1.5%. Vous pouvez consulter vos gains en temps réel dans l'onglet 'Portefeuille' et dans les statistiques."
     },
     {
       question: "Comment confirmer une livraison ?",
-      answer: "Pour confirmer une livraison, prenez une photo de preuve, demandez la signature du client, puis cliquez sur 'Confirmer la livraison'. Les deux sont n├®cessaires pour valider la livraison."
+      answer: "Pour confirmer une livraison, prenez une photo de preuve, demandez la signature du client, puis cliquez sur 'Confirmer la livraison'. Les deux sont nécessaires pour valider la livraison."
     },
     {
       question: "Quand vais-je recevoir mes paiements ?",
-      answer: "Les paiements sont trait├®s automatiquement apr├¿s chaque livraison confirm├®e. Vous pouvez retirer vos gains ├á tout moment depuis votre portefeuille 224Solutions."
+      answer: "Les paiements sont traités automatiquement après chaque livraison confirmée. Vous pouvez retirer vos gains à tout moment depuis votre portefeuille 224Solutions."
     }
   ];
 
@@ -50,7 +50,7 @@ export default function DriverHelp() {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Centre d'aide</h1>
-          <p className="text-muted-foreground">Trouvez des r├®ponses ├á vos questions</p>
+          <p className="text-muted-foreground">Trouvez des réponses à vos questions</p>
         </div>
 
         {/* Recherche */}
@@ -68,11 +68,11 @@ export default function DriverHelp() {
             <CardHeader className="text-center">
               <MessageCircle className="h-8 w-8 mx-auto text-primary mb-2" />
               <CardTitle className="text-base">Chat en direct</CardTitle>
-              <CardDescription>Support instantan├®</CardDescription>
+              <CardDescription>Support instantané</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full">
-                D├®marrer un chat
+                Démarrer un chat
               </Button>
             </CardContent>
           </Card>
@@ -109,9 +109,9 @@ export default function DriverHelp() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Questions fr├®quentes
+              Questions fréquentes
             </CardTitle>
-            <CardDescription>R├®ponses aux questions les plus courantes</CardDescription>
+            <CardDescription>Réponses aux questions les plus courantes</CardDescription>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
@@ -134,19 +134,19 @@ export default function DriverHelp() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Video className="h-5 w-5" />
-              Tutoriels vid├®o
+              Tutoriels vidéo
             </CardTitle>
-            <CardDescription>Apprenez ├á utiliser toutes les fonctionnalit├®s</CardDescription>
+            <CardDescription>Apprenez à utiliser toutes les fonctionnalités</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">3 min</Badge>
-              <h3 className="font-semibold mb-1">D├®marrer avec 224Solutions</h3>
-              <p className="text-sm text-muted-foreground">Introduction compl├¿te ├á l'application</p>
+              <h3 className="font-semibold mb-1">Démarrer avec 224Solutions</h3>
+              <p className="text-sm text-muted-foreground">Introduction complète à l'application</p>
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">5 min</Badge>
-              <h3 className="font-semibold mb-1">Accepter et g├®rer des livraisons</h3>
+              <h3 className="font-semibold mb-1">Accepter et gérer des livraisons</h3>
               <p className="text-sm text-muted-foreground">Workflow complet de livraison</p>
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
@@ -156,7 +156,7 @@ export default function DriverHelp() {
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">4 min</Badge>
-              <h3 className="font-semibold mb-1">G├®rer vos gains</h3>
+              <h3 className="font-semibold mb-1">Gérer vos gains</h3>
               <p className="text-sm text-muted-foreground">Portefeuille et retraits</p>
             </div>
           </CardContent>
@@ -166,9 +166,9 @@ export default function DriverHelp() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="pt-6 text-center">
             <MessageCircle className="h-12 w-12 mx-auto text-primary mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Besoin d'aide suppl├®mentaire ?</h3>
+            <h3 className="text-lg font-semibold mb-2">Besoin d'aide supplémentaire ?</h3>
             <p className="text-muted-foreground mb-4">
-              Notre ├®quipe de support est disponible 24/7 pour vous aider
+              Notre équipe de support est disponible 24/7 pour vous aider
             </p>
             <Button>Contacter le support</Button>
           </CardContent>

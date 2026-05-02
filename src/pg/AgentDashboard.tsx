@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Key, Mail, Lock, AlertTriangle, Shield, Users, DollarSign, Settings as SettingsIcon, Brain, Zap } from 'lucide-react';
+import { Key, Mail, Lock, AlertTriangle, _Shield, _Users, _DollarSign, Settings as _SettingsIcon, _Brain, _Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "@/hooks/useTranslation";
-import { AVAILABLE_PERMISSIONS, PermissionKey } from '@/hooks/useAgentPermissions';
+import { _AVAILABLE_PERMISSIONS, _PermissionKey } from '@/hooks/useAgentPermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
@@ -25,7 +25,7 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
-// Modules op├®rationnels complets
+// Modules opérationnels complets
 import { AgentKYCManagement } from '@/components/agent/AgentKYCManagement';
 import { AgentFullFinanceModule } from '@/components/agent/modules/AgentFullFinanceModule';
 import { AgentWalletTransactionsManagement } from '@/components/agent/AgentWalletTransactionsManagement';
@@ -43,13 +43,13 @@ export default function AgentDashboard() {
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [pdgUserId, setPdgUserId] = useState<string | null>(null);
+  const [_pdgUserId, setPdgUserId] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
-  
-  // Hook pour les permissions unifi├®es (table agent_permissions + legacy JSON)
+
+  // Hook pour les permissions unifiées (table agent_permissions + legacy JSON)
   const { permissions: unifiedPermissions, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
-  
+
   // Password change state
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -73,13 +73,14 @@ export default function AgentDashboard() {
       return;
     }
     loadAgentData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
-    if (agent?.id) {
+    if (agent?.user_id) {
       loadWalletBalance();
-      
-      // Abonnement temps r├®el pour les changements de wallet
+
+      // Abonnement temps réel sur wallets (source de vérité) par user_id
       const channel = supabase
         .channel(`agent-wallet-dashboard-${agent.id}`)
         .on(
@@ -87,11 +88,10 @@ export default function AgentDashboard() {
           {
             event: '*',
             schema: 'public',
-            table: 'agent_wallets',
-            filter: `agent_id=eq.${agent.id}`,
+            table: 'wallets',
+            filter: `user_id=eq.${agent.user_id}`,
           },
           (payload) => {
-            console.log('­ƒÆ░ Wallet agent mis ├á jour (dashboard):', payload);
             if (payload.new && typeof (payload.new as any).balance === 'number') {
               setWalletBalance((payload.new as any).balance);
             } else {
@@ -105,17 +105,19 @@ export default function AgentDashboard() {
         supabase.removeChannel(channel);
       };
     }
-  }, [agent?.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent?.user_id]);
 
-  // ├ëcouter l'├®v├®nement personnalis├® de mise ├á jour wallet
+  // Écouter l'événement personnalisé de mise à jour wallet
   useEffect(() => {
     const handleWalletUpdate = () => {
-      console.log('­ƒôó Event wallet-updated re├ºu (dashboard)');
+      console.log('📊 Event wallet-updated reçu (dashboard)');
       loadWalletBalance();
     };
 
     window.addEventListener('wallet-updated', handleWalletUpdate);
     return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent?.id]);
 
   const loadAgentData = async () => {
@@ -131,25 +133,23 @@ export default function AgentDashboard() {
       setPdgUserId(user?.id || null);
     } catch (error: any) {
       console.error('Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement des donn├®es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
   const loadWalletBalance = async () => {
-    if (!agent?.id) return;
-    
+    if (!agent?.user_id) return;
+
     try {
-      console.log('­ƒöä Chargement solde wallet dashboard pour agent:', agent.id);
       const { data, error } = await supabase
-        .from('agent_wallets')
+        .from('wallets')
         .select('balance')
-        .eq('agent_id', agent.id)
+        .eq('user_id', agent.user_id)
         .single();
-      
+
       if (!error && data) {
-        console.log('Ô£à Solde wallet dashboard:', data.balance);
         setWalletBalance(data.balance || 0);
       }
     } catch (error) {
@@ -164,9 +164,9 @@ export default function AgentDashboard() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!agent) {
-      toast.error('Agent non trouv├®');
+      toast.error('Agent non trouvé');
       return;
     }
 
@@ -176,7 +176,7 @@ export default function AgentDashboard() {
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caract├¿res');
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -194,7 +194,7 @@ export default function AgentDashboard() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success('Mot de passe modifi├® avec succ├¿s');
+        toast.success('Mot de passe modifié avec succès');
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
@@ -210,9 +210,9 @@ export default function AgentDashboard() {
 
   const handleChangeEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!agent) {
-      toast.error('Agent non trouv├®');
+      toast.error('Agent non trouvé');
       return;
     }
 
@@ -242,7 +242,7 @@ export default function AgentDashboard() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success('Email modifi├® avec succ├¿s');
+        toast.success('Email modifié avec succès');
         setIsEmailDialogOpen(false);
         setEmailData({ newEmail: '', currentPassword: '' });
         // Reload agent data to reflect new email
@@ -301,42 +301,42 @@ export default function AgentDashboard() {
             onNavigate={setActiveTab}
           />
         );
-      
+
       case 'wallet':
         return (
-          <AgentWalletManagement 
-            agentId={agent.id} 
+          <AgentWalletManagement
+            agentId={agent.id}
             agentCode={agent.agent_code}
             showTransactions={true}
           />
         );
-      
-      // --- Modules op├®rationnels complets ---
+
+      // --- Modules opérationnels complets ---
       case 'finance':
         return <AgentFullFinanceModule agentId={agent.id} canManage={unifiedPermissions.manage_finance === true} />;
-      
+
       case 'banking':
         return <AgentBankingModule agentId={agent.id} canManage={unifiedPermissions.manage_banking === true} />;
-      
+
       case 'kyc-management':
         return <AgentKYCManagement agentId={agent.id} canManage={unifiedPermissions.manage_kyc === true} />;
-      
+
       case 'wallet-transactions':
         return <AgentWalletTransactionsManagement agentId={agent.id} />;
-      
+
       case 'users-management':
         return <AgentUsersModule agentId={agent.id} canManage={unifiedPermissions.manage_users === true} />;
-      
+
       case 'vendors-management':
         return <AgentVendorsModule agentId={agent.id} canManage={unifiedPermissions.manage_vendors === true} />;
-      
+
       case 'orders-management':
         return <AgentOrdersModule agentId={agent.id} canManage={unifiedPermissions.manage_orders === true} />;
-      
+
       case 'service-subscriptions':
         return <AgentServiceSubscriptionsModule agentId={agent.id} canManage={unifiedPermissions.manage_service_subscriptions === true} />;
-      // --- Fin modules op├®rationnels ---
-      
+      // --- Fin modules opérationnels ---
+
       case 'create-user':
         return (
           <Card className="border-0 shadow-lg">
@@ -344,36 +344,36 @@ export default function AgentDashboard() {
               <CardTitle className="text-slate-800">{t('agent.createNewUser')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <CreateUserForm 
-                agentId={agent.id} 
+              <CreateUserForm
+                agentId={agent.id}
                 agentCode={agent.agent_code}
                 accessToken={agent.access_token}
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
-                  setActiveTab('my-users'); // Aller vers la liste apr├¿s cr├®ation
+                  setActiveTab('my-users'); // Aller vers la liste après création
                   toast.success(t('agent.userCreatedSuccess'));
                 }}
               />
             </CardContent>
           </Card>
         );
-      
+
       case 'my-users':
         return <AgentCreatedUsersList agentId={agent.id} />;
-      
+
       case 'orders':
         return <AgentOrdersTracking agentId={agent.id} />;
-      
+
       case 'my-purchases':
-        return <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" />;
-      
+        return <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />;
+
       case 'sub-agents':
         return <AgentSubAgentsManagement agentId={agent.id} />;
-      
+
       case 'reports':
         return (
-          <ViewReportsSection 
+          <ViewReportsSection
             agentId={agent.id}
             agentData={{
               total_users_created: stats.totalUsersCreated,
@@ -383,18 +383,18 @@ export default function AgentDashboard() {
             agentStats={stats}
           />
         );
-      
+
       case 'affiliate':
         return <AgentAffiliateLinksSection agentId={agent.id} agentToken={agent.access_token} />;
-      
+
       case 'settings':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Permissions accord├®es - affichage par cat├®gorie avec le nouveau composant */}
+            {/* Permissions accordées - affichage par catégorie avec le nouveau composant */}
             <div className="md:col-span-2">
-              <AgentPermissionsDisplay 
-                permissions={unifiedPermissions} 
-                loading={permissionsLoading} 
+              <AgentPermissionsDisplay
+                permissions={unifiedPermissions}
+                loading={permissionsLoading}
               />
             </div>
 
@@ -445,7 +445,7 @@ export default function AgentDashboard() {
                           required
                           value={emailData.currentPassword}
                           onChange={(e) => setEmailData({ ...emailData, currentPassword: e.target.value })}
-                          placeholder="Pour confirmer votre identit├®"
+                          placeholder="Pour confirmer votre identité"
                         />
                       </div>
                       <div className="flex gap-3 pt-2">
@@ -481,7 +481,7 @@ export default function AgentDashboard() {
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <p className="text-sm text-slate-500">
-                  Changez votre mot de passe pour s├®curiser votre compte agent.
+                  Changez votre mot de passe pour sécuriser votre compte agent.
                 </p>
                 <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                   <DialogTrigger asChild>
@@ -518,7 +518,7 @@ export default function AgentDashboard() {
                           minLength={8}
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          placeholder="Minimum 8 caract├¿res"
+                          placeholder="Minimum 8 caractères"
                         />
                       </div>
                       <div className="space-y-2">
@@ -556,7 +556,7 @@ export default function AgentDashboard() {
             </Card>
           </div>
         );
-      
+
       default:
         return null;
     }
@@ -575,7 +575,7 @@ export default function AgentDashboard() {
       >
         {renderContent()}
       </AgentLayoutProfessional>
-      
+
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { signedInvoke } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
-import { 
-  Wallet, 
+import {
+  Wallet,
   ArrowDownToLine,
   ArrowUpFromLine,
   Send,
@@ -35,7 +35,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Building2 } from 'lucide-react';
-import StripeInlineDeposit from './StripeWalletDeposit';
+import _StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
@@ -45,6 +45,7 @@ import {
   depositToWallet,
   getWalletPinStatus,
   previewWalletTransfer,
+  resetWalletPin,
   resolveWalletRecipient,
   setupWalletPin,
   transferToWallet,
@@ -79,13 +80,13 @@ interface Transaction {
   metadata: any;
 }
 
-export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = true }: UniversalWalletTransactionsProps = {}) => {
+export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   // Utiliser le contexte Auth comme tous les autres composants de l'application
   const { user, profile } = useAuth();
   const { convert } = usePriceConverter();
   // Utiliser propUserId si fourni, sinon utiliser user?.id
   const effectiveUserId = propUserId || user?.id;
-  
+
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +94,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [isAgent, setIsAgent] = useState(false);
   const [agentInfo, setAgentInfo] = useState<{ id: string; agent_code: string; name: string } | null>(null);
   const [userCustomId, setUserCustomId] = useState<string | null>(null);
-  
+
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'card_stripe'>('card');
@@ -106,20 +107,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [bankIban, setBankIban] = useState('');
   const [bankAccountHolder, setBankAccountHolder] = useState('');
   // PayPal card deposit states
-  const [cardDepositStep, setCardDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
-  const [cardDepositOrderId, setCardDepositOrderId] = useState<string | null>(null);
+  const [_cardDepositStep, _setCardDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
+  const [_cardDepositOrderId, _setCardDepositOrderId] = useState<string | null>(null);
   const [withdrawPhone, setWithdrawPhone] = useState('');
   const [withdrawProvider, setWithdrawProvider] = useState<'orange' | 'mtn'>('orange');
   // PayPal states
-  const [paypalDepositAmount, setPaypalDepositAmount] = useState('');
-  const [paypalDepositStep, setPaypalDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
-  const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
+  const [_paypalDepositAmount, _setPaypalDepositAmount] = useState('');
+  const [_paypalDepositStep, _setPaypalDepositStep] = useState<'input' | 'approve' | 'capturing'>('input');
+  const [_paypalOrderId, _setPaypalOrderId] = useState<string | null>(null);
   const [paypalWithdrawEmail, setPaypalWithdrawEmail] = useState('');
   const [paypalWithdrawAmount, setPaypalWithdrawAmount] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [recipientId, setRecipientId] = useState('');
   const [transferDescription, setTransferDescription] = useState('');
-  
+
   // États des dialogs
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -145,6 +146,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveUserId]);
 
   const loadPinStatus = async () => {
@@ -175,7 +177,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
     try {
       // Vérifier si l'utilisateur est un agent
-      const { data: agentData, error: agentError } = await supabase
+      const { data: agentData, error: _agentError } = await supabase
         .from('agents_management')
         .select('id, agent_code, name')
         .eq('user_id', effectiveUserId)
@@ -212,7 +214,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
-  const loadWalletData = async (isAgentUser: boolean = false, agentInfoData: any = null) => {
+  const loadWalletData = async (_isAgentUser: boolean = false, _agentInfoData: any = null) => {
     if (!effectiveUserId) {
       setLoading(false);
       return;
@@ -245,7 +247,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           if (profileData?.detected_currency) {
             nativeCurrency = profileData.detected_currency;
           }
-        } catch (e) {
+        } catch (_e) {
           console.warn('Could not detect user currency, defaulting to GNF');
         }
 
@@ -274,7 +276,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           toast.success('Wallet créé avec succès');
         }
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
@@ -499,7 +501,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     if (propUserId) {
       return true;
     }
-    
+
     const normalizedRole = (profile?.role || '').toString().toLowerCase().trim();
 
     if (!normalizedRole) {
@@ -553,10 +555,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     // Sinon, dépôt manuel (dev mode)
     setProcessing(true);
     console.log('🔄 Dépôt manuel en cours:', { amount, userId: effectiveUserId });
-    
+
     try {
       // Créer ou récupérer le wallet de l'utilisateur
-      let { data: walletData, error: walletError } = await supabase
+      // eslint-disable-next-line prefer-const
+      let { data: _walletData, error: walletError } = await supabase
         .from('wallets')
         .select('*')
         .eq('user_id', effectiveUserId)
@@ -565,27 +568,27 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (walletError && walletError.code === 'PGRST116') {
         // Wallet n'existe pas, initialiser via RPC
         console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
-        
+
         try {
           const { data: initResult, error: rpcError } = await supabase
             .rpc('initialize_user_wallet', { p_user_id: effectiveUserId });
-          
+
           if (rpcError) throw rpcError;
-          
+
           const result = initResult as any;
           if (!result?.success) {
             throw new Error('Échec initialisation wallet');
           }
-          
+
           // Recharger le wallet
           const { data: reloadedWallet, error: reloadError } = await supabase
             .from('wallets')
             .select('*')
             .eq('user_id', effectiveUserId)
             .single();
-          
+
           if (reloadError) throw reloadError;
-          walletData = reloadedWallet;
+          _walletData = reloadedWallet;
         } catch (initError) {
           console.error('❌ Erreur initialisation:', initError);
           toast.error('Impossible d\'initialiser le wallet');
@@ -598,7 +601,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       // Créer une transaction de dépôt
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      
+
       const backendResult = await depositToWallet(amount, 'Dépôt manuel sur le wallet', referenceNumber);
       if (!backendResult.success) {
         throw new Error(backendResult.error || 'Échec du dépôt wallet');
@@ -621,7 +624,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const handleMobileMoneyDeposit = async (amount: number) => {
     // Nettoyer et valider le numéro
     const cleanPhone = mobileMoneyPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
-    
+
     if (!cleanPhone || cleanPhone.length !== 9) {
       toast.error('Numéro de téléphone invalide', {
         description: `Entrez 9 chiffres (ex: 621234567). Vous avez entré: ${cleanPhone.length} chiffres`
@@ -635,7 +638,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     try {
       // ✅ ChapChapPay pour les depots Mobile Money
       const paymentMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
-      
+
       const { data, error } = await supabase.functions.invoke('chapchappay-pull', {
         body: {
           amount: amount,
@@ -747,12 +750,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
     setProcessing(true);
     console.log('🔄 Retrait en cours:', { amount, method: withdrawMethod, userId: effectiveUserId });
-    
+
     try {
       if (withdrawMethod === 'mobile_money') {
         // Appeler l'edge function Mobile Money Withdrawal
         const cleanPhone = withdrawPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
-        
+
         const { data, error } = await supabase.functions.invoke('mobile-money-withdrawal', {
           body: {
             amount,
@@ -765,7 +768,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait');
 
         console.log('✅ Retrait Mobile Money:', data);
-        
+
         const providerLabel = withdrawProvider === 'orange' ? 'Orange Money' : 'MTN MoMo';
         if (data.status === 'completed') {
           toast.success(`Retrait ${providerLabel} effectué !`, {
@@ -811,7 +814,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           description: `${formatPrice(data.netAmount || amount)} net (frais: ${formatPrice(data.withdrawalFee || 0)}). Votre demande sera examinée par notre équipe.`
         });
       }
-      
+
       setWithdrawAmount('');
       setWithdrawPhone('');
       setBankName('');
@@ -880,10 +883,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
 
     setProcessing(true);
-    
+
     try {
       console.log('🔍 Recherche du destinataire:', recipientId);
-      
+
       const searchTerm = recipientId.trim();
       const isEmail = searchTerm.includes('@');
       const isPhone = /^[+]?\d{6,}$/.test(searchTerm.replace(/[\s\-()]/g, ''));
@@ -902,12 +905,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           || resolved.data.phone
           || 'Utilisateur';
       }
-      
+
       // 1. Chercher dans profiles par email, téléphone ou ID
       let profileQuery = supabase
         .from('profiles')
         .select('id, email, first_name, last_name, custom_id, public_id, phone');
-      
+
       if (isEmail) {
         profileQuery = profileQuery.ilike('email', searchTerm);
       } else if (isPhone) {
@@ -916,7 +919,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       } else {
         profileQuery = profileQuery.or(`custom_id.eq.${searchTerm.toUpperCase()},public_id.eq.${searchTerm.toUpperCase()}`);
       }
-      
+
       const { data: profileData, error: profileError } = recipientUuid
         ? ({ data: null, error: null } as any)
         : await profileQuery.maybeSingle();
@@ -931,9 +934,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       if (!recipientUuid && profileData) {
         console.log('📋 Profil trouvé:', profileData);
         recipientUuid = profileData.id;
-        recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 
-                       profileData.custom_id || 
-                       profileData.public_id || 
+        recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() ||
+                       profileData.custom_id ||
+                       profileData.public_id ||
                        'Utilisateur';
       } else if (!recipientUuid && !isEmail && !isPhone) {
         // 2. Sinon, chercher dans agents_management (agent_code) - seulement pour les IDs
@@ -1002,14 +1005,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       // Vérifier si c'est un transfert vers un bureau
       const isBureauTransfer = recipientUuid.startsWith('bureau:');
-      
+
       if (!isBureauTransfer && recipientUuid === effectiveUserId) {
         toast.error('Vous ne pouvez pas transférer à vous-même');
         return;
       }
 
-      console.log('🔍 Prévisualisation pour:', { 
-        sender: effectiveUserId, 
+      console.log('🔍 Prévisualisation pour:', {
+        sender: effectiveUserId,
         receiver: recipientUuid,
         recipient_name: recipientName,
         amount,
@@ -1027,7 +1030,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           return;
         }
 
-        setTransferPreview({ 
+        setTransferPreview({
           success: true,
           amount: amount,
           fee_amount: feeAmount,
@@ -1072,6 +1075,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             fee_amount: data.fee_amount || 0,
             amount_after_fee: data.amount_after_fee || 0,
             rate_displayed: data.rate_displayed || 1,
+            official_rate: data.official_rate,
+            fx_margin: data.fx_margin,
+            rate_source: data.rate_source,
+            rate_fetched_at: data.rate_fetched_at,
+            rate_source_type: data.rate_source_type,
+            rate_source_url: data.rate_source_url,
+            rate_is_official: data.rate_is_official,
+            rate_is_stale: data.rate_is_stale,
             amount_received: data.amount_received || 0,
             currency_received: data.currency_received || 'GNF',
             is_international: true,
@@ -1089,7 +1100,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         }
 
         // ✅ Local = même devise → dialogue simple
-        setTransferPreview({ 
+        setTransferPreview({
           success: true,
           amount: data.amount_sent || amount,
           fee_percent: data.fee_percentage || 0,
@@ -1116,22 +1127,22 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const executeConfirmTransfer = async (pin: string) => {
-    console.log('🔵 handleConfirmTransfer appelé', { 
-      userId: user?.id, 
+    console.log('🔵 handleConfirmTransfer appelé', {
+      userId: user?.id,
       effectiveUserId,
       hasPreview: !!transferPreview,
-      preview: transferPreview 
+      preview: transferPreview
     });
-    
+
     if (!effectiveUserId || !transferPreview) {
       console.error('❌ Transfert annulé: données manquantes', { effectiveUserId, transferPreview });
       toast.error('Données de transfert manquantes');
       return false;
     }
-    
+
     setProcessing(true);
     setShowTransferPreview(false);
-    
+
     try {
       console.log('🔄 Exécution du transfert:', {
         sender: effectiveUserId,
@@ -1165,7 +1176,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         // 2. Mettre à jour le solde de l'expéditeur
         const { error: updateSenderError } = await supabase
           .from('wallets')
-          .update({ 
+          .update({
             balance: senderWallet.balance - transferPreview.total_debit,
             updated_at: new Date().toISOString()
           })
@@ -1186,7 +1197,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
         const { error: updateBureauError } = await supabase
           .from('bureau_wallets')
-          .update({ 
+          .update({
             balance: bureauWallet.balance + transferPreview.amount,
             updated_at: new Date().toISOString()
           })
@@ -1266,7 +1277,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         `✅ Transfert réussi vers ${transferPreview.recipient_name || 'le destinataire'}\n💸 Frais: ${transferPreview.fee_amount?.toLocaleString()} ${cur}\n📤 Total débité: ${transferPreview.total_debit?.toLocaleString()} ${cur}\n📥 Reçu: ${transferPreview.amount_received?.toLocaleString()} ${transferPreview.currency_received || cur}`,
         { duration: 6000 }
       );
-      
+
       setTransferAmount('');
       setRecipientId('');
       setTransferDescription('');
@@ -1365,14 +1376,26 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
-  const handlePinSetup = async ({ currentPin, pin, confirmPin }: { currentPin?: string; pin: string; confirmPin: string }) => {
+  const handlePinSetup = async ({
+    currentPin,
+    accountPassword,
+    pin,
+    confirmPin,
+  }: {
+    currentPin?: string;
+    accountPassword?: string;
+    pin: string;
+    confirmPin: string;
+  }) => {
     try {
       setPinLoading(true);
       setPinError(null);
 
       const response = pinSetupMode === 'change'
         ? await changeWalletPin(currentPin || '', pin, confirmPin)
-        : await setupWalletPin(pin, confirmPin);
+        : pinSetupMode === 'reset'
+          ? await resetWalletPin(accountPassword || '', pin, confirmPin)
+          : await setupWalletPin(pin, confirmPin);
 
       if (!response.success) {
         throw new Error(response.error || 'Erreur configuration code PIN');
@@ -1387,7 +1410,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         return;
       }
 
-      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
+      toast.success(
+        pinSetupMode === 'change'
+          ? 'Code PIN modifié'
+          : pinSetupMode === 'reset'
+            ? 'Code PIN réinitialisé'
+            : 'Code PIN activé'
+      );
       setPinAction(null);
     } catch (error: any) {
       setPinError(error?.message || 'Erreur configuration code PIN');
@@ -1556,7 +1585,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     PayPal
                   </TabsTrigger>
                 </TabsList>
-                
+
                 {/* Onglet Carte Bancaire - via Stripe */}
                 <TabsContent value="card" className="space-y-4 mt-4">
                   {effectiveUserId && wallet ? (
@@ -1575,7 +1604,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     </div>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
                   <div>
                     <Label htmlFor="mobile-provider">Opérateur</Label>
@@ -1599,7 +1628,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="mobile-phone">Numéro de téléphone</Label>
                     <div className="flex gap-2">
@@ -1619,7 +1648,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="mobile-amount">Montant (GNF)</Label>
                     <Input
@@ -1632,9 +1661,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     />
                     <p className="text-xs text-muted-foreground mt-1">Minimum: 1 000 GNF</p>
                   </div>
-                  
-                  <Button 
-                    onClick={handleDeposit} 
+
+                  <Button
+                    onClick={handleDeposit}
                     disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
@@ -1671,13 +1700,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Retirez des fonds de votre wallet vers votre compte
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
                 <p className="text-sm text-orange-800">
                   Solde disponible: <span className="font-bold">{formatWalletBalance(wallet?.balance || 0)}</span>
                 </p>
               </div>
-              
+
               <Tabs value={withdrawMethod} onValueChange={(v) => setWithdrawMethod(v as 'mobile_money' | 'bank' | 'paypal')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
@@ -1693,7 +1722,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     PayPal
                   </TabsTrigger>
                 </TabsList>
-                
+
                 {/* Retrait Mobile Money */}
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
                   <div>
@@ -1718,7 +1747,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="withdraw-phone">Numéro de téléphone</Label>
                     <div className="flex gap-2">
@@ -1738,7 +1767,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
                   </div>
-                  
+
                   <div>
                     <Label>Montants rapides</Label>
                     <div className="grid grid-cols-3 gap-2 mt-1">
@@ -1757,7 +1786,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="withdraw-amount-mm">Montant personnalisé (GNF)</Label>
                     <Input
@@ -1771,21 +1800,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     />
                     <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF</p>
                   </div>
-                  
-                  <Button 
-                    onClick={handleWithdraw} 
+
+                  <Button
+                    onClick={handleWithdraw}
                     disabled={processing || !withdrawAmount || !withdrawPhone || withdrawPhone.length !== 9 || parseFloat(withdrawAmount) < 5000}
                     className="w-full bg-orange-600 hover:bg-orange-700"
                   >
                     {processing ? 'Traitement...' : `Retirer ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
                   </Button>
-                  
+
                   <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
                     <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
                     <p className="text-xs text-blue-700">Le retrait sera traité sous 24-48h</p>
                   </div>
                 </TabsContent>
-                
+
                 {/* Retrait Virement bancaire */}
                 <TabsContent value="bank" className="space-y-4 mt-4">
                   <div className="p-4 rounded-lg border bg-muted/50">
@@ -1809,7 +1838,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       onChange={(e) => setBankAccountHolder(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="bank-name">Nom de la banque</Label>
                     <Input
@@ -1819,7 +1848,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       onChange={(e) => setBankName(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="bank-iban">IBAN / Numéro de compte</Label>
                     <Input
@@ -1829,7 +1858,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       onChange={(e) => setBankIban(e.target.value)}
                     />
                   </div>
-                  
+
                   <div>
                     <Label>Montants rapides</Label>
                     <div className="grid grid-cols-3 gap-2 mt-1">
@@ -1848,7 +1877,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="withdraw-amount-bank">Montant à retirer (GNF)</Label>
                     <Input
@@ -1862,15 +1891,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     />
                     <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF · Frais dynamiques (configurable par l'administration)</p>
                   </div>
-                  
-                  <Button 
-                    onClick={handleWithdraw} 
+
+                  <Button
+                    onClick={handleWithdraw}
                     disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) < 50000 || !bankName || !bankIban || !bankAccountHolder}
                     className="w-full"
                   >
                     {processing ? 'Traitement...' : `Demander le retrait de ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
                   </Button>
-                  
+
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
                     <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <p className="text-xs text-muted-foreground">
@@ -2007,8 +2036,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     onChange={(e) => setTransferDescription(e.target.value)}
                   />
                 </div>
-                <Button 
-                  onClick={handlePreviewTransfer} 
+                <Button
+                  onClick={handlePreviewTransfer}
                   disabled={processing || !transferAmount || !recipientId || !transferDescription}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
@@ -2061,7 +2090,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount_received || 0)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 bg-muted border border-border rounded-lg">
                     <p className="text-sm">
                       <strong>Solde actuel:</strong> {formatWalletBalance(transferPreview?.current_balance || 0)}
@@ -2122,6 +2151,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           loading={pinLoading}
           error={pinError}
           onConfirm={handlePinConfirm}
+          onForgotPin={() => {
+            setPinPromptOpen(false);
+            setPinError(null);
+            setPinSetupMode('reset');
+            setPinSetupOpen(true);
+          }}
         />
 
         <WalletPinSetupDialog
@@ -2139,6 +2174,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           loading={pinLoading}
           error={pinError}
           onSubmit={handlePinSetup}
+          onForgotPin={() => {
+            setPinError(null);
+            setPinSetupMode('reset');
+          }}
         />
 
         {/* Historique des transactions - optimisé mobile */}
@@ -2147,7 +2186,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             <History className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
             <h3 className="font-semibold text-sm sm:text-base">Historique récent</h3>
           </div>
-          
+
           {transactions.length === 0 ? (
             <div className="text-center py-6 sm:py-8 text-muted-foreground">
               <History className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
@@ -2166,7 +2205,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       {(tx.sender_id !== effectiveUserId || tx.receiver_id !== effectiveUserId) && (
                         <>
                           <span className="text-foreground">
-                            {tx.sender_id === effectiveUserId 
+                            {tx.sender_id === effectiveUserId
                               ? (tx.receiver_name || 'Utilisateur')
                               : (tx.sender_name || 'Utilisateur')}
                           </span>
@@ -2208,15 +2247,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </div>
                 </div>
               ))}
-              
+
               {transactions.length > 4 && (
                 <Button
                   variant="ghost"
                   className="w-full mt-1 sm:mt-2 text-xs sm:text-sm h-8 sm:h-10"
                   onClick={() => setShowAllTransactions(!showAllTransactions)}
                 >
-                  {showAllTransactions 
-                    ? 'Afficher moins' 
+                  {showAllTransactions
+                    ? 'Afficher moins'
                     : `Voir tout (${transactions.length - 4} de plus)`}
                 </Button>
               )}
@@ -2225,7 +2264,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         </div>
       </CardContent>
     </Card>
-    
+
     {/* PayPal deposit tab content is handled inline above */}
   </>
   );

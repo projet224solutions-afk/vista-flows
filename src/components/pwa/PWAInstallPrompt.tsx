@@ -44,7 +44,7 @@ function PWAInstallPromptInner() {
 
   const handleInstall = async () => {
     const installed = await promptInstall();
-    
+
     if (installed) {
       toast.success('🎉 Application installée avec succès!', {
         description: 'Vous pouvez maintenant utiliser 224Solutions depuis votre écran d\'accueil'
@@ -61,7 +61,7 @@ function PWAInstallPromptInner() {
     setIsVisible(false);
     setIsDismissed(true);
     localStorage.setItem('pwa-install-dismissed', String(Date.now()));
-    
+
     toast.info('Invitation masquée', {
       description: 'Vous pourrez installer l\'application depuis les paramètres de votre navigateur'
     });
@@ -120,7 +120,7 @@ function PWAInstallPromptInner() {
 
               {/* Boutons */}
               <div className="flex gap-2 mt-3">
-                <Button 
+                <Button
                   onClick={handleInstall}
                   className="flex-1 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
                   size="sm"
@@ -128,7 +128,7 @@ function PWAInstallPromptInner() {
                   <Download className="w-4 h-4 mr-2" />
                   Installer maintenant
                 </Button>
-                <Button 
+                <Button
                   onClick={handleDismiss}
                   variant="ghost"
                   size="sm"

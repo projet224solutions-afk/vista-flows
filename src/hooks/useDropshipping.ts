@@ -50,7 +50,7 @@ export function useDropshipping(vendorId?: string) {
   // Charger les produits dropshipping du vendeur
   const loadProducts = useCallback(async () => {
     if (!vendorId) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('dropship_products')
@@ -78,7 +78,7 @@ export function useDropshipping(vendorId?: string) {
   // Charger les commandes dropshipping
   const loadOrders = useCallback(async () => {
     if (!vendorId) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('dropship_orders')
@@ -107,7 +107,7 @@ export function useDropshipping(vendorId?: string) {
   // Charger les paramètres dropshipping
   const loadSettings = useCallback(async () => {
     if (!vendorId) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('dropship_settings')
@@ -144,7 +144,7 @@ export function useDropshipping(vendorId?: string) {
       });
       return;
     }
-    
+
     try {
       const [productsRes, ordersRes] = await Promise.all([
         supabase
@@ -176,15 +176,15 @@ export function useDropshipping(vendorId?: string) {
       const ordersList = ordersRes.data || [];
 
       const activeProducts = productsList.filter(p => p.is_active).length;
-      const pendingOrders = ordersList.filter(o => 
+      const pendingOrders = ordersList.filter(o =>
         !['completed', 'cancelled', 'refunded'].includes(o.status)
       ).length;
       const completedOrders = ordersList.filter(o => o.status === 'completed').length;
-      
+
       const totalRevenue = ordersList
         .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + (o.customer_total || 0), 0);
-      
+
       const totalProfit = ordersList
         .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + (o.profit_amount || 0), 0);
@@ -238,7 +238,7 @@ export function useDropshipping(vendorId?: string) {
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Produit ajouté au catalogue dropshipping');
       await loadProducts();
       return data;
@@ -261,7 +261,7 @@ export function useDropshipping(vendorId?: string) {
         .eq('id', productId);
 
       if (error) throw error;
-      
+
       toast.success('Produit mis à jour');
       await loadProducts();
       return true;
@@ -284,7 +284,7 @@ export function useDropshipping(vendorId?: string) {
         .eq('id', productId);
 
       if (error) throw error;
-      
+
       toast.success('Produit supprimé');
       await loadProducts();
       return true;
@@ -379,7 +379,7 @@ export function useDropshipping(vendorId?: string) {
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       toast.success('Statut de commande mis à jour');
       await loadOrders();
       return true;
@@ -397,8 +397,8 @@ export function useDropshipping(vendorId?: string) {
     setLoading(true);
     try {
       // Simulation de synchronisation (à connecter avec API fournisseur réel)
-      const startTime = Date.now();
-      
+      const _startTime = Date.now();
+
       // Log de synchronisation
       await supabase
         .from('dropship_sync_logs')
@@ -447,7 +447,7 @@ export function useDropshipping(vendorId?: string) {
         });
 
       if (error) throw error;
-      
+
       toast.success('Paramètres mis à jour');
       await loadSettings();
       return true;
@@ -479,7 +479,7 @@ export function useDropshipping(vendorId?: string) {
     orders,
     settings,
     stats,
-    
+
     // Actions
     loadSuppliers,
     loadProducts,

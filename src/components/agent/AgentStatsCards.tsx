@@ -93,7 +93,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {statCards.map((stat, index) => (
-        <Card 
+        <Card
           key={index}
           className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
         >
@@ -114,7 +114,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
                 </div>
               )}
             </div>
-            
+
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">{stat.title}</p>
               <div className="flex items-baseline gap-2">

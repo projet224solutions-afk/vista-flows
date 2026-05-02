@@ -1,7 +1,7 @@
 ﻿/**
- * DASHBOARD VENDEUR DIGITAL - Interface d├®di├®e produits num├®riques
- * Compl├¿tement s├®par├® du dashboard vendeur e-commerce classique
- * Note: CommunicationWidget retir├® car d├®j├á rendu null et ├®vite doublons potentiels
+ * DASHBOARD VENDEUR DIGITAL - Interface dédiée produits numériques
+ * Complètement séparé du dashboard vendeur e-commerce classique
+ * Note: CommunicationWidget retiré car déjà rendu null et évite doublons potentiels
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -17,13 +17,16 @@ import { PageLoader } from '@/components/ui/GlobalLoader';
 import { DataLoadTimeoutState } from '@/components/ui/DataLoadTimeoutState';
 import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { shouldAssumeOffline } from '@/lib/networkHealth';
 import { supabase } from '@/integrations/supabase/client';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function DigitalVendorDashboard() {
   const { user, profile, signOut, loading: authLoading, profileLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   useRoleRedirect();
 
@@ -89,11 +92,12 @@ export default function DigitalVendorDashboard() {
     if (profile.role === 'vendeur' && vendorBusinessType && vendorBusinessType !== 'digital') {
       setRedirectingToStandardDashboard(true);
       toast({
-        title: 'Compte vendeur classique détecté',
-        description: 'Redirection vers le dashboard vendeur standard.',
+        title: t('vendor.standardVendorDetected'),
+        description: t('vendor.redirectingToStandardDashboard'),
       });
       navigate('/vendeur', { replace: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     user?.id,
     profile?.role,
@@ -107,40 +111,43 @@ export default function DigitalVendorDashboard() {
   const handleSignOut = useCallback(async () => {
     try {
       await signOut();
-      toast({ title: 'Déconnexion réussie' });
+      toast({ title: t('common.signOutSuccess') });
       navigate('/');
     } catch (err) {
       console.error('Erreur déconnexion:', err);
-      toast({ title: 'Erreur', description: 'Erreur lors de la déconnexion', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('common.signOutError'), variant: 'destructive' });
     }
-  }, [signOut, toast, navigate]);
+  }, [signOut, toast, navigate, t]);
 
   const isLoading = authLoading || profileLoading || (!!user && vendorLoading);
   const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
-  const { isOnline } = useOnlineStatus();
+  const { connectivity, checkConnection } = useOnlineStatus();
+  const confirmedOffline = !isLoading && !!user && connectivity === 'offline' && shouldAssumeOffline();
 
   if (redirectingToStandardDashboard) {
-    return <PageLoader text="Redirection vers le dashboard vendeur..." />;
+    return <PageLoader text={t('vendor.redirectingToStandardDashboard')} />;
   }
 
-  if (!isOnline && typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (confirmedOffline) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#eef3fb] px-6">
         <div className="max-w-sm w-full rounded-[28px] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.12)] p-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#04439e]/10">
             <WifiOff className="h-8 w-8 text-[#04439e]" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900">Connexion requise</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t('common.connectionRequired')}</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Le tableau de bord vendeur digital nécessite une connexion internet active.
-            Les produits numériques et les transactions ne sont pas accessibles hors ligne.
+            {t('vendor.digitalOfflineDesc')}
           </p>
           <Button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              void checkConnection();
+              window.location.reload();
+            }}
             className="mt-6 w-full rounded-2xl bg-[#04439e] font-semibold text-white hover:bg-[#0536a8]"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            Réessayer
+            {t('common.retry')}
           </Button>
         </div>
       </div>
@@ -150,8 +157,8 @@ export default function DigitalVendorDashboard() {
   if (loadingTimedOut) {
     return (
       <DataLoadTimeoutState
-        title="Impossible de charger le dashboard vendeur digital"
-        description="Le chargement est trop long. Réessayez ou rechargez l'application."
+        title={t('vendor.digitalDashboardLoadFailed')}
+        description={t('vendor.loadingTooLong')}
         onRetry={resetTimeout}
         onReload={() => window.location.reload()}
       />
@@ -159,21 +166,21 @@ export default function DigitalVendorDashboard() {
   }
 
   if (isLoading) {
-    return <PageLoader text="Chargement des données..." />;
+    return <PageLoader text={t('common.loadingData')} />;
   }
 
   if (!user) {
     return (
       <DataLoadTimeoutState
-        title="Session non disponible"
-        description="Impossible de restaurer la session utilisateur."
+        title={t('auth.sessionUnavailable')}
+        description={t('auth.sessionRestoreFailed')}
         onRetry={resetTimeout}
         onReload={() => window.location.reload()}
       />
     );
   }
 
-  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Vendeur Digital';
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || t('vendor.digitalVendor');
   const sellerCode = (profile as any)?.public_id || (profile as any)?.custom_id || vendorId || null;
 
   return (
@@ -187,7 +194,7 @@ export default function DigitalVendorDashboard() {
           <main
             className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7"
             role="main"
-            aria-label="Dashboard vendeur digital"
+            aria-label={t('vendor.digitalDashboard')}
           >
             <div className="mx-auto w-full max-w-[1600px] min-w-0">
               <DigitalVendorRoutes vendorId={vendorId} />

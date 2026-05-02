@@ -4,13 +4,13 @@
  */
 
 import { useState, useCallback } from "react";
-import { 
-  chapChapPayService, 
-  CCPEcommerceRequest, 
-  CCPPullRequest, 
+import {
+  chapChapPayService,
+  CCPEcommerceRequest,
+  CCPPullRequest,
   CCPPushRequest,
   CCPPaymentResult,
-  CCPStatusResult 
+  CCPStatusResult
 } from "@/services/payment/ChapChapPayService";
 import { toast } from "sonner";
 
@@ -30,20 +30,20 @@ export function useChapChapPay() {
   ): Promise<CCPPaymentResult> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await chapChapPayService.createEcommercePayment(request);
-      
+
       if (!result.success) {
         setError(result.error || "Payment failed");
         toast.error(result.error || "Échec du paiement");
         return result;
       }
-      
+
       if (options?.autoRedirect && result.paymentUrl) {
         window.location.href = result.paymentUrl;
       }
-      
+
       return result;
     } finally {
       setIsLoading(false);
@@ -58,22 +58,22 @@ export function useChapChapPay() {
   ): Promise<CCPPaymentResult> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await chapChapPayService.initiatePullPayment(request);
-      
+
       if (!result.success) {
         setError(result.error || "Payment failed");
         toast.error(result.error || "Échec du paiement");
         return result;
       }
-      
+
       if (result.requiresOtp) {
         toast.info("Un code OTP a été envoyé sur votre téléphone");
       } else {
         toast.success("Paiement initié avec succès");
       }
-      
+
       return result;
     } finally {
       setIsLoading(false);
@@ -88,16 +88,16 @@ export function useChapChapPay() {
   ): Promise<CCPPaymentResult> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await chapChapPayService.initiatePushPayment(request);
-      
+
       if (!result.success) {
         setError(result.error || "Transfer failed");
         toast.error(result.error || "Échec du transfert");
         return result;
       }
-      
+
       toast.success("Transfert effectué avec succès");
       return result;
     } finally {
@@ -114,14 +114,14 @@ export function useChapChapPay() {
   ): Promise<CCPStatusResult> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await chapChapPayService.checkStatus(transactionId, orderId);
-      
+
       if (!result.success) {
         setError(result.error || "Status check failed");
       }
-      
+
       return result;
     } finally {
       setIsLoading(false);

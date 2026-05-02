@@ -1,19 +1,19 @@
 ﻿/**
- * ­ƒôÑ PAGE DE T├ëL├ëCHARGEMENT / ACC├êS PRODUIT NUM├ëRIQUE
- * G├¿re les achats uniques ET les abonnements actifs
- * Inspir├® de Gumroad / Teachable / Payhip
+ * 📥 PAGE DE TÉLÉCHARGEMENT / ACCÈS PRODUIT NUMÉRIQUE
+ * Gère les achats uniques ET les abonnements actifs
+ * Inspiré de Gumroad / Teachable / Payhip
  */
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Download, CheckCircle, FileText, Image, Music, Video, 
+import {
+  Download, CheckCircle, FileText, Image, Music, Video,
   Package, ArrowLeft, ExternalLink, ShoppingBag, AlertCircle,
   Loader2, RefreshCw, Calendar, Shield, Infinity, Clock
 } from 'lucide-react';
@@ -75,8 +75,8 @@ function getFileName(url: string): string {
   }
 }
 
-function getFileSize(url: string): string {
-  // Placeholder ÔÇö in production, store file sizes in DB
+function _getFileSize(_url: string): string {
+  // Placeholder - in production, store file sizes in DB
   return '';
 }
 
@@ -94,6 +94,7 @@ export default function DigitalPurchaseDownload() {
     if (user?.id && productId) {
       loadAccessAndProduct();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, productId]);
 
   // Auto-hide success banner after 8s
@@ -166,7 +167,7 @@ export default function DigitalPurchaseDownload() {
           setTimeout(() => loadAccessAndProduct(retryCount + 1), 1500);
           return;
         }
-        toast.error('Achat non trouv├® ou acc├¿s non accord├®');
+        toast.error('Achat non trouvé ou accès non accordé');
         navigate('/marketplace');
         return;
       }
@@ -177,7 +178,7 @@ export default function DigitalPurchaseDownload() {
       const { data: productData, error: productError } = await supabase
         .from('digital_products')
         .select(`
-          id, title, description, images, file_urls, file_type, video_url, price, currency, 
+          id, title, description, images, file_urls, file_type, video_url, price, currency,
           pricing_type, subscription_interval, merchant_id, vendor_id,
           vendors:vendor_id(business_name)
         `)
@@ -195,7 +196,7 @@ export default function DigitalPurchaseDownload() {
         navigate('/marketplace');
         return;
       }
-      
+
       const vRaw = (productData as any).vendors;
       setProduct({
         ...productData,
@@ -212,12 +213,12 @@ export default function DigitalPurchaseDownload() {
 
   const handleDownload = async (fileUrl: string) => {
     if (!access || !access.access_granted) {
-      toast.error('Acc├¿s non autoris├®');
+      toast.error('Accès non autorisé');
       return;
     }
 
     if (access.type === 'purchase' && access.max_downloads && access.download_count >= access.max_downloads) {
-      toast.error(`Limite de t├®l├®chargement atteinte (${access.max_downloads} max)`);
+      toast.error(`Limite de téléchargement atteinte (${access.max_downloads} max)`);
       return;
     }
 
@@ -234,10 +235,10 @@ export default function DigitalPurchaseDownload() {
       }
 
       window.open(fileUrl, '_blank');
-      toast.success('T├®l├®chargement lanc├® !');
+      toast.success('Téléchargement lancé !');
     } catch (error) {
-      console.error('Erreur t├®l├®chargement:', error);
-      toast.error('Erreur lors du t├®l├®chargement');
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
     } finally {
       setDownloading(null);
     }
@@ -247,7 +248,7 @@ export default function DigitalPurchaseDownload() {
     const explicitFiles = Array.isArray(product?.file_urls) ? product.file_urls.filter(Boolean) : [];
     if (explicitFiles.length > 0) return explicitFiles;
 
-    // Compatibilit├® r├®troactive: produits cr├®├®s avec vid├®o uniquement
+    // Compatibilite retroactive: produits crees avec video uniquement
     const fallbackVideoUrl = (product as any)?.video_url;
     return fallbackVideoUrl ? [fallbackVideoUrl] : [];
   })();
@@ -275,9 +276,9 @@ export default function DigitalPurchaseDownload() {
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
-            <h2 className="text-xl font-semibold mb-2">Achat non trouv├®</h2>
+            <h2 className="text-xl font-semibold mb-2">Achat non trouvé</h2>
             <p className="text-muted-foreground mb-4">
-              Vous n'avez pas acc├¿s ├á ce produit ou l'achat n'a pas ├®t├® finalis├®.
+              Vous n'avez pas accès à ce produit ou l'achat n'a pas été finalisé.
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => navigate('/marketplace')}>
@@ -298,11 +299,11 @@ export default function DigitalPurchaseDownload() {
   const fileUrls = resolvedFileUrls;
   const hasFiles = fileUrls.length > 0;
   const isSubscription = access.type === 'subscription';
-  const daysRemaining = access.current_period_end 
+  const daysRemaining = access.current_period_end
     ? Math.max(0, Math.ceil((new Date(access.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
-  const downloadProgress = access.max_downloads 
-    ? ((access.download_count || 0) / access.max_downloads) * 100 
+  const downloadProgress = access.max_downloads
+    ? ((access.download_count || 0) / access.max_downloads) * 100
     : 0;
 
   return (
@@ -315,12 +316,12 @@ export default function DigitalPurchaseDownload() {
             <CardContent className="p-5 text-center">
               <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
               <h1 className="text-xl font-bold text-foreground mb-1">
-                {isSubscription ? 'Abonnement activ├® !' : 'Achat r├®ussi !'}
+                {isSubscription ? 'Abonnement activé !' : 'Achat réussi !'}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {isSubscription 
+                {isSubscription
                   ? `Votre abonnement ${access.billing_cycle === 'yearly' ? 'annuel' : 'mensuel'} est maintenant actif.`
-                  : <>Votre paiement de <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> a ├®t├® confirm├®.</>
+                  : <>Votre paiement de <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> a été confirmé.</>
                 }
               </p>
             </CardContent>
@@ -342,20 +343,20 @@ export default function DigitalPurchaseDownload() {
                     {isSubscription ? 'Abonnement actif' : 'Achat unique'}
                   </span>
                   <Badge variant="outline" className={
-                    isSubscription 
-                      ? 'bg-primary/10 text-primary border-primary/20 text-xs' 
+                    isSubscription
+                      ? 'bg-primary/10 text-primary border-primary/20 text-xs'
                       : 'bg-green-500/10 text-green-600 border-green-500/20 text-xs'
                   }>
-                    {isSubscription 
+                    {isSubscription
                       ? (access.billing_cycle === 'yearly' ? 'Annuel' : 'Mensuel')
-                      : 'Compl├®t├®'
+                      : 'Complété'
                     }
                   </Badge>
                 </div>
                 {isSubscription && daysRemaining !== null ? (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     <Calendar className="w-3 h-3 inline mr-1" />
-                    {daysRemaining > 0 
+                    {daysRemaining > 0
                       ? `${daysRemaining} jour${daysRemaining > 1 ? 's' : ''} restant${daysRemaining > 1 ? 's' : ''}`
                       : 'Renouvellement imminent'
                     }
@@ -363,7 +364,7 @@ export default function DigitalPurchaseDownload() {
                 ) : access.max_downloads ? (
                   <div className="mt-1">
                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>{access.download_count || 0} / {access.max_downloads} t├®l├®chargements</span>
+                      <span>{access.download_count || 0} / {access.max_downloads} téléchargements</span>
                       <span>{Math.round(downloadProgress)}%</span>
                     </div>
                     <Progress value={downloadProgress} className="h-1.5" />
@@ -371,7 +372,7 @@ export default function DigitalPurchaseDownload() {
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     <Infinity className="w-3 h-3 inline mr-1" />
-                    T├®l├®chargements illimit├®s
+                    Téléchargements illimités
                   </p>
                 )}
               </div>
@@ -384,9 +385,9 @@ export default function DigitalPurchaseDownload() {
           <CardContent className="p-4">
             <div className="flex gap-4">
               {product.images?.[0] ? (
-                <img 
-                  src={product.images[0]} 
-                  alt={product.title} 
+                <img
+                  src={product.images[0]}
+                  alt={product.title}
                   className="w-20 h-20 rounded-lg object-cover shrink-0"
                 />
               ) : (
@@ -421,7 +422,7 @@ export default function DigitalPurchaseDownload() {
               {hasFiles && fileUrls.length > 1 && (
                 <Button size="sm" variant="outline" onClick={handleDownloadAll} className="text-xs">
                   <Download className="w-3 h-3 mr-1" />
-                  Tout t├®l├®charger
+                  Tout télécharger
                 </Button>
               )}
             </div>
@@ -429,7 +430,7 @@ export default function DigitalPurchaseDownload() {
           <CardContent className="space-y-2 pt-0">
             {hasFiles ? (
               fileUrls.map((url, index) => (
-                <div 
+                <div
                   key={index}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors group"
                 >
@@ -446,7 +447,7 @@ export default function DigitalPurchaseDownload() {
                     size="sm"
                     onClick={() => handleDownload(url)}
                     disabled={
-                      downloading === url || 
+                      downloading === url ||
                       (!isSubscription && !!access.max_downloads && access.download_count >= access.max_downloads)
                     }
                     className="shrink-0 ml-3"
@@ -456,7 +457,7 @@ export default function DigitalPurchaseDownload() {
                     ) : (
                       <>
                         <Download className="w-4 h-4 mr-1" />
-                        T├®l├®charger
+                        Télécharger
                       </>
                     )}
                   </Button>
@@ -465,19 +466,19 @@ export default function DigitalPurchaseDownload() {
             ) : (
               <div className="text-center py-10 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-foreground/70">Contenu en pr├®paration</p>
+                <p className="font-medium text-foreground/70">Contenu en préparation</p>
                 <p className="text-xs mt-1 max-w-xs mx-auto">
-                  Le vendeur n'a pas encore ajout├® les fichiers t├®l├®chargeables. 
-                  Ils seront disponibles ici d├¿s qu'ils seront mis en ligne.
+                  Le vendeur n'a pas encore ajouté les fichiers téléchargeables.
+                  Ils seront disponibles ici dès qu'ils seront mis en ligne.
                 </p>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="mt-3 text-xs"
                   onClick={() => loadAccessAndProduct()}
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
-                  V├®rifier ├á nouveau
+                  Vérifier à nouveau
                 </Button>
               </div>
             )}

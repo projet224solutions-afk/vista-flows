@@ -48,7 +48,7 @@ export function useHasDigitalProducts(): UseHasDigitalProductsResult {
         }
 
         const { count: productCount, error } = await query;
-        
+
         if (error) throw error;
 
         setCount(productCount || 0);

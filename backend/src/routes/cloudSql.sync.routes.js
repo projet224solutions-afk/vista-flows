@@ -16,7 +16,7 @@ const router = express.Router();
 function verifySyncApiKey(req, res, next) {
   const apiKey = req.headers['x-sync-api-key'];
   const expectedKey = process.env.CLOUD_SQL_SYNC_API_KEY;
-  
+
   if (!expectedKey || apiKey !== expectedKey) {
     return res.status(401).json({ error: 'Clé API de synchronisation invalide' });
   }
@@ -74,8 +74,8 @@ router.post('/sync-order', async (req, res) => {
     const result = await withTransaction(async (client) => {
       // Upsert la commande
       const orderResult = await client.query(
-        `INSERT INTO orders (supabase_order_id, customer_id, vendor_id, order_number, status, 
-         payment_status, payment_method, subtotal, tax_amount, shipping_amount, 
+        `INSERT INTO orders (supabase_order_id, customer_id, vendor_id, order_number, status,
+         payment_status, payment_method, subtotal, tax_amount, shipping_amount,
          discount_amount, total_amount, shipping_address, notes, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          ON CONFLICT (supabase_order_id)

@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MessageSquare, User, Calendar, Bot } from 'lucide-react';
+import { Star, MessageSquare, User, Calendar, _Bot } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -53,6 +53,7 @@ export default function VendorRatingsPanel() {
     if (user?.id) {
       loadRatings();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadRatings = async () => {
@@ -87,7 +88,7 @@ export default function VendorRatingsPanel() {
           .select('first_name, last_name')
           .eq('id', rating.customer_id)
           .maybeSingle();
-        
+
         return {
           ...rating,
           vendor_response: rating.vendor_response || null,

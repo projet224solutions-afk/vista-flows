@@ -1,6 +1,6 @@
 /**
  * ❤️ HEALTH CHECK - Phase 6 Enhanced
- * 
+ *
  * Liveness, readiness, and deep health probes.
  * Includes Redis, job queue, and metrics status.
  */

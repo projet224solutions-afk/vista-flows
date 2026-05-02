@@ -90,7 +90,7 @@ export function NearbyServicesSection({
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200/60">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

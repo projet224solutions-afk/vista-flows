@@ -255,7 +255,7 @@ export class DisputeService {
    */
   static async checkAutoEscalation() {
     try {
-      const { data, error } = await supabase.rpc('auto_escalate_disputes');
+      const { _data, error } = await supabase.rpc('auto_escalate_disputes');
 
       if (error) throw error;
 

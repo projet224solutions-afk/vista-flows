@@ -47,26 +47,26 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Adresse IP</label>
-                <Input 
-                  value={newBlock.ip} 
-                  onChange={(e) => setNewBlock({ ...newBlock, ip: e.target.value })} 
+                <Input
+                  value={newBlock.ip}
+                  onChange={(e) => setNewBlock({ ...newBlock, ip: e.target.value })}
                   placeholder="192.168.1.1"
                 />
               </div>
               <div>
                 <label className="text-sm font-medium">Raison du blocage</label>
-                <Textarea 
-                  value={newBlock.reason} 
-                  onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })} 
+                <Textarea
+                  value={newBlock.reason}
+                  onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })}
                   placeholder="Tentatives de brute force détectées"
                 />
               </div>
               <div>
                 <label className="text-sm font-medium">Durée (heures)</label>
-                <Input 
-                  type="number" 
-                  value={newBlock.hours} 
-                  onChange={(e) => setNewBlock({ ...newBlock, hours: parseInt(e.target.value) })} 
+                <Input
+                  type="number"
+                  value={newBlock.hours}
+                  onChange={(e) => setNewBlock({ ...newBlock, hours: parseInt(e.target.value) })}
                 />
               </div>
               <Button onClick={handleBlock} className="w-full">

@@ -68,7 +68,7 @@ export function useReverseGeocode(address: any): AddressResult {
         }
       } catch (err) {
         console.error('Error geocoding address:', err);
-        
+
         // Fallback sur l'adresse originale en cas d'erreur - pas besoin d'afficher l'erreur à l'utilisateur
         const fallbackAddress = typeof address === 'object' && address !== null
           ? `${address.address || address.street || 'Adresse non spécifiée'}, ${address.city || 'Conakry'}, ${address.country || 'Guinée'}`

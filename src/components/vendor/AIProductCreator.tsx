@@ -1,6 +1,6 @@
 /**
  * 🤖 COMPOSANT: CRÉATEUR DE PRODUIT AVEC IA
- * 
+ *
  * Interface utilisateur pour créer des produits avec assistance IA complète
  * Upload vers Google Cloud Storage
  */
@@ -13,11 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { 
-  Zap, 
-  Wand2, 
-  Image as ImageIcon, 
-  Check, 
+import {
+  Zap,
+  Wand2,
+  Image as ImageIcon,
+  Check,
   Loader2,
   Tag,
   FileText,
@@ -33,11 +33,11 @@ export function AIProductCreator() {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [price, setPrice] = useState("");
-  
+
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ProductAnalysis | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // Hook pour upload vers GCS
   const { uploadFile: uploadToGCS } = useStorageUpload();
 
@@ -52,7 +52,7 @@ export function AIProductCreator() {
 
     try {
       setAnalyzing(true);
-      
+
       toast.info("🤖 Analyse IA en cours...", {
         description: "L'IA analyse votre produit"
       });
@@ -121,12 +121,12 @@ export function AIProductCreator() {
         // Télécharger l'image depuis URL
         const imageResponse = await fetch(analysis.generatedImageUrl);
         const imageBlob = await imageResponse.blob();
-        
+
         const fileName = `${product.id}_ai_generated.png`;
         const imageFile = new File([imageBlob], fileName, { type: 'image/png' });
-        
+
         console.log('[AIProductCreator] Uploading AI-generated image to GCS...');
-        
+
         const uploadResult = await uploadToGCS(imageFile, {
           folder: 'products',
           subfolder: vendor.id,
@@ -134,7 +134,7 @@ export function AIProductCreator() {
 
         if (uploadResult.success && uploadResult.publicUrl) {
           console.log(`[AIProductCreator] ✅ Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
-          
+
           // Mettre à jour le produit avec l'image
           await supabase
             .from('products')

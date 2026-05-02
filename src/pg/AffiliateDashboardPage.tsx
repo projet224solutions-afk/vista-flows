@@ -26,7 +26,7 @@ export default function AffiliateDashboardPage() {
   const copyLink = () => {
     if (affiliateLink) {
       navigator.clipboard.writeText(affiliateLink);
-      toast.success('Lien affili├® copi├® !');
+      toast.success('Lien affilié copié !');
     }
   };
 
@@ -64,18 +64,18 @@ export default function AffiliateDashboardPage() {
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Espace Affili├®</h1>
+                <h1 className="text-2xl font-bold">Espace Affilié</h1>
                 <Badge variant="secondary" className="text-xs">
-                  {affiliateStatus === 'approved' ? 'Ô£à Actif' : affiliateStatus}
+                  {affiliateStatus === 'approved' ? 'Actif' : affiliateStatus}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Bienvenue {profile?.first_name || 'Affili├®'} ÔÇö Code : <span className="font-mono font-semibold">{affiliateCode}</span>
+                Bienvenue {profile?.first_name || 'Affilié'} — Code : <span className="font-mono font-semibold">{affiliateCode}</span>
               </p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate('/client')}>
-            ÔåÉ Compte client
+            Compte client
           </Button>
         </div>
 
@@ -111,17 +111,17 @@ export default function AffiliateDashboardPage() {
             <AffiliateDashboard onViewServices={() => navigate('/services-proximite')} />
           </TabsContent>
 
-          {/* Produits ├á promouvoir */}
+          {/* Produits à promouvoir */}
           <TabsContent value="products">
             <div className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5 text-primary" />
-                    Produits ├á promouvoir
+                    Produits à promouvoir
                   </CardTitle>
                   <CardDescription>
-                    Parcourez le catalogue et g├®n├®rez des liens d'affiliation pour les produits que vous souhaitez recommander.
+                    Parcourez le catalogue et générez des liens d'affiliation pour les produits que vous souhaitez recommander.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -129,30 +129,30 @@ export default function AffiliateDashboardPage() {
                     <Button onClick={() => navigate('/marketplace')} className="h-auto py-4 flex-col gap-1">
                       <Package className="h-5 w-5" />
                       <span>Produits physiques</span>
-                      <span className="text-xs opacity-70">Marketplace compl├¿te</span>
+                      <span className="text-xs opacity-70">Marketplace complète</span>
                     </Button>
                     <Button variant="outline" onClick={() => navigate('/digital-products')} className="h-auto py-4 flex-col gap-1">
                       <Megaphone className="h-5 w-5" />
-                      <span>Produits num├®riques</span>
+                      <span>Produits numériques</span>
                       <span className="text-xs opacity-70">Modules & services digitaux</span>
                     </Button>
                   </div>
                   <Button variant="outline" className="w-full" onClick={() => navigate('/services-proximite')}>
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Services de proximit├®
+                    Services de proximité
                   </Button>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* Liens affili├®s */}
+          {/* Liens affiliés */}
           <TabsContent value="links">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Link2 className="h-5 w-5 text-primary" />
-                  Mes liens affili├®s
+                  Mes liens affiliés
                 </CardTitle>
                 <CardDescription>
                   Partagez ces liens pour gagner des commissions sur chaque inscription ou achat.
@@ -162,7 +162,7 @@ export default function AffiliateDashboardPage() {
                 <div className="rounded-lg border p-4 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">Lien principal</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 text-sm bg-muted p-2 rounded truncate">{affiliateLink || 'G├®n├®ration...'}</code>
+                    <code className="flex-1 text-sm bg-muted p-2 rounded truncate">{affiliateLink || 'Génération...'}</code>
                     {affiliateLink && (
                       <Button size="sm" variant="outline" onClick={copyLink}>
                         <Copy className="h-4 w-4" />
@@ -179,7 +179,7 @@ export default function AffiliateDashboardPage() {
                     </code>
                     <Button size="sm" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/marketplace?ref=${affiliateCode}`);
-                      toast.success('Lien copi├® !');
+                      toast.success('Lien copié !');
                     }}>
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -194,7 +194,7 @@ export default function AffiliateDashboardPage() {
                     </code>
                     <Button size="sm" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/services-proximite?ref=${affiliateCode}`);
-                      toast.success('Lien copi├® !');
+                      toast.success('Lien copié !');
                     }}>
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -210,7 +210,7 @@ export default function AffiliateDashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  Statistiques d├®taill├®es
+                  Statistiques détaillées
                 </CardTitle>
                 <CardDescription>
                   Vue d'ensemble de vos performances d'affiliation.
@@ -221,26 +221,26 @@ export default function AffiliateDashboardPage() {
                   <div className="text-center p-4 rounded-lg bg-muted/50">
                     <Users className="h-5 w-5 mx-auto text-primary mb-1" />
                     <p className="text-xs text-muted-foreground">Filleuls</p>
-                    <p className="text-lg font-bold">ÔÇö</p>
+                    <p className="text-lg font-bold">—</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-muted/50">
                     <Link2 className="h-5 w-5 mx-auto text-primary mb-1" />
                     <p className="text-xs text-muted-foreground">Clics</p>
-                    <p className="text-lg font-bold">ÔÇö</p>
+                    <p className="text-lg font-bold">—</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-muted/50">
                     <TrendingUp className="h-5 w-5 mx-auto text-primary mb-1" />
                     <p className="text-xs text-muted-foreground">Conversions</p>
-                    <p className="text-lg font-bold">ÔÇö</p>
+                    <p className="text-lg font-bold">—</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-muted/50">
                     <Wallet className="h-5 w-5 mx-auto text-primary mb-1" />
                     <p className="text-xs text-muted-foreground">Revenus</p>
-                    <p className="text-lg font-bold">ÔÇö</p>
+                    <p className="text-lg font-bold">—</p>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Les statistiques d├®taill├®es s'afficheront au fur et ├á mesure de votre activit├®.
+                  Les statistiques détaillées s'afficheront au fur et à mesure de votre activité.
                 </p>
               </CardContent>
             </Card>
@@ -255,7 +255,7 @@ export default function AffiliateDashboardPage() {
                   Paiements & Commissions
                 </CardTitle>
                 <CardDescription>
-                  Vos commissions sont cr├®dit├®es sur votre wallet principal. Aucune donn├®e client n'est affect├®e.
+                  Vos commissions sont créditées sur votre wallet principal. Aucune donnée client n'est affectée.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -264,35 +264,35 @@ export default function AffiliateDashboardPage() {
                   Voir mon wallet
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  ­ƒÆí Les commissions affili├®es sont automatiquement ajout├®es ├á votre wallet existant.
-                  Consultez l'historique des transactions pour le d├®tail.
+                  Les commissions affiliées sont automatiquement ajoutées à votre wallet existant.
+                  Consultez l'historique des transactions pour le détail.
                 </p>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Profil affili├® */}
+          {/* Profil affilié */}
           <TabsContent value="profile">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserCircle className="h-5 w-5 text-primary" />
-                  Profil Affili├®
+                  Profil Affilié
                 </CardTitle>
                 <CardDescription>
-                  Informations de votre compte affili├®.
+                  Informations de votre compte affilié.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Code affili├®</p>
+                    <p className="text-xs text-muted-foreground">Code affilié</p>
                     <p className="font-mono font-semibold text-sm">{affiliateCode || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Statut</p>
                     <Badge variant={affiliateStatus === 'approved' ? 'default' : 'secondary'}>
-                      {affiliateStatus === 'approved' ? 'Ô£à Actif' : affiliateStatus || 'N/A'}
+                      {affiliateStatus === 'approved' ? 'Actif' : affiliateStatus || 'N/A'}
                     </Badge>
                   </div>
                   <div className="space-y-1">
@@ -300,8 +300,8 @@ export default function AffiliateDashboardPage() {
                     <p className="text-sm">{profile?.first_name} {profile?.last_name}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">R├┤le</p>
-                    <Badge variant="outline">{profile?.role || 'client'} + affili├®</Badge>
+                    <p className="text-xs text-muted-foreground">Rôle</p>
+                    <Badge variant="outline">{profile?.role || 'client'} + affilié</Badge>
                   </div>
                 </div>
                 <div className="pt-2 border-t">

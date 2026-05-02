@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, TrendingUp, Shield, Zap, Globe, Lock, Server, Smartphone } from 'lucide-react';
+import { CheckCircle2, XCircle, TrendingUp, Shield, Zap, _Globe, Lock, Server, Smartphone } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
@@ -220,8 +220,8 @@ export const CompareWithCompetitors = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {globalScores.map((platform) => (
-              <div 
-                key={platform.name} 
+              <div
+                key={platform.name}
                 className={`text-center p-4 rounded-lg ${platform.highlight ? 'bg-primary/20 border-2 border-primary' : 'bg-secondary'}`}
               >
                 <div className={`text-3xl font-bold ${platform.color}`}>{platform.score}/100</div>
@@ -229,7 +229,7 @@ export const CompareWithCompetitors = () => {
               </div>
             ))}
           </div>
-          
+
           <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <h4 className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />

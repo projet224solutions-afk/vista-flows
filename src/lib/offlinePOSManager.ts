@@ -71,7 +71,7 @@ interface OfflineSale {
 export async function cacheProducts(vendorId: string): Promise<Product[]> {
   try {
     console.log('📦 Chargement des produits pour cache...');
-    
+
     // Essayer de charger depuis Supabase
     const { data: products, error } = await supabase
       .from('products')
@@ -87,7 +87,7 @@ export async function cacheProducts(vendorId: string): Promise<Product[]> {
         timestamp: Date.now(),
         vendorId
       });
-      
+
       console.log('✅ Produits mis en cache:', products.length);
       return products;
     }
@@ -104,7 +104,7 @@ export async function cacheProducts(vendorId: string): Promise<Product[]> {
   if (cached) {
     const cacheAge = Date.now() - cached.timestamp;
     const cacheAgeMinutes = Math.floor(cacheAge / 60000);
-    
+
     console.log(`📂 Produits chargés depuis le cache (${cacheAgeMinutes} min):`, cached.products.length);
     toast.info('Mode hors ligne', {
       description: `${cached.products.length} produits en cache`
@@ -121,7 +121,7 @@ export async function getCachedProducts(vendorId: string): Promise<Product[]> {
   const cached = await productsCache.getItem<{
     products: Product[];
   }>(`vendor_${vendorId}`);
-  
+
   return cached?.products || [];
 }
 
@@ -145,7 +145,7 @@ export async function queueOfflineSale(sale: Omit<OfflineSale, 'synced' | 'times
 
   await salesQueue.setItem(sale.id, offlineSale);
   console.log('📴 Vente enregistrée hors ligne:', sale.id);
-  
+
   toast.success('Vente enregistrée', {
     description: 'Sera synchronisée lors de la reconnexion'
   });
@@ -174,10 +174,10 @@ export async function syncOfflineSales(): Promise<{
     try {
       // Générer un numéro de commande unique
       const orderNumber = `OFF-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
-      
+
       // Mapper la méthode de paiement au type enum
       const paymentMethodEnum = sale.paymentMethod as 'cash' | 'card' | 'mobile_money' | 'bank_transfer' | 'wallet';
-      
+
       // Créer la commande dans Supabase
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -223,7 +223,7 @@ export async function syncOfflineSales(): Promise<{
       sale.synced = true;
       await salesQueue.setItem(key, sale);
       success++;
-      
+
       console.log(`✅ Vente synchronisée: ${key} (${order.order_number})`);
     } catch (error: any) {
       const errorMsg = `Vente ${key}: ${error.message}`;
@@ -275,12 +275,12 @@ async function updateLocalStock(items: Array<{ productId: string; quantity: numb
     const cached = await inventoryCache.getItem<{ quantity: number }>(item.productId);
     const currentQuantity = cached?.quantity || 0;
     const newQuantity = Math.max(0, currentQuantity - item.quantity);
-    
+
     await inventoryCache.setItem(item.productId, {
       quantity: newQuantity,
       lastUpdate: Date.now()
     });
-    
+
     console.log(`📦 Stock local mis à jour: ${item.productId} -> ${newQuantity}`);
   }
 }
@@ -291,7 +291,7 @@ async function updateLocalStock(items: Array<{ productId: string; quantity: numb
 export async function syncInventory(vendorId: string): Promise<void> {
   try {
     console.log('🔄 Synchronisation inventaire...');
-    
+
     const { data: products } = await supabase
       .from('products')
       .select('id, stock_quantity')
@@ -331,7 +331,7 @@ export function onNetworkChange(callback: (online: boolean) => void): () => void
     console.log('🟢 Connexion rétablie');
     callback(true);
   };
-  
+
   const handleOffline = () => {
     console.log('🔴 Connexion perdue');
     callback(false);
@@ -367,11 +367,11 @@ export async function autoSync(vendorId: string): Promise<{
   try {
     // 1. Synchroniser les ventes en attente
     const salesResult = await syncOfflineSales();
-    
+
     if (salesResult.success > 0) {
       toast.success(`${salesResult.success} vente(s) synchronisée(s)`);
     }
-    
+
     if (salesResult.failed > 0) {
       toast.error(`${salesResult.failed} vente(s) en échec`);
       errors.push(...salesResult.errors);
@@ -466,26 +466,26 @@ export default {
   cacheProducts,
   getCachedProducts,
   clearProductsCache,
-  
+
   // Ventes
   queueOfflineSale,
   syncOfflineSales,
   getPendingSalesCount,
   getPendingSales,
-  
+
   // Inventaire
   syncInventory,
   getLocalStock,
-  
+
   // Réseau
   isOnline,
   onNetworkChange,
-  
+
   // Sync
   autoSync,
   cleanupSyncedSales,
   clearAllCache,
-  
+
   // Stats
   getCacheStats
 };

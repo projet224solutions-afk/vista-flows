@@ -46,7 +46,7 @@ class HealthCheckEngine {
     // Delegate to MultiCloudHealth and convert results
     const report = await multiCloudHealth.checkAll();
     const results: HealthCheckResult[] = [];
-    
+
     for (const provider of Object.values(report.providers)) {
       for (const svc of provider.services) {
         const statusMap: Record<string, ServiceStatus> = {
@@ -63,7 +63,7 @@ class HealthCheckEngine {
         });
       }
     }
-    
+
     return results;
   }
 
@@ -71,12 +71,12 @@ class HealthCheckEngine {
     const map = new Map<string, HealthCheckResult>();
     const report = multiCloudHealth.getLastReport();
     if (!report) return map;
-    
+
     for (const provider of Object.values(report.providers)) {
       for (const svc of provider.services) {
         const statusMap: Record<string, ServiceStatus> = {
           operational: 'healthy',
-          degraded: 'degraded', 
+          degraded: 'degraded',
           outage: 'critical',
           unknown: 'unknown',
         };

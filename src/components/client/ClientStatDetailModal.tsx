@@ -4,9 +4,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { _Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package, TrendingUp, Heart, CreditCard, CheckCircle, XCircle, Clock, Truck, Plus, Search, Trash2, Store, Loader2 } from "lucide-react";
+import { Package, TrendingUp, Heart, CreditCard, CheckCircle, _XCircle, Clock, Truck, _Plus, _Search, Trash2, Store, _Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,9 +30,9 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
   const [summary, setSummary] = useState<any>(null);
   const [showAddFav, setShowAddFav] = useState(false);
   const [favSearch, setFavSearch] = useState('');
-  const [favResults, setFavResults] = useState<any[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null);
+  const [_favResults, setFavResults] = useState<any[]>([]);
+  const [_searchLoading, setSearchLoading] = useState(false);
+  const [_addingId, setAddingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !statType || !user?.id) return;
@@ -40,6 +40,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
     setShowAddFav(false);
     setFavSearch('');
     setFavResults([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, statType, user?.id]);
 
   // Recherche de produits pour ajouter aux favoris
@@ -64,7 +65,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
     return () => clearTimeout(t);
   }, [favSearch, searchProducts]);
 
-  const addToFavorites = async (productId: string) => {
+  const _addToFavorites = async (productId: string) => {
     if (!user?.id) return;
     setAddingId(productId);
     try {

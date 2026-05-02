@@ -54,7 +54,7 @@ export function usePDGProductsData() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      
+
       // Récupérer les produits
       const { data: productsData, error: productsError } = await supabase
         .from('products')

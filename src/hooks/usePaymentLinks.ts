@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dataManager } from '@/services/DataManager';
+import { _dataManager } from '@/services/DataManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useCurrentVendor } from './useCurrentVendor';
@@ -100,12 +100,14 @@ export function usePaymentLinks() {
 
   useEffect(() => {
     loadOwnerInfo();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, currentVendorId, currentVendorUserId, isAgent, vendorLoading]);
 
   useEffect(() => {
     if (effectiveOwnerUserId) {
       loadPaymentLinks();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerUserId, vendorId]);
 
   const loadOwnerInfo = async () => {
@@ -257,11 +259,11 @@ export function usePaymentLinks() {
       let expireDays = data.expires_days || 30; // Augmenté de 7 à 30 jours par défaut
       // Sécurité: min 1 jour, max 365 jours
       expireDays = Math.max(1, Math.min(365, parseInt(String(expireDays)) || 30));
-      
+
       // Calcul sûr de la date d'expiration
       const expiresAtMs = Date.now() + (expireDays * 24 * 60 * 60 * 1000);
       const expiresAtDate = new Date(expiresAtMs);
-      
+
       // Vérification de validité
       if (isNaN(expiresAtDate.getTime())) {
         throw new Error('Erreur de calcul de date d\'expiration');

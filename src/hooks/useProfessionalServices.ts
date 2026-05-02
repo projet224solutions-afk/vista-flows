@@ -55,6 +55,7 @@ export const useProfessionalServices = () => {
       setLoading(false);
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchServiceTypes = async () => {
@@ -66,16 +67,16 @@ export const useProfessionalServices = () => {
         .order('name');
 
       if (error) throw error;
-      
+
       const parsedData = (data || []).map(service => ({
         ...service,
-        features: typeof service.features === 'string' 
-          ? JSON.parse(service.features) 
-          : Array.isArray(service.features) 
-            ? service.features 
+        features: typeof service.features === 'string'
+          ? JSON.parse(service.features)
+          : Array.isArray(service.features)
+            ? service.features
             : []
       }));
-      
+
       setServiceTypes(parsedData as ServiceType[]);
     } catch (error: any) {
       console.error('Erreur lors du chargement des types de service:', error);

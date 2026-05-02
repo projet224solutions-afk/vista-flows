@@ -9,14 +9,14 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   view_dashboard: 'Accéder au Dashboard',
   view_statistics: 'Voir les statistiques globales',
   view_recent_activity: 'Voir l\'activité récente',
-  
+
   // ===== SOS & ALERTES =====
   view_sos_alerts: 'Voir les alertes SOS',
   respond_sos: 'Répondre aux SOS',
   manage_sos_alerts: 'Gérer/Clôturer les alertes SOS',
   call_sos_driver: 'Appeler le conducteur en SOS',
   view_sos_location: 'Voir la localisation SOS',
-  
+
   // ===== MEMBRES DU BUREAU =====
   view_members: 'Voir les membres du bureau',
   add_members: 'Ajouter des membres',
@@ -24,7 +24,7 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   delete_members: 'Supprimer les membres',
   manage_member_permissions: 'Gérer les permissions des membres',
   toggle_member_status: 'Activer/Désactiver les membres',
-  
+
   // ===== TAXI-MOTARDS =====
   view_drivers: 'Voir les taxi-motards',
   add_drivers: 'Ajouter des taxi-motards',
@@ -33,7 +33,7 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   view_driver_details: 'Voir les détails d\'un taxi-motard',
   generate_driver_badge: 'Générer les badges taxi-motard',
   manage_driver_wallet: 'Gérer le wallet des taxi-motards',
-  
+
   // ===== VÉHICULES & MOTOS =====
   view_vehicles: 'Voir les véhicules',
   add_vehicles: 'Enregistrer des véhicules',
@@ -43,7 +43,7 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   declare_stolen: 'Déclarer un véhicule volé',
   recover_vehicle: 'Récupérer un véhicule volé',
   view_vehicle_security_log: 'Voir l\'historique sécurité véhicules',
-  
+
   // ===== TICKETS DE TRANSPORT =====
   view_tickets: 'Voir les tickets',
   generate_tickets: 'Générer des tickets',
@@ -51,7 +51,7 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   export_tickets: 'Exporter les tickets en PDF',
   manage_ticket_history: 'Gérer l\'historique des tickets',
   upload_bureau_stamp: 'Uploader le tampon du bureau',
-  
+
   // ===== TRÉSORERIE & WALLET =====
   view_wallet: 'Voir le portefeuille',
   view_balance: 'Voir le solde',
@@ -60,25 +60,25 @@ export const SYNDICATE_WORKER_PERMISSIONS = {
   receive_transfers: 'Recevoir des transferts',
   manage_cotisations: 'Gérer les cotisations',
   export_transactions: 'Exporter les transactions',
-  
+
   // ===== GESTION & PARAMÈTRES =====
   view_settings: 'Voir les paramètres',
   edit_settings: 'Modifier les paramètres',
   manage_bureau_info: 'Modifier les infos du bureau',
   edit_bureau_photo: 'Modifier la photo du bureau',
   edit_bureau_contact: 'Modifier les contacts du bureau',
-  
+
   // ===== ANALYTICS & RAPPORTS =====
   view_analytics: 'Accéder aux analytics',
   view_performance_reports: 'Voir les rapports de performance',
   view_financial_reports: 'Voir les rapports financiers',
   export_reports: 'Exporter les rapports',
-  
+
   // ===== COMMUNICATION =====
   send_notifications: 'Envoyer des notifications',
   manage_communications: 'Gérer les communications',
   use_communication_widget: 'Utiliser le widget de communication',
-  
+
   // ===== BADGES =====
   view_badges: 'Voir les badges',
   generate_badges: 'Générer des badges',
@@ -111,8 +111,8 @@ export const useSyndicateWorkerPermissions = (workerId?: string) => {
       }
 
       // Cast data to SyndicateWorkerPermissions
-      const permissionsData = (data && typeof data === 'object' && !Array.isArray(data)) 
-        ? data as SyndicateWorkerPermissions 
+      const permissionsData = (data && typeof data === 'object' && !Array.isArray(data))
+        ? data as SyndicateWorkerPermissions
         : {};
       setPermissions(permissionsData);
     } catch (err) {
@@ -129,7 +129,7 @@ export const useSyndicateWorkerPermissions = (workerId?: string) => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('set_syndicate_worker_permissions', {
+      const { _data, error } = await supabase.rpc('set_syndicate_worker_permissions', {
         p_worker_id: workerId,
         p_permissions: newPermissions
       });

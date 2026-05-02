@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { _Card, _CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,7 +44,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
   const {
     broadcasts,
     stats,
-    loading,
+    _loading,
     markAsRead,
     markAllAsRead,
     getUrgentBroadcast,
@@ -56,7 +56,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
   const [isOpen, setIsOpen] = useState(false);
 
   const urgentBroadcast = getUrgentBroadcast();
-  const unreadBroadcasts = getUnreadBroadcasts();
+  const _unreadBroadcasts = getUnreadBroadcasts();
 
   const handleOpenBroadcast = async (broadcast: Broadcast) => {
     setSelectedBroadcast(broadcast);

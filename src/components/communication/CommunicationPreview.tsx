@@ -6,7 +6,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, _AvatarImage } from "@/components/ui/avatar";
 import {
   MessageSquare,
   Phone,
@@ -241,7 +241,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
                 Messages, fichiers, localisation
               </p>
             </div>
-            
+
             <div className="p-4 border rounded-lg text-center">
               <Phone className="w-8 h-8 text-green-500 mx-auto mb-2" />
               <h3 className="font-medium text-sm">Appels Audio</h3>
@@ -249,7 +249,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
                 Qualité HD, contrôles avancés
               </p>
             </div>
-            
+
             <div className="p-4 border rounded-lg text-center">
               <Video className="w-8 h-8 text-purple-500 mx-auto mb-2" />
               <h3 className="font-medium text-sm">Appels Vidéo</h3>
@@ -257,7 +257,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
                 1:1 et conférences
               </p>
             </div>
-            
+
             <div className="p-4 border rounded-lg text-center">
               <Users className="w-8 h-8 text-orange-500 mx-auto mb-2" />
               <h3 className="font-medium text-sm">Contacts Universels</h3>
@@ -278,18 +278,18 @@ export default function CommunicationPreview({ className }: CommunicationPreview
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-muted-foreground">Système actif</span>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4 text-blue-500" />
                 <span className="text-sm text-muted-foreground">Notifications activées</span>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 text-purple-500" />
                 <span className="text-sm text-muted-foreground">Temps réel</span>
               </div>
             </div>
-            
+
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               Opérationnel
             </Badge>

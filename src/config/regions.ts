@@ -210,13 +210,13 @@ export const REGIONS: Record<string, RegionConfig> = {
 
 // ==================== HELPERS ====================
 
-export const getEnabledRegions = (): RegionConfig[] => 
+export const getEnabledRegions = (): RegionConfig[] =>
   Object.values(REGIONS).filter(r => r.enabled);
 
-export const getPrimaryRegion = (): RegionConfig => 
+export const getPrimaryRegion = (): RegionConfig =>
   Object.values(REGIONS).find(r => r.isPrimary) || REGIONS['africa-west'];
 
-export const getRegionById = (id: string): RegionConfig | undefined => 
+export const getRegionById = (id: string): RegionConfig | undefined =>
   REGIONS[id];
 
 export const getRegionsByContinent = (continent: string): RegionConfig[] =>

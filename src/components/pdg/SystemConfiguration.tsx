@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Loader2, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Loader2,
   Settings,
   CreditCard,
   Video,
@@ -108,6 +108,7 @@ export default function SystemConfiguration() {
 
   useEffect(() => {
     testAllServices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const testAllServices = async () => {
@@ -123,9 +124,9 @@ export default function SystemConfiguration() {
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         }
       });
-      
+
       const data = await response.json();
-      
+
       if (data.status === 'success' && data.services) {
         // Mettre à jour le statut de chaque service depuis l'API
         setServices(prev => prev.map(service => {
@@ -143,12 +144,12 @@ export default function SystemConfiguration() {
         try {
           const { firestore } = await import('@/lib/firebaseClient');
           const { collection, getDocs, limit, query } = await import('firebase/firestore');
-          
+
           if (firestore) {
             // Essayer d'accéder à Firestore
             const testQuery = query(collection(firestore, 'test'), limit(1));
             await getDocs(testQuery);
-            
+
             // Mise à jour du statut Firestore
             setServices(prev => prev.map(service =>
               service.name === 'Firebase Firestore'
@@ -170,7 +171,7 @@ export default function SystemConfiguration() {
           const currentConfigured = services.filter(s => s.status === 'configured').length;
           const currentRequired = services.filter(s => s.required).length;
           const currentRequiredConfigured = services.filter(s => s.required && s.status === 'configured').length;
-          
+
           if (currentRequiredConfigured === currentRequired) {
             toast.success('Tous les services requis sont configurés !', {
               description: `${currentConfigured}/${services.length} services configurés`
@@ -187,7 +188,7 @@ export default function SystemConfiguration() {
       toast.error('Erreur lors du test des services', {
         description: error.message
       });
-      
+
       // Marquer tous comme erreur
       setServices(prev => prev.map(service => ({
         ...service,
@@ -198,8 +199,8 @@ export default function SystemConfiguration() {
     setTesting(false);
   };
 
-  const updateServiceStatus = (serviceName: string, status: ServiceStatus['status']) => {
-    setServices(prev => prev.map(service => 
+  const _updateServiceStatus = (serviceName: string, status: ServiceStatus['status']) => {
+    setServices(prev => prev.map(service =>
       service.name === serviceName ? { ...service, status } : service
     ));
   };
@@ -285,8 +286,8 @@ export default function SystemConfiguration() {
               {requiredConfigured === requiredCount ? 'Opérationnel' : 'Attention'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {requiredConfigured === requiredCount 
-                ? 'Tous les services requis fonctionnent' 
+              {requiredConfigured === requiredCount
+                ? 'Tous les services requis fonctionnent'
                 : 'Certains services requis ne sont pas configurés'}
             </p>
           </CardContent>

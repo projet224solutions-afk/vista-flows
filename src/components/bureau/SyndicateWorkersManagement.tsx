@@ -38,7 +38,7 @@ import {
   UserCheck,
   UserX,
   Trash2,
-  Edit,
+  _Edit,
   Crown,
   Key,
   Loader2,
@@ -53,17 +53,17 @@ interface SyndicateWorkersManagementProps {
 }
 
 export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWorkersManagementProps) {
-  const { workers, loading, stats, createWorker, updateWorker, deleteWorker, toggleWorkerStatus, refetch } = useSyndicateWorkersData(bureauId);
-  
+  const { workers, loading, stats, createWorker, _updateWorker, deleteWorker, toggleWorkerStatus, refetch } = useSyndicateWorkersData(bureauId);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filterLevel, setFilterLevel] = useState<'all' | 'president' | 'secretary' | 'member'>('all');
-  
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState<SyndicateWorker | null>(null);
   const [workerToDelete, setWorkerToDelete] = useState<SyndicateWorker | null>(null);
-  
+
   const [newWorker, setNewWorker] = useState({
     nom: '',
     prenom: '',
@@ -75,22 +75,22 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
 
   // Filter workers
   const filteredWorkers = workers.filter(worker => {
-    const matchesSearch = 
+    const matchesSearch =
       worker.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       worker.prenom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       worker.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       worker.telephone?.includes(searchTerm) ||
       worker.custom_id?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = 
-      filterStatus === 'all' || 
+
+    const matchesStatus =
+      filterStatus === 'all' ||
       (filterStatus === 'active' && worker.is_active) ||
       (filterStatus === 'inactive' && !worker.is_active);
-    
+
     const matchesLevel =
       filterLevel === 'all' ||
       worker.access_level === filterLevel;
-    
+
     return matchesSearch && matchesStatus && matchesLevel;
   });
 
@@ -293,8 +293,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button 
-                    onClick={handleCreateWorker} 
+                  <Button
+                    onClick={handleCreateWorker}
                     disabled={!newWorker.nom || creating}
                     className="w-full"
                   >
@@ -421,7 +421,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                             </>
                           )}
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => setWorkerToDelete(worker)}
                           className="text-destructive"
                         >
@@ -451,7 +451,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le membre "{workerToDelete?.nom} {workerToDelete?.prenom}" ? 
+              Êtes-vous sûr de vouloir supprimer le membre "{workerToDelete?.nom} {workerToDelete?.prenom}" ?
               Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>

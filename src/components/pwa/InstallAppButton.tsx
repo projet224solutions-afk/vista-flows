@@ -61,9 +61,9 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     })();
     // WebView / in-app browsers n'autorisent souvent pas l'installation PWA
     const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(ua);
-    
+
     // Vérifier si déjà en mode standalone (PWA installée)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
       || (window.navigator as any).standalone === true;
 
     setIsMobile(mobile);
@@ -107,14 +107,14 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       // 1) iOS ou Mac avec Safari - Ouvrir le guide visuel
       if (isIOS || (isMac && isSafari)) {
         setConfirmOpen(false);
-        
+
         if (isIOS && !isSafari && !isInAppBrowser) {
           toast.info('Ouvrir dans Safari', {
             description: "L'installation PWA sur iOS fonctionne uniquement avec Safari.",
             duration: 6000,
           });
         }
-        
+
         // Afficher le guide iOS/Mac
         setIosGuideOpen(true);
         return;

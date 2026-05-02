@@ -51,7 +51,7 @@ export const SUPPORTED_LANGUAGES = {
   ka: 'ქართული',
   hy: 'Հայdelays',
   az: 'Azərbaycan',
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LANGUES AFRICAINES (45)
   // ═══════════════════════════════════════════════════════════════
@@ -100,7 +100,7 @@ export const SUPPORTED_LANGUAGES = {
   ber: 'Tamazight',
   kab: 'Taqbaylit',
   tir: 'Tigre',
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LANGUES ASIATIQUES (40)
   // ═══════════════════════════════════════════════════════════════
@@ -144,7 +144,7 @@ export const SUPPORTED_LANGUAGES = {
   sd: 'سنڌي',
   ku: 'Kurdî',
   ckb: 'کوردی',
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LANGUES MOYEN-ORIENTALES (8)
   // ═══════════════════════════════════════════════════════════════
@@ -156,7 +156,7 @@ export const SUPPORTED_LANGUAGES = {
   apc: 'شامي',
   acm: 'عراقي',
   ary: 'الدارجة',
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LANGUES OCÉANIENNES & PACIFIQUE (12)
   // ═══════════════════════════════════════════════════════════════
@@ -172,7 +172,7 @@ export const SUPPORTED_LANGUAGES = {
   tpi: 'Tok Pisin',
   ho: 'Hiri Motu',
   rar: 'Māori Kūki ʻĀirani',
-  
+
   // ═══════════════════════════════════════════════════════════════
   // LANGUES AMÉRINDIENNES (10)
   // ═══════════════════════════════════════════════════════════════
@@ -322,13 +322,13 @@ class TranslationService {
     try {
       const result = await translationPromise;
       this.translationCache.set(cacheKey, result);
-      
+
       // Limiter la taille du cache
       if (this.translationCache.size > 500) {
         const firstKey = this.translationCache.keys().next().value;
         if (firstKey) this.translationCache.delete(firstKey);
       }
-      
+
       return result;
     } finally {
       this.pendingTranslations.delete(cacheKey);
@@ -387,7 +387,7 @@ class TranslationService {
     context?: 'general' | 'commerce' | 'delivery' | 'payment' | 'support'
   ): Promise<Map<string, TranslationResult>> {
     const results = new Map<string, TranslationResult>();
-    
+
     // Traduire en parallèle avec limitation
     const batchSize = 5;
     for (let i = 0; i < messages.length; i += batchSize) {
@@ -401,12 +401,12 @@ class TranslationService {
           context
         }))
       );
-      
+
       batch.forEach((msg, idx) => {
         results.set(msg.id, translations[idx]);
       });
     }
-    
+
     return results;
   }
 
@@ -419,9 +419,9 @@ class TranslationService {
         this.getRecipientLanguage(senderId),
         this.getRecipientLanguage(recipientId)
       ]);
-      
+
       return senderLang !== recipientLang;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -442,70 +442,70 @@ class TranslationService {
     if (/[\u0400-\u04FF]/.test(text)) return 'ru'; // Cyrillique (russe par défaut)
     if (/[\u1200-\u137F]/.test(text)) return 'am'; // Amharique (Éthiopien)
     if (/[\u1E00-\u1EFF]/.test(text) && /\b(và|của|là|một)\b/i.test(text)) return 'vi'; // Vietnamien
-    
+
     // Langues latines - basées sur des caractères/mots spécifiques
     const lowerText = text.toLowerCase();
-    
+
     // Français - caractères accentués et mots communs
     if (/[àâäéèêëïîôùûüç]/i.test(text) && !/[ãõ]/i.test(text)) {
       if (/\b(le|la|les|un|une|de|du|des|et|est|je|tu|il|elle|nous|vous|ils|elles|que|qui|dans|pour|avec|sur|pas|plus|bien|très|tout|cette|son|sa|ses|mais|ou|où|comme|aussi|encore|même)\b/i.test(lowerText)) {
         return 'fr';
       }
     }
-    
+
     // Espagnol
     if (/[áéíóúñ¿¡]/i.test(text)) {
       if (/\b(el|la|los|las|un|una|de|del|en|que|es|no|se|con|por|para|su|sus|como|pero|más|este|esta|muy)\b/i.test(lowerText)) {
         return 'es';
       }
     }
-    
+
     // Portugais
     if (/[ãõç]/i.test(text) && /\b(o|a|os|as|um|uma|de|do|da|em|que|é|não|se|com|para|seu|sua|como|mas|mais|este|esta|muito)\b/i.test(lowerText)) {
       return 'pt';
     }
-    
+
     // Allemand
     if (/[äöüß]/i.test(text) && /\b(der|die|das|und|ist|von|für|mit|auf|nicht|ein|eine|sich|auch|es|ich|du|wir|sie)\b/i.test(lowerText)) {
       return 'de';
     }
-    
+
     // Italien
     if (/[àèéìòù]/i.test(text) && /\b(il|la|lo|le|gli|un|una|di|del|che|è|non|per|con|su|sono|essere|questo|questa|molto)\b/i.test(lowerText)) {
       return 'it';
     }
-    
+
     // Néerlandais
     if (/\b(de|het|een|van|en|in|is|dat|op|te|zijn|voor|met|niet|ook|aan|naar|maar|dan|als|er|wel)\b/i.test(lowerText) && /ij|oe|ui|eu/i.test(text)) {
       return 'nl';
     }
-    
+
     // Polonais
     if (/[ąćęłńóśźż]/i.test(text)) {
       return 'pl';
     }
-    
+
     // Turc
     if (/[ğışöüç]/i.test(text) && /\b(ve|bir|bu|için|ile|da|de|mi|ne|var|yok|ben|sen|o|biz|siz|onlar)\b/i.test(lowerText)) {
       return 'tr';
     }
-    
+
     // Swahili
     if (/\b(na|ya|wa|ni|kwa|hakuna|sana|mimi|wewe|yeye|sisi|nyinyi|wao|ndiyo|hapana|asante|karibu)\b/i.test(lowerText)) {
       return 'sw';
     }
-    
+
     // Langues africaines ouest-africaines (détection basique)
     if (/\b(dafa|ndax|nit|benn|am|nii|wax)\b/i.test(lowerText)) return 'wo'; // Wolof
     if (/\b(shi|ya|da|ba|na|mai|yana|suna|gida|ruwa)\b/i.test(lowerText)) return 'ha'; // Hausa
     if (/\b(ewo|ihe|onye|ndi|gi|ya|ka|na|si|di|bu)\b/i.test(lowerText)) return 'ig'; // Igbo
     if (/\b(emi|iwo|oun|wa|ti|si|ni|ko|mo|se)\b/i.test(lowerText)) return 'yo'; // Yoruba
-    
+
     // Bahasa Indonesia/Malay
     if (/\b(dan|yang|di|ini|itu|dengan|untuk|pada|tidak|dari|akan|saya|anda|mereka|bisa|ada|sudah|juga|atau|tetapi)\b/i.test(lowerText)) {
       return 'id';
     }
-    
+
     // Défaut: anglais pour les textes non identifiés
     return 'en';
   }
@@ -522,13 +522,13 @@ class TranslationService {
 export const translationService = TranslationService.getInstance();
 
 // Export helper functions
-export const translateMessage = (request: TranslationRequest) => 
+export const translateMessage = (request: TranslationRequest) =>
   translationService.translateMessage(request);
 
-export const getUserLanguage = () => 
+export const getUserLanguage = () =>
   translationService.getUserPreferredLanguage();
 
-export const setUserLanguage = (language: SupportedLanguage) => 
+export const setUserLanguage = (language: SupportedLanguage) =>
   translationService.setUserPreferredLanguage(language);
 
 export const needsTranslation = (senderId: string, recipientId: string) =>

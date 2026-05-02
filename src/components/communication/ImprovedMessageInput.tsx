@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Send, 
-  Paperclip, 
-  Image as ImageIcon, 
-  Mic, 
-  Smile,
+import {
+  Send,
+  Paperclip,
+  Image as ImageIcon,
+  Mic,
+  _Smile,
   X,
   Loader2
 } from 'lucide-react';
@@ -18,10 +18,10 @@ interface ImprovedMessageInputProps {
   placeholder?: string;
 }
 
-export default function ImprovedMessageInput({ 
-  onSendMessage, 
+export default function ImprovedMessageInput({
+  onSendMessage,
   disabled = false,
-  placeholder = "Tapez votre message..." 
+  placeholder = "Tapez votre message..."
 }: ImprovedMessageInputProps) {
   const { toast } = useToast();
   const [message, setMessage] = useState('');
@@ -69,7 +69,7 @@ export default function ImprovedMessageInput({
   const startRecording = async () => {
     try {
       // CRITICAL: getUserMedia must be called directly within the click handler
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -83,7 +83,7 @@ export default function ImprovedMessageInput({
       // Déterminer le meilleur format supporté
       const isIOS = isIOSDevice();
       const isSafari = isSafariBrowser();
-      
+
       console.log('[VoiceRecord] Platform:', { isIOS, isSafari });
 
       // Tester les formats dans l'ordre de préférence
@@ -95,10 +95,10 @@ export default function ImprovedMessageInput({
         { mime: 'audio/wav', ext: 'wav' },
         { mime: '', ext: 'webm' }, // Fallback
       ];
-      
+
       let selectedMime = '';
       let selectedExt = 'webm';
-      
+
       for (const format of formatsToTry) {
         if (format.mime === '' || MediaRecorder.isTypeSupported(format.mime)) {
           selectedMime = format.mime;
@@ -145,7 +145,7 @@ export default function ImprovedMessageInput({
 
       mediaRecorder.onstop = async () => {
         console.log('[VoiceRecord] Recording stopped, chunks:', audioChunksRef.current.length);
-        
+
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
@@ -153,7 +153,7 @@ export default function ImprovedMessageInput({
 
         const actualMimeType = mediaRecorder.mimeType || selectedMime || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        
+
         // Déterminer l'extension
         let finalExtension = selectedExt;
         if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
@@ -326,7 +326,7 @@ export default function ImprovedMessageInput({
             className="hidden"
             onChange={handleFileSelect}
           />
-          
+
           <Button
             size="icon"
             variant="ghost"
@@ -337,7 +337,7 @@ export default function ImprovedMessageInput({
           >
             <ImageIcon className="w-5 h-5" />
           </Button>
-          
+
           <Button
             size="icon"
             variant="ghost"
@@ -348,7 +348,7 @@ export default function ImprovedMessageInput({
           >
             <Paperclip className="w-5 h-5" />
           </Button>
-          
+
           <Button
             size="icon"
             variant={isRecording ? "destructive" : "ghost"}

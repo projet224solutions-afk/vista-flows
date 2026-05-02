@@ -26,7 +26,7 @@ const validateBearerToken = async (req: any, res: any, next: any) => {
 };
 
 // 1. Create User by Agent
-router.post("/create-by-agent", async (req: any, res: any) => {
+router.post("/create-by-agent", validateBearerToken, async (req: any, res: any) => {
   try {
     const { agent_id, email, phone, first_name, last_name } = req.body;
 
@@ -34,14 +34,37 @@ router.post("/create-by-agent", async (req: any, res: any) => {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
-    // Verify agent exists and has permission
+    // Verify caller role
+    const { data: callerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("user_id", req.user.id)
+      .single();
+
+    const isAdminOrPdg = ["admin", "pdg", "ceo"].includes(callerProfile?.role);
+
+    // Agents can only create users for themselves
+    if (!isAdminOrPdg) {
+      const { data: callerAgent } = await supabaseAdmin
+        .from("agents_management")
+        .select("id")
+        .eq("user_id", req.user.id)
+        .eq("id", agent_id)
+        .maybeSingle();
+
+      if (!callerAgent) {
+        return res.status(403).json({ success: false, error: "Unauthorized: can only create users for your own agent account" });
+      }
+    }
+
+    // Verify agent exists
     const { data: agent } = await supabaseAdmin
       .from("agents_management")
       .select("id, vendor_id")
       .eq("id", agent_id)
       .single();
 
-    if (!agent) return res.status(401).json({ success: false, error: "Agent not found" });
+    if (!agent) return res.status(404).json({ success: false, error: "Agent not found" });
 
     // Create user via Supabase Auth
     const { data: user, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -458,12 +481,23 @@ router.patch("/vendor/email", validateBearerToken, async (req: any, res: any) =>
 });
 
 // 12. Send Agent Invitation Email
-router.post("/agent/invite", async (req: any, res: any) => {
+router.post("/agent/invite", validateBearerToken, async (req: any, res: any) => {
   try {
     const { email, role, permissions, expires_in } = req.body;
 
     if (!email || !role) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    // Only admin/pdg can send invitations
+    const { data: callerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("user_id", req.user.id)
+      .single();
+
+    if (!["admin", "pdg", "ceo"].includes(callerProfile?.role)) {
+      return res.status(403).json({ success: false, error: "Unauthorized: admin or PDG required" });
     }
 
     // Generate invitation token
@@ -485,7 +519,6 @@ router.post("/agent/invite", async (req: any, res: any) => {
 
     if (error) throw error;
 
-    // Send email (mock)
     console.log(`Invitation sent to ${email}: ${token}`);
 
     return res.json({ success: true, invitation });

@@ -5,12 +5,12 @@
 
 export type EmergencyStatus = 'active' | 'in_progress' | 'resolved' | 'false_alert';
 
-export type EmergencyActionType = 
-  | 'call_driver' 
-  | 'send_message' 
-  | 'notify_police' 
-  | 'mark_safe' 
-  | 'escalate' 
+export type EmergencyActionType =
+  | 'call_driver'
+  | 'send_message'
+  | 'notify_police'
+  | 'mark_safe'
+  | 'escalate'
   | 'note';
 
 export interface GPSPosition {
@@ -29,34 +29,34 @@ export interface EmergencyAlert {
   driver_name?: string;
   driver_phone?: string;
   driver_code?: string;
-  
+
   // Statut
   status: EmergencyStatus;
-  
+
   // Position initiale
   initial_latitude: number;
   initial_longitude: number;
   initial_accuracy?: number;
-  
+
   // Position actuelle
   current_latitude?: number;
   current_longitude?: number;
   current_accuracy?: number;
   current_speed?: number;
   current_direction?: number;
-  
+
   // Métadonnées
   silent_mode: boolean;
   bureau_syndicat_id?: string;
   handled_by?: string;
   handled_at?: string;
   resolution_notes?: string;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
   resolved_at?: string;
-  
+
   // Données enrichies (depuis la vue)
   driver_full_name?: string;
   driver_avatar?: string;

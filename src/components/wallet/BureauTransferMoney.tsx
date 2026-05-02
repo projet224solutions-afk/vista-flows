@@ -93,7 +93,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
             .select('full_name, phone')
             .eq('id', driver.user_id)
             .maybeSingle();
-          
+
           if (profile && (
             profile.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             profile.phone?.includes(searchQuery) ||
@@ -324,7 +324,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       setSearchResults([]);
       setSearchQuery('');
       setShowConfirm(false);
-      
+
       if (onTransferComplete) {
         onTransferComplete();
       }

@@ -22,11 +22,11 @@ interface Props {
 
 export default function SingleTransportTicket({ ticketNumber, config, ticketTypeLabel }: Props) {
   const formattedNumber = String(ticketNumber).padStart(2, '0');
-  
+
   const formatAmount = (amount: number) => formatCurrency(amount);
 
   return (
-    <div 
+    <div
       className="ticket-container relative overflow-hidden"
       style={{
         width: '100%',
@@ -43,7 +43,7 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
       }}
     >
       {/* Petit drapeau Guinéen - coin supérieur gauche */}
-      <div 
+      <div
         style={{
           position: 'absolute',
           top: '2px',
@@ -64,9 +64,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
       </div>
 
       {/* Contenu principal - Layout horizontal */}
-      <div 
-        style={{ 
-          flex: 1, 
+      <div
+        style={{
+          flex: 1,
           padding: '3px 5px 3px 18px', // Espace pour le drapeau
           display: 'flex',
           flexDirection: 'column',
@@ -75,7 +75,7 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         }}
       >
         {/* Filigrane de sécurité */}
-        <div 
+        <div
           style={{
             position: 'absolute',
             inset: 0,
@@ -91,9 +91,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         {/* LIGNE 1: En-tête - République + Numéro */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div 
-              style={{ 
-                fontSize: '8px', 
+            <div
+              style={{
+                fontSize: '8px',
                 fontWeight: 'bold',
                 letterSpacing: '0.5px',
                 color: '#1e3a5f',
@@ -102,9 +102,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
             >
               RÉPUBLIQUE DE GUINÉE
             </div>
-            <div 
-              style={{ 
-                fontSize: '6px', 
+            <div
+              style={{
+                fontSize: '6px',
                 color: '#64748b',
                 fontStyle: 'italic',
               }}
@@ -112,10 +112,10 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
               Travail • Justice • Solidarité
             </div>
           </div>
-          
+
           {/* Numéro de ticket - TRÈS VISIBLE */}
-          <div 
-            style={{ 
+          <div
+            style={{
               background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
               color: '#ffffff',
               padding: '3px 8px',
@@ -132,9 +132,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         </div>
 
         {/* LIGNE 2: Commune - VISIBLE */}
-        <div 
-          style={{ 
-            fontSize: '9px', 
+        <div
+          style={{
+            fontSize: '9px',
             fontWeight: 'bold',
             color: '#CE1126',
             textTransform: 'uppercase',
@@ -150,7 +150,7 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         </div>
 
         {/* LIGNE 3: Type + Montant + Cachet Syndicat */}
-        <div 
+        <div
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -160,9 +160,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         >
           {/* Type de ticket */}
           <div style={{ flex: 1 }}>
-            <div 
-              style={{ 
-                fontSize: '6px', 
+            <div
+              style={{
+                fontSize: '6px',
                 color: '#94a3b8',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
@@ -170,9 +170,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
             >
               TYPE
             </div>
-            <div 
-              style={{ 
-                fontSize: '9px', 
+            <div
+              style={{
+                fontSize: '9px',
                 fontWeight: 'bold',
                 color: '#1e3a5f',
                 lineHeight: 1.2,
@@ -183,8 +183,8 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
           </div>
 
           {/* Montant - TRÈS VISIBLE */}
-          <div 
-            style={{ 
+          <div
+            style={{
               background: 'linear-gradient(135deg, #009639 0%, #00752c 100%)',
               color: '#ffffff',
               padding: '4px 10px',
@@ -193,9 +193,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
               boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
             }}
           >
-            <div 
-              style={{ 
-                fontSize: '12px', 
+            <div
+              style={{
+                fontSize: '12px',
                 fontWeight: 'bold',
                 lineHeight: 1.1,
               }}
@@ -206,8 +206,8 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
           </div>
 
           {/* Zone cachet du bureau syndicat */}
-          <div 
-            style={{ 
+          <div
+            style={{
               width: '32px',
               height: '32px',
               marginLeft: '6px',
@@ -222,9 +222,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
             }}
           >
             {config.bureauStampUrl ? (
-              <img 
-                src={config.bureauStampUrl} 
-                alt="Cachet" 
+              <img
+                src={config.bureauStampUrl}
+                alt="Cachet"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -233,9 +233,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
                 }}
               />
             ) : (
-              <div 
-                style={{ 
-                  fontSize: '5px', 
+              <div
+                style={{
+                  fontSize: '5px',
                   color: '#94a3b8',
                   textAlign: 'center',
                   lineHeight: 1.1,
@@ -250,9 +250,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
         {/* LIGNE 4: Syndicat + Date */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <div 
-              style={{ 
-                fontSize: '7px', 
+            <div
+              style={{
+                fontSize: '7px',
                 color: '#475569',
                 fontWeight: '500',
                 maxWidth: '80%',
@@ -262,9 +262,9 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
               {config.syndicateName}
             </div>
             {config.optionalMention && (
-              <div 
-                style={{ 
-                  fontSize: '5px', 
+              <div
+                style={{
+                  fontSize: '5px',
                   color: '#94a3b8',
                   fontStyle: 'italic',
                 }}
@@ -273,10 +273,10 @@ export default function SingleTransportTicket({ ticketNumber, config, ticketType
               </div>
             )}
           </div>
-          
-          <div 
-            style={{ 
-              fontSize: '7px', 
+
+          <div
+            style={{
+              fontSize: '7px',
               color: '#64748b',
               fontFamily: "'Courier New', monospace",
               background: '#f1f5f9',

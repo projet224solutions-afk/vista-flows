@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Clock, Save, Store, Phone, Mail, MapPin, 
+import {
+  Clock, Save, Store, Phone, Mail, MapPin,
   Image as ImageIcon, Globe, Upload, X, Loader2,
   Navigation, CheckCircle2
 } from 'lucide-react';
@@ -61,7 +61,7 @@ const DEFAULT_HOURS: OpeningHours = {
 };
 
 export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
-  const { uploadFile, isUploading } = useStorageUpload();
+  const { uploadFile, _isUploading } = useStorageUpload();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingType, setUploadingType] = useState<'logo' | 'cover' | null>(null);
@@ -106,7 +106,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       setGpsLoading(false);
     }
   }, [serviceId]);
-  
+
   const [formData, setFormData] = useState({
     business_name: '',
     description: '',
@@ -119,11 +119,12 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
     logo_url: '',
     cover_image_url: '',
   });
-  
+
   const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_HOURS);
 
   useEffect(() => {
     loadSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId]);
 
   const loadSettings = async () => {
@@ -150,7 +151,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
           logo_url: data.logo_url || '',
           cover_image_url: data.cover_image_url || '',
         });
-        
+
         if (data.opening_hours && typeof data.opening_hours === 'object') {
           setOpeningHours({ ...DEFAULT_HOURS, ...(data.opening_hours as Partial<OpeningHours>) });
         }
@@ -166,10 +167,10 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
+
       // Convert opening hours to Json-compatible format
       const openingHoursJson = JSON.parse(JSON.stringify(openingHours));
-      
+
       const { error } = await supabase
         .from('professional_services')
         .update({
@@ -189,7 +190,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
         .eq('id', serviceId);
 
       if (error) throw error;
-      
+
       toast.success('Paramètres sauvegardés !');
     } catch (err: any) {
       console.error('Error saving settings:', err);
@@ -201,10 +202,10 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
 
   const handleImageUpload = async (file: File, type: 'logo' | 'cover') => {
     if (!file) return;
-    
+
     try {
       setUploadingType(type);
-      
+
       // Upload vers GCS via le hook unifié
       const result = await uploadFile(file, {
         folder: 'restaurant',
@@ -221,7 +222,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       } else {
         setFormData(prev => ({ ...prev, cover_image_url: result.publicUrl! }));
       }
-      
+
       toast.success('Image uploadée !');
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -330,7 +331,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">📍 Localisation du restaurant</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {detectedCoords 
+                {detectedCoords
                   ? `Coordonnées : ${detectedCoords.lat.toFixed(5)}, ${detectedCoords.lng.toFixed(5)}`
                   : 'Détectez automatiquement votre adresse via GPS'
                 }
@@ -343,8 +344,8 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               onClick={handleDetectPosition}
               disabled={gpsLoading}
               className={`gap-2 transition-all duration-300 ${
-                gpsSuccess 
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' 
+                gpsSuccess
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
                   : 'border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground'
               }`}
             >
@@ -419,9 +420,9 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               <div className="border-2 border-dashed rounded-lg p-4 text-center">
                 {formData.logo_url ? (
                   <div className="relative inline-block">
-                    <img 
-                      src={formData.logo_url} 
-                      alt="Logo" 
+                    <img
+                      src={formData.logo_url}
+                      alt="Logo"
                       className="w-24 h-24 object-cover rounded-lg"
                     />
                     <button
@@ -465,9 +466,9 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               <div className="border-2 border-dashed rounded-lg p-4 text-center">
                 {formData.cover_image_url ? (
                   <div className="relative inline-block">
-                    <img 
-                      src={formData.cover_image_url} 
-                      alt="Cover" 
+                    <img
+                      src={formData.cover_image_url}
+                      alt="Cover"
                       className="w-full h-32 object-cover rounded-lg"
                     />
                     <button

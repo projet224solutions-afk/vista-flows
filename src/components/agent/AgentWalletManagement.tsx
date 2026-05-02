@@ -18,10 +18,10 @@ interface AgentWalletManagementProps {
  * Réutilise UniversalWalletDashboard pour éviter la duplication de code
  * Le système de dépôt/retrait est identique à celui des vendeurs/clients
  */
-export default function AgentWalletManagement({ 
-  agentId, 
+export default function AgentWalletManagement({
+  agentId,
   agentCode,
-  showTransactions = true 
+  showTransactions = true
 }: AgentWalletManagementProps) {
   const [agentUserId, setAgentUserId] = useState<string | null>(null);
   const [agentUserCode, setAgentUserCode] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function AgentWalletManagement({
 
       const userId = agentData.user_id;
       console.log('✅ Agent trouvé:', agentData.name, '| user_id:', userId);
-      
+
       setAgentUserId(userId);
       setAgentUserCode(agentData.agent_code || agentCode || null);
 
@@ -74,7 +74,7 @@ export default function AgentWalletManagement({
         console.log('💡 Initialisation du wallet pour agent userId:', userId);
         const { error: initError } = await supabase
           .rpc('initialize_user_wallet', { p_user_id: userId });
-        
+
         if (initError) {
           console.warn('⚠️ Initialisation wallet échouée:', initError);
         }
@@ -92,39 +92,6 @@ export default function AgentWalletManagement({
     loadAgentData();
   }, [loadAgentData]);
 
-  // Synchroniser agent_wallets quand le wallet principal est mis à jour
-  useEffect(() => {
-    if (!agentUserId || !agentId) return;
-
-    const handleWalletUpdate = async () => {
-      try {
-        // Récupérer le solde actuel du wallet principal
-        const { data: walletData } = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('user_id', agentUserId)
-          .single();
-
-        if (walletData) {
-          // Synchroniser avec agent_wallets
-          await supabase
-            .from('agent_wallets')
-            .upsert({
-              agent_id: agentId,
-              balance: walletData.balance,
-              currency: 'GNF',
-              wallet_status: 'active',
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'agent_id' });
-        }
-      } catch (err) {
-        console.warn('⚠️ Sync agent_wallets échouée:', err);
-      }
-    };
-
-    window.addEventListener('wallet-updated', handleWalletUpdate);
-    return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
-  }, [agentUserId, agentId]);
 
   if (loading) {
     return (
@@ -161,7 +128,7 @@ export default function AgentWalletManagement({
             </div>
           </CardContent>
         </Card>
-        
+
         <AgentWalletDiagnosticTool agentId={agentId} />
       </div>
     );

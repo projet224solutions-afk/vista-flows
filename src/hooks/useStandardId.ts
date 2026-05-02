@@ -106,7 +106,7 @@ export const useStandardId = () => {
       const errorMsg = err.message || 'Erreur génération ID';
       setError(errorMsg);
       console.error('Erreur génération ID:', err);
-      
+
       // Fallback local
       const prefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'CLT';
       return await generateLocalSequentialId(prefix);
@@ -147,7 +147,7 @@ export const useStandardId = () => {
 
       // Générer l'ID avec 4 chiffres (CLT0001)
       const newId = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
-      
+
       // Vérifier que l'ID n'existe pas déjà
       const { data: existing } = await supabase
         .from('user_ids')
@@ -212,13 +212,13 @@ export const useStandardId = () => {
     } catch (err: any) {
       const errorMsg = err.message || 'Erreur génération IDs';
       setError(errorMsg);
-      
+
       if (showToast) {
         toast.error('Échec génération IDs', {
           description: errorMsg
         });
       }
-      
+
       return [];
     } finally {
       setLoading(false);
@@ -257,7 +257,7 @@ export const useStandardId = () => {
   const previewNextId = async (scope: string): Promise<string | null> => {
     try {
       const prefix = SCOPE_PREFIX_MAP[scope.toLowerCase()] || 'GEN';
-      
+
       const { data, error } = await supabase
         .rpc('preview_next_id', { p_prefix: prefix });
 

@@ -42,7 +42,7 @@ export function useCurrentLocation() {
 
             // Détecter si on est sur mobile ou desktop
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
+
             // Stratégie adaptée: desktop = moins précis mais plus rapide, mobile = GPS précis
             const tryGetPosition = (highAccuracy: boolean, timeout: number, maxAge: number): Promise<LocationData> => {
                 return new Promise((res, rej) => {
@@ -71,7 +71,7 @@ export function useCurrentLocation() {
             const attemptLocation = async () => {
                 try {
                     let locationData: LocationData;
-                    
+
                     if (isMobile) {
                         // Mobile: GPS haute précision
                         try {
@@ -96,25 +96,25 @@ export function useCurrentLocation() {
                         loading: false,
                         error: null
                     }));
-                    
+
                     console.log('📍 [GPS] Position obtenue:', {
                         lat: locationData.latitude,
                         lng: locationData.longitude,
                         accuracy: locationData.accuracy,
                         device: isMobile ? 'mobile' : 'desktop'
                     });
-                    
+
                     resolve(locationData);
                 } catch (error: any) {
                     let errorMessage = 'Impossible d\'obtenir votre position GPS';
-                    
+
                     if (error.code) {
                         switch (error.code) {
                             case 1: // PERMISSION_DENIED
                                 errorMessage = 'Permission GPS refusée. Autorisez l\'accès dans les paramètres du navigateur.';
                                 break;
                             case 2: // POSITION_UNAVAILABLE
-                                errorMessage = isMobile 
+                                errorMessage = isMobile
                                     ? 'Position GPS indisponible. Activez votre GPS et vérifiez votre connexion.'
                                     : 'Géolocalisation indisponible. Vérifiez les paramètres de localisation de votre navigateur.';
                                 break;
@@ -127,9 +127,9 @@ export function useCurrentLocation() {
                                 errorMessage = `Erreur GPS: ${error.message || 'Erreur inconnue'}`;
                         }
                     }
-                    
+
                     console.error('📍 [GPS] Erreur:', error, { device: isMobile ? 'mobile' : 'desktop' });
-                    
+
                     setState(prev => ({
                         ...prev,
                         loading: false,
@@ -170,7 +170,7 @@ export function useCurrentLocation() {
             },
             (error) => {
                 let errorMessage = 'Erreur de suivi GPS';
-                
+
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
                         errorMessage = 'Permission GPS refusée';
@@ -182,7 +182,7 @@ export function useCurrentLocation() {
                         errorMessage = 'Délai GPS dépassé';
                         break;
                 }
-                
+
                 setState(prev => ({
                     ...prev,
                     loading: false,
@@ -221,7 +221,7 @@ export function useCurrentLocation() {
         try {
             await getCurrentLocation();
             return true;
-        } catch (error) {
+        } catch (_error) {
             return false;
         }
     }, [getCurrentLocation]);
@@ -230,7 +230,7 @@ export function useCurrentLocation() {
         checkPermission();
     }, [checkPermission]);
 
-    const getGeolocationErrorMessage = (code: number): string => {
+    const _getGeolocationErrorMessage = (code: number): string => {
         switch (code) {
             case 1:
                 return 'Permission de géolocalisation refusée';

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, Check, Users } from 'lucide-react';
+import { Search, _User, Check, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface UserSearchResult {
@@ -96,6 +96,28 @@ export const UserSearchInput = ({
           }
         }
 
+        // 3. Charger les agents PDG depuis agents_management
+        const { data: agentsData } = await supabase
+          .from('agents_management')
+          .select('user_id, name, email, phone, agent_code')
+          .neq('user_id', currentUser.user.id)
+          .not('user_id', 'is', null);
+
+        if (agentsData) {
+          for (const agent of agentsData) {
+            if (agent.user_id && agent.agent_code && !usersMap.has(agent.user_id)) {
+              usersMap.set(agent.user_id, {
+                public_id: agent.agent_code,
+                user_id: agent.user_id,
+                email: agent.email,
+                first_name: agent.name,
+                last_name: null,
+                phone: agent.phone
+              });
+            }
+          }
+        }
+
         setAvailableUsers(Array.from(usersMap.values()));
       } catch (error) {
         console.error('❌ Erreur chargement utilisateurs:', error);
@@ -120,7 +142,7 @@ export const UserSearchInput = ({
       let foundUser: UserSearchResult | null = null;
 
       // PRIORITÉ 1: Chercher dans user_ids.custom_id (système principal)
-      const { data: userIdData, error: userIdError } = await supabase
+      const { data: userIdData, error: _userIdError } = await supabase
         .from('user_ids')
         .select('user_id, custom_id')
         .ilike('custom_id', `%${upperSearchId}%`)
@@ -148,7 +170,7 @@ export const UserSearchInput = ({
 
       // PRIORITÉ 2: Si pas trouvé dans user_ids, chercher dans profiles.public_id
       if (!foundUser) {
-        const { data: profileData, error: profileError } = await supabase
+        const { data: profileData, error: _profileError } = await supabase
           .from('profiles')
           .select('id, public_id, email, first_name, last_name, phone')
           .ilike('public_id', `%${upperSearchId}%`)
@@ -196,6 +218,28 @@ export const UserSearchInput = ({
         }
       }
 
+      // PRIORITÉ 4: Chercher dans agents_management par code/email/téléphone
+      if (!foundUser) {
+        const { data: agentData } = await supabase
+          .from('agents_management')
+          .select('user_id, name, email, phone, agent_code')
+          .or(`agent_code.ilike.%${upperSearchId}%,email.ilike.%${searchId}%,phone.ilike.%${searchId}%`)
+          .not('user_id', 'is', null)
+          .limit(1)
+          .maybeSingle();
+
+        if (agentData?.user_id) {
+          foundUser = {
+            public_id: agentData.agent_code || agentData.user_id,
+            user_id: agentData.user_id,
+            email: agentData.email,
+            first_name: agentData.name,
+            last_name: null,
+            phone: agentData.phone
+          };
+        }
+      }
+
       if (foundUser) {
         setUserInfo(foundUser);
         setSearchError(null);
@@ -217,13 +261,13 @@ export const UserSearchInput = ({
 
   const handleInputChange = (newValue: string) => {
     onChange(newValue);
-    
+
     // Déclencher la recherche après un délai (debounce)
     if (newValue.length >= 3) {
       const timeoutId = setTimeout(() => {
         searchUser(newValue);
       }, 500);
-      
+
       return () => clearTimeout(timeoutId);
     } else {
       setUserInfo(null);

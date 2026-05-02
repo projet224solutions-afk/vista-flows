@@ -75,7 +75,7 @@ export class TaxiMotoService {
         if (data && Array.isArray(data) && data.length > 0) {
           return data as any;
         }
-      } catch (rpcError) {
+      } catch (_rpcError) {
         console.log('[TaxiMotoService] RPC fallback to direct query');
       }
 
@@ -213,15 +213,15 @@ export class TaxiMotoService {
     console.log(`[TaxiMotoService] 🔍 Recherche de chauffeurs à proximité de [${params.pickupLat}, ${params.pickupLng}]`);
     const drivers = await this.findNearbyDrivers(params.pickupLat, params.pickupLng, 10); // Augmenté à 10km
     console.log(`[TaxiMotoService] 👥 ${drivers.length} chauffeurs trouvés`);
-    
+
     // Notifier jusqu'à 10 chauffeurs (élargi)
     const notifiedDrivers = drivers.slice(0, 10);
     console.log(`[TaxiMotoService] 📢 Notification de ${notifiedDrivers.length} chauffeurs...`);
-    
+
     for (const driver of notifiedDrivers) {
       try {
         console.log(`[TaxiMotoService] 📲 Envoi notification à ${driver.full_name} (${driver.id})`);
-        const { data: notifData, error: notifError } = await supabase.rpc('create_taxi_notification' as any, {
+        const { data: _notifData, error: notifError } = await supabase.rpc('create_taxi_notification' as any, {
           p_user_id: driver.id,
           p_ride_id: data.id,
           p_type: 'ride_request',
@@ -229,7 +229,7 @@ export class TaxiMotoService {
           p_body: `Course de ${params.pickupAddress} à ${params.dropoffAddress} - ${params.estimatedPrice} GNF`,
           p_data: { distance_km: params.distanceKm, price_total: params.estimatedPrice, driver_share: driverShare }
         });
-        
+
         if (notifError) {
           console.error(`[TaxiMotoService] ❌ Erreur notification pour ${driver.id}:`, notifError);
         } else {
@@ -239,7 +239,7 @@ export class TaxiMotoService {
         console.error(`[TaxiMotoService] ❌ Erreur lors de l'envoi notification:`, err);
       }
     }
-    
+
     console.log(`[TaxiMotoService] ✅ Course créée avec succès: ${data.ride_code} (ID: ${data.id})`);
 
     return data as TaxiRide;
@@ -271,7 +271,7 @@ export class TaxiMotoService {
         }
         return { data, error: null };
       },
-      { 
+      {
         maxRetries: 1, // Réduire les tentatives pour les erreurs de verrouillage
         timeout: 20000,
         onRetry: (attempt) => {
@@ -335,7 +335,7 @@ export class TaxiMotoService {
           .eq('id', rideId);
         return { data, error };
       },
-      { 
+      {
         context: 'Mise à jour du statut',
         timeout: 15000,
         maxRetries: 2
@@ -365,9 +365,9 @@ export class TaxiMotoService {
     driverId: string,
     lat: number,
     lng: number,
-    speed?: number,
-    heading?: number,
-    accuracy?: number
+    _speed?: number,
+    _heading?: number,
+    _accuracy?: number
   ): Promise<void> {
     const { error } = await supabase
       .from('taxi_ride_tracking')

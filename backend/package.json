@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "npx --yes tsx src/server.ts",
-    "dev": "npx --yes tsx src/server.ts"
+    "dev": "npx --yes tsx watch src/server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.4",

@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  AlertTriangle,
+  CheckCircle2,
   Clock,
   Zap,
   RefreshCw,
-  XCircle
+  _XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -123,12 +123,13 @@ export default function AlertsDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const handleAcknowledge = async (alertId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase
         .from('system_alerts')
         .update({
@@ -151,7 +152,7 @@ export default function AlertsDashboard() {
   const handleResolve = async (alertId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase
         .from('system_alerts')
         .update({

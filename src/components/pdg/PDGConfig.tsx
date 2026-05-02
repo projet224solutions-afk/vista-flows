@@ -78,7 +78,7 @@ export default function PDGConfig() {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    
+
     await updateConfig(editingId, editConfig);
     setEditingId(null);
   };
@@ -398,14 +398,14 @@ export default function PDGConfig() {
                         </Badge>
                       </div>
                       <p className="text-sm font-medium text-primary">
-                        Commission: {config.commission_type === 'percentage' 
+                        Commission: {config.commission_type === 'percentage'
                           ? `${config.commission_value}%`
                           : `${config.commission_value} GNF`
                         }
                       </p>
                       {(config.min_amount || config.max_amount) && (
                         <p className="text-xs text-muted-foreground">
-                          Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'} 
+                          Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'}
                           {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
                         </p>
                       )}

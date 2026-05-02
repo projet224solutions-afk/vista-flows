@@ -13,22 +13,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Dumbbell, 
-  Users, 
+import {
+  Dumbbell,
+  Users,
   Calendar,
-  Clock,
+  _Clock,
   Plus,
-  CreditCard,
+  _CreditCard,
   TrendingUp,
   User,
   Activity,
-  Target,
+  _Target,
   Flame,
-  Award,
+  _Award,
   CheckCircle,
   Timer,
-  Heart
+  _Heart
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -81,7 +81,7 @@ interface Subscription {
   color: string;
 }
 
-interface Equipment {
+interface _Equipment {
   id: string;
   name: string;
   category: string;
@@ -89,7 +89,7 @@ interface Equipment {
   lastMaintenance: string;
 }
 
-export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
+export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNewMemberDialog, setShowNewMemberDialog] = useState(false);
   const [showNewClassDialog, setShowNewClassDialog] = useState(false);
@@ -302,7 +302,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
   };
 
   // Statistiques
-  const totalMembers = members.length;
+  const _totalMembers = members.length;
   const activeMembers = members.filter(m => m.membershipStatus === 'actif').length;
   const todayCheckIns = 23; // Simulé
   const todayClasses = classes.length;
@@ -520,8 +520,8 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                           </span>
                           <Users className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <Progress 
-                          value={(fitnessClass.enrolled / fitnessClass.maxParticipants) * 100} 
+                        <Progress
+                          value={(fitnessClass.enrolled / fitnessClass.maxParticipants) * 100}
                           className="h-2 w-24 mt-2"
                         />
                         <Button size="sm" className="mt-2">

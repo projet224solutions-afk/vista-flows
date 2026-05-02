@@ -7,8 +7,8 @@
 import {
   CognitoUserPool,
   CognitoUser,
-  AuthenticationDetails,
-  CognitoUserAttribute,
+  _AuthenticationDetails,
+  _CognitoUserAttribute,
   CognitoUserSession,
 } from 'amazon-cognito-identity-js';
 import { cognitoConfig, isCognitoConfigured } from '@/config/cognito';
@@ -148,8 +148,8 @@ export const cognitoSignIn = async (
 
     if (result.error) {
       console.error('❌ [Cognito] Erreur connexion:', result.error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: mapProxyError(result.code, result.error),
         challengeName: result.challengeName,
       };

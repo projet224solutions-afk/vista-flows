@@ -182,7 +182,7 @@ export function useAppPersistence<T>(config: PersistenceConfig<T>) {
       isRestoringRef.current = true;
       setState(savedState);
       setIsRestored(true);
-      
+
       // Appeler onRestore de manière asynchrone pour éviter les mises à jour en cascade
       setTimeout(() => {
         onRestoreRef.current?.(savedState);

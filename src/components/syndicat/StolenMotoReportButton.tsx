@@ -36,7 +36,7 @@ interface Props {
   bureauLocation: string;
 }
 
-export default function StolenMotoReportButton({ moto, bureauName, bureauLocation }: Props) {
+export default function StolenMotoReportButton({ moto, _bureauName, bureauLocation }: Props) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +54,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
       if (isOnline) {
         // CENTRALISÉ: Utiliser le RPC declare_vehicle_stolen
         console.log('📝 Déclaration vol via RPC centralisé:', moto.id);
-        
+
         const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
           p_vehicle_id: moto.id,
           p_bureau_id: moto.bureau_id,
@@ -71,11 +71,11 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
         }
 
         const result = data as { success: boolean; error?: string; message?: string };
-        
+
         if (!result.success) {
           throw new Error(result.error || 'Erreur lors de la déclaration');
         }
-        
+
         console.log('✅ Véhicule déclaré volé via RPC:', result);
 
         toast.success('🚨 Alerte de vol enregistrée', {
@@ -91,9 +91,9 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
           location: bureauLocation,
           created_at: new Date().toISOString()
         };
-        
+
         await storeOfflineEvent('security_alert', alertData);
-        
+
         toast.success('📴 Alerte enregistrée localement', {
           description: 'Elle sera synchronisée à la reconnexion'
         });
@@ -168,7 +168,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
           {/* Avertissement */}
           <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-sm text-yellow-800">
-              ⚠️ Cette déclaration sera visible par tous les bureaux. 
+              ⚠️ Cette déclaration sera visible par tous les bureaux.
               Assurez-vous que les informations sont exactes.
             </p>
           </div>

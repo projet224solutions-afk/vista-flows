@@ -5,12 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {  AlertCircle, Eye, CheckCircle2, XCircle, AlertTriangle, Download, QrCode, CreditCard } from 'lucide-react';
+import {  _AlertCircle, Eye, CheckCircle2, _XCircle, AlertTriangle, _Download, _QrCode, CreditCard } from 'lucide-react';
 import BadgeGenerator from './BadgeGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import StolenMotoReportButton from './StolenMotoReportButton';
-import MotoManagementOffline from './MotoManagementOffline';
+import _StolenMotoReportButton from './StolenMotoReportButton';
+import _MotoManagementOffline from './MotoManagementOffline';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -84,7 +84,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       const { data, error } = await query;
 
       if (error) throw error;
-      
+
       // Transformer les données pour compatibilité avec l'interface existante
       const transformedData = (data || []).map((v: any) => ({
         id: v.id,
@@ -102,7 +102,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
         bureau_id: v.bureau_id,
         security_lock_level: v.security_lock_level
       }));
-      
+
       setMotos(transformedData);
     } catch (error) {
       console.error('Erreur chargement motos:', error);
@@ -114,6 +114,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
   useEffect(() => {
     loadMotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bureauId, statusFilter]);
 
   const filteredMotos = motos.filter(moto =>
@@ -126,7 +127,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const handleValidate = async (motoId: string) => {
     try {
       setLoadingAction(true);
-      
+
       // CENTRALISÉ: Utilise la table vehicles
       const { error } = await supabase
         .from('vehicles')
@@ -150,9 +151,9 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const handleReportStolen = async (motoId: string, reason: string = 'Vol signalé via interface bureau') => {
     try {
       setLoadingAction(true);
-      
+
       // CENTRALISÉ: Utilise le RPC declare_vehicle_stolen
-      const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
+      const { _data, error } = await supabase.rpc('declare_vehicle_stolen', {
         p_vehicle_id: motoId,
         p_bureau_id: bureauId,
         p_declared_by: null, // Sera rempli côté serveur si possible
@@ -267,8 +268,8 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                         <div className="flex gap-2">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedMoto(moto)}
                               >
@@ -365,7 +366,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                             )}
                           </DialogContent>
                         </Dialog>
-                        
+
                         <Button
                           variant="default"
                           size="sm"

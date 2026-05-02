@@ -75,7 +75,7 @@ export function useDelivery() {
 
     try {
       console.log('🚚 [useDelivery] Loading current delivery for user:', user.id);
-      
+
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -86,7 +86,7 @@ export function useDelivery() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       // Vérifier que la livraison a des données valides
       if (data && (data.vendor_name || data.customer_name || data.order_id)) {
         console.log('✅ [useDelivery] Current delivery loaded:', data.id);
@@ -106,7 +106,7 @@ export function useDelivery() {
 
     try {
       console.log('📋 [useDelivery] Loading delivery history for user:', user.id);
-      
+
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -116,12 +116,12 @@ export function useDelivery() {
         .limit(50);
 
       if (error) throw error;
-      
+
       // Filtrer pour exclure les livraisons sans données valides
-      const validHistory = (data || []).filter(d => 
+      const validHistory = (data || []).filter(d =>
         d.vendor_name || d.customer_name || d.order_id
       );
-      
+
       console.log('✅ [useDelivery] Valid history loaded:', validHistory.length, 'items');
       setDeliveryHistory(validHistory);
     } catch (error) {
@@ -130,17 +130,17 @@ export function useDelivery() {
   }, [user]);
 
   // Trouver les livraisons à proximité avec données de tarification vendeur
-  const findNearbyDeliveries = useCallback(async (lat: number, lng: number, radiusKm: number) => {
+  const findNearbyDeliveries = useCallback(async (_lat: number, _lng: number, _radiusKm: number) => {
     setLoading(true);
     setError(null);
 
     try {
       console.log('🔍 [useDelivery] Searching nearby deliveries...');
-      
+
       // Charger UNIQUEMENT les livraisons vraiment disponibles
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -153,23 +153,23 @@ export function useDelivery() {
       if (error) throw error;
 
       console.log('✅ Livraisons disponibles (réelles):', data?.length || 0);
-      
+
       // Filtrer et enrichir avec les données de tarification vendeur
-      const validDeliveries = (data || []).filter(d => 
+      const validDeliveries = (data || []).filter(d =>
         d.status === 'pending' && !d.driver_id
       );
-      
+
       // Récupérer les configurations de prix des vendeurs
       const vendorIds = [...new Set(validDeliveries.filter(d => d.vendor_id).map(d => d.vendor_id))];
-      
-      let vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
-      
+
+      const vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
+
       if (vendorIds.length > 0) {
         const { data: vendorData } = await supabase
           .from('vendors')
           .select('id, delivery_base_price, delivery_price_per_km')
           .in('id', vendorIds);
-        
+
         if (vendorData) {
           vendorData.forEach(v => {
             vendorPricing[v.id] = {
@@ -179,12 +179,12 @@ export function useDelivery() {
           });
         }
       }
-      
+
       // Enrichir les livraisons avec les données de tarification
       const enrichedDeliveries = validDeliveries.map(d => {
         const pricing = d.vendor_id ? vendorPricing[d.vendor_id] : null;
         const distanceKm = d.distance_km || d.distance_vendor_to_client || 5;
-        
+
         return {
           ...d,
           base_price: pricing?.base_price || 5000,
@@ -194,7 +194,7 @@ export function useDelivery() {
           total_distance: (d.distance_to_vendor || 0) + distanceKm
         };
       });
-      
+
       console.log('✅ Après enrichissement:', enrichedDeliveries.length);
       setNearbyDeliveries(enrichedDeliveries);
     } catch (error: any) {
@@ -212,7 +212,7 @@ export function useDelivery() {
 
     try {
       console.log('🎯 [useDelivery] Accepting delivery:', deliveryId);
-      
+
       // Vérifier disponibilité avant acceptation
       const { data: checkDelivery, error: checkError } = await supabase
         .from('deliveries')
@@ -251,7 +251,7 @@ export function useDelivery() {
       setCurrentDelivery(data);
       setNearbyDeliveries(prev => prev.filter(d => d.id !== deliveryId));
       toast.success('Livraison acceptée !');
-      
+
       return data;
     } catch (error: any) {
       console.error('❌ Error accepting delivery:', error);
@@ -277,7 +277,7 @@ export function useDelivery() {
 
       setCurrentDelivery(data);
       toast.success('Livraison démarrée !');
-      
+
       return data;
     } catch (error: any) {
       console.error('Erreur démarrage livraison:', error);
@@ -316,7 +316,7 @@ export function useDelivery() {
       setCurrentDelivery(null);
       await loadDeliveryHistory();
       toast.success('Livraison terminée !');
-      
+
       return data;
     } catch (error: any) {
       console.error('Erreur completion livraison:', error);
@@ -344,7 +344,7 @@ export function useDelivery() {
 
       setCurrentDelivery(null);
       toast.success('Livraison annulée');
-      
+
       return data;
     } catch (error: any) {
       console.error('Erreur annulation livraison:', error);
@@ -363,7 +363,7 @@ export function useDelivery() {
     accuracy?: number
   ) => {
     if (!user) return;
-    
+
     try {
       const { error } = await supabase
         .from('delivery_tracking')
@@ -420,7 +420,7 @@ export function useDelivery() {
   }, []);
 
   // Traiter le paiement
-  const processPayment = useCallback(async (deliveryId: string, paymentMethod: string = 'cash') => {
+  const processPayment = useCallback(async (deliveryId: string, _paymentMethod: string = 'cash') => {
     try {
       // Vérifier que la livraison est terminée
       const { data: delivery } = await supabase
@@ -435,7 +435,7 @@ export function useDelivery() {
 
       // Marquer le paiement comme traité
       toast.success(`Paiement de ${delivery.driver_earning} GNF reçu !`);
-      
+
       return {
         success: true,
         amount: delivery.driver_earning

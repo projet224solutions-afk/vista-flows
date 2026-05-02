@@ -22,7 +22,7 @@ export const logger = {
     if (isDevelopment) {
       console.error(`❌ ${message}`, error, metadata);
     }
-    
+
     if (isProduction) {
       // TODO: Envoyer à Sentry/LogRocket/DataDog
       // sendToMonitoringService('error', message, error, metadata);
@@ -36,7 +36,7 @@ export const logger = {
     if (isDevelopment) {
       console.warn(`⚠️  ${message}`, metadata);
     }
-    
+
     if (isProduction) {
       // TODO: Envoyer aux services de monitoring
     }
@@ -140,7 +140,7 @@ export const dbLogger = {
 export const securityLogger = {
   warning: (event: string, metadata?: LogMetadata) => {
     logger.warn(`🔒 Security: ${event}`, metadata);
-    
+
     if (isProduction) {
       // Envoyer alerte sécurité immédiate
     }
@@ -148,7 +148,7 @@ export const securityLogger = {
 
   critical: (event: string, metadata?: LogMetadata) => {
     logger.error(`🚨 Security CRITICAL: ${event}`, undefined, metadata);
-    
+
     if (isProduction) {
       // Alerte sécurité critique - notification PDG
     }
@@ -161,7 +161,7 @@ export const securityLogger = {
 export const perfLogger = {
   measure: (name: string, duration: number) => {
     const threshold = 100; // ms
-    
+
     if (duration > threshold) {
       logger.warn(`⏱️  Performance: ${name} took ${duration}ms (> ${threshold}ms)`);
     } else {

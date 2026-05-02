@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Printer, Download, FileText, Eye, History, Loader2, Upload, Stamp, X } from "lucide-react";
+import { _Printer, _Download, FileText, Eye, History, Loader2, Upload, Stamp, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import TransportTicketPreview from './TransportTicketPreview';
@@ -27,7 +27,7 @@ interface TicketConfig {
   bureauStampUrl?: string;
 }
 
-interface TicketBatch {
+interface _TicketBatch {
   id: string;
   batch_number: string;
   bureau_id: string;
@@ -48,7 +48,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
   const [stampUrl, setStampUrl] = useState<string | null>(null);
   const [isUploadingStamp, setIsUploadingStamp] = useState(false);
   const stampInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [config, setConfig] = useState<TicketConfig>({
     syndicateName: bureauName || 'Syndicat de Transports Moto-Taxi',
     commune: '',
@@ -167,7 +167,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     }
 
     setIsGenerating(true);
-    
+
     try {
       // Récupérer le dernier lot DE CE TYPE pour ce bureau
       const { data: lastBatch, error: fetchError } = await (supabase as any)
@@ -192,7 +192,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         console.log('Aucun lot trouvé, numérotation à 1');
       } else {
         const lastTicketType = lastBatch.ticket_config?.ticketType || 'journalier';
-        
+
         // Si le type de ticket est différent, recommencer à 1
         if (lastTicketType !== config.ticketType) {
           startNumber = 1;
@@ -242,14 +242,14 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
       // Générer les numéros de tickets
       const ticketNumbers = Array.from({ length: 30 }, (_, i) => startNumber + i);
-      
+
       setGeneratedTickets(ticketNumbers);
       setBatchId(newBatch?.id || null);
       setConfig(configWithStamp);
       setShowPreview(true);
-      
+
       const { name } = getValidityPeriod(config.ticketType);
-      const successMsg = resetReason 
+      const successMsg = resetReason
         ? `Lot ${batchNumber} généré (tickets 01-30) - ${resetReason}`
         : `Lot ${batchNumber} généré (tickets ${startNumber}-${endNumber}) - Validité: ${name}`;
       toast.success(successMsg);
@@ -368,13 +368,13 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
               <Stamp className="w-4 h-4" />
               Cachet du Bureau Syndicat (optionnel)
             </Label>
-            
+
             {stampUrl ? (
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 border-2 border-amber-400 rounded-full overflow-hidden bg-white flex items-center justify-center">
-                  <img 
-                    src={stampUrl} 
-                    alt="Cachet" 
+                  <img
+                    src={stampUrl}
+                    alt="Cachet"
                     className="w-full h-full object-contain"
                   />
                 </div>

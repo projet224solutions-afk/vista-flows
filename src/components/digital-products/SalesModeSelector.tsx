@@ -4,11 +4,11 @@
  */
 
 import React from 'react';
-import { 
-  Store, 
-  Link2, 
+import {
+  Store,
+  Link2,
   Check,
-  Users, 
+  Users,
   TrendingUp,
   Globe,
   ShieldCheck,
@@ -81,7 +81,7 @@ const salesModes = {
 
 export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }: SalesModeSelectorProps) {
   // Filtrer les modes selon hideDirectSale
-  const availableModes = hideDirectSale 
+  const availableModes = hideDirectSale
     ? (['affiliate'] as SalesMode[])
     : (Object.keys(salesModes) as SalesMode[]);
 
@@ -132,15 +132,15 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               className={cn(
                 'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#04439e]',
-                isSelected 
-                  ? 'border-[rgba(4,67,158,0.22)] shadow-[0_20px_42px_rgba(4,67,158,0.12)] bg-[linear-gradient(180deg,rgba(4,67,158,0.08),#ffffff)]' 
+                isSelected
+                  ? 'border-[rgba(4,67,158,0.22)] shadow-[0_20px_42px_rgba(4,67,158,0.12)] bg-[linear-gradient(180deg,rgba(4,67,158,0.08),#ffffff)]'
                   : 'border-[#e8eef8] bg-white hover:border-[rgba(4,67,158,0.22)] hover:shadow-[0_16px_34px_rgba(4,67,158,0.10)]',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               {/* Badge en haut à droite */}
               <div className="absolute top-3 right-3">
-                <Badge 
+                <Badge
                   variant={mode.badgeVariant}
                   className={cn(
                     'text-[10px] font-medium',
@@ -154,8 +154,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               {/* Indicateur de sélection */}
               <div className={cn(
                 'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                isSelected 
-                  ? 'border-[#04439e] bg-[#04439e]' 
+                isSelected
+                  ? 'border-[#04439e] bg-[#04439e]'
                   : 'border-slate-300'
               )}>
                 {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
@@ -166,8 +166,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Icône */}
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
-                  mode.color === 'blue' 
-                      ? 'bg-[#04439e]' 
+                  mode.color === 'blue'
+                      ? 'bg-[#04439e]'
                     : 'bg-[linear-gradient(135deg,#ff4000_0%,#ff6a33_100%)]',
                   'text-white shadow-lg'
                 )}>
@@ -183,8 +183,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Highlight */}
                 <div className={cn(
                   'text-center py-2 px-3 rounded-lg text-xs font-medium',
-                  mode.color === 'blue' 
-                    ? 'bg-[#04439e]/10 text-[#04439e]' 
+                  mode.color === 'blue'
+                    ? 'bg-[#04439e]/10 text-[#04439e]'
                     : 'bg-[#ff4000]/10 text-[#ff4000]'
                 )}>
                   {mode.highlight}
@@ -195,8 +195,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   {mode.features.map((feature, idx) => {
                     const FeatureIcon = feature.icon;
                     return (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         className="flex items-center gap-2 text-xs text-muted-foreground"
                       >
                         <FeatureIcon className="w-3.5 h-3.5 text-[#04439e] shrink-0" />

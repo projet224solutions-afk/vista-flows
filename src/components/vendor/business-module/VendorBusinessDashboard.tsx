@@ -11,9 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { 
-  ShoppingCart, Package, Users, TrendingUp, 
-  RefreshCw, Clock, XCircle, 
+import {
+  ShoppingCart, Package, Users, TrendingUp,
+  RefreshCw, Clock, XCircle,
   DollarSign, BarChart3, ShoppingBag, Plus,
   Store, ArrowUpRight,
   Sparkles, Settings, BookOpen
@@ -44,12 +44,12 @@ export function VendorBusinessDashboard({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddService, setShowAddService] = useState(false);
-  
+
   // Utiliser les stats spécifiques au service professionnel sélectionné
   console.log('🔍 VendorBusinessDashboard - serviceId:', serviceId);
   console.log('🔍 VendorBusinessDashboard - serviceTypeCode:', serviceTypeCode);
   console.log('🔍 VendorBusinessDashboard - professionalService:', professionalService);
-  
+
   const { stats, loading, refresh: refreshStats } = useProfessionalServiceStats({
     serviceId,
     serviceTypeCode: serviceTypeCode || professionalService?.service_type?.code
@@ -153,8 +153,8 @@ export function VendorBusinessDashboard({
                     <Settings className="w-4 h-4" />
                     Configurer
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="gap-2 justify-start"
                     onClick={() => window.open('https://docs.224solutions.com/guide-vendeur', '_blank')}
                   >
@@ -256,7 +256,7 @@ export function VendorBusinessDashboard({
                   <span className="text-sm font-medium">Total général</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.revenue || 0)}</span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
@@ -309,7 +309,7 @@ export function VendorBusinessDashboard({
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.ordersOnline || 0}</div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-2 rounded bg-muted/30">
                     <span className="text-sm">Total commandes</span>

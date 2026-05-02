@@ -3,7 +3,7 @@
  * 224Solutions - Système de diffusion multicanal
  */
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   Megaphone, Plus, Send, Users, Mail, MessageSquare, Bell,
   Smartphone, BarChart3, Clock, CheckCircle, XCircle, AlertTriangle,
-  Eye, TrendingUp, Filter, Calendar, Pause, RefreshCw, Target
+  Eye, _TrendingUp, Filter, Calendar, Pause, RefreshCw, Target
 } from 'lucide-react';
 import {
   listCampaigns, createCampaign, sendCampaign, cancelCampaign,
@@ -424,6 +424,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
 
   useEffect(() => {
     if (step === 2) loadPreview();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, form.target_type]);
 
   const handleToggleChannel = (channel: CampaignChannel) => {

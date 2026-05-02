@@ -1,7 +1,7 @@
 /**
  * EDGE FUNCTIONS MIGRATION - PAYMENTS ROUTES
  * Migrates Supabase Edge Functions to Node.js/Express
- * 
+ *
  * Functions Migrated (45 total):
  * - payment/stripe/*
  * - payment/paypal/*
@@ -28,6 +28,304 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 const BCRG_OFFICIAL_URL = "https://www.bcrg-guinee.org";
+
+const DEFAULT_FEES: Record<string, number> = {
+  deposit_fee_percentage: 2,
+};
+
+const STRIPE_ZERO_DECIMAL_CURRENCIES = new Set([
+  "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF",
+  "UGX", "VND", "VUV", "XAF", "XOF", "XPF",
+]);
+
+async function getPdgFeeRatePercent(settingKey: string): Promise<number> {
+  const defaultValue = DEFAULT_FEES[settingKey] ?? 0;
+  try {
+    const { data, error } = await supabase
+      .from("pdg_settings")
+      .select("setting_value")
+      .eq("setting_key", settingKey)
+      .maybeSingle();
+
+    if (error || !data) return defaultValue;
+
+    const raw = data.setting_value;
+    const rate = typeof raw === "object" && raw !== null && "value" in (raw as any)
+      ? Number((raw as any).value)
+      : Number(raw);
+
+    return Number.isFinite(rate) && rate >= 0 ? rate : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+function toStripeAmount(amount: number, currency: string): number {
+  return STRIPE_ZERO_DECIMAL_CURRENCIES.has(String(currency || "").toUpperCase())
+    ? Math.round(amount)
+    : Math.round(amount * 100);
+}
+
+function fromStripeAmount(amount: number, currency: string): number {
+  return STRIPE_ZERO_DECIMAL_CURRENCIES.has(String(currency || "").toUpperCase())
+    ? amount
+    : amount / 100;
+}
+
+function isWalletDepositIntent(paymentIntent: Stripe.PaymentIntent): boolean {
+  return paymentIntent.metadata?.source === "wallet_deposit"
+    || paymentIntent.metadata?.type === "deposit"
+    || paymentIntent.metadata?.type === "wallet_deposit";
+}
+
+function getBearerToken(req: any): string | null {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  return auth.slice("Bearer ".length).trim();
+}
+
+const validateBearerToken = async (req: any, res: any, next: any) => {
+  try {
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ success: false, error: "Missing bearer token" });
+
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) return res.status(401).json({ success: false, error: "Invalid token" });
+
+    req.user = data.user;
+    next();
+  } catch {
+    return res.status(500).json({ success: false, error: "Token validation failed" });
+  }
+};
+
+// ============ POST /payments/stripe-deposit ============
+/**
+ * Alias used by the frontend edge-function proxy.
+ * Creates a real Stripe PaymentIntent for card wallet deposits.
+ */
+router.post("/stripe-deposit", validateBearerToken, async (req: any, res: Response) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
+    const userId = req.user!.id;
+    const { amount, currency = "GNF" } = req.body || {};
+    const grossAmount = Number(amount);
+    const normalizedCurrency = String(currency || "GNF").toUpperCase();
+
+    if (!Number.isFinite(grossAmount) || grossAmount <= 0) {
+      return res.status(400).json({ success: false, error: "Valid amount required" });
+    }
+
+    const depositFeeRate = await getPdgFeeRatePercent("deposit_fee_percentage");
+    const depositFee = Math.round(grossAmount * (depositFeeRate / 100));
+    const netAmount = Math.max(grossAmount - depositFee, 0);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: toStripeAmount(grossAmount, normalizedCurrency),
+      currency: normalizedCurrency.toLowerCase(),
+      payment_method_types: ["card"],
+      metadata: {
+        user_id: userId,
+        buyer_id: userId,
+        type: "wallet_deposit",
+        source: "wallet_deposit",
+        gross_amount: grossAmount.toString(),
+        deposit_fee: depositFee.toString(),
+        net_amount: netAmount.toString(),
+        fee_rate: depositFeeRate.toString(),
+      },
+      description: "Depot wallet 224Solutions",
+    });
+
+    const { data: transaction, error: insertError } = await supabase
+      .from("stripe_transactions")
+      .insert({
+        stripe_payment_intent_id: paymentIntent.id,
+        payment_intent_id: paymentIntent.id,
+        buyer_id: userId,
+        seller_id: userId,
+        amount: grossAmount,
+        currency: normalizedCurrency,
+        commission_rate: depositFeeRate,
+        commission_amount: depositFee,
+        seller_net_amount: netAmount,
+        status: "PENDING",
+        payment_method: "card",
+        metadata: {
+          type: "wallet_deposit",
+          source: "wallet_deposit",
+          gross_amount: grossAmount,
+          wallet_credited: false,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (insertError) {
+      console.error("[payments/stripe-deposit] transaction insert error:", insertError.message);
+    }
+
+    return res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      client_secret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      payment_intent_id: paymentIntent.id,
+      transactionId: transaction?.id,
+      transaction_id: transaction?.id,
+      amount: grossAmount,
+      currency: normalizedCurrency,
+      depositFee,
+      netAmount,
+    });
+  } catch (error) {
+    console.error("[payments/stripe-deposit] Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Deposit creation failed",
+    });
+  }
+});
+
+// ============ POST /payments/confirm-stripe-deposit ============
+/**
+ * Confirms a succeeded Stripe wallet deposit and credits the wallet once.
+ */
+router.post("/confirm-stripe-deposit", validateBearerToken, async (req: any, res: Response) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
+    const userId = req.user!.id;
+    const paymentIntentId = req.body?.paymentIntentId || req.body?.payment_intent_id || req.body?.payment_id;
+    if (!paymentIntentId) {
+      return res.status(400).json({ success: false, error: "paymentIntentId required" });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(String(paymentIntentId));
+    if (paymentIntent.status !== "succeeded") {
+      return res.status(409).json({ success: false, error: `Payment not succeeded (${paymentIntent.status})` });
+    }
+
+    const ownerId = paymentIntent.metadata?.user_id || paymentIntent.metadata?.buyer_id;
+    if (ownerId !== userId) {
+      return res.status(403).json({ success: false, error: "Payment does not belong to this user" });
+    }
+
+    if (!isWalletDepositIntent(paymentIntent)) {
+      return res.status(400).json({ success: false, error: "Payment is not a wallet deposit" });
+    }
+
+    let chargeId: string | null = null;
+    let last4: string | null = null;
+    let cardBrand: string | null = null;
+
+    const latestChargeId = typeof paymentIntent.latest_charge === "string"
+      ? paymentIntent.latest_charge
+      : paymentIntent.latest_charge?.id;
+
+    if (latestChargeId) {
+      try {
+        const charge = await stripe.charges.retrieve(latestChargeId);
+        chargeId = charge.id;
+        last4 = charge.payment_method_details?.card?.last4 || null;
+        cardBrand = charge.payment_method_details?.card?.brand || null;
+      } catch (chargeError) {
+        console.error("[payments/confirm-stripe-deposit] charge lookup error:", chargeError);
+      }
+    }
+
+    const { data: existingTx } = await supabase
+      .from("stripe_transactions")
+      .select("id, status, metadata")
+      .eq("stripe_payment_intent_id", paymentIntent.id)
+      .maybeSingle();
+
+    const normalizedCurrency = paymentIntent.currency.toUpperCase();
+    const grossAmount = Number(paymentIntent.metadata?.gross_amount || fromStripeAmount(paymentIntent.amount, normalizedCurrency));
+    const feeRate = Number(paymentIntent.metadata?.fee_rate || DEFAULT_FEES.deposit_fee_percentage);
+    const depositFee = Number(paymentIntent.metadata?.deposit_fee || Math.round(grossAmount * (feeRate / 100)));
+    const netAmount = Number(paymentIntent.metadata?.net_amount || Math.max(grossAmount - depositFee, 0));
+
+    let transactionId = existingTx?.id;
+    const alreadyCredited = Boolean((existingTx?.metadata as any)?.wallet_credited === true);
+
+    if (existingTx?.status === "SUCCEEDED" && alreadyCredited) {
+      return res.json({ success: true, already_processed: true, transactionId });
+    }
+
+    if (!transactionId) {
+      const { data: createdTx, error: createError } = await supabase
+        .from("stripe_transactions")
+        .insert({
+          stripe_payment_intent_id: paymentIntent.id,
+          payment_intent_id: paymentIntent.id,
+          buyer_id: userId,
+          seller_id: userId,
+          amount: grossAmount,
+          currency: normalizedCurrency,
+          commission_rate: feeRate,
+          commission_amount: depositFee,
+          seller_net_amount: netAmount,
+          status: "PENDING",
+          payment_method: "card",
+          metadata: {
+            type: "wallet_deposit",
+            source: "wallet_deposit",
+            gross_amount: grossAmount,
+            recovered_on_confirm: true,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (createError || !createdTx) {
+        return res.status(500).json({ success: false, error: createError?.message || "Transaction creation failed" });
+      }
+      transactionId = createdTx.id;
+    }
+
+    const { error: updateError } = await supabase
+      .from("stripe_transactions")
+      .update({
+        status: "SUCCEEDED",
+        stripe_charge_id: chargeId,
+        last4,
+        card_brand: cardBrand,
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", transactionId);
+
+    if (updateError) {
+      return res.status(500).json({ success: false, error: updateError.message });
+    }
+
+    const { data: depositResult, error: depositError } = await supabase
+      .rpc("process_deposit_payment", { p_transaction_id: transactionId });
+
+    if (depositError) {
+      return res.status(500).json({ success: false, error: depositError.message });
+    }
+
+    return res.json({
+      success: true,
+      message: "Wallet credited",
+      transactionId,
+      result: depositResult,
+    });
+  } catch (error) {
+    console.error("[payments/confirm-stripe-deposit] Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Deposit confirmation failed",
+    });
+  }
+});
 
 // ============ POST /payment/stripe/intent ============
 /**

@@ -1,7 +1,7 @@
 ﻿// @ts-nocheck
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, Zap, Tag } from "lucide-react";
+import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, _Zap, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ export default function VisualSearch() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Charger l'image pass├®e depuis la navigation (Home ou Marketplace)
+  // Charger l'image passée depuis la navigation (Home ou Marketplace)
   useEffect(() => {
     const stateImage = location.state?.capturedImage;
     if (stateImage && stateImage instanceof File) {
@@ -52,8 +52,8 @@ export default function VisualSearch() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -61,8 +61,8 @@ export default function VisualSearch() {
       }
       setShowCamera(true);
     } catch (error) {
-      console.error('Erreur cam├®ra:', error);
-      toast.error("Impossible d'acc├®der ├á la cam├®ra");
+      console.error('Erreur caméra:', error);
+      toast.error("Impossible d'accéder à la caméra");
     }
   };
 
@@ -76,7 +76,7 @@ export default function VisualSearch() {
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
-    
+
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -94,7 +94,7 @@ export default function VisualSearch() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error("Veuillez s├®lectionner une image");
+      toast.error("Veuillez sélectionner une image");
       return;
     }
 
@@ -107,14 +107,14 @@ export default function VisualSearch() {
 
   const searchByImage = async () => {
     if (!capturedImage) {
-      toast.error("Veuillez d'abord capturer ou t├®l├®charger une image");
+      toast.error("Veuillez d'abord capturer ou télécharger une image");
       return;
     }
 
     setIsSearching(true);
     setAnalysis(null);
     setKeywords([]);
-    
+
     try {
       // Appeler l'edge function pour analyser l'image avec l'IA
       const { data, error } = await supabase.functions.invoke('visual-search', {
@@ -127,11 +127,11 @@ export default function VisualSearch() {
         setResults(data.results || []);
         setAnalysis(data.analysis || null);
         setKeywords(data.keywords || []);
-        
+
         if (data.results?.length > 0) {
-          toast.success(`${data.results.length} produits similaires trouv├®s !`);
+          toast.success(`${data.results.length} produits similaires trouvés !`);
         } else {
-          toast.info("Aucun produit similaire trouv├®. Essayez une autre image.");
+          toast.info("Aucun produit similaire trouvé. Essayez une autre image.");
         }
       } else {
         throw new Error(data.error || 'Erreur de recherche');
@@ -139,15 +139,15 @@ export default function VisualSearch() {
     } catch (error: any) {
       console.error('Erreur recherche:', error);
       toast.error("Erreur lors de la recherche visuelle");
-      
-      // Fallback: recherche basique si l'IA ├®choue
+
+      // Fallback: recherche basique si l'IA échoue
       try {
         const { data: products } = await supabase
           .from('products')
           .select('id, name, price, images')
           .eq('is_active', true)
           .limit(12);
-        
+
         if (products) {
           setResults(products.map((p, i) => ({
             ...p,
@@ -196,7 +196,7 @@ export default function VisualSearch() {
                 <div className="text-center">
                   <h2 className="font-semibold text-foreground">Rechercher par image</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Prenez une photo ou t├®l├®chargez une image pour trouver des produits similaires
+                    Prenez une photo ou téléchargez une image pour trouver des produits similaires
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -204,13 +204,13 @@ export default function VisualSearch() {
                     <Camera className="w-4 h-4" />
                     Prendre une photo
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                     className="gap-2"
                   >
                     <Upload className="w-4 h-4" />
-                    T├®l├®charger
+                    Télécharger
                   </Button>
                 </div>
                 <input
@@ -225,13 +225,13 @@ export default function VisualSearch() {
           </Card>
         )}
 
-        {/* Cam├®ra en direct */}
+        {/* Caméra en direct */}
         {showCamera && (
           <Card className="overflow-hidden">
             <CardContent className="p-0 relative">
-              <video 
-                ref={videoRef} 
-                autoPlay 
+              <video
+                ref={videoRef}
+                autoPlay
                 playsInline
                 className="w-full aspect-[4/3] object-cover bg-black"
               />
@@ -248,17 +248,17 @@ export default function VisualSearch() {
           </Card>
         )}
 
-        {/* Image captur├®e */}
+        {/* Image capturée */}
         {capturedImage && (
           <Card className="overflow-hidden">
             <CardContent className="p-0 relative">
-              <img 
-                src={capturedImage} 
-                alt="Image captur├®e" 
+              <img
+                src={capturedImage}
+                alt="Image capturée"
                 className="w-full aspect-[4/3] object-cover"
               />
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 size="icon"
                 className="absolute top-2 right-2"
                 onClick={clearImage}
@@ -271,8 +271,8 @@ export default function VisualSearch() {
 
         {/* Bouton de recherche */}
         {capturedImage && (
-          <Button 
-            onClick={searchByImage} 
+          <Button
+            onClick={searchByImage}
             className="w-full gap-2"
             size="lg"
             disabled={isSearching}
@@ -291,7 +291,7 @@ export default function VisualSearch() {
           </Button>
         )}
 
-        {/* Analyse IA - Affichage des mots-cl├®s d├®tect├®s */}
+        {/* Analyse IA - Affichage des mots-clés détectés */}
         {analysis && (
           <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-4">
@@ -304,8 +304,8 @@ export default function VisualSearch() {
               )}
               <div className="flex flex-wrap gap-2">
                 {keywords.map((keyword, index) => (
-                  <Badge 
-                    key={index} 
+                  <Badge
+                    key={index}
                     variant="secondary"
                     className="gap-1 cursor-pointer hover:bg-primary hover:text-primary-foreground"
                     onClick={() => navigate(`/marketplace?search=${encodeURIComponent(keyword)}`)}
@@ -319,16 +319,16 @@ export default function VisualSearch() {
           </Card>
         )}
 
-        {/* R├®sultats */}
+        {/* Résultats */}
         {results.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Search className="w-4 h-4" />
-              {results.length} produits similaires trouv├®s
+              {results.length} produits similaires trouvés
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {results.map((product) => (
-                <Card 
+                <Card
                   key={product.id}
                   className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => navigate(`/marketplace?product=${product.id}`)}
@@ -336,8 +336,8 @@ export default function VisualSearch() {
                   <CardContent className="p-0">
                     <div className="aspect-square bg-muted relative overflow-hidden rounded-t-lg">
                       {product.images?.[0] ? (
-                        <img 
-                          src={product.images[0]} 
+                        <img
+                          src={product.images[0]}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />

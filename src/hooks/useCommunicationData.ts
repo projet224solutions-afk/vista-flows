@@ -51,7 +51,7 @@ export function useCommunicationData() {
   const loadConversations = useCallback(async (userId: string) => {
     try {
       setLoading(true);
-      
+
       // Récupérer toutes les conversations de l'utilisateur
       const { data: participantsData, error: participantsError } = await supabase
         .from('conversation_participants')
@@ -82,7 +82,7 @@ export function useCommunicationData() {
       const conversationsWithContacts = await Promise.all(
         participantsData.map(async (participant) => {
           const conv = (participant as any).conversations;
-          
+
           // Récupérer l'autre participant (le contact)
           const { data: otherParticipant } = await supabase
             .from('conversation_participants')
@@ -99,7 +99,7 @@ export function useCommunicationData() {
             .maybeSingle();
 
           const profile = otherParticipant ? (otherParticipant as any).profiles : null;
-          
+
           // ✅ Calculer le nombre réel de messages non lus
           const { count: unreadCount } = await supabase
             .from('messages')
@@ -107,7 +107,7 @@ export function useCommunicationData() {
             .eq('conversation_id', conv.id)
             .neq('sender_id', userId)
             .is('read_at', null);
-          
+
           return {
             id: conv.id,
             name: conv.name || (profile ? `${profile.first_name} ${profile.last_name}` : 'Conversation'),
@@ -137,7 +137,7 @@ export function useCommunicationData() {
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
+
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select(`
@@ -412,7 +412,7 @@ export function useCommunicationData() {
     try {
       // Get current user from auth
       const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
+
       if (!currentUser) throw new Error('Non authentifié');
 
       const { error } = await supabase

@@ -185,23 +185,23 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
   private async attemptAutoRecovery(error: Error): Promise<void> {
     // Vérifier si c'est une erreur de cache/module
     const errorMessage = error.message || '';
-    const isDynamicImportError = 
+    const isDynamicImportError =
       errorMessage.includes('dynamically imported module') ||
       errorMessage.includes('Importing a module script failed') ||
       errorMessage.includes('Failed to fetch dynamically imported module');
 
     if (isDynamicImportError && !this.state.recoveryAttempted) {
       this.setState({ isRecovering: true, recoveryAttempted: true });
-      
+
       console.log('🔄 Erreur de cache détectée, tentative de récupération...');
-      
+
       try {
         const recovered = await autoErrorRecovery.handleError(
           'dynamic_import_failed',
           errorMessage,
           'react_error_boundary'
         );
-        
+
         if (!recovered) {
           this.setState({ isRecovering: false });
         }
@@ -218,7 +218,7 @@ class EnhancedErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
   private async reportToMonitoring(error: Error, errorInfo: ErrorInfo): Promise<void> {
     try {
       const { monitoringService } = await import('@/services/MonitoringService');
-      
+
       await monitoringService.logError(
         'critical',
         'react_error',
@@ -372,7 +372,7 @@ export async function tryCatch<T>(
     return [result, null];
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    
+
     secureLogger.error(
       'system',
       errorMessage || `Error in tryCatch: ${err.message}`,
@@ -395,7 +395,7 @@ export function tryCatchSync<T>(
     return [result, null];
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    
+
     secureLogger.error(
       'system',
       errorMessage || `Error in tryCatchSync: ${err.message}`,

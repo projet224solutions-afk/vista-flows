@@ -27,12 +27,12 @@ interface CategoryProductsListProps {
   onBack: () => void;
 }
 
-export function CategoryProductsList({ 
-  category, 
-  title, 
-  description, 
+export function CategoryProductsList({
+  category,
+  title,
+  description,
   gradient,
-  onBack 
+  onBack
 }: CategoryProductsListProps) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -47,7 +47,7 @@ export function CategoryProductsList({
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return products;
     const query = searchQuery.toLowerCase().trim();
-    return products.filter(product => 
+    return products.filter(product =>
       product.title?.toLowerCase().includes(query) ||
       product.short_description?.toLowerCase().includes(query) ||
       product.description?.toLowerCase().includes(query)
@@ -56,7 +56,7 @@ export function CategoryProductsList({
 
   const handleAddProduct = () => {
     console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant, role: profile?.role });
-    
+
     if (!user) {
       toast.info('Connexion requise pour ajouter un produit');
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
@@ -103,7 +103,7 @@ export function CategoryProductsList({
 
   // formatPrice conservé pour fallback
   const fc = useFormatCurrency();
-  const formatPriceSimple = (price: number, currency: string = 'GNF') => fc(price, currency);
+  const _formatPriceSimple = (price: number, currency: string = 'GNF') => fc(price, currency);
 
   if (showProductForm) {
     return (
@@ -121,8 +121,8 @@ export function CategoryProductsList({
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={onBack}
               className="shrink-0"
@@ -185,9 +185,9 @@ export function CategoryProductsList({
               {searchQuery ? `Aucun résultat pour "${searchQuery}"` : `Aucun ${title.toLowerCase()}`}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {searchQuery 
+              {searchQuery
                 ? 'Essayez avec d\'autres mots-clés'
-                : isMerchant 
+                : isMerchant
                   ? `Soyez le premier à ajouter dans ${title}!`
                   : `Devenez marchand pour être le premier à vendre!`
               }
@@ -195,7 +195,7 @@ export function CategoryProductsList({
             {!searchQuery && (
               <Button onClick={handleAddProduct} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/40">
                 <Plus className="w-4 h-4 mr-2" />
-                {user 
+                {user
                   ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand')
                   : 'Se connecter pour vendre'
                 }
@@ -205,15 +205,15 @@ export function CategoryProductsList({
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {filteredProducts.map((product) => (
-              <Card 
+              <Card
                 key={product.id}
                 className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
                 onClick={() => handleProductClick(product)}
               >
                 <div className="relative aspect-square bg-muted">
                   {product.images && product.images[0] ? (
-                    <img 
-                      src={product.images[0]} 
+                    <img
+                      src={product.images[0]}
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
@@ -234,7 +234,7 @@ export function CategoryProductsList({
                       <ShoppingCart className="w-10 h-10" />
                     </div>
                   )}
-                  
+
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {product.video_url && (
@@ -262,7 +262,7 @@ export function CategoryProductsList({
                   <h3 className="font-medium text-sm text-foreground line-clamp-2 mb-1">
                     {product.title}
                   </h3>
-                  
+
                   {product.short_description && (
                     <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
                       {product.short_description}
@@ -270,9 +270,9 @@ export function CategoryProductsList({
                   )}
 
                     <div className="flex items-center justify-between">
-                    <LocalPrice 
-                      amount={product.price} 
-                      currency={product.currency || 'GNF'} 
+                    <LocalPrice
+                      amount={product.price}
+                      currency={product.currency || 'GNF'}
                       size="sm"
                       className="font-bold text-primary"
                     />

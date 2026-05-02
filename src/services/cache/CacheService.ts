@@ -46,13 +46,13 @@ class CacheService {
 
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, 1);
-      
+
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
         resolve();
       };
-      
+
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains('cache')) {
@@ -94,8 +94,8 @@ class CacheService {
    * Stocke une valeur dans le cache
    */
   async set<T>(
-    key: string, 
-    value: T, 
+    key: string,
+    value: T,
     ttlSeconds?: number,
     strategy: string = CACHE_STRATEGIES.CACHE_ASIDE
   ): Promise<void> {
@@ -134,7 +134,7 @@ class CacheService {
   async deletePattern(pattern: string): Promise<number> {
     let deleted = 0;
     const regex = new RegExp(pattern.replace('*', '.*'));
-    
+
     for (const key of this.memoryCache.keys()) {
       if (regex.test(key)) {
         this.memoryCache.delete(key);
@@ -142,7 +142,7 @@ class CacheService {
         deleted++;
       }
     }
-    
+
     this.stats.size = this.memoryCache.size;
     return deleted;
   }

@@ -33,7 +33,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
     try {
       // 1. Vérifier session utilisateur
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+
       result.checks.push({
         name: 'Session Utilisateur',
         status: !userError && user ? 'success' : 'error',
@@ -91,10 +91,10 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
 
       // 3. Vérifier permissions
       const permissions = result.agent?.permissions || [];
-      const hasCreateUsers = permissions.includes('create_users') || 
+      const hasCreateUsers = permissions.includes('create_users') ||
                             permissions.includes('all') ||
                             permissions.includes('all_modules');
-      
+
       result.canCreateUsers = hasCreateUsers;
 
       result.checks.push({

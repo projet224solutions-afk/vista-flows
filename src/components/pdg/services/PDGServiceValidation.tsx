@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  CheckCircle, XCircle, Clock, MapPin, Phone, Mail, Eye,
-  Shield, AlertTriangle, RefreshCw, Store
+import {
+  CheckCircle, XCircle, Clock, MapPin, Phone, Mail, _Eye,
+  Shield, _AlertTriangle, RefreshCw, _Store
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,7 +41,7 @@ interface PendingService {
   service_type?: { name: string; code: string } | null;
 }
 
-export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh }: PDGServiceValidationProps) {
+export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefresh }: PDGServiceValidationProps) {
   const [services, setServices] = useState<PendingService[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionService, setActionService] = useState<PendingService | null>(null);
@@ -88,9 +88,9 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
 
       const { error } = await supabase
         .from('professional_services')
-        .update({ 
-          status: newStatus, 
-          verification_status: newVerification 
+        .update({
+          status: newStatus,
+          verification_status: newVerification
         })
         .eq('id', actionService.id);
 
@@ -162,11 +162,11 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
                         <Clock className="w-3 h-3" />En attente
                       </Badge>
                     </div>
-                    
+
                     {service.description && (
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{service.description}</p>
                     )}
-                    
+
                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                       {service.address && (
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.address}</span>
@@ -183,17 +183,17 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2 shrink-0">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       className="bg-green-600 hover:bg-green-700 text-white gap-1"
                       onClick={() => { setActionService(service); setActionType('approve'); }}
                     >
                       <CheckCircle className="w-4 h-4" />Approuver
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       className="gap-1"
                       onClick={() => { setActionService(service); setActionType('reject'); }}
@@ -229,8 +229,8 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionService(null)}>Annuler</Button>
-            <Button 
-              onClick={handleAction} 
+            <Button
+              onClick={handleAction}
               disabled={submitting}
               variant={actionType === 'approve' ? 'default' : 'destructive'}
             >

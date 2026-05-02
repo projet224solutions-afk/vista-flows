@@ -48,30 +48,31 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
   const [myPresence, setMyPresence] = useState<UserPresence | null>(null);
   const [typingUsers, setTypingUsers] = useState<TypingIndicator[]>([]);
   const [presenceCache, setPresenceCache] = useState<Map<string, UserPresence>>(new Map());
-  
+
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const awayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
-  const channelRef = useRef<any>(null);
+  const _channelRef = useRef<any>(null);
 
   // Détecter l'activité utilisateur
   const resetAwayTimeout = useCallback(() => {
     lastActivityRef.current = Date.now();
-    
+
     if (awayTimeoutRef.current) {
       clearTimeout(awayTimeoutRef.current);
     }
-    
+
     // Si l'utilisateur était away, le remettre online
     if (myPresence?.status === 'away' && user?.id) {
       updatePresenceInternal('online');
     }
-    
+
     awayTimeoutRef.current = setTimeout(() => {
       if (user?.id && myPresence?.status === 'online') {
         updatePresenceInternal('away');
       }
     }, awayTimeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myPresence?.status, user?.id, awayTimeout]);
 
   // Fonction interne pour mettre à jour la présence
@@ -83,9 +84,9 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
 
     try {
       const device = /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'web';
-      
+
       console.log('[Presence] 📡 Mise à jour présence:', { userId: user.id, status, device });
-      
+
       // Utiliser la fonction RPC optimisée si disponible
       const { error: rpcError } = await (supabase.rpc as any)('update_user_presence', {
         p_user_id: user.id,
@@ -145,7 +146,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
   const getUserPresence = useCallback(async (userId: string): Promise<UserPresence | null> => {
     try {
       console.log('[Presence] 🔍 Récupération présence pour:', userId);
-      
+
       const { data, error } = await supabase
         .from('user_presence' as any)
         .select('*')
@@ -162,10 +163,10 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
           is_online: false,
         };
       }
-      
+
       const row = data as any;
       console.log('[Presence] 📊 Données reçues:', row);
-      
+
       const presence: UserPresence = {
         user_id: userId,
         status: row?.status || 'offline',
@@ -174,12 +175,12 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
         custom_status: row?.custom_status,
         is_online: ['online', 'busy', 'away'].includes(row?.status),
       };
-      
+
       console.log('[Presence] ✅ Présence récupérée:', presence.status, '- En ligne:', presence.is_online);
-      
+
       // Mettre en cache
       setPresenceCache(prev => new Map(prev).set(userId, presence));
-      
+
       return presence;
     } catch (error) {
       console.warn('[Presence] Error getting user presence:', error);
@@ -195,7 +196,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
   // Obtenir plusieurs présences
   const getMultiplePresences = useCallback(async (userIds: string[]): Promise<Map<string, UserPresence>> => {
     const result = new Map<string, UserPresence>();
-    
+
     try {
       const { data, error } = await supabase
         .from('user_presence' as any)
@@ -263,7 +264,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
               is_typing_in: row.is_typing_in,
               is_online: ['online', 'busy', 'away'].includes(row.status),
             };
-            
+
             setPresenceCache(prev => new Map(prev).set(userId, presence));
             callback(presence);
           }
@@ -402,7 +403,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
       if (awayTimeoutRef.current) {
         clearTimeout(awayTimeoutRef.current);
       }
-      
+
       activityEvents.forEach(event => {
         window.removeEventListener(event, resetAwayTimeout);
       });
@@ -412,6 +413,7 @@ export function usePresence(options: UsePresenceOptions = {}): UsePresenceReturn
       // Marquer comme offline
       updatePresenceInternal('offline');
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, heartbeatInterval, resetAwayTimeout, updatePresenceInternal]);
 
   return {

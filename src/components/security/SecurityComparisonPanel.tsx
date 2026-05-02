@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Lock, AlertTriangle, CheckCircle2, XCircle, Award, TrendingUp } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, _CheckCircle2, XCircle, Award, TrendingUp } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 /**
@@ -13,22 +13,22 @@ export const SecurityComparisonPanel = () => {
       category: 'Protection des Données',
       icon: Lock,
       items: [
-        { 
-          name: 'Row Level Security (RLS)', 
+        {
+          name: 'Row Level Security (RLS)',
           us: { score: 100, note: 'Activé sur toutes les tables' },
           amazon: { score: 100, note: 'Complet' },
           alibaba: { score: 60, note: 'Partiel' },
           odoo: { score: 40, note: 'Limité' }
         },
-        { 
-          name: 'Chiffrement E2E', 
+        {
+          name: 'Chiffrement E2E',
           us: { score: 90, note: 'Données sensibles' },
           amazon: { score: 100, note: 'Total' },
           alibaba: { score: 70, note: 'Partiel' },
           odoo: { score: 50, note: 'Basique' }
         },
-        { 
-          name: 'Isolation Données Multi-Tenant', 
+        {
+          name: 'Isolation Données Multi-Tenant',
           us: { score: 100, note: 'Complet avec RLS' },
           amazon: { score: 100, note: 'Complet' },
           alibaba: { score: 80, note: 'Bon' },
@@ -40,29 +40,29 @@ export const SecurityComparisonPanel = () => {
       category: 'Détection & Prévention Fraude',
       icon: AlertTriangle,
       items: [
-        { 
-          name: 'ML Fraud Detection', 
+        {
+          name: 'ML Fraud Detection',
           us: { score: 85, note: 'Temps réel, 6 critères' },
           amazon: { score: 100, note: 'Advanced ML' },
           alibaba: { score: 70, note: 'Basique' },
           odoo: { score: 0, note: 'Non disponible' }
         },
-        { 
-          name: 'Rate Limiting', 
+        {
+          name: 'Rate Limiting',
           us: { score: 95, note: 'DB + Client-side' },
           amazon: { score: 100, note: 'Multi-niveaux' },
           alibaba: { score: 90, note: 'Standard' },
           odoo: { score: 60, note: 'Partiel' }
         },
-        { 
-          name: 'Blocage IP Automatique', 
+        {
+          name: 'Blocage IP Automatique',
           us: { score: 90, note: 'Intégré avec ML' },
           amazon: { score: 95, note: 'Avancé' },
           alibaba: { score: 80, note: 'Standard' },
           odoo: { score: 40, note: 'Manuel' }
         },
-        { 
-          name: 'MFA pour Transactions Sensibles', 
+        {
+          name: 'MFA pour Transactions Sensibles',
           us: { score: 85, note: '> 1M GNF' },
           amazon: { score: 100, note: 'Toutes transactions' },
           alibaba: { score: 75, note: 'Optionnel' },
@@ -74,29 +74,29 @@ export const SecurityComparisonPanel = () => {
       category: 'Conformité & Audit',
       icon: Award,
       items: [
-        { 
-          name: 'GDPR Compliance', 
+        {
+          name: 'GDPR Compliance',
           us: { score: 80, note: 'En cours certification' },
           amazon: { score: 100, note: 'Certifié' },
           alibaba: { score: 60, note: 'Partiel' },
           odoo: { score: 70, note: 'Standard' }
         },
-        { 
-          name: 'PCI DSS', 
+        {
+          name: 'PCI DSS',
           us: { score: 75, note: 'Level 2 en cours' },
           amazon: { score: 100, note: 'Level 1 certifié' },
           alibaba: { score: 80, note: 'Certifié' },
           odoo: { score: 50, note: 'Non certifié' }
         },
-        { 
-          name: 'Audit Logs Complets', 
+        {
+          name: 'Audit Logs Complets',
           us: { score: 95, note: 'Tous événements tracés' },
           amazon: { score: 100, note: 'CloudTrail' },
           alibaba: { score: 85, note: 'Standard' },
           odoo: { score: 60, note: 'Limité' }
         },
-        { 
-          name: 'ISO 27001', 
+        {
+          name: 'ISO 27001',
           us: { score: 0, note: 'Roadmap 6 mois' },
           amazon: { score: 100, note: 'Certifié' },
           alibaba: { score: 90, note: 'Certifié' },
@@ -108,29 +108,29 @@ export const SecurityComparisonPanel = () => {
       category: 'Fiabilité & Disponibilité',
       icon: TrendingUp,
       items: [
-        { 
-          name: 'Uptime SLA', 
+        {
+          name: 'Uptime SLA',
           us: { score: 95, note: '99.5% (Supabase)' },
           amazon: { score: 100, note: '99.99% garanti' },
           alibaba: { score: 95, note: '99.5%' },
           odoo: { score: 85, note: '99.0%' }
         },
-        { 
-          name: 'Backup Automatique', 
+        {
+          name: 'Backup Automatique',
           us: { score: 100, note: 'Quotidien + PITR' },
           amazon: { score: 100, note: 'Continu' },
           alibaba: { score: 90, note: 'Quotidien' },
           odoo: { score: 80, note: 'Manuel + auto' }
         },
-        { 
-          name: 'Disaster Recovery', 
+        {
+          name: 'Disaster Recovery',
           us: { score: 85, note: 'Multi-AZ Supabase' },
           amazon: { score: 100, note: 'Multi-région' },
           alibaba: { score: 90, note: 'Multi-région' },
           odoo: { score: 70, note: 'Selon hébergement' }
         },
-        { 
-          name: 'CDN Global', 
+        {
+          name: 'CDN Global',
           us: { score: 80, note: 'Via Supabase' },
           amazon: { score: 100, note: 'CloudFront' },
           alibaba: { score: 95, note: 'Alibaba Cloud' },
@@ -142,29 +142,29 @@ export const SecurityComparisonPanel = () => {
       category: 'Protection Attaques',
       icon: Shield,
       items: [
-        { 
-          name: 'DDoS Protection', 
+        {
+          name: 'DDoS Protection',
           us: { score: 90, note: 'Supabase + Cloudflare' },
           amazon: { score: 100, note: 'AWS Shield' },
           alibaba: { score: 95, note: 'Anti-DDoS Pro' },
           odoo: { score: 70, note: 'Selon hébergement' }
         },
-        { 
-          name: 'WAF (Web Application Firewall)', 
+        {
+          name: 'WAF (Web Application Firewall)',
           us: { score: 85, note: 'Supabase intégré' },
           amazon: { score: 100, note: 'AWS WAF' },
           alibaba: { score: 90, note: 'Alibaba Cloud WAF' },
           odoo: { score: 60, note: 'Optionnel' }
         },
-        { 
-          name: 'SQL Injection Prevention', 
+        {
+          name: 'SQL Injection Prevention',
           us: { score: 100, note: 'Zod + Parameterized' },
           amazon: { score: 100, note: 'Multi-niveaux' },
           alibaba: { score: 95, note: 'Standard' },
           odoo: { score: 85, note: 'ORM protégé' }
         },
-        { 
-          name: 'XSS Protection', 
+        {
+          name: 'XSS Protection',
           us: { score: 95, note: 'React + CSP' },
           amazon: { score: 100, note: 'Multi-niveaux' },
           alibaba: { score: 90, note: 'Standard' },
@@ -521,7 +521,7 @@ export const SecurityComparisonPanel = () => {
               <Award className="w-8 h-8 text-yellow-500" />
               <h3 className="text-2xl font-bold">🏆 VERDICT FINAL</h3>
             </div>
-            
+
             {/* Classement */}
             <div className="space-y-3">
               <div className="text-center space-y-2">
@@ -590,15 +590,15 @@ export const SecurityComparisonPanel = () => {
             {/* Conclusion */}
             <div className="pt-4 border-t space-y-3 text-center">
               <p className="text-sm font-semibold">
-                🎯 <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">90% du niveau Amazon</span> 
+                🎯 <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">90% du niveau Amazon</span>
                 pour la sécurité & fiabilité
               </p>
               <p className="text-sm text-muted-foreground">
-                Avec un score de <strong>8.5/10</strong>, 224SOLUTIONS se positionne comme la <strong className="text-primary">meilleure alternative</strong> à Amazon 
+                Avec un score de <strong>8.5/10</strong>, 224SOLUTIONS se positionne comme la <strong className="text-primary">meilleure alternative</strong> à Amazon
                 pour le marché africain, combinant sécurité enterprise et innovations uniques.
               </p>
               <p className="text-sm text-muted-foreground">
-                Amazon reste le <strong>leader mondial absolu</strong> (9.4/10), mais 224SOLUTIONS offre un 
+                Amazon reste le <strong>leader mondial absolu</strong> (9.4/10), mais 224SOLUTIONS offre un
                 <strong className="text-primary"> meilleur rapport innovation/sécurité/coût</strong> pour l'Afrique.
               </p>
             </div>

@@ -1,7 +1,7 @@
 /**
  * 🚀 Hook de Présence Ultra-Rapide - 224SOLUTIONS
  * Détection instantanée online/offline via Supabase Broadcast
- * 
+ *
  * Caractéristiques:
  * - Détection < 100ms quand quelqu'un se connecte/déconnecte
  * - Heartbeat rapide (5 secondes)
@@ -202,7 +202,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
             last_active: status !== 'offline' ? new Date().toISOString() : undefined,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'user_id' });
-        
+
         if (upsertError) {
           log('⚠️ DB fallback error:', upsertError.message);
         }
@@ -361,7 +361,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState();
       log('📊 Presence sync:', Object.keys(state).length, 'utilisateurs');
-      
+
       const now = new Date();
       setOnlineUsers(prev => {
         const updated = new Map(prev);
@@ -409,7 +409,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     // S'abonner
     channel.subscribe(async (status) => {
       log('📡 Channel status:', status);
-      
+
       if (status === 'SUBSCRIBED') {
         setIsConnected(true);
         setLastError(null);
@@ -451,7 +451,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
           device,
           timestamp: Date.now(),
         });
-        
+
         // Utiliser la fonction RPC presence_heartbeat (ultra-léger)
         try {
           await (supabase.rpc as any)('presence_heartbeat', { p_user_id: user.id });
@@ -564,6 +564,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Dépendances minimales pour éviter les re-subscriptions
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -592,7 +593,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     if (currentTypingRef.current === conversationId) return;
     currentTypingRef.current = conversationId;
     broadcastPresence('typing_start', myStatus, conversationId);
-    
+
     // Persister en DB via RPC pour les autres clients
     if (user?.id) {
       try {
@@ -612,7 +613,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
     const convId = currentTypingRef.current;
     broadcastPresence('typing_stop', myStatus);
     currentTypingRef.current = null;
-    
+
     // Persister en DB via RPC
     if (user?.id) {
       try {

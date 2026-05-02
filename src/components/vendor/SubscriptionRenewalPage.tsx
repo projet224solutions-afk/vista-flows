@@ -37,6 +37,7 @@ export function SubscriptionRenewalPage() {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadData = async () => {
@@ -55,7 +56,7 @@ export function SubscriptionRenewalPage() {
         .single();
 
       if (subError) throw subError;
-      
+
       // Transform data to match interface
       if (subData && subData.plans) {
         const plan = Array.isArray(subData.plans) ? subData.plans[0] : subData.plans;

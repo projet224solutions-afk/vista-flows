@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { 
+import {
   RefreshCw, Search, UserX, RotateCcw, Clock, AlertTriangle,
   User, Mail, Phone, Calendar, Shield, Eye, Wallet, CheckCircle2,
   Database, XCircle, Package, CreditCard, ShoppingBag, ArrowRight
@@ -136,14 +136,14 @@ interface ActiveProfile {
 }
 
 // Composant pour afficher le statut d'une donnée
-function DataStatusBadge({ 
-  status, 
-  label, 
-  icon, 
-  showIfZero = false 
-}: { 
-  status: DataStatus; 
-  label: string; 
+function DataStatusBadge({
+  status,
+  label,
+  icon,
+  showIfZero = false
+}: {
+  status: DataStatus;
+  label: string;
   icon?: React.ReactNode;
   showIfZero?: boolean;
 }) {
@@ -152,8 +152,8 @@ function DataStatusBadge({
     return null;
   }
 
-  const bgClass = status.exists 
-    ? 'bg-green-500/10 text-green-700' 
+  const bgClass = status.exists
+    ? 'bg-green-500/10 text-green-700'
     : 'bg-muted text-muted-foreground';
 
   return (
@@ -187,25 +187,26 @@ export default function DeletedUsersRestore() {
   // Charger les utilisateurs supprimés au montage
   useEffect(() => {
     fetchAllDeletedUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRestored]);
 
   const fetchAllDeletedUsers = async () => {
     try {
       setLoading(true);
-      
+
       let query = supabase
         .from('deleted_users_archive')
         .select('*')
         .order('deleted_at', { ascending: false });
-      
+
       if (!showRestored) {
         query = query.eq('is_restored', false);
       }
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
-      
+
       setDeletedUsers(data || []);
       setSearched(false);
     } catch (error) {
@@ -243,9 +244,9 @@ export default function DeletedUsersRestore() {
       // Stocker les profils actifs et les archives
       setActiveProfiles(data.active_profiles || []);
       setDeletedUsers(data.archived_users || []);
-      
+
       const totalFound = (data.total_active || 0) + (data.total_archived || 0);
-      
+
       if (totalFound === 0) {
         toast.info('Aucun utilisateur trouvé avec ces critères');
       } else {
@@ -263,15 +264,16 @@ export default function DeletedUsersRestore() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Restauration de l'utilisateur
   const handleRestore = async () => {
     if (!selectedUser) return;
-    
+
     try {
       setRestoring(true);
-      
+
       const { data, error } = await supabase.functions.invoke('restore-user', {
         body: {
           archive_id: selectedUser.id,
@@ -294,12 +296,12 @@ export default function DeletedUsersRestore() {
           duration: 6000,
         });
       }
-      
+
       setRestoreDialogOpen(false);
       setDetailsOpen(false);
       setRestoreNotes('');
       setSelectedUser(null);
-      
+
       // Rafraîchir la liste
       if (searched && searchQuery) {
         handleSearch();
@@ -340,7 +342,7 @@ export default function DeletedUsersRestore() {
     const expDate = new Date(expiresAt);
     const now = new Date();
     const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysLeft <= 0) return { status: 'expired', text: 'Expiré', color: 'text-red-500' };
     if (daysLeft <= 7) return { status: 'warning', text: `${daysLeft}j restants`, color: 'text-orange-500' };
     return { status: 'ok', text: `${daysLeft}j restants`, color: 'text-muted-foreground' };
@@ -469,7 +471,7 @@ export default function DeletedUsersRestore() {
           <CardContent>
             <div className="space-y-4">
               {activeProfiles.map((profile) => (
-                <div 
+                <div
                   key={profile.id}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
@@ -551,7 +553,7 @@ export default function DeletedUsersRestore() {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Données existantes */}
                       {profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
                         <div className="mb-3">
@@ -572,93 +574,93 @@ export default function DeletedUsersRestore() {
                       {/* Grille des statuts principaux */}
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {/* Profil */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.profile} 
-                          label="Profil" 
-                          icon={<User className="h-3 w-3" />} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.profile}
+                          label="Profil"
+                          icon={<User className="h-3 w-3" />}
                         />
                         {/* Wallet */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.wallet} 
-                          label="Portefeuille" 
-                          icon={<Wallet className="h-3 w-3" />} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.wallet}
+                          label="Portefeuille"
+                          icon={<Wallet className="h-3 w-3" />}
                         />
                         {/* User IDs */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.user_ids} 
-                          label="ID Public" 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.user_ids}
+                          label="ID Public"
                         />
                         {/* Commandes */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.orders} 
-                          label={`Commandes (${profile.data_analysis.analysis.orders.count || 0})`} 
-                          icon={<ShoppingBag className="h-3 w-3" />} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.orders}
+                          label={`Commandes (${profile.data_analysis.analysis.orders.count || 0})`}
+                          icon={<ShoppingBag className="h-3 w-3" />}
                           showIfZero
                         />
                         {/* Transactions */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.transactions} 
-                          label={`Transactions (${profile.data_analysis.analysis.transactions.count || 0})`} 
-                          icon={<CreditCard className="h-3 w-3" />} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.transactions}
+                          label={`Transactions (${profile.data_analysis.analysis.transactions.count || 0})`}
+                          icon={<CreditCard className="h-3 w-3" />}
                           showIfZero
                         />
                         {/* Notifications */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.notifications} 
-                          label={`Notifs (${profile.data_analysis.analysis.notifications?.count || 0})`} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.notifications}
+                          label={`Notifs (${profile.data_analysis.analysis.notifications?.count || 0})`}
                           showIfZero
                         />
                         {/* Messages */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.messages} 
-                          label={`Messages (${profile.data_analysis.analysis.messages?.count || 0})`} 
-                          icon={<Mail className="h-3 w-3" />} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.messages}
+                          label={`Messages (${profile.data_analysis.analysis.messages?.count || 0})`}
+                          icon={<Mail className="h-3 w-3" />}
                           showIfZero
                         />
                         {/* Conversations */}
-                        <DataStatusBadge 
-                          status={profile.data_analysis.analysis.conversations} 
-                          label={`Convos (${profile.data_analysis.analysis.conversations?.count || 0})`} 
+                        <DataStatusBadge
+                          status={profile.data_analysis.analysis.conversations}
+                          label={`Convos (${profile.data_analysis.analysis.conversations?.count || 0})`}
                           showIfZero
                         />
                         {/* Rôles spécifiques */}
                         {profile.data_analysis.analysis.agent.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.agent} 
-                            label="Agent" 
-                            icon={<Shield className="h-3 w-3" />} 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.agent}
+                            label="Agent"
+                            icon={<Shield className="h-3 w-3" />}
                           />
                         )}
                         {profile.data_analysis.analysis.vendor.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.vendor} 
-                            label="Vendeur" 
-                            icon={<Package className="h-3 w-3" />} 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.vendor}
+                            label="Vendeur"
+                            icon={<Package className="h-3 w-3" />}
                           />
                         )}
                         {profile.data_analysis.analysis.taxi_driver?.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.taxi_driver} 
-                            label="Taxi" 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.taxi_driver}
+                            label="Taxi"
                           />
                         )}
                         {profile.data_analysis.analysis.livreur?.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.livreur} 
-                            label="Livreur" 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.livreur}
+                            label="Livreur"
                           />
                         )}
                         {/* Commerce */}
                         {profile.data_analysis.analysis.products?.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.products} 
-                            label={`Produits (${profile.data_analysis.analysis.products.count || 0})`} 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.products}
+                            label={`Produits (${profile.data_analysis.analysis.products.count || 0})`}
                           />
                         )}
                         {profile.data_analysis.analysis.favorites?.exists && (
-                          <DataStatusBadge 
-                            status={profile.data_analysis.analysis.favorites} 
-                            label={`Favoris (${profile.data_analysis.analysis.favorites.count || 0})`} 
+                          <DataStatusBadge
+                            status={profile.data_analysis.analysis.favorites}
+                            label={`Favoris (${profile.data_analysis.analysis.favorites.count || 0})`}
                           />
                         )}
                         {/* Archives */}
@@ -780,14 +782,14 @@ export default function DeletedUsersRestore() {
             <div className="text-center py-8 text-muted-foreground">
               <UserX className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p className="font-medium">
-                {searched && activeProfiles.length > 0 
+                {searched && activeProfiles.length > 0
                   ? "Aucune donnée supprimée pour cet utilisateur"
                   : "Aucun utilisateur supprimé trouvé"
                 }
               </p>
               <p className="text-xs mt-2 max-w-md mx-auto">
-                {searched 
-                  ? activeProfiles.length > 0 
+                {searched
+                  ? activeProfiles.length > 0
                     ? "Toutes les données de cet utilisateur sont intactes. Aucune restauration n'est nécessaire."
                     : "Aucun résultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
                   : "Les utilisateurs supprimés via l'application sont archivés pendant 30 jours pour restauration."
@@ -900,7 +902,7 @@ export default function DeletedUsersRestore() {
               État détaillé des données de l'utilisateur dans la base de données
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedProfile && (
             <div className="space-y-4">
               {/* Informations principales */}
@@ -950,12 +952,12 @@ export default function DeletedUsersRestore() {
                     <Database className="h-4 w-4" />
                     État des données dans la base
                   </h4>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Profil */}
                     <div className={`p-3 rounded-lg border ${
-                      selectedProfile.data_analysis.analysis.profile.exists 
-                        ? 'border-green-500/30 bg-green-500/5' 
+                      selectedProfile.data_analysis.analysis.profile.exists
+                        ? 'border-green-500/30 bg-green-500/5'
                         : 'border-red-500/30 bg-red-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -967,16 +969,16 @@ export default function DeletedUsersRestore() {
                         <span className="font-medium">Profil utilisateur</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedProfile.data_analysis.analysis.profile.exists 
-                          ? 'Présent dans la table profiles' 
+                        {selectedProfile.data_analysis.analysis.profile.exists
+                          ? 'Présent dans la table profiles'
                           : 'Absent de la table profiles'}
                       </p>
                     </div>
 
                     {/* Wallet */}
                     <div className={`p-3 rounded-lg border ${
-                      selectedProfile.data_analysis.analysis.wallet.exists 
-                        ? 'border-green-500/30 bg-green-500/5' 
+                      selectedProfile.data_analysis.analysis.wallet.exists
+                        ? 'border-green-500/30 bg-green-500/5'
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -989,16 +991,16 @@ export default function DeletedUsersRestore() {
                         <span className="font-medium">Portefeuille</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedProfile.data_analysis.analysis.wallet.exists 
-                          ? 'Wallet actif trouvé' 
+                        {selectedProfile.data_analysis.analysis.wallet.exists
+                          ? 'Wallet actif trouvé'
                           : 'Aucun wallet trouvé'}
                       </p>
                     </div>
 
                     {/* User IDs */}
                     <div className={`p-3 rounded-lg border ${
-                      selectedProfile.data_analysis.analysis.user_ids.exists 
-                        ? 'border-green-500/30 bg-green-500/5' 
+                      selectedProfile.data_analysis.analysis.user_ids.exists
+                        ? 'border-green-500/30 bg-green-500/5'
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -1010,16 +1012,16 @@ export default function DeletedUsersRestore() {
                         <span className="font-medium">Identifiant public</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedProfile.data_analysis.analysis.user_ids.exists 
-                          ? 'ID synchronisé dans user_ids' 
+                        {selectedProfile.data_analysis.analysis.user_ids.exists
+                          ? 'ID synchronisé dans user_ids'
                           : 'Absent de la table user_ids'}
                       </p>
                     </div>
 
                     {/* Commandes */}
                     <div className={`p-3 rounded-lg border ${
-                      selectedProfile.data_analysis.analysis.orders.exists 
-                        ? 'border-blue-500/30 bg-blue-500/5' 
+                      selectedProfile.data_analysis.analysis.orders.exists
+                        ? 'border-blue-500/30 bg-blue-500/5'
                         : 'border-muted'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -1033,8 +1035,8 @@ export default function DeletedUsersRestore() {
 
                     {/* Transactions */}
                     <div className={`p-3 rounded-lg border ${
-                      selectedProfile.data_analysis.analysis.transactions.exists 
-                        ? 'border-blue-500/30 bg-blue-500/5' 
+                      selectedProfile.data_analysis.analysis.transactions.exists
+                        ? 'border-blue-500/30 bg-blue-500/5'
                         : 'border-muted'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -1161,7 +1163,7 @@ export default function DeletedUsersRestore() {
               )}
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setProfileDetailsOpen(false)}>
               Fermer
@@ -1182,7 +1184,7 @@ export default function DeletedUsersRestore() {
               Données archivées avant suppression - Vérifiez les informations avant restauration
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedUser && (
             <div className="space-y-6">
               {/* Informations principales */}
@@ -1222,7 +1224,7 @@ export default function DeletedUsersRestore() {
                     <Calendar className="h-3 w-3" /> Créé le
                   </label>
                   <p>
-                    {selectedUser.original_created_at 
+                    {selectedUser.original_created_at
                       ? format(new Date(selectedUser.original_created_at), 'dd MMMM yyyy', { locale: fr })
                       : 'Inconnu'
                     }
@@ -1241,7 +1243,7 @@ export default function DeletedUsersRestore() {
                     <div>
                       <span className="text-muted-foreground">Solde:</span>
                       <span className="ml-2 font-medium">
-                        {((selectedUser.wallet_data as Record<string, unknown>)?.balance as number || 0).toLocaleString()} 
+                        {((selectedUser.wallet_data as Record<string, unknown>)?.balance as number || 0).toLocaleString()}
                         {' '}
                         {(selectedUser.wallet_data as Record<string, unknown>)?.currency as string || 'GNF'}
                       </span>
@@ -1297,7 +1299,7 @@ export default function DeletedUsersRestore() {
                     <div>
                       <span className="text-muted-foreground">Restauré le:</span>
                       <span className="ml-2">
-                        {selectedUser.restored_at 
+                        {selectedUser.restored_at
                           ? format(new Date(selectedUser.restored_at), 'dd/MM/yyyy à HH:mm', { locale: fr })
                           : 'N/A'
                         }
@@ -1314,7 +1316,7 @@ export default function DeletedUsersRestore() {
               )}
             </div>
           )}
-          
+
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
               Fermer
@@ -1346,7 +1348,7 @@ export default function DeletedUsersRestore() {
                   Vous allez restaurer l'utilisateur{' '}
                   <strong>{selectedUser?.public_id || selectedUser?.email}</strong>.
                 </p>
-                
+
                 <div className="p-3 bg-muted rounded-lg text-sm">
                   <p className="font-medium mb-2">Ce qui sera restauré:</p>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">

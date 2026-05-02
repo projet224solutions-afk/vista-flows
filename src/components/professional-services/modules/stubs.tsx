@@ -12,7 +12,7 @@ interface ModuleProps {
 }
 
 // Traiteur - Inspiré de ezCater
-export function CateringModule({ serviceId, businessName }: ModuleProps) {
+export function CateringModule({ _serviceId, businessName }: ModuleProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">

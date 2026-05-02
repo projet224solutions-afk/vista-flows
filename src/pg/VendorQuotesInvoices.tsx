@@ -21,7 +21,7 @@ export default function VendorQuotesInvoices() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Devis & Factures</h1>
         <p className="text-muted-foreground">
-          Cr├®ez des devis professionnels et convertissez-les en factures
+          Créez des devis professionnels et convertissez-les en factures
         </p>
       </div>
 
@@ -29,7 +29,7 @@ export default function VendorQuotesInvoices() {
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
           <TabsTrigger value="create" className="gap-2">
             <FileText className="w-4 h-4" />
-            Cr├®er un Devis
+            Créer un devis
           </TabsTrigger>
           <TabsTrigger value="quotes" className="gap-2">
             <FileText className="w-4 h-4" />

@@ -1,9 +1,9 @@
 ﻿/**
  * PAGE DE DEMANDE DE LIVRAISON
- * Interface client pour cr├®er une nouvelle livraison
+ * Interface client pour créer une nouvelle livraison
  */
 
-import { useState } from 'react';
+import {} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,13 @@ export default function DeliveryRequest() {
   const navigate = useNavigate();
 
   const handleDeliveryCreated = (deliveryId: string) => {
-    // Rediriger vers le tracking apr├¿s cr├®ation
+    // Rediriger vers le tracking après création
     navigate(`/tracking?id=${deliveryId}`);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
-      {/* En-t├¬te */}
+      {/* En-tête */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">

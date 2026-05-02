@@ -3,12 +3,12 @@
  * Inspiré de ClickBank, ShareASale, Impact
  */
 
-import { useState } from 'react';
-import { 
-  Link2, 
-  Globe, 
-  Percent, 
-  Tag, 
+import {} from 'react';
+import {
+  Link2,
+  Globe,
+  Percent,
+  Tag,
   AlertCircle,
   CheckCircle2,
   ExternalLink,
@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CurrencySelect } from '@/components/ui/currency-select';
@@ -67,11 +67,11 @@ const commissionTypes = [
   { id: 'recurring', label: 'Récurrent', description: 'Commission sur abonnements' }
 ];
 
-export function AffiliateForm({ 
-  data, 
-  onChange, 
+export function AffiliateForm({
+  data,
+  onChange,
   onValidateUrl,
-  urlValidationStatus = 'idle' 
+  urlValidationStatus = 'idle'
 }: AffiliateFormProps) {
   const selectedNetwork = affiliateNetworks.find(n => n.id === data.affiliateNetwork);
 
@@ -358,7 +358,7 @@ export function AffiliateForm({
       <Alert className="border-[#ffd9cc] bg-[#fff4ef]">
         <ExternalLink className="w-4 h-4 text-[#ff4000]" />
         <AlertDescription className="text-xs text-muted-foreground">
-          <strong className="text-foreground">Note :</strong> Les visiteurs seront redirigés vers votre lien d'affiliation. 
+          <strong className="text-foreground">Note :</strong> Les visiteurs seront redirigés vers votre lien d'affiliation.
           Assurez-vous que votre lien est actif et correctement configuré sur la plateforme partenaire.
         </AlertDescription>
       </Alert>

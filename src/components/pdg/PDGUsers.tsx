@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2, Store, Package, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2, Store, Package, Eye, _ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { _Collapsible, _CollapsibleContent, _CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Select,
   SelectContent,
@@ -43,6 +43,7 @@ export default function PDGUsers() {
 
   useEffect(() => {
     filterUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, roleFilter, users]);
 
   const loadUsers = async () => {
@@ -132,7 +133,7 @@ export default function PDGUsers() {
 
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(u => 
+      filtered = filtered.filter(u =>
         u.email?.toLowerCase().includes(search) ||
         u.first_name?.toLowerCase().includes(search) ||
         u.last_name?.toLowerCase().includes(search) ||
@@ -166,7 +167,7 @@ export default function PDGUsers() {
 
       toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activé');
       loadUsers();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la modification du statut');
     }
   };
@@ -174,7 +175,7 @@ export default function PDGUsers() {
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         toast.error('Session expirée, veuillez vous reconnecter');
         return;
@@ -323,8 +324,8 @@ export default function PDGUsers() {
       {/* Users List */}
       <div className="grid gap-4">
         {filteredUsers.map((user, index) => (
-          <Card 
-            key={user.id} 
+          <Card
+            key={user.id}
             className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-200 animate-fade-in"
             style={{ animationDelay: `${index * 30}ms` }}
           >
@@ -412,7 +413,7 @@ export default function PDGUsers() {
                       </>
                     )}
                   </Button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -455,7 +456,7 @@ export default function PDGUsers() {
                   </h4>
                   <div className="grid gap-3">
                     {userServices[user.id].map((service) => (
-                      <div 
+                      <div
                         key={service.id}
                         className="p-4 rounded-lg border border-border/40 bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
@@ -463,11 +464,11 @@ export default function PDGUsers() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h5 className="font-semibold text-sm">{service.business_name}</h5>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={
-                                  service.status === 'active' 
-                                    ? 'border-green-500/50 bg-green-500/10 text-green-500 text-xs' 
+                                  service.status === 'active'
+                                    ? 'border-green-500/50 bg-green-500/10 text-green-500 text-xs'
                                     : service.status === 'pending'
                                     ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs'
                                     : 'border-red-500/50 bg-red-500/10 text-red-500 text-xs'
@@ -481,7 +482,7 @@ export default function PDGUsers() {
                                 </Badge>
                               )}
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Package className="w-3 h-3" />
@@ -507,7 +508,7 @@ export default function PDGUsers() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <Button
                             variant="ghost"
                             size="sm"

@@ -11,9 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, ChevronUp, CheckSquare, Square, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  PERMISSION_CATEGORIES, 
-  getPermissionLabel 
+import {
+  PERMISSION_CATEGORIES,
+  getPermissionLabel
 } from '@/constants/agentPermissionCategories';
 import { PermissionKey } from '@/hooks/useAgentPermissions';
 import { cn } from '@/lib/utils';

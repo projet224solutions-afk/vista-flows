@@ -3,10 +3,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  Printer, 
-  Check, 
+import {
+  Download,
+  Printer,
+  Check,
   Store,
   Calendar,
   CreditCard,
@@ -111,7 +111,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
       const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 5, 5, 70, (canvas.height * 70) / canvas.width);
       pdf.save(`recu-${orderData.orderNumber}.pdf`);
-      
+
       toast.success('Reçu téléchargé avec succès');
     } catch (error) {
       console.error('Erreur téléchargement:', error);
@@ -121,7 +121,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
   const printReceipt = () => {
     if (!receiptRef.current) return;
-    
+
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -177,9 +177,9 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 <p className="text-xs text-white/80">#{orderData.orderNumber}</p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
               className="text-white hover:bg-white/20 h-8 w-8"
             >
@@ -190,8 +190,8 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
         {/* Reçu imprimable */}
         <div className="p-3">
-          <div 
-            ref={receiptRef} 
+          <div
+            ref={receiptRef}
             className="bg-white border-2 border-dashed border-border rounded-lg p-3 font-mono text-sm"
             style={{ fontFamily: "'Courier New', monospace" }}
           >
@@ -232,7 +232,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                         {item.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {item.saleType === 'carton' && item.displayQuantity 
+                        {item.saleType === 'carton' && item.displayQuantity
                           ? item.displayQuantity
                           : `${item.quantity} unité(s)`
                         } × {pricing.hasItemDiscount ? pricing.finalUnitPrice.toLocaleString() : item.price.toLocaleString()} {orderData.currency}
@@ -310,7 +310,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                   Payé
                 </Badge>
               </div>
-              
+
               {orderData.paymentMethod === 'cash' && orderData.receivedAmount > 0 && (
                 <div className="mt-2 pt-2 border-t border-muted-foreground/20 text-xs">
                   <div className="flex justify-between">

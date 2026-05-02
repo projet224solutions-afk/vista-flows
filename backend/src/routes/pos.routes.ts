@@ -1,6 +1,6 @@
 /**
  * 🏪 POS SYNC ROUTES - Phase 6 (P1 Optimized)
- * 
+ *
  * P1 Optimization:
  *   - Atomic RPC create_pos_sale_complete: 1 DB call per sale
  *   - Combines idempotence + insert sale + items + stock decrement

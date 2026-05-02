@@ -2,7 +2,7 @@
  * CHINA LOGISTICS TRACKING COMPONENT
  * Suivi logistique multi-segments Chine → Client
  * Extension du module dropshipping existant
- * 
+ *
  * @module ChinaLogisticsTracking
  * @version 1.0.0
  */
@@ -12,20 +12,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { _Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { _ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
+  _Accordion,
+  _AccordionContent,
+  _AccordionItem,
+  _AccordionTrigger
 } from '@/components/ui/accordion';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
+  _Tooltip,
+  _TooltipContent,
+  _TooltipProvider,
+  _TooltipTrigger
 } from '@/components/ui/tooltip';
 import {
   Package,
@@ -41,11 +41,11 @@ import {
   Building2,
   Home,
   RefreshCw,
-  ExternalLink,
+  _ExternalLink,
   Copy,
   Info,
   ShieldAlert,
-  ArrowRight
+  _ArrowRight
 } from 'lucide-react';
 import { format, differenceInDays, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -226,7 +226,7 @@ export function ChinaLogisticsTracking({
     try {
       await onRefreshTracking();
       toast.success('Tracking mis à jour');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la mise à jour');
     } finally {
       setIsRefreshing(false);
@@ -259,7 +259,7 @@ export function ChinaLogisticsTracking({
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {estimatedDelivery && daysRemaining !== null && (
                 <div className="text-right">
@@ -272,7 +272,7 @@ export function ChinaLogisticsTracking({
                   </Badge>
                 </div>
               )}
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -310,16 +310,16 @@ export function ChinaLogisticsTracking({
               const isCompleted = index <= currentStepIndex;
               const isCurrent = index === currentStepIndex;
               const historyItem = order.status_history?.find(h => h.status === step.key);
-              
+
               return (
                 <div key={step.key} className="flex gap-4 pb-6 last:pb-0">
                   {/* Ligne verticale */}
                   <div className="flex flex-col items-center">
                     <div className={`
                       w-8 h-8 rounded-full flex items-center justify-center
-                      ${isCompleted 
-                        ? isCurrent 
-                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' 
+                      ${isCompleted
+                        ? isCurrent
+                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
                           : 'bg-green-500 text-white'
                         : 'bg-muted text-muted-foreground'
                       }
@@ -336,7 +336,7 @@ export function ChinaLogisticsTracking({
                       }`} />
                     )}
                   </div>
-                  
+
                   {/* Contenu */}
                   <div className="flex-1 pb-4">
                     <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ export function ChinaLogisticsTracking({
                         {historyItem.note && ` - ${historyItem.note}`}
                       </p>
                     )}
-                    
+
                     {/* Informations de tracking par segment */}
                     {isCompleted && step.segment === 'china' && logistics?.tracking_domestic && (
                       <div className="mt-2 flex items-center gap-2 text-sm">
@@ -384,7 +384,7 @@ export function ChinaLogisticsTracking({
                         </Button>
                       </div>
                     )}
-                    
+
                     {isCompleted && step.segment === 'international' && logistics?.tracking_international && (
                       <div className="mt-2 flex items-center gap-2 text-sm">
                         <Badge variant="outline">
@@ -403,7 +403,7 @@ export function ChinaLogisticsTracking({
                         </Button>
                       </div>
                     )}
-                    
+
                     {isCompleted && step.segment === 'lastmile' && logistics?.tracking_last_mile && (
                       <div className="mt-2 flex items-center gap-2 text-sm">
                         <Badge variant="outline">
@@ -447,7 +447,7 @@ export function ChinaLogisticsTracking({
                   {getTransportIcon(logistics.transport_method)}
                   Transport: {TRANSPORT_METHODS[logistics.transport_method]?.name || logistics.transport_method}
                 </h4>
-                
+
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Production</p>
@@ -474,7 +474,7 @@ export function ChinaLogisticsTracking({
                   <Globe className="w-4 h-4" />
                   Informations douanières
                 </h4>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Statut douane</span>
@@ -487,14 +487,14 @@ export function ChinaLogisticsTracking({
                        logistics.customs_status === 'pending' ? 'En attente' : logistics.customs_status}
                     </Badge>
                   </div>
-                  
+
                   {logistics.customs_reference && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Référence</span>
                       <span className="font-mono">{logistics.customs_reference}</span>
                     </div>
                   )}
-                  
+
                   {logistics.customs_duty_amount && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Droits de douane</span>

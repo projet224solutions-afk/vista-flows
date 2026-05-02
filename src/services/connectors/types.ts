@@ -1,7 +1,7 @@
 /**
  * CONNECTOR SYSTEM - Types & Interfaces
  * Architecture modulaire type App Store (Shopify-like)
- * 
+ *
  * @module connector-types
  * @version 1.0.0
  * @author 224Solutions
@@ -9,14 +9,14 @@
 
 // ==================== ENUMS ====================
 
-export type ConnectorType = 
+export type ConnectorType =
   | 'ALIEXPRESS'
   | 'ALIBABA'
   | '1688'
   | 'PRIVATE'
   | 'CUSTOM';
 
-export type ConnectorStatus = 
+export type ConnectorStatus =
   | 'active'
   | 'inactive'
   | 'error'
@@ -24,14 +24,14 @@ export type ConnectorStatus =
   | 'authentication_failed'
   | 'maintenance';
 
-export type SyncType = 
+export type SyncType =
   | 'price'
   | 'availability'
   | 'product_details'
   | 'tracking'
   | 'full';
 
-export type WebhookEvent = 
+export type WebhookEvent =
   | 'order.created'
   | 'order.updated'
   | 'order.shipped'
@@ -53,57 +53,57 @@ export interface IExternalConnector {
   readonly connectorType: ConnectorType;
   readonly connectorName: string;
   readonly connectorVersion: string;
-  
+
   // État
   status: ConnectorStatus;
   lastSync: Date | null;
   errorCount: number;
-  
+
   // Configuration
   config: ConnectorConfig;
-  
+
   // ==================== MÉTHODES OBLIGATOIRES ====================
-  
+
   /**
    * Authentification auprès de la plateforme externe
    */
   authenticate(): Promise<AuthResult>;
-  
+
   /**
    * Valider la connexion et les credentials
    */
   validateConnection(): Promise<boolean>;
-  
+
   /**
    * Importer un produit depuis une URL source
    */
   importProduct(sourceUrl: string): Promise<ProductImportResult>;
-  
+
   /**
    * Synchroniser les prix d'un ou plusieurs produits
    */
   syncPrice(productIds?: string[]): Promise<SyncResult>;
-  
+
   /**
    * Synchroniser la disponibilité (stock)
    */
   syncAvailability(productIds?: string[]): Promise<SyncResult>;
-  
+
   /**
    * Déclenché lors de la création d'une commande client
    */
   onOrderCreated(orderData: OrderData): Promise<SupplierOrderResult>;
-  
+
   /**
    * Pousser les informations de tracking vers le système
    */
   pushTracking(trackingData: TrackingData): Promise<TrackingResult>;
-  
+
   /**
    * Gestion centralisée des erreurs
    */
   handleError(error: ConnectorError): Promise<ErrorHandlingResult>;
-  
+
   /**
    * Nettoyage et déconnexion
    */
@@ -118,26 +118,26 @@ export interface ConnectorConfig {
   apiSecret?: string;
   accessToken?: string;
   refreshToken?: string;
-  
+
   // Endpoints
   baseUrl: string;
   webhookUrl?: string;
-  
+
   // Limites
   rateLimit: RateLimitConfig;
   timeout: number; // ms
   retryAttempts: number;
   retryDelayMs: number;
-  
+
   // Options
   sandbox: boolean;
   autoSync: boolean;
   syncIntervalMinutes: number;
-  
+
   // Mappings personnalisés
   fieldMappings?: Record<string, string>;
   currencyMapping?: Record<string, string>;
-  
+
   // Métadonnées
   metadata?: Record<string, unknown>;
 }
@@ -180,42 +180,42 @@ export interface NormalizedProduct {
   externalId: string;
   sourceUrl: string;
   sourcePlatform: ConnectorType;
-  
+
   // Informations produit
   title: string;
   titleTranslated?: string;
   description?: string;
   descriptionTranslated?: string;
   images: string[];
-  
+
   // Prix
   priceCurrency: string;
   priceOriginal: number;
   priceUsd: number;
-  
+
   // Quantités
   moq: number; // Minimum Order Quantity
   stockQuantity?: number;
   priceTiers?: PriceTier[];
-  
+
   // Variantes
   variants?: ProductVariant[];
-  
+
   // Shipping
   shippingMethods?: ShippingMethod[];
   estimatedDeliveryDays: {
     min: number;
     max: number;
   };
-  
+
   // Fournisseur
   supplierInfo: SupplierInfo;
-  
+
   // Métadonnées
   category?: string;
   tags?: string[];
   attributes?: Record<string, string>;
-  
+
   // Flags internes
   isDropship: true;
   isExternalDropship: true;
@@ -289,14 +289,14 @@ export interface OrderData {
   orderId: string;
   customerOrderId: string;
   vendorId: string;
-  
+
   items: OrderItem[];
   quantity: number;
-  
+
   shippingAddress: ShippingAddress;
-  
+
   notes?: string;
-  
+
   // Montants
   subtotal: number;
   shippingCost: number;
@@ -451,30 +451,30 @@ export interface WebhookHandler {
 
 export interface ConnectorMetrics {
   connectorType: ConnectorType;
-  
+
   // Performance
   avgResponseTimeMs: number;
   successRate: number;
   errorRate: number;
-  
+
   // Volume
   totalRequests: number;
   totalSyncs: number;
   totalOrders: number;
-  
+
   // Produits
   productsImported: number;
   productsActive: number;
-  
+
   // Erreurs
   errorsLast24h: number;
   rateLimitHitsLast24h: number;
-  
+
   // Dernière activité
   lastSyncAt?: Date;
   lastOrderAt?: Date;
   lastErrorAt?: Date;
-  
+
   // Période
   periodStart: Date;
   periodEnd: Date;

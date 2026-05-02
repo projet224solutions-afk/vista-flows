@@ -21,11 +21,11 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "Messages",
     "nav.notifications": "Notifications",
     "nav.wallet": "Portefeuille",
-    
+
     // Header
     "header.subtitle": "Plateforme Intégrée Multi-Services",
     "header.connectedAs": "Connecté en tant que",
-    
+
     // Home Page
     "home.welcome": "Bienvenue sur 224Solutions",
     "home.discoverServices": "Découvrez nos services à proximité et nos produits",
@@ -64,7 +64,7 @@ export const translations: Record<string, Record<string, string>> = {
     "home.live": "En direct",
     "home.addedToCart": "Produit ajouté au panier",
     "nav.tracking": "Suivi",
-    
+
     // Proximity
     "proximity.title": "Services de Proximité",
     "proximity.popularServices": "Services Populaires",
@@ -73,11 +73,11 @@ export const translations: Record<string, Record<string, string>> = {
     "proximity.exploreByCategory": "Explorez par catégorie",
     "proximity.available": "disponibles",
     "proximity.trending": "Tendance",
-    
+
     // Marketplace
     "marketplace.professionalServices": "Services Pro",
     "marketplace.digitalProducts": "Numériques",
-    
+
     // Auth Page
     "auth.pageTitle": "Authentification",
     "auth.home": "Accueil",
@@ -145,7 +145,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.bureauLogin": "Connexion Bureau Syndicat",
     "auth.workerLogin": "Connexion Travailleur",
     "auth.googleLogin": "Continuer avec Google",
-    
+
     // Auth error/success messages
     "auth.error.selectAccountType": "Veuillez d'abord sélectionner un type de compte ci-dessus",
     "auth.error.passwordMismatch": "Les mots de passe ne correspondent pas",
@@ -157,7 +157,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.success.loggedIn": "Connexion réussie ! Redirection en cours...",
     "auth.success.resetEmailSent": "Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.",
     "auth.success.passwordUpdated": "Mot de passe mis à jour avec succès ! Redirection...",
-    
+
     // Services
     "service.restaurant": "Restauration",
     "service.ecommerce": "Boutique Digitale",
@@ -174,7 +174,7 @@ export const translations: Record<string, Record<string, string>> = {
     "service.media": "Média & Création",
     "service.it": "Technique & Informatique",
     "service.cleaning": "Ménage & Entretien",
-    
+
     // Common
     "common.loading": "Chargement...",
     "common.error": "Erreur",
@@ -204,6 +204,16 @@ export const translations: Record<string, Record<string, string>> = {
     "common.refresh": "Actualiser",
     "common.signOut": "Se déconnecter",
     "common.signOutSuccess": "Déconnexion réussie",
+    "common.signOutError": "Erreur lors de la déconnexion",
+    "common.settings": "Paramètres",
+    "common.toggleMenu": "Ouvrir/Fermer le menu",
+    "common.online": "En ligne",
+    "common.showMore": "Voir plus",
+    "common.showLess": "Voir moins",
+    "common.locked": "verrouillé",
+    "common.retry": "Réessayer",
+    "common.connectionRequired": "Connexion requise",
+    "common.loadingData": "Chargement des données...",
     "common.welcome": "Bienvenue",
     "common.actions": "Actions",
     "common.status": "Statut",
@@ -225,7 +235,7 @@ export const translations: Record<string, Record<string, string>> = {
     "common.address": "Adresse",
     "common.description": "Description",
     "common.reloadPage": "Recharger la page",
-    
+
     // Vendor Dashboard
     "vendor.dashboard": "Espace Vendeur",
     "vendor.loadingSpace": "Chargement de votre espace vendeur…",
@@ -257,7 +267,28 @@ export const translations: Record<string, Record<string, string>> = {
     "vendor.settings": "Paramètres du compte",
     "vendor.settingsDesc": "Configurez votre espace vendeur",
     "vendor.accountInfo": "Informations du compte",
-    
+    "vendor.last2Orders": "Vos 2 dernières commandes",
+    "vendor.posLocked": "POS verrouillé",
+    "vendor.posLockedDesc": "Votre boutique est configurée en ligne uniquement. Le POS est désactivé.",
+    "vendor.loadingDashboard": "Chargement du dashboard...",
+    "vendor.loadingAnalytics": "Chargement des analytics...",
+    "vendor.loadingHistory": "Chargement de l'historique...",
+    "vendor.recentlyViewedProducts": "Produits consultés récemment",
+    "vendor.recentlyViewedProductsDesc": "Retrouvez les derniers produits visités depuis vos interfaces",
+    "vendor.virtualCard224Pay": "Carte Virtuelle 224PAY",
+    "vendor.virtualCardDesc": "Gérez votre carte virtuelle pour les paiements en ligne",
+    "vendor.aiCopilotTitle": "Copilote IA Vendeur",
+    "vendor.aiCopilotDesc": "Votre assistant intelligent pour gérer votre boutique",
+    "vendor.myPersonalPurchases": "Mes Achats Personnels",
+    "vendor.noMarketplacePurchases": "Vous n'avez pas encore effectué d'achats sur le marketplace",
+    "vendor.standardVendorDetected": "Compte vendeur classique détecté",
+    "vendor.redirectingToStandardDashboard": "Redirection vers le dashboard vendeur standard.",
+    "vendor.digitalOfflineDesc": "Le tableau de bord vendeur digital nécessite une connexion internet active. Les produits numériques et les transactions ne sont pas accessibles hors ligne.",
+    "vendor.digitalDashboardLoadFailed": "Impossible de charger le dashboard vendeur digital",
+    "vendor.loadingTooLong": "Le chargement est trop long. Réessayez ou rechargez l'application.",
+    "vendor.digitalVendor": "Vendeur Digital",
+    "vendor.digitalDashboard": "Dashboard vendeur digital",
+
     // Wallet translations
     "wallet.title": "Portefeuille",
     "wallet.operational": "Opérationnel",
@@ -340,7 +371,7 @@ export const translations: Record<string, Record<string, string>> = {
     "wallet.recharge": "Recharger",
     "wallet.amountToDeposit": "Montant à déposer",
     "wallet.confirm": "Confirmer",
-    
+
     // Sidebar translations
     "sidebar.principal": "Principal",
     "sidebar.dashboard": "Dashboard",
@@ -401,7 +432,17 @@ export const translations: Record<string, Record<string, string>> = {
     "sidebar.aiCopilot": "Copilote IA",
     "sidebar.settings": "Paramètres",
     "sidebar.requires": "Requiert",
-    
+    "sidebar.digitalProducts": "Produits Numériques",
+    "sidebar.stockAdjustments": "Ajustements Stock",
+    "sidebar.businessModule": "Module Métier",
+    "sidebar.campaigns": "Campagnes",
+    "sidebar.collectionAccounts": "Comptes Encaissement",
+    "sidebar.installmentPayments": "Paiements Échelonnés",
+    "sidebar.advancedSales": "Ventes Avancées",
+    "sidebar.myPurchases": "Mes Achats",
+    "sidebar.customerReviews": "Avis Clients",
+    "sidebar.higherPlan": "un abonnement supérieur",
+
     // Client Dashboard
     "client.dashboard": "Espace Client",
     "client.marketplace": "Marketplace",
@@ -423,7 +464,7 @@ export const translations: Record<string, Record<string, string>> = {
     "client.messageSent": "Message envoyé au vendeur!",
     "client.connectionRequired": "Veuillez vous connecter",
     "client.orderCreated": "Commande créée avec succès",
-    
+
     // Taxi Moto Driver
     "taxi.dashboard": "Tableau de Bord Conducteur",
     "taxi.online": "En ligne",
@@ -460,7 +501,7 @@ export const translations: Record<string, Record<string, string>> = {
     "taxi.permissionDenied": "Permission GPS refusée. Autorisez l'accès dans les paramètres.",
     "taxi.positionUnavailable": "Position GPS indisponible. Vérifiez que le GPS est activé.",
     "taxi.timeout": "Délai GPS dépassé. Vérifiez votre connexion.",
-    
+
     // Delivery Driver (Livreur)
     "delivery.dashboard": "Tableau de Bord Livreur",
     "delivery.availableMissions": "Missions disponibles",
@@ -489,7 +530,7 @@ export const translations: Record<string, Record<string, string>> = {
     "delivery.proofUpload": "Preuve de livraison",
     "delivery.takePhoto": "Prendre une photo",
     "delivery.captureSignature": "Capturer la signature",
-    
+
     // Agent Dashboard
     "agent.dashboard": "Espace Agent",
     "agent.overview": "Vue d'ensemble",
@@ -516,7 +557,7 @@ export const translations: Record<string, Record<string, string>> = {
     "agent.emailChanged": "Email modifié avec succès",
     "agent.totalUsersCreated": "Utilisateurs créés",
     "agent.commissionsEarned": "Commissions gagnées",
-    
+
     // Bureau Syndicat Dashboard
     "bureau.dashboard": "Espace Bureau Syndicat",
     "bureau.loadingInterface": "Chargement de votre interface...",
@@ -553,7 +594,7 @@ export const translations: Record<string, Record<string, string>> = {
     "bureau.noAlerts": "Aucune alerte",
     "bureau.communicationHub": "Hub de Communication",
     "bureau.bureauInfo": "Informations du Bureau",
-    
+
     // Transitaire Dashboard
     "transit.dashboard": "Dashboard Transitaire",
     "transit.internationalTransport": "Transport international",
@@ -582,7 +623,7 @@ export const translations: Record<string, Record<string, string>> = {
     "transit.smsEmailAlerts": "Alertes SMS/Email",
     "transit.detailedReports": "Rapports détaillés",
     "transit.communication": "Communication",
-    
+
     // Marketplace
     "marketplace.title": "Marketplace",
     "marketplace.products": "Produits",
@@ -665,7 +706,7 @@ export const translations: Record<string, Record<string, string>> = {
     "marketplace.refreshLocation": "Actualiser ma position",
     "marketplace.detectedCountry": "Pays détecté",
     "marketplace.geoRefreshed": "Localisation actualisée",
-    
+
     // Cart
     "cart.title": "Panier",
     "cart.empty": "Votre panier est vide",
@@ -675,7 +716,7 @@ export const translations: Record<string, Record<string, string>> = {
     "cart.continueShopping": "Continuer les achats",
     "cart.removeItem": "Retirer",
     "cart.updateQuantity": "Modifier la quantité",
-    
+
     // Profile
     "profile.title": "Mon profil",
     "profile.personalInfo": "Informations personnelles",
@@ -684,20 +725,20 @@ export const translations: Record<string, Record<string, string>> = {
     "profile.payments": "Moyens de paiement",
     "profile.security": "Sécurité",
     "profile.preferences": "Préférences",
-    
+
     // Language
     "language.title": "Langue de l'application",
     "language.select": "Sélectionner la langue",
     "language.current": "Langue actuelle",
     "language.change": "Changer de langue",
-    
+
     // Footer
     "footer.rights": "Tous droits réservés",
     "footer.privacy": "Politique de confidentialité",
     "footer.terms": "Conditions d'utilisation",
     "footer.contact": "Nous contacter",
     "footer.about": "À propos",
-    
+
     // Errors
     "error.generic": "Une erreur s'est produite",
     "error.notFound": "Page non trouvée",
@@ -705,7 +746,7 @@ export const translations: Record<string, Record<string, string>> = {
     "error.network": "Erreur de connexion",
     "error.tryAgain": "Veuillez réessayer",
     "error.loadingFailed": "Erreur lors du chargement des données",
-    
+
     // Digital Products
     "digital.title": "Produits Numériques",
     "digital.subtitle": "Créez et vendez sur le marketplace",
@@ -719,7 +760,7 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.merchantActive": "Statut Marchand actif - Cliquez sur un module pour créer vos produits",
     "digital.loginRequired": "Connexion requise pour devenir marchand",
     "digital.alreadyMerchant": "Vous êtes déjà marchand. Cliquez sur un module pour créer un produit.",
-    
+
     // Digital Products Modules
     "digital.modules.flight": "Vol/Hôtel",
     "digital.modules.flightDesc": "Billets d'avion, hôtels",
@@ -816,7 +857,7 @@ export const translations: Record<string, Record<string, string>> = {
     "client.affiliateSpaceDesc": "Devenez affilié, promouvez des offres et suivez vos commissions sans changer de compte.",
     "client.affiliateBecome": "Devenir affilié",
     "client.affiliateOpenSpace": "Ouvrir mon espace affilié",
-    
+
     // Messaging / Chat
     "messaging.placeholder": "Écrivez votre message...",
     "messaging.sendHint": "Appuyez sur Entrée pour envoyer",
@@ -1045,7 +1086,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.verifyOtp": "Vérifier le code",
     "auth.resendOtp": "Renvoyer le code",
     "auth.otpVerified": "Code vérifié avec succès !",
-    
+
     "auth.otpInvalid": "Code OTP invalide",
     "auth.backToPhone": "Retour",
   },
@@ -1067,11 +1108,11 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "Messages",
     "nav.notifications": "Notifications",
     "nav.wallet": "Wallet",
-    
+
     // Header
     "header.subtitle": "Integrated Multi-Services Platform",
     "header.connectedAs": "Connected as",
-    
+
     // Home Page
     "home.welcome": "Welcome to 224Solutions",
     "home.discoverServices": "Discover our nearby services and products",
@@ -1110,7 +1151,7 @@ export const translations: Record<string, Record<string, string>> = {
     "home.live": "Live",
     "home.addedToCart": "Product added to cart",
     "nav.tracking": "Tracking",
-    
+
     // Proximity
     "proximity.title": "Nearby Services",
     "proximity.popularServices": "Popular Services",
@@ -1119,11 +1160,11 @@ export const translations: Record<string, Record<string, string>> = {
     "proximity.exploreByCategory": "Explore by category",
     "proximity.available": "available",
     "proximity.trending": "Trending",
-    
+
     // Marketplace
     "marketplace.professionalServices": "Pro Services",
     "marketplace.digitalProducts": "Digital",
-    
+
     // Auth Page
     "auth.pageTitle": "Authentication",
     "auth.home": "Home",
@@ -1191,7 +1232,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.bureauLogin": "Bureau Syndicat Login",
     "auth.workerLogin": "Worker Login",
     "auth.googleLogin": "Continue with Google",
-    
+
     // Auth error/success messages
     "auth.error.selectAccountType": "Please select an account type above first",
     "auth.error.passwordMismatch": "Passwords do not match",
@@ -1203,7 +1244,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.success.loggedIn": "Login successful! Redirecting...",
     "auth.success.resetEmailSent": "Reset email sent! Check your inbox.",
     "auth.success.passwordUpdated": "Password updated successfully! Redirecting...",
-    
+
     // Services
     "service.restaurant": "Restaurant",
     "service.ecommerce": "Digital Shop",
@@ -1220,7 +1261,7 @@ export const translations: Record<string, Record<string, string>> = {
     "service.media": "Media & Creation",
     "service.it": "Technical & IT",
     "service.cleaning": "Cleaning & Maintenance",
-    
+
     // Common
     "common.loading": "Loading...",
     "common.error": "Error",
@@ -1271,7 +1312,7 @@ export const translations: Record<string, Record<string, string>> = {
     "common.address": "Address",
     "common.description": "Description",
     "common.reloadPage": "Reload page",
-    
+
     // Vendor Dashboard
     "vendor.dashboard": "Vendor Dashboard",
     "vendor.loadingSpace": "Loading your vendor space…",
@@ -1303,7 +1344,7 @@ export const translations: Record<string, Record<string, string>> = {
     "vendor.settings": "Account settings",
     "vendor.settingsDesc": "Configure your vendor space",
     "vendor.accountInfo": "Account information",
-    
+
     // Wallet translations
     "wallet.title": "Wallet",
     "wallet.operational": "Operational",
@@ -1386,7 +1427,7 @@ export const translations: Record<string, Record<string, string>> = {
     "wallet.recharge": "Recharge",
     "wallet.amountToDeposit": "Amount to deposit",
     "wallet.confirm": "Confirm",
-    
+
     // Sidebar translations
     "sidebar.principal": "Main",
     "sidebar.dashboard": "Dashboard",
@@ -1447,7 +1488,7 @@ export const translations: Record<string, Record<string, string>> = {
     "sidebar.aiCopilot": "AI Copilot",
     "sidebar.settings": "Settings",
     "sidebar.requires": "Requires",
-    
+
     // Client Dashboard
     "client.dashboard": "Client Dashboard",
     "client.marketplace": "Marketplace",
@@ -1469,7 +1510,7 @@ export const translations: Record<string, Record<string, string>> = {
     "client.messageSent": "Message sent to vendor!",
     "client.connectionRequired": "Please log in",
     "client.orderCreated": "Order created successfully",
-    
+
     // Taxi Moto Driver
     "taxi.dashboard": "Driver Dashboard",
     "taxi.online": "Online",
@@ -1506,7 +1547,7 @@ export const translations: Record<string, Record<string, string>> = {
     "taxi.permissionDenied": "GPS permission denied. Allow access in settings.",
     "taxi.positionUnavailable": "GPS position unavailable. Check if GPS is enabled.",
     "taxi.timeout": "GPS timeout. Check your connection.",
-    
+
     // Delivery Driver (Livreur)
     "delivery.dashboard": "Delivery Dashboard",
     "delivery.availableMissions": "Available missions",
@@ -1535,7 +1576,7 @@ export const translations: Record<string, Record<string, string>> = {
     "delivery.proofUpload": "Delivery proof",
     "delivery.takePhoto": "Take photo",
     "delivery.captureSignature": "Capture signature",
-    
+
     // Agent Dashboard
     "agent.dashboard": "Agent Dashboard",
     "agent.overview": "Overview",
@@ -1562,7 +1603,7 @@ export const translations: Record<string, Record<string, string>> = {
     "agent.emailChanged": "Email changed successfully",
     "agent.totalUsersCreated": "Users created",
     "agent.commissionsEarned": "Commissions earned",
-    
+
     // Bureau Syndicat Dashboard
     "bureau.dashboard": "Bureau Syndicat Dashboard",
     "bureau.loadingInterface": "Loading your interface...",
@@ -1599,7 +1640,7 @@ export const translations: Record<string, Record<string, string>> = {
     "bureau.noAlerts": "No alerts",
     "bureau.communicationHub": "Communication Hub",
     "bureau.bureauInfo": "Bureau Information",
-    
+
     // Transitaire Dashboard
     "transit.dashboard": "Transit Dashboard",
     "transit.internationalTransport": "International transport",
@@ -1628,7 +1669,7 @@ export const translations: Record<string, Record<string, string>> = {
     "transit.smsEmailAlerts": "SMS/Email alerts",
     "transit.detailedReports": "Detailed reports",
     "transit.communication": "Communication",
-    
+
     // Marketplace
     "marketplace.title": "Marketplace",
     "marketplace.products": "Products",
@@ -1711,7 +1752,7 @@ export const translations: Record<string, Record<string, string>> = {
     "marketplace.refreshLocation": "Refresh my location",
     "marketplace.detectedCountry": "Detected country",
     "marketplace.geoRefreshed": "Location updated",
-    
+
     // Cart
     "cart.title": "Cart",
     "cart.empty": "Your cart is empty",
@@ -1721,7 +1762,7 @@ export const translations: Record<string, Record<string, string>> = {
     "cart.continueShopping": "Continue shopping",
     "cart.removeItem": "Remove",
     "cart.updateQuantity": "Update quantity",
-    
+
     // Profile
     "profile.title": "My profile",
     "profile.personalInfo": "Personal information",
@@ -1730,20 +1771,20 @@ export const translations: Record<string, Record<string, string>> = {
     "profile.payments": "Payment methods",
     "profile.security": "Security",
     "profile.preferences": "Preferences",
-    
+
     // Language
     "language.title": "Application language",
     "language.select": "Select language",
     "language.current": "Current language",
     "language.change": "Change language",
-    
+
     // Footer
     "footer.rights": "All rights reserved",
     "footer.privacy": "Privacy policy",
     "footer.terms": "Terms of service",
     "footer.contact": "Contact us",
     "footer.about": "About",
-    
+
     // Errors
     "error.generic": "An error occurred",
     "error.notFound": "Page not found",
@@ -1751,7 +1792,7 @@ export const translations: Record<string, Record<string, string>> = {
     "error.network": "Connection error",
     "error.tryAgain": "Please try again",
     "error.loadingFailed": "Failed to load data",
-    
+
     // Digital Products
     "digital.title": "Digital Products",
     "digital.subtitle": "Create and sell on the marketplace",
@@ -1765,7 +1806,7 @@ export const translations: Record<string, Record<string, string>> = {
     "digital.merchantActive": "Merchant status active - Click a module to create your products",
     "digital.loginRequired": "Login required to become a merchant",
     "digital.alreadyMerchant": "You are already a merchant. Click a module to create a product.",
-    
+
     // Digital Products Modules
     "digital.modules.flight": "Flights/Hotels",
     "digital.modules.flightDesc": "Airline tickets, hotels",
@@ -1862,7 +1903,7 @@ export const translations: Record<string, Record<string, string>> = {
     "client.affiliateSpaceDesc": "Become an affiliate, promote offers, and track commissions without changing accounts.",
     "client.affiliateBecome": "Become an affiliate",
     "client.affiliateOpenSpace": "Open my affiliate space",
-    
+
     // Messaging / Chat
     "messaging.placeholder": "Type your message...",
     "messaging.sendHint": "Press Enter to send",
@@ -2091,13 +2132,13 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.verifyOtp": "Verify code",
     "auth.resendOtp": "Resend code",
     "auth.otpVerified": "Code verified successfully!",
-    
+
     "auth.otpInvalid": "Invalid OTP code",
     "auth.backToPhone": "Back",
   },
 
   // Español
-  
+
   es: {
     "nav.home": "Inicio",
     "nav.marketplace": "Mercado",
@@ -2936,7 +2977,7 @@ export const translations: Record<string, Record<string, string>> = {
   },
 
   // Português
-  
+
   pt: {
     "nav.home": "Início",
     "nav.marketplace": "Marketplace",
@@ -3775,7 +3816,7 @@ export const translations: Record<string, Record<string, string>> = {
   },
 
   // العربية (Arabic)
-  
+
   ar: {
     "nav.home": "الرئيسية",
     "nav.marketplace": "السوق",
@@ -4783,7 +4824,7 @@ export const translations: Record<string, Record<string, string>> = {
     "error.unauthorized": "未授权访问",
     "error.network": "连接错误",
     "error.tryAgain": "请重试",
-    
+
     // Digital Products
     "digital.title": "数字产品",
     "digital.subtitle": "在市场上创建和销售",
@@ -4949,7 +4990,7 @@ export const translations: Record<string, Record<string, string>> = {
     "nav.messages": "Nachrichten",
     "nav.notifications": "Benachrichtigungen",
     "nav.wallet": "Geldbörse",
-    
+
     // Home Page
     "home.welcome": "Willkommen bei 224Solutions",
     "home.discoverServices": "Entdecken Sie unsere Dienstleistungen in der Nähe und Produkte",
@@ -4988,7 +5029,7 @@ export const translations: Record<string, Record<string, string>> = {
     "home.live": "Live",
     "home.addedToCart": "Produkt zum Warenkorb hinzugefügt",
     "nav.tracking": "Verfolgung",
-    
+
     // Proximity
     "proximity.title": "Dienste in der Nähe",
     "proximity.popularServices": "Beliebte Dienste",
@@ -4997,7 +5038,7 @@ export const translations: Record<string, Record<string, string>> = {
     "proximity.exploreByCategory": "Nach Kategorie erkunden",
     "proximity.available": "verfügbar",
     "proximity.trending": "Im Trend",
-    
+
     "common.loading": "Laden...",
     "common.error": "Fehler",
     "common.success": "Erfolg",
@@ -5587,7 +5628,7 @@ export const translations: Record<string, Record<string, string>> = {
     "error.unauthorized": "Ongeautoriseerde toegang",
     "error.network": "Verbindingsfout",
     "error.tryAgain": "Probeer het opnieuw",
-    
+
     // Digital Products
     "digital.title": "Digitale Producten",
     "digital.subtitle": "Maak en verkoop op de marktplaats",

@@ -12,7 +12,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { _toast } from "sonner";
 
 interface AIProduct {
   product_id: string;
@@ -20,6 +20,7 @@ interface AIProduct {
   price: number;
   images: string[];
   rating: number | null;
+  reviews_count?: number | null;
   reason?: string;
   score?: number;
   vendor_id?: string;
@@ -50,9 +51,9 @@ export function AIRecommendationSection({
   title,
   subtitle,
   products,
-  isLoading,
+  _isLoading,
   icon = 'sparkles',
-  showReason = true,
+  _showReason = true,
   seeAllLink,
   maxItems = 12,
   className,
@@ -126,7 +127,7 @@ export function AIRecommendationSection({
                   currency={p.currency || 'GNF'}
                   image={p.images || []}
                   rating={p.rating || 0}
-                  reviewCount={0}
+                  reviewCount={p.reviews_count || 0}
                   vendor=""
                   onBuy={() => navigate(`/product/${p.product_id}`)}
                   onAddToCart={() => handleAddToCart(p)}

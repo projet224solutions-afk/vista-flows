@@ -97,7 +97,7 @@ export const usePDGSyndicatData = () => {
   const loadAllData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const [bureausRes, workersRes, alertsRes, featuresRes, membersRes] = await Promise.all([
         supabase.from('bureaus').select('*').order('created_at', { ascending: false }),
         supabase.from('syndicate_workers').select('*').order('created_at', { ascending: false }),
@@ -168,7 +168,7 @@ export const usePDGSyndicatData = () => {
     try {
       const { error } = await supabase
         .from('bureaus')
-        .update({ 
+        .update({
           status: 'active',
           validated_at: new Date().toISOString()
         })
@@ -198,7 +198,7 @@ export const usePDGSyndicatData = () => {
   }) => {
     try {
       const access_token = crypto.randomUUID();
-      
+
       const { data: bureau, error } = await supabase
         .from('bureaus')
         .insert([{
@@ -306,7 +306,7 @@ export const usePDGSyndicatData = () => {
       // Si l'URL n'existe pas, la générer et la sauvegarder
       if (!urlToCopy && bureau.access_token) {
         urlToCopy = `${window.location.origin}/bureau/${bureau.access_token}`;
-        
+
         // Mettre à jour le bureau avec l'URL générée
         const { error } = await supabase
           .from('bureaus')
@@ -365,7 +365,7 @@ export const usePDGSyndicatData = () => {
         console.error('Erreur envoi email:', data.error);
         throw new Error(data.error);
       }
-      
+
       toast.success(`✓ Email envoyé avec succès à ${bureau.president_email}`);
       return true;
     } catch (error: any) {

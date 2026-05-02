@@ -133,7 +133,7 @@ export class InterfaceMetricsService {
   static async getGlobalStats(): Promise<GlobalStats | null> {
     try {
       const { data, error } = await supabase.rpc('get_pdg_dashboard_stats');
-      
+
       if (error) {
         console.error('Error getting PDG stats:', error);
         return null;

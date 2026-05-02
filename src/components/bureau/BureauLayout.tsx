@@ -258,10 +258,10 @@ export function BureauLayout({
                 </div>
               </div>
               <div className="mt-3">
-                <BureauWalletDisplay 
-                  bureauId={bureau.id} 
-                  bureauCode={bureau.bureau_code} 
-                  compact={true} 
+                <BureauWalletDisplay
+                  bureauId={bureau.id}
+                  bureauCode={bureau.bureau_code}
+                  compact={true}
                 />
               </div>
             </div>
@@ -343,8 +343,8 @@ export function BureauLayout({
           <div className="flex items-center gap-4">
             <Badge variant={bureau.status === 'active' ? "default" : "secondary"} className={cn(
               "px-3 py-1",
-              bureau.status === 'active' 
-                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" 
+              bureau.status === 'active'
+                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
                 : "bg-slate-100 text-slate-600"
             )}>
               {bureau.status === 'active' ? '● Actif' : '○ Inactif'}

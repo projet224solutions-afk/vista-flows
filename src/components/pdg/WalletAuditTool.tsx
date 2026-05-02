@@ -14,10 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Search, 
-  Wallet, 
-  Shield, 
+import {
+  Search,
+  Wallet,
+  Shield,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -46,8 +46,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { format, _formatDistanceToNow } from 'date-fns';
+import { _fr } from 'date-fns/locale';
 
 interface WalletIssue {
   type: 'critical' | 'warning' | 'info';
@@ -207,7 +207,7 @@ export function WalletAuditTool() {
   // Réconcilier le solde
   const reconcileBalance = useCallback(async () => {
     if (!auditResult?.wallet) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
@@ -225,12 +225,13 @@ export function WalletAuditTool() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditResult, auditWallet]);
 
   // Débloquer un wallet
   const unblockWallet = useCallback(async () => {
     if (!auditResult?.wallet) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
@@ -252,7 +253,7 @@ export function WalletAuditTool() {
   // Activer un wallet
   const activateWallet = useCallback(async () => {
     if (!auditResult?.wallet) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
@@ -338,12 +339,12 @@ export function WalletAuditTool() {
   // Bloquer un wallet
   const blockWallet = useCallback(async (reason?: string) => {
     if (!auditResult?.wallet) return;
-    
+
     setActionLoading('block');
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
-        body: { 
-          action: 'block-wallet', 
+        body: {
+          action: 'block-wallet',
           userId: auditResult.wallet.user_id,
           reason: reason || blockReason || 'Blocage de sécurité'
         }
@@ -368,12 +369,12 @@ export function WalletAuditTool() {
   // Charger les abonnements d'un utilisateur
   const loadUserSubscriptions = useCallback(async () => {
     if (!auditResult?.wallet) return;
-    
+
     setActionLoading('subscriptions');
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
-        body: { 
-          action: 'get-user-subscriptions', 
+        body: {
+          action: 'get-user-subscriptions',
           userId: auditResult.wallet.user_id
         }
       });
@@ -393,12 +394,12 @@ export function WalletAuditTool() {
   // Annuler un abonnement
   const cancelSubscription = useCallback(async (subscriptionId: string) => {
     if (!auditResult?.wallet) return;
-    
+
     setActionLoading(`cancel-${subscriptionId}`);
     try {
       const { data, error } = await supabase.functions.invoke('wallet-audit', {
-        body: { 
-          action: 'cancel-subscription', 
+        body: {
+          action: 'cancel-subscription',
           userId: auditResult.wallet.user_id,
           subscriptionId,
           reason: cancelReason || 'Annulation par administrateur'
@@ -581,8 +582,8 @@ export function WalletAuditTool() {
                                   )}
                                 </div>
                                 {issue.canAutoFix && (
-                                  <Button 
-                                    size="sm" 
+                                  <Button
+                                    size="sm"
                                     variant="outline"
                                     onClick={() => {
                                       if (issue.code === 'BALANCE_MISMATCH') reconcileBalance();
@@ -657,8 +658,8 @@ export function WalletAuditTool() {
                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-full ${
-                                auditResult.wallet?.wallet_status === 'blocked' 
-                                  ? 'bg-red-100' 
+                                auditResult.wallet?.wallet_status === 'blocked'
+                                  ? 'bg-red-100'
                                   : 'bg-green-100'
                               }`}>
                                 {auditResult.wallet?.wallet_status === 'blocked' ? (
@@ -672,7 +673,7 @@ export function WalletAuditTool() {
                                   Statut: {auditResult.wallet?.wallet_status === 'blocked' ? 'Bloqué' : 'Actif'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {auditResult.wallet?.wallet_status === 'blocked' 
+                                  {auditResult.wallet?.wallet_status === 'blocked'
                                     ? 'L\'utilisateur ne peut pas effectuer de transactions'
                                     : 'Le wallet fonctionne normalement'
                                   }
@@ -680,8 +681,8 @@ export function WalletAuditTool() {
                               </div>
                             </div>
                             {auditResult.wallet?.wallet_status === 'blocked' ? (
-                              <Button 
-                                onClick={unblockWallet} 
+                              <Button
+                                onClick={unblockWallet}
                                 disabled={actionLoading === 'unblock'}
                                 variant="outline"
                                 className="border-green-500 text-green-600 hover:bg-green-50"
@@ -694,8 +695,8 @@ export function WalletAuditTool() {
                                 Débloquer
                               </Button>
                             ) : (
-                              <Button 
-                                onClick={() => setShowBlockDialog(true)} 
+                              <Button
+                                onClick={() => setShowBlockDialog(true)}
                                 disabled={actionLoading === 'block'}
                                 variant="destructive"
                               >
@@ -717,7 +718,7 @@ export function WalletAuditTool() {
                                 <span className="font-medium">Bloquer ce wallet</span>
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                Cette action empêchera l'utilisateur d'effectuer des transactions. 
+                                Cette action empêchera l'utilisateur d'effectuer des transactions.
                                 Une notification sera envoyée.
                               </p>
                               <Input
@@ -727,8 +728,8 @@ export function WalletAuditTool() {
                                 className="border-destructive/50"
                               />
                               <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
+                                <Button
+                                  variant="outline"
                                   onClick={() => {
                                     setShowBlockDialog(false);
                                     setBlockReason('');
@@ -736,7 +737,7 @@ export function WalletAuditTool() {
                                 >
                                   Annuler
                                 </Button>
-                                <Button 
+                                <Button
                                   variant="destructive"
                                   onClick={() => blockWallet()}
                                   disabled={!blockReason.trim() || actionLoading === 'block'}
@@ -768,7 +769,7 @@ export function WalletAuditTool() {
                               </p>
                             </div>
                           </div>
-                          <Button 
+                          <Button
                             variant="outline"
                             onClick={loadUserSubscriptions}
                             disabled={actionLoading === 'subscriptions'}
@@ -792,8 +793,8 @@ export function WalletAuditTool() {
                                   Abonnements ({userSubscriptions.stats?.total || 0})
                                 </span>
                               </div>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => setShowSubscriptionsDialog(false)}
                               >
@@ -826,8 +827,8 @@ export function WalletAuditTool() {
                               <ScrollArea className="h-[280px]">
                                 <div className="space-y-3">
                                   {userSubscriptions.subscriptions.all.map((sub: any, idx: number) => (
-                                    <div 
-                                      key={idx} 
+                                    <div
+                                      key={idx}
                                       className="p-3 bg-background rounded-lg border"
                                     >
                                       <div className="flex items-center justify-between mb-2">
@@ -840,8 +841,8 @@ export function WalletAuditTool() {
                                           </Badge>
                                         </div>
                                         {(sub._status === 'active' || sub.status === 'active') && (
-                                          <Button 
-                                            variant="destructive" 
+                                          <Button
+                                            variant="destructive"
                                             size="sm"
                                             onClick={() => cancelSubscription(sub.id)}
                                             disabled={actionLoading === `cancel-${sub.id}`}
@@ -855,19 +856,19 @@ export function WalletAuditTool() {
                                           </Button>
                                         )}
                                       </div>
-                                      
+
                                       <p className="text-sm font-medium">
                                         {sub._plan_name || sub.plans?.display_name || sub.plans?.name || sub.service_plans?.name || 'Abonnement'}
                                       </p>
-                                      
+
                                       <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
                                         <div className="flex items-center gap-1 text-muted-foreground">
                                           <Clock className="h-3 w-3" />
                                           <span>Expire:</span>
                                           <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-green-600 font-medium' : 'font-medium')}>
-                                            {sub._is_unlimited 
-                                              ? '∞ Illimité' 
-                                              : (sub._end_date 
+                                            {sub._is_unlimited
+                                              ? '∞ Illimité'
+                                              : (sub._end_date
                                                   ? format(new Date(sub._end_date), 'dd/MM/yyyy HH:mm')
                                                   : 'Non définie'
                                                 )
@@ -882,7 +883,7 @@ export function WalletAuditTool() {
                                           </Badge>
                                         </div>
                                       </div>
-                                      
+
                                       {sub.price_paid && (
                                         <div className="mt-2 text-xs text-muted-foreground">
                                           Montant payé: <span className="font-medium">{formatAmount(sub.price_paid)}</span>
@@ -1008,7 +1009,7 @@ export function WalletAuditTool() {
                               <Alert key={idx} variant="destructive">
                                 <AlertTitle>{activity.activity_type}</AlertTitle>
                                 <AlertDescription>
-                                  Niveau de risque: {activity.risk_level} • 
+                                  Niveau de risque: {activity.risk_level} •
                                   {activity.is_resolved ? ' Résolu' : ' Non résolu'}
                                 </AlertDescription>
                               </Alert>
@@ -1278,9 +1279,9 @@ export function WalletAuditTool() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Button 
-                        className="w-full justify-start" 
-                        variant="outline" 
+                      <Button
+                        className="w-full justify-start"
+                        variant="outline"
                         onClick={loadGlobalStats}
                         disabled={loading || actionLoading !== null}
                       >
@@ -1291,9 +1292,9 @@ export function WalletAuditTool() {
                         )}
                         Scanner tous les wallets
                       </Button>
-                      <Button 
-                        className="w-full justify-start" 
-                        variant="outline" 
+                      <Button
+                        className="w-full justify-start"
+                        variant="outline"
                         onClick={verifySignatures}
                         disabled={loading || actionLoading !== null}
                       >
@@ -1317,9 +1318,9 @@ export function WalletAuditTool() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <Button 
-                        className="w-full justify-start" 
-                        variant="outline" 
+                      <Button
+                        className="w-full justify-start"
+                        variant="outline"
                         onClick={reconcileAllWallets}
                         disabled={loading || actionLoading !== null}
                       >
@@ -1330,8 +1331,8 @@ export function WalletAuditTool() {
                         )}
                         Réconcilier tous les soldes
                       </Button>
-                      <Button 
-                        className="w-full justify-start" 
+                      <Button
+                        className="w-full justify-start"
                         variant="outline"
                         onClick={createAllMissingWallets}
                         disabled={loading || actionLoading !== null}

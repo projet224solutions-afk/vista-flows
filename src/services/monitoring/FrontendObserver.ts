@@ -1,5 +1,5 @@
 /**
- * Frontend Error Observer - Captures JS errors, unhandled rejections, 
+ * Frontend Error Observer - Captures JS errors, unhandled rejections,
  * chunk load failures and routes them to the monitoring event bus
  */
 
@@ -13,9 +13,9 @@ export function initFrontendObserver(): void {
 
   // Global JS errors
   window.addEventListener('error', (event) => {
-    const isChunkError = event.message?.includes('Loading chunk') || 
+    const isChunkError = event.message?.includes('Loading chunk') ||
                          event.message?.includes('Failed to fetch dynamically');
-    
+
     monitoringBus.frontendError(
       event.message || 'Unknown error',
       {
@@ -57,7 +57,7 @@ export function initFrontendObserver(): void {
         }
       });
       observer.observe({ entryTypes: ['longtask'] });
-    } catch (e) {
+    } catch (_e) {
       // longtask not supported in all browsers
     }
   }

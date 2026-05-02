@@ -7,12 +7,12 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ export function PaymentSystemConfig() {
         .order('config_key');
 
       if (error) throw error;
-      
+
       setConfigs(data || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
@@ -176,7 +176,7 @@ export function PaymentSystemConfig() {
               {/* Seuils */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Seuils de décision</h3>
-                
+
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="auto-approve">Seuil auto-approbation</Label>
@@ -213,7 +213,7 @@ export function PaymentSystemConfig() {
               {/* Pondérations */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Pondération des facteurs</h3>
-                
+
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label>Âge utilisateur (max points)</Label>
@@ -446,7 +446,7 @@ export function PaymentSystemConfig() {
               {/* Notifications */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Notifications</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <Label>Activer notifications</Label>
                   <Switch
@@ -475,7 +475,7 @@ export function PaymentSystemConfig() {
               {/* Double vérification */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Double vérification Stripe</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <Label>Activer double vérification</Label>
                   <Switch

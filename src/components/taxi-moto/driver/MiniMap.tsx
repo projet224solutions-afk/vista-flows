@@ -28,16 +28,16 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
       )}>
         {/* Map placeholder with grid pattern */}
         <div className="absolute inset-0">
-          <div className="w-full h-full" 
+          <div className="w-full h-full"
             style={{
               backgroundImage: `
                 linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px)
               `,
               backgroundSize: '20px 20px'
-            }} 
+            }}
           />
-          
+
           {/* Radial gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900/80" />
         </div>
@@ -52,13 +52,13 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
                 <div className="absolute w-14 h-14 rounded-full bg-emerald-500/20 animate-pulse" />
               </>
             )}
-            
+
             {/* Marker - plus petit */}
             <div className={cn(
               "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
               "shadow-xl",
-              isOnline 
-                ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30" 
+              isOnline
+                ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30"
                 : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-black/30"
             )}>
               <Navigation2 className={cn(

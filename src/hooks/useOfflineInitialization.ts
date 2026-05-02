@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import type { Profile } from './useAuth';
+import type { _Profile } from './useAuth';
 import { checkNetworkHealth } from '@/lib/networkHealth';
 import { cacheVendorProducts, cacheCategories, getCacheStats } from '@/lib/offline/catalogCache';
 import { loadInitialStock, getStockStats } from '@/lib/offline/localStockManager';

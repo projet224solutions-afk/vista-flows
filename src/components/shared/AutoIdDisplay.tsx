@@ -16,9 +16,9 @@ interface AutoIdDisplayProps {
  * Composant d'affichage d'ID automatique
  * S'intègre partout sans modifier le code existant
  */
-export function AutoIdDisplay({ 
-  id, 
-  roleType, 
+export function AutoIdDisplay({
+  id,
+  roleType,
   showCopy = true,
   className = '',
   variant = 'outline'
@@ -33,7 +33,7 @@ export function AutoIdDisplay({
       setCopied(true);
       toast.success('ID copié dans le presse-papier');
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la copie');
     }
   };

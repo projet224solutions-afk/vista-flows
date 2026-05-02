@@ -11,12 +11,12 @@ interface UseUnifiedSubscriptionReturn {
   loading: boolean;
   subscribing: boolean;
   walletBalance: number;
-  
+
   // Statut
   hasAccess: boolean;
   isExpired: boolean;
   daysRemaining: number;
-  
+
   // Fonctions
   loadSubscription: () => Promise<void>;
   loadPlans: (role?: 'vendeur' | 'taxi' | 'livreur') => Promise<void>;
@@ -24,7 +24,7 @@ interface UseUnifiedSubscriptionReturn {
   cancelSubscription: () => Promise<boolean>;
   enableAutoRenew: () => Promise<boolean>;
   refreshWalletBalance: () => Promise<void>;
-  
+
   // Utilitaires
   formatPrice: (price: number) => string;
   calculatePrice: (plan: UnifiedPlan, billingCycle: 'monthly' | 'yearly') => number;
@@ -238,7 +238,7 @@ export function useUnifiedSubscription(autoLoad: boolean = true): UseUnifiedSubs
     if (autoLoad && user?.id) {
       loadSubscription();
       refreshWalletBalance();
-      
+
       // Charger les plans selon le rôle
       if (profile?.role) {
         const roleMap: Record<string, 'vendeur' | 'taxi' | 'livreur' | undefined> = {
@@ -260,12 +260,12 @@ export function useUnifiedSubscription(autoLoad: boolean = true): UseUnifiedSubs
     loading,
     subscribing,
     walletBalance,
-    
+
     // Statut
     hasAccess,
     isExpired,
     daysRemaining,
-    
+
     // Fonctions
     loadSubscription,
     loadPlans,
@@ -273,7 +273,7 @@ export function useUnifiedSubscription(autoLoad: boolean = true): UseUnifiedSubs
     cancelSubscription,
     enableAutoRenew,
     refreshWalletBalance,
-    
+
     // Utilitaires
     formatPrice: UnifiedSubscriptionService.formatPrice,
     calculatePrice: UnifiedSubscriptionService.calculatePrice,

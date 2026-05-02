@@ -87,7 +87,7 @@ export default function CommissionsManagement() {
         });
         return;
       }
-      
+
       // Vérifier si l'utilisateur est PDG
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -96,7 +96,7 @@ export default function CommissionsManagement() {
           .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         setIsPDG(!!pdgData);
 
         // Charger les paramètres de commission
@@ -104,7 +104,7 @@ export default function CommissionsManagement() {
           .from('commission_settings')
           .select('*')
           .order('setting_key');
-        
+
         if (settingsError) throw settingsError;
         setSettings(settingsData || []);
 
@@ -131,7 +131,7 @@ export default function CommissionsManagement() {
           const thisMonth = new Date();
           thisMonth.setDate(1);
           thisMonth.setHours(0, 0, 0, 0);
-          
+
           const thisMonthEarned = (logsData || [])
             .filter(log => new Date(log.created_at) >= thisMonth)
             .reduce((sum, log) => sum + (log.amount || 0), 0);
@@ -155,9 +155,9 @@ export default function CommissionsManagement() {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(100);
-          
+
           setCommissionLogs(allLogsData || []);
-          
+
           const totalEarned = (allLogsData || []).reduce((sum, log) => sum + (log.amount || 0), 0);
           const baseCommissionSetting = (settingsData || []).find(s => s.setting_key === 'base_user_commission');
           const currentRate = baseCommissionSetting ? Number(baseCommissionSetting.setting_value) * 100 : 20;
@@ -187,14 +187,14 @@ export default function CommissionsManagement() {
   const handleUpdateSetting = async (settingKey: string, newValue: number) => {
     try {
       setSaving(true);
-      
+
       const { error } = await supabase
         .from('commission_settings')
         .update({ setting_value: newValue })
         .eq('setting_key', settingKey);
-      
+
       if (error) throw error;
-      
+
       toast.success(`Taux mis à jour: ${(newValue * 100).toFixed(1)}%`);
       await loadData();
       setEditedSettings(prev => {
@@ -395,13 +395,13 @@ export default function CommissionsManagement() {
                   {settings.map((setting) => {
                     const { title, icon } = getSettingLabel(setting.setting_key);
                     const currentEditValue = editedSettings[setting.setting_key];
-                    const displayValue = currentEditValue !== undefined 
-                      ? currentEditValue 
+                    const displayValue = currentEditValue !== undefined
+                      ? currentEditValue
                       : Number(setting.setting_value) * 100;
                     const hasChanges = currentEditValue !== undefined;
-                    
+
                     return (
-                      <div 
+                      <div
                         key={setting.id}
                         className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-gray-50 to-white"
                       >
@@ -416,7 +416,7 @@ export default function CommissionsManagement() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-2">
                             <Input
@@ -438,7 +438,7 @@ export default function CommissionsManagement() {
                             />
                             <span className="text-sm font-medium">%</span>
                           </div>
-                          
+
                           {hasChanges && (
                             <Button
                               size="sm"

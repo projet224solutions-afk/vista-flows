@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  TrendingUp, TrendingDown, DollarSign, Eye,
+  TrendingUp, _TrendingDown, DollarSign, _Eye,
   ShoppingCart, Calendar, ArrowUpRight
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';

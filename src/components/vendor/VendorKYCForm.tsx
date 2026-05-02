@@ -25,7 +25,7 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const file = e.target.files?.[0];
       if (file) {
@@ -51,7 +51,7 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Vous devez être connecté');
       return;
@@ -68,8 +68,8 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
       // Upload du document
       const fileExt = documentFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError, data: uploadData } = await supabase.storage
+
+      const { error: uploadError, data: _uploadData } = await supabase.storage
         .from('kyc-documents')
         .upload(fileName, documentFile);
 
@@ -143,9 +143,9 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
           <div className="mt-2">
             {documentPreview ? (
               <div className="relative">
-                <img 
-                  src={documentPreview} 
-                  alt="Aperçu" 
+                <img
+                  src={documentPreview}
+                  alt="Aperçu"
                   className="max-h-48 rounded-lg border"
                 />
                 <Button

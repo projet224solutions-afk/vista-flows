@@ -139,7 +139,7 @@ export class PaymentSecurity {
   /**
    * Valider l'accès à un lien de paiement
    */
-  static async validatePaymentAccess(paymentId: string, userId?: string): Promise<SecurityValidation> {
+  static async validatePaymentAccess(paymentId: string, _userId?: string): Promise<SecurityValidation> {
     try {
       // Récupérer les détails du lien de paiement
       const { data: paymentLink, error } = await supabase
@@ -158,7 +158,7 @@ export class PaymentSecurity {
       // Vérifier l'expiration
       const now = new Date();
       const expiresAt = new Date(paymentLink.expires_at);
-      
+
       if (now > expiresAt && paymentLink.status === 'pending') {
         return {
           isValid: false,
@@ -249,7 +249,7 @@ export class PaymentSecurity {
   static validateFeeRate(amount: number, feeRate: number = 0.01): boolean {
     const calculatedFee = amount * feeRate;
     const maxFee = amount * 0.05; // Maximum 5% de frais
-    
+
     return calculatedFee <= maxFee && calculatedFee >= 0;
   }
 
@@ -261,7 +261,7 @@ export class PaymentSecurity {
       // Compter les liens créés aujourd'hui
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const { count, error } = await supabase
         .from('payment_links')
         .select('*', { count: 'exact', head: true })

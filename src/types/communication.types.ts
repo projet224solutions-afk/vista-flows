@@ -63,20 +63,20 @@ export interface Message {
   recipient?: UserProfile;
 }
 
-export type MessageType = 
-  | 'text' 
-  | 'image' 
-  | 'video' 
-  | 'audio' 
-  | 'file' 
+export type MessageType =
+  | 'text'
+  | 'image'
+  | 'video'
+  | 'audio'
+  | 'file'
   | 'location'
   | 'system';
 
-export type MessageStatus = 
-  | 'sending' 
-  | 'sent' 
-  | 'delivered' 
-  | 'read' 
+export type MessageStatus =
+  | 'sending'
+  | 'sent'
+  | 'delivered'
+  | 'read'
   | 'failed';
 
 export interface MessageMetadata {
@@ -134,13 +134,13 @@ export interface Call {
 
 export type CallType = 'audio' | 'video';
 
-export type CallStatus = 
-  | 'initiated' 
-  | 'ringing' 
-  | 'connected' 
-  | 'ended' 
-  | 'missed' 
-  | 'declined' 
+export type CallStatus =
+  | 'initiated'
+  | 'ringing'
+  | 'connected'
+  | 'ended'
+  | 'missed'
+  | 'declined'
   | 'failed';
 
 export interface CallMetadata {
@@ -164,11 +164,11 @@ export interface CommunicationNotification {
   metadata?: NotificationMetadata;
 }
 
-export type NotificationType = 
-  | 'message' 
-  | 'call' 
-  | 'mention' 
-  | 'invitation' 
+export type NotificationType =
+  | 'message'
+  | 'call'
+  | 'mention'
+  | 'invitation'
   | 'system';
 
 export interface NotificationMetadata {
@@ -222,7 +222,7 @@ export interface AuditLog {
   created_at: string;
 }
 
-export type AuditAction = 
+export type AuditAction =
   | 'conversation_created'
   | 'conversation_deleted'
   | 'message_sent'

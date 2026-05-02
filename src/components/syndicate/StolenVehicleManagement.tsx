@@ -31,19 +31,19 @@ import {
     MapPin,
     Clock,
     Eye,
-    FileText,
+    _FileText,
     Download,
     RefreshCw,
     Search,
     Lock,
     Unlock,
     Navigation,
-    Smartphone,
+    _Smartphone,
     Activity,
     History,
     AlertCircle,
     CheckCircle,
-    XCircle
+    _XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from 'date-fns';
@@ -115,14 +115,14 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
     const [gpsTrackings, setGpsTrackings] = useState<GPSTracking[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Dialogs
     const [showDeclareDialog, setShowDeclareDialog] = useState(false);
     const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
     const [showGPSDialog, setShowGPSDialog] = useState(false);
-    const [showLogDialog, setShowLogDialog] = useState(false);
+    const [_showLogDialog, _setShowLogDialog] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState<StolenVehicle | null>(null);
-    
+
     // Form states
     const [declareReason, setDeclareReason] = useState('');
     const [declareLocation, setDeclareLocation] = useState('');
@@ -156,8 +156,8 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 owner_name: v.syndicate_workers?.nom || 'Non assigné'
             }));
 
-            console.log('🚗 Véhicules chargés:', { 
-                bureauId, 
+            console.log('🚗 Véhicules chargés:', {
+                bureauId,
                 total: formattedVehicles.length,
                 stolen: formattedVehicles.filter((v: any) => v.stolen_status === 'stolen').length,
                 vehicles: formattedVehicles.map((v: any) => ({ id: v.id, plate: v.license_plate, stolen_status: v.stolen_status }))
@@ -259,7 +259,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             if (error) throw error;
 
             const result = data as { success: boolean; error?: string; message?: string };
-            
+
             if (result.success) {
                 toast.success('🚨 Moto déclarée volée', {
                     description: 'Blocage global activé. Tous les bureaux sont alertés.',
@@ -300,7 +300,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             if (error) throw error;
 
             const result = data as { success: boolean; error?: string; message?: string };
-            
+
             if (result.success) {
                 toast.success('✅ Véhicule réactivé', {
                     description: 'Le blocage a été levé et le véhicule est de nouveau opérationnel.',
@@ -362,7 +362,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
         window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
     };
 
-    const generatePDFReport = async (vehicle: StolenVehicle) => {
+    const generatePDFReport = async (_vehicle: StolenVehicle) => {
         toast.info('Génération du rapport PDF en cours...');
         // TODO: Implémenter la génération PDF
     };
@@ -511,7 +511,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                     Gestion des véhicules
                                 </CardTitle>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <Button 
+                                    <Button
                                         onClick={() => window.location.href = '/stolen-moto-declaration'}
                                         className="bg-red-600 hover:bg-red-700 text-white"
                                     >
@@ -1029,7 +1029,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                         <div>
                                             <p className="font-medium text-green-800">Dernière position connue</p>
                                             <p className="text-sm text-green-700">
-                                                Lat: {selectedVehicle.last_known_latitude.toFixed(6)}, 
+                                                Lat: {selectedVehicle.last_known_latitude.toFixed(6)},
                                                 Lng: {selectedVehicle.last_known_longitude.toFixed(6)}
                                             </p>
                                             {selectedVehicle.last_known_location_at && (

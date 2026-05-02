@@ -8,9 +8,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
-import { 
-  Star, 
-  ShoppingCart, 
+import {
+  Star,
+  ShoppingCart,
   Download,
   Crown
 } from 'lucide-react';
@@ -38,10 +38,10 @@ export function UniversalMarketplaceCard({
 }: UniversalMarketplaceCardProps) {
   const { convert, loading: priceLoading } = usePriceConverter();
   const { t } = useTranslation();
-  const { displayCurrency } = useDisplayCurrency();
+  const { _displayCurrency } = useDisplayCurrency();
 
   // Images par défaut selon le type
-  const defaultImage = 
+  const defaultImage =
     item.item_type === 'digital_product'
       ? 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400'
       : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400';
@@ -49,7 +49,7 @@ export function UniversalMarketplaceCard({
   // Préparer les images (filtrer les vides)
   const validImages = (item.images || []).filter(img => img && img.trim());
   const displayImages = validImages.length > 0 ? validImages : [defaultImage];
-  
+
   // Récupérer les vidéos promotionnelles
   const videos = (item.promotional_videos || []).filter((v: string) => v && v.trim());
 
@@ -110,7 +110,7 @@ export function UniversalMarketplaceCard({
   };
 
   return (
-    <Card 
+    <Card
       className={cn(
         "group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-300",
         "border border-border/50 hover:border-primary/50",
@@ -129,7 +129,7 @@ export function UniversalMarketplaceCard({
           showControls={true}
           muted={true}
         />
-        
+
         {/* Badge type */}
         {getTypeBadge()}
 

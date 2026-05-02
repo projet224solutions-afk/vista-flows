@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export default function AffiliateActivationPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { _t } = useTranslation();
   const {
     loading,
     isAffiliateEnabled,
@@ -29,10 +29,10 @@ export default function AffiliateActivationPage() {
     setActivating(true);
     try {
       await activateWithExistingSubscription();
-      toast.success('Module affili├® activ├® avec succ├¿s ! ­ƒÄë');
+      toast.success('Module affilié activé avec succès !');
       navigate('/affiliate/dashboard');
     } catch (error: any) {
-      toast.error(error.message || "Impossible d'activer le module affili├®");
+      toast.error(error.message || "Impossible d'activer le module affilié");
     } finally {
       setActivating(false);
     }
@@ -42,22 +42,22 @@ export default function AffiliateActivationPage() {
     {
       icon: <Gift className="h-5 w-5 text-primary" />,
       title: "Activez gratuitement",
-      description: "Cliquez sur le bouton d'activation pour ouvrir votre espace affili├®. Aucun frais, aucun engagement."
+      description: "Cliquez sur le bouton d'activation pour ouvrir votre espace affilié. Aucun frais, aucun engagement."
     },
     {
       icon: <Link2 className="h-5 w-5 text-primary" />,
       title: "Partagez vos liens",
-      description: "Recevez un code affili├® unique et des liens de parrainage ├á partager avec votre r├®seau."
+      description: "Recevez un code affilié unique et des liens de parrainage à partager avec votre réseau."
     },
     {
       icon: <Users className="h-5 w-5 text-primary" />,
       title: "Parrainez des utilisateurs",
-      description: "Chaque personne qui s'inscrit ou ach├¿te via votre lien vous rapporte une commission."
+      description: "Chaque personne qui s'inscrit ou achète via votre lien vous rapporte une commission."
     },
     {
       icon: <Wallet className="h-5 w-5 text-primary" />,
       title: "Gagnez des commissions",
-      description: "Vos gains sont cr├®dit├®s directement sur votre wallet. Retirez quand vous voulez."
+      description: "Vos gains sont crédités directement sur votre wallet. Retirez quand vous voulez."
     },
   ];
 
@@ -70,7 +70,7 @@ export default function AffiliateActivationPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Devenir Affili├®</h1>
+            <h1 className="text-2xl font-bold">Devenir Affilié</h1>
             <p className="text-muted-foreground text-sm">Gagnez de l'argent en recommandant nos services</p>
           </div>
         </div>
@@ -86,8 +86,8 @@ export default function AffiliateActivationPage() {
             </div>
             <CardTitle className="text-xl mt-2">Programme d'Affiliation</CardTitle>
             <CardDescription className="text-sm">
-              Rejoignez notre programme d'affiliation et transformez votre r├®seau en source de revenus.
-              Votre compte client reste intact ÔÇö l'affiliation est un module compl├®mentaire.
+              Rejoignez notre programme d'affiliation et transformez votre réseau en source de revenus.
+              Votre compte client reste intact — l'affiliation est un module complémentaire.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -102,22 +102,22 @@ export default function AffiliateActivationPage() {
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Tableau de bord d├®di├®</p>
-                  <p className="text-xs text-muted-foreground">Suivez vos performances, liens et paiements en temps r├®el</p>
+                  <p className="text-sm font-medium">Tableau de bord dédié</p>
+                  <p className="text-xs text-muted-foreground">Suivez vos performances, liens et paiements en temps réel</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Liens de parrainage illimit├®s</p>
-                  <p className="text-xs text-muted-foreground">Cr├®ez autant de liens que n├®cessaire pour vos campagnes</p>
+                  <p className="text-sm font-medium">Liens de parrainage illimités</p>
+                  <p className="text-xs text-muted-foreground">Créez autant de liens que nécessaire pour vos campagnes</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Paiement direct au wallet</p>
-                  <p className="text-xs text-muted-foreground">Commissions cr├®dit├®es automatiquement sur votre portefeuille</p>
+                  <p className="text-xs text-muted-foreground">Commissions créditées automatiquement sur votre portefeuille</p>
                 </div>
               </div>
             </div>
@@ -129,7 +129,7 @@ export default function AffiliateActivationPage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Comment ├ºa marche ?
+              Comment ça marche ?
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -162,9 +162,9 @@ export default function AffiliateActivationPage() {
               <div>
                 <p className="font-medium text-sm">Votre compte client reste intact</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  L'activation de l'affiliation est un module compl├®mentaire. Vous conservez toutes vos fonctionnalit├®s :
-                  commandes, wallet, favoris, historique, param├¿tres et notifications.
-                  Aucune donn├®e ne sera modifi├®e ou supprim├®e.
+                  L'activation de l'affiliation est un module complémentaire. Vous conservez toutes vos fonctionnalités :
+                  commandes, wallet, favoris, historique, paramètres et notifications.
+                  Aucune donnée ne sera modifiée ou supprimée.
                 </p>
               </div>
             </div>
@@ -179,9 +179,9 @@ export default function AffiliateActivationPage() {
         ) : (
           <Card className="border-primary/30">
             <CardHeader>
-              <CardTitle>Pr├¬t ├á commencer ?</CardTitle>
+              <CardTitle>Prêt à commencer ?</CardTitle>
               <CardDescription>
-                Activez gratuitement votre module affili├® en un clic et commencez ├á gagner des commissions d├¿s maintenant.
+                Activez gratuitement votre module affilié en un clic et commencez à gagner des commissions dès maintenant.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-3">

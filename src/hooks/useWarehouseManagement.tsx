@@ -224,7 +224,7 @@ export const useWarehouseManagement = () => {
         .single();
 
       if (error) throw error;
-      
+
       // Update stock quantities based on movement
       if (movementData.from_warehouse_id) {
         const { data: currentStock } = await supabase
@@ -237,8 +237,8 @@ export const useWarehouseManagement = () => {
         if (currentStock) {
           await supabase
             .from('warehouse_stocks')
-            .update({ 
-              quantity: Math.max(0, (currentStock as unknown).quantity - movementData.quantity) 
+            .update({
+              quantity: Math.max(0, (currentStock as unknown).quantity - movementData.quantity)
             })
             .eq('warehouse_id', movementData.from_warehouse_id)
             .eq('product_id', movementData.product_id);
@@ -341,6 +341,7 @@ export const useWarehouseManagement = () => {
       fetchStocks();
       fetchMovements();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
   return {

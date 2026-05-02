@@ -1,6 +1,6 @@
 /**
  * Hook pour la gestion des paramètres POS
- * 
+ *
  * @author 224SOLUTIONS
  * @version 1.0.0
  */
@@ -189,6 +189,7 @@ export const usePOSSettings = () => {
 
   useEffect(() => {
     loadSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, vendorId, vendorOwnerUserId, vendorLoading]);
 
   return {

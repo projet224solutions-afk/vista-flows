@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { _ScrollArea } from '@/components/ui/scroll-area';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -117,7 +117,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       try {
         let query = supabase.from('agents_management').select('*');
-        
+
         // Si agentId est fourni, charger directement cet agent
         if (agentId) {
           query = query.eq('id', agentId);
@@ -143,7 +143,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           can_create_sub_agent: data.can_create_sub_agent || false,
           commission_rate: Number(data.commission_rate) || 0,
         };
-        
+
         setAgentProfile(profile);
       } catch (error) {
         console.error('Erreur chargement agent:', error);
@@ -175,9 +175,9 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
         // Récupérer les statistiques de tous les sous-agents en une seule requête
         const subAgentIds = (subAgentsData || []).map(sa => sa.id);
-        
+
         let usersCountMap: Record<string, number> = {};
-        
+
         if (subAgentIds.length > 0) {
           const { data: usersCounts, error: countsError } = await supabase
             .from('agent_created_users')
@@ -286,12 +286,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           status: error.status,
           fullError: error
         });
-        
+
         // Message d'erreur plus explicite
         const errorMsg = error.context?.body?.error || error.message || 'Erreur inconnue';
         throw new Error(`Erreur Edge Function: ${errorMsg}`);
       }
-      
+
       if (data?.error) {
         console.error('❌ Response error:', data.error);
         throw new Error(data.error);
@@ -299,12 +299,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       console.log('✅ Sous-agent créé:', data?.agent);
       toast.success(`Sous-agent ${subAgentData.name} créé avec succès!`);
-      
+
       // Recharger la liste après un délai
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-      
+
       return data?.agent;
     } catch (error: any) {
       console.error('Erreur création sous-agent:', error);
@@ -360,7 +360,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
   const handleCreateSubAgent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!agentProfile) {
       toast.error('Profil agent manquant');
       return;
@@ -388,7 +388,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
     try {
       setIsSubmitting(true);
-      
+
       const permissions = Object.entries(formData.permissions)
         .filter(([_, value]) => value)
         .map(([key]) => key);
@@ -538,7 +538,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateSubAgent} className="space-y-4">
-              
+
               <div className="space-y-2">
                 <Label htmlFor="name">Nom Complet *</Label>
                 <Input
@@ -606,9 +606,9 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
               />
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   disabled={isSubmitting}
                 >

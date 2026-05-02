@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export type DeliveryStatus = 
+export type DeliveryStatus =
   | 'assigned'
   | 'driver_on_way_to_vendor'
   | 'driver_arrived_vendor'
@@ -73,13 +73,13 @@ const STATUS_STEPS: { status: DeliveryStatus; label: string; icon: any }[] = [
 
 export function ActiveDeliveryPanel({
   delivery,
-  driverLocation,
+  _driverLocation,
   onUpdateStatus,
   onUploadProof,
-  onCancel
+  _onCancel
 }: ActiveDeliveryPanelProps) {
   const [loading, setLoading] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [_showCancelDialog, setShowCancelDialog] = useState(false);
 
   const currentStepIndex = STATUS_STEPS.findIndex(s => s.status === delivery.status);
   const progress = ((currentStepIndex + 1) / STATUS_STEPS.length) * 100;
@@ -122,7 +122,7 @@ export function ActiveDeliveryPanel({
     try {
       await onUpdateStatus(nextStatus);
       toast.success('Statut mis à jour');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la mise à jour');
     } finally {
       setLoading(false);
@@ -144,7 +144,7 @@ export function ActiveDeliveryPanel({
     try {
       await onUploadProof(file);
       toast.success('Photo de preuve uploadée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'upload');
     } finally {
       setLoading(false);
@@ -154,7 +154,7 @@ export function ActiveDeliveryPanel({
   const formatCurrency = useFormatCurrency();
 
   const isAtVendorPhase = ['assigned', 'driver_on_way_to_vendor', 'driver_arrived_vendor'].includes(delivery.status);
-  const currentDestination = isAtVendorPhase 
+  const currentDestination = isAtVendorPhase
     ? { location: delivery.vendorLocation, label: delivery.vendorName, address: delivery.vendorAddress, phone: delivery.vendorPhone }
     : { location: delivery.clientLocation, label: delivery.clientName, address: delivery.clientAddress, phone: delivery.clientPhone };
 
@@ -285,7 +285,7 @@ export function ActiveDeliveryPanel({
               const Icon = step.icon;
               const isCompleted = index < currentStepIndex;
               const isCurrent = index === currentStepIndex;
-              
+
               return (
                 <div
                   key={step.status}

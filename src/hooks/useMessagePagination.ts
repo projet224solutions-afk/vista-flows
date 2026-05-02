@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Message, PaginatedResponse } from '@/types/communication.types';
+import type { Message, _PaginatedResponse } from '@/types/communication.types';
 
 interface UseMessagePaginationOptions {
   conversationId: string;
@@ -39,7 +39,7 @@ export function useMessagePagination({
     try {
       // Si c'est une conversation directe
       const isDirect = conversationId.startsWith('direct_');
-      
+
       let queryBuilder = supabase
         .from('messages')
         .select(`
@@ -66,9 +66,9 @@ export function useMessagePagination({
         const otherUserId = conversationId.replace('direct_', '');
         const { data: session } = await supabase.auth.getSession();
         if (!session?.session?.user) throw new Error('Non authentifié');
-        
+
         const currentUserId = session.session.user.id;
-        
+
         queryBuilder = queryBuilder
           .is('conversation_id', null)
           .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUserId})`);
@@ -107,7 +107,7 @@ export function useMessagePagination({
       const errorMessage = err.message || 'Erreur chargement messages';
       setError(errorMessage);
       console.error('Erreur pagination messages:', err);
-      
+
       toast.error('Erreur chargement', {
         description: errorMessage,
       });
@@ -173,6 +173,7 @@ export function useMessagePagination({
     if (autoLoad && conversationId) {
       refresh();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, autoLoad]); // Ne pas inclure refresh pour éviter la boucle
 
   return {

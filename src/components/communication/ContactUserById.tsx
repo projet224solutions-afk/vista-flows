@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,9 @@ interface ContactUserByIdProps {
   showNavigation?: boolean;
 }
 
-export default function ContactUserById({ 
-  onUserSelected, 
-  showNavigation = true 
+export default function ContactUserById({
+  onUserSelected,
+  showNavigation = true
 }: ContactUserByIdProps) {
   const navigate = useNavigate();
   const { searchById, validateIdFormat, loading } = useSearchUserId();
@@ -26,15 +26,15 @@ export default function ContactUserById({
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Obtenir l'ID de l'utilisateur connecté
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setCurrentUserId(data.session?.user.id || null);
     });
-  });
+  }, []);
 
   const handleSearch = async () => {
     if (!searchInput.trim()) {
-      toast.error("Veuillez entrer un ID");
+      toast.error("Veuillez entrer un email, ID ou telephone");
       return;
     }
 
@@ -47,7 +47,7 @@ export default function ContactUserById({
     }
 
     const user = await searchById(searchInput);
-    
+
     if (user) {
       // Vérifier qu'on ne contacte pas soi-même
       if (user.id === currentUserId) {
@@ -83,7 +83,7 @@ export default function ContactUserById({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hash className="w-5 h-5 text-orange-500" />
-            Rechercher par ID
+            Rechercher un utilisateur
           </CardTitle>
           <CardDescription>
             Recherchez un utilisateur par son ID standardisé
@@ -98,14 +98,14 @@ export default function ContactUserById({
             </label>
             <div className="flex gap-2">
               <Input
-                placeholder="USR0001 ou 224-123-456"
+                placeholder="email@exemple.com, USR0001, UUID ou +224..."
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+                onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="font-mono"
               />
-              <Button 
-                onClick={handleSearch} 
+              <Button
+                onClick={handleSearch}
                 disabled={loading || !searchInput.trim()}
                 size="icon"
               >
@@ -124,13 +124,13 @@ export default function ContactUserById({
                     <User className="w-6 h-6" />
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1">
                   <h4 className="font-semibold">
                     {foundUser.first_name} {foundUser.last_name}
                   </h4>
                   <p className="text-sm text-gray-600">{foundUser.email}</p>
-                  
+
                   {foundUser.public_id && (
                     <div className="flex items-center gap-1 mt-1">
                       <Hash className="w-3 h-3 text-orange-500" />
@@ -149,7 +149,7 @@ export default function ContactUserById({
               </div>
 
               {showNavigation && (
-                <Button 
+                <Button
                   onClick={handleContact}
                   className="w-full"
                   variant="default"

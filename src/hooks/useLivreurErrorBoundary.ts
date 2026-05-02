@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 
-export type LivreurErrorType = 
+export type LivreurErrorType =
   | 'gps'
   | 'env'
   | 'permission'

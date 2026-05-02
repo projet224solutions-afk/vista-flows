@@ -29,10 +29,10 @@ import {
   Trash2,
   Copy,
   MoreVertical,
-  Check,
-  CheckCheck,
-  Clock,
-  AlertCircle,
+  _Check,
+  _CheckCheck,
+  _Clock,
+  _AlertCircle,
   X,
 } from 'lucide-react';
 import { MessageStatusBadge } from './PresenceIndicator';
@@ -110,7 +110,7 @@ export function EnhancedMessageBubble({
     );
   }
 
-  const senderName = sender 
+  const senderName = sender
     ? `${sender.first_name || ''} ${sender.last_name || ''}`.trim() || sender.email
     : 'Utilisateur';
 
@@ -154,8 +154,8 @@ export function EnhancedMessageBubble({
             <div
               className={cn(
                 'flex items-start gap-2 px-3 py-2 rounded-lg text-xs border-l-2',
-                isOwn 
-                  ? 'bg-primary/10 border-primary/50 text-primary-foreground/70' 
+                isOwn
+                  ? 'bg-primary/10 border-primary/50 text-primary-foreground/70'
                   : 'bg-muted/50 border-muted-foreground/30'
               )}
             >

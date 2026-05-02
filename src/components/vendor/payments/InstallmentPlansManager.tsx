@@ -13,8 +13,8 @@ import { Progress } from '@/components/ui/progress';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Calendar, DollarSign, Plus, Clock, CheckCircle2, 
+import {
+  Calendar, DollarSign, Plus, Clock, CheckCircle2,
   AlertCircle, User, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
 
@@ -95,7 +95,7 @@ export default function InstallmentPlansManager() {
           .select('*')
           .eq('plan_id', plan.id)
           .order('installment_number');
-        
+
         paymentsMap[plan.id] = (paymentsData || []).map(p => ({
           id: p.id,
           plan_id: p.plan_id,
@@ -118,6 +118,7 @@ export default function InstallmentPlansManager() {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const createPlan = async () => {
@@ -152,15 +153,15 @@ export default function InstallmentPlansManager() {
       // Créer les échéances
       const installments = [];
       const firstDate = new Date(newPlan.start_date);
-      
+
       for (let i = 0; i < numInstallments; i++) {
         const dueDate = new Date(firstDate);
         dueDate.setMonth(dueDate.getMonth() + i);
-        
+
         installments.push({
           plan_id: planData.id,
           installment_number: i + 1,
-          amount_due: i === numInstallments - 1 
+          amount_due: i === numInstallments - 1
             ? totalAmount - (installmentAmount * (numInstallments - 1))
             : installmentAmount,
           due_date: dueDate.toISOString().split('T')[0],
@@ -188,7 +189,7 @@ export default function InstallmentPlansManager() {
       // Marquer le paiement comme payé
       const { error: payError } = await supabase
         .from('installment_payments')
-        .update({ 
+        .update({
           status: 'paid',
           amount_paid: amountDue,
           payment_date: new Date().toISOString()
@@ -223,7 +224,7 @@ export default function InstallmentPlansManager() {
   const activePlans = plans.filter(p => p.status === 'active').length;
   const totalExpected = plans.reduce((sum, p) => sum + p.total_amount, 0);
   const totalReceived = plans.reduce((sum, p) => sum + (p.total_amount - p.remaining_amount), 0);
-  const overduePayments = Object.values(payments).flat().filter(p => 
+  const overduePayments = Object.values(payments).flat().filter(p =>
     p.status === 'pending' && new Date(p.due_date) < new Date()
   ).length;
 
@@ -295,7 +296,7 @@ export default function InstallmentPlansManager() {
                   onChange={(e) => setNewPlan({ ...newPlan, start_date: e.target.value })}
                 />
               </div>
-              
+
               {newPlan.total_amount && newPlan.number_of_installments && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm">
@@ -371,12 +372,12 @@ export default function InstallmentPlansManager() {
           const planPayments = payments[plan.id] || [];
           const paidCount = planPayments.filter(p => p.status === 'paid').length;
           const progress = (paidCount / plan.number_of_installments) * 100;
-          
+
           return (
             <Card key={plan.id}>
               <CardContent className="p-4">
                 {/* En-tête du plan */}
-                <div 
+                <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}
                 >
@@ -415,15 +416,15 @@ export default function InstallmentPlansManager() {
                   <div className="mt-4 pt-4 border-t space-y-2">
                     {planPayments.map((payment) => {
                       const isOverdue = payment.status === 'pending' && new Date(payment.due_date) < new Date();
-                      
+
                       return (
-                        <div 
+                        <div
                           key={payment.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
-                            payment.status === 'paid' 
-                              ? 'bg-green-50 dark:bg-green-900/20' 
-                              : isOverdue 
-                                ? 'bg-destructive/10' 
+                            payment.status === 'paid'
+                              ? 'bg-green-50 dark:bg-green-900/20'
+                              : isOverdue
+                                ? 'bg-destructive/10'
                                 : 'bg-muted/50'
                           }`}
                         >
@@ -446,8 +447,8 @@ export default function InstallmentPlansManager() {
                           <div className="flex items-center gap-3">
                             <span className="font-bold">{payment.amount_due.toLocaleString()} GNF</span>
                             {payment.status === 'pending' && (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   markAsPaid(payment.id, plan.id, payment.amount_due);

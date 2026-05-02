@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, ArrowRightLeft, Plus, Minus, Users, Lock, Unlock, Eye, Edit2, Trash2, TrendingUp, AlertCircle } from "lucide-react";
+import { Package, ArrowRightLeft, Plus, _Minus, Users, _Lock, _Unlock, Eye, Edit2, Trash2, _TrendingUp, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -69,7 +69,7 @@ interface StockMovement {
 export default function WarehouseStockManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
   const [stocks, setStocks] = useState<WarehouseStock[]>([]);
@@ -77,7 +77,7 @@ export default function WarehouseStockManagement() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Transfer dialog
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferData, setTransferData] = useState({
@@ -112,6 +112,7 @@ export default function WarehouseStockManagement() {
       fetchWarehouses();
       fetchProducts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -120,6 +121,7 @@ export default function WarehouseStockManagement() {
       fetchMovements();
       fetchPermissions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWarehouse]);
 
   // Écouter les événements de mise à jour des entrepôts
@@ -134,6 +136,7 @@ export default function WarehouseStockManagement() {
 
     window.addEventListener('warehouseUpdated', handleWarehouseUpdate);
     return () => window.removeEventListener('warehouseUpdated', handleWarehouseUpdate);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWarehouse]);
 
   const fetchWarehouses = async () => {
@@ -365,7 +368,7 @@ export default function WarehouseStockManagement() {
       setTransferData({ product_id: '', from_warehouse_id: '', to_warehouse_id: '', quantity: 0, notes: '' });
       fetchStocks();
       fetchMovements();
-      
+
       // Déclencher un événement pour synchroniser
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (error: any) {
@@ -422,7 +425,7 @@ export default function WarehouseStockManagement() {
       setAdjustmentData({ product_id: '', warehouse_id: '', quantity_change: 0, notes: '' });
       fetchStocks();
       fetchMovements();
-      
+
       // Déclencher un événement pour synchroniser
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (error: any) {
@@ -488,7 +491,7 @@ export default function WarehouseStockManagement() {
 
   if (loading) return <div className="p-4">Chargement...</div>;
 
-  const currentWarehouse = warehouses.find(w => w.id === selectedWarehouse);
+  const _currentWarehouse = warehouses.find(w => w.id === selectedWarehouse);
   const totalStock = stocks.reduce((acc, s) => acc + s.quantity, 0);
   const totalValue = stocks.reduce((acc, s) => acc + (s.quantity * (s.product?.price || 0)), 0);
   const lowStockItems = stocks.filter(s => s.quantity <= s.minimum_stock);

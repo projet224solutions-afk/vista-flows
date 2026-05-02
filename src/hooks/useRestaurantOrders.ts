@@ -86,22 +86,22 @@ export function useRestaurantOrders(serviceId: string) {
   const createOrder = async (data: Partial<RestaurantOrder>) => {
     // Générer un numéro de commande
     const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
-    
+
     // Récupérer l'ID de l'utilisateur connecté pour le suivi client
     const { data: authData } = await supabase.auth.getUser();
     const customerUserId = authData?.user?.id || null;
-    
+
     const { data: newOrder, error } = await supabase
       .from('restaurant_orders')
-      .insert([{ 
-        ...data, 
+      .insert([{
+        ...data,
         professional_service_id: serviceId,
         order_number: orderNumber,
         customer_user_id: customerUserId,
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     setOrders(prev => [newOrder as RestaurantOrder, ...prev]);
     return newOrder;
@@ -114,7 +114,7 @@ export function useRestaurantOrders(serviceId: string) {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     setOrders(prev => prev.map(o => o.id === id ? updated as RestaurantOrder : o));
     return updated;
@@ -122,28 +122,28 @@ export function useRestaurantOrders(serviceId: string) {
 
   const updateOrderStatus = async (id: string, status: RestaurantOrder['status']) => {
     const updates: Partial<RestaurantOrder> = { status };
-    
+
     // Ajouter les timestamps selon le statut
     const now = new Date().toISOString();
     if (status === 'preparing') updates.started_preparing_at = now;
     if (status === 'ready') updates.ready_at = now;
     if (status === 'completed' || status === 'delivered') updates.completed_at = now;
-    
+
     return updateOrder(id, updates);
   };
 
   const cancelOrder = async (id: string, reason: string) => {
-    return updateOrder(id, { 
-      status: 'cancelled', 
+    return updateOrder(id, {
+      status: 'cancelled',
       cancelled_reason: reason,
       completed_at: new Date().toISOString()
     });
   };
 
-  const getActiveOrders = () => 
+  const getActiveOrders = () =>
     orders.filter(o => !['completed', 'cancelled'].includes(o.status));
 
-  const getOrdersByStatus = (status: RestaurantOrder['status']) => 
+  const getOrdersByStatus = (status: RestaurantOrder['status']) =>
     orders.filter(o => o.status === status);
 
   const getOrdersByType = (type: RestaurantOrder['order_type']) =>
@@ -153,7 +153,7 @@ export function useRestaurantOrders(serviceId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayOrders = orders.filter(o => new Date(o.created_at) >= today);
-    
+
     return {
       total: orders.length,
       today: todayOrders.length,

@@ -3,7 +3,7 @@
  * Design glassmorphism avec animations fluides
  */
 
-import { Home, MapPin, History, Settings, Wallet, Navigation, ShoppingBag } from "lucide-react";
+import { Home, MapPin, _History, Settings, Wallet, Navigation, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavigationProps {
@@ -13,18 +13,18 @@ interface BottomNavigationProps {
   onMarketplace?: () => void;
 }
 
-export function BottomNavigation({ 
-  activeTab, 
+export function BottomNavigation({
+  activeTab,
   onTabChange,
   hasActiveRide,
-  onMarketplace
+  _onMarketplace
 }: BottomNavigationProps) {
   const navItems = [
     { id: 'dashboard', label: 'Accueil', icon: Home },
-    { 
-      id: 'navigation', 
-      label: hasActiveRide ? 'Navigation' : 'Course', 
-      icon: hasActiveRide ? Navigation : MapPin, 
+    {
+      id: 'navigation',
+      label: hasActiveRide ? 'Navigation' : 'Course',
+      icon: hasActiveRide ? Navigation : MapPin,
       badge: hasActiveRide,
       highlight: hasActiveRide
     },
@@ -37,13 +37,13 @@ export function BottomNavigation({
     <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom">
       {/* Gradient overlay for seamless blend */}
       <div className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-gray-950 to-transparent pointer-events-none" />
-      
+
       {/* Main navigation bar */}
       <div className="bg-gray-950/95 backdrop-blur-xl border-t border-gray-800/50">
         <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
-            
+
             return (
               <button
                 key={item.id}
@@ -58,41 +58,41 @@ export function BottomNavigation({
                 {isActive && (
                   <div className="absolute inset-x-2 inset-y-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20" />
                 )}
-                
+
                 {/* Highlight glow for active ride */}
                 {item.highlight && !isActive && (
                   <div className="absolute inset-x-3 inset-y-2 rounded-xl bg-emerald-500/5 animate-pulse" />
                 )}
-                
+
                 {/* Icon container */}
                 <div className="relative z-10">
                   <item.icon className={cn(
                     "w-5 h-5 transition-all duration-200",
-                    isActive 
-                      ? "text-emerald-400 scale-110" 
-                      : item.highlight 
+                    isActive
+                      ? "text-emerald-400 scale-110"
+                      : item.highlight
                         ? "text-emerald-400/70 animate-pulse"
                         : "text-gray-500"
                   )} />
-                  
+
                   {/* Active ride badge */}
                   {item.badge && (
                     <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
                   )}
                 </div>
-                
+
                 {/* Label */}
                 <span className={cn(
                   "text-[10px] font-medium relative z-10 transition-colors duration-200",
-                  isActive 
-                    ? "text-emerald-400 font-semibold" 
-                    : item.highlight 
+                  isActive
+                    ? "text-emerald-400 font-semibold"
+                    : item.highlight
                       ? "text-emerald-400/70"
                       : "text-gray-500"
                 )}>
                   {item.label}
                 </span>
-                
+
                 {/* Active indicator line */}
                 {isActive && (
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full" />

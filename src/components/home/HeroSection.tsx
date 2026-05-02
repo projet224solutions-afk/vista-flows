@@ -6,7 +6,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Utensils, Truck, Car, ChevronRight, Package, GraduationCap } from 'lucide-react';
+import { Store, Utensils, Truck, Car, _ChevronRight, _Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,27 +21,27 @@ interface QuickAction {
 }
 
 const getQuickActions = (t: (key: string) => string): QuickAction[] => [
-  { 
-    id: 'restaurant', 
-    icon: <Utensils className="w-5 h-5" />, 
+  {
+    id: 'restaurant',
+    icon: <Utensils className="w-5 h-5" />,
     label: t('home.restaurant'),
     gradient: 'from-vendeur-secondary to-brand-orange-dark'
   },
-  { 
-    id: 'boutique', 
-    icon: <Store className="w-5 h-5" />, 
+  {
+    id: 'boutique',
+    icon: <Store className="w-5 h-5" />,
     label: t('home.boutique'),
     gradient: 'from-[hsl(220,97%,27%)] to-[hsl(220,96%,32%)]'
   },
-  { 
-    id: 'livraison', 
-    icon: <Truck className="w-5 h-5" />, 
+  {
+    id: 'livraison',
+    icon: <Truck className="w-5 h-5" />,
     label: t('home.delivery'),
     gradient: 'from-emerald-500 to-teal-500'
   },
-  { 
-    id: 'transport', 
-    icon: <Car className="w-5 h-5" />, 
+  {
+    id: 'transport',
+    icon: <Car className="w-5 h-5" />,
     label: t('home.transport'),
     gradient: 'from-violet-500 to-purple-500'
   },
@@ -55,8 +55,8 @@ export function HeroSection({ className }: HeroSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const quickActions = getQuickActions(t);
-  
+  const _quickActions = getQuickActions(t);
+
   const [showServicesModal, setShowServicesModal] = useState(false);
 
   const handleStartNowClick = () => {
@@ -69,7 +69,7 @@ export function HeroSection({ className }: HeroSectionProps) {
     }
   };
 
-  const handleQuickActionClick = (actionId: string) => {
+  const _handleQuickActionClick = (_actionId: string) => {
     if (user) {
       // User is logged in - show available services modal
       setShowServicesModal(true);
@@ -94,7 +94,7 @@ export function HeroSection({ className }: HeroSectionProps) {
         <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight mb-2">
           {t('home.createService')}
         </h1>
-        
+
         {/* Subtitle - Short */}
         <p className="text-sm md:text-base text-muted-foreground mb-6">
           {t('home.professionalCategories')} • {t('home.completeTools') || t('home.withCompleteTools')}
@@ -155,9 +155,9 @@ export function HeroSection({ className }: HeroSectionProps) {
 
 
       {/* Available Services Modal - Only shown when user is logged in */}
-      <AvailableServicesModal 
-        open={showServicesModal} 
-        onOpenChange={setShowServicesModal} 
+      <AvailableServicesModal
+        open={showServicesModal}
+        onOpenChange={setShowServicesModal}
       />
     </section>
   );

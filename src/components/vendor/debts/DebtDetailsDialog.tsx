@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  _Table,
+  _TableBody,
+  _TableCell,
+  _TableHead,
+  _TableHeader,
+  _TableRow,
 } from "@/components/ui/table";
 
 interface Debt {
@@ -55,6 +55,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
     if (open) {
       loadPayments();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, debt.id]);
 
   const loadPayments = async () => {
@@ -174,7 +175,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.minimum_installment)}</p>
               </div>
             </div>
-            
+
             {/* Barre de progression */}
             <div className="mt-3 sm:mt-4">
               <div className="flex justify-between text-xs sm:text-sm mb-1">
@@ -184,13 +185,13 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 </span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-green-500 transition-all duration-300"
                   style={{ width: `${(debt.paid_amount / debt.total_amount) * 100}%` }}
                 />
               </div>
             </div>
-            
+
             {debt.due_date && (
               <div className="mt-3 text-center">
                 <span className="text-xs sm:text-sm text-muted-foreground">Date limite: </span>

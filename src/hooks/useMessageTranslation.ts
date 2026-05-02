@@ -26,8 +26,8 @@ interface UseMessageTranslationReturn {
 }
 
 export function useMessageTranslation(options: UseMessageTranslationOptions = {}): UseMessageTranslationReturn {
-  const { autoTranslate = true, context = 'general' } = options;
-  
+  const { _autoTranslate = true, context = 'general' } = options;
+
   const [userLanguage, setUserLanguageState] = useState<SupportedLanguage>('fr');
   const [showOriginalIds, setShowOriginalIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ export function useMessageTranslation(options: UseMessageTranslationOptions = {}
 
   // Traduire un message
   const translateMessage = useCallback(async (
-    content: string, 
+    content: string,
     sourceLang?: string
   ): Promise<TranslationResult> => {
     return translationService.translateMessage({
@@ -74,7 +74,7 @@ export function useMessageTranslation(options: UseMessageTranslationOptions = {}
     if (showOriginalIds.has(message.id)) {
       return message.content;
     }
-    
+
     // Si une traduction est disponible et correspond à la langue de l'utilisateur
     if (
       message.translation_status === 'completed' &&
@@ -83,7 +83,7 @@ export function useMessageTranslation(options: UseMessageTranslationOptions = {}
     ) {
       return message.translated_content;
     }
-    
+
     // Sinon, afficher le contenu original
     return message.display_content || message.content;
   }, [showOriginalIds, userLanguage]);

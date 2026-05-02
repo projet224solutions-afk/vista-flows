@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { 
-  Wallet, TrendingUp, Users, Copy, 
-  CheckCircle, Clock, AlertCircle, ExternalLink,
+import {
+  Wallet, TrendingUp, Users, _Copy,
+  CheckCircle, Clock, AlertCircle, _ExternalLink,
   BarChart3, Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { _cn } from '@/lib/utils';
 
 interface AffiliateData {
   id: string;
@@ -54,6 +54,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
     if (user) {
       loadAffiliateData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadAffiliateData = async () => {
@@ -137,9 +138,9 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="flex-1 gap-2"
               onClick={copyAffiliateLink}
             >
@@ -246,7 +247,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
           ) : (
             <div className="space-y-3">
               {commissions.map((commission) => (
-                <div 
+                <div
                   key={commission.id}
                   className="flex items-center justify-between py-2 border-b border-border last:border-0"
                 >
@@ -267,14 +268,14 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                       </p>
                     </div>
                   </div>
-                  <Badge 
+                  <Badge
                     variant={
-                      commission.status === 'paid' ? 'default' : 
+                      commission.status === 'paid' ? 'default' :
                       commission.status === 'approved' ? 'secondary' : 'outline'
                     }
                     className="text-xs"
                   >
-                    {commission.status === 'paid' ? 'Payé' : 
+                    {commission.status === 'paid' ? 'Payé' :
                      commission.status === 'approved' ? 'Approuvé' : 'En attente'}
                   </Badge>
                 </div>

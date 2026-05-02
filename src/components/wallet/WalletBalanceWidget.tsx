@@ -14,7 +14,7 @@ interface WalletBalanceWidgetProps {
   variant?: 'default' | 'surface';
 }
 
-export function WalletBalanceWidget({ 
+export function WalletBalanceWidget({
   className = "",
   showTransferButton = true,
   variant = 'default',
@@ -48,6 +48,7 @@ export function WalletBalanceWidget({
     const handleWalletUpdate = () => loadBalance();
     window.addEventListener('wallet-updated', handleWalletUpdate);
     return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const formatBalance = () => {

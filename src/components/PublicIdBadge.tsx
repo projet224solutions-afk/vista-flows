@@ -36,16 +36,16 @@ export function PublicIdBadge({
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!copyable) return;
 
     try {
       await navigator.clipboard.writeText(formattedId);
       setCopied(true);
       toast.success(`ID copié: ${formattedId}`);
-      
+
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la copie');
     }
   };

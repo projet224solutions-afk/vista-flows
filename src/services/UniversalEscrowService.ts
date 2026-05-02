@@ -15,15 +15,15 @@ export interface UniversalEscrowRequest {
   buyer_id: string;
   seller_id: string;
   order_id?: string;
-  
+
   // Montants
   amount: number;
   currency?: string;
-  
+
   // Type et méthode
   transaction_type: TransactionType;
   payment_provider: PaymentProvider;
-  
+
   // Métadonnées
   metadata?: {
     product_ids?: string[];
@@ -32,7 +32,7 @@ export interface UniversalEscrowRequest {
     description?: string;
     [key: string]: any;
   };
-  
+
   // Options escrow
   escrow_options?: {
     auto_release_days?: number;
@@ -53,7 +53,7 @@ export interface EscrowStatus {
 }
 
 export class UniversalEscrowService {
-  
+
   /**
    * Crée une transaction escrow universelle
    */
@@ -93,7 +93,7 @@ export class UniversalEscrowService {
 
       // Déterminer la méthode de création selon le provider
       let result;
-      
+
       if (request.payment_provider === 'stripe') {
         // Utiliser l'escrow Stripe avec capture manuelle
         result = await this.createStripeEscrow(request, enrichedMetadata);
@@ -112,7 +112,7 @@ export class UniversalEscrowService {
 
       if (result.success) {
         console.log('[UniversalEscrow] ✅ Escrow created:', result.escrow_id);
-        
+
         // Log l'action
         if (result.escrow_id) {
           await this.logEscrowAction(result.escrow_id, 'created', request.buyer_id, {
@@ -180,7 +180,7 @@ export class UniversalEscrowService {
    */
   private static async createWalletEscrow(
     request: UniversalEscrowRequest,
-    metadata: any
+    _metadata: any
   ): Promise<{ success: boolean; escrow_id?: string; status?: string; error?: string }> {
     try {
       const escrowRequest: EscrowCreateRequest = {

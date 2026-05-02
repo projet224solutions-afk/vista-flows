@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  RefreshCw, 
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  RefreshCw,
   Search,
   DollarSign,
   User,
@@ -56,7 +56,7 @@ export default function DetailedTransactionsList() {
     try {
       setLoading(true);
       console.log('🔄 [DetailedTransactions] Chargement des transactions détaillées...');
-      
+
       // Récupérer toutes les transactions
       const { data: transactionsData, error } = await supabase
         .from('wallet_transactions')
@@ -111,26 +111,26 @@ export default function DetailedTransactionsList() {
 
       // Mapper les données
       const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
-      
+
       const enrichedTransactions: DetailedTransaction[] = (transactionsData || []).map((t: any) => {
         const senderUserId = t.sender_wallet_id ? walletsMap.get(t.sender_wallet_id) : null;
         const receiverUserId = t.receiver_wallet_id ? walletsMap.get(t.receiver_wallet_id) : null;
-        
+
         const senderUser = senderUserId ? usersMap.get(senderUserId) : null;
         const receiverUser = receiverUserId ? usersMap.get(receiverUserId) : null;
-        
+
         return {
           ...t,
           sender_info: senderUserId ? {
             user_id: senderUserId,
-            name: senderUser 
+            name: senderUser
               ? `${senderUser.first_name || ''} ${senderUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
               : 'Utilisateur inconnu',
             email: senderUser?.email || 'N/A'
           } : null,
           receiver_info: receiverUserId ? {
             user_id: receiverUserId,
-            name: receiverUser 
+            name: receiverUser
               ? `${receiverUser.first_name || ''} ${receiverUser.last_name || ''}`.trim() || 'Utilisateur inconnu'
               : 'Utilisateur inconnu',
             email: receiverUser?.email || 'N/A'
@@ -246,9 +246,9 @@ export default function DetailedTransactionsList() {
                 Toutes les transactions avec détails complets et revenus de la plateforme
               </CardDescription>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
               className="gap-2"
@@ -315,8 +315,8 @@ export default function DetailedTransactionsList() {
                     {/* Type et ID */}
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        transaction.amount > 0 
-                          ? 'bg-green-500/10' 
+                        transaction.amount > 0
+                          ? 'bg-green-500/10'
                           : 'bg-red-500/10'
                       }`}>
                         {transaction.amount > 0 ? (

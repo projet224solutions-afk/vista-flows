@@ -14,7 +14,7 @@ export default function OtherProducts() {
   const { data: personalized, isLoading: loadingPersonalized } = usePersonalizedRecommendations(20);
 
   const isLoading = loadingAlso || loadingPersonalized;
-  
+
   // Merge and deduplicate
   const allProducts = (() => {
     const seen = new Set<string>();
@@ -53,7 +53,7 @@ export default function OtherProducts() {
           </div>
         ) : allProducts.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
-            <p className="text-lg">{t('marketplace.noProducts') || 'Aucun produit trouv├®'}</p>
+            <p className="text-lg">{t('marketplace.noProducts') || 'Aucun produit trouvé'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

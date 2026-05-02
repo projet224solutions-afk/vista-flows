@@ -95,7 +95,7 @@ export interface InventoryStats {
 }
 
 export const useInventoryService = () => {
-  const { vendorId, loading: vendorLoading } = useCurrentVendor();
+  const { vendorId, loading: _vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
@@ -291,10 +291,10 @@ export const useInventoryService = () => {
   const updateStock = async (itemId: string, newQuantity: number) => {
     try {
       console.log('📝 Mise à jour stock:', itemId, 'nouvelle quantité:', newQuantity);
-      
+
       const { error } = await supabase
         .from('inventory')
-        .update({ 
+        .update({
           quantity: newQuantity,
           last_updated: new Date().toISOString()
         })

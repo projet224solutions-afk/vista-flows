@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { SupportedLanguage, SUPPORTED_LANGUAGES } from './translationService';
+import { SupportedLanguage, _SUPPORTED_LANGUAGES } from './translationService';
 
 export interface AudioTranslationResult {
   success: boolean;
@@ -232,7 +232,7 @@ class AudioTranslationService {
       const recipientLang = profiles.find(p => p.id === recipientId)?.preferred_language || 'fr';
 
       return senderLang !== recipientLang;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -305,14 +305,14 @@ class AudioTranslationService {
     try {
       const { audioUrl, isTranslated } = await this.getAudioForUser(messageId, userId);
       const url = audioUrl || fallbackUrl;
-      
+
       if (!url) return null;
 
       const audio = this.createAudioPlayer(url);
-      
+
       // Log pour debug
       console.log(`🎧 Playing ${isTranslated ? 'translated' : 'original'} audio`);
-      
+
       return audio;
     } catch (error) {
       console.error('Error playing audio:', error);

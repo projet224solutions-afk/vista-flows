@@ -46,6 +46,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
 
   useEffect(() => {
     loadBatches();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bureauId]);
 
   const loadBatches = async () => {
@@ -75,7 +76,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   const handleDeleteBatch = async (batchId: string) => {
     setIsDeleting(true);
     setDeletingBatchId(batchId);
-    
+
     try {
       const { error } = await (supabase as any)
         .from('transport_ticket_batches')
@@ -97,7 +98,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
 
   const handleDeleteAllBatches = async () => {
     setIsDeleting(true);
-    
+
     try {
       const { error } = await (supabase as any)
         .from('transport_ticket_batches')
@@ -162,7 +163,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       <div className="flex items-center justify-between">
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-sm text-amber-800">
-            <strong>{batches.length}</strong> lot(s) de tickets générés au total • 
+            <strong>{batches.length}</strong> lot(s) de tickets générés au total •
             <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)}</strong> tickets
           </p>
         </div>
@@ -184,7 +185,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
               <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
               <AlertDialogDescription>
                 Êtes-vous sûr de vouloir supprimer tout l'historique des tickets ?
-                Cette action est irréversible et supprimera <strong>{batches.length} lot(s)</strong> contenant 
+                Cette action est irréversible et supprimera <strong>{batches.length} lot(s)</strong> contenant
                 <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)} tickets</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -254,7 +255,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                     <Eye className="w-4 h-4 mr-1" />
                     Voir
                   </Button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button

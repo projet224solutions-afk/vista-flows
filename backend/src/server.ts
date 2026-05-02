@@ -4,7 +4,7 @@ import './config/load-env.js';
 
 /**
  * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v3 (Phase 6)
- * 
+ *
  * Architecture: Express/TypeScript
  * Auth: JWT Supabase
  * Database: PostgreSQL via Supabase

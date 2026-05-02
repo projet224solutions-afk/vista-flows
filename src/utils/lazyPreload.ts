@@ -22,7 +22,7 @@ export function lazyWithPreload<T extends ComponentType<any>>(
   componentName: string,
   fallback?: ComponentType<any>
 ): LazyExoticComponent<T> & { preload: () => Promise<void> } {
-  
+
   // Vérifier le cache
   if (preloadCache[componentName]) {
     return preloadCache[componentName].component as any;
@@ -32,22 +32,22 @@ export function lazyWithPreload<T extends ComponentType<any>>(
   const LazyComponent = lazy(() =>
     importFn().catch((error) => {
       console.error(`Error loading component ${componentName}:`, error);
-      
+
       // Stocker l'erreur dans le cache
       if (preloadCache[componentName]) {
         preloadCache[componentName].error = error;
       }
-      
+
       // Retourner le fallback si fourni
       if (fallback) {
         return { default: fallback as any };
       }
-      
+
       // Sinon retourner un composant d'erreur simple en React pur (sans JSX)
       const ErrorComponent: ComponentType<any> = () => {
         return null; // React gère mieux les erreurs de chargement avec Suspense
       };
-      
+
       return { default: ErrorComponent };
     })
   ) as LazyExoticComponent<T> & { preload: () => Promise<void> };
@@ -60,26 +60,26 @@ export function lazyWithPreload<T extends ComponentType<any>>(
 
     try {
       await importFn();
-      
+
       if (!preloadCache[componentName]) {
         preloadCache[componentName] = {
           component: LazyComponent,
           preloaded: false,
         };
       }
-      
+
       preloadCache[componentName].preloaded = true;
       console.log(`✅ Component ${componentName} preloaded successfully`);
     } catch (error) {
       console.error(`❌ Failed to preload component ${componentName}:`, error);
-      
+
       if (!preloadCache[componentName]) {
         preloadCache[componentName] = {
           component: LazyComponent,
           preloaded: false,
         };
       }
-      
+
       preloadCache[componentName].error = error as Error;
     }
   };

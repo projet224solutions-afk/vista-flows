@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shirt, ShoppingBag, TrendingUp, DollarSign, Package, Star } from 'lucide-react';
+import { Shirt, ShoppingBag, _TrendingUp, DollarSign, Package, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FashionModuleProps {
@@ -37,7 +37,7 @@ const COLORS = [
   { name: 'Gris', hex: '#6B7280' }
 ];
 
-export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
+export function FashionModule({ _serviceId, businessName }: FashionModuleProps) {
   const [activeTab, setActiveTab] = useState('products');
   const [newProduct, setNewProduct] = useState({
     name: '',

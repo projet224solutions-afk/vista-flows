@@ -11,12 +11,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useVendorSubscription } from '@/hooks/useVendorSubscription';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  MessageSquare, 
-  Plus, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
+import {
+  MessageSquare,
+  Plus,
+  Clock,
+  _CheckCircle,
+  _AlertCircle,
   Send,
   Loader2
 } from 'lucide-react';
@@ -82,6 +82,7 @@ export function SupportTicketSystem() {
     if (user) {
       loadTickets();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function SupportTicketSystem() {
       // Déterminer la priorité selon le plan
       let priority = 'normal';
       const planName = subscription.plan_name?.toLowerCase();
-      
+
       if (planName === 'business' || planName === 'premium') {
         priority = 'high';
       } else if (planName === 'pro') {
@@ -237,7 +238,7 @@ export function SupportTicketSystem() {
         <div>
           <h2 className="text-2xl font-bold">Support {subscription?.plan_name ? `- Plan ${subscription.plan_name}` : ''}</h2>
           <p className="text-muted-foreground">
-            {subscription?.plan_name === 'business' || subscription?.plan_name === 'premium' 
+            {subscription?.plan_name === 'business' || subscription?.plan_name === 'premium'
               ? '🚀 Support prioritaire activé - Réponse garantie sous 2h'
               : 'Support standard - Réponse sous 24h'}
           </p>

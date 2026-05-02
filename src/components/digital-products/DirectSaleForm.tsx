@@ -3,26 +3,26 @@
  * Inspiré de Gumroad, Teachable, Podia
  */
 
-import { useState } from 'react';
-import { 
-  Package, 
-  FileText, 
-  Upload, 
-  DollarSign, 
-  Clock, 
-  Shield, 
+import {} from 'react';
+import {
+  Package,
+  _FileText,
+  _Upload,
+  DollarSign,
+  _Clock,
+  Shield,
   Users,
   Zap,
   Lock,
   Download,
   Mail,
   RefreshCw,
-  AlertCircle
+  _AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { _Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,21 +52,21 @@ interface DirectSaleFormProps {
 }
 
 const pricingTypes = [
-  { 
-    id: 'one_time', 
-    label: 'Paiement unique', 
+  {
+    id: 'one_time',
+    label: 'Paiement unique',
     icon: DollarSign,
     description: 'Un seul paiement pour un accès complet'
   },
-  { 
-    id: 'subscription', 
-    label: 'Abonnement', 
+  {
+    id: 'subscription',
+    label: 'Abonnement',
     icon: RefreshCw,
     description: 'Paiement récurrent mensuel ou annuel'
   },
-  { 
-    id: 'pay_what_you_want', 
-    label: 'Prix libre', 
+  {
+    id: 'pay_what_you_want',
+    label: 'Prix libre',
     icon: Users,
     description: 'Le client choisit son prix'
   }
@@ -426,7 +426,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       <Alert className="border-[#dbe6fb] bg-[#f7fbff]">
         <Shield className="w-4 h-4 text-[#04439e]" />
         <AlertDescription className="text-xs text-muted-foreground">
-          <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sécurisés. 
+          <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sécurisés.
           Vous recevez vos fonds après validation de la livraison.
         </AlertDescription>
       </Alert>

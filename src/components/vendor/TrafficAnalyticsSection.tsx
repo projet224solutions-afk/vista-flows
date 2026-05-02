@@ -143,8 +143,8 @@ export function TrafficAnalyticsSection() {
               <div>
                 <p className="text-sm text-muted-foreground">Taux d'engagement</p>
                 <p className="text-2xl font-bold">
-                  {stats.uniqueShopVisitors > 0 
-                    ? ((stats.uniqueProductViewers / stats.uniqueShopVisitors) * 100).toFixed(1) 
+                  {stats.uniqueShopVisitors > 0
+                    ? ((stats.uniqueProductViewers / stats.uniqueShopVisitors) * 100).toFixed(1)
                     : 0}%
                 </p>
                 <p className="text-xs text-muted-foreground">Vues / Visiteurs</p>
@@ -167,30 +167,30 @@ export function TrafficAnalyticsSection() {
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={stats.weeklyTrend}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                   tick={{ fontSize: 12 }}
                 />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 />
                 <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="productViews" 
+                <Area
+                  type="monotone"
+                  dataKey="productViews"
                   name="Vues produits"
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary))" 
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
                   fillOpacity={0.3}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="shopVisits" 
+                <Area
+                  type="monotone"
+                  dataKey="shopVisits"
                   name="Visites boutique"
-                  stroke="#22c55e" 
-                  fill="#22c55e" 
+                  stroke="#22c55e"
+                  fill="#22c55e"
                   fillOpacity={0.3}
                 />
               </AreaChart>

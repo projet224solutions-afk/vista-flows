@@ -85,18 +85,18 @@ queue:analytics:batch                   # FIFO queue for batch inserts
 -- DEDUPLICATION INDEX (Most critical)
 -- Prevents duplicates at DB level, used in ON CONFLICT
 -- Composite: fingerprint + target + date for 24h dedup
-CREATE UNIQUE INDEX idx_product_views_raw_dedup 
+CREATE UNIQUE INDEX idx_product_views_raw_dedup
 ON product_views_raw (fingerprint_hash, product_id, view_date);
 
 -- DASHBOARD QUERY INDEX
 -- Covers: SELECT * WHERE vendor_id = X ORDER BY date DESC
 -- Composite for vendor-centric queries
-CREATE INDEX idx_product_views_raw_vendor_date 
+CREATE INDEX idx_product_views_raw_vendor_date
 ON product_views_raw (vendor_id, view_date DESC);
 
 -- PRODUCT ANALYTICS INDEX
 -- For product-level breakdowns
-CREATE INDEX idx_product_views_raw_product_date 
+CREATE INDEX idx_product_views_raw_product_date
 ON product_views_raw (product_id, view_date DESC);
 ```
 
@@ -134,7 +134,7 @@ CREATE TABLE product_views_raw (
   ...
 ) PARTITION BY RANGE (view_date);
 
-CREATE TABLE product_views_raw_2026_01 
+CREATE TABLE product_views_raw_2026_01
   PARTITION OF product_views_raw
   FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
 ```

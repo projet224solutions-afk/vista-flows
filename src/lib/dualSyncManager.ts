@@ -4,22 +4,22 @@
  * 224SOLUTIONS - Architecture hybride
  */
 
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
-  updateDoc,
+import {
+  collection,
+  doc,
+  setDoc,
+  _getDoc,
+  getDocs,
+  query,
+  where,
+  _updateDoc,
   deleteDoc,
   onSnapshot,
-  Timestamp 
+  Timestamp
 } from 'firebase/firestore';
 import { firestore } from './firebaseClient';
 import { supabase } from './supabaseClient';
-import { encryptData, decryptData, hashValue } from './encryption';
+import { encryptData, decryptData, _hashValue } from './encryption';
 import { toast } from 'sonner';
 
 export interface SyncConfig {
@@ -84,7 +84,7 @@ export async function syncFirestoreToSupabase(
     const actualData = config.encrypted ? decryptData(data) : data;
 
     // Vérifier si l'entrée existe déjà dans Supabase
-    const { data: existing, error: checkError } = await (supabase as any)
+    const { data: _existing, error: checkError } = await (supabase as any)
       .from(config.supabaseTable)
       .select('id')
       .eq(config.uniqueField, actualData[config.uniqueField])
@@ -166,7 +166,7 @@ export async function syncBidirectional(
   source: 'firestore' | 'supabase'
 ): Promise<{ success: boolean; error?: string }> {
   const config = SYNC_CONFIGS[configKey];
-  
+
   if (config.syncDirection === 'both') {
     if (source === 'firestore') {
       return await syncFirestoreToSupabase(configKey, data);
@@ -193,7 +193,7 @@ export function listenFirestoreChanges(
   if (!config || !firestore) return () => {};
 
   const collectionRef = collection(firestore, config.collection);
-  
+
   const unsubscribe = onSnapshot(collectionRef, (snapshot) => {
     snapshot.docChanges().forEach(async (change) => {
       const data: any = { id: change.doc.id, ...change.doc.data() };
@@ -320,11 +320,11 @@ export async function fullSync(
       if (direction === 'firestore-to-supabase') {
         // Récupérer toutes les données de Firestore
         const snapshot = await getDocs(collection(firestore, config.collection));
-        
+
         for (const doc of snapshot.docs) {
           const data = { id: doc.id, ...doc.data() };
           const result = await syncFirestoreToSupabase(configKey, data);
-          
+
           if (result.success) success++;
           else failed++;
 
@@ -341,7 +341,7 @@ export async function fullSync(
 
         for (const item of data || []) {
           const result = await syncSupabaseToFirestore(configKey, item);
-          
+
           if (result.success) success++;
           else failed++;
 

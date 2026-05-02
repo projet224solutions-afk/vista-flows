@@ -30,7 +30,7 @@ const PDGAgentsManagement = lazy(() => import('@/components/pdg/PDGAgentsManagem
 const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatManagement'));
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
-const GoogleCloudMonitoring = lazy(() => import('@/components/pdg/GoogleCloudMonitoring'));
+const _GoogleCloudMonitoring = lazy(() => import('@/components/pdg/GoogleCloudMonitoring'));
 const MultiCloudDashboard = lazy(() => import('@/components/admin/MultiCloudDashboard'));
 const SystemConfiguration = lazy(() => import('@/components/pdg/SystemConfiguration'));
 const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSettings'));
@@ -136,7 +136,7 @@ export default function PDG224Solutions() {
 
     const currentRole = (profile.role || '').toString().toLowerCase();
     if (!['admin', 'pdg', 'ceo'].includes(currentRole)) {
-      toast.error('Acc├¿s refus├® - R├®serv├® au PDG');
+      toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
       return;
     }
@@ -180,27 +180,27 @@ export default function PDG224Solutions() {
       if (fnError) throw fnError;
 
       if (data?.success) {
-        toast.success(`Code MFA envoy├® ├á ${data?.recipient_email || user.email}`);
+        toast.success(`Code MFA envoyé à ${data?.recipient_email || user.email}`);
         // In dev mode, show the code if returned
         if (data.dev_code) {
           setMfaCode(data.dev_code);
-          toast.info(`­ƒöæ Mode secours - Code: ${data.dev_code}`, { duration: 60000 });
+          toast.info(`Mode secours - Code: ${data.dev_code}`, { duration: 60000 });
         }
       } else {
         if (data?.error_code === 'RESEND_TEST_MODE_RECIPIENT_RESTRICTED') {
-          toast.error('Envoi email bloqu├® par Resend (mode test)');
-          toast.info(`Destinataire demand├®: ${data?.recipient_email || user.email}`);
+          toast.error('Envoi email bloqué par Resend (mode test)');
+          toast.info(`Destinataire demandé: ${data?.recipient_email || user.email}`);
         } else {
           toast.error(data?.error || 'Erreur envoi MFA');
         }
 
         if (data?.dev_code) {
           setMfaCode(data.dev_code);
-          toast.info(`­ƒöæ Code temporaire: ${data.dev_code}`, { duration: 60000 });
+          toast.info(`Code temporaire: ${data.dev_code}`, { duration: 60000 });
         }
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '├ëchec envoi code MFA';
+      const msg = e instanceof Error ? e.message : 'Échec de l\'envoi du code MFA';
       console.error('MFA send error:', e);
       toast.error(msg);
     } finally {
@@ -211,7 +211,7 @@ export default function PDG224Solutions() {
   // Server-side MFA: verify code
   const handleVerifyMfa = useCallback(async () => {
     if (!mfaCode || mfaCode.length !== 6) {
-      toast.error('Entrez le code ├á 6 chiffres');
+      toast.error('Entrez le code à 6 chiffres');
       return;
     }
 
@@ -228,12 +228,12 @@ export default function PDG224Solutions() {
         sessionStorage.setItem('mfa_verified_admin', 'true');
         setShowMfaDialog(false);
         setMfaCode('');
-        toast.success('Ô£à MFA v├®rifi├®, acc├¿s PDG autoris├®');
+        toast.success('MFA vérifiée, accès PDG autorisé');
       } else {
         toast.error(data?.error || 'Code MFA invalide');
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Erreur v├®rification MFA';
+      const msg = e instanceof Error ? e.message : 'Erreur de vérification MFA';
       console.error('MFA verify error:', e);
       toast.error(msg);
     } finally {
@@ -252,11 +252,11 @@ export default function PDG224Solutions() {
       const { error: updateError } = await supabase.auth.updateUser({ email: newEmail });
       if (updateError) throw updateError;
 
-      toast.success('Email mis ├á jour. V├®rifiez votre nouvelle adresse.');
+      toast.success('Email mis à jour. Vérifiez votre nouvelle adresse.');
       setShowEmailDialog(false);
       setNewEmail('');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '├ëchec mise ├á jour email';
+      const msg = err instanceof Error ? err.message : 'Échec de la mise à jour de l\'email';
       console.error('Email update error:', err);
       toast.error(msg);
     } finally {
@@ -280,7 +280,7 @@ export default function PDG224Solutions() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
           <p className="text-destructive">Impossible de charger le profil</p>
-          <Button onClick={() => navigate('/auth')}>Retour ├á la connexion</Button>
+          <Button onClick={() => navigate('/auth')}>Retour à la connexion</Button>
         </div>
       </div>
     );
@@ -295,10 +295,10 @@ export default function PDG224Solutions() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
-                V├®rification MFA requise
+                Vérification MFA requise
               </DialogTitle>
               <DialogDescription>
-                Un code de s├®curit├® ├á 6 chiffres est n├®cessaire pour acc├®der ├á l'interface PDG.
+                Un code de sécurité à 6 chiffres est nécessaire pour accéder à l'interface PDG.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
@@ -312,7 +312,7 @@ export default function PDG224Solutions() {
                 {sendingMfa ? 'Envoi en cours...' : 'Envoyer le code par email'}
               </Button>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Code de v├®rification</label>
+                <label className="text-sm font-medium">Code de vérification</label>
                 <Input
                   placeholder="000000"
                   value={mfaCode}
@@ -326,12 +326,12 @@ export default function PDG224Solutions() {
                 disabled={verifyingMfa || mfaCode.length !== 6}
                 className="w-full"
               >
-                {verifyingMfa ? 'V├®rification...' : 'V├®rifier le code'}
+                {verifyingMfa ? 'Vérification...' : 'Vérifier le code'}
               </Button>
             </div>
             <DialogFooter>
               <p className="text-xs text-muted-foreground">
-                ­ƒöÉ Le code expire apr├¿s 10 minutes.
+                Le code expire après 10 minutes.
               </p>
             </DialogFooter>
           </DialogContent>
@@ -364,7 +364,7 @@ export default function PDG224Solutions() {
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-1 items-center gap-2 hidden sm:flex">
                     <Lock className="w-3 h-3 text-green-500" />
-                    Contr├┤le total et s├®curis├®
+                    Contrôle total et sécurisé
                   </p>
                 </div>
               </div>
@@ -386,7 +386,7 @@ export default function PDG224Solutions() {
                   className="bg-red-600 hover:bg-red-700 text-white gap-1 sm:gap-2 shadow-lg shadow-red-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-                  D├®fense
+                  Défense
                 </Button>
                 <Button
                   variant="default"
@@ -409,7 +409,7 @@ export default function PDG224Solutions() {
                 )}
                 <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 gap-1 text-xs flex-shrink-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  <span className="hidden sm:inline">Syst├¿me</span> Actif
+                  <span className="hidden sm:inline">Système</span> Actif
                 </Badge>
                 {fxCriticalAlerts > 0 && (
                   <Button
@@ -445,7 +445,7 @@ export default function PDG224Solutions() {
                   className="gap-1 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">D├®connexion</span>
+                  <span className="hidden sm:inline">Déconnexion</span>
                 </Button>
               </div>
             </div>
@@ -456,7 +456,7 @@ export default function PDG224Solutions() {
                     <Shield className="w-5 h-5 text-orange-500" />
                   </div>
                   <p className="text-sm text-orange-500 flex-1">
-                    MFA non v├®rifi├® - Certaines actions critiques n├®cessiteront une v├®rification suppl├®mentaire
+                    MFA non vérifiée - Certaines actions critiques nécessiteront une vérification supplémentaire
                   </p>
                 </div>
               </div>
@@ -618,7 +618,7 @@ export default function PDG224Solutions() {
               Modifier l'adresse email
             </DialogTitle>
             <DialogDescription>
-              Entrez votre nouvelle adresse email. Un email de confirmation sera envoy├®.
+              Entrez votre nouvelle adresse email. Un email de confirmation sera envoyé.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -646,7 +646,7 @@ export default function PDG224Solutions() {
               Annuler
             </Button>
             <Button onClick={handleUpdateEmail} disabled={updatingEmail || !newEmail}>
-              {updatingEmail ? 'Mise ├á jour...' : 'Mettre ├á jour'}
+              {updatingEmail ? 'Mise à jour...' : 'Mettre à jour'}
             </Button>
           </DialogFooter>
         </DialogContent>

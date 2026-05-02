@@ -1,6 +1,6 @@
 ﻿import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink, CheckCircle2, RefreshCw, WifiOff, SearchX, ShieldOff } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink, _CheckCircle2, RefreshCw, WifiOff, SearchX, _ShieldOff, Plane, ShieldCheck, ArrowUpRight } from "lucide-react";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import SEOHead from "@/components/SEOHead";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
+import { AffiliateFlightPartnerCard } from "@/components/vendor/AffiliateFlightPartnerCard";
 
 // Mini composant pour afficher le badge de certification d'un vendeur
 function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
@@ -69,6 +70,10 @@ type ShopErrorType = 'none' | 'vendor_not_found' | 'shop_inactive' | 'network_er
 
 const isMobile = () => /Mobi|Android/i.test(navigator.userAgent);
 
+const isAffiliateFlightProduct = (product: any) => {
+  return product?.product_mode === 'affiliate' && (product?.product_type || '').trim().toLowerCase() === 'billet_avion';
+};
+
 export default function VendorShop() {
   const params = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
@@ -83,17 +88,21 @@ export default function VendorShop() {
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const activeLoadIdRef = useRef(0);
 
-  // R├®cup├®rer les produits num├®riques du vendeur
-  const { products: digitalProducts, loading: digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
+  // Récupérer les produits numériques du vendeur
+  const { products: digitalProducts, loading: _digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
+  const affiliateFlightProducts = digitalProducts.filter(isAffiliateFlightProduct);
+  const otherDigitalProducts = digitalProducts.filter((product: any) => !isAffiliateFlightProduct(product));
+  const showAffiliateFlightPartnerExperience = affiliateFlightProducts.length > 0;
   const identifier = params.slug || params.vendorId;
 
-  // ÔöÇÔöÇ Structured log helper ÔöÇÔöÇ
+  // -- Structured log helper --
   const log = useCallback((tag: string, data?: Record<string, unknown>) => {
-    console.log(`­ƒÅ¬ [VendorShop] ${tag}`, data ?? '');
+    console.log(`🏪 [VendorShop] ${tag}`, data ?? '');
   }, []);
 
-  // ÔöÇÔöÇ Mount log ÔöÇÔöÇ
+  // -- Mount log --
   useEffect(() => {
     log('SHOP PAGE START', {
       vendorId: params.vendorId,
@@ -102,9 +111,10 @@ export default function VendorShop() {
       pathname: window.location.pathname,
       mobile: isMobile(),
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ÔöÇÔöÇ Timeout management ÔöÇÔöÇ
+  // -- Timeout management --
   const startTimeout = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     const ms = isMobile() ? 15000 : 10000;
@@ -127,7 +137,7 @@ export default function VendorShop() {
     abortRef.current?.abort();
   }, [clearShopTimeout]);
 
-  // ÔöÇÔöÇ Load vendor data ÔöÇÔöÇ
+  // -- Load vendor data --
   const loadVendorData = useCallback(async () => {
     const id = identifier;
     if (!id) {
@@ -141,6 +151,9 @@ export default function VendorShop() {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    const loadId = ++activeLoadIdRef.current;
+
+    const isStaleRequest = () => controller.signal.aborted || activeLoadIdRef.current !== loadId;
 
     setLoading(true);
     setLoadingTimedOut(false);
@@ -150,7 +163,7 @@ export default function VendorShop() {
     log('SHOP IDENTIFIER DETECTED', { id, mobile: isMobile() });
 
     try {
-      // ÔöÇÔöÇ Fetch vendor ÔöÇÔöÇ
+      // -- Fetch vendor --
       log('SHOP VENDOR FETCH START', { id });
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
@@ -175,7 +188,7 @@ export default function VendorShop() {
       }
 
       // Check abort
-      if (controller.signal.aborted) return;
+      if (isStaleRequest()) return;
 
       if (!vendorData) {
         log('SHOP VENDOR FETCH FAIL', { reason: 'not_found', id });
@@ -208,19 +221,19 @@ export default function VendorShop() {
         vendorPublicId = profileData?.public_id || undefined;
       }
 
-      if (controller.signal.aborted) return;
+      if (isStaleRequest()) return;
 
       setVendor({ ...vendorData, public_id: vendorPublicId });
 
-      // Inactive shop ÔÇô show page but no products for clients
+      // Inactive shop - show page but no products for clients
       if (!vendorData.is_active && !vendorIsOwned) {
         log('SHOP INACTIVE', { vendorId: vendorData.id });
         setProducts([]);
-        setErrorType('none'); // Not an error, just inactive ÔÇô handled in UI
+        setErrorType('none'); // Not an error, just inactive - handled in UI
         return;
       }
 
-      // ÔöÇÔöÇ Fetch products ÔöÇÔöÇ
+      // -- Fetch products --
       log('SHOP PRODUCTS FETCH START', { vendorId: vendorData.id });
       const { data: productsData, error: productsError } = await supabase
         .from('products')
@@ -239,7 +252,7 @@ export default function VendorShop() {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (controller.signal.aborted) return;
+      if (isStaleRequest()) return;
 
       if (productsError) {
         log('SHOP PRODUCTS FETCH FAIL', { error: productsError.message });
@@ -253,7 +266,7 @@ export default function VendorShop() {
       setErrorType('none');
 
     } catch (error: any) {
-      if (controller.signal.aborted) return;
+      if (isStaleRequest()) return;
 
       const isNetwork =
         error?.message?.includes('Failed to fetch') ||
@@ -270,19 +283,22 @@ export default function VendorShop() {
 
       setErrorType(isNetwork ? 'network_error' : 'vendor_not_found');
     } finally {
-      clearShopTimeout();
-      setLoading(false);
+      if (!isStaleRequest()) {
+        clearShopTimeout();
+        setLoading(false);
+      }
     }
   }, [identifier, user?.id, navigate, log, startTimeout, clearShopTimeout, params.vendorId]);
 
-  // ÔöÇÔöÇ Trigger load ÔöÇÔöÇ
+  // -- Trigger load --
   useEffect(() => {
     if (identifier) {
       loadVendorData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identifier, user?.id]);
 
-  // ÔöÇÔöÇ Track visit ÔöÇÔöÇ
+  // -- Track visit --
   useEffect(() => {
     if (vendor && vendor.id && !hasTrackedVisit.current && !isOwner) {
       hasTrackedVisit.current = true;
@@ -290,14 +306,14 @@ export default function VendorShop() {
     }
   }, [vendor, isOwner]);
 
-  // ÔöÇÔöÇ Timeout effect (separate from loadVendorData for the case where loading stays true) ÔöÇÔöÇ
+  // -- Timeout effect (separate from loadVendorData for the case where loading stays true) --
   useEffect(() => {
     if (!loading) {
       setLoadingTimedOut(false);
     }
   }, [loading]);
 
-  // ÔöÇÔöÇ Retry handler ÔöÇÔöÇ
+  // -- Retry handler --
   const handleRetry = useCallback(() => {
     log('SHOP RETRY TRIGGERED');
     setLoadingTimedOut(false);
@@ -305,9 +321,9 @@ export default function VendorShop() {
     loadVendorData();
   }, [loadVendorData, log]);
 
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   //  RENDER: Loading state
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   if (loading && !loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -319,9 +335,9 @@ export default function VendorShop() {
     );
   }
 
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   //  RENDER: Timeout state
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   if (loading && loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -329,12 +345,12 @@ export default function VendorShop() {
           <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Connexion lente</h2>
           <p className="text-muted-foreground mb-6">
-            La boutique met trop de temps ├á charger. Votre connexion est peut-├¬tre instable.
+            La boutique met trop de temps à charger. Votre connexion est peut-être instable.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              R├®essayer
+              Réessayer
             </Button>
             <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -345,9 +361,9 @@ export default function VendorShop() {
     );
   }
 
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   //  RENDER: Error states (differentiated)
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   if (errorType === 'network_error') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -355,12 +371,12 @@ export default function VendorShop() {
           <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Erreur de connexion</h2>
           <p className="text-muted-foreground mb-6">
-            Impossible de contacter le serveur. V├®rifiez votre connexion Internet.
+            Impossible de contacter le serveur. Vérifiez votre connexion Internet.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              R├®essayer
+              Réessayer
             </Button>
             <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -372,7 +388,7 @@ export default function VendorShop() {
   }
 
   if (errorType === 'products_error' && vendor) {
-    // Vendor loaded but products failed ÔÇô show vendor info + error for products section
+    // Vendor loaded but products failed - show vendor info + error for products section
     // Fall through to normal render below, products section will show inline error
   }
 
@@ -383,12 +399,12 @@ export default function VendorShop() {
           <SearchX className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Boutique introuvable</h2>
           <p className="text-muted-foreground mb-6">
-            Cette boutique n'existe pas ou a ├®t├® supprim├®e.
+            Cette boutique n'existe pas ou a été supprimée.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full" variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
-              R├®essayer
+              Réessayer
             </Button>
             <Button onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -403,9 +419,9 @@ export default function VendorShop() {
     return null; // Should not happen, safety guard
   }
 
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   //  HELPERS
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   const handleContactVendor = async () => {
     if (!vendor) return;
 
@@ -427,7 +443,7 @@ export default function VendorShop() {
         });
 
       if (error) throw error;
-      toast.success('Message envoy├® au vendeur');
+      toast.success('Message envoyé au vendeur');
       navigate(`/messages?recipientId=${vendor.user_id}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -454,15 +470,15 @@ export default function VendorShop() {
     </div>
   );
 
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   //  RENDER: Main shop page
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ===========================================
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* SEO Meta Tags */}
       <SEOHead
         title={vendor.business_name}
-        description={vendor.description || `D├®couvrez la boutique ${vendor.business_name} sur 224Solutions`}
+        description={vendor.description || `Découvrez la boutique ${vendor.business_name} sur 224Solutions`}
         image={vendor.cover_image_url || vendor.logo_url}
         type="website"
       />
@@ -481,7 +497,7 @@ export default function VendorShop() {
                   className="p-0 h-auto text-primary ml-1"
                   onClick={() => navigate('/vendeur')}
                 >
-                  Activez-la dans vos param├¿tres vendeur
+                  Activez-la dans vos paramètres vendeur
                 </Button>
               </>
             ) : (
@@ -516,7 +532,7 @@ export default function VendorShop() {
           </div>
           <ShareButton
             title={vendor.business_name}
-            text={`D├®couvrez la boutique ${vendor.business_name} sur 224 Solutions`}
+            text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
             url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
             variant="outline"
             size="sm"
@@ -535,7 +551,7 @@ export default function VendorShop() {
         {vendor.cover_image_url && (
           <img
             src={vendor.cover_image_url}
-            alt={`Banni├¿re ${vendor.business_name}`}
+            alt={`Bannière ${vendor.business_name}`}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -583,9 +599,9 @@ export default function VendorShop() {
               {vendor.service_type && (
                 <Badge variant="outline">
                   <Truck className="w-3 h-3 mr-1" />
-                  {vendor.service_type === 'retail' ? 'Vente au d├®tail' :
+                  {vendor.service_type === 'retail' ? 'Vente au détail' :
                    vendor.service_type === 'wholesale' ? 'Vente en gros' :
-                   vendor.service_type === 'mixed' ? 'D├®tail + Gros' :
+                   vendor.service_type === 'mixed' ? 'Détail + Gros' :
                    vendor.service_type === 'services' ? 'Services' : vendor.service_type}
                 </Badge>
               )}
@@ -664,7 +680,7 @@ export default function VendorShop() {
             </Button>
             <ShareButton
               title={vendor.business_name}
-              text={`D├®couvrez la boutique ${vendor.business_name} sur 224 Solutions`}
+              text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
               url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
               variant="outline"
               size="icon"
@@ -679,7 +695,7 @@ export default function VendorShop() {
         </div>
       </div>
 
-      {/* Products section ÔÇô with inline error if products failed */}
+      {/* Products section - with inline error if products failed */}
       <div className="px-4">
         <div className="mb-4">
           <RecentlyViewedProducts maxItems={6} />
@@ -690,18 +706,18 @@ export default function VendorShop() {
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
             <p className="text-foreground font-medium mb-1">Impossible de charger les produits</p>
             <p className="text-sm text-muted-foreground mb-4">
-              Le vendeur existe mais ses produits n'ont pas pu ├¬tre r├®cup├®r├®s.
+              Le vendeur existe mais ses produits n'ont pas pu être récupérés.
             </p>
             <Button onClick={handleRetry} size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
-              R├®essayer
+              Réessayer
             </Button>
           </Card>
         )}
 
         {errorType !== 'products_error' && (
           <>
-            {/* Tabs pour produits physiques et num├®riques */}
+            {/* Tabs pour produits physiques et numériques */}
             {digitalProducts.length > 0 ? (
               <Tabs value={vendor?.business_type === 'digital' ? 'digital' : activeTab} onValueChange={setActiveTab} className="w-full">
                 {vendor?.business_type !== 'digital' && (
@@ -712,14 +728,14 @@ export default function VendorShop() {
                     </TabsTrigger>
                     <TabsTrigger value="digital" className="gap-2">
                       <Laptop className="w-4 h-4" />
-                      Num├®riques ({digitalProducts.length})
+                      Numériques ({digitalProducts.length})
                     </TabsTrigger>
                   </TabsList>
                 )}
                 {vendor?.business_type === 'digital' && (
                   <div className="flex items-center gap-2 mb-4">
                     <Laptop className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Produits num├®riques ({digitalProducts.length})</h3>
+                    <h3 className="font-semibold text-foreground">Produits numériques ({digitalProducts.length})</h3>
                   </div>
                 )}
 
@@ -750,7 +766,7 @@ export default function VendorShop() {
                           category={product.categories?.name}
                           onBuy={() => handleProductClick(product.id)}
                           onAddToCart={() => {
-                            toast.success('Produit ajout├® au panier');
+                            toast.success('Produit ajouté au panier');
                           }}
                           onContact={handleContactVendor}
                         />
@@ -759,96 +775,162 @@ export default function VendorShop() {
                   )}
                 </TabsContent>
 
-                {/* Produits num├®riques */}
+                {/* Produits numériques */}
                 <TabsContent value="digital">
-                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
-                    {digitalProducts.map((product: any) => (
-                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
-                        <div className="relative h-40 bg-muted">
-                          {product.images?.[0] ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/placeholder.svg';
-                              }}
-                            />
-                          ) : product.video_url ? (
-                            <video
-                              src={product.video_url}
-                              className="w-full h-full object-cover"
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
-                          ) : (
-                            <img
-                              src="/placeholder.svg"
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          )}
-                          <div className="absolute top-2 left-2">
-                            <Badge className="bg-accent text-accent-foreground">
-                              <Laptop className="w-3 h-3 mr-1" />
-                              {product.category}
-                            </Badge>
+                  <div className="space-y-6">
+                    {showAffiliateFlightPartnerExperience && (
+                      <div className="space-y-4">
+                        <div className="overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+                          <div className="grid gap-6 p-5 md:grid-cols-[1.5fr_1fr] md:p-7">
+                            <div>
+                              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
+                                <Plane className="h-3.5 w-3.5" />
+                                Billetterie partenaire
+                              </div>
+                              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+                                Réservez vos billets d'avion partenaires avec une expérience dédiée.
+                              </h2>
+                              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+                                Découvrez une sélection de billets d'avion proposée par nos partenaires, avec un parcours clair, rapide et professionnel pour consulter les disponibilités, vérifier le tarif final et finaliser votre réservation en toute confiance.
+                              </p>
+                              <div className="mt-5 flex flex-wrap gap-3 text-sm">
+                                <div className="inline-flex items-center gap-2 rounded-2xl border border-orange-200 bg-white px-3 py-2 text-slate-700 shadow-sm">
+                                  <ShieldCheck className="h-4 w-4 text-orange-500" />
+                                  Finalisation securisee chez le partenaire
+                                </div>
+                                <div className="inline-flex items-center gap-2 rounded-2xl border border-orange-200 bg-white px-3 py-2 text-slate-700 shadow-sm">
+                                  <ArrowUpRight className="h-4 w-4 text-orange-500" />
+                                  Offres comparees et redirection directe
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 self-start rounded-2xl border border-orange-200/80 bg-white/90 p-4 shadow-sm">
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-600">Billets partenaires</p>
+                                <p className="mt-2 text-3xl font-semibold text-slate-900">{affiliateFlightProducts.length}</p>
+                                <p className="text-sm text-slate-500">offre{affiliateFlightProducts.length > 1 ? 's' : ''} de vol partenaire{affiliateFlightProducts.length > 1 ? 's' : ''}</p>
+                              </div>
+                              <div className="rounded-2xl bg-orange-50 p-3 text-sm text-orange-800">
+                                Cette partie est réservée aux billets d'avion partenaires. Les autres produits numériques restent affichés plus bas.
+                              </div>
+                            </div>
                           </div>
-                          {product.video_url && (
-                            <div className="absolute bottom-2 left-2">
-                              <Badge className="bg-black/70 text-white hover:bg-black/70">
-                                Vidéo
-                              </Badge>
-                            </div>
-                          )}
-                          {product.product_mode === 'affiliate' && (
-                            <div className="absolute top-2 right-2">
-                              <Badge variant="outline" className="bg-white/90">
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Affiliation
-                              </Badge>
-                            </div>
-                          )}
                         </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
-                            {product.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                            {product.short_description || product.description || 'Aucune description'}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            {product.price > 0 ? (
-                              <span className="font-bold text-lg text-primary">
-                                {(() => {
-                                  const currency = product.currency || 'GNF';
-                                  const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
-                                  const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
-                                  const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
-                                    minimumFractionDigits: decimals,
-                                    maximumFractionDigits: decimals,
-                                  });
-                                  return `${formattedAmount} ${currency}`;
-                                })()}
-                              </span>
-                            ) : (
-                              <span className="font-bold text-lg text-green-600">Gratuit</span>
-                            )}
-                            <Button size="sm" variant="outline">
-                              Voir d├®tails
-                            </Button>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                          {affiliateFlightProducts.map((product: any) => (
+                            <AffiliateFlightPartnerCard
+                              key={product.id}
+                              product={product}
+                              fallbackCurrency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
+                              onOpen={() => navigate(`/digital-product/${product.id}`)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {otherDigitalProducts.length > 0 && (
+                      <div className="space-y-4">
+                        {showAffiliateFlightPartnerExperience && (
+                          <div className="flex items-center gap-2">
+                            <Laptop className="h-4 w-4 text-primary" />
+                            <h3 className="font-semibold text-foreground">Autres produits numériques ({otherDigitalProducts.length})</h3>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        )}
+
+                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
+                          {otherDigitalProducts.map((product: any) => (
+                        <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
+                          <div className="relative h-40 bg-muted">
+                            {product.images?.[0] ? (
+                              <img
+                                src={product.images[0]}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                }}
+                              />
+                            ) : product.video_url ? (
+                              <video
+                                src={product.video_url}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : (
+                              <img
+                                src="/placeholder.svg"
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            )}
+                            <div className="absolute top-2 left-2">
+                              <Badge className="bg-accent text-accent-foreground">
+                                <Laptop className="w-3 h-3 mr-1" />
+                                {product.category}
+                              </Badge>
+                            </div>
+                            {product.video_url && (
+                              <div className="absolute bottom-2 left-2">
+                                <Badge className="bg-black/70 text-white hover:bg-black/70">
+                                  Vidéo
+                                </Badge>
+                              </div>
+                            )}
+                            {product.product_mode === 'affiliate' && (
+                              <div className="absolute top-2 right-2">
+                                <Badge variant="outline" className="bg-white/90">
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  Affiliation
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
+                              {product.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                              {product.short_description || product.description || 'Aucune description'}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              {product.price > 0 ? (
+                                <span className="font-bold text-lg text-primary">
+                                  {(() => {
+                                    const currency = product.currency || 'GNF';
+                                    const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
+                                    const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
+                                    const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
+                                      minimumFractionDigits: decimals,
+                                      maximumFractionDigits: decimals,
+                                    });
+                                    return `${formattedAmount} ${currency}`;
+                                  })()}
+                                </span>
+                              ) : (
+                                <span className="font-bold text-lg text-green-600">Gratuit</span>
+                              )}
+                              <Button size="sm" variant="outline">
+                                Voir détails
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
             ) : (
-              // Affichage simple si pas de produits num├®riques
+              // Affichage simple si pas de produits numériques
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">
@@ -882,7 +964,7 @@ export default function VendorShop() {
                         category={product.categories?.name}
                         onBuy={() => handleProductClick(product.id)}
                         onAddToCart={() => {
-                          toast.success('Produit ajout├® au panier');
+                          toast.success('Produit ajouté au panier');
                         }}
                         onContact={handleContactVendor}
                       />

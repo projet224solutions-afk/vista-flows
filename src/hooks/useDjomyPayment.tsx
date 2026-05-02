@@ -125,7 +125,7 @@ export function useDjomyPayment() {
       console.error('[useDjomyPayment] Error:', errorMessage);
       setError(errorMessage);
       toast.error(errorMessage);
-      
+
       return {
         success: false,
         error: errorMessage,
@@ -171,7 +171,7 @@ export function useDjomyPayment() {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de vérification';
       console.error('[useDjomyPayment] Verification error:', errorMessage);
       setError(errorMessage);
-      
+
       return {
         success: false,
         transactionId,
@@ -217,13 +217,13 @@ export function useDjomyPayment() {
     } = options || {};
 
     let attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       attempts++;
       console.log(`[useDjomyPayment] Polling attempt ${attempts}/${maxAttempts}`);
-      
+
       const status = await verifyPayment(transactionId, useSandbox);
-      
+
       if (onStatusChange) {
         onStatusChange(status);
       }

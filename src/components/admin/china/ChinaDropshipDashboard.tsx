@@ -1,9 +1,9 @@
 /**
  * CHINA DROPSHIP ADMIN DASHBOARD
- * 
+ *
  * Dashboard complet pour PDG/Admin pour gérer les opérations
  * de dropshipping Chine à l'échelle de la plateforme.
- * 
+ *
  * @module ChinaDropshipDashboard
  * @version 1.0.0
  */
@@ -96,8 +96,8 @@ import {
 } from 'lucide-react';
 
 // Types
-import type { 
-  ChinaSupplierExtension, 
+import type {
+  ChinaSupplierExtension,
   ChinaPlatformType,
   SupplierScoreLevel
 } from '@/types/china-dropshipping';
@@ -218,7 +218,7 @@ const getRiskBadgeColor = (level: string): string => {
 
 
 export const ChinaDropshipDashboard: React.FC = () => {
-  
+
   // State
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -239,6 +239,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboardData = async () => {
@@ -274,14 +275,14 @@ export const ChinaDropshipDashboard: React.FC = () => {
     const goldSuppliers = suppliersData?.filter(s => s.score_level === 'GOLD').length || 0;
     const blacklistedSuppliers = suppliersData?.filter(s => s.score_level === 'BLACKLISTED').length || 0;
 
-    const pendingOrders = ordersData?.filter(o => 
+    const pendingOrders = ordersData?.filter(o =>
       ['pending_supplier_confirm', 'supplier_confirmed', 'in_production'].includes(o.status)
     ).length || 0;
-    
-    const inTransitOrders = ordersData?.filter(o => 
+
+    const inTransitOrders = ordersData?.filter(o =>
       ['shipped_domestic_china', 'shipped_international', 'customs_clearance', 'last_mile_delivery'].includes(o.status)
     ).length || 0;
-    
+
     const deliveredOrders = ordersData?.filter(o => o.status === 'delivered').length || 0;
     const disputedOrders = ordersData?.filter(o => o.status === 'disputed').length || 0;
 
@@ -329,7 +330,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
       .limit(100);
 
     if (error) throw error;
-    
+
     setOrders(data?.map(order => ({
       ...order,
       transport_method: order.china_logistics?.[0]?.transport_method,
@@ -361,7 +362,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
         product_name: `Produit #${alert.product_id?.slice(0, 8)}`,
         vendor_name: `Vendeur #${alert.vendor_id?.slice(0, 8)}`,
         supplier_name: alert.supplier_id ? `Fournisseur #${alert.supplier_id.slice(0, 8)}` : 'N/A',
-        risk_type: alert.alert_type === 'INCREASE' ? 'price_spike' : 
+        risk_type: alert.alert_type === 'INCREASE' ? 'price_spike' :
                    alert.alert_type === 'OUT_OF_STOCK' ? 'out_of_stock' : 'price_spike',
         risk_level: alert.severity as RiskProduct['risk_level'],
         details: alert.message,
@@ -405,7 +406,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
       toast.success(verify ? 'Fournisseur vérifié' : 'Vérification retirée');
       await loadSuppliers();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la vérification');
     } finally {
       setActionLoading(false);
@@ -429,7 +430,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
       toast.success('Fournisseur blacklisté');
       await loadSuppliers();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors du blacklist');
     } finally {
       setActionLoading(false);
@@ -450,24 +451,24 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter(supplier => {
-      const matchesSearch = 
+      const matchesSearch =
         supplier.platform_shop_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         supplier.platform_shop_url?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesPlatform = platformFilter === 'all' || supplier.platform_type === platformFilter;
-      
+
       return matchesSearch && matchesPlatform;
     });
   }, [suppliers, searchQuery, platformFilter]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      const matchesSearch = 
+      const matchesSearch =
         order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.customer_order_id?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [orders, searchQuery, statusFilter]);
@@ -846,7 +847,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Dialog open={verifyDialogOpen && selectedSupplier?.id === supplier.id} 
+                          <Dialog open={verifyDialogOpen && selectedSupplier?.id === supplier.id}
                                   onOpenChange={(open) => {
                                     setVerifyDialogOpen(open);
                                     if (open) setSelectedSupplier(supplier);
@@ -866,7 +867,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                                   {supplier.verified_by_admin ? 'Retirer vérification' : 'Vérifier fournisseur'}
                                 </DialogTitle>
                                 <DialogDescription>
-                                  {supplier.verified_by_admin 
+                                  {supplier.verified_by_admin
                                     ? 'Le fournisseur perdra son statut vérifié.'
                                     : 'Confirmer que ce fournisseur a été validé manuellement.'}
                                 </DialogDescription>

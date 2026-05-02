@@ -9,11 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { 
-  MapPin, 
-  Crosshair, 
-  Loader2, 
-  CheckCircle, 
+import {
+  MapPin,
+  Crosshair,
+  Loader2,
+  CheckCircle,
   AlertCircle,
   Navigation,
   Building2,
@@ -24,10 +24,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { 
-  precisionGeoService, 
-  AddressSuggestion, 
-  PlaceDetails 
+import {
+  precisionGeoService,
+  AddressSuggestion,
+  PlaceDetails
 } from '@/services/gps/PrecisionGeolocationService';
 
 // Types
@@ -120,13 +120,13 @@ export function GooglePlacesAddressInput({
     }
 
     setIsLoading(true);
-    
+
     try {
       const results = await precisionGeoService.searchAddresses(
         query,
         userLocation || undefined
       );
-      
+
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
     } catch (error) {
@@ -143,7 +143,7 @@ export function GooglePlacesAddressInput({
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    
+
     // Invalider l'adresse précédente
     if (selectedAddress) {
       setSelectedAddress(null);
@@ -171,7 +171,7 @@ export function GooglePlacesAddressInput({
 
     try {
       const details = await precisionGeoService.getPlaceDetails(suggestion.placeId);
-      
+
       if (details && details.latitude && details.longitude) {
         const validatedAddress: ValidatedAddress = {
           formattedAddress: details.formattedAddress,
@@ -207,7 +207,7 @@ export function GooglePlacesAddressInput({
 
     try {
       const location = await precisionGeoService.getCurrentPosition(true);
-      
+
       // Géocodage inverse pour obtenir l'adresse
       const details = await precisionGeoService.reverseGeocode(
         location.latitude,
@@ -309,7 +309,7 @@ export function GooglePlacesAddressInput({
               inputClassName
             )}
           />
-          
+
           {/* Icône gauche */}
           <MapPin className={cn(
             'absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4',
@@ -360,7 +360,7 @@ export function GooglePlacesAddressInput({
 
       {/* Liste des suggestions */}
       {showSuggestions && suggestions.length > 0 && (
-        <Card 
+        <Card
           ref={suggestionsRef}
           className="absolute top-full left-0 right-0 mt-1 z-50 max-h-60 overflow-y-auto shadow-lg"
         >

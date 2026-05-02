@@ -52,7 +52,7 @@ export function AddDropshipProductDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.supplier_id || !formData.product_name || !formData.supplier_price || !formData.selling_price) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
@@ -89,7 +89,7 @@ export function AddDropshipProductDialog({
         estimated_delivery_min: '7',
         estimated_delivery_max: '21'
       });
-      
+
       onOpenChange(false);
     } catch (error) {
       console.error(error);
@@ -200,8 +200,8 @@ export function AddDropshipProductDialog({
 
           {formData.supplier_price && formData.selling_price && (
             <div className={`p-3 rounded-lg ${
-              parseFloat(marginValue) > 20 
-                ? 'bg-green-50 border-green-200 dark:bg-green-950' 
+              parseFloat(marginValue) > 20
+                ? 'bg-green-50 border-green-200 dark:bg-green-950'
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950'
             } border`}>
               <p className="text-sm">

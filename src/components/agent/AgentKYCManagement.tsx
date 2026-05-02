@@ -7,9 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Shield, Search, CheckCircle, XCircle, Clock, Eye, 
-  Building2, User, Phone, FileText, AlertTriangle, RefreshCw 
+import {
+  Shield, Search, CheckCircle, XCircle, Clock, Eye,
+  Building2, _User, _Phone, _FileText, _AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ interface AgentKYCManagementProps {
   canManage?: boolean;
 }
 
-export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManagementProps) {
+export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCManagementProps) {
   const [vendors, setVendors] = useState<VendorKYC[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,17 +45,18 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
   useEffect(() => {
     loadVendors();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStatus]);
 
   const loadVendors = async () => {
     try {
       setLoading(true);
-      
+
       let query = supabase
         .from('vendors')
         .select('id, user_id, business_name, email, phone, kyc_status, kyc_verified_at, is_verified, created_at')
         .order('created_at', { ascending: false });
-      
+
       if (activeStatus === 'pending') {
         query = query.or('kyc_status.eq.pending,kyc_status.is.null');
       } else if (activeStatus === 'verified') {
@@ -63,9 +64,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       } else if (activeStatus === 'rejected') {
         query = query.eq('kyc_status', 'rejected');
       }
-      
+
       const { data, error } = await query.limit(100);
-      
+
       if (error) throw error;
       setVendors(data || []);
     } catch (error: any) {
@@ -84,7 +85,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
     try {
       setProcessing(true);
-      
+
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -93,9 +94,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
           kyc_verified_at: new Date().toISOString()
         })
         .eq('id', vendor.id);
-      
+
       if (error) throw error;
-      
+
       toast.success(`KYC de ${vendor.business_name} validé avec succès`);
       loadVendors();
       setIsDialogOpen(false);
@@ -120,7 +121,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
     try {
       setProcessing(true);
-      
+
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -128,9 +129,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
           is_verified: false
         })
         .eq('id', vendor.id);
-      
+
       if (error) throw error;
-      
+
       toast.success(`KYC de ${vendor.business_name} rejeté`);
       loadVendors();
       setIsDialogOpen(false);
@@ -154,7 +155,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
     }
   };
 
-  const filteredVendors = vendors.filter(v => 
+  const filteredVendors = vendors.filter(v =>
     v.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.phone?.includes(searchTerm)
@@ -288,7 +289,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
               Détails KYC - {selectedVendor?.business_name}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedVendor && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -335,7 +336,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                       rows={3}
                     />
                   </div>
-                  
+
                   <DialogFooter className="gap-2">
                     <Button
                       variant="destructive"

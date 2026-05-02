@@ -3,7 +3,7 @@
  * Interface complète de gestion des transactions escrow pour le PDG
  */
 
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEscrowTransactions } from '@/hooks/useEscrowTransactions';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Shield, AlertCircle, CheckCircle, Clock, XCircle, Bell, 
-  RefreshCw, Search, Filter, Download, TrendingUp, DollarSign
+import {
+  Shield, AlertCircle, CheckCircle, Clock, XCircle, _Bell,
+  RefreshCw, Search, _Filter, _Download, TrendingUp, DollarSign
 } from 'lucide-react';
 import PDGEscrowDisputes from './PDGEscrowDisputes';
 import {
@@ -70,7 +70,7 @@ export default function PDGEscrowManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   const isAdmin = profile?.role === 'admin';
 
   // Statistiques
@@ -88,12 +88,12 @@ export default function PDGEscrowManagement() {
 
   // Filtrage
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       transaction.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -291,8 +291,8 @@ export default function PDGEscrowManagement() {
               <div className="py-12 text-center">
                 <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Aucun résultat' 
+                  {searchTerm || statusFilter !== 'all'
+                    ? 'Aucun résultat'
                     : 'Aucune transaction escrow'}
                 </h3>
                 <p className="text-muted-foreground">
@@ -314,9 +314,9 @@ export default function PDGEscrowManagement() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
                             <h4 className="font-bold text-lg">
-                              {transaction.order?.order_number 
-                                ? `Commande: ${transaction.order.order_number}` 
-                                : transaction.order_id 
+                              {transaction.order?.order_number
+                                ? `Commande: ${transaction.order.order_number}`
+                                : transaction.order_id
                                   ? `ID: ${transaction.order_id.slice(0, 8)}...`
                                   : 'Commande sans ID'}
                             </h4>
@@ -325,7 +325,7 @@ export default function PDGEscrowManagement() {
                               {config.label}
                             </Badge>
                           </div>
-                          
+
                           {/* Informations Vendeur */}
                           {transaction.receiver && (
                             <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3 mb-3">
@@ -348,7 +348,7 @@ export default function PDGEscrowManagement() {
                               </div>
                             </div>
                           )}
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                             <div>
                               <p className="text-sm text-muted-foreground mb-1">Montant</p>

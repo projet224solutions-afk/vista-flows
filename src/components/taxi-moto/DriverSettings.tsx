@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { 
-  MapPin, Bell, User, Phone, Mail, Car, 
+import {
+  MapPin, Bell, User, Phone, Mail, Car,
   Settings as SettingsIcon, Save, LogOut, Loader2, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -57,6 +57,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
   // Charger le profil et les paramètres
   useEffect(() => {
     loadDriverData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   const loadDriverData = async () => {
@@ -82,8 +83,8 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
       if (profileError) throw profileError;
 
       // Extraire gilet_number et moto_serial_number du champ vehicle JSON
-      const vehicleData = driverData.vehicle ? 
-        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle) 
+      const vehicleData = driverData.vehicle ?
+        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle)
         : {};
 
       setProfile({
@@ -121,7 +122,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
     try {
       // Sauvegarder dans localStorage
       localStorage.setItem(`driver_settings_${driverId}`, JSON.stringify(settings));
-      
+
       // Mettre à jour le profil si modifié
       if (profile) {
         const { error: profileError } = await supabase
@@ -142,8 +143,8 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
           .eq('id', driverId)
           .single();
 
-        const currentVehicle = currentDriver?.vehicle ? 
-          (typeof currentDriver.vehicle === 'string' ? JSON.parse(currentDriver.vehicle) : currentDriver.vehicle) 
+        const currentVehicle = currentDriver?.vehicle ?
+          (typeof currentDriver.vehicle === 'string' ? JSON.parse(currentDriver.vehicle) : currentDriver.vehicle)
           : {};
 
         const updatedVehicle = {
@@ -380,13 +381,13 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               <Bell className="w-4 h-4" />
               Notifications
             </h3>
-            
+
             <div className="flex items-center justify-between">
               <Label htmlFor="sound" className="text-sm">Notifications sonores</Label>
               <Switch
                 id="sound"
                 checked={settings.soundNotifications}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, soundNotifications: checked }))
                 }
               />
@@ -397,7 +398,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               <Switch
                 id="vibration"
                 checked={settings.vibrationNotifications}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, vibrationNotifications: checked }))
                 }
               />
@@ -408,7 +409,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               <Switch
                 id="auto"
                 checked={settings.autoAccept}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setSettings(prev => ({ ...prev, autoAccept: checked }))
                 }
               />
@@ -427,9 +428,9 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                 min="1"
                 max="20"
                 value={settings.serviceRadius}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  serviceRadius: parseInt(e.target.value) 
+                onChange={(e) => setSettings(prev => ({
+                  ...prev,
+                  serviceRadius: parseInt(e.target.value)
                 }))}
                 className="flex-1"
               />
@@ -449,9 +450,9 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                 max="50000"
                 step="1000"
                 value={settings.minRidePrice}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  minRidePrice: parseInt(e.target.value) 
+                onChange={(e) => setSettings(prev => ({
+                  ...prev,
+                  minRidePrice: parseInt(e.target.value)
                 }))}
                 className="flex-1 px-4 py-2 border rounded-lg"
               />
@@ -472,8 +473,8 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                   onClick={() => toggleZone(zone)}
                   variant={settings.preferredZones.includes(zone) ? 'default' : 'outline'}
                   size="sm"
-                  className={settings.preferredZones.includes(zone) 
-                    ? 'bg-blue-600 hover:bg-blue-700' 
+                  className={settings.preferredZones.includes(zone)
+                    ? 'bg-blue-600 hover:bg-blue-700'
                     : ''
                   }
                 >

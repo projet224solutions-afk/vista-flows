@@ -109,7 +109,7 @@ export interface PurchaseProduct {
   categoryId: string | null;
 }
 
-const CURRENCIES = [
+const _CURRENCIES = [
   { code: 'GNF', label: 'GNF' },
   { code: 'USD', label: 'USD' },
   { code: 'EUR', label: 'EUR' },
@@ -130,7 +130,7 @@ export function NewPurchaseDialog({
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<PurchaseProduct[]>([]);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-  
+
   // Keypad state
   const [keypadOpen, setKeypadOpen] = useState(false);
   const [keypadMode, setKeypadMode] = useState<'price' | 'quantity' | 'carton'>('quantity');
@@ -188,7 +188,7 @@ export function NewPurchaseDialog({
     queryKey: ['supplier-products', selectedSupplier?.id],
     queryFn: async () => {
       if (!selectedSupplier?.id) return [];
-      
+
       const { data, error } = await supabase
         .from('vendor_supplier_products')
         .select(`
@@ -213,13 +213,13 @@ export function NewPurchaseDialog({
   const filteredSupplierProducts = supplierProducts.filter((sp) => {
     const matchesSearch = sp.product?.name?.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
       sp.product?.sku?.toLowerCase().includes(productSearchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategoryFilter === 'all' || 
+
+    const matchesCategory = selectedCategoryFilter === 'all' ||
       sp.product?.category_id === selectedCategoryFilter;
-    
+
     // Don't show already selected products
     const notAlreadySelected = !selectedProducts.some(p => p.productId === sp.product_id);
-    
+
     return matchesSearch && matchesCategory && notAlreadySelected;
   });
 
@@ -233,7 +233,7 @@ export function NewPurchaseDialog({
     const sellByCarton = sp.product?.sell_by_carton || false;
     const unitsPerCarton = sp.product?.units_per_carton || null;
     const priceCarton = sp.product?.price_carton || null;
-    
+
     const newProduct: PurchaseProduct = {
       productId: sp.product_id,
       productName: sp.product?.name || 'Produit inconnu',
@@ -251,7 +251,7 @@ export function NewPurchaseDialog({
       cartonQuantity: 0,
       categoryId: sp.product?.category_id || null,
     };
-    
+
     setSelectedProducts(prev => [...prev, newProduct]);
   };
 
@@ -293,7 +293,7 @@ export function NewPurchaseDialog({
     setProductSearchTerm('');
   };
 
-  const updateProductQuantity = (productId: string, delta: number) => {
+  const _updateProductQuantity = (productId: string, delta: number) => {
     setSelectedProducts((prev) =>
       prev.map((p) =>
         p.productId === productId
@@ -323,7 +323,7 @@ export function NewPurchaseDialog({
     );
   };
 
-  const setProductCurrency = (productId: string, currency: string) => {
+  const _setProductCurrency = (productId: string, currency: string) => {
     setSelectedProducts((prev) =>
       prev.map((p) =>
         p.productId === productId
@@ -333,7 +333,7 @@ export function NewPurchaseDialog({
     );
   };
 
-  const updateCartonQuantity = (productId: string, delta: number) => {
+  const _updateCartonQuantity = (productId: string, delta: number) => {
     setSelectedProducts((prev) =>
       prev.map((p) =>
         p.productId === productId
@@ -360,7 +360,7 @@ export function NewPurchaseDialog({
     setKeypadMode(mode);
     setKeypadCurrency(product.unitCostCurrency);
     setKeypadUnitsPerCarton(product.unitsPerCarton);
-    
+
     if (mode === 'price') {
       setKeypadCurrentValue(product.unitCost);
     } else if (mode === 'quantity') {
@@ -368,13 +368,13 @@ export function NewPurchaseDialog({
     } else {
       setKeypadCurrentValue(product.cartonQuantity);
     }
-    
+
     setKeypadOpen(true);
   };
 
   const handleKeypadConfirm = (value: number) => {
     if (!keypadProductId) return;
-    
+
     if (keypadMode === 'price') {
       setProductUnitCost(keypadProductId, value);
     } else if (keypadMode === 'quantity') {
@@ -404,7 +404,7 @@ export function NewPurchaseDialog({
   const totalItems = selectedProducts.reduce((sum, p) => sum + calculateTotalUnits(p), 0);
 
   // Get unique categories from supplier products for the filter
-  const availableCategories = categories.filter(cat => 
+  const availableCategories = categories.filter(cat =>
     supplierProducts.some(sp => sp.product?.category_id === cat.id)
   );
 
@@ -555,9 +555,9 @@ export function NewPurchaseDialog({
                   <p className="font-semibold text-xs sm:text-sm truncate">{selectedSupplier?.name}</p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleChangeSupplier}
                 className="text-[10px] sm:text-xs gap-1 px-2 h-7 sm:h-8 flex-shrink-0"
               >
@@ -603,7 +603,7 @@ export function NewPurchaseDialog({
                     <Badge variant="secondary" className="text-[10px] sm:text-xs">{filteredSupplierProducts.length}</Badge>
                   </Label>
                 </div>
-                
+
                 {loadingProducts ? (
                   <div className="flex-1 flex items-center justify-center min-h-[120px] sm:min-h-0">
                     <p className="text-xs sm:text-sm text-muted-foreground">Chargement...</p>
@@ -665,7 +665,7 @@ export function NewPurchaseDialog({
                     <Badge className="bg-primary text-[10px] sm:text-xs">{selectedProducts.length} produit(s)</Badge>
                   </Label>
                 </div>
-                
+
                 {selectedProducts.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-3 min-h-[120px] sm:min-h-0">
                     <ShoppingCart className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40 mb-2" />
@@ -678,7 +678,7 @@ export function NewPurchaseDialog({
                     <div className="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2">
                       {selectedProducts.map((product) => {
                         const productTotal = calculateProductTotal(product);
-                        
+
                         return (
                           <div
                             key={product.productId}
@@ -701,9 +701,9 @@ export function NewPurchaseDialog({
                                 <p className="font-semibold text-sm truncate">{product.productName}</p>
                                 <p className="text-xs text-muted-foreground">Stock: {product.currentStock}</p>
                               </div>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
+                              <Button
+                                size="icon"
+                                variant="ghost"
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => removeProductFromSelection(product.productId)}
                               >

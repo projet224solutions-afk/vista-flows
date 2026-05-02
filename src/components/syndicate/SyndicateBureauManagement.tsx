@@ -71,7 +71,7 @@ export default function SyndicateBureauManagement() {
         .eq('id', bureauId);
 
       if (error) throw error;
-      
+
       toast.success('Statut mis à jour');
       loadData();
     } catch (error: unknown) {
@@ -89,7 +89,7 @@ export default function SyndicateBureauManagement() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const formatAmount = useFormatCurrency();
+  const _formatAmount = useFormatCurrency();
 
   if (loading) {
     return (

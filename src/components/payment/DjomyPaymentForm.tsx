@@ -30,23 +30,23 @@ interface PaymentStatus {
 }
 
 const PAYMENT_METHODS = [
-  { 
-    id: 'OM' as PaymentMethod, 
-    name: 'Orange Money', 
+  {
+    id: 'OM' as PaymentMethod,
+    name: 'Orange Money',
     icon: '🍊',
     color: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30',
     activeColor: 'ring-2 ring-orange-500 border-orange-500'
   },
-  { 
-    id: 'MOMO' as PaymentMethod, 
-    name: 'MTN Mobile Money', 
+  {
+    id: 'MOMO' as PaymentMethod,
+    name: 'MTN Mobile Money',
     icon: '💛',
     color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
     activeColor: 'ring-2 ring-yellow-500 border-yellow-500'
   },
-  { 
-    id: 'KULU' as PaymentMethod, 
-    name: 'Kulu', 
+  {
+    id: 'KULU' as PaymentMethod,
+    name: 'Kulu',
     icon: '💳',
     color: 'border-blue-500 bg-blue-50 dark:bg-blue-950/30',
     activeColor: 'ring-2 ring-blue-500 border-blue-500'
@@ -119,7 +119,7 @@ export function DjomyPaymentForm({
           message: 'Paiement initié ! Validez sur votre téléphone.',
           transactionId: data.transactionId,
         });
-        
+
         toast.success('Paiement initié avec succès');
         onSuccess?.(data.transactionId);
       } else {
@@ -307,7 +307,7 @@ export function DjomyPaymentForm({
               `Payer ${formatAmount(amount)}`
             )}
           </Button>
-          
+
           {onCancel && (
             <Button
               type="button"

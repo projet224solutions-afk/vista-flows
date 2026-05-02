@@ -13,9 +13,9 @@ export default function PdgDebug() {
   const hasPdgAccess = !!profile && ['admin', 'pdg', 'ceo'].includes((profile.role || '').toString().toLowerCase());
 
   useEffect(() => {
-    // V├®rifier que l'utilisateur est PDG
+    // Vérifier que l'utilisateur est PDG
     if (profile && !hasPdgAccess) {
-      toast.error('Acc├¿s refus├® - R├®serv├® au PDG');
+      toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
     }
   }, [profile, navigate, hasPdgAccess]);
@@ -39,7 +39,7 @@ export default function PdgDebug() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Surveillance Logique</h1>
-            <p className="text-muted-foreground">Monitez 120 r├¿gles m├®tier en temps r├®el</p>
+            <p className="text-muted-foreground">Monitez 120 règles métier en temps réel</p>
           </div>
         </div>
 

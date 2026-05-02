@@ -1,5 +1,4 @@
 import { resolveBackendUrl } from '@/config/backend';
-import { supabase } from '@/integrations/supabase/client';
 
 export type ConnectivityStatus = 'online' | 'degraded' | 'offline';
 
@@ -26,10 +25,8 @@ interface HealthProbeResult {
 }
 
 const HEALTH_CHECK_PATH = resolveBackendUrl('/healthz.json');
-const FALLBACK_SUPABASE_URL = (supabase as any)?.supabaseUrl as string | undefined;
-const FALLBACK_SUPABASE_KEY = (supabase as any)?.supabaseKey as string | undefined;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const DEFAULT_RETRIES = 1;
@@ -43,7 +40,7 @@ let lastReportedReason = '';
 
 const nowPerf = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+function _withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   // 🚀 Use AbortController for real cancellation (saves bandwidth on slow networks)
   const controller = new AbortController();
   return new Promise<T>((resolve, reject) => {
@@ -179,15 +176,7 @@ function pickStatusCode(...probes: HealthProbeResult[]): number | undefined {
 }
 
 async function executeHealthCheck(timeoutMs: number, retries: number): Promise<NetworkHealthResult> {
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return {
-      ok: false,
-      connectivity: 'offline',
-      reason: 'navigator_offline',
-      latencyMs: 0,
-      sources: [],
-    };
-  }
+  const browserOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
 
   const maxAttempts = Math.max(1, retries + 1);
   let lastResult: NetworkHealthResult = {
@@ -253,7 +242,10 @@ async function executeHealthCheck(timeoutMs: number, retries: number): Promise<N
       lastResult = {
         ok: false,
         connectivity: 'offline',
-        reason: [healthzProbe.reason, supabaseProbe.reason, businessProbe.reason].find(Boolean) || 'offline',
+        reason:
+          (!browserOnline && 'navigator_offline') ||
+          [healthzProbe.reason, supabaseProbe.reason, businessProbe.reason].find(Boolean) ||
+          'offline',
         statusCode: pickStatusCode(healthzProbe, supabaseProbe),
         latencyMs,
         sources,
@@ -334,6 +326,22 @@ export async function checkNetworkHealth(options: NetworkHealthOptions = {}): Pr
     });
 
   return inFlightHealthCheck;
+}
+
+export function getCachedNetworkHealth(): NetworkHealthResult | null {
+  return lastHealthResult;
+}
+
+export function shouldAssumeOffline(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  if (navigator.onLine) return false;
+
+  const cacheIsFresh = Date.now() - lastHealthCheckAt < RESULT_CACHE_WINDOW_MS * 2;
+  if (!cacheIsFresh || !lastHealthResult) {
+    return false;
+  }
+
+  return lastHealthResult.connectivity === 'offline';
 }
 
 export { HEALTH_CHECK_PATH, DEFAULT_TIMEOUT_MS };

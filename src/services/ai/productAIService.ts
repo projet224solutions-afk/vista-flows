@@ -1,6 +1,6 @@
 /**
  * 🤖 SERVICE IA COMPLET POUR PRODUITS VENDEURS
- * 
+ *
  * Fonctionnalités:
  * 1. Détection automatique type de produit
  * 2. Catégorisation intelligente
@@ -21,7 +21,7 @@ export interface ProductAnalysis {
   detectedType: string;
   category: string;
   subcategory?: string;
-  
+
   // Caractéristiques extraites
   characteristics: {
     brand?: string;
@@ -33,7 +33,7 @@ export interface ProductAnalysis {
     material?: string;
     condition?: 'new' | 'used' | 'refurbished';
   };
-  
+
   // Description enrichie
   enrichedDescription: {
     commercial: string;
@@ -42,11 +42,11 @@ export interface ProductAnalysis {
     packageContent?: string[];
     warranty?: string;
   };
-  
+
   // Image et tags
   generatedImageUrl?: string;
   autoTags: string[];
-  
+
   // Métadonnées
   confidence: number;
   language: 'fr' | 'en';
@@ -114,21 +114,21 @@ const CATEGORIES_MAP = {
 // ============================================
 
 export class ProductAIService {
-  
+
   /**
    * 🎯 ANALYSE COMPLÈTE DU PRODUIT
    */
   static async analyzeProduct(input: ProductInput): Promise<ProductAnalysis> {
     try {
       const text = `${input.name} ${input.description}`.toLowerCase();
-      
+
       // 1. Détection type et catégorie
       const category = this.detectCategory(text);
       const detectedType = this.detectProductType(text, category);
-      
+
       // 2. Extraction caractéristiques
       const characteristics = this.extractCharacteristics(text);
-      
+
       // 3. Génération description professionnelle
       const enrichedDescription = await this.generateProfessionalDescription(
         input.name,
@@ -136,10 +136,10 @@ export class ProductAIService {
         category,
         characteristics
       );
-      
+
       // 4. Génération tags automatiques
       const autoTags = this.generateTags(input.name, input.description, category, characteristics);
-      
+
       // 5. Génération image (optionnel)
       let generatedImageUrl: string | undefined;
       try {
@@ -151,7 +151,7 @@ export class ProductAIService {
       } catch (error) {
         console.warn('⚠️ Génération image échouée:', error);
       }
-      
+
       return {
         detectedType,
         category,
@@ -162,20 +162,20 @@ export class ProductAIService {
         confidence: 0.85,
         language: 'fr'
       };
-      
+
     } catch (error) {
       console.error('❌ Erreur analyse IA produit:', error);
       throw new Error('Échec de l\'analyse IA du produit');
     }
   }
-  
+
   /**
    * 📦 DÉTECTION CATÉGORIE PRINCIPALE
    */
   private static detectCategory(text: string): string {
     let bestMatch = 'autre';
     let maxScore = 0;
-    
+
     for (const [category, keywords] of Object.entries(CATEGORIES_MAP)) {
       let score = 0;
       for (const keyword of keywords) {
@@ -183,37 +183,37 @@ export class ProductAIService {
           score += keyword.length; // Mots plus longs = plus spécifiques
         }
       }
-      
+
       if (score > maxScore) {
         maxScore = score;
         bestMatch = category;
       }
     }
-    
+
     return bestMatch;
   }
-  
+
   /**
    * 🔍 DÉTECTION TYPE PRÉCIS
    */
   private static detectProductType(text: string, category: string): string {
     const keywords = CATEGORIES_MAP[category as keyof typeof CATEGORIES_MAP] || [];
-    
+
     for (const keyword of keywords) {
       if (text.includes(keyword)) {
         return keyword;
       }
     }
-    
+
     return category;
   }
-  
+
   /**
    * ⚙️ EXTRACTION CARACTÉRISTIQUES
    */
   private static extractCharacteristics(text: string): ProductAnalysis['characteristics'] {
     const chars: ProductAnalysis['characteristics'] = {};
-    
+
     // Marques téléphones
     const phoneBrands = ['iphone', 'samsung', 'huawei', 'xiaomi', 'oppo', 'tecno', 'infinix', 'realme'];
     for (const brand of phoneBrands) {
@@ -222,13 +222,13 @@ export class ProductAIService {
         break;
       }
     }
-    
+
     // Modèle
     const modelMatch = text.match(/\b([a-z]\d+|pro|max|plus|ultra|note|redmi)\b/gi);
     if (modelMatch) {
       chars.model = modelMatch.join(' ');
     }
-    
+
     // Couleur
     const colors = ['noir', 'blanc', 'rouge', 'bleu', 'vert', 'rose', 'gris', 'silver', 'gold', 'purple'];
     for (const color of colors) {
@@ -237,19 +237,19 @@ export class ProductAIService {
         break;
       }
     }
-    
+
     // Capacité (Go, GB, L, ml)
     const capacityMatch = text.match(/(\d+)\s*(go|gb|l|ml|litre|litres)/i);
     if (capacityMatch) {
       chars.capacity = `${capacityMatch[1]}${capacityMatch[2].toUpperCase()}`;
     }
-    
+
     // Puissance (W, mAh)
     const powerMatch = text.match(/(\d+)\s*(w|watt|watts|mah)/i);
     if (powerMatch) {
       chars.power = `${powerMatch[1]}${powerMatch[2].toUpperCase()}`;
     }
-    
+
     // Matériau
     const materials = ['inox', 'acier', 'plastique', 'verre', 'bois', 'cuir', 'tissu', 'métal'];
     for (const material of materials) {
@@ -258,7 +258,7 @@ export class ProductAIService {
         break;
       }
     }
-    
+
     // État
     if (text.includes('neuf') || text.includes('nouveau')) {
       chars.condition = 'new';
@@ -267,10 +267,10 @@ export class ProductAIService {
     } else if (text.includes('reconditionné')) {
       chars.condition = 'refurbished';
     }
-    
+
     return chars;
   }
-  
+
   /**
    * 📝 GÉNÉRATION DESCRIPTION PROFESSIONNELLE
    */
@@ -280,7 +280,7 @@ export class ProductAIService {
     category: string,
     characteristics: ProductAnalysis['characteristics']
   ): Promise<ProductAnalysis['enrichedDescription']> {
-    
+
     // Appel Edge Function Supabase pour génération IA
     try {
       const { data, error } = await supabase.functions.invoke('generate-product-description', {
@@ -291,19 +291,19 @@ export class ProductAIService {
           characteristics
         }
       });
-      
+
       if (error) throw error;
-      
+
       return data;
-      
+
     } catch (error) {
       console.warn('⚠️ IA génération indisponible, fallback manuel:', error);
-      
+
       // Fallback: génération basique
       return this.generateBasicDescription(name, description, category, characteristics);
     }
   }
-  
+
   /**
    * 📝 FALLBACK: Description basique
    */
@@ -313,19 +313,19 @@ export class ProductAIService {
     category: string,
     characteristics: ProductAnalysis['characteristics']
   ): ProductAnalysis['enrichedDescription'] {
-    
+
     const { brand, model, capacity, power, material, color, condition } = characteristics;
-    
+
     // Description commerciale
     let commercial = `Découvrez ${name}`;
-    
+
     if (brand) commercial += ` de la marque ${brand}`;
     if (model) commercial += ` ${model}`;
     if (condition === 'new') commercial += ', tout neuf et sous garantie';
     if (condition === 'used') commercial += ', en excellent état';
-    
+
     commercial += '. ';
-    
+
     if (category === 'electronique') {
       commercial += 'Un appareil performant et fiable pour un usage quotidien. ';
     } else if (category === 'electromenager') {
@@ -333,12 +333,12 @@ export class ProductAIService {
     } else if (category === 'mode') {
       commercial += 'Un article tendance et de qualité pour compléter votre style. ';
     }
-    
+
     commercial += description;
-    
+
     // Points forts
     const keyPoints: string[] = [];
-    
+
     if (brand) keyPoints.push(`Marque ${brand} reconnue`);
     if (capacity) keyPoints.push(`Capacité ${capacity}`);
     if (power) keyPoints.push(`Puissance ${power}`);
@@ -346,13 +346,13 @@ export class ProductAIService {
     if (color) keyPoints.push(`Couleur ${color}`);
     if (condition === 'new') keyPoints.push('État neuf');
     if (condition === 'used') keyPoints.push('Excellent état');
-    
+
     keyPoints.push('Livraison rapide disponible');
     keyPoints.push('Service client réactif');
-    
+
     // Caractéristiques techniques
     const technicalSpecs: Record<string, string> = {};
-    
+
     if (brand) technicalSpecs['Marque'] = brand;
     if (model) technicalSpecs['Modèle'] = model;
     if (capacity) technicalSpecs['Capacité'] = capacity;
@@ -362,18 +362,18 @@ export class ProductAIService {
     if (condition) {
       technicalSpecs['État'] = condition === 'new' ? 'Neuf' : condition === 'used' ? 'Occasion' : 'Reconditionné';
     }
-    
+
     // Contenu du paquet
     const packageContent = [
       name,
       'Manuel d\'utilisation',
       'Garantie constructeur'
     ];
-    
+
     if (category === 'electronique') {
       packageContent.push('Câble de charge', 'Adaptateur secteur');
     }
-    
+
     return {
       commercial,
       keyPoints,
@@ -382,7 +382,7 @@ export class ProductAIService {
       warranty: condition === 'new' ? 'Garantie constructeur 12 mois' : 'Garantie vendeur 3 mois'
     };
   }
-  
+
   /**
    * 🏷️ GÉNÉRATION TAGS AUTOMATIQUES
    */
@@ -393,10 +393,10 @@ export class ProductAIService {
     characteristics: ProductAnalysis['characteristics']
   ): string[] {
     const tags = new Set<string>();
-    
+
     // Catégorie
     tags.add(category);
-    
+
     // Caractéristiques
     if (characteristics.brand) tags.add(characteristics.brand);
     if (characteristics.model) tags.add(characteristics.model);
@@ -404,13 +404,13 @@ export class ProductAIService {
     if (characteristics.condition) {
       tags.add(characteristics.condition === 'new' ? 'neuf' : 'occasion');
     }
-    
+
     // Mots-clés du nom
     const nameWords = name.toLowerCase().split(/\s+/);
     nameWords.forEach(word => {
       if (word.length > 3) tags.add(word);
     });
-    
+
     // Tags spécifiques par catégorie
     if (category === 'electronique') {
       tags.add('high-tech');
@@ -422,10 +422,10 @@ export class ProductAIService {
       tags.add('fashion');
       tags.add('style');
     }
-    
+
     return Array.from(tags).slice(0, 10);
   }
-  
+
   /**
    * 🎨 GÉNÉRATION IMAGE IA
    */
@@ -434,7 +434,7 @@ export class ProductAIService {
     description: string,
     category: string
   ): Promise<string | undefined> {
-    
+
     try {
       // Appel Edge Function pour génération image
       const { data, error } = await supabase.functions.invoke('generate-product-image', {
@@ -446,17 +446,17 @@ export class ProductAIService {
           background: 'white' // white | transparent | scene
         }
       });
-      
+
       if (error) throw error;
-      
+
       return data.imageUrl;
-      
+
     } catch (error) {
       console.warn('⚠️ Génération image échouée:', error);
       return undefined;
     }
   }
-  
+
   /**
    * 🔄 ENRICHIR PRODUIT EXISTANT
    */
@@ -468,18 +468,18 @@ export class ProductAIService {
         .select('name, description, vendor_id')
         .eq('id', productId)
         .single();
-      
+
       if (error || !product) {
         throw new Error('Produit non trouvé');
       }
-      
+
       // Analyser
       const analysis = await this.analyzeProduct({
         name: product.name,
         description: product.description || '',
         userId: product.vendor_id
       });
-      
+
       // Mettre à jour le produit
       const { error: updateError } = await supabase
         .from('products')
@@ -491,13 +491,13 @@ export class ProductAIService {
           updated_at: new Date().toISOString()
         })
         .eq('id', productId);
-      
+
       if (updateError) {
         console.error('❌ Erreur mise à jour produit:', updateError);
       }
-      
+
       return analysis;
-      
+
     } catch (error) {
       console.error('❌ Erreur enrichissement produit:', error);
       throw error;

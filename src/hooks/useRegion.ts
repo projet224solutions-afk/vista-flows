@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
+import {
   regionService,
   globalHealthService,
   RegionConfig,
@@ -18,24 +18,24 @@ interface UseRegionReturn {
   // Current region
   currentRegion: RegionConfig | null;
   isDetecting: boolean;
-  
+
   // Endpoints
   apiEndpoint: string;
   cdnEndpoint: string;
   wsEndpoint: string;
-  
+
   // Health
   health: HealthMetrics | null;
   regionsHealth: RegionHealth[];
   alerts: HealthAlert[];
-  
+
   // Actions
   detectRegion: () => Promise<RegionConfig>;
   switchRegion: (regionId: string) => void;
   failover: () => Promise<RegionConfig>;
   acknowledgeAlert: (alertId: string) => void;
   refreshHealth: () => Promise<HealthMetrics>;
-  
+
   // Utils
   availableRegions: RegionConfig[];
   isHealthy: boolean;
@@ -51,7 +51,7 @@ export function useRegion(): UseRegionReturn {
   // Détecter la région au montage
   useEffect(() => {
     detectRegion();
-    
+
     // Mettre à jour la santé périodiquement
     const interval = setInterval(() => {
       refreshHealth();
@@ -60,6 +60,7 @@ export function useRegion(): UseRegionReturn {
     return () => {
       clearInterval(interval);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const detectRegion = useCallback(async (): Promise<RegionConfig> => {
@@ -72,6 +73,7 @@ export function useRegion(): UseRegionReturn {
     } finally {
       setIsDetecting(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const switchRegion = useCallback((regionId: string): void => {

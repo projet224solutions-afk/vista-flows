@@ -5,7 +5,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { _Card, _CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Camera, Check, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -22,7 +22,7 @@ interface DeliveryProofUploadProps {
   onCancel: () => void;
 }
 
-export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: DeliveryProofUploadProps) {
+export function DeliveryProofUpload({ _deliveryId, onProofUploaded, onCancel }: DeliveryProofUploadProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [signature, setSignature] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -139,7 +139,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
             onChange={handlePhotoChange}
             className="hidden"
           />
-          
+
           {photoPreview ? (
             <div className="relative">
               <img

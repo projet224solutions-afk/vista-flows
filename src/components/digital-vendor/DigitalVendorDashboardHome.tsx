@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Laptop, Plus, Eye, TrendingUp, DollarSign,
-  Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
-  Users, Download, BarChart3, Wallet
+  _Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
+  Users, Download, BarChart3, _Wallet
 } from 'lucide-react';
 import { useMerchantDigitalProducts } from '@/hooks/useDigitalProducts';
 import { SectionLoader } from '@/components/ui/GlobalLoader';

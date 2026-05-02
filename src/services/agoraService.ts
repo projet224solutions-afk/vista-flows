@@ -13,7 +13,7 @@ import type {
   IRemoteVideoTrack,
   IRemoteAudioTrack,
   NetworkQuality,
-  IAgoraRTCRemoteUser
+  _IAgoraRTCRemoteUser
 } from 'agora-rtc-sdk-ng';
 
 export interface AgoraConfig {
@@ -73,7 +73,7 @@ class AgoraService {
   private currentUid = '';
   private appId = '';
   private subscribedChannels: Set<string> = new Set();
-  
+
   // Event callbacks
   private onUserJoined?: (user: RemoteUser) => void;
   private onUserLeft?: (uid: string) => void;
@@ -85,13 +85,13 @@ class AgoraService {
   async initialize(config: AgoraConfig): Promise<void> {
     try {
       this.appId = config.appId;
-      
+
       const AgoraRTC = await loadAgoraRTC();
-      
+
       // Initialiser RTC Client
-      this.client = AgoraRTC.createClient({ 
-        mode: 'rtc', 
-        codec: 'vp8' 
+      this.client = AgoraRTC.createClient({
+        mode: 'rtc',
+        codec: 'vp8'
       });
 
       // Configurer les événements RTC
@@ -107,17 +107,17 @@ class AgoraService {
   /**
    * Initialiser RTM pour un utilisateur spécifique (lazy-load du SDK RTM)
    */
-  async initializeRTM(userId: string, token?: string): Promise<void> {
+  async initializeRTM(userId: string, _token?: string): Promise<void> {
     try {
       if (!this.appId) {
         throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
       }
 
       const AgoraRTMDefault = await loadAgoraRTM();
-      
+
       // Créer instance RTM v2
       this.rtmClient = new AgoraRTMDefault.RTM(this.appId, userId);
-      
+
       // Configurer les événements RTM v2
       this.setupRTMEvents();
 
@@ -139,22 +139,22 @@ class AgoraService {
 
     this.client.on('user-published', async (user, mediaType) => {
       console.log('👤 Utilisateur publié:', user.uid, mediaType);
-      
+
       try {
         await this.client!.subscribe(user, mediaType);
-        
+
         const remoteUser: RemoteUser = this.remoteUsers.get(String(user.uid)) || { uid: user.uid };
-        
+
         if (mediaType === 'video') {
           remoteUser.videoTrack = user.videoTrack;
         } else if (mediaType === 'audio') {
           remoteUser.audioTrack = user.audioTrack;
           user.audioTrack?.play();
         }
-        
+
         this.remoteUsers.set(String(user.uid), remoteUser);
         this.onUserJoined?.(remoteUser);
-        
+
         console.log('✅ Abonné au flux:', user.uid, mediaType);
       } catch (error) {
         console.error('❌ Erreur abonnement flux:', error);
@@ -163,7 +163,7 @@ class AgoraService {
 
     this.client.on('user-unpublished', (user, mediaType) => {
       console.log('👤 Utilisateur a arrêté la publication:', user.uid, mediaType);
-      
+
       const remoteUser = this.remoteUsers.get(String(user.uid));
       if (remoteUser) {
         if (mediaType === 'video') {
@@ -225,7 +225,7 @@ class AgoraService {
         withMessage: true,
         withPresence: true
       });
-      
+
       this.subscribedChannels.add(channelName);
       console.log('✅ Abonné au canal RTM:', channelName);
     } catch (error) {
@@ -554,14 +554,14 @@ class AgoraService {
         errors.push(msg);
         console.warn('[Agora] ⚠️', msg);
       }
-      
+
       if (this.rtmClient) {
         try {
           for (const channel of this.subscribedChannels) {
             try {
               await Promise.race([
                 this.rtmClient.unsubscribe(channel),
-                new Promise<never>((_, reject) => 
+                new Promise<never>((_, reject) =>
                   setTimeout(() => reject(new Error('Timeout unsubscribe')), 5000)
                 )
               ]);
@@ -571,11 +571,11 @@ class AgoraService {
             }
           }
           this.subscribedChannels.clear();
-          
+
           try {
             await Promise.race([
               this.rtmClient.logout(),
-              new Promise<never>((_, reject) => 
+              new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout logout')), 5000)
               )
             ]);
@@ -583,7 +583,7 @@ class AgoraService {
           } catch (logoutError: any) {
             console.warn('[Agora] ⚠️ Erreur RTM logout:', logoutError?.message);
           }
-          
+
           this.rtmClient = null;
         } catch (rtmError: any) {
           const msg = `Erreur cleanup RTM: ${rtmError?.message || 'Inconnue'}`;

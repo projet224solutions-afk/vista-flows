@@ -34,6 +34,7 @@ const SecurityForensics: React.FC = () => {
 
   useEffect(() => {
     loadSnapshots();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateSnapshot = async () => {
@@ -151,8 +152,8 @@ const SecurityForensics: React.FC = () => {
                     placeholder="UUID de l'incident"
                   />
                 </div>
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   onClick={handleCreateSnapshot}
                   disabled={loading}
                 >
@@ -173,8 +174,8 @@ const SecurityForensics: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   variant="outline"
                   onClick={() => exportAuditLogs()}
                   disabled={loading}
@@ -239,8 +240,8 @@ const SecurityForensics: React.FC = () => {
                   placeholder="UUID de l'utilisateur"
                 />
               </div>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={handleAnalyzeBehavior}
                 disabled={loading}
               >
@@ -254,8 +255,8 @@ const SecurityForensics: React.FC = () => {
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-muted-foreground">Score d'Anomalie</p>
                       <p className="text-2xl font-bold">
-                        {behaviorAnalysis.anomalyScore !== null && behaviorAnalysis.anomalyScore !== undefined 
-                          ? behaviorAnalysis.anomalyScore.toFixed(1) 
+                        {behaviorAnalysis.anomalyScore !== null && behaviorAnalysis.anomalyScore !== undefined
+                          ? behaviorAnalysis.anomalyScore.toFixed(1)
                           : '0.0'}
                       </p>
                     </div>
@@ -312,8 +313,8 @@ const SecurityForensics: React.FC = () => {
                   placeholder="UUID de l'incident"
                 />
               </div>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={handleCorrelateEvents}
                 disabled={loading || !selectedIncidentId}
               >
@@ -338,8 +339,8 @@ const SecurityForensics: React.FC = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="timeline-incident">Sélectionner un Incident</Label>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-start text-left font-normal"
                   onClick={async () => {
                     // Charger les incidents récents depuis audit_logs
@@ -348,7 +349,7 @@ const SecurityForensics: React.FC = () => {
                       .select('id, action, created_at, actor_id')
                       .order('created_at', { ascending: false })
                       .limit(10);
-                    
+
                     if (data && data.length > 0) {
                       toast.info(`${data.length} incidents récents trouvés`);
                       console.log('Incidents récents:', data);
@@ -371,8 +372,8 @@ const SecurityForensics: React.FC = () => {
                   Vous pouvez aussi utiliser un ID utilisateur pour voir son historique
                 </p>
               </div>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={handleReconstructTimeline}
                 disabled={loading || !selectedIncidentId}
               >
@@ -431,8 +432,8 @@ const SecurityForensics: React.FC = () => {
                     placeholder="UUID de l'incident"
                   />
                 </div>
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   onClick={handleGenerateReport}
                   disabled={loading || !selectedIncidentId}
                 >
@@ -477,8 +478,8 @@ const SecurityForensics: React.FC = () => {
                     placeholder="UUID de l'incident"
                   />
                 </div>
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   variant="outline"
                   onClick={handleExportToSIEM}
                   disabled={loading}

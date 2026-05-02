@@ -7,7 +7,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Wifi, WifiOff, Clock, Phone } from 'lucide-react';
+import { _Wifi, _WifiOff, _Clock, _Phone } from 'lucide-react';
 import type { PresenceStatus } from '@/types/communication.types';
 
 interface PresenceIndicatorProps {
@@ -20,10 +20,10 @@ interface PresenceIndicatorProps {
   className?: string;
 }
 
-const statusConfig: Record<PresenceStatus, { 
-  color: string; 
+const statusConfig: Record<PresenceStatus, {
+  color: string;
   bgColor: string;
-  label: string; 
+  label: string;
   animation?: string;
   icon?: React.ComponentType<{ className?: string }>;
 }> = {
@@ -73,22 +73,22 @@ export function PresenceIndicator({
   className,
 }: PresenceIndicatorProps) {
   const config = statusConfig[status] || statusConfig.offline;
-  
+
   const formatLastSeen = (dateStr?: string) => {
     if (!dateStr) return '';
-    
+
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-    
+
     if (diffMins < 1) return 'À l\'instant';
     if (diffMins < 60) return `${diffMins} min`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}j`;
-    
+
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
@@ -123,8 +123,8 @@ export function PresenceIndicator({
                   status === 'in_call' ? 'text-violet-700 dark:text-violet-300' :
                   'text-muted-foreground'
                 )}>
-                  {showLastSeen && status === 'offline' && lastSeen 
-                    ? `Vu ${lastSeenFormatted}` 
+                  {showLastSeen && status === 'offline' && lastSeen
+                    ? `Vu ${lastSeenFormatted}`
                     : config.label}
                 </span>
               )}
@@ -153,8 +153,8 @@ export function PresenceIndicator({
           status === 'online' ? 'text-emerald-600 dark:text-emerald-400 font-medium' :
           'text-muted-foreground'
         )}>
-          {showLastSeen && status === 'offline' && lastSeen 
-            ? `Vu ${lastSeenFormatted}` 
+          {showLastSeen && status === 'offline' && lastSeen
+            ? `Vu ${lastSeenFormatted}`
             : config.label}
         </span>
       </div>
@@ -208,14 +208,14 @@ interface PresenceBadgeProps {
   className?: string;
 }
 
-export function PresenceBadge({ 
-  status, 
+export function PresenceBadge({
+  status,
   size = 'md',
   position = 'bottom-right',
-  className 
+  className
 }: PresenceBadgeProps) {
   const config = statusConfig[status] || statusConfig.offline;
-  
+
   const positionClasses = {
     'bottom-right': '-bottom-0.5 -right-0.5',
     'top-right': '-top-0.5 -right-0.5',

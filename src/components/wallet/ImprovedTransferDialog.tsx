@@ -91,6 +91,7 @@ export const ImprovedTransferDialog = ({
     } finally {
       setPreviewLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, recipientCode, recipientUserId, amount, description, currentBalance, onOpenChange]);
 
   // Execute local transfer (no international fees)

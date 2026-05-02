@@ -136,7 +136,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       if (agents && agents.length > 0) {
         for (const agent of agents) {
           if (!agent.user_id) continue; // Skip agents sans user_id
-          
+
           // Chercher le wallet dans la table wallets standard
           const { data: agentWallet } = await supabase
             .from('wallets')
@@ -182,7 +182,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
               results.push({
                 id: profile.id,
-                name: userId?.custom_id 
+                name: userId?.custom_id
                   ? `${userId.custom_id} - ${profile.full_name || 'Utilisateur'}`
                   : profile.full_name || 'Utilisateur',
                 email: profile.email || profile.phone || '',
@@ -234,7 +234,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         if (agentsByName && agentsByName.length > 0) {
           for (const agent of agentsByName) {
             if (!agent.user_id) continue; // Skip agents sans user_id
-            
+
             const { data: agentWallet } = await supabase
               .from('wallets')
               .select('id')
@@ -297,7 +297,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
     try {
       // Déterminer le sender_id : utiliser senderUserId si fourni, sinon récupérer depuis le wallet
       let senderId = senderUserId;
-      
+
       if (!senderId) {
         // Fallback: récupérer le user_id depuis le wallet
         const { data: walletData } = await supabase
@@ -315,7 +315,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       // Déterminer le receiver_id selon le type
       let receiverId: string;
       let receiverType: 'bureau' | 'user' = 'user';
-      
+
       if (selectedUser.type === 'bureau') {
         // Pour les bureaux, on utilise directement l'ID du bureau
         receiverId = selectedUser.id;
@@ -330,7 +330,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
             .select('user_id')
             .eq('id', selectedUser.id)
             .single();
-          
+
           if (!recipientAgent?.user_id) {
             throw new Error('Agent destinataire non lié à un utilisateur');
           }
@@ -367,14 +367,14 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       }
 
       // Vérifier le résultat de la transaction
-      const result = data as { 
-        success: boolean; 
-        error?: string; 
+      const result = data as {
+        success: boolean;
+        error?: string;
         transaction_id?: string;
         sender_balance_after?: number;
         receiver_balance_after?: number;
       };
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Échec de la transaction');
       }
@@ -390,7 +390,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       setSearchResults([]);
       setSearchQuery('');
       setShowConfirm(false);
-      
+
       if (onTransferComplete) {
         onTransferComplete();
       }

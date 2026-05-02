@@ -24,16 +24,16 @@ interface AddressSuggestionItemProps {
     isSelected?: boolean;
 }
 
-export default function AddressSuggestionItem({ 
-    suggestion, 
-    onClick, 
-    isSelected 
+export default function AddressSuggestionItem({
+    suggestion,
+    onClick,
+    isSelected
 }: AddressSuggestionItemProps) {
     // Parser l'adresse pour extraire les composants
     const addressParts = suggestion.address.split(',').map(part => part.trim());
     const mainAddress = addressParts[0] || suggestion.address;
     const secondaryAddress = addressParts.slice(1).join(', ');
-    
+
     // Déterminer l'icône selon le type
     const getIcon = () => {
         const addressLower = suggestion.address.toLowerCase();
@@ -53,8 +53,8 @@ export default function AddressSuggestionItem({
         <button
             onClick={onClick}
             className={`
-                w-full text-left px-4 py-3 
-                hover:bg-blue-50 
+                w-full text-left px-4 py-3
+                hover:bg-blue-50
                 border-b border-gray-100 last:border-b-0
                 transition-colors duration-150
                 flex items-start gap-3

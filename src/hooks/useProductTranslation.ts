@@ -2,7 +2,7 @@
  * HOOK DE TRADUCTION DES PRODUITS
  * Traduit automatiquement les noms et descriptions de produits
  * Utilise un cache localStorage pour optimiser les performances
- * 
+ *
  * @module useProductTranslation
  * @version 1.0.0
  */
@@ -117,7 +117,7 @@ export function useProductTranslation() {
     });
 
     // Résultats depuis le cache
-    const cachedResults = products
+    const _cachedResults = products
       .map(p => getFromCache(p.id, language))
       .filter((t): t is ProductTranslation => t !== null);
 
@@ -186,7 +186,7 @@ export function useProductTranslation() {
       console.error('[ProductTranslation] Translation failed:', error);
       // Retirer des pending
       uncached.forEach(p => pendingRef.current.delete(`${p.id}_${language}`));
-      
+
       // Retourner les originaux en cas d'erreur
       return products.map(p => ({
         productId: p.id,
@@ -251,16 +251,16 @@ export function useProductTranslation() {
     translating,
     language,
     needsTranslation: needsTranslation(language),
-    
+
     // Actions asynchrones
     translateProducts,
     translateProduct,
-    
+
     // Accesseurs synchrones (cache uniquement)
     getTranslatedName,
     getTranslatedDescription,
     hasTranslation,
-    
+
     // Utilitaires
     clearCache
   };

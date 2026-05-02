@@ -11,7 +11,7 @@ import { Navigation, Phone, Car, CheckCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SimpleMapView } from "./SimpleMapView";
-import { GeolocationService } from "@/services/taxi/GeolocationService";
+import { _GeolocationService } from "@/services/taxi/GeolocationService";
 import { TaxiMotoGeolocationService } from "@/services/taxi/TaxiMotoGeolocationService";
 
 interface ActiveRide {
@@ -54,7 +54,7 @@ export function DriverNavigation({
   // Charger la course active depuis la base de données
   const loadActiveRide = async () => {
     if (!driverId) return;
-    
+
     setLoading(true);
     try {
       const { data: rides, error } = await supabase
@@ -90,7 +90,7 @@ export function DriverNavigation({
           customerName = `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim() || 'Client';
           customerPhone = customerProfile.phone || customerPhone;
         }
-        
+
         // Note par défaut pour éviter les problèmes de types
         customerRating = 4.5;
       } catch (e) {
@@ -140,16 +140,16 @@ export function DriverNavigation({
         const destination = frontendStatus === 'picked_up' || frontendStatus === 'in_progress'
           ? activeRideData.destination.coords
           : activeRideData.pickup.coords;
-        
+
         try {
           const routeInfo = await TaxiMotoGeolocationService.getRoute(
             { latitude: location.latitude, longitude: location.longitude },
             { latitude: destination.latitude, longitude: destination.longitude }
           );
-          
+
           setDistanceToDestination(routeInfo.distance * 1000); // convertir km en mètres
           setTimeToDestination(routeInfo.duration); // déjà en minutes
-          
+
           if (frontendStatus === 'accepted' || frontendStatus === 'arriving') {
             setNextInstruction(`Direction: ${activeRideData.pickup.address}`);
           } else {
@@ -187,7 +187,7 @@ export function DriverNavigation({
     try {
       const { error } = await supabase
         .from('taxi_trips')
-        .update({ 
+        .update({
           status: newStatus,
           updated_at: new Date().toISOString()
         })
@@ -208,6 +208,7 @@ export function DriverNavigation({
   // Chargement initial
   useEffect(() => {
     loadActiveRide();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   // S'abonner aux changements en temps réel
@@ -234,6 +235,7 @@ export function DriverNavigation({
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   // Recalculer la distance quand la position change avec Mapbox
@@ -242,7 +244,7 @@ export function DriverNavigation({
       const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
         ? activeRide.destination.coords
         : activeRide.pickup.coords;
-      
+
       TaxiMotoGeolocationService.getRoute(
         { latitude: location.latitude, longitude: location.longitude },
         { latitude: destination.latitude, longitude: destination.longitude }
@@ -295,11 +297,11 @@ export function DriverNavigation({
       {/* Carte avec les positions */}
       <SimpleMapView
         driverLocation={location ? { latitude: location.latitude, longitude: location.longitude } : undefined}
-        pickupLocation={activeRide.status === 'accepted' || activeRide.status === 'arriving' 
-          ? activeRide.pickup.coords 
+        pickupLocation={activeRide.status === 'accepted' || activeRide.status === 'arriving'
+          ? activeRide.pickup.coords
           : undefined}
         destinationLocation={activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
-          ? activeRide.destination.coords 
+          ? activeRide.destination.coords
           : undefined}
         height="300px"
       />
@@ -316,7 +318,7 @@ export function DriverNavigation({
                 <span>•</span>
                 <span className="font-medium">⏱️ {Math.ceil(timeToDestination / 60)} min</span>
               </div>
-              
+
               {/* Bouton pour ouvrir Google Maps */}
               <Button
                 onClick={() => {
@@ -424,16 +426,16 @@ export function DriverNavigation({
                 '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
                 'Le client sera notifié et vous pourriez recevoir une pénalité.'
               );
-              
+
               if (!confirmed) return;
-              
+
               setLoading(true);
               try {
                 console.log('🚫 Annulation de la course:', activeRide.id);
-                
+
                 const { error } = await supabase
                   .from('taxi_trips')
-                  .update({ 
+                  .update({
                     status: 'cancelled',
                     cancel_reason: 'Annulée par le conducteur',
                     cancelled_at: new Date().toISOString(),
@@ -447,12 +449,12 @@ export function DriverNavigation({
                 }
 
                 console.log('✅ Course annulée avec succès dans la DB');
-                
+
                 toast.success('✅ Course annulée avec succès');
-                
+
                 // Réinitialiser l'état local
                 setActiveRide(null);
-                
+
                 // Recharger pour vérifier
                 await loadActiveRide();
               } catch (error) {

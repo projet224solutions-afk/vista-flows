@@ -100,6 +100,7 @@ export async function backendFetch<T = unknown>(
   }
 
   const url = `${backendConfig.baseUrl}${path}`;
+  const publicFallbackUrl = `${backendConfig.publicBaseUrl}${path}`;
   const rawHeaders = ((rest.headers as Record<string, string>) || {});
   const isRawBody =
     typeof body === 'string' ||
@@ -126,63 +127,86 @@ export async function backendFetch<T = unknown>(
     headers['Idempotency-Key'] = idempotencyKey;
   }
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  async function executeRequest(requestUrl: string): Promise<BackendResponse<T>> {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    if (externalSignal) {
-      externalSignal.addEventListener('abort', () => controller.abort());
-    }
+      if (externalSignal) {
+        externalSignal.addEventListener('abort', () => controller.abort());
+      }
 
-    try {
-      const response = await fetch(url, {
-        ...rest,
-        headers,
-        body: requestBody,
-        signal: controller.signal,
-      });
+      try {
+        const response = await fetch(requestUrl, {
+          ...rest,
+          headers,
+          body: requestBody,
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeout);
+        clearTimeout(timeout);
 
-      const json = await response.json();
+        const json = await response.json();
 
-      if (!response.ok) {
-        // Don't retry 4xx errors
-        if (response.status >= 400 && response.status < 500) {
-          return {
-            success: false,
-            error: json.error || `Erreur ${response.status}`,
-            error_code: json.error_code,
-            details: json.details,
-          };
+        if (!response.ok) {
+          if (response.status >= 400 && response.status < 500) {
+            return {
+              success: false,
+              error: json.error || `Erreur ${response.status}`,
+              error_code: json.error_code,
+              details: json.details,
+            };
+          }
+
+          if (attempt < MAX_RETRIES) {
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
+
+          return { success: false, error: json.error || 'Erreur serveur', error_code: json.error_code };
         }
-        // Retry 5xx on non-last attempt
+
+        return json as BackendResponse<T>;
+      } catch (err: any) {
+        clearTimeout(timeout);
+
+        if (err.name === 'AbortError') {
+          return { success: false, error: 'Requête annulée ou timeout' };
+        }
+
         if (attempt < MAX_RETRIES) {
           await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
           continue;
         }
-        return { success: false, error: json.error || 'Erreur serveur', error_code: json.error_code };
-      }
 
-      return json as BackendResponse<T>;
-    } catch (err: any) {
-      clearTimeout(timeout);
-      if (err.name === 'AbortError') {
-        return { success: false, error: 'Requête annulée ou timeout' };
+        return { success: false, error: 'Erreur réseau' };
       }
-      if (attempt < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-        continue;
-      }
-
-      const isLocalApiRequest = import.meta.env.DEV && (backendConfig.baseUrl === '' || /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(backendConfig.baseUrl));
-      if (isLocalApiRequest) {
-        return { success: false, error: 'Serveur backend local indisponible. Lancez npm run dev:backend.' };
-      }
-
-      return { success: false, error: 'Erreur réseau' };
     }
+
+    return { success: false, error: 'Échec après plusieurs tentatives' };
   }
 
-  return { success: false, error: 'Échec après plusieurs tentatives' };
+  const primaryResult = await executeRequest(url);
+  const isLocalApiRequest = import.meta.env.DEV && (backendConfig.baseUrl === '' || /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(backendConfig.baseUrl));
+  const shouldTryPublicFallback =
+    isLocalApiRequest &&
+    primaryResult.success === false &&
+    (primaryResult.error === 'Erreur réseau' || primaryResult.error === 'Requête annulée ou timeout') &&
+    Boolean(backendConfig.publicBaseUrl) &&
+    publicFallbackUrl !== url;
+
+  if (shouldTryPublicFallback) {
+    const fallbackResult = await executeRequest(publicFallbackUrl);
+    if (fallbackResult.success || (fallbackResult.error && fallbackResult.error !== 'Erreur réseau')) {
+      return fallbackResult;
+    }
+
+    return { success: false, error: 'Serveur backend local indisponible et API publique injoignable.' };
+  }
+
+  if (isLocalApiRequest && primaryResult.success === false && primaryResult.error === 'Erreur réseau') {
+    return { success: false, error: 'Serveur backend local indisponible. Lancez npm run dev:backend.' };
+  }
+
+  return primaryResult;
 }

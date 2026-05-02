@@ -1,6 +1,6 @@
 /**
  * 🔄 COMPOSANT DE SYNCHRONISATION PDG - 224SOLUTIONS
- * 
+ *
  * Affiche l'état de synchronisation des données et permet de lancer une sync manuelle
  */
 
@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { usePDGSyncStatus } from '@/hooks/usePDGSyncStatus';
-import { 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
   XCircle,
   Database,
   Users,
@@ -25,15 +25,15 @@ import {
 import { toast } from 'sonner';
 
 export default function PDGSyncDashboard() {
-  const { 
-    lastCheck, 
-    isHealthy, 
-    checks, 
-    recommendations, 
-    loading, 
-    syncing, 
-    refresh, 
-    runSync 
+  const {
+    lastCheck,
+    isHealthy,
+    checks,
+    recommendations,
+    loading,
+    syncing,
+    refresh,
+    runSync
   } = usePDGSyncStatus();
 
   const [showDetails, setShowDetails] = useState(false);
@@ -67,7 +67,7 @@ export default function PDGSyncDashboard() {
     return <ArrowRightLeft className="w-4 h-4" />;
   };
 
-  const healthScore = checks.length > 0 
+  const healthScore = checks.length > 0
     ? Math.round((checks.filter(c => c.status === 'ok').length / checks.length) * 100)
     : 100;
 
@@ -118,17 +118,17 @@ export default function PDGSyncDashboard() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={refresh}
                 disabled={loading}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Vérifier
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={handleSync}
                 disabled={syncing}
                 className="gap-2"
@@ -149,15 +149,15 @@ export default function PDGSyncDashboard() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">Score de santé</span>
               <span className={`text-lg font-bold ${
-                healthScore >= 80 ? 'text-green-500' : 
-                healthScore >= 50 ? 'text-yellow-500' : 
+                healthScore >= 80 ? 'text-green-500' :
+                healthScore >= 50 ? 'text-yellow-500' :
                 'text-red-500'
               }`}>
                 {healthScore}%
               </span>
             </div>
-            <Progress 
-              value={healthScore} 
+            <Progress
+              value={healthScore}
               className="h-2"
             />
           </div>
@@ -197,9 +197,9 @@ export default function PDGSyncDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Détails des vérifications</CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowDetails(!showDetails)}
             >
               {showDetails ? 'Masquer' : 'Afficher'} détails
@@ -209,7 +209,7 @@ export default function PDGSyncDashboard() {
         <CardContent>
           <div className="space-y-3">
             {checks.map((check, index) => (
-              <div 
+              <div
                 key={index}
                 className={`flex items-center justify-between p-4 rounded-xl border ${getStatusColor(check.status)}`}
               >

@@ -148,7 +148,7 @@ export function useEcommerceStats() {
 
       // Compter les clients uniques
       const uniqueCustomerIds = new Set((ordersCustomersData || []).map(o => o.customer_id));
-      const clientsThisMonth = (ordersCustomersData || []).filter(o => 
+      const clientsThisMonth = (ordersCustomersData || []).filter(o =>
         new Date(o.created_at) >= startOfMonth
       );
       const uniqueCustomersThisMonth = new Set(clientsThisMonth.map(o => o.customer_id));
@@ -187,7 +187,7 @@ export function useEcommerceStats() {
         total_amount: o.total_amount,
         created_at: o.created_at,
         source: o.source,
-        customer_name: o.customers?.profiles 
+        customer_name: o.customers?.profiles
           ? `${o.customers.profiles.first_name || ''} ${o.customers.profiles.last_name || ''}`.trim() || 'Client anonyme'
           : 'Client anonyme',
       })));
@@ -236,13 +236,13 @@ export function useEcommerceStats() {
 
   useEffect(() => {
     if (vendorLoading) return;
-    
+
     if (!vendorId) {
       // Pas de vendorId = pas de stats, mais on arrête le loading
       setLoading(false);
       return;
     }
-    
+
     loadStats();
   }, [vendorId, vendorLoading, loadStats]);
 

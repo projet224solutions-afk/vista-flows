@@ -12,16 +12,16 @@ interface PDGCopilotProps {
 
 export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
   const [input, setInput] = useState('');
-  const { 
-    messages, 
-    isLoading, 
+  const {
+    messages,
+    isLoading,
     sendMessage: sendCopilotMessage,
-    analyzeSystem 
+    analyzeSystem
   } = useCopilote();
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
-    
+
     await sendCopilotMessage(input);
     setInput('');
   };
@@ -136,7 +136,7 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
               <Search className="w-4 h-4" />
               🔍 Analyser automatiquement le système
             </Button>
-            
+
             {/* Questions rapides */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[

@@ -57,15 +57,15 @@ export class RateLimiter {
     LOGIN: { max: 5, window: 15 },
     REGISTER: { max: 3, window: 60 },
     PASSWORD_RESET: { max: 3, window: 60 },
-    
+
     // Transactions financières
     WALLET_TRANSFER: { max: 10, window: 5 },
     CARD_TRANSACTION: { max: 20, window: 10 },
-    
+
     // API calls
     API_CALL: { max: 100, window: 1 },
     HEAVY_API_CALL: { max: 10, window: 1 },
-    
+
     // Actions utilisateur
     CREATE_ORDER: { max: 50, window: 5 },
     SEND_MESSAGE: { max: 30, window: 1 },

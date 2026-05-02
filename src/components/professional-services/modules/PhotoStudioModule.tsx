@@ -12,11 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Camera, 
+import {
+  Camera,
   Calendar,
   Image,
-  Users,
+  _Users,
   Clock,
   Plus,
   Eye,
@@ -70,7 +70,7 @@ interface Service {
   isPopular: boolean;
 }
 
-export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModuleProps) {
+export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModuleProps) {
   const [activeTab, setActiveTab] = useState('reservations');
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showNewGalleryDialog, setShowNewGalleryDialog] = useState(false);

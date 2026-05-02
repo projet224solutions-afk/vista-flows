@@ -243,18 +243,3 @@ class EnterpriseServiceInitializer {
 
 // Export singleton
 export const enterpriseServices = EnterpriseServiceInitializer.getInstance();
-
-// Auto-initialisation si dans le navigateur
-if (typeof window !== 'undefined') {
-  // Initialiser après le chargement du DOM
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      enterpriseServices.initialize().catch(console.error);
-    });
-  } else {
-    // DOM déjà chargé
-    setTimeout(() => {
-      enterpriseServices.initialize().catch(console.error);
-    }, 100);
-  }
-}

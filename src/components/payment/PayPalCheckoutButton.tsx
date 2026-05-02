@@ -41,8 +41,8 @@ interface PayPalCheckoutButtonProps {
 export default function PayPalCheckoutButton({
   amount,
   currency = 'USD',
-  description = 'Achat 224Solutions',
-  orderId,
+  _description = 'Achat 224Solutions',
+  _orderId,
   onSuccess,
   onCancel,
   onError,
@@ -78,7 +78,7 @@ export default function PayPalCheckoutButton({
   }, []);
 
   const createOrder = useCallback(async () => {
-    const action = creditWallet ? 'create' : 'create';
+    const _action = creditWallet ? 'create' : 'create';
     const successUrl = new URL(window.location.href);
     successUrl.searchParams.set('paypal_result', 'success');
     const cancelUrl = new URL(window.location.href);

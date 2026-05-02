@@ -2,15 +2,15 @@
  * DROPSHIPPING DASHBOARD
  * Dashboard principal pour la gestion du module dropshipping
  * Agrège toutes les fonctionnalités: connecteurs, produits, commandes
- * 
+ *
  * @module DropshippingDashboard
  * @version 1.0.0
  * @author 224Solutions
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,13 +25,13 @@ import {
   Settings,
   Plus,
   TrendingUp,
-  DollarSign,
+  _DollarSign,
   AlertTriangle,
   BarChart3,
-  RefreshCw,
-  Loader2,
+  _RefreshCw,
+  _Loader2,
   Activity,
-  ShoppingCart
+  _ShoppingCart
 } from 'lucide-react';
 
 // Components
@@ -218,11 +218,11 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [products, setProducts] = useState<DropshipProduct[]>(mockProducts);
   const [orders, setOrders] = useState<SupplierOrder[]>(mockOrders);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  
+  const [loading, _setLoading] = useState(false);
+  const [_refreshing, setRefreshing] = useState(false);
+
   const { activeConnectors } = useConnectors(vendorId);
-  
+
   // Calculer les statistiques
   const stats: DashboardStats = {
     totalProducts: products.length,
@@ -231,23 +231,23 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
     shippedOrders: orders.filter(o => o.status === 'shipped').length,
     totalRevenue: products.reduce((sum, p) => sum + p.totalRevenue, 0),
     totalProfit: products.reduce((sum, p) => sum + (p.totalRevenue * p.margin / 100), 0),
-    avgMargin: products.length > 0 
-      ? products.reduce((sum, p) => sum + p.margin, 0) / products.length 
+    avgMargin: products.length > 0
+      ? products.reduce((sum, p) => sum + p.margin, 0) / products.length
       : 0,
     syncErrors: products.filter(p => p.syncStatus === 'error').length
   };
-  
+
   // Handlers
   const handleRefreshProduct = async (productId: string) => {
     // Simuler sync
     await new Promise(r => setTimeout(r, 1500));
-    setProducts(prev => prev.map(p => 
-      p.id === productId 
+    setProducts(prev => prev.map(p =>
+      p.id === productId
         ? { ...p, syncStatus: 'synced' as const, lastSyncAt: new Date().toISOString() }
         : p
     ));
   };
-  
+
   const handleRefreshAll = async () => {
     setRefreshing(true);
     await new Promise(r => setTimeout(r, 2000));
@@ -258,34 +258,34 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
     })));
     setRefreshing(false);
   };
-  
+
   const handleCreateOrder = async (orderId: string) => {
     await new Promise(r => setTimeout(r, 1500));
-    setOrders(prev => prev.map(o => 
-      o.id === orderId 
+    setOrders(prev => prev.map(o =>
+      o.id === orderId
         ? { ...o, status: 'ordered' as const, supplierOrderId: 'AE' + Date.now(), orderedAt: new Date().toISOString() }
         : o
     ));
     return { success: true, orderId: 'AE' + Date.now() };
   };
-  
-  const handleRefreshTracking = async (orderId: string) => {
+
+  const handleRefreshTracking = async (_orderId: string) => {
     await new Promise(r => setTimeout(r, 1000));
     // Update tracking...
   };
-  
+
   const handleCancelOrder = async (orderId: string) => {
-    setOrders(prev => prev.map(o => 
+    setOrders(prev => prev.map(o =>
       o.id === orderId ? { ...o, status: 'cancelled' as const } : o
     ));
   };
-  
+
   const handleAddNote = async (orderId: string, note: string) => {
-    setOrders(prev => prev.map(o => 
+    setOrders(prev => prev.map(o =>
       o.id === orderId ? { ...o, notes: note } : o
     ));
   };
-  
+
   return (
     <div className="space-y-6 p-6">
       {/* En-tête */}
@@ -299,20 +299,20 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             Gérez vos produits dropshipping et commandes fournisseurs
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-sm py-1 px-3">
             <Activity className="w-4 h-4 mr-1" />
             {activeConnectors.length} connecteur(s) actif(s)
           </Badge>
-          
+
           <Button onClick={() => setImportDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Importer un produit
           </Button>
         </div>
       </div>
-      
+
       {/* Alertes */}
       {stats.pendingOrders > 0 && (
         <Alert className="bg-yellow-50 border-yellow-200">
@@ -320,8 +320,8 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           <AlertTitle className="text-yellow-800">Actions requises</AlertTitle>
           <AlertDescription className="text-yellow-700">
             Vous avez {stats.pendingOrders} commande(s) en attente à passer auprès des fournisseurs.
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               className="text-yellow-800 p-0 h-auto ml-2"
               onClick={() => setActiveTab('orders')}
             >
@@ -330,15 +330,15 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           </AlertDescription>
         </Alert>
       )}
-      
+
       {stats.syncErrors > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
           <AlertTitle>Erreurs de synchronisation</AlertTitle>
           <AlertDescription>
             {stats.syncErrors} produit(s) n'ont pas pu être synchronisés.
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               className="text-red-200 p-0 h-auto ml-2"
               onClick={() => setActiveTab('products')}
             >
@@ -347,7 +347,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           </AlertDescription>
         </Alert>
       )}
-      
+
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -373,7 +373,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             Connecteurs
           </TabsTrigger>
         </TabsList>
-        
+
         {/* Overview */}
         <TabsContent value="overview" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -394,7 +394,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -410,7 +410,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -426,7 +426,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -443,7 +443,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Recent activity */}
           <div className="grid gap-6 md:grid-cols-2 mt-6">
             <Card>
@@ -469,9 +469,9 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                     </div>
                   ))}
                 </div>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   className="w-full mt-4"
                   onClick={() => setActiveTab('products')}
                 >
@@ -479,7 +479,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 </Button>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Commandes récentes</CardTitle>
@@ -503,9 +503,9 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                     </div>
                   ))}
                 </div>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   className="w-full mt-4"
                   onClick={() => setActiveTab('orders')}
                 >
@@ -515,7 +515,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             </Card>
           </div>
         </TabsContent>
-        
+
         {/* Products */}
         <TabsContent value="products" className="mt-6">
           <DropshipProductsTable
@@ -526,14 +526,14 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             onEditProduct={(product) => console.log('Edit', product)}
             onDeleteProduct={(id) => setProducts(prev => prev.filter(p => p.id !== id))}
             onTogglePublish={(id, published) => {
-              setProducts(prev => prev.map(p => 
+              setProducts(prev => prev.map(p =>
                 p.id === id ? { ...p, isPublished: published } : p
               ));
             }}
             onViewOnSource={(url) => window.open(url, '_blank')}
           />
         </TabsContent>
-        
+
         {/* Orders */}
         <TabsContent value="orders" className="mt-6">
           <SupplierOrderPanel
@@ -546,13 +546,13 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             onAddNote={handleAddNote}
           />
         </TabsContent>
-        
+
         {/* Connectors */}
         <TabsContent value="connectors" className="mt-6">
           <ConnectorManager vendorId={vendorId} />
         </TabsContent>
       </Tabs>
-      
+
       {/* Import Dialog */}
       <ProductImportDialog
         open={importDialogOpen}

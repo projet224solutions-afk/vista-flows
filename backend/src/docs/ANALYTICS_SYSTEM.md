@@ -12,7 +12,7 @@
 
 3. **Unique Constraints with Partial Indexes**: PostgreSQL supports unique indexes with `WHERE` clauses, enabling efficient 24-hour deduplication without application-level locking:
    ```sql
-   CREATE UNIQUE INDEX idx_product_views_dedup_user 
+   CREATE UNIQUE INDEX idx_product_views_dedup_user
    ON product_views (product_id, user_id, DATE(viewed_at))
    WHERE user_id IS NOT NULL;
    ```

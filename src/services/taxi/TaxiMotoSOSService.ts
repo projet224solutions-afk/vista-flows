@@ -142,7 +142,7 @@ class TaxiMotoSOSService {
 
       // Obtenir position actuelle
       const currentPosition = await this.getCurrentPosition();
-      
+
       if (!currentPosition) {
         return {
           success: false,
@@ -153,7 +153,7 @@ class TaxiMotoSOSService {
 
       // Créer l'objet SOS dans Supabase
       console.log('🚨 Création alerte SOS dans Supabase...');
-      
+
       const { data: sosRecord, error: insertError } = await supabase
         .from('sos_alerts')
         .insert({
@@ -186,10 +186,10 @@ class TaxiMotoSOSService {
         audio: true,
         video: true
       });
-      
+
       if (recordingStarted) {
         console.log('✅ Enregistrement automatique démarré');
-        
+
         // Mettre à jour sos_alerts avec le timestamp de début d'enregistrement
         await supabase
           .from('sos_alerts')
@@ -197,7 +197,7 @@ class TaxiMotoSOSService {
             recording_started_at: new Date().toISOString()
           })
           .eq('id', sosRecord.id);
-        
+
         toast.info('🎥 Enregistrement en cours', {
           description: 'Audio et vidéo enregistrés automatiquement'
         });
@@ -225,7 +225,7 @@ class TaxiMotoSOSService {
         description: description,
         triggered_at: sosRecord.created_at
       };
-      
+
       const existingAlerts = await this.getLocalSOSAlerts();
       existingAlerts.push(sosData);
       // 🔒 Stockage chiffré des alertes SOS (contient position GPS sensible)
@@ -273,7 +273,7 @@ class TaxiMotoSOSService {
   private async notifyBureauSyndicat(sosAlert: SOSAlert): Promise<void> {
     try {
       console.log('📢 Envoi notification Bureau Syndicat...');
-      
+
       // 1. Notification système native
       if ('Notification' in window) {
         if (Notification.permission === 'granted') {
@@ -312,7 +312,7 @@ class TaxiMotoSOSService {
             .select('president_email')
             .eq('id', sosAlert.bureau_syndicat_id)
             .single();
-          
+
           if (bureauData?.president_email) {
             // Chercher le profile avec cet email
             const { data: profileData } = await supabase
@@ -320,7 +320,7 @@ class TaxiMotoSOSService {
               .select('id')
               .eq('email', bureauData.president_email)
               .single();
-            
+
             if (profileData?.id) {
               await supabase.from('notifications').insert({
                 user_id: profileData.id,
@@ -376,27 +376,27 @@ class TaxiMotoSOSService {
   ): Promise<boolean> {
     try {
       console.log(`🔄 Mise à jour SOS ${sosId} vers statut: ${newStatus}`);
-      
+
       const updateData: any = {
         status: newStatus,
         updated_at: new Date().toISOString()
       };
-      
+
       if (newStatus === 'RESOLU') {
         updateData.resolved_at = new Date().toISOString();
         updateData.resolved_by = resolvedBy;
       }
-      
+
       const { error } = await supabase
         .from('sos_alerts')
         .update(updateData)
         .eq('id', sosId);
-      
+
       if (error) {
         console.error('❌ Erreur mise à jour SOS Supabase:', error);
         return false;
       }
-      
+
       // 🎬 ARRÊTER ENREGISTREMENT SI SOS RÉSOLU
       if (newStatus === 'RESOLU' || newStatus === 'ANNULE') {
         console.log('⏹️ Arrêt enregistrement automatique...');
@@ -405,28 +405,28 @@ class TaxiMotoSOSService {
           description: 'Vidéo sauvegardée et uploadée automatiquement'
         });
       }
-      
+
       // Mettre à jour aussi localStorage en backup
       try {
         const alerts = await this.getLocalSOSAlerts();
         const index = alerts.findIndex(a => a.id === sosId);
-        
+
         if (index !== -1) {
           alerts[index].status = newStatus;
           alerts[index].updated_at = updateData.updated_at;
-          
+
           if (newStatus === 'RESOLU') {
             alerts[index].resolved_at = updateData.resolved_at;
             alerts[index].resolved_by = resolvedBy;
           }
-          
+
           // 🔒 Stockage chiffré
           await SecureStorage.setItem('taxi_sos_alerts', alerts);
         }
       } catch (localError) {
         console.warn('⚠️ Erreur localStorage:', localError);
       }
-      
+
       console.log('✅ SOS mis à jour avec succès');
       toast.success(`Statut mis à jour: ${newStatus}`);
       return true;
@@ -443,7 +443,7 @@ class TaxiMotoSOSService {
   public async getActiveSOSAlerts(): Promise<SOSAlert[]> {
     try {
       console.log('🔍 Chargement alertes SOS actives depuis Supabase...');
-      
+
       // Statuts actifs: 'active' (nouveau format DB) + 'DANGER', 'EN_INTERVENTION' (ancien format)
       const { data, error } = await supabase
         .from('sos_alerts')
@@ -471,7 +471,7 @@ class TaxiMotoSOSService {
         } else if (record.status === 'in_progress') {
           normalizedStatus = 'EN_INTERVENTION';
         }
-        
+
         return {
           id: record.id,
           taxi_driver_id: record.taxi_driver_id,

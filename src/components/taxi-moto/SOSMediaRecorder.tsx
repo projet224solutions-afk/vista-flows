@@ -7,13 +7,13 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Video, 
-  Mic, 
-  Square, 
-  Send, 
-  Camera, 
-  Loader2, 
+import {
+  Video,
+  Mic,
+  Square,
+  Send,
+  Camera,
+  Loader2,
   CheckCircle,
   X,
   Play,
@@ -47,7 +47,7 @@ export function SOSMediaRecorder({
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -61,7 +61,7 @@ export function SOSMediaRecorder({
       chunksRef.current = [];
       setRecordingDuration(0);
 
-      const constraints = type === 'video' 
+      const constraints = type === 'video'
         ? { video: { facingMode: 'environment' }, audio: true }
         : { audio: true };
 
@@ -74,8 +74,8 @@ export function SOSMediaRecorder({
         videoPreviewRef.current.play();
       }
 
-      const mimeType = type === 'video' 
-        ? 'video/webm;codecs=vp8,opus' 
+      const mimeType = type === 'video'
+        ? 'video/webm;codecs=vp8,opus'
         : 'audio/webm;codecs=opus';
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
@@ -88,8 +88,8 @@ export function SOSMediaRecorder({
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { 
-          type: type === 'video' ? 'video/webm' : 'audio/webm' 
+        const blob = new Blob(chunksRef.current, {
+          type: type === 'video' ? 'video/webm' : 'audio/webm'
         });
         setRecordedBlob(blob);
         setRecordingState('stopped');
@@ -166,7 +166,7 @@ export function SOSMediaRecorder({
       const filePath = `sos-media/${sosAlertId}/${fileName}`;
 
       // Upload vers Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, recordedBlob, {
           contentType: recordingType === 'video' ? 'video/webm' : 'audio/webm',

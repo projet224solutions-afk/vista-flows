@@ -78,7 +78,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     loading: userRole === 'vendeur',
     hasVendor: userRole === 'vendeur' ? null : true,
   });
-  
+
   // NOUVEAU: Hook Copilote Vendeur Enterprise
   const vendorCopilot = useVendorCopilot();
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -219,12 +219,12 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   useEffect(() => {
     const storageKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
     let existingSession = sessionStorage.getItem(storageKey);
-    
+
     if (!existingSession) {
       existingSession = generateSessionId();
       sessionStorage.setItem(storageKey, existingSession);
     }
-    
+
     setSessionId(existingSession);
     console.log(`📍 Copilote session: ${existingSession}`);
   }, [userRole, user?.id]);
@@ -278,6 +278,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     if (user?.id) {
       loadHistory();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, userRole]);
 
   // Vérifie si l'utilisateur connecté est bien associé à un vendeur (table vendors)
@@ -304,7 +305,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         if (!cancelled) {
           const hasVendor = !!res?.data;
           setVendorAccess({ loading: false, hasVendor });
-          
+
           // NOUVEAU: Si vendeur trouvé, activer mode Enterprise et stocker l'ID
           if (hasVendor && res.data?.id) {
             setVendorId(res.data.id);
@@ -416,7 +417,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         .filter(m => m.id !== 'welcome')
         .slice(-15)
         .map(m => ({ role: m.role, content: m.content }));
-      
+
       // Ajouter le nouveau message utilisateur
       const conversationMessages = [
         ...historyMessages,
@@ -482,7 +483,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -496,13 +497,13 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
 
       if (reader) {
         let textBuffer = '';
-        
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           textBuffer += decoder.decode(value, { stream: true });
-          
+
           // Traiter ligne par ligne
           let newlineIndex: number;
           while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
@@ -592,7 +593,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         const storageKey = `copilote-history-${userRole}`;
         localStorage.removeItem(storageKey);
       }
-      
+
       // Générer une nouvelle session après effacement
       const sessionKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
       const newSession = generateSessionId();
@@ -600,7 +601,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       setSessionId(newSession);
       setAttachedImage(null);
       console.log(`🔄 Nouvelle session créée: ${newSession}`);
-      
+
       toast.success('Conversation réinitialisée');
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
@@ -615,7 +616,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     }
   };
 
-  const formatTime = (timestamp: string) => {
+  const _formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit'
@@ -708,8 +709,8 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                 <MessageSquare className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground mb-6" />
                 <h3 className="text-xl sm:text-3xl font-semibold mb-3 sm:mb-4">Bienvenue chez Copilote 224</h3>
                 <p className="text-sm sm:text-lg text-muted-foreground mb-5 sm:mb-6 px-2 sm:px-0">
-                  {userRole === 'vendeur' 
-                    ? useEnterpriseMode 
+                  {userRole === 'vendeur'
+                    ? useEnterpriseMode
                       ? '🚀 Je suis votre IA ENTERPRISE de 224Solutions. Je peux analyser en profondeur TOUTE votre interface vendeur.'
                       : 'Je suis votre assistant pour gérer votre boutique, produits et ventes.'
                     : 'Je suis votre assistant pour vos achats, commandes et wallet.'}

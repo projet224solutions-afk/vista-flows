@@ -1,14 +1,14 @@
 /**
  * 🔐 CLIENT-SIDE HMAC REQUEST SIGNER V2
  * Signe toutes les requêtes de paiement avec HMAC-SHA256
- * 
+ *
  * Headers générés:
  * - X-API-KEY: identifiant client (PayPal Client ID)
  * - X-SIGNATURE: HMAC-SHA256(METHOD + PATH + BODY + TIMESTAMP + NONCE)
  * - X-TIMESTAMP: Date.now()
  * - X-NONCE: UUID unique
  * - Idempotency-Key: UUID pour anti-double-transaction
- * 
+ *
  * 224Solutions
  */
 
@@ -19,7 +19,7 @@ const encoder = new TextEncoder();
 /**
  * Generate HMAC-SHA256 signature using Web Crypto API
  */
-async function hmacSha256(secret: string, message: string): Promise<string> {
+async function _hmacSha256(secret: string, message: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -54,7 +54,7 @@ export interface SignedHeaders {
 export async function signRequest(
   method: string,
   path: string,
-  body: string = "",
+  _body: string = "",
   options?: { idempotencyKey?: string }
 ): Promise<SignedHeaders> {
   const timestamp = Date.now().toString();
@@ -83,7 +83,7 @@ export async function signRequest(
 export async function signedInvoke(
   functionName: string,
   body: Record<string, unknown>,
-  options?: { 
+  options?: {
     idempotencyKey?: string;
     skipSigning?: boolean;
   }

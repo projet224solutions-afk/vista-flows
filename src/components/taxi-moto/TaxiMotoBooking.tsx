@@ -14,15 +14,15 @@ import { Separator } from "@/components/ui/separator";
 import {
     MapPin,
     Navigation,
-    Clock,
+    _Clock,
     CreditCard,
     Star,
     Loader2,
-    Calendar,
+    _Calendar,
     Users,
-    Zap,
+    _Zap,
     DollarSign,
-    Route,
+    _Route,
     Search
 } from "lucide-react";
 import { toast } from "sonner";
@@ -78,7 +78,7 @@ export default function TaxiMotoBooking({
 
     // États de chargement
     const [loadingRoute, setLoadingRoute] = useState(false);
-    const [loadingPrice, setLoadingPrice] = useState(false);
+    const [_loadingPrice, setLoadingPrice] = useState(false);
     const [bookingInProgress, setBookingInProgress] = useState(false);
 
     // États de géocodage
@@ -119,7 +119,7 @@ export default function TaxiMotoBooking({
      */
     const useCurrentLocation = async () => {
         console.log('[TaxiMotoBooking] Demande de position actuelle...');
-        
+
         if (userLocation) {
             setPickupCoords(userLocation);
             setPickupAddress('Position actuelle');
@@ -130,7 +130,7 @@ export default function TaxiMotoBooking({
 
         // Si pas de position, demander l'accès GPS
         toast.info('Demande d\'accès à votre position GPS...');
-        
+
         if (!navigator.geolocation) {
             toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
             return;
@@ -155,10 +155,10 @@ export default function TaxiMotoBooking({
             setPickupAddress('Position actuelle');
             toast.success('✅ Position GPS obtenue avec succès !');
             console.log('[TaxiMotoBooking] Position GPS obtenue:', newLocation);
-            
+
         } catch (error) {
             console.error('[TaxiMotoBooking] Erreur GPS:', error);
-            
+
             if (error instanceof GeolocationPositionError) {
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
@@ -261,13 +261,13 @@ export default function TaxiMotoBooking({
                 route.duration,
                 1.0 // surge multiplier
             );
-            
+
             console.log('[TaxiMotoBooking] Fare calculated:', fareCalculation);
-            
+
             // Formater le prix pour l'affichage
             const totalPrice = fareCalculation.total_fare || fareCalculation.total;
             const basePrice = fareCalculation.base_fare || 0;
-            
+
             if (fareCalculation && typeof totalPrice === 'number') {
                 setPriceEstimate({
                     totalPrice: Math.round(totalPrice),
@@ -293,6 +293,7 @@ export default function TaxiMotoBooking({
             setLoadingRoute(false);
             setLoadingPrice(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pickupCoords, destinationCoords, selectedVehicleType, isScheduled, scheduledTime]);
 
     /**
@@ -492,7 +493,7 @@ export default function TaxiMotoBooking({
                                     className="pl-10 pr-4"
                                 />
                                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
-                                
+
                                 {/* Indicateur de recherche en cours */}
                                 {destinationSearchQuery.length >= 3 && destinationSearchQuery.length < 5 && (
                                     <div className="absolute right-3 top-3">
@@ -500,7 +501,7 @@ export default function TaxiMotoBooking({
                                     </div>
                                 )}
                             </div>
-                            
+
                             {/* Bouton de recherche explicite */}
                             <Button
                                 onClick={() => {
@@ -517,7 +518,7 @@ export default function TaxiMotoBooking({
                                 <Search className="w-4 h-4" />
                             </Button>
                         </div>
-                        
+
                         {/* Message d'aide contextuel */}
                         {destinationAddress.length > 0 && destinationAddress.length < 3 && (
                             <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
@@ -545,7 +546,7 @@ export default function TaxiMotoBooking({
                                 ))}
                             </div>
                         )}
-                        
+
                         {/* Message quand aucun résultat */}
                         {showDestinationSuggestions && destinationSuggestions.length === 0 && destinationSearchQuery.length >= 5 && (
                             <div className="absolute top-full left-0 right-0 bg-white border rounded-xl shadow-xl z-20 mt-1 p-4 text-center">

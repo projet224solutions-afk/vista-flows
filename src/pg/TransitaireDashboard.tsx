@@ -1,12 +1,12 @@
 ﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "lucide-react";
+import { Globe, Package, Plane, Ship, TrendingUp, Clock, _MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { _ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
 
 import { useTransitaireStats } from "@/hooks/useTransitaireStats";
@@ -20,8 +20,8 @@ export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  useRoleRedirect(); // S'assurer que seuls les transitaires/admins acc├¿dent ├á cette page
-  const { error, captureError, clearError } = useTransitaireErrorBoundary();
+  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
+  const { error, _captureError, clearError } = useTransitaireErrorBoundary();
   const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
   const formatPrice = useFormatCurrency();
 
@@ -30,43 +30,43 @@ export default function TransitaireDashboard() {
     navigate('/');
   };
 
-  // Stats dynamiques bas├®es sur les donn├®es r├®elles
+  // Stats dynamiques basées sur les données réelles
   const stats = [
-    { 
-      label: t('transit.activeShipments'), 
-      value: statsLoading ? "..." : transitaireStats.totalShipments.toString(), 
-      icon: Package, 
-      color: "text-blue-500" 
+    {
+      label: t('transit.activeShipments'),
+      value: statsLoading ? "..." : transitaireStats.totalShipments.toString(),
+      icon: Package,
+      color: "text-blue-500"
     },
-    { 
-      label: t('transit.inTransit'), 
-      value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(), 
-      icon: Plane, 
-      color: "text-green-500" 
+    {
+      label: t('transit.inTransit'),
+      value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(),
+      icon: Plane,
+      color: "text-green-500"
     },
-    { 
-      label: t('transit.monthlyRevenue'), 
-      value: statsLoading ? "..." : formatPrice(transitaireStats.totalRevenue), 
-      icon: TrendingUp, 
-      color: "text-purple-500" 
+    {
+      label: t('transit.monthlyRevenue'),
+      value: statsLoading ? "..." : formatPrice(transitaireStats.totalRevenue),
+      icon: TrendingUp,
+      color: "text-purple-500"
     },
-    { 
-      label: t('transit.averageDelay'), 
-      value: statsLoading ? "..." : `${transitaireStats.customsInProgress}j`, 
-      icon: Clock, 
-      color: "text-orange-500" 
+    {
+      label: t('transit.averageDelay'),
+      value: statsLoading ? "..." : `${transitaireStats.customsInProgress}j`,
+      icon: Clock,
+      color: "text-orange-500"
     }
   ];
 
   const activeShipments = [
     {
       id: 'INT-2024-089',
-      origin: 'Conakry, Guin├®e',
+      origin: 'Conakry, Guinée',
       destination: 'Paris, France',
       weight: '125 kg',
       status: 'En douane',
       eta: '3 jours',
-      type: 'A├®rien'
+      type: 'Aérien'
     },
     {
       id: 'INT-2024-090',
@@ -117,7 +117,7 @@ export default function TransitaireDashboard() {
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-red-800">{error.message}</p>
-            <button onClick={clearError} className="text-red-600 hover:text-red-800">Ô£ò</button>
+            <button onClick={clearError} className="text-red-600 hover:text-red-800">×</button>
           </div>
         </div>
       )}
@@ -158,7 +158,7 @@ export default function TransitaireDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
-              Exp├®ditions actives
+              Expéditions actives
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -169,17 +169,17 @@ export default function TransitaireDashboard() {
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{shipment.id}</h4>
                       <span className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${
-                        shipment.status === 'En transit' 
-                          ? 'bg-blue-100 text-blue-800' 
+                        shipment.status === 'En transit'
+                          ? 'bg-blue-100 text-blue-800'
                           : 'bg-orange-100 text-orange-800'
                       }`}>
-                        {shipment.type === 'A├®rien' ? <Plane className="w-3 h-3" /> : <Ship className="w-3 h-3" />}
+                        {shipment.type === 'Aérien' ? <Plane className="w-3 h-3" /> : <Ship className="w-3 h-3" />}
                         {shipment.status}
                       </span>
                     </div>
                     <span className="text-sm font-medium text-green-600">ETA: {shipment.eta}</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Origine</p>
@@ -217,12 +217,12 @@ export default function TransitaireDashboard() {
                   <div className="flex-1">
                     <h4 className="font-medium mb-1">{customs.country}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="text-green-600">{customs.processed} trait├®s</span>
+                      <span className="text-green-600">{customs.processed} traités</span>
                       <span className="text-orange-600">{customs.pending} en attente</span>
                     </div>
                   </div>
                   <Button variant="outline" size="sm">
-                    D├®tails
+                    Détails
                   </Button>
                 </div>
               ))}
@@ -239,16 +239,16 @@ export default function TransitaireDashboard() {
               <Globe className="w-12 h-12 mx-auto mb-4 text-blue-500" />
               <h3 className="text-xl font-bold mb-2">Plateforme de Transit International</h3>
               <p className="text-muted-foreground mb-4">
-                G├®rez vos exp├®ditions internationales avec notre syst├¿me avanc├®
+                Gérez vos expéditions internationales avec notre système avancé
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Suivi en temps r├®el</span>
+                  <span>Suivi en temps réel</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Gestion douani├¿re</span>
+                  <span>Gestion douanière</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -264,7 +264,7 @@ export default function TransitaireDashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Rapports d├®taill├®s</span>
+                  <span>Rapports détaillés</span>
                 </div>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default function TransitaireDashboard() {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>

@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
+import { _Textarea } from '@/components/ui/textarea';
+import { _Progress } from '@/components/ui/progress';
 import {
   Sprout, Apple, Egg, Fish, DollarSign, TrendingUp,
   Plus, Package, ShoppingCart, Users, Calendar,
-  MapPin, Truck, Sun, CloudRain, Leaf, Scale
+  MapPin, Truck, Sun, CloudRain, Leaf, _Scale
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -70,7 +70,7 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function AgricultureModule({ serviceId, businessName }: AgricultureModuleProps) {
+export function AgricultureModule({ _serviceId, businessName }: AgricultureModuleProps) {
   const [activeTab, setActiveTab] = useState('produits');
   const [showNewProduct, setShowNewProduct] = useState(false);
 
@@ -179,7 +179,7 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
           {/* Categories */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {CATEGORIES.map(cat => {
-              const Icon = cat.icon;
+              const _Icon = cat.icon;
               const count = products.filter(p => p.category === cat.id).length;
               return (
                 <Card key={cat.id} className="cursor-pointer hover:shadow-md transition-all group">

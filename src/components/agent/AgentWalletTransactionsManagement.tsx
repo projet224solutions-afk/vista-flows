@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Wallet, ArrowUpRight, ArrowDownLeft, Send, RefreshCw, 
-  Search, Filter, Clock, CheckCircle, XCircle, AlertTriangle,
-  CreditCard, Building2, User
+import {
+  Wallet, ArrowUpRight, ArrowDownLeft, Send, RefreshCw,
+  Search, _Filter, Clock, CheckCircle, XCircle, _AlertTriangle,
+  CreditCard, _Building2, _User
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -42,7 +42,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [walletId, setWalletId] = useState<string | null>(null);
+  const [_walletId, setWalletId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -56,17 +56,31 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
   useEffect(() => {
     loadWalletData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadWalletData = async () => {
     try {
       setLoading(true);
 
-      // Charger le wallet de l'agent
+      // Résoudre user_id depuis agents_management
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData?.user_id) {
+        console.error('Erreur agent:', agentError);
+        setLoading(false);
+        return;
+      }
+
+      // Charger le wallet depuis wallets (source de vérité)
       const { data: wallet, error: walletError } = await supabase
-        .from('agent_wallets')
+        .from('wallets')
         .select('id, balance, currency')
-        .eq('agent_id', agentId)
+        .eq('user_id', agentData.user_id)
         .single();
 
       if (walletError && walletError.code !== 'PGRST116') {
@@ -75,10 +89,10 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
       if (wallet) {
         setWalletBalance(wallet.balance || 0);
-        setWalletId(wallet.id);
+        setWalletId(String(wallet.id));
       }
 
-      // 🔒 SÉCURITÉ: Charger UNIQUEMENT les transactions liées au wallet de cet agent
+      // Charger UNIQUEMENT les transactions liées au wallet (wallets.id = sender/receiver)
       if (wallet?.id) {
         const { data: txData, error: txError } = await supabase
           .from('wallet_transactions')
@@ -91,7 +105,6 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
           console.error('Erreur transactions:', txError);
         }
 
-        // Map wallet IDs to user IDs for display
         setTransactions((txData || []).map(tx => ({
           ...tx,
           sender_user_id: tx.sender_wallet_id || '',
@@ -130,7 +143,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
       setProcessing(true);
 
       // Appel à une fonction RPC pour le transfert sécurisé
-      const { data, error } = await supabase.rpc('agent_wallet_transfer' as any, {
+      const { _data, error } = await supabase.rpc('agent_wallet_transfer' as any, {
         p_agent_id: agentId,
         p_recipient_id: transferData.recipientId,
         p_amount: amount,
@@ -210,8 +223,8 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
               <p className="text-3xl font-bold text-white">{formatAmount(walletBalance)} GNF</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 size="sm"
                 onClick={loadWalletData}
               >

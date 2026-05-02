@@ -8,10 +8,10 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { 
+import {
   Calendar, Clock, Users, Phone, Mail, User, Sparkles, Check, AlertCircle,
-  UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, Trash2, ChevronRight,
-  Flame, Leaf, Info, Download, Receipt, Eye, Wallet
+  UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, _Trash2, ChevronRight,
+  _Flame, _Leaf, _Info, _Download, Receipt, Eye, Wallet
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,18 +22,18 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRestaurantReservations, TimeSlot, ReservationFormData } from '@/hooks/useRestaurantReservations';
-import { useRestaurantMenu, MenuItem, MenuCategory } from '@/hooks/useRestaurantMenu';
+import { useRestaurantMenu, MenuItem, _MenuCategory } from '@/hooks/useRestaurantMenu';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { StripePaymentWrapper } from '@/components/payment/StripePaymentWrapper';
-import { useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
+import { _useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -60,12 +60,12 @@ export function ReservationModal({
   const { user } = useAuth();
   const { createReservation, checkAvailability } = useRestaurantReservations(serviceId);
   const { categories, menuItems, loading: menuLoading } = useRestaurantMenu(serviceId);
-  
+
   const [step, setStep] = useState<Step>('guests');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  
+
   // Persistance du formulaire de réservation avec useAppPersistence (supporte serialize/deserialize)
   interface ReservationFormState {
     partySize: number;
@@ -80,7 +80,7 @@ export function ReservationModal({
     paymentMethod: 'card' | 'mobile';
     selectedCategory: string;
   }
-  
+
   const defaultReservationForm: ReservationFormState = {
     partySize: 2,
     selectedDate: undefined,
@@ -94,11 +94,11 @@ export function ReservationModal({
     paymentMethod: 'mobile',
     selectedCategory: 'all',
   };
-  
+
   const reservationPersistence = useAppPersistence<ReservationFormState>({
     key: `reservation_${serviceId}`,
     defaultState: defaultReservationForm,
-    enabled: !!serviceId && isOpen, 
+    enabled: !!serviceId && isOpen,
     maxAge: 30 * 60 * 1000, // 30 minutes
     serialize: (state) => ({
       ...state,
@@ -109,11 +109,11 @@ export function ReservationModal({
       selectedDate: data.selectedDate ? new Date(data.selectedDate) : undefined,
     }),
   });
-  
+
   const reservationForm = reservationPersistence.state;
   const setReservationForm = reservationPersistence.setState;
-  const resetReservationForm = reservationPersistence.clear;
-  
+  const _resetReservationForm = reservationPersistence.clear;
+
   // Persistance du panier de précommande
   const cartPersistence = useAppPersistence<CartItem[]>({
     key: `reservation_cart_${serviceId}`,
@@ -121,7 +121,7 @@ export function ReservationModal({
     enabled: !!serviceId && isOpen,
     maxAge: 30 * 60 * 1000,
   });
-  
+
   // Aliases pour compatibilité
   const partySize = reservationForm.partySize;
   const setPartySize = (v: number) => setReservationForm(prev => ({ ...prev, partySize: v }));
@@ -145,21 +145,22 @@ export function ReservationModal({
   const setPaymentMethod = (v: 'card' | 'mobile') => setReservationForm(prev => ({ ...prev, paymentMethod: v }));
   const selectedCategory = reservationForm.selectedCategory;
   const setSelectedCategory = (v: string) => setReservationForm(prev => ({ ...prev, selectedCategory: v }));
-  
+
   const cart = cartPersistence.state;
   const setCart = cartPersistence.setState;
-  
+
   // États non persistés (temporaires)
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [_paymentProcessing, _setPaymentProcessing] = useState(false);
   const [showStripePayment, setShowStripePayment] = useState(false);
   const [confirmationData, setConfirmationData] = useState<any>(null);
-  const [showReceiptDownload, setShowReceiptDownload] = useState(false);
+  const [_showReceiptDownload, setShowReceiptDownload] = useState(false);
 
   // Préremplir avec les infos de l'utilisateur connecté
   useEffect(() => {
     if (user) {
       setCustomerEmail(user.email || '');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Charger les créneaux quand la date change
@@ -167,11 +168,12 @@ export function ReservationModal({
     if (selectedDate && serviceId) {
       loadTimeSlots();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, partySize]);
 
   const loadTimeSlots = async () => {
     if (!selectedDate) return;
-    
+
     setLoadingSlots(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -190,8 +192,8 @@ export function ReservationModal({
     setCart(prev => {
       const existing = prev.find(c => c.menuItem.id === item.id);
       if (existing) {
-        return prev.map(c => 
-          c.menuItem.id === item.id 
+        return prev.map(c =>
+          c.menuItem.id === item.id
             ? { ...c, quantity: c.quantity + 1 }
             : c
         );
@@ -204,8 +206,8 @@ export function ReservationModal({
     setCart(prev => {
       const existing = prev.find(c => c.menuItem.id === itemId);
       if (existing && existing.quantity > 1) {
-        return prev.map(c => 
-          c.menuItem.id === itemId 
+        return prev.map(c =>
+          c.menuItem.id === itemId
             ? { ...c, quantity: c.quantity - 1 }
             : c
         );
@@ -218,7 +220,7 @@ export function ReservationModal({
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Filtrer les plats
-  const filteredMenuItems = selectedCategory === 'all' 
+  const filteredMenuItems = selectedCategory === 'all'
     ? menuItems.filter(i => i.is_available)
     : menuItems.filter(i => i.is_available && i.category_id === selectedCategory);
 
@@ -231,7 +233,7 @@ export function ReservationModal({
     setIsSubmitting(true);
     try {
       // Préparer les données de précommande
-      const preorderData = wantToPreorder && cart.length > 0 
+      const preorderData = wantToPreorder && cart.length > 0
         ? JSON.stringify(cart.map(c => ({
             item_id: c.menuItem.id,
             name: c.menuItem.name,
@@ -241,7 +243,7 @@ export function ReservationModal({
           })))
         : null;
 
-      const paymentInfo = paymentIntentId 
+      const paymentInfo = paymentIntentId
         ? `\n\n💳 Paiement carte effectué (Réf: ${paymentIntentId.substring(0, 12)})`
         : (wantToPrepay ? '\n\n📱 Paiement mobile en attente' : '');
 
@@ -252,17 +254,17 @@ export function ReservationModal({
         party_size: partySize,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
         reservation_time: selectedTime,
-        special_requests: specialRequests 
-          ? (preorderData 
+        special_requests: specialRequests
+          ? (preorderData
             ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
             : `${specialRequests}${paymentInfo}`)
-          : (preorderData 
+          : (preorderData
             ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
             : (paymentInfo ? paymentInfo.trim() : undefined)),
       };
 
       const result = await createReservation(reservationData);
-      
+
       if (result) {
         setConfirmationData({
           ...result,
@@ -308,7 +310,7 @@ export function ReservationModal({
   // Générer et télécharger le reçu
   const generateReceipt = () => {
     if (!confirmationData) return;
-    
+
     const receiptContent = `
 ╔═══════════════════════════════════════════════╗
 ║           REÇU DE RÉSERVATION                 ║
@@ -353,7 +355,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     toast.success('Reçu téléchargé !');
   };
 
@@ -376,7 +378,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
       case 'guests': setStep('datetime'); break;
       case 'datetime': setStep('menu'); break;
       case 'menu': setStep('details'); break;
-      case 'details': 
+      case 'details':
         if (wantToPrepay && cartTotal > 0) {
           setStep('payment');
         } else {
@@ -441,8 +443,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <span>Pour plus de 8 personnes, veuillez nous appeler</span>
             </div>
 
-            <Button 
-              className="w-full h-12 text-lg" 
+            <Button
+              className="w-full h-12 text-lg"
               onClick={goToNextStep}
             >
               Continuer
@@ -472,7 +474,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                     )}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
-                    {selectedDate 
+                    {selectedDate
                       ? format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })
                       : 'Sélectionner une date'
                     }
@@ -483,8 +485,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    disabled={(date) => 
-                      isBefore(date, startOfDay(new Date())) || 
+                    disabled={(date) =>
+                      isBefore(date, startOfDay(new Date())) ||
                       isBefore(addDays(new Date(), 60), date)
                     }
                     initialFocus
@@ -559,15 +561,15 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             )}
 
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                className="flex-1 h-12" 
+              <Button
+                variant="outline"
+                className="flex-1 h-12"
                 onClick={goToPreviousStep}
               >
                 Retour
               </Button>
-              <Button 
-                className="flex-1 h-12" 
+              <Button
+                className="flex-1 h-12"
                 onClick={goToNextStep}
                 disabled={!selectedDate || !selectedTime}
               >
@@ -606,7 +608,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 {categories.length > 0 && (
                   <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex gap-2 pb-2">
-                      <Badge 
+                      <Badge
                         variant={selectedCategory === 'all' ? 'default' : 'outline'}
                         className="cursor-pointer"
                         onClick={() => setSelectedCategory('all')}
@@ -644,7 +646,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                       {filteredMenuItems.map(item => {
                         const inCart = cart.find(c => c.menuItem.id === item.id);
                         return (
-                          <div 
+                          <div
                             key={item.id}
                             className={cn(
                               "flex items-center gap-3 p-3 rounded-lg border transition-all",
@@ -653,13 +655,13 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                           >
                             {/* Image */}
                             {item.image_url && (
-                              <img 
-                                src={item.image_url} 
+                              <img
+                                src={item.image_url}
                                 alt={item.name}
                                 className="w-16 h-16 rounded-lg object-cover"
                               />
                             )}
-                            
+
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -694,9 +696,9 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                             <div className="flex items-center gap-2">
                               {inCart ? (
                                 <div className="flex items-center gap-2">
-                                  <Button 
-                                    size="icon" 
-                                    variant="outline" 
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
                                     className="h-8 w-8"
                                     onClick={() => removeFromCart(item.id)}
                                   >
@@ -705,7 +707,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                                   <span className="w-6 text-center font-semibold">
                                     {inCart.quantity}
                                   </span>
-                                  <Button 
+                                  <Button
                                     size="icon"
                                     className="h-8 w-8"
                                     onClick={() => addToCart(item)}
@@ -714,7 +716,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                                   </Button>
                                 </div>
                               ) : (
-                                <Button 
+                                <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => addToCart(item)}
@@ -885,8 +887,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <Button variant="outline" className="flex-1 h-12" onClick={goToPreviousStep}>
                 Retour
               </Button>
-              <Button 
-                className="flex-1 h-12" 
+              <Button
+                className="flex-1 h-12"
                 onClick={goToNextStep}
                 disabled={!customerName || isSubmitting}
               >
@@ -928,9 +930,9 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 onError={handleStripeError}
               />
 
-              <Button 
-                variant="ghost" 
-                className="w-full" 
+              <Button
+                variant="ghost"
+                className="w-full"
                 onClick={() => setShowStripePayment(false)}
               >
                 Retour aux options de paiement
@@ -967,8 +969,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             </Card>
 
             {/* Sélection méthode de paiement */}
-            <RadioGroup 
-              value={paymentMethod} 
+            <RadioGroup
+              value={paymentMethod}
               onValueChange={(value) => setPaymentMethod(value as 'card' | 'mobile')}
               className="space-y-3"
             >
@@ -992,10 +994,10 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               )}>
                 <RadioGroupItem value="mobile" id="mobile" />
                 <Label htmlFor="mobile" className="flex items-center gap-3 cursor-pointer flex-1">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
-                    alt="Orange Money" 
-                    className="w-6 h-6 rounded" 
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png"
+                    alt="Orange Money"
+                    className="w-6 h-6 rounded"
                   />
                   <div>
                     <p className="font-medium">Orange Money</p>
@@ -1007,7 +1009,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
 
             {/* Options de paiement */}
             <div className="space-y-3">
-              <Button 
+              <Button
                 className={cn(
                   "w-full h-14",
                   paymentMethod === 'card' ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-500 hover:bg-orange-600"
@@ -1028,17 +1030,17 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   </>
                 ) : (
                   <>
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png" 
-                      alt="Orange Money" 
-                      className="w-5 h-5 mr-2 rounded" 
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Orange_Money_logo.png"
+                      alt="Orange Money"
+                      className="w-5 h-5 mr-2 rounded"
                     />
                     Payer avec Orange Money
                   </>
                 )}
               </Button>
-              
-              <Button 
+
+              <Button
                 variant="outline"
                 className="w-full h-12"
                 onClick={() => {
@@ -1127,8 +1129,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             </div>
 
             {/* Bouton télécharger le reçu */}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full h-12"
               onClick={generateReceipt}
             >

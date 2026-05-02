@@ -131,8 +131,8 @@ export function AgentLayout({
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={onSignOut}
               className="text-red-600 hover:bg-red-50"
@@ -313,8 +313,8 @@ export function AgentLayout({
           <div className="flex items-center gap-4">
             <Badge variant={agent.is_active ? "default" : "secondary"} className={cn(
               "px-3 py-1",
-              agent.is_active 
-                ? "bg-green-100 text-green-700 hover:bg-green-100" 
+              agent.is_active
+                ? "bg-green-100 text-green-700 hover:bg-green-100"
                 : "bg-slate-100 text-slate-600"
             )}>
               {agent.is_active ? '● Actif' : '○ Inactif'}

@@ -7,9 +7,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { 
-  CreatePaymentIntentRequest, 
-  CreatePaymentIntentResponse 
+import type {
+  CreatePaymentIntentRequest,
+  CreatePaymentIntentResponse
 } from '@/types/stripePayment';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -176,7 +176,7 @@ export function useStripePayment(options: UseStripePaymentOptions = {}) {
   ) => {
     try {
       const field = userType === 'buyer' ? 'buyer_id' : 'seller_id';
-      
+
       const { data, error: queryError } = await supabase
         .from('stripe_transactions')
         .select('status, amount, currency, commission_amount, seller_net_amount')

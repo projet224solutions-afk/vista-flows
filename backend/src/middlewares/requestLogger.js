@@ -13,7 +13,7 @@ export function requestLogger(req, res, next) {
     const duration = Date.now() - start;
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
-    
+
     const logData = {
       method: req.method,
       path: req.path,

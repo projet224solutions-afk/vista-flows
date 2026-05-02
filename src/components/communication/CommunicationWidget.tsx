@@ -4,11 +4,11 @@
  * Optimisé pour éviter les problèmes INP (Interaction to Next Paint)
  */
 
-import React from 'react';
+import _React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Bell } from 'lucide-react';
+import { _Button } from '@/components/ui/button';
+import { _Badge } from '@/components/ui/badge';
+import { _MessageSquare, _Bell } from 'lucide-react';
 import { useUniversalCommunication } from '@/hooks/useUniversalCommunication';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -18,18 +18,18 @@ interface CommunicationWidgetProps {
 }
 
 export default function CommunicationWidget({
-  position = 'bottom-right',
-  showNotifications = true 
+  _position = 'bottom-right',
+  _showNotifications = true
 }: CommunicationWidgetProps) {
   const { user } = useAuth();
   const { stats } = useUniversalCommunication();
-  const navigate = useNavigate();
-  const unreadCount = stats?.unreadCount || 0;
-  const notificationCount = stats?.notificationCount || 0;
+  const _navigate = useNavigate();
+  const _unreadCount = stats?.unreadCount || 0;
+  const _notificationCount = stats?.notificationCount || 0;
 
   if (!user) return null;
 
-  const positionClasses = {
+  const _positionClasses = {
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4',
     'top-right': 'top-4 right-4',

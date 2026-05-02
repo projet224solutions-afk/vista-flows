@@ -12,9 +12,9 @@ interface ProductRecommendationsProps {
 /**
  * Composant de recommandations personnalisées (style Amazon)
  */
-export const ProductRecommendations = ({ 
+export const ProductRecommendations = ({
   limit = 10,
-  title = "Recommandé pour vous" 
+  title = "Recommandé pour vous"
 }: ProductRecommendationsProps) => {
   const { recommendations, loading } = useProductRecommendations(limit);
 
@@ -52,16 +52,16 @@ export const ProductRecommendations = ({
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {recommendations.map((rec) => (
-          <Link 
-            key={rec.id} 
+          <Link
+            key={rec.id}
             to={`/product/${rec.recommended_product_id}`}
             className="block"
           >
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardContent className="p-4 space-y-2">
                 {rec.product?.images && rec.product.images[0] && (
-                  <img 
-                    src={rec.product.images[0]} 
+                  <img
+                    src={rec.product.images[0]}
                     alt={rec.product.name}
                     className="w-full h-40 object-cover rounded"
                   />

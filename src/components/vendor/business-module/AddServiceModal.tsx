@@ -17,20 +17,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
+import { _Card, _CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, Store, Utensils, Scissors, Car, Heart, 
+import { _Badge } from '@/components/ui/badge';
+import {
+  Plus, Store, Utensils, Scissors, Car, Heart,
   BookOpen, Camera, Truck, Building2, Dumbbell,
-  Laptop, Leaf, Hammer, Sparkles, ArrowRight,
+  Laptop, Leaf, Hammer, Sparkles, _ArrowRight,
   Loader2, CheckCircle, AlertCircle, MapPin, Navigation,
   Home, Plane, Briefcase
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { _cn } from '@/lib/utils';
 import { z } from 'zod';
 
 interface ServiceType {
@@ -103,13 +103,13 @@ type ServiceFormData = z.infer<typeof serviceFormSchema>;
 export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [step, setStep] = useState<'select' | 'configure'>('select');
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  
+
   // Form state
   const [businessName, setBusinessName] = useState('');
   const [description, setDescription] = useState('');
@@ -221,9 +221,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         description,
         address
       };
-      
+
       const validatedData = serviceFormSchema.parse(formData);
-      
+
       setCreating(true);
 
       // Créer le nouveau service professionnel avec données validées
@@ -249,13 +249,13 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
       toast.success('Service créé avec succès !');
       onOpenChange(false);
-      
+
       // Rediriger vers la page vendeur pour voir le nouveau service
-      navigate('/vendeur', { 
-        state: { 
+      navigate('/vendeur', {
+        state: {
           newServiceId: data.id,
-          showServiceModule: true 
-        } 
+          showServiceModule: true
+        }
       });
 
     } catch (error: any) {
@@ -302,9 +302,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     ],
     // Autres Services (4) - Identique à Auth.tsx
     other: [
-      { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+      { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours et coaching' },
       { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
-      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme et voyages' },
       { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
     ]
   };
@@ -316,7 +316,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const renderDisplayServiceCard = (displayService: { code: string; name: string; icon: string; desc: string }, colorClass: string, borderClass: string) => {
     const dbService = getServiceTypeByCode(displayService.code);
     if (!dbService) return null;
-    
+
     return (
       <button
         key={displayService.code}
@@ -342,13 +342,13 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           </h4>
           {/* Première ligne - 4 boutons */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            {DISPLAY_SERVICES.proximity.slice(0, 4).map(s => 
+            {DISPLAY_SERVICES.proximity.slice(0, 4).map(s =>
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
             )}
           </div>
           {/* Deuxième ligne - 2 boutons centrés */}
           <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-            {DISPLAY_SERVICES.proximity.slice(4).map(s => 
+            {DISPLAY_SERVICES.proximity.slice(4).map(s =>
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
             )}
           </div>
@@ -362,7 +362,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.professional.map(s => 
+            {DISPLAY_SERVICES.professional.map(s =>
               renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
             )}
           </div>
@@ -376,7 +376,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {DISPLAY_SERVICES.other.map(s => 
+            {DISPLAY_SERVICES.other.map(s =>
               renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
             )}
           </div>
@@ -387,7 +387,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
   const renderConfigureForm = () => {
     const Icon = selectedType ? getServiceIcon(selectedType.code) : Store;
-    
+
     return (
       <div className="space-y-6">
         {/* Selected type indicator */}
@@ -440,9 +440,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           <div className="space-y-2">
             <Label>Position GPS (recommandé)</Label>
             <div className="flex items-center gap-3">
-              <Button 
+              <Button
                 type="button"
-                variant="outline" 
+                variant="outline"
                 onClick={getGpsLocation}
                 disabled={gpsLoading}
                 className="gap-2"
@@ -487,16 +487,16 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
         {/* Action buttons */}
         <div className="flex gap-3 pt-2">
-          <Button 
+          <Button
             type="button"
-            variant="outline" 
+            variant="outline"
             onClick={handleBack}
             className="flex-1"
             disabled={creating}
           >
             Retour
           </Button>
-          <Button 
+          <Button
             type="button"
             onClick={handleCreate}
             className="flex-1 gap-2"
@@ -525,7 +525,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             {step === 'select' ? 'Nouveau service professionnel' : 'Configurer votre service'}
           </DialogTitle>
           <DialogDescription className="text-base">
-            {step === 'select' 
+            {step === 'select'
               ? 'Choisissez le type de service que vous souhaitez créer parmi nos catégories'
               : `Configurez votre ${selectedType?.name || 'service'}`
             }

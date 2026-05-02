@@ -21,6 +21,7 @@ export function useAffiliateToken() {
 
   useEffect(() => {
     initializeAffiliateToken();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const initializeAffiliateToken = async () => {
@@ -130,7 +131,7 @@ export function useAffiliateToken() {
     ];
 
     const str = components.join('|');
-    
+
     // Hash simple
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -138,7 +139,7 @@ export function useAffiliateToken() {
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash;
     }
-    
+
     return Math.abs(hash).toString(36);
   };
 

@@ -127,8 +127,8 @@ export function MissingProductsVerificationDialog({
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) resetDialog();
         onOpenChange(isOpen);
@@ -184,7 +184,7 @@ export function MissingProductsVerificationDialog({
                 <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span>
-                    Veuillez d'abord vérifier tous les produits reçus avant de valider cet achat. 
+                    Veuillez d'abord vérifier tous les produits reçus avant de valider cet achat.
                     Cela vous permettra de signaler tout produit manquant.
                   </span>
                 </p>
@@ -283,9 +283,9 @@ export function MissingProductsVerificationDialog({
                         type="number"
                         min={1}
                         value={currentEntry.missing_count || ''}
-                        onChange={(e) => setCurrentEntry({ 
-                          ...currentEntry, 
-                          missing_count: parseInt(e.target.value) || 0 
+                        onChange={(e) => setCurrentEntry({
+                          ...currentEntry,
+                          missing_count: parseInt(e.target.value) || 0
                         })}
                         className="h-9"
                         placeholder="0"
@@ -296,9 +296,9 @@ export function MissingProductsVerificationDialog({
                       <Label className="text-xs">Raison *</Label>
                       <Select
                         value={currentEntry.reason}
-                        onValueChange={(v) => setCurrentEntry({ 
-                          ...currentEntry, 
-                          reason: v as 'supplier_error' | 'shipping_loss' | 'other' 
+                        onValueChange={(v) => setCurrentEntry({
+                          ...currentEntry,
+                          reason: v as 'supplier_error' | 'shipping_loss' | 'other'
                         })}
                       >
                         <SelectTrigger className="h-9">
@@ -402,8 +402,8 @@ export function MissingProductsVerificationDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
           >
             Annuler

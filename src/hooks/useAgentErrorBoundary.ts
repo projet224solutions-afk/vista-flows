@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 
-export type AgentErrorType = 
+export type AgentErrorType =
   | 'user'          // Création/gestion utilisateurs
   | 'sub_agent'     // Gestion sous-agents
   | 'commission'    // Calcul/retrait commissions

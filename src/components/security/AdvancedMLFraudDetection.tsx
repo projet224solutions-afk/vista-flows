@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Brain, Activity, AlertTriangle, TrendingDown, RefreshCw, 
-  Zap, Target, BarChart3, Shield, CheckCircle 
+import {
+  Brain, Activity, AlertTriangle, _TrendingDown, RefreshCw,
+  Zap, Target, BarChart3, Shield, _CheckCircle
 } from "lucide-react";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,8 +103,8 @@ export function AdvancedMLFraudDetection() {
   };
 
   const totalPredictions = models.reduce((sum, m) => sum + Number(m.total_predictions), 0);
-  const avgAccuracy = models.length > 0 
-    ? models.reduce((sum, m) => sum + Number(m.accuracy), 0) / models.length 
+  const avgAccuracy = models.length > 0
+    ? models.reduce((sum, m) => sum + Number(m.accuracy), 0) / models.length
     : 0;
   const activePatterns = patterns.filter(p => p.is_active).length;
   const highRiskPatterns = patterns.filter(p => p.risk_score >= 75).length;
@@ -124,8 +124,8 @@ export function AdvancedMLFraudDetection() {
                 Intelligence artificielle prédictive comparable à Amazon/Alibaba
               </CardDescription>
             </div>
-            <Button 
-              onClick={handleRefresh} 
+            <Button
+              onClick={handleRefresh}
               disabled={loading}
               variant="outline"
               size="sm"
@@ -141,8 +141,8 @@ export function AdvancedMLFraudDetection() {
               <span className="font-semibold">Système ML Actif - Analyse en temps réel</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {models.filter(m => m.status === 'active').length} modèles actifs • 
-              {totalPredictions.toLocaleString()} prédictions • 
+              {models.filter(m => m.status === 'active').length} modèles actifs •
+              {totalPredictions.toLocaleString()} prédictions •
               Précision moyenne: {avgAccuracy.toFixed(1)}%
             </p>
           </div>

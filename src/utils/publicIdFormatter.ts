@@ -32,10 +32,10 @@ export function formatPublicId(id: string | null | undefined): string {
  */
 export function extractPublicId(text: string | null | undefined): string | null {
   if (!text) return null;
-  
+
   const regex = /[A-HJ-KM-NP-Z]{3}[0-9]{4}/i;
   const match = text.match(regex);
-  
+
   return match ? match[0].toUpperCase() : null;
 }
 
@@ -79,7 +79,7 @@ export function isTempId(id: string | null | undefined): boolean {
 export function maskPublicId(id: string | null | undefined): string {
   const formattedId = formatPublicId(id);
   if (!formattedId || formattedId.length < 7) return '***';
-  
+
   return formattedId.substring(0, 3) + '****';
 }
 

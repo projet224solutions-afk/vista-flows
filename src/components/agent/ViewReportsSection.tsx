@@ -12,7 +12,7 @@ interface ViewReportsSectionProps {
   agentStats?: AgentStats;
 }
 
-export function ViewReportsSection({ agentId, agentData, agentStats }: ViewReportsSectionProps) {
+export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewReportsSectionProps) {
   const usersThisMonth = agentStats?.usersThisMonth ?? 0;
   const commissionsThisMonth = agentStats?.commissionsThisMonth ?? 0;
   const totalCommissions = agentData.total_commissions_earned ?? agentStats?.totalCommissions ?? 0;
@@ -100,8 +100,8 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                     <span className="font-semibold">{usersThisMonth}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min((usersThisMonth / monthlyTarget) * 100, 100)}%` }}
                     ></div>
                   </div>
@@ -113,8 +113,8 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                     <span className="font-semibold">{commissionsThisMonth.toLocaleString()} GNF</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-500" 
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(commissionsThisMonth > 0 ? 50 : 0, 100)}%` }}
                     ></div>
                   </div>

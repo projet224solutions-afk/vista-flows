@@ -1,7 +1,7 @@
 /**
  * 📢 CAMPAIGNS ROUTES - Système de diffusion multicanal vendeur
  * 224Solutions - Broadcast Campaign System
- * 
+ *
  * Endpoints:
  *   POST   /api/campaigns              — Créer une campagne
  *   GET    /api/campaigns              — Lister mes campagnes (vendeur)
@@ -437,7 +437,7 @@ router.get('/', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) =
 });
 
 /**
- * GET /api/campaigns/:id — Détail d'une campagne  
+ * GET /api/campaigns/:id — Détail d'une campagne
  */
 router.get('/:id', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
@@ -507,7 +507,7 @@ router.get('/:id/analytics', verifyJWT, async (req: CampaignRequest, res: Campai
       res.status(403).json({ success: false, error: 'Forbidden' }); return;
     }
 
-    // Get all deliveries  
+    // Get all deliveries
     const { data: deliveries } = await supabaseAdmin
       .from('vendor_campaign_deliveries')
       .select('channel, status, sent_at, delivered_at, read_at, clicked_at, failure_reason')

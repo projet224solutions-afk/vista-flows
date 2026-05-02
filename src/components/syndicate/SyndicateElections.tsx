@@ -14,7 +14,7 @@ interface SyndicateElectionsProps {
     bureauId: string;
 }
 
-export default function SyndicateElections({ bureauId }: SyndicateElectionsProps) {
+export default function SyndicateElections({ _bureauId }: SyndicateElectionsProps) {
     const [electionStats] = useState({
         activeElections: 1,
         totalVoters: 42,

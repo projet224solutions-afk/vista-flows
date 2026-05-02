@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle, UserPlus, Loader2, Reply, X } from "lucide-react";
+import { ArrowLeft, _Send, User, Search, MessageCircle, Phone, Video, _MoreVertical, Shield, _Check, _CheckCheck, _Clock, _XCircle, UserPlus, Loader2, Reply, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,8 +21,7 @@ import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
 import { playNotificationSound } from "@/services/notificationSoundService";
-import { useStorageUpload, StorageFolder } from "@/hooks/useStorageUpload";
-import type { PresenceStatus, Message as MessageType } from "@/types/communication.types";
+import type { PresenceStatus, Message as _MessageType } from "@/types/communication.types";
 
 interface Message {
   id: string;
@@ -101,16 +100,16 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ├ëtats pour les nouvelles fonctionnalit├®s
+  // États pour les nouvelles fonctionnalités
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [otherUserPresence, setOtherUserPresence] = useState<PresenceStatus>('offline');
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Hook de pr├®sence
+  // Hook de présence
   const { setTyping, subscribeToTyping } = usePresence();
 
-  // ­ƒƒó Hook de pr├®sence pour la liste des conversations
+  // 🟢 Hook de présence pour la liste des conversations
   const {
     isOnline: isContactOnline,
     getStatus: getContactStatus,
@@ -123,6 +122,7 @@ export default function Messages() {
 
   useEffect(() => {
     loadCurrentUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -130,9 +130,10 @@ export default function Messages() {
       loadConversations();
       loadAvailableContacts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  // Charger les pr├®sences quand les conversations changent
+  // Charger les présences quand les conversations changent
   useEffect(() => {
     if (conversations.length > 0) {
       const userIds = conversations.map(c => c.other_user_id);
@@ -144,6 +145,7 @@ export default function Messages() {
     if (selectedConversation && currentUser) {
       loadMessages(selectedConversation);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation, currentUser]);
 
   useEffect(() => {
@@ -172,12 +174,12 @@ export default function Messages() {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          // V├®rifier si le message concerne cette conversation
+          // Vérifier si le message concerne cette conversation
           if (newMsg.sender_id === selectedConversation || newMsg.sender_id === currentUser.id) {
             // Recharger les messages pour cette conversation
             loadMessages(selectedConversation);
-            
-            // Jouer le son si c'est un message re├ºu (pas notre propre message)
+
+            // Jouer le son si c'est un message reçu (pas notre propre message)
             if (newMsg.sender_id !== currentUser.id) {
               playNotificationSound();
             }
@@ -189,9 +191,10 @@ export default function Messages() {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversation, currentUser]);
 
-  // ­ƒöö Real-time subscription for unread count synchronization
+  // 🔔 Real-time subscription for unread count synchronization
   useEffect(() => {
     if (!currentUser) return;
 
@@ -206,7 +209,7 @@ export default function Messages() {
           filter: `recipient_id=eq.${currentUser.id}`
         },
         () => {
-          console.log('[Messages] ­ƒô® Nouveau message re├ºu - rechargement conversations');
+          console.log('[Messages] 📨 Nouveau message reçu - rechargement conversations');
           loadConversations();
         }
       )
@@ -219,7 +222,7 @@ export default function Messages() {
           filter: `recipient_id=eq.${currentUser.id}`
         },
         () => {
-          console.log('[Messages] Ô£à Message mis ├á jour - rechargement conversations');
+          console.log('[Messages] ✓ Message mis à jour - rechargement conversations');
           loadConversations();
         }
       )
@@ -228,9 +231,10 @@ export default function Messages() {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  // Synchroniser pr├®sence du contact s├®lectionn├® (source unique stable)
+  // Synchroniser présence du contact sélectionné (source unique stable)
   useEffect(() => {
     if (!selectedConversation) {
       setOtherUserPresence('offline');
@@ -256,7 +260,7 @@ export default function Messages() {
     return () => unsubscribe();
   }, [selectedConversation, subscribeToTyping, currentUser?.id]);
 
-  const stopTypingIndicator = useCallback(() => {
+  const _stopTypingIndicator = useCallback(() => {
     if (!selectedConversation) return;
 
     if (typingTimeoutRef.current) {
@@ -270,7 +274,7 @@ export default function Messages() {
     }
   }, [selectedConversation, setTyping]);
 
-  // G├®rer l'indicateur de frappe lors de la saisie (throttle anti-spam)
+  // Gérer l'indicateur de frappe lors de la saisie (throttle anti-spam)
   const handleTyping = useCallback(() => {
     if (!selectedConversation) return;
 
@@ -316,8 +320,8 @@ export default function Messages() {
     try {
       setLoading(true);
 
-      // Ô£à Source de v├®rit├®: table messages
-      // On liste uniquement les contacts qui ont d├®j├á ├®chang├® au moins 1 message avec l'utilisateur.
+      // ✓ Source de vérité: table messages
+      // On liste uniquement les contacts qui ont déjà échangé au moins 1 message avec l'utilisateur.
       const { data: recentMessages, error: msgError } = await supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at')
@@ -336,7 +340,7 @@ export default function Messages() {
         return;
       }
 
-      // Construire une liste unique de contacts (dernier message conserv├®)
+      // Construire une liste unique de contacts (dernier message conservé)
       const conversationMap = new Map<string, { other_user_id: string; last_message: string; last_message_time: string }>();
 
       for (const msg of recentMessages as any[]) {
@@ -361,21 +365,21 @@ export default function Messages() {
             .eq('id', conv.other_user_id)
             .single();
 
-          // V├®rifier si c'est un vendeur
+          // Vérifier si c'est un vendeur
           const { data: vendor } = await supabase
             .from('vendors')
             .select('id, business_name, shop_slug, phone')
             .eq('user_id', conv.other_user_id)
             .maybeSingle();
 
-          // V├®rifier certification
+          // Vérifier certification
           const { data: cert } = await supabase
             .from('vendor_certifications')
             .select('status')
             .eq('vendor_id', conv.other_user_id)
             .maybeSingle();
 
-          // R├®cup├®rer le type de service pro (restaurant, coiffure, etc.)
+          // Récupérer le type de service pro (restaurant, coiffure, etc.)
           const { data: proService } = await supabase
             .from('professional_services')
             .select(`
@@ -393,7 +397,7 @@ export default function Messages() {
             ? (proService as any).service_type[0]
             : (proService as any)?.service_type;
 
-          // Ô£à Calculer le nombre de messages non lus pour cette conversation
+          // ✓ Calculer le nombre de messages non lus pour cette conversation
           const { count: unreadCount } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
@@ -430,18 +434,18 @@ export default function Messages() {
         })
       );
 
-      // Ô£à Trier: messages non lus en premier (par nombre d├®croissant), puis par date
+      // ✓ Trier: messages non lus en premier (par nombre décroissant), puis par date
       const sortedConversations = enrichedConversations.sort((a, b) => {
         // D'abord, ceux avec des messages non lus
         if (a.unread_count > 0 && b.unread_count === 0) return -1;
         if (a.unread_count === 0 && b.unread_count > 0) return 1;
-        
-        // Si les deux ont des messages non lus, trier par nombre d├®croissant
+
+        // Si les deux ont des messages non lus, trier par nombre décroissant
         if (a.unread_count > 0 && b.unread_count > 0) {
           return b.unread_count - a.unread_count;
         }
-        
-        // Sinon, trier par date du dernier message (plus r├®cent en premier)
+
+        // Sinon, trier par date du dernier message (plus récent en premier)
         return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
       });
 
@@ -454,16 +458,16 @@ export default function Messages() {
     }
   };
 
-  // Charger les contacts disponibles (vendeurs) pour d├®marrer une nouvelle conversation
+  // Charger les contacts disponibles (vendeurs) pour démarrer une nouvelle conversation
   const loadAvailableContacts = async () => {
     if (!currentUser) return;
 
     try {
       setLoadingContacts(true);
 
-      // Les contacts disponibles sont maintenant g├®r├®s via les conversations existantes
-      // Cette fonction n'affiche plus tous les utilisateurs, seulement ceux avec qui on a d├®j├á convers├®
-      // Les nouveaux contacts sont ajout├®s via la recherche d'utilisateurs
+      // Les contacts disponibles sont maintenant gérés via les conversations existantes
+      // Cette fonction n'affiche plus tous les utilisateurs, seulement ceux avec qui on a déjà conversé
+      // Les nouveaux contacts sont ajoutés via la recherche d'utilisateurs
       setAvailableContacts([]);
     } catch (error) {
       console.error('Erreur chargement contacts:', error);
@@ -472,10 +476,11 @@ export default function Messages() {
     }
   };
 
-  // Rechercher des utilisateurs par nom, email ou public_id
+  // Rechercher des utilisateurs par nom, email, public_id, UUID ou telephone
   const searchUsers = async (query: string) => {
     if (!query.trim() || query.trim().length < 2) {
       setSearchResults([]);
+      setSearchingUsers(false);
       return;
     }
 
@@ -483,33 +488,16 @@ export default function Messages() {
       setSearchingUsers(true);
       const searchTerm = query.trim();
 
-      // ├ëchapper les caract├¿res sp├®ciaux pour ├®viter les erreurs de requ├¬te
-      const escapedTerm = searchTerm.replace(/[%_]/g, '\\$&');
-      const searchPattern = `%${escapedTerm}%`;
+      console.log('[Messages] Recherche utilisateurs:', { searchTerm });
 
-      console.log('[Messages] ­ƒöì Recherche utilisateurs:', { searchTerm, searchPattern });
+      const profiles = (await universalCommunicationService.searchUsers(searchTerm))
+        .filter((profile) => profile.id !== currentUser?.id);
 
-      // Recherche dans profiles avec plusieurs strat├®gies
-      // 1. Recherche par public_id exact (format VND0001, USR0001, etc.)
-      // 2. Recherche par nom/pr├®nom/email (insensible ├á la casse)
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url, public_id, phone')
-        .neq('id', currentUser?.id || '')
-        .or(`public_id.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`)
-        .limit(20);
-
-      console.log('[Messages] ­ƒôè R├®sultats recherche:', { profiles: profiles?.length, error });
-
-      if (error) {
-        console.error('Erreur recherche utilisateurs:', error);
-        setSearchResults([]);
-        return;
-      }
+      console.log('[Messages] Resultats recherche:', { profiles: profiles.length });
 
       // Enrichir avec infos vendeur
       const enrichedResults = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        profiles.map(async (profile) => {
           const { data: vendor } = await supabase
             .from('vendors')
             .select('business_name, phone')
@@ -548,7 +536,7 @@ export default function Messages() {
     }
   };
 
-  // S├®lectionner un utilisateur depuis la recherche et ouvrir la conversation
+  // Sélectionner un utilisateur depuis la recherche et ouvrir la conversation
   const handleSelectSearchResult = (user: any) => {
     setShowSearchDialog(false);
     setUserSearchQuery("");
@@ -561,8 +549,8 @@ export default function Messages() {
 
     try {
       // Charger les messages directement via sender_id et recipient_id
-      // Essayer d'inclure les messages de r├®ponse (reply_to)
-      let query = supabase
+      // Essayer d'inclure les messages de réponse (reply_to)
+      const query = supabase
         .from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`)
@@ -571,12 +559,12 @@ export default function Messages() {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Erreur requ├¬te messages:', error);
+        console.error('Erreur requête messages:', error);
         setMessages([]);
         return;
       }
 
-      // Charger les messages de r├®ponse s├®par├®ment si reply_to_id existe
+      // Charger les messages de réponse séparément si reply_to_id existe
       const messagesWithReplies = await Promise.all((data || []).map(async (msg) => {
         let replyTo = null;
         if (msg.reply_to_id) {
@@ -598,13 +586,13 @@ export default function Messages() {
 
       setMessages(messagesWithReplies);
 
-      // Marquer les messages re├ºus comme lus imm├®diatement
+      // Marquer les messages reçus comme lus immédiatement
       const unreadMessages = messagesWithReplies.filter(
         msg => msg.sender_id === otherUserId && !msg.read_at
       );
 
       if (unreadMessages.length > 0) {
-        console.log('[Messages] ­ƒôû Marquage de', unreadMessages.length, 'messages comme lus');
+        console.log('[Messages] 📖 Marquage de', unreadMessages.length, 'messages comme lus');
 
         // Marquer tous les messages non lus de cette conversation
         const { error: readError } = await supabase
@@ -617,8 +605,8 @@ export default function Messages() {
         if (readError) {
           console.warn('[Messages] Erreur marquage lu:', readError);
         } else {
-          console.log('[Messages] Ô£à Messages marqu├®s comme lus');
-          // Recharger pour mettre ├á jour l'affichage
+          console.log('[Messages] ✓ Messages marqués comme lus');
+          // Recharger pour mettre à jour l'affichage
           const { data: updatedData } = await supabase
             .from('messages')
             .select('*')
@@ -633,8 +621,8 @@ export default function Messages() {
             }));
             setMessages(updatedMessages);
           }
-          
-          // Ô£à Forcer le rechargement des conversations pour mettre ├á jour les badges
+
+          // ✓ Forcer le rechargement des conversations pour mettre à jour les badges
           loadConversations();
         }
       }
@@ -645,11 +633,11 @@ export default function Messages() {
     }
   };
 
-  const sendMessage = async () => {
+  const _sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
-      // Arr├¬ter l'indicateur de frappe
+      // Arrêter l'indicateur de frappe
       setTyping(selectedConversation, false);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -664,12 +652,12 @@ export default function Messages() {
         status: 'sent'
       };
 
-      // Ajouter la r├®f├®rence au message de r├®ponse si pr├®sent
+      // Ajouter la référence au message de réponse si présent
       if (replyToMessage) {
         messageData.reply_to_id = replyToMessage.id;
       }
 
-      // Ins├®rer le message directement avec sender_id et recipient_id
+      // Insérer le message directement avec sender_id et recipient_id
       const { error } = await supabase
         .from('messages')
         .insert(messageData);
@@ -677,7 +665,7 @@ export default function Messages() {
       if (error) throw error;
 
       setNewMessage("");
-      setReplyToMessage(null); // R├®initialiser la r├®ponse
+      setReplyToMessage(null); // Réinitialiser la réponse
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
@@ -687,13 +675,13 @@ export default function Messages() {
     }
   };
 
-  // G├®rer la r├®ponse ├á un message
+  // Gérer la réponse à un message
   const handleReplyToMessage = useCallback((message: Message) => {
     setReplyToMessage(message);
     inputRef.current?.focus();
   }, []);
 
-  // Annuler la r├®ponse
+  // Annuler la réponse
   const cancelReply = useCallback(() => {
     setReplyToMessage(null);
   }, []);
@@ -704,7 +692,7 @@ export default function Messages() {
 
     try {
       await universalCommunicationService.softDeleteMessage(messageId, currentUser.id, deleteForEveryone);
-      toast.success('Message supprim├®');
+      toast.success('Message supprimé');
       if (selectedConversation) {
         loadMessages(selectedConversation);
       }
@@ -712,10 +700,8 @@ export default function Messages() {
       console.error('Erreur suppression:', error);
       toast.error(error.message || 'Erreur lors de la suppression');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, selectedConversation]);
-
-  // Hook pour upload vers GCS
-  const { uploadFile: uploadToGCS } = useStorageUpload();
 
   const handleSendFile = async (file: File) => {
     if (!selectedConversation || !currentUser) {
@@ -724,27 +710,7 @@ export default function Messages() {
     }
 
     try {
-      // D├®terminer le folder GCS bas├® sur le type MIME
-      let folder: StorageFolder = 'documents';
-      if (file.type.startsWith('image/')) folder = 'products';
-      else if (file.type.startsWith('video/')) folder = 'videos';
-      else if (file.type.startsWith('audio/')) folder = 'audio';
-
-      console.log(`[Messages] Uploading file to GCS folder: ${folder}`);
-
-      // Upload vers GCS via useStorageUpload
-      const uploadResult = await uploadToGCS(file, {
-        folder,
-        subfolder: currentUser.id,
-      });
-
-      if (!uploadResult.success || !uploadResult.publicUrl) {
-        throw new Error(uploadResult.error || 'Upload ├®chou├®');
-      }
-
-      console.log(`[Messages] Ô£à File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
-
-      // D├®terminer le type de fichier - types accept├®s par la DB: text, image, file, audio, video
+      // Déterminer le type de fichier - types acceptés par la DB: text, image, file, audio, video
       let fileType: 'image' | 'file' | 'audio' | 'video' = 'file';
       if (file.type.startsWith('image/')) {
         fileType = 'image';
@@ -754,42 +720,24 @@ export default function Messages() {
         fileType = 'video';
       }
 
-      const fileExt = (file.name.split('.').pop() || '').toLowerCase();
-
-      // Ins├®rer message avec fichier directement
-      console.log('[Messages] Inserting file message:', { 
-        type: fileType, 
-        fileName: file.name, 
+      console.log('[Messages] Sending file via UniversalCommunicationService:', {
+        type: fileType,
+        fileName: file.name,
         fileSize: file.size,
-        mimeType: file.type,
-        provider: uploadResult.provider
+        mimeType: file.type
       });
 
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert([
-          {
-            sender_id: currentUser.id,
-            recipient_id: selectedConversation,
-            content: fileType === 'audio' ? '­ƒÄÖ´©Å Message vocal' : file.name,
-            type: fileType,
-            file_url: uploadResult.publicUrl,
-            file_name: file.name,
-            file_size: file.size,
-            status: 'sent',
-            ...(fileType === 'audio' && { 
-              audio_format: fileExt,
-              audio_mime_type: file.type,
-            })
-          },
-        ]);
-
-      if (messageError) throw messageError;
+      await universalCommunicationService.sendFileMessage(
+        `direct_${selectedConversation}`,
+        currentUser.id,
+        file,
+        fileType
+      );
 
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
-      toast.success(`Fichier envoy├® via ${uploadResult.provider?.toUpperCase()}!`);
+      toast.success(fileType === 'audio' ? 'Message vocal envoye' : 'Fichier envoye');
     } catch (error: any) {
       console.error('Erreur envoi fichier:', error);
       toast.error(error.message || 'Erreur lors de l\'envoi');
@@ -819,7 +767,7 @@ export default function Messages() {
 
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
-  // Helper pour le label du r├┤le utilisateur
+  // Helper pour le label du rôle utilisateur
   const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string | null; service_type_name?: string | null; service_type_code?: string | null }) => {
     if (conv.is_vendor) return 'Vendeur';
 
@@ -966,7 +914,7 @@ export default function Messages() {
                             {contact.is_certified && (
                               <Badge variant="outline" className="text-xs gap-1">
                                 <Shield className="w-3 h-3" />
-                                Certifi├®
+                                Certifié
                               </Badge>
                             )}
                           </div>
@@ -987,7 +935,7 @@ export default function Messages() {
                   </div>
                   <p className="text-lg font-medium text-foreground mb-2">Aucun contact</p>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    Visitez le marketplace pour d├®couvrir des vendeurs
+                    Visitez le marketplace pour découvrir des vendeurs
                   </p>
                 </div>
               )}
@@ -1015,10 +963,10 @@ export default function Messages() {
                         {conv.other_user_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Indicateur de pr├®sence en ligne */}
+                    {/* Indicateur de présence en ligne */}
                     {isContactOnline(conv.other_user_id) && (
-                      <PresenceBadge 
-                        status={getContactStatus(conv.other_user_id)} 
+                      <PresenceBadge
+                        status={getContactStatus(conv.other_user_id)}
                         size="md"
                         position="bottom-right"
                       />
@@ -1055,11 +1003,11 @@ export default function Messages() {
                         >
                           {formatTime(conv.last_message_time)}
                         </span>
-                        {/* Statut en ligne ou derni├¿re connexion */}
+                        {/* Statut en ligne ou dernière connexion */}
                         <span className={cn(
                           "text-[10px]",
-                          isContactOnline(conv.other_user_id) 
-                            ? "text-emerald-600 dark:text-emerald-400 font-medium" 
+                          isContactOnline(conv.other_user_id)
+                            ? "text-emerald-600 dark:text-emerald-400 font-medium"
                             : "text-muted-foreground"
                         )}>
                           {getLastSeenText(conv.other_user_id)}
@@ -1122,7 +1070,7 @@ export default function Messages() {
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {selectedConvData?.other_user_name?.substring(0, 2).toUpperCase() || 'U'}
                   </AvatarFallback>
-                  {/* Indicateur de pr├®sence */}
+                  {/* Indicateur de présence */}
                   <div className="absolute -bottom-0.5 -right-0.5">
                     <PresenceIndicator status={otherUserPresence} size="sm" />
                   </div>
@@ -1140,7 +1088,7 @@ export default function Messages() {
                     {selectedConvData?.is_certified && (
                       <Badge variant="default" className="gap-1 flex-shrink-0">
                         <Shield className="w-3 h-3" />
-                        Certifi├®
+                        Certifié
                       </Badge>
                     )}
                   </div>
@@ -1154,7 +1102,7 @@ export default function Messages() {
                         {getRoleLabel(selectedConvData || {})}
                       </Badge>
                     )}
-                    {/* Indicateur de pr├®sence visuel */}
+                    {/* Indicateur de présence visuel */}
                     <div className="flex items-center gap-1.5">
                       <span className={cn(
                         "w-2 h-2 rounded-full",
@@ -1167,7 +1115,7 @@ export default function Messages() {
                       <span className="text-xs text-muted-foreground">
                         {otherUserPresence === 'online' && 'En ligne'}
                         {otherUserPresence === 'away' && 'Absent'}
-                        {otherUserPresence === 'busy' && 'Occup├®'}
+                        {otherUserPresence === 'busy' && 'Occupé'}
                         {otherUserPresence === 'in_call' && 'En appel'}
                         {otherUserPresence === 'offline' && 'Hors ligne'}
                       </span>
@@ -1190,7 +1138,7 @@ export default function Messages() {
                   size="icon"
                   className="text-muted-foreground"
                   onClick={() => setShowVideoCall(true)}
-                  title="Appel vid├®o"
+                  title="Appel vidéo"
                 >
                   <Video className="w-5 h-5" />
                 </Button>
@@ -1206,15 +1154,15 @@ export default function Messages() {
                       <MessageCircle className="w-8 h-8 text-primary" />
                     </div>
                     <p className="text-base font-medium text-foreground mb-1">
-                      D├®marrez la conversation
+                      Démarrez la conversation
                     </p>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                      Envoyez votre premier message ├á {selectedConvData?.other_user_name}
+                      Envoyez votre premier message à {selectedConvData?.other_user_name}
                     </p>
                   </div>
                 ) : (
                   messages
-                    // Filtrer les messages supprim├®s pour l'utilisateur courant
+                    // Filtrer les messages supprimés pour l'utilisateur courant
                     .filter(message => {
                       const deletedFor = message.deleted_for || [];
                       return !deletedFor.includes(currentUser?.id);
@@ -1239,7 +1187,7 @@ export default function Messages() {
                           ? 'text'
                           : (message.type as any) || 'text';
 
-                      // V├®rifier si le message est supprim├® pour tout le monde
+                      // Vérifier si le message est supprimé pour tout le monde
                       if (message.deleted_at) {
                         return (
                           <div key={message.id} className={cn(
@@ -1248,7 +1196,7 @@ export default function Messages() {
                           )}>
                             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 text-muted-foreground italic text-sm">
                               <X className="w-4 h-4" />
-                              <span>Ce message a ├®t├® supprim├®</span>
+                              <span>Ce message a été supprimé</span>
                             </div>
                           </div>
                         );
@@ -1256,7 +1204,7 @@ export default function Messages() {
 
                       return (
                         <div key={message.id} className="mb-3">
-                          {/* Afficher le message de r├®ponse s'il existe */}
+                          {/* Afficher le message de réponse s'il existe */}
                           {message.reply_to_id && message.reply_to && (
                             <div className={cn(
                               "flex mb-1",
@@ -1290,7 +1238,7 @@ export default function Messages() {
                             onReply={() => handleReplyToMessage(message)}
                             onDelete={(msgId, deleteForEveryone) => handleDeleteMessage(msgId, deleteForEveryone)}
                           />
-                          {/* Indicateur de statut pour les messages envoy├®s */}
+                          {/* Indicateur de statut pour les messages envoyés */}
                           {isOwnMessage && (
                             <div className="flex justify-end mt-0.5 pr-2">
                               <MessageStatusBadge
@@ -1316,7 +1264,7 @@ export default function Messages() {
               </div>
             )}
 
-            {/* Barre de r├®ponse */}
+            {/* Barre de réponse */}
             {replyToMessage && (
               <ReplyBar
                 message={replyToMessage as any}
@@ -1330,10 +1278,10 @@ export default function Messages() {
               onSendText={async (text) => {
                 if (!currentUser || !selectedConversation) return;
 
-                // Arr├¬ter l'indicateur de frappe
+                // Arrêter l'indicateur de frappe
                 setTyping(selectedConversation, false);
 
-                // Si c'est une r├®ponse
+                // Si c'est une réponse
                 if (replyToMessage) {
                   await universalCommunicationService.sendReplyMessage(
                     `direct_${selectedConversation}`,
@@ -1355,7 +1303,7 @@ export default function Messages() {
               }}
               onSendFile={handleSendFile}
               disabled={!selectedConversation}
-              placeholder={replyToMessage ? "R├®pondre..." : "├ëcrivez votre message..."}
+              placeholder={replyToMessage ? "Répondre..." : "Écrivez votre message..."}
               className="sticky bottom-0 z-50"
               onInputChange={handleTyping}
             />
@@ -1364,16 +1312,16 @@ export default function Messages() {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center p-8">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <p className="font-medium">S├®lectionnez une conversation</p>
+              <p className="font-medium">Sélectionnez une conversation</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Choisissez un contact pour commencer ├á discuter
+                Choisissez un contact pour commencer à discuter
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer navigation - cach├® quand le chat est ouvert sur mobile */}
+      {/* Footer navigation - caché quand le chat est ouvert sur mobile */}
       <div className={cn(showChat ? "hidden" : "block")}>
         <QuickFooter />
       </div>
@@ -1402,7 +1350,7 @@ export default function Messages() {
         <Dialog open={showVideoCall} onOpenChange={setShowVideoCall}>
           <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Appel Vid├®o</DialogTitle>
+              <DialogTitle>Appel Vidéo</DialogTitle>
             </DialogHeader>
             <AgoraVideoCall
               channel={`video_${selectedConversation}_${currentUser?.id}`}
@@ -1430,7 +1378,7 @@ export default function Messages() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Nom, email, ID (VND0001) ou t├®l├®phone..."
+                placeholder="Nom, email, ID (VND0001) ou téléphone..."
                 value={userSearchQuery}
                 onChange={(e) => {
                   setUserSearchQuery(e.target.value);
@@ -1502,7 +1450,7 @@ export default function Messages() {
                         </div>
                         {user.phone && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            ­ƒô× {user.phone}
+                            ☎️ {user.phone}
                           </p>
                         )}
                       </div>
@@ -1512,12 +1460,12 @@ export default function Messages() {
               ) : userSearchQuery.trim().length >= 2 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Aucun utilisateur trouv├®</p>
+                  <p className="text-sm">Aucun utilisateur trouvé</p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Tapez au moins 2 caract├¿res</p>
+                  <p className="text-sm">Tapez au moins 2 caractères</p>
                 </div>
               )}
             </ScrollArea>

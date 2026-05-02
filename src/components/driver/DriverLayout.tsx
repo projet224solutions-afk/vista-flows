@@ -22,13 +22,13 @@ import {
   LogOut,
   Bell,
   Navigation as NavigationIcon,
-  Bike
+  _Bike
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDriver } from '@/hooks/useDriver';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 
@@ -39,7 +39,7 @@ interface DriverLayoutProps {
 
 export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayoutProps) {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { _user, profile, signOut } = useAuth();
   const { driver, stats } = useDriver();
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -59,7 +59,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
       await signOut();
       navigate('/auth');
       toast.success('Déconnexion réussie');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la déconnexion');
     }
   };
@@ -146,7 +146,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
                     onClick={() => {
                       if (item.path.includes('?')) {
                         const [path, query] = item.path.split('?');
-                        const params = new URLSearchParams(query);
+                        const _params = new URLSearchParams(query);
                         navigate(path);
                         // Déclencher changement d'onglet si nécessaire
                       } else {

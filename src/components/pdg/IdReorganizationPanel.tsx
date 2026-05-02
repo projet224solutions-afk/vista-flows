@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  RefreshCw, 
-  AlertTriangle, 
-  CheckCircle2, 
+import {
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
   ArrowRight,
   Layers,
   TrendingUp,
@@ -57,6 +57,7 @@ export function IdReorganizationPanel() {
 
   useEffect(() => {
     loadAllStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAllStats = async () => {

@@ -1,6 +1,6 @@
 /**
  * 🚀 REAL-TIME ANALYTICS ROUTES
- * 
+ *
  * Endpoints for live vendor dashboard data:
  * - GET /realtime/stats/:vendorId     - Live stats (views, visits, trends)
  * - GET /realtime/trending/:vendorId  - Trending products
@@ -38,7 +38,7 @@ router.get('/health', handleHealthCheck);
  * @route   GET /realtime/stats/:vendorId
  * @desc    Get real-time statistics for a vendor
  * @access  Private (vendor owner)
- * 
+ *
  * @returns {
  *   success: true,
  *   data: {
@@ -63,7 +63,7 @@ router.get('/stats/:vendorId', verifyJWT, handleGetRealtimeStats);
  * @desc    Get trending products for a vendor
  * @access  Private (vendor owner)
  * @query   limit - Number of products (default: 5)
- * 
+ *
  * @returns {
  *   success: true,
  *   data: {
@@ -85,7 +85,7 @@ router.get('/trending/:vendorId', verifyJWT, handleGetTrendingProducts);
  * @desc    Keep vendor marked as "online" for targeted notifications
  * @access  Private
  * @body    { vendorId: UUID }
- * 
+ *
  * Call every 2-3 minutes from the dashboard to receive real-time notifications
  */
 router.post('/heartbeat', verifyJWT, handleHeartbeat);

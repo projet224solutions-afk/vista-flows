@@ -52,22 +52,43 @@ serve(async (req) => {
 
     console.log(`📝 Refund request for order: ${order_id} by user: ${user.id}`);
 
-    // Get order details
+    // Get order details without relying on an inner join that can hide valid orders.
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*, customers!inner(user_id)")
+      .select("*")
       .eq("id", order_id)
       .single();
 
     if (orderError || !order) {
       return new Response(
-        JSON.stringify({ success: false, error: "Commande introuvable" }),
+        JSON.stringify({ success: false, error: "Commande non trouvée" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify user owns this order
-    if (order.customers.user_id !== user.id) {
+    let isBuyer = false;
+
+    if (order.customer_id) {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("user_id")
+        .eq("id", order.customer_id)
+        .maybeSingle();
+
+      isBuyer = customer?.user_id === user.id;
+    }
+
+    if (!isBuyer) {
+      const { data: escrowBuyer } = await supabase
+        .from("escrow_transactions")
+        .select("buyer_id")
+        .eq("order_id", order_id)
+        .maybeSingle();
+
+      isBuyer = escrowBuyer?.buyer_id === user.id;
+    }
+
+    if (!isBuyer) {
       return new Response(
         JSON.stringify({ success: false, error: "Non autorisé pour cette commande" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }

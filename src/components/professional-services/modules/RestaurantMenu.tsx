@@ -9,7 +9,7 @@ interface RestaurantMenuProps {
   serviceId: string;
 }
 
-export function RestaurantMenu({ serviceId }: RestaurantMenuProps) {
+export function RestaurantMenu({ _serviceId }: RestaurantMenuProps) {
   return (
     <Card>
       <CardContent className="py-12 text-center">

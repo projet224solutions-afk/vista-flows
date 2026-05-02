@@ -30,7 +30,7 @@ export function useDriverOnlineStatus({
 
   const toggleOnlineStatus = useCallback(async () => {
     const next = !isOnline;
-    
+
     if (!driverId) {
       toast.error('Profil conducteur non trouvé');
       return;
@@ -53,22 +53,22 @@ export function useDriverOnlineStatus({
 
     if (next) {
       toast.loading('📍 Recherche GPS en cours...', { id: 'gps-loading' });
-      
+
       try {
         // Toujours demander une nouvelle position GPS
         console.log('📍 [GPS] Demande de position...');
         const position = await getCurrentLocation();
-        
+
         console.log('📍 [GPS] Position reçue:', position);
-        
+
         if (!position || typeof position.latitude !== 'number' || typeof position.longitude !== 'number') {
           throw new Error('Position GPS non disponible - coordonnées invalides');
         }
-        
+
         toast.dismiss('gps-loading');
-        
+
         console.log('📍 [GPS] Mise à jour statut conducteur avec position:', position.latitude, position.longitude);
-        
+
         await TaxiMotoService.updateDriverStatus(
           driverId,
           true,
@@ -81,10 +81,10 @@ export function useDriverOnlineStatus({
         toast.success('🟢 Vous êtes maintenant en ligne', {
           description: `GPS: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
         });
-        
+
         startLocationTracking();
         loadPendingRides();
-        
+
       } catch (error: any) {
         // Si l'update DB du statut échoue, on ne doit pas afficher une erreur "GPS".
         const msg = error?.message || '';
@@ -121,7 +121,7 @@ export function useDriverOnlineStatus({
       try {
         console.log('🔴 [Offline] Arrêt du suivi GPS...');
         stopWatching(); // Fixed: call without parameter
-        
+
         console.log('🔴 [Offline] Mise à jour statut DB...');
         await TaxiMotoService.updateDriverStatus(
           driverId,

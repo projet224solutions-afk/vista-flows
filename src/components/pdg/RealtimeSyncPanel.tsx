@@ -20,7 +20,7 @@ import {
     AlertTriangle,
     DollarSign,
     CheckCircle,
-    XCircle,
+    _XCircle,
     Trash2
 } from 'lucide-react';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';

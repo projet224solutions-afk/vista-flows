@@ -44,7 +44,7 @@ export function StandardIdBadge({
       });
 
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch (_err) {
       toast.error('Échec copie ID');
     }
   };
@@ -66,7 +66,7 @@ export function StandardIdBadge({
 
   // Déterminer le format d'affichage
   const is224Format = formattedId.startsWith('224-');
-  
+
   return (
     <Badge
       variant={variant}

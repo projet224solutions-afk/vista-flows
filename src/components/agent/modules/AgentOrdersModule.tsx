@@ -10,9 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ShoppingCart, Package, Truck, CheckCircle, XCircle, 
+import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ShoppingCart, Package, Truck, CheckCircle, XCircle,
   RefreshCw, Search, Clock, Eye, DollarSign
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,7 +50,7 @@ interface Order {
   };
 }
 
-export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersModuleProps) {
+export function AgentOrdersModule({ _agentId, _canManage = false }: AgentOrdersModuleProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +73,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
   const loadOrders = async () => {
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .from('orders')
         .select('id, order_number, status, total_amount, created_at, updated_at')
@@ -89,11 +89,11 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
         profiles: null,
         vendors: null
       })) as Order[];
-      
+
       setOrders(ordersList);
 
       const totalAmount = ordersList.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-      
+
       setStats({
         total: ordersList.length,
         pending: ordersList.filter(o => o.status === 'pending').length,
@@ -121,7 +121,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
       cancelled: { color: 'bg-red-100 text-red-700', icon: <XCircle className="w-3 h-3" />, label: 'Annulée' },
     };
     const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-700', icon: null, label: status };
-    
+
     return (
       <Badge className={`${config.color} flex items-center gap-1`}>
         {config.icon}
@@ -134,11 +134,11 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
   const formatAmount = (amount: number, currency: string = 'GNF') => fc(amount, currency);
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.vendors?.business_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'pending') return matchesSearch && order.status === 'pending';
     if (activeTab === 'processing') return matchesSearch && (order.status === 'processing' || order.status === 'shipped');
@@ -296,7 +296,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
               Commande {selectedOrder?.order_number}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

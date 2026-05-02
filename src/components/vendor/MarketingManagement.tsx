@@ -12,9 +12,9 @@ import { usePromoCodes } from "@/hooks/useVendorData";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Megaphone, Tag, Mail, MessageSquare, TrendingUp, 
-  Users, Eye, MousePointer, Plus, Copy, Edit, Trash2,
+import {
+  Megaphone, Tag, Mail, _MessageSquare, _TrendingUp,
+  _Users, Eye, MousePointer, Plus, Copy, Edit, _Trash2,
   BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +56,7 @@ export default function MarketingManagement() {
   const { user } = useAuth();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
-  const { promoCodes, loading: promoLoading, error: promoError, createPromoCode } = usePromoCodes();
+  const { promoCodes, loading: promoLoading, error: _promoError, createPromoCode } = usePromoCodes();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
@@ -83,6 +83,7 @@ export default function MarketingManagement() {
     if (vendorLoading) return;
     if (!vendorId && !user) return;
     fetchCampaigns();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, vendorId, vendorLoading]);
 
   const fetchCampaigns = async () => {
@@ -107,7 +108,7 @@ export default function MarketingManagement() {
 
       if (error) throw error;
       setCampaigns(data || []);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de charger les campagnes.",
@@ -126,12 +127,12 @@ export default function MarketingManagement() {
         valid_from: new Date().toISOString(),
         is_active: true
       });
-      
+
       toast({
         title: "Code promo créé",
         description: "Le code promotionnel a été créé avec succès."
       });
-      
+
       setIsPromoDialogOpen(false);
       setPromoForm({
         code: '',
@@ -142,7 +143,7 @@ export default function MarketingManagement() {
         usage_limit: 100,
         valid_until: ''
       });
-    } catch (error) {
+    } catch (_error) {
       // Error handled in hook
     }
   };
@@ -188,7 +189,7 @@ export default function MarketingManagement() {
         target_audience: '',
         content: ''
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de créer la campagne.",
@@ -285,9 +286,9 @@ export default function MarketingManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="discount_type">Type de remise</Label>
-                    <Select 
-                      value={promoForm.discount_type} 
-                      onValueChange={(value: 'percentage' | 'fixed_amount') => 
+                    <Select
+                      value={promoForm.discount_type}
+                      onValueChange={(value: 'percentage' | 'fixed_amount') =>
                         setPromoForm(prev => ({ ...prev, discount_type: value }))
                       }
                     >
@@ -376,9 +377,9 @@ export default function MarketingManagement() {
                 </div>
                 <div>
                   <Label htmlFor="type">Type de campagne</Label>
-                  <Select 
-                    value={campaignForm.type} 
-                    onValueChange={(value: Campaign['type']) => 
+                  <Select
+                    value={campaignForm.type}
+                    onValueChange={(value: Campaign['type']) =>
                       setCampaignForm(prev => ({ ...prev, type: value }))
                     }
                   >
@@ -498,8 +499,8 @@ export default function MarketingManagement() {
                     <div>
                       <p className="text-muted-foreground">Remise</p>
                       <p className="font-medium">
-                        {promo.discount_type === 'percentage' 
-                          ? `${promo.discount_value}%` 
+                        {promo.discount_type === 'percentage'
+                          ? `${promo.discount_value}%`
                           : `${promo.discount_value.toLocaleString()} GNF`}
                       </p>
                     </div>
@@ -516,7 +517,7 @@ export default function MarketingManagement() {
                     <div>
                       <p className="text-muted-foreground">Expire le</p>
                       <p className="font-medium">
-                        {promo.valid_until 
+                        {promo.valid_until
                           ? new Date(promo.valid_until).toLocaleDateString('fr-FR')
                           : 'Jamais'
                         }

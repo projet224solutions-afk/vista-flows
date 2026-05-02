@@ -6,12 +6,12 @@ import AIContractForm from '@/components/vendor/contracts/AIContractForm';
 import AIContractEditor from '@/components/vendor/contracts/AIContractEditor';
 import { FileText, History, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
+import {} from 'react';
 
 export default function VendorContracts() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewingContract, setViewingContract] = useState<any>(null);
-  const [loadingContract, setLoadingContract] = useState(false);
+  const [_loadingContract, setLoadingContract] = useState(false);
 
   const handleContractCreated = () => {
     setRefreshKey(prev => prev + 1);
@@ -27,7 +27,7 @@ export default function VendorContracts() {
         .single();
 
       if (error) throw error;
-      
+
       setViewingContract(data);
     } catch (error) {
       console.error('Error loading contract:', error);
@@ -61,7 +61,7 @@ export default function VendorContracts() {
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Gestion des Contrats</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Cr├®ez et g├®rez vos contrats professionnels
+          Créez et gérez vos contrats professionnels
         </p>
       </div>
 

@@ -37,7 +37,7 @@ import {
   RefreshCw,
   Download,
   Clock,
-  TrendingUp,
+  _TrendingUp,
   Activity,
   BarChart3,
   LogOut,
@@ -45,7 +45,7 @@ import {
   Shield
 } from 'lucide-react';
 import { useSurveillanceLogic } from '@/hooks/useSurveillanceLogic';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SystemTestDemo from './SystemTestDemo';
 
@@ -172,7 +172,7 @@ export default function SurveillanceLogiqueDashboard() {
       link.click();
 
       toast.success('📊 Analyse exportée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur export');
     }
   };

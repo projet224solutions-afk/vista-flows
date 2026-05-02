@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Mail, 
-  Phone, 
-  Shield, 
+import {
+  Mail,
+  Phone,
+  Shield,
   Calendar,
   TrendingUp,
   Users,
@@ -53,7 +53,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <AgentStatsCards 
+      <AgentStatsCards
         stats={stats}
         commissionRate={agent.commission_rate}
         walletBalance={walletBalance}
@@ -122,7 +122,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                   <div className="flex flex-wrap gap-2">
                     {agent.permissions?.length ? (
                       agent.permissions.map((perm: string) => (
-                        <Badge 
+                        <Badge
                           key={perm}
                           variant="outline"
                           className="text-xs bg-slate-50"
@@ -197,9 +197,9 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
             {/* Status */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Statut</span>
-              <Badge 
-                className={agent.is_active 
-                  ? "bg-green-100 text-green-700 hover:bg-green-100" 
+              <Badge
+                className={agent.is_active
+                  ? "bg-green-100 text-green-700 hover:bg-green-100"
                   : "bg-slate-100 text-slate-600"
                 }
               >

@@ -33,12 +33,12 @@ function setInMemory(key: string, data: any, ttlSeconds: number) {
 // Appel Edge Function Redis
 async function redisGet(key: string): Promise<any | null> {
   try {
-    const { data, error } = await supabase.functions.invoke('redis-cache', {
+    const { _data, _error } = await supabase.functions.invoke('redis-cache', {
       body: null,
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
-    
+
     // Use query params approach
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/redis-cache?action=get&key=${CACHE_PREFIX}${key}`,
@@ -49,7 +49,7 @@ async function redisGet(key: string): Promise<any | null> {
         },
       }
     );
-    
+
     if (!response.ok) return null;
     const result = await response.json();
     return result.hit ? result.value : null;
@@ -116,11 +116,11 @@ export async function cachedQuery<T>(
 
   // L3: Supabase (source de vérité)
   const data = await queryFn();
-  
+
   // Stocker dans les 2 couches de cache
   setInMemory(cacheKey, data, ttlSeconds);
   redisSet(cacheKey, data, ttlSeconds); // fire-and-forget
-  
+
   return data;
 }
 

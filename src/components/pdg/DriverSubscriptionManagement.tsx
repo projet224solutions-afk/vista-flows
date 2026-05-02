@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -28,12 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  Gift, RefreshCw, Users, DollarSign, Bike, Car, 
-  Calendar, Search, Edit, CheckCircle, XCircle, Clock 
+import {
+  Gift, RefreshCw, Users, DollarSign, Bike, Car,
+  Calendar, Search, Edit, CheckCircle, XCircle, Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -83,12 +83,12 @@ export default function DriverSubscriptionManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'taxi' | 'livreur'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'expired'>('all');
-  
+
   // Dialog states
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Offer subscription form
   const [offerData, setOfferData] = useState({
     userId: '',
@@ -96,7 +96,7 @@ export default function DriverSubscriptionManagement() {
     days: '30',
     isFree: true
   });
-  
+
   // Config form
   const [configForm, setConfigForm] = useState({
     price: '',
@@ -106,6 +106,7 @@ export default function DriverSubscriptionManagement() {
 
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchData = async () => {
@@ -161,7 +162,7 @@ export default function DriverSubscriptionManagement() {
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
-    
+
     setConfig(data);
     if (data) {
       setConfigForm({
@@ -239,7 +240,8 @@ export default function DriverSubscriptionManagement() {
             console.log('⚠️ [PDG] RPC non trouvée, recherche directe...');
 
             // Recherche par email exact
-            let { data: profileData, error: profileError } = await supabase
+            // eslint-disable-next-line prefer-const
+            let { data: profileData, error: _profileError } = await supabase
               .from('profiles')
               .select('id, email')
               .eq('email', resolvedUserId.toLowerCase())
@@ -291,11 +293,11 @@ export default function DriverSubscriptionManagement() {
 
       if (rpcError) {
         console.error('❌ [PDG] Erreur RPC:', rpcError);
-        
+
         // Si fonction n'existe pas encore, fallback sur méthode directe
         if (rpcError.code === 'PGRST202' || rpcError.message?.includes('function')) {
           console.warn('⚠️ [PDG] Fonction RPC non trouvée, utilisation méthode directe');
-          
+
           // Méthode fallback
           const startDate = new Date();
           const endDate = new Date();
@@ -332,13 +334,13 @@ export default function DriverSubscriptionManagement() {
       toast.success(`🎁 Abonnement ${offerData.type} de ${days} jours offert avec succès!`, {
         description: 'L\'utilisateur peut maintenant utiliser l\'application'
       });
-      
+
       setIsOfferDialogOpen(false);
       setOfferData({ userId: '', type: 'taxi', days: '30', isFree: true });
       fetchData();
     } catch (error: any) {
       console.error('❌ [PDG] Erreur offre abonnement:', error);
-      
+
       // Messages d'erreur détaillés
       let errorMessage = 'Erreur lors de l\'offre d\'abonnement';
       if (error.message?.includes('non trouvé') || error.message?.includes('not found')) {
@@ -350,7 +352,7 @@ export default function DriverSubscriptionManagement() {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage, {
         description: 'Vérifiez les informations et réessayez'
       });
@@ -420,22 +422,22 @@ export default function DriverSubscriptionManagement() {
 
       toast.success(`Abonnement ${newStatus === 'active' ? 'réactivé' : 'suspendu'}`);
       fetchSubscriptions();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la modification');
     }
   };
 
   const filteredSubscriptions = subscriptions.filter(sub => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       sub.profiles?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sub.profiles?.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sub.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sub.profiles?.phone?.includes(searchQuery) ||
       sub.transaction_id?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = filterType === 'all' || sub.type === filterType;
     const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
-    
+
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -498,7 +500,7 @@ export default function DriverSubscriptionManagement() {
               <div className="text-2xl font-bold text-green-600">{stats.total_active}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Taxi-Moto</CardTitle>
@@ -510,7 +512,7 @@ export default function DriverSubscriptionManagement() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Livreurs</CardTitle>
@@ -522,7 +524,7 @@ export default function DriverSubscriptionManagement() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Expirés</CardTitle>
@@ -531,7 +533,7 @@ export default function DriverSubscriptionManagement() {
               <div className="text-2xl font-bold text-muted-foreground">{stats.total_expired}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Revenus Total</CardTitle>
@@ -540,7 +542,7 @@ export default function DriverSubscriptionManagement() {
               <div className="text-lg font-bold text-green-600">{formatAmount(stats.total_revenue)}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium text-muted-foreground">Ce Mois</CardTitle>

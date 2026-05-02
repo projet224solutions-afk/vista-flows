@@ -14,10 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Sparkles, Home, Building2, Users, Calendar,
-  Clock, CheckCircle2, DollarSign, TrendingUp,
-  MapPin, Star, ShoppingBag, Shirt
+import {
+  Sparkles, Home, Building2, _Users, Calendar,
+  Clock, CheckCircle2, DollarSign, _TrendingUp,
+  MapPin, Star, _ShoppingBag, Shirt
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -107,11 +107,11 @@ const CLEANING_SERVICES: CleaningService[] = [
   }
 ];
 
-export function CleaningModule({ serviceId, businessName }: CleaningModuleProps) {
+export function CleaningModule({ _serviceId, businessName }: CleaningModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({
+  const [stats, _setStats] = useState({
     todayBookings: 4,
     completedThisWeek: 12,
     revenue: 1250000,
@@ -176,7 +176,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
         specialInstructions: ''
       });
       loadBookings();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la réservation');
     } finally {
       setLoading(false);
@@ -443,7 +443,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                     const statusInfo = getStatusBadge(booking.status);
                     const service = CLEANING_SERVICES.find(s => s.id === booking.service);
                     const Icon = service?.icon || Home;
-                    
+
                     return (
                       <Card key={booking.id}>
                         <CardContent className="pt-6">

@@ -5,11 +5,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import offlineQueueManager, { 
-  QueuedOperation, 
-  getQueueStats, 
+import offlineQueueManager, {
+  QueuedOperation,
+  getQueueStats,
   processQueue,
-  setupConnectivityListener 
+  setupConnectivityListener
 } from '@/lib/offlineQueueManager';
 import { offlineSyncService, SyncableEntity } from '@/lib/offlineSyncService';
 
@@ -39,21 +39,21 @@ export interface UseOfflineModeResult {
   // Statut de connectivité
   offlineStatus: OfflineStatus;
   isOnline: boolean;
-  
+
   // File d'attente des opérations
   queueStatus: QueueStatus;
   pendingOperations: QueuedOperation[];
-  
+
   // Synchronisation
   syncStatus: SyncStatus;
-  
+
   // Actions
   processQueue: () => Promise<void>;
   syncAll: () => Promise<void>;
   syncEntity: (entity: SyncableEntity) => Promise<void>;
   retryFailedOperations: () => Promise<void>;
   clearFailedOperations: () => Promise<void>;
-  
+
   // État UI
   showOfflineBanner: boolean;
   showSyncIndicator: boolean;
@@ -121,8 +121,8 @@ export function useOfflineMode(): UseOfflineModeResult {
       const status = await offlineSyncService.getSyncStatus();
       setSyncStatus({
         syncInProgress: status.syncInProgress.length > 0,
-        lastSync: status.entities.length > 0 
-          ? new Date(Math.max(...status.entities.map(e => 
+        lastSync: status.entities.length > 0
+          ? new Date(Math.max(...status.entities.map(e =>
               new Date(e.last_incremental_sync || 0).getTime()
             )))
           : null,
@@ -137,8 +137,8 @@ export function useOfflineMode(): UseOfflineModeResult {
   // Gérer le passage online
   const handleOnline = useCallback(() => {
     console.log('[useOfflineMode] Back online!');
-    
-    const duration = offlineStartRef.current 
+
+    const duration = offlineStartRef.current
       ? Math.round((Date.now() - offlineStartRef.current.getTime()) / 1000)
       : null;
 
@@ -175,7 +175,7 @@ export function useOfflineMode(): UseOfflineModeResult {
   // Gérer le passage offline
   const handleOffline = useCallback(() => {
     console.log('[useOfflineMode] Gone offline!');
-    
+
     offlineStartRef.current = new Date();
     setOfflineStatus(prev => ({
       ...prev,
@@ -264,7 +264,7 @@ export function useOfflineMode(): UseOfflineModeResult {
           description: `${result.failed} opération(s) ont échoué`
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur de synchronisation');
     } finally {
       setShowSyncIndicator(false);
@@ -282,7 +282,7 @@ export function useOfflineMode(): UseOfflineModeResult {
       await offlineSyncService.syncAll();
       await updateSyncStatus();
       toast.success('Synchronisation complète terminée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la synchronisation');
     } finally {
       setShowSyncIndicator(false);
@@ -299,7 +299,7 @@ export function useOfflineMode(): UseOfflineModeResult {
     try {
       await offlineSyncService.syncEntity(entity);
       await updateSyncStatus();
-    } catch (error) {
+    } catch (_error) {
       toast.error(`Erreur lors de la synchronisation de ${entity}`);
     } finally {
       setShowSyncIndicator(false);
@@ -312,7 +312,7 @@ export function useOfflineMode(): UseOfflineModeResult {
       await offlineQueueManager.retryOperation(op.id);
     }
     await updateQueueStatus();
-    
+
     if (navigator.onLine) {
       handleProcessQueue();
     }

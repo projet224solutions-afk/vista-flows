@@ -20,11 +20,11 @@ const customFormat = winston.format.combine(
   winston.format.json(),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     let msg = `${timestamp} [${level.toUpperCase()}]: ${message}`;
-    
+
     if (Object.keys(meta).length > 0) {
       msg += ` ${JSON.stringify(meta)}`;
     }
-    
+
     return msg;
   })
 );
@@ -41,14 +41,14 @@ export const logger = winston.createLogger({
         winston.format.simple()
       )
     }),
-    
+
     // Fichier pour toutes les logs
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/backend.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5
     }),
-    
+
     // Fichier pour les erreurs uniquement
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/error.log'),

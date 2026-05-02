@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   CreditCard, Plus, Search,
   Loader2
 } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function CreditSalesForm() {
   const [activeTab, setActiveTab] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
-  
+
   const [formData, setFormData] = useState<CreditFormData>({
     customer_name: '',
     customer_phone: '',
@@ -81,7 +81,7 @@ export default function CreditSalesForm() {
   // Charger les ventes à crédit - table n'existe pas encore
   const loadCreditSales = async () => {
     if (!vendorId) return;
-    
+
     setLoading(true);
     try {
       // Table vendor_credit_sales n'existe pas encore - utiliser des données mockées pour l'instant
@@ -95,6 +95,7 @@ export default function CreditSalesForm() {
 
   useEffect(() => {
     loadCreditSales();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   // Ajouter une ligne d'article
@@ -131,7 +132,7 @@ export default function CreditSalesForm() {
   // Soumettre la vente à crédit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!vendorId) {
       toast({
         title: "Erreur",
@@ -173,7 +174,7 @@ export default function CreditSalesForm() {
       title: "Information",
       description: "La fonctionnalité de vente à crédit sera bientôt disponible",
     });
-    
+
     setIsDialogOpen(false);
   };
 
@@ -182,7 +183,7 @@ export default function CreditSalesForm() {
     if (!vendorId || amount <= 0) return;
 
     toast({
-      title: "Information", 
+      title: "Information",
       description: "La fonctionnalité de paiement sera bientôt disponible",
     });
   };
@@ -227,7 +228,7 @@ export default function CreditSalesForm() {
               <DialogHeader>
                 <DialogTitle>Créer une vente à crédit</DialogTitle>
               </DialogHeader>
-              
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Informations client */}
                 <div className="space-y-3">

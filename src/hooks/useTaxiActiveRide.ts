@@ -64,7 +64,7 @@ export function useTaxiActiveRide(
         setNavigationActive(false);
         return;
       }
-      
+
       const ride = rides[0];
 
       // Charger les infos du client
@@ -89,7 +89,7 @@ export function useTaxiActiveRide(
           .from('taxi_ratings')
           .select('stars')
           .eq('customer_id', String(ride.customer_id));
-        
+
         if (ratingsData && Array.isArray(ratingsData) && ratingsData.length > 0) {
           customerRating = ratingsData.reduce((sum: number, r: any) => sum + (r.stars || 0), 0) / ratingsData.length;
         }
@@ -131,14 +131,14 @@ export function useTaxiActiveRide(
 
       setActiveRide(activeRideData);
       setNavigationActive(true);
-      
+
       // Si course démarrée, lancer navigation vers destination
       if (frontendStatus === 'picked_up' || frontendStatus === 'in_progress') {
         onStartNavigation(activeRideData.destination.coords);
       } else {
         onStartNavigation(activeRideData.pickup.coords);
       }
-      
+
       console.log('✅ Course active chargée:', activeRideData);
     } catch (error) {
       console.error('Error loading active ride:', error);
@@ -154,7 +154,7 @@ export function useTaxiActiveRide(
     try {
       // Mapper les statuts frontend vers les statuts DB
       let dbStatus: string;
-      
+
       if (newStatus === 'arriving') {
         dbStatus = 'arriving';
       } else if (newStatus === 'picked_up') {
@@ -170,7 +170,7 @@ export function useTaxiActiveRide(
       // Mise à jour directe dans Supabase pour plus de robustesse
       const { error } = await supabase
         .from('taxi_trips')
-        .update({ 
+        .update({
           status: dbStatus,
           updated_at: new Date().toISOString()
         })
@@ -220,15 +220,15 @@ export function useTaxiActiveRide(
 
     try {
       console.log('❌ Annulation de la course:', activeRide.id);
-      
+
       await TaxiMotoService.updateRideStatus(activeRide.id, 'cancelled', {
         cancel_reason: 'Annulée par le conducteur',
         cancelled_at: new Date().toISOString()
       });
-      
+
       setActiveRide(null);
       setNavigationActive(false);
-      
+
       toast.success('✅ Course annulée avec succès');
     } catch (error) {
       console.error('❌ Erreur lors de l\'annulation:', error);
@@ -241,22 +241,22 @@ export function useTaxiActiveRide(
 
     try {
       console.log('🏁 Finalisation de la course:', activeRide.id);
-      
+
       await TaxiMotoService.updateRideStatus(activeRide.id, 'completed', {
         completed_at: new Date().toISOString()
       });
-      
+
       // Mettre à jour les statistiques du conducteur dans la DB
       const { data: currentDriver, error: driverError } = await supabase
         .from('taxi_drivers')
         .select('total_rides, total_earnings')
         .eq('id', driverId)
         .single();
-      
+
       if (!driverError && currentDriver) {
         const newTotalRides = (currentDriver.total_rides || 0) + 1;
         const newTotalEarnings = (currentDriver.total_earnings || 0) + activeRide.estimatedEarnings;
-        
+
         await supabase
           .from('taxi_drivers')
           .update({
@@ -267,7 +267,7 @@ export function useTaxiActiveRide(
           })
           .eq('id', driverId);
       }
-      
+
       // Callback pour mettre à jour les stats locales
       if (onStatsUpdate) {
         onStatsUpdate(activeRide.estimatedEarnings);
@@ -277,7 +277,7 @@ export function useTaxiActiveRide(
 
       setActiveRide(null);
       setNavigationActive(false);
-      
+
       console.log('✅ Course finalisée avec succès');
     } catch (error) {
       console.error('Error completing ride:', error);
@@ -291,7 +291,7 @@ export function useTaxiActiveRide(
 
     const unsubscribe = TaxiMotoService.subscribeToRide(activeRide.id, (updatedRide) => {
       console.log('📍 Mise à jour course:', updatedRide);
-      
+
       if (updatedRide.status === 'cancelled' || updatedRide.status === 'completed') {
         setActiveRide(null);
         setNavigationActive(false);

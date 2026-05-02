@@ -31,7 +31,7 @@ export interface AgoraCallActions {
 export function useAgora() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [callState, setCallState] = useState<AgoraCallState>({
     isConnected: false,
     isMuted: false,
@@ -320,6 +320,7 @@ export function useAgora() {
     const timestamp = Date.now().toString(36); // Base36 pour raccourcir
     const channel = `call_${timestamp}`;
     await joinCall(channel, isVideo);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, joinCall]);
 
   /**

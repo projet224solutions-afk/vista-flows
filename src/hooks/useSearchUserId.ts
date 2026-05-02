@@ -7,8 +7,14 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UserProfile } from '@/types/communication.types';
+import {
+  buildPhoneSearchTerms,
+  isSupportedDirectUserSearch,
+  parseUserSearchInput,
+  stripPhoneToDigits,
+} from '@/lib/communication/userSearch';
 
-interface SearchByIdResult {
+interface _SearchByIdResult {
   user: UserProfile | null;
   loading: boolean;
   error: string | null;
@@ -22,21 +28,7 @@ export function useSearchUserId() {
    * Valider le format de l'ID
    */
   const validateIdFormat = useCallback((id: string): boolean => {
-    const trimmedId = id.trim();
-    
-    // Format 1: AAA0001 (3 lettres + 4+ chiffres)
-    const format1 = /^[A-Z]{3}\d{4,}$/i;
-    
-    // Format 2: 224-XXX-XXX (224 + 3 chiffres + 3 chiffres)
-    const format2 = /^224-\d{3}-\d{3}$/;
-
-    // Format 3: Email
-    const formatEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // Format 4: Phone (starts with 6,7,8 or +224)
-    const formatPhone = /^(\+?224)?[678]\d{7,}$/;
-    
-    return format1.test(trimmedId.toUpperCase()) || format2.test(trimmedId) || formatEmail.test(trimmedId) || formatPhone.test(trimmedId.replace(/[\s-]/g, ''));
+    return isSupportedDirectUserSearch(id);
   }, []);
 
   /**
@@ -50,6 +42,7 @@ export function useSearchUserId() {
 
     try {
       const trimmedId = searchId.trim();
+      const parsed = parseUserSearchInput(trimmedId);
 
       // Valider le format
       if (!validateIdFormat(trimmedId)) {
@@ -59,32 +52,55 @@ export function useSearchUserId() {
       let profile: any = null;
 
       // Détection du type de recherche
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedId);
-      const isPhone = /^(\+?224)?[678]\d{7,}$/.test(trimmedId.replace(/[\s-]/g, ''));
-
-      if (isEmail) {
+      if (parsed.kind === 'uuid') {
+        const { data, error: searchError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+          .eq('id', trimmedId)
+          .maybeSingle();
+        if (searchError && searchError.code !== 'PGRST116') throw searchError;
+        profile = data;
+      } else if (parsed.kind === 'email') {
         // Recherche par email
         const { data, error: searchError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
-          .ilike('email', trimmedId)
+          .ilike('email', `%${trimmedId}%`)
           .maybeSingle();
         if (searchError && searchError.code !== 'PGRST116') throw searchError;
         profile = data;
-      } else if (isPhone) {
+      } else if (parsed.kind === 'phone') {
         // Recherche par téléphone
-        const cleanPhone = trimmedId.replace(/[\s-]/g, '');
+        const phoneFilters = buildPhoneSearchTerms(trimmedId)
+          .map((term) => `phone.ilike.%${term}%`)
+          .join(',');
         const { data, error: searchError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
-          .or(`phone.ilike.%${cleanPhone}%`)
+          .or(phoneFilters)
           .limit(1)
           .maybeSingle();
         if (searchError && searchError.code !== 'PGRST116') throw searchError;
         profile = data;
+
+        if (!profile) {
+          const referenceDigits = stripPhoneToDigits(trimmedId).replace(/^224/, '');
+          const looseTerm = referenceDigits.slice(-4);
+          const { data: loosePhoneData, error: looseSearchError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+            .ilike('phone', `%${looseTerm}%`)
+            .limit(20);
+          if (looseSearchError) throw looseSearchError;
+
+          profile = (loosePhoneData || []).find((candidate) => {
+            const candidateDigits = stripPhoneToDigits(candidate.phone || '').replace(/^224/, '');
+            return candidateDigits && (candidateDigits.includes(referenceDigits) || referenceDigits.includes(candidateDigits));
+          });
+        }
       } else {
         // Recherche par public_id (format code)
-        const upperId = trimmedId.toUpperCase();
+        const upperId = parsed.upper;
         const { data, error: searchError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
@@ -123,7 +139,7 @@ export function useSearchUserId() {
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur lors de la recherche';
       setError(errorMessage);
-      
+
       toast.error('Recherche échouée', {
         description: errorMessage
       });
@@ -165,7 +181,7 @@ export function useSearchUserId() {
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur lors de la recherche';
       setError(errorMessage);
-      
+
       toast.error('Recherche échouée', {
         description: errorMessage
       });
@@ -204,7 +220,7 @@ export function useSearchUserId() {
     } catch (err: any) {
       const errorMessage = err.message || 'Erreur lors de la recherche';
       setError(errorMessage);
-      
+
       toast.error('Recherche échouée', {
         description: errorMessage
       });

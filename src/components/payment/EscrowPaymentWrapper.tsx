@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 interface EscrowPaymentWrapperProps {
   // Enfant (bouton ou élément déclencheur)
   children: ReactNode;
-  
+
   // Configuration de la transaction
   transaction: {
     buyer_id: string;
@@ -27,11 +27,11 @@ interface EscrowPaymentWrapperProps {
     payment_provider: PaymentProvider;
     description?: string;
   };
-  
+
   // Options
   enabled?: boolean; // Active/désactive l'escrow
   showConfirmDialog?: boolean; // Affiche un dialog de confirmation
-  
+
   // Callbacks
   onSuccess?: (escrow_id: string) => void;
   onError?: (error: string) => void;

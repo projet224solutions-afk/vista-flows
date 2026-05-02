@@ -1,15 +1,15 @@
 /**
  * 📦 PRODUCTS ROUTES - Phase 3
- * 
+ *
  * Tables utilisées :
  *   - `products` : name, price, images, vendor_id, is_active, stock_quantity, etc.
  *   - `vendors` : pour résoudre vendor_id depuis user_id
  *   - `plans` + `subscriptions` : pour appliquer les limites max_products et max_images_per_product
- * 
+ *
  * Limites appliquées côté backend :
  *   1. max_products — blocage de la création si quota atteint
  *   2. max_images_per_product — troncature automatique du tableau images[]
- * 
+ *
  * Le trigger DB `trg_enforce_product_limit` reste actif comme filet de sécurité,
  * mais le backend valide AVANT pour donner des messages d'erreur explicites.
  */
@@ -237,7 +237,7 @@ router.get('/limits', verifyJWT, async (req: AuthenticatedRequest, res: Response
 /**
  * POST /api/products
  * Créer un produit — avec validation des limites du plan
- * 
+ *
  * Contrôles effectués :
  *   1. L'utilisateur a une boutique (vendor_id résolu)
  *   2. Le nombre de produits actifs < max_products du plan

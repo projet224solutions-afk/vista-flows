@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  RefreshCw, Cloud, Database, Shield, Bell, Server, 
+import {
+  RefreshCw, Cloud, Database, _Shield, Bell, Server,
   CheckCircle, AlertTriangle, XCircle, HelpCircle,
   Activity, Clock, Wifi, Globe, Zap, TrendingUp, Eye
 } from 'lucide-react';
@@ -45,7 +45,7 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
   const config = statusConfig[svc.status];
   const Icon = config.icon;
   const latencyColor = svc.responseTime < 500 ? 'text-emerald-600' : svc.responseTime < 1500 ? 'text-amber-600' : 'text-red-600';
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -122,10 +122,10 @@ export default function MultiCloudDashboard() {
             <Activity className="h-3 w-3" />
             Refresh: 30s + Realtime
           </Badge>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={refresh} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
             disabled={isChecking}
             className="gap-1.5"
           >
@@ -136,7 +136,7 @@ export default function MultiCloudDashboard() {
       </div>
 
       {/* === SCORE GLOBAL === */}
-      <Card className={cn('border-2', 
+      <Card className={cn('border-2',
         report.overall === 'operational' ? 'border-emerald-500/30' :
         report.overall === 'degraded' ? 'border-amber-500/30' : 'border-red-500/30'
       )}>

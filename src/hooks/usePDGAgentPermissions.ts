@@ -33,7 +33,7 @@ export interface AgentPermission {
 // Generate permission catalog from constants
 function generatePermissionCatalog(): AgentPermission[] {
   const catalog: AgentPermission[] = [];
-  
+
   for (const cat of PERMISSION_CATEGORIES) {
     for (const permKey of cat.permissions) {
       catalog.push({
@@ -47,7 +47,7 @@ function generatePermissionCatalog(): AgentPermission[] {
       });
     }
   }
-  
+
   return catalog;
 }
 
@@ -72,7 +72,7 @@ export function usePDGAgentPermissions(pdgId: string | null) {
 
       // Get permissions for each agent
       const allPermissions: PermissionGrant[] = [];
-      
+
       for (const agent of agents || []) {
         const { data: agentPerms, error: permsError } = await supabase
           .from('agent_permissions')
@@ -82,10 +82,10 @@ export function usePDGAgentPermissions(pdgId: string | null) {
         if (!permsError && agentPerms) {
           for (const perm of agentPerms) {
             if (perm.permission_value) {
-              const catInfo = PERMISSION_CATEGORIES.find(c => 
+              const catInfo = PERMISSION_CATEGORIES.find(c =>
                 c.permissions.includes(perm.permission_key as PermissionKey)
               );
-              
+
               allPermissions.push({
                 id: perm.id,
                 permission_key: perm.permission_key,

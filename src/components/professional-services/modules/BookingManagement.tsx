@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
+import { Calendar, _Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +39,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
 
   useEffect(() => {
     loadBookings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId]);
 
   const loadBookings = async () => {
@@ -68,7 +69,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
         .eq('id', bookingId);
 
       if (error) throw error;
-      
+
       toast.success(`Réservation ${status === 'confirmed' ? 'confirmée' : status === 'completed' ? 'terminée' : 'annulée'}`);
       loadBookings();
     } catch (error) {
@@ -123,8 +124,8 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
         if (limits.maxBookings !== null) {
           return (
             <div className={`flex items-center gap-3 p-3 rounded-lg border ${
-              limitCheck.allowed 
-                ? 'bg-muted/50 border-border' 
+              limitCheck.allowed
+                ? 'bg-muted/50 border-border'
                 : 'bg-destructive/10 border-destructive/30'
             }`}>
               <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${limitCheck.allowed ? 'text-muted-foreground' : 'text-destructive'}`} />

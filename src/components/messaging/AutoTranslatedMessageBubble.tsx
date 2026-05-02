@@ -57,7 +57,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
 
       // Détecter la langue du message
       const detectedLang = translationService.detectLanguage(message.content);
-      
+
       // Si même langue, pas besoin de traduire
       if (detectedLang === userLanguage) {
         setDisplayContent(message.content);
@@ -95,6 +95,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
     };
 
     translateMessage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message.id, message.content, userLanguage, isOwn, message.translation_status, message.translated_content, message.target_language, message.original_language, onTranslationComplete]);
 
   const getLanguageName = (code?: string): string => {
@@ -126,7 +127,7 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
             onClick={() => setShowOriginal(!showOriginal)}
             className={cn(
               "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full transition-colors",
-              showOriginal 
+              showOriginal
                 ? "bg-primary/20 text-primary hover:bg-primary/30"
                 : "bg-muted/50 text-muted-foreground hover:bg-muted"
             )}
@@ -171,11 +172,11 @@ export const LanguageIndicator: React.FC<LanguageIndicatorProps> = ({
   };
 
   return (
-    <span 
+    <span
       className={cn(
         "inline-flex items-center gap-0.5 text-[9px] px-1 py-0.5 rounded",
-        isTranslated 
-          ? "bg-primary/10 text-primary" 
+        isTranslated
+          ? "bg-primary/10 text-primary"
           : "bg-muted/50 text-muted-foreground",
         className
       )}

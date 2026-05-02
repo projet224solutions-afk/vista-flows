@@ -1,9 +1,9 @@
 /**
  * 🔐 IDEMPOTENCY MIDDLEWARE - Phase 4 (Production Hardened)
- * 
+ *
  * Prévient les doubles débits et créations dupliquées.
  * Le client envoie un header `Idempotency-Key` (UUID v4).
- * 
+ *
  * Améliorations production :
  *   - Lié au user_id (isolation par utilisateur)
  *   - Hash du payload pour détecter les réutilisations frauduleuses
@@ -152,13 +152,15 @@ export async function idempotencyGuard(req: AuthenticatedRequest, res: Response,
     next();
   } catch (error: any) {
     logger.error(`Idempotency middleware error: ${error.message}`);
-    // Marquer comme failed si on avait déjà inséré
     await supabaseAdmin
       .from('idempotency_keys')
       .update({ status: 'failed', updated_at: new Date().toISOString() })
       .eq('key', idempotencyKey)
       .eq('user_id', userId);
-    // Fail-open pour ne pas bloquer
-    next();
+    // Fail-closed : en cas d'erreur, bloquer plutôt que de risquer un double débit
+    res.status(503).json({
+      success: false,
+      error: 'Service temporairement indisponible, veuillez réessayer avec la même Idempotency-Key',
+    });
   }
 }

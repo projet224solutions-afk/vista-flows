@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -57,20 +57,20 @@ export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default
               <CheckCircle2 className="h-5 w-5 text-success" />
               <h4 className="font-semibold">Abonnement Actif</h4>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Plan:</span>
                 <span className="font-medium">{subscription.plan_display_name}</span>
               </div>
-              
+
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Expire le:</span>
                 <span className="font-medium">
                   {format(new Date(subscription.current_period_end), 'dd MMM yyyy', { locale: fr })}
                 </span>
               </div>
-              
+
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Jours restants:</span>
                 <span className={`font-medium ${daysRemaining < 7 ? 'text-destructive' : 'text-success'}`}>
@@ -96,7 +96,7 @@ export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default
               <AlertCircle className="h-5 w-5 text-warning" />
               <h4 className="font-semibold">Aucun Abonnement</h4>
             </div>
-            
+
             <p className="text-sm text-muted-foreground">
               Souscrivez à un abonnement pour accéder à toutes les fonctionnalités de 224Solutions.
             </p>

@@ -5,16 +5,16 @@
  * ET paiement escrow pour sécuriser les fonds du livreur
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock, CreditCard, Wallet, Shield } from 'lucide-react';
+import { _RadioGroup, _RadioGroupItem } from '@/components/ui/radio-group';
+import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock, _CreditCard, _Wallet, _Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useDeliveryPriceCalculation } from '@/hooks/useDeliveryPriceCalculation';
@@ -35,25 +35,25 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
     senderName: '',
     senderPhone: '',
     senderAddress: '',
-    
+
     // Destinataire
     receiverName: '',
     receiverPhone: '',
     receiverAddress: '',
-    
+
     // Colis
     weight: '',
     piecesCount: '1',
     itemType: '',
     packageDescription: '',
-    
+
     // Options
     cashOnDelivery: false,
     codAmount: '',
     insurance: false,
     insuranceAmount: '',
     returnOption: false,
-    
+
     // Méthode de paiement pour le livreur
     deliveryPaymentMethod: 'wallet' as 'wallet' | 'cash',
   });
@@ -83,18 +83,18 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.senderName || !formData.senderPhone || !formData.senderAddress) {
       toast.error('Veuillez remplir toutes les informations de l\'expéditeur');
       return;
     }
-    
+
     if (!formData.receiverName || !formData.receiverPhone || !formData.receiverAddress) {
       toast.error('Veuillez remplir toutes les informations du destinataire');
       return;
     }
-    
+
     if (!formData.weight || parseFloat(formData.weight) <= 0) {
       toast.error('Veuillez indiquer un poids valide');
       return;
@@ -114,7 +114,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
       // 2. Créer un customer temporaire si nécessaire ou utiliser le user courant
       let customerId = currentUserId;
-      
+
       // Vérifier si un customer existe pour cet utilisateur
       const { data: existingCustomer } = await supabase
         .from('customers')
@@ -214,12 +214,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             address: formData.senderAddress,
             name: formData.senderName
           },
-          pickup_address: { 
+          pickup_address: {
             address: formData.senderAddress,
             name: formData.senderName,
             phone: formData.senderPhone
           },
-          delivery_address: { 
+          delivery_address: {
             address: formData.receiverAddress,
             name: formData.receiverName,
             phone: formData.receiverPhone
@@ -249,7 +249,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       // 8. Si paiement par wallet, créer l'escrow pour bloquer les fonds
       if (formData.deliveryPaymentMethod === 'wallet' && delivery) {
         console.log('🔐 Création escrow pour livraison:', deliveryFee);
-        
+
         // Vérifier le solde
         if ((wallet?.balance || 0) < deliveryFee) {
           toast.error('Solde insuffisant pour payer la livraison');
@@ -521,7 +521,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               onCheckedChange={(checked) => handleInputChange('cashOnDelivery', checked)}
             />
           </div>
-          
+
           {formData.cashOnDelivery && (
             <div className="ml-4">
               <Label htmlFor="codAmount">Montant à collecter (GNF)</Label>
@@ -548,7 +548,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               onCheckedChange={(checked) => handleInputChange('insurance', checked)}
             />
           </div>
-          
+
           {formData.insurance && (
             <div className="ml-4">
               <Label htmlFor="insuranceAmount">Valeur déclarée (GNF)</Label>

@@ -28,6 +28,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
 
   useEffect(() => {
     loadVendorData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const loadVendorData = async () => {
@@ -168,7 +169,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
       setCoverUrl(newCoverUrl);
       setLogoFile(null);
       setCoverFile(null);
-      
+
       toast.success('Images de la boutique mises à jour avec succès');
     } catch (error) {
       console.error('Erreur mise à jour:', error);
@@ -204,14 +205,14 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
           {/* Aperçu en temps réel */}
           <div className="relative rounded-xl overflow-hidden border">
             {/* Couverture */}
-            <div 
+            <div
               className="h-32 sm:h-40 bg-gradient-to-br from-primary/20 to-primary/5 relative group cursor-pointer"
               onClick={() => coverInputRef.current?.click()}
             >
               {coverPreview ? (
-                <img 
-                  src={coverPreview} 
-                  alt="Couverture" 
+                <img
+                  src={coverPreview}
+                  alt="Couverture"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -222,7 +223,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
                   </div>
                 </div>
               )}
-              
+
               {/* Overlay au survol */}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <div className="text-white text-center">
@@ -250,7 +251,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
 
             {/* Photo de profil */}
             <div className="absolute left-4 -bottom-12 sm:-bottom-16">
-              <div 
+              <div
                 className="relative group cursor-pointer"
                 onClick={() => logoInputRef.current?.click()}
               >
@@ -260,7 +261,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
                     {getInitials(businessName || 'B')}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 {/* Overlay au survol */}
                 <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Camera className="w-6 h-6 text-white" />

@@ -8,12 +8,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useVendorSubscription } from '@/hooks/useVendorSubscription';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Key, 
-  Copy, 
-  Plus, 
-  Trash2, 
-  Eye, 
+import {
+  Key,
+  Copy,
+  Plus,
+  Trash2,
+  Eye,
   EyeOff,
   Activity,
   Zap,
@@ -59,6 +59,7 @@ export function ApiKeyManager() {
     if (user) {
       loadKeys();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadKeys = async () => {
@@ -228,16 +229,16 @@ export function ApiKeyManager() {
                   <div>
                     <p className="text-muted-foreground">Par minute</p>
                     <p className="font-bold">
-                      {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perMinute === -1 
-                        ? 'Illimité' 
+                      {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perMinute === -1
+                        ? 'Illimité'
                         : planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perMinute || 10}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Par jour</p>
                     <p className="font-bold">
-                      {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perDay === -1 
-                        ? 'Illimité' 
+                      {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perDay === -1
+                        ? 'Illimité'
                         : planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perDay || 1000}
                     </p>
                   </div>

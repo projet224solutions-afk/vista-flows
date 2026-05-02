@@ -10,6 +10,30 @@ import { initializeSecurity } from "./lib/security";
 import { initFrontendObserver } from "./services/monitoring/FrontendObserver";
 import { backendConfig, resolveBackendUrl } from "./config/backend";
 
+function safeGetLocalStorageItem(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function runSafeStartupStep(label: string, step: () => void) {
+  try {
+    step();
+  } catch (error) {
+    console.error(`[Startup] ${label} failed`, error);
+  }
+}
+
+async function runSafeStartupStepAsync(label: string, step: () => Promise<void>) {
+  try {
+    await step();
+  } catch (error) {
+    console.error(`[Startup] ${label} failed`, error);
+  }
+}
+
 function installBackendRequestBridge() {
   if (typeof window === 'undefined' || import.meta.env.DEV) return;
   if ((window as any).__vfBackendBridgeInstalled) return;
@@ -66,15 +90,6 @@ function installBackendRequestBridge() {
   console.info('[NetworkBridge] Active', { baseUrl });
 }
 
-installBackendRequestBridge();
-
-// Initialiser le monitoring (Sentry, erreurs globales, performance)
-initMonitoring().catch(console.error);
-initFrontendObserver();
-
-// Initialiser la s├®curit├® (watermark, anti-debug, validation env)
-initializeSecurity().catch(console.error);
-
 // --- Crash recovery (stale cache / SW / chunk load) ---
 const RECOVERY_FLAG = "__224_cache_recovery_done";
 
@@ -100,7 +115,7 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
     sessionStorage.setItem(RECOVERY_FLAG, "1");
     sessionStorage.removeItem("page_reloaded_for_chunk");
 
-    console.warn("­ƒº╣ [Recovery] Tentative de r├®cup├®ration (cache/SW)", { trigger, err });
+    console.warn("🧹 [Recovery] Tentative de récupération (cache/SW)", { trigger, err });
 
     // Unregister ALL service workers for this origin
     if ("serviceWorker" in navigator) {
@@ -119,14 +134,62 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
     url.searchParams.set("__reload", Date.now().toString());
     window.location.replace(url.toString());
   } catch (e) {
-    console.warn("­ƒº╣ [Recovery] ├ëchec r├®cup├®ration", e);
+    console.warn("🧹 [Recovery] Échec récupération", e);
     // As a last resort, hard reload
     window.location.reload();
   }
 }
 
-// Initialiser le listener PWA le plus t├┤t possible (├®vite de rater beforeinstallprompt)
-initPWAInstallPromptListener();
+function initializeNonCriticalStartup() {
+  runSafeStartupStep('backend bridge', () => {
+    installBackendRequestBridge();
+  });
+
+  void runSafeStartupStepAsync('monitoring', async () => {
+    await initMonitoring();
+  });
+
+  runSafeStartupStep('frontend observer', () => {
+    initFrontendObserver();
+  });
+
+  void runSafeStartupStepAsync('security', async () => {
+    await initializeSecurity();
+  });
+
+  runSafeStartupStep('pwa install prompt', () => {
+    initPWAInstallPromptListener();
+  });
+}
+
+function initializePwaRuntime() {
+  const resetParams = new URLSearchParams(window.location.search);
+
+  if (resetParams.has('resetSw')) {
+    runSafeStartupStep('reset PWA', () => {
+      resetPWA();
+    });
+    return;
+  }
+
+  const enablePwaPreview =
+    resetParams.has('pwa') ||
+    safeGetLocalStorageItem('enable_pwa_preview') === '1';
+
+  if (import.meta.env.DEV && !enablePwaPreview) {
+    runSafeStartupStep('unregister service worker', () => {
+      unregisterServiceWorker();
+      if ('caches' in window) {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+      }
+    });
+    return;
+  }
+
+  runSafeStartupStep('register service worker', () => {
+    registerServiceWorker({ force: enablePwaPreview });
+  });
+}
 
 // Hide the initial loader
 const hideLoader = () => {
@@ -161,9 +224,9 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
       <div style="max-width: 500px; text-align: center;">
-        <div style="font-size: 64px; margin-bottom: 16px;">ÔÜá´©Å</div>
+        <div style="font-size: 64px; margin-bottom: 16px;">⚠️</div>
         <h1 style="color: #e74c3c; font-size: 24px; margin-bottom: 16px;">Erreur de chargement</h1>
-        <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu d├®marrer.</p>
+        <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu démarrer.</p>
         <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${safeErrorMessage}</pre>
         <button onclick="location.reload()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Recharger</button>
       </div>
@@ -171,13 +234,13 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   `;
 };
 
-// PWA Diagnostic Logger ÔÇö helps debug production vs preview differences
+// PWA Diagnostic Logger - helps debug production vs preview differences
 function logPwaDiagnostics() {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || (navigator as any).standalone === true;
   const swSupported = 'serviceWorker' in navigator;
-  
-  console.info('­ƒô▒ [PWA Diagnostics]', {
+
+  console.info('📱 [PWA Diagnostics]', {
     mode: isStandalone ? 'standalone (installed)' : 'browser',
     hostname: location.hostname,
     protocol: location.protocol,
@@ -189,7 +252,7 @@ function logPwaDiagnostics() {
   // Check SW registration
   if (swSupported) {
     navigator.serviceWorker.getRegistrations().then(regs => {
-      console.info('­ƒô▒ [PWA SW]', {
+      console.info('📱 [PWA SW]', {
         registrations: regs.length,
         active: regs.map(r => r.active?.scriptURL || 'none'),
       });
@@ -203,7 +266,7 @@ function logPwaDiagnostics() {
       const isJson = ct.includes('application/json');
       let body: any = null;
       try { body = await r.json(); } catch {}
-      console.info('­ƒô▒ [PWA healthz]', {
+      console.info('📱 [PWA healthz]', {
         status: r.status,
         contentType: ct,
         isRealJson: isJson && body?.status === 'ok',
@@ -211,21 +274,21 @@ function logPwaDiagnostics() {
       });
     })
     .catch(err => {
-      console.warn('­ƒô▒ [PWA healthz] FAILED', err.message);
+      console.warn('📱 [PWA healthz] FAILED', err.message);
     });
 }
 
-// ­ƒÜÇ Warm up ALL Supabase domains at startup (TCP+TLS handshake)
+// 🚀 Warm up ALL Supabase domains at startup (TCP+TLS handshake)
 function warmUpConnections() {
   const supabaseRef = 'uakkxaibujzxdiqzpnpr';
   const base = `https://${supabaseRef}.supabase.co`;
   const edgeDomain = `https://${supabaseRef}.functions.supabase.co`;
-  
+
   // Fire-and-forget warm-up requests in parallel
   const warmOpts: RequestInit = { method: 'HEAD', mode: 'no-cors', keepalive: true, cache: 'no-store' };
-  
+
   Promise.allSettled([
-    fetch(`${edgeDomain}/health-check`, warmOpts),   // Edge Functions (~584ms ÔåÆ ~100ms on 2nd call)
+    fetch(`${edgeDomain}/health-check`, warmOpts),   // Edge Functions (~584ms → ~100ms on 2nd call)
     fetch(`${base}/rest/v1/`, warmOpts),               // DB / REST API
     fetch(`${base}/auth/v1/settings`, warmOpts),       // Auth service
     fetch(`${base}/storage/v1/`, warmOpts),             // Storage service
@@ -235,13 +298,11 @@ function warmUpConnections() {
 // Initialize app
 
 const initApp = () => {
-  console.log("­ƒÜÇ 224Solutions - Starting...");
-  logPwaDiagnostics();
-  warmUpConnections();
+  console.log("🚀 224Solutions - Starting...");
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
-    console.error("ÔØî Root element not found");
+    console.error("✕ Root element not found");
     return;
   }
 
@@ -249,6 +310,7 @@ const initApp = () => {
     const root = createRoot(rootElement);
     // Log de debug visible
     console.log("[DEBUG] Avant rendu React");
+    rootElement.setAttribute('data-app-mounted', 'booting');
     root.render(
       <React.StrictMode>
         <HelmetProvider>
@@ -256,16 +318,28 @@ const initApp = () => {
         </HelmetProvider>
       </React.StrictMode>
     );
-    console.log("[DEBUG] Apr├¿s rendu React");
-    console.log("Ô£à React app mounted");
+    console.log("[DEBUG] Après rendu React");
+    console.log("✓ React app mounted");
     // Hide loader after React renders
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        rootElement.setAttribute('data-app-mounted', 'true');
         hideLoader();
+        setTimeout(() => {
+          runSafeStartupStep('pwa diagnostics', () => {
+            logPwaDiagnostics();
+          });
+          runSafeStartupStep('warm up connections', () => {
+            warmUpConnections();
+          });
+          initializeNonCriticalStartup();
+          initializePwaRuntime();
+        }, 0);
       });
     });
   } catch (error) {
-    console.error("ÔØî React render error:", error);
+    rootElement.setAttribute('data-app-mounted', 'error');
+    console.error("✕ React render error:", error);
     showError(rootElement, error);
   }
 };
@@ -273,31 +347,11 @@ const initApp = () => {
 // Start app
 initApp();
 
-// Universal SW reset: works on ALL domains (224solution.net, lovable, etc.)
-const resetParams = new URLSearchParams(window.location.search);
-if (resetParams.has('resetSw')) {
-  resetPWA();
-} else {
-  // Service Worker registration
-  const enablePwaPreview =
-    resetParams.has('pwa') ||
-    window.localStorage.getItem('enable_pwa_preview') === '1';
-
-  if (import.meta.env.DEV && !enablePwaPreview) {
-    unregisterServiceWorker();
-    if ('caches' in window) {
-      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-    }
-  } else {
-    registerServiceWorker({ force: enablePwaPreview });
-  }
-}
-
 // Capturer les erreurs globales
 window.addEventListener('error', (event) => {
   console.error('Erreur globale:', event.error || event.message);
 
-  // Auto-r├®cup├®ration sur erreurs typiques de cache/SW (├®cran blanc)
+  // Auto-récupération sur erreurs typiques de cache/SW (écran blanc)
   const err = (event as any).error ?? event.message;
   if (isLikelyChunkOrAssetLoadError(err)) {
     recoverFromStaleCache("window.error", err);
@@ -305,7 +359,7 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('Promise rejet├®e:', event.reason);
+  console.error('Promise rejetée:', event.reason);
 
   if (isLikelyChunkOrAssetLoadError(event.reason)) {
     recoverFromStaleCache("unhandledrejection", event.reason);

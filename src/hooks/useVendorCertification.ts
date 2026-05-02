@@ -113,6 +113,7 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
 
   useEffect(() => {
     fetchCertification();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const isCertified = certification?.status === 'CERTIFIE';

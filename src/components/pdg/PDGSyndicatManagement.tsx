@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, Send, Settings, Mail, Copy, Edit, Trash2, UserCircle, Download, RefreshCw } from 'lucide-react';
+import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, _Send, Settings, Mail, Copy, Edit, Trash2, UserCircle, _Download, RefreshCw } from 'lucide-react';
 import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
 import { usePDGActions } from '@/hooks/usePDGActions';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import GenerateBureauInstallLink from '@/components/admin/GenerateBureauInstallLink';
 import DualSyncDashboard from '@/components/admin/DualSyncDashboard';
 
@@ -46,7 +46,7 @@ export default function PDGSyndicatManagement() {
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
+  const [_selectedBureau, setSelectedBureau] = useState<Bureau | null>(null);
   const [editingBureau, setEditingBureau] = useState<Bureau | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingWorker, setEditingWorker] = useState<any>(null);
@@ -70,9 +70,9 @@ export default function PDGSyndicatManagement() {
 
   const handleCreateBureau = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const result = await createBureauAction(formData);
-    
+
     if (result.success) {
       setIsDialogOpen(false);
       setFormData({
@@ -473,7 +473,7 @@ export default function PDGSyndicatManagement() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Lien d'accès à l'interface */}
                     {bureau.access_token && (
                       <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
@@ -497,10 +497,10 @@ export default function PDGSyndicatManagement() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Actions */}
                     <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
-                      <GenerateBureauInstallLink 
+                      <GenerateBureauInstallLink
                         bureauId={bureau.id}
                         bureauName={`${bureau.prefecture} - ${bureau.commune}`}
                       />
@@ -517,9 +517,9 @@ export default function PDGSyndicatManagement() {
                         <Eye className="w-4 h-4" />
                       </Button>
                       {bureau.president_email && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleResendLink(bureau)}
                           disabled={sendingEmail === bureau.id}
                           className="gap-2"

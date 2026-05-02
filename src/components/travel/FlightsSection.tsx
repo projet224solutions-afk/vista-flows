@@ -3,9 +3,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { 
-  Plane, Star, ExternalLink, ArrowRight, 
-  Calendar, Users, Clock, Filter
+import {
+  Plane, _Star, ExternalLink, ArrowRight,
+  Calendar, _Users, _Clock, _Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { _cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface Airline {
@@ -116,9 +116,9 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
   const formatPrice = (price: number, currency: string) => fc(price, currency);
 
   const filteredOffers = flightOffers.filter(offer => {
-    const matchOrigin = !searchOrigin || 
+    const matchOrigin = !searchOrigin ||
       offer.origin_city.toLowerCase().includes(searchOrigin.toLowerCase());
-    const matchDest = !searchDest || 
+    const matchDest = !searchDest ||
       offer.destination_city.toLowerCase().includes(searchDest.toLowerCase());
     const matchAirline = !selectedAirline || offer.airline_id === selectedAirline;
     return matchOrigin && matchDest && matchAirline;
@@ -153,7 +153,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2">
-              <Badge 
+              <Badge
                 variant={selectedAirline === null ? "default" : "outline"}
                 className="cursor-pointer whitespace-nowrap"
                 onClick={() => setSelectedAirline(null)}
@@ -161,7 +161,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
                 Toutes
               </Badge>
               {airlines.map((airline) => (
-                <Badge 
+                <Badge
                   key={airline.id}
                   variant={selectedAirline === airline.id ? "default" : "outline"}
                   className="cursor-pointer whitespace-nowrap"
@@ -183,7 +183,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {airlines.map((airline) => (
-            <Card 
+            <Card
               key={airline.id}
               className="cursor-pointer hover:shadow-md transition-all"
               onClick={() => handleAirlineClick(airline)}
@@ -191,8 +191,8 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
               <CardContent className="p-3">
                 <div className="flex items-center gap-3">
                   {airline.logo_url ? (
-                    <img 
-                      src={airline.logo_url} 
+                    <img
+                      src={airline.logo_url}
                       alt={airline.name}
                       className="w-10 h-10 object-contain"
                     />
@@ -233,7 +233,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
             {filteredOffers.map((offer) => {
               const airline = airlines.find(a => a.id === offer.airline_id);
               return (
-                <Card 
+                <Card
                   key={offer.id}
                   className="cursor-pointer hover:shadow-md transition-all"
                   onClick={() => handleOfferClick(offer)}

@@ -113,7 +113,7 @@ export default function EnhancedAuth() {
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
   const [accountType, setAccountType] = useState<AccountType | null>(null);
-  const [authMethod, setAuthMethod] = useState<'email' | 'phone' | null>(null);
+  const [authMethod, _setAuthMethod] = useState<'email' | 'phone' | null>(null);
 
   // Memoize account types with translations
   const accountTypes = useMemo(() => accountTypeConfigs.map(config => ({
@@ -175,7 +175,7 @@ export default function EnhancedAuth() {
   useEffect(() => {
     if (!authLoading && !profileLoading && user && profile?.role) {
       const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
-      
+
       const provider = user.app_metadata?.provider;
       const isOAuthUser = provider === 'google' || provider === 'facebook';
       const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
@@ -201,7 +201,7 @@ export default function EnhancedAuth() {
       };
 
       const targetRoute = roleRoutes[profile.role] || '/';
-      
+
       if (isNewSignup) {
         const isProfileIncomplete = !profile.first_name || !profile.last_name || !profile.phone;
         if (isProfileIncomplete) {
@@ -218,7 +218,7 @@ export default function EnhancedAuth() {
   // Fonction pour continuer après le modal "compte existant"
   const handleContinueWithExistingAccount = () => {
     setOauthExistingAccountModal({ open: false, email: '', role: '' });
-    
+
     // Rediriger vers la page appropriée selon le rôle
     const roleRoutes: Record<string, string> = {
       admin: '/pdg',
@@ -231,13 +231,13 @@ export default function EnhancedAuth() {
       client: '/client',
       agent: '/agent',
     };
-    
+
     const targetRoute = roleRoutes[oauthExistingAccountModal.role] || '/';
     navigate(targetRoute, { replace: true });
   };
 
   // Vérifier si un email existe déjà dans le système
-  const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; role?: string }> => {
+  const _checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; role?: string }> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -454,7 +454,7 @@ export default function EnhancedAuth() {
         const nameParts = fullName.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
-        
+
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
@@ -470,46 +470,46 @@ export default function EnhancedAuth() {
             }
           }
         });
-        
+
         if (error) throw error;
-        
+
         if (data.user) {
           localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
         }
-        
+
         toast.success(t('auth.checkEmail'));
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
         });
-        
+
         if (error) throw error;
         toast.success(t('auth.connectionSuccess'));
-        
+
         if (data.user) {
           let profileData = null;
           let attempts = 0;
           const maxAttempts = 10;
-          
+
           while (!profileData && attempts < maxAttempts) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('role')
               .eq('id', data.user.id)
               .maybeSingle();
-            
+
             if (profile?.role) {
               profileData = profile;
               break;
             }
-            
+
             if (attempts < maxAttempts - 1) {
               await new Promise(resolve => setTimeout(resolve, 200));
             }
             attempts++;
           }
-          
+
           if (profileData?.role) {
             const roleRoutes: Record<string, string> = {
               admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
@@ -545,7 +545,7 @@ export default function EnhancedAuth() {
     try {
       const formatted = phone.startsWith('+') ? phone : `+224${phone}`;
       setFormattedPhoneNumber(formatted);
-      
+
       const { error } = await supabase.auth.signInWithOtp({
         phone: formatted,
         options: {
@@ -555,7 +555,7 @@ export default function EnhancedAuth() {
           }
         }
       });
-      
+
       if (error) throw error;
       toast.success(t('auth.otpSent'));
       setOtpSent(true);
@@ -637,18 +637,18 @@ export default function EnhancedAuth() {
     setError(null);
   };
 
-  const goBack = () => {
+  const _goBack = () => {
     if (step === 'form') setStep('method');
     else if (step === 'method') setStep('type');
     else navigate('/');
   };
 
-  const goNext = () => {
+  const _goNext = () => {
     if (step === 'type' && accountType) setStep('method');
     else if (step === 'method' && authMethod) setStep('form');
   };
 
-  const selectedType = accountTypes.find(t => t.value === accountType);
+  const _selectedType = accountTypes.find(t => t.value === accountType);
 
   // État pour basculer entre connexion et inscription sur mobile
   const [showSignupPanel, setShowSignupPanel] = useState(false);
@@ -666,9 +666,9 @@ export default function EnhancedAuth() {
       {/* Header ultra-compact professionnel */}
       <header className="w-full py-1.5 px-3 flex items-center justify-between bg-card border-b border-border/30 sticky top-0 z-50">
         <div className="flex items-center gap-1.5">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigate('/')}
             className="h-7 w-7 rounded-md hover:bg-muted"
           >
@@ -742,7 +742,7 @@ export default function EnhancedAuth() {
                   <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
                     <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
                     <p className="text-[10px] text-muted-foreground">
-                      Un code de vérification a été envoyé à <strong>{confirmationEmail}</strong>
+                      {t('auth.confirmationCodeSentTo')} <strong>{confirmationEmail}</strong>
                     </p>
                   </div>
 
@@ -750,7 +750,7 @@ export default function EnhancedAuth() {
                     <div className="space-y-0.5">
                       <Label htmlFor="confirmation-code" className="text-[11px] font-medium flex items-center gap-1">
                         <Lock className="h-3 w-3 text-muted-foreground" />
-                        Code de vérification
+                        {t('auth.verificationCode')}
                       </Label>
                       <Input
                         id="confirmation-code"
@@ -779,9 +779,9 @@ export default function EnhancedAuth() {
                       disabled={loading || confirmationCode.length < 4}
                     >
                       {loading ? (
-                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</>
+                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> {t('auth.verifying')}</>
                       ) : (
-                        <><UserCheck className="mr-1 h-3 w-3" /> Confirmer mon email</>
+                        <><UserCheck className="mr-1 h-3 w-3" /> {t('auth.confirmMyEmail')}</>
                       )}
                     </Button>
 
@@ -791,7 +791,7 @@ export default function EnhancedAuth() {
                       className="w-full h-7 text-[10px]"
                       onClick={() => { setNeedsConfirmation(false); setError(null); }}
                     >
-                      <ArrowLeft className="mr-1 h-3 w-3" /> Retour
+                      <ArrowLeft className="mr-1 h-3 w-3" /> {t('common.back')}
                     </Button>
                   </form>
                 </div>
@@ -965,7 +965,7 @@ export default function EnhancedAuth() {
                         ) : (
                           <Phone className="h-3 w-3" />
                         )}
-                        {t('auth.otpSent') ? t('auth.verifyOtp') : t('auth.login')}
+                        {t('auth.sendOtp')}
                       </Button>
                     </form>
                   ) : (

@@ -43,25 +43,25 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
 
       if (!data) {
         try {
-          const { data: initResult, error: rpcError } = await supabase
+          const { data: _initResult, error: rpcError } = await supabase
             .rpc('initialize_user_wallet', { p_user_id: userId });
-          
+
           if (rpcError) {
             setLoading(false);
             return;
           }
-          
+
           const { data: reloadedWallet, error: reloadError } = await supabase
             .from('wallets')
             .select('id, balance, currency, wallet_status')
             .eq('user_id', userId)
             .maybeSingle();
-          
+
           if (reloadError || !reloadedWallet) {
             setLoading(false);
             return;
           }
-          
+
           setWalletId(String(reloadedWallet.id));
           setBalance(reloadedWallet.balance || 0);
           setCurrency(reloadedWallet.currency || 'GNF');
@@ -91,6 +91,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
         .subscribe();
       return () => { channel.unsubscribe(); };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const formatAmount = (amount: number) => {

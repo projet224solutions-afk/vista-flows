@@ -176,12 +176,12 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
         if (!vendor) return false; // Pas de vendeur = pas affiché
-        
+
         // Exclure les vendeurs qui n'ont pas activé la vente en ligne
         // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
         const allowedTypes = ['hybrid', 'online'];
         if (!vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
-        
+
         // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
           const vendorCountry = (vendor.country || '').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -195,7 +195,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
           if (!vendorCity.startsWith(normalizedCity) && !normalizedCity.startsWith(vendorCity)) return false;
         }
-        
+
         return true;
       });
 
@@ -203,14 +203,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const vendorUserIds = filtered
         .map(p => (p.vendors as any)?.user_id)
         .filter(Boolean);
-      
+
       let vendorPublicIds: Record<string, string> = {};
       if (vendorUserIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, public_id')
           .in('id', vendorUserIds);
-        
+
         if (profiles) {
           vendorPublicIds = Object.fromEntries(
             profiles.map(p => [p.id, p.public_id || ''])
@@ -223,7 +223,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendorUserId = vendor?.user_id;
         const vendorCountry = vendor?.country || '';
         const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
-        
+
         return {
           id: product.id,
           name: product.name,
@@ -305,7 +305,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const images: string[] = [];
         if (service.cover_image_url) images.push(service.cover_image_url);
         if (service.logo_url) images.push(service.logo_url);
-        
+
         return {
           id: service.id,
           name: service.business_name,
@@ -433,14 +433,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const vendorUserIds = filtered
         .map((p: any) => (p.vendors as any)?.user_id || p.merchant_id)
         .filter(Boolean);
-      
+
       let vendorPublicIds: Record<string, string> = {};
       if (vendorUserIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, public_id')
           .in('id', vendorUserIds);
-        
+
         if (profiles) {
           vendorPublicIds = Object.fromEntries(
             profiles.map(p => [p.id, p.public_id || ''])
@@ -496,12 +496,12 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   /**
    * Récupère le nom de la catégorie à partir de son ID
    */
-  const getCategoryName = async (categoryId: string): Promise<string | null> => {
+  const _getCategoryName = async (categoryId: string): Promise<string | null> => {
     if (!categoryId || categoryId === 'all') return null;
-    
+
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
     if (!isUUID) return categoryId; // C'est déjà un nom
-    
+
     try {
       const { data } = await supabase
         .from('categories')
@@ -525,7 +525,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       setLoading(true);
 
       // Si une catégorie e-commerce est sélectionnée (UUID), ne charger que les produits
-      const isEcommerceCategorySelected = category && category !== 'all' && 
+      const isEcommerceCategorySelected = category && category !== 'all' &&
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
 
       // Charger selon le type sélectionné
@@ -570,7 +570,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // Seed basé sur la date du jour pour que l'ordre change chaque jour
       const today = new Date();
       const dailySeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-      
+
       // Fonction de hash simple pour créer un ordre pseudo-aléatoire déterministe
       const seededHash = (str: string, seed: number) => {
         let hash = seed;
@@ -583,7 +583,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // D'abord, séparer les produits sponsorisés (toujours en tête)
       const sponsored = allItems.filter(item => item.is_sponsored);
       const nonSponsored = allItems.filter(item => !item.is_sponsored);
-      
+
       // Fonction de tri pour les non-sponsorisés
       const sortItems = (items: MarketplaceItem[]) => {
         switch (sortBy) {
@@ -616,11 +616,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         }
         return items;
       };
-      
+
       // Trier les deux groupes séparément
       sortItems(sponsored);
       sortItems(nonSponsored);
-      
+
       // Combiner: sponsorisés en tête, puis les autres
       allItems = [...sponsored, ...nonSponsored];
 
@@ -713,6 +713,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         setLoading(false);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     page,
     limit,

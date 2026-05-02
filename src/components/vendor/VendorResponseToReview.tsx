@@ -16,10 +16,10 @@ interface VendorResponseToReviewProps {
   onResponseSubmitted: () => void;
 }
 
-export default function VendorResponseToReview({ 
-  ratingId, 
+export default function VendorResponseToReview({
+  ratingId,
   existingResponse,
-  onResponseSubmitted 
+  onResponseSubmitted
 }: VendorResponseToReviewProps) {
   const [response, setResponse] = useState(existingResponse || '');
   const [submitting, setSubmitting] = useState(false);
@@ -63,8 +63,8 @@ export default function VendorResponseToReview({
             <MessageSquare className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">Votre réponse</span>
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setIsEditing(true)}
           >

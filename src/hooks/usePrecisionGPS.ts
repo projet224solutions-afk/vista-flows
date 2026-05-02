@@ -6,10 +6,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { 
-  precisionGeoService, 
-  PreciseLocation, 
-  GPS_CONFIG 
+import {
+  precisionGeoService,
+  PreciseLocation,
+  GPS_CONFIG
 } from '@/services/gps/PrecisionGeolocationService';
 
 export interface PrecisionGPSState {
@@ -62,9 +62,9 @@ export function usePrecisionGPS(options: UsePrecisionGPSOptions = {}) {
   const getCurrentLocation = useCallback(async (): Promise<PreciseLocation | null> => {
     try {
       setState(prev => ({ ...prev, error: null }));
-      
+
       const location = await precisionGeoService.getCurrentPosition(requireHighAccuracy);
-      
+
       const isHighAccuracy = precisionGeoService.isHighAccuracy(location.accuracy);
       const isSufficientAccuracy = precisionGeoService.isAccuracySufficient(location.accuracy);
 
@@ -172,7 +172,7 @@ export function usePrecisionGPS(options: UsePrecisionGPSOptions = {}) {
 
     heartbeatRef.current = setInterval(async () => {
       const { location, isSufficientAccuracy } = state;
-      
+
       if (location && isSufficientAccuracy) {
         try {
           await updateCallback(location);

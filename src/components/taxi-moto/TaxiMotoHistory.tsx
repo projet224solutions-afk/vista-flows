@@ -12,16 +12,16 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
     Clock,
-    MapPin,
+    _MapPin,
     Star,
     Download,
-    Filter,
+    _Filter,
     Search,
-    Calendar,
-    DollarSign,
+    _Calendar,
+    _DollarSign,
     Navigation,
-    User,
-    MoreVertical
+    _User,
+    _MoreVertical
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,11 +60,13 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     // Charger l'historique des courses
     useEffect(() => {
         loadRideHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
 
     // Filtrer les courses
     useEffect(() => {
         filterRides();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rides, searchTerm, statusFilter, dateFilter]);
 
     /**

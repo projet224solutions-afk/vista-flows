@@ -21,6 +21,7 @@ export default function VendorSettings() {
 
   useEffect(() => {
     checkVendorAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -77,9 +78,9 @@ export default function VendorSettings() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Param├¿tres</h1>
+        <h1 className="text-3xl font-bold">Paramètres</h1>
         <p className="text-muted-foreground mt-2">
-          G├®rez les param├¿tres de votre compte et de votre entreprise
+          Gérez les paramètres de votre compte et de votre entreprise
         </p>
       </div>
 
@@ -152,14 +153,14 @@ export default function VendorSettings() {
                   Profil personnel
                 </CardTitle>
                 <CardDescription>
-                  G├®rez vos informations personnelles
+                  Gérez vos informations personnelles
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-center text-muted-foreground py-8">
                 D'autres options de profil seront disponibles prochainement.
               </CardContent>
             </Card>
-            
+
             <VendorPasswordChange />
           </div>
         </TabsContent>
@@ -172,11 +173,11 @@ export default function VendorSettings() {
                 Notifications
               </CardTitle>
               <CardDescription>
-                Configurez vos pr├®f├®rences de notifications
+                Configurez vos préférences de notifications
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center text-muted-foreground py-8">
-              Cette fonctionnalit├® sera disponible prochainement.
+              Cette fonctionnalité sera disponible prochainement.
             </CardContent>
           </Card>
         </TabsContent>

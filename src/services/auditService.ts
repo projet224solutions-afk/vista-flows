@@ -6,7 +6,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export type AuditAction = 
+export type AuditAction =
   | 'wallet_transfer'
   | 'wallet_deposit'
   | 'wallet_withdrawal'

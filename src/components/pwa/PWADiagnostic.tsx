@@ -8,8 +8,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  CheckCircle, XCircle, AlertCircle, Wifi, WifiOff, 
+import {
+  CheckCircle, XCircle, AlertCircle, Wifi, WifiOff,
   Download, Smartphone, Monitor, RefreshCw, Shield, Database, Globe
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,8 +26,8 @@ export default function PWADiagnostic() {
   const [isRunning, setIsRunning] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [swStatus, setSwStatus] = useState<string>('checking');
-  const [cacheStatus, setCacheStatus] = useState<{ cached: number; size: string } | null>(null);
+  const [_swStatus, setSwStatus] = useState<string>('checking');
+  const [_cacheStatus, setCacheStatus] = useState<{ cached: number; size: string } | null>(null);
 
   // Écouter l'événement d'installation PWA
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function PWADiagnostic() {
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-    
+
     // Vérifier si déjà installé
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstallable(false);
@@ -68,12 +68,12 @@ export default function PWADiagnostic() {
         const registration = await navigator.serviceWorker.getRegistration();
         swRegistered = !!registration;
         setSwStatus(registration ? 'active' : 'not-registered');
-        
+
         results.push({
           label: 'Service Worker',
           status: swRegistered ? 'success' : 'error',
-          message: swRegistered 
-            ? `Actif (${registration?.active?.state || 'installed'})` 
+          message: swRegistered
+            ? `Actif (${registration?.active?.state || 'installed'})`
             : 'Non enregistré',
           icon: <Database className="w-4 h-4" />
         });
@@ -81,7 +81,7 @@ export default function PWADiagnostic() {
         // Vérifier les caches
         if (swRegistered) {
           const cacheNames = await caches.keys();
-          let totalSize = 0;
+          const _totalSize = 0;
           let cachedCount = 0;
 
           for (const name of cacheNames) {
@@ -99,7 +99,7 @@ export default function PWADiagnostic() {
             icon: <Database className="w-4 h-4" />
           });
         }
-      } catch (error) {
+      } catch (_error) {
         results.push({
           label: 'Service Worker',
           status: 'error',
@@ -123,14 +123,14 @@ export default function PWADiagnostic() {
         const manifestUrl = manifestLink.getAttribute('href');
         const response = await fetch(manifestUrl || '/manifest.webmanifest');
         const manifest = await response.json();
-        
+
         const hasRequiredFields = manifest.name && manifest.icons?.length > 0 && manifest.start_url;
-        
+
         results.push({
           label: 'Manifest PWA',
           status: hasRequiredFields ? 'success' : 'warning',
-          message: hasRequiredFields 
-            ? `${manifest.short_name || manifest.name}` 
+          message: hasRequiredFields
+            ? `${manifest.short_name || manifest.name}`
             : 'Champs requis manquants',
           icon: <Globe className="w-4 h-4" />
         });
@@ -142,7 +142,7 @@ export default function PWADiagnostic() {
           icon: <Globe className="w-4 h-4" />
         });
       }
-    } catch (error) {
+    } catch (_error) {
       results.push({
         label: 'Manifest PWA',
         status: 'error',
@@ -163,7 +163,7 @@ export default function PWADiagnostic() {
     // 5. Vérifier l'installabilité
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isInFrame = window.top !== window.self;
-    
+
     if (isStandalone) {
       results.push({
         label: 'Mode d\'affichage',
@@ -189,7 +189,7 @@ export default function PWADiagnostic() {
 
     // 6. Vérifier IndexedDB
     try {
-      const testDB = await new Promise((resolve, reject) => {
+      const _testDB = await new Promise((resolve, reject) => {
         const request = indexedDB.open('pwa-diagnostic-test', 1);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
@@ -205,7 +205,7 @@ export default function PWADiagnostic() {
         message: 'Disponible pour données offline',
         icon: <Database className="w-4 h-4" />
       });
-    } catch (error) {
+    } catch (_error) {
       results.push({
         label: 'Stockage IndexedDB',
         status: 'error',
@@ -219,15 +219,15 @@ export default function PWADiagnostic() {
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const isFirefox = /Firefox/.test(navigator.userAgent);
     const isEdge = /Edge|Edg/.test(navigator.userAgent);
-    
+
     let browserName = 'Inconnu';
     let browserSupport: 'success' | 'warning' | 'error' = 'warning';
-    
+
     if (isChrome) { browserName = 'Chrome'; browserSupport = 'success'; }
     else if (isEdge) { browserName = 'Edge'; browserSupport = 'success'; }
     else if (isSafari) { browserName = 'Safari'; browserSupport = 'warning'; }
     else if (isFirefox) { browserName = 'Firefox'; browserSupport = 'warning'; }
-    
+
     results.push({
       label: 'Navigateur',
       status: browserSupport,
@@ -251,14 +251,14 @@ export default function PWADiagnostic() {
     try {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         toast.success("🎉 Installation réussie !");
         setIsInstallable(false);
       } else {
         toast.info("Installation annulée");
       }
-      
+
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Erreur installation:', error);
@@ -270,10 +270,10 @@ export default function PWADiagnostic() {
   const forceCacheResources = async () => {
     try {
       toast.info("Mise en cache en cours...");
-      
+
       // Ouvrir le cache dynamique
       const cache = await caches.open('224solutions-dynamic-v6');
-      
+
       // Liste des ressources essentielles à mettre en cache
       const essentialUrls = [
         '/',
@@ -296,7 +296,7 @@ export default function PWADiagnostic() {
             await cache.put(url, response);
             cached++;
           }
-        } catch (e) {
+        } catch (_e) {
           console.warn(`Impossible de mettre en cache: ${url}`);
         }
       }
@@ -340,6 +340,7 @@ export default function PWADiagnostic() {
   // Lancer le diagnostic au montage
   useEffect(() => {
     runDiagnostic();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusIcon = (status: DiagnosticItem['status']) => {
@@ -373,7 +374,7 @@ export default function PWADiagnostic() {
             Diagnostic PWA
           </span>
           <Badge className={`${
-            overallStatus === 'success' ? 'bg-green-500' : 
+            overallStatus === 'success' ? 'bg-green-500' :
             overallStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
           } text-white`}>
             {successCount}/{diagnostics.length} OK
@@ -385,8 +386,8 @@ export default function PWADiagnostic() {
         {/* Résultats du diagnostic */}
         <div className="space-y-3">
           {diagnostics.map((item, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center gap-3">
@@ -405,9 +406,9 @@ export default function PWADiagnostic() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 pt-4 border-t">
-          <Button 
-            onClick={runDiagnostic} 
-            variant="outline" 
+          <Button
+            onClick={runDiagnostic}
+            variant="outline"
             disabled={isRunning}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />

@@ -1,7 +1,7 @@
 /**
  * HOOK USE CONNECTORS
  * Hook React pour gérer les connecteurs dropshipping
- * 
+ *
  * @module useConnectors
  * @version 1.0.0
  * @author 224Solutions
@@ -30,30 +30,30 @@ interface UseConnectorsReturn {
   loading: boolean;
   importing: boolean;
   syncing: boolean;
-  
+
   // Données
   availableConnectors: ConnectorInfo[];
   activeConnectors: ConnectorType[];
   metrics: Map<ConnectorType, Partial<ConnectorMetrics>>;
-  
+
   // Actions Connecteurs
   initConnector: (type: ConnectorType, config?: Partial<ConnectorConfig>) => Promise<boolean>;
   disconnectConnector: (type: ConnectorType) => Promise<void>;
-  
+
   // Actions Import
   importFromUrl: (url: string, connectorType?: ConnectorType) => Promise<ProductImportResult>;
   importFromId: (productId: string, connectorType: ConnectorType) => Promise<ProductImportResult>;
   detectPlatform: (url: string) => ConnectorType | null;
   saveProduct: (product: ProductImportResult, options?: { autoPublish?: boolean; marginPercent?: number }) => Promise<string | null>;
-  
+
   // Actions Sync
   syncPrices: (connectorType: ConnectorType, productIds?: string[]) => Promise<SyncResult>;
   syncAvailability: (connectorType: ConnectorType, productIds?: string[]) => Promise<SyncResult>;
   syncAll: (connectorType: ConnectorType, productIds?: string[]) => Promise<{ priceSync: SyncResult; availabilitySync: SyncResult }>;
-  
+
   // Actions Commandes
   createOrder: (connectorType: ConnectorType, orderData: OrderData) => Promise<SupplierOrderResult>;
-  
+
   // Utilitaires
   isConnectorActive: (type: ConnectorType) => boolean;
   getConnectorInfo: (type: ConnectorType) => ConnectorInfo | undefined;
@@ -68,21 +68,21 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
   const [syncing, setSyncing] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<ConnectorType[]>([]);
   const [metrics, setMetrics] = useState<Map<ConnectorType, Partial<ConnectorMetrics>>>(new Map());
-  
+
   // Données statiques
-  const availableConnectors = useMemo(() => 
+  const availableConnectors = useMemo(() =>
     ConnectorFactory.getAvailableConnectors().filter(c => c.status !== 'deprecated'),
     []
   );
-  
+
   // ==================== INITIALISATION ====================
-  
+
   useEffect(() => {
     if (vendorId) {
       // Charger les connecteurs actifs
       const active = dropshippingConnectorService.getActiveConnectors(vendorId);
       setActiveConnectors(active);
-      
+
       // Charger les métriques
       const metricsMap = new Map<ConnectorType, Partial<ConnectorMetrics>>();
       for (const type of active) {
@@ -92,9 +92,9 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       setMetrics(metricsMap);
     }
   }, [vendorId]);
-  
+
   // ==================== ACTIONS CONNECTEURS ====================
-  
+
   const initConnector = useCallback(async (
     type: ConnectorType,
     config: Partial<ConnectorConfig> = {}
@@ -103,7 +103,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       toast.error('Vendeur non identifié');
       return false;
     }
-    
+
     setLoading(true);
     try {
       const connector = await dropshippingConnectorService.initializeConnector(
@@ -111,12 +111,12 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         type,
         config
       );
-      
+
       if (connector) {
         setActiveConnectors(prev => [...prev.filter(t => t !== type), type]);
         return true;
       }
-      
+
       return false;
     } catch (error: any) {
       console.error('[useConnectors] Init error:', error);
@@ -126,24 +126,24 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       setLoading(false);
     }
   }, [vendorId]);
-  
+
   const disconnectConnector = useCallback(async (type: ConnectorType): Promise<void> => {
     if (!vendorId) return;
-    
+
     setLoading(true);
     try {
       await dropshippingConnectorService.disconnectConnector(vendorId, type);
       setActiveConnectors(prev => prev.filter(t => t !== type));
       toast.success(`${type} déconnecté`);
-    } catch (error: any) {
+    } catch (_error: any) {
       toast.error(`Erreur déconnexion ${type}`);
     } finally {
       setLoading(false);
     }
   }, [vendorId]);
-  
+
   // ==================== ACTIONS IMPORT ====================
-  
+
   const importFromUrl = useCallback(async (
     url: string,
     connectorType?: ConnectorType
@@ -151,7 +151,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
     if (!vendorId) {
       return { success: false, errors: ['Vendeur non identifié'] };
     }
-    
+
     setImporting(true);
     try {
       const result = await dropshippingConnectorService.importProduct(
@@ -159,13 +159,13 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         url,
         { connectorType, autoDetectPlatform: !connectorType }
       );
-      
+
       if (result.success) {
         toast.success('Produit importé avec succès');
       } else {
         toast.error(result.errors?.[0] || 'Erreur import');
       }
-      
+
       return result;
     } catch (error: any) {
       toast.error(error.message);
@@ -174,13 +174,13 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       setImporting(false);
     }
   }, [vendorId]);
-  
+
   const detectPlatform = useCallback((url: string): ConnectorType | null => {
     return dropshippingConnectorService.detectPlatform(url);
   }, []);
-  
+
   // ==================== ACTIONS SYNC ====================
-  
+
   const syncPrices = useCallback(async (
     connectorType: ConnectorType,
     productIds?: string[]
@@ -199,23 +199,23 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         durationMs: 0
       };
     }
-    
+
     setSyncing(true);
     try {
       const result = await dropshippingConnectorService.syncPrices(vendorId, connectorType, productIds);
-      
+
       if (result.success) {
         toast.success(`${result.pricesUpdated} prix synchronisés`);
       } else if (result.errors.length > 0) {
         toast.warning(`Sync avec ${result.errors.length} erreurs`);
       }
-      
+
       return result;
     } finally {
       setSyncing(false);
     }
   }, [vendorId]);
-  
+
   const syncAvailability = useCallback(async (
     connectorType: ConnectorType,
     productIds?: string[]
@@ -234,21 +234,21 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         durationMs: 0
       };
     }
-    
+
     setSyncing(true);
     try {
       const result = await dropshippingConnectorService.syncAvailability(vendorId, connectorType, productIds);
-      
+
       if (result.success) {
         toast.success(`${result.stocksUpdated} stocks synchronisés`);
       }
-      
+
       return result;
     } finally {
       setSyncing(false);
     }
   }, [vendorId]);
-  
+
   const syncAll = useCallback(async (
     connectorType: ConnectorType,
     productIds?: string[]
@@ -268,7 +268,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       };
       return { priceSync: emptyResult, availabilitySync: emptyResult };
     }
-    
+
     setSyncing(true);
     try {
       const result = await dropshippingConnectorService.syncAll(vendorId, connectorType, productIds);
@@ -278,7 +278,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       setSyncing(false);
     }
   }, [vendorId]);
-  
+
   // Import depuis un ID produit (pour marketplace)
   const importFromId = useCallback(async (
     productId: string,
@@ -287,7 +287,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
     if (!vendorId) {
       return { success: false, errors: ['Vendeur non identifié'] };
     }
-    
+
     setImporting(true);
     try {
       // Construire l'URL depuis l'ID selon le connecteur
@@ -305,13 +305,13 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         default:
           return { success: false, errors: ['Plateforme non supportée pour import par ID'] };
       }
-      
+
       return await importFromUrl(url, connectorType);
     } finally {
       setImporting(false);
     }
   }, [vendorId, importFromUrl]);
-  
+
   // Sauvegarder un produit importé dans dropship_products
   const saveProduct = useCallback(async (
     product: ProductImportResult,
@@ -321,12 +321,12 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
       toast.error('Données produit invalides');
       return null;
     }
-    
+
     try {
       const np = product.normalizedProduct;
       const marginPercent = options.marginPercent || 30;
       const sellingPrice = np.priceUsd * (1 + marginPercent / 100);
-      
+
       const { data, error } = await (supabase as any)
         .from('dropship_products')
         .insert({
@@ -360,9 +360,9 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         })
         .select('id')
         .single();
-      
+
       if (error) throw error;
-      
+
       toast.success('Produit sauvegardé avec succès');
       return data?.id || null;
     } catch (error: any) {
@@ -373,7 +373,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
   }, [vendorId]);
 
   // ==================== ACTIONS COMMANDES ====================
-  
+
   const createOrder = useCallback(async (
     connectorType: ConnectorType,
     orderData: OrderData
@@ -381,7 +381,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
     if (!vendorId) {
       return { success: false, error: 'Vendeur non identifié', errorCode: 'NO_VENDOR' };
     }
-    
+
     setLoading(true);
     try {
       const result = await dropshippingConnectorService.createSupplierOrder(
@@ -389,42 +389,42 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
         connectorType,
         orderData
       );
-      
+
       if (result.success) {
         toast.success(`Commande fournisseur créée: ${result.supplierOrderId}`);
       } else {
         toast.error(result.error || 'Erreur création commande');
       }
-      
+
       return result;
     } finally {
       setLoading(false);
     }
   }, [vendorId]);
-  
+
   // ==================== UTILITAIRES ====================
-  
+
   const isConnectorActive = useCallback((type: ConnectorType): boolean => {
     return activeConnectors.includes(type);
   }, [activeConnectors]);
-  
+
   const getConnectorInfo = useCallback((type: ConnectorType): ConnectorInfo | undefined => {
     return ConnectorFactory.getConnectorInfo(type);
   }, []);
-  
+
   // ==================== RETURN ====================
-  
+
   return {
     // État
     loading,
     importing,
     syncing,
-    
+
     // Données
     availableConnectors,
     activeConnectors,
     metrics,
-    
+
     // Actions
     initConnector,
     disconnectConnector,
@@ -436,7 +436,7 @@ export function useConnectors(vendorId?: string): UseConnectorsReturn {
     syncAvailability,
     syncAll,
     createOrder,
-    
+
     // Utilitaires
     isConnectorActive,
     getConnectorInfo

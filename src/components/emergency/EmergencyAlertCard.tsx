@@ -88,7 +88,7 @@ export const EmergencyAlertCard: React.FC<EmergencyAlertCardProps> = ({
             <Clock className="h-3 w-3" />
             <span>{formatTime(alert.seconds_since_alert)}</span>
           </div>
-          
+
           {alert.current_speed !== undefined && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Activity className="h-3 w-3" />
@@ -99,7 +99,7 @@ export const EmergencyAlertCard: React.FC<EmergencyAlertCardProps> = ({
           <div className="flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-3 w-3" />
             <span className="truncate">
-              {alert.current_latitude?.toFixed(4) || alert.initial_latitude.toFixed(4)}, 
+              {alert.current_latitude?.toFixed(4) || alert.initial_latitude.toFixed(4)},
               {alert.current_longitude?.toFixed(4) || alert.initial_longitude.toFixed(4)}
             </span>
           </div>

@@ -107,7 +107,7 @@ const RecentOrdersSection = memo(function RecentOrdersSection({
       <CardHeader className="pb-2 sm:pb-4">
         <CardTitle className="text-base sm:text-lg">{t('vendor.recentOrders')}</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Vos 2 dernières commandes
+          {t('vendor.last2Orders')}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
@@ -128,9 +128,9 @@ const RecentOrdersSection = memo(function RecentOrdersSection({
               className="w-full text-primary text-xs sm:text-sm"
               onClick={onToggleShowAll}
               aria-expanded={showAll}
-              aria-label={showAll ? 'Voir moins de commandes' : `Voir ${orders.length - 2} commandes supplémentaires`}
+              aria-label={showAll ? t('common.showLess') : `${t('common.showMore')} (${orders.length - 2})`}
             >
-              {showAll ? 'Voir moins' : `Voir plus (${orders.length - 2} autres)`}
+              {showAll ? t('common.showLess') : `${t('common.showMore')} (${orders.length - 2})`}
               <ChevronRight
                 className={`ml-1 h-3 w-3 sm:h-4 sm:w-4 transition-transform ${showAll ? 'rotate-90' : ''}`}
                 aria-hidden="true"
@@ -158,13 +158,14 @@ const QuickActionsSection = memo(function QuickActionsSection({
   const handlePOSClick = useCallback(() => {
     if (!canAccessPOS) {
       toast({
-        title: 'POS verrouillé',
-        description: "Le POS est désactivé pour les vendeurs 'En ligne uniquement'.",
+        title: t('vendor.posLocked'),
+        description: t('vendor.posLockedDesc'),
         variant: 'destructive',
       });
       return;
     }
     navigate('/vendeur/pos');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canAccessPOS, navigate, toast]);
 
   const handleNavigate = useCallback(
@@ -185,7 +186,7 @@ const QuickActionsSection = memo(function QuickActionsSection({
             variant="outline"
             className={`h-auto py-6 flex-col gap-2 ${!canAccessPOS ? 'opacity-60 cursor-not-allowed' : ''}`}
             onClick={handlePOSClick}
-            aria-label={canAccessPOS ? t('vendor.pos') : `${t('vendor.pos')} (verrouillé)`}
+            aria-label={canAccessPOS ? t('vendor.pos') : `${t('vendor.pos')} (${t('common.locked')})`}
             aria-disabled={!canAccessPOS}
           >
             {!canAccessPOS ? (
@@ -195,7 +196,7 @@ const QuickActionsSection = memo(function QuickActionsSection({
             )}
             <span className="text-sm font-medium">
               {t('vendor.pos')}
-              {!canAccessPOS ? ' (verrouillé)' : ''}
+              {!canAccessPOS ? ` (${t('common.locked')})` : ''}
             </span>
           </Button>
 
@@ -247,8 +248,10 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
   onToggleShowAllOrders,
   canAccessPOS,
 }: VendorDashboardHomeProps) {
+  const { t } = useTranslation();
+
   return (
-    <Suspense fallback={<SectionLoader text="Chargement du dashboard..." />}>
+    <Suspense fallback={<SectionLoader text={t('vendor.loadingDashboard')} />}>
       <div className="space-y-6">
         {/* Banner d'abonnement */}
         <Suspense fallback={null}>
@@ -256,7 +259,7 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
         </Suspense>
 
         {/* Analytics Dashboard intégré */}
-        <Suspense fallback={<SectionLoader text="Chargement des analytics..." />}>
+        <Suspense fallback={<SectionLoader text={t('vendor.loadingAnalytics')} />}>
           <VendorAnalyticsDashboard />
         </Suspense>
 
@@ -282,10 +285,10 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
         {/* Actions rapides */}
         <QuickActionsSection canAccessPOS={canAccessPOS} />
 
-        <Suspense fallback={<SectionLoader text="Chargement de l'historique..." />}>
+        <Suspense fallback={<SectionLoader text={t('vendor.loadingHistory')} />}>
           <RecentlyViewedProducts
-            title="Produits consultes recemment"
-            subtitle="Retrouvez les derniers produits visites depuis vos interfaces"
+            title={t('vendor.recentlyViewedProducts')}
+            subtitle={t('vendor.recentlyViewedProductsDesc')}
             maxItems={6}
           />
         </Suspense>

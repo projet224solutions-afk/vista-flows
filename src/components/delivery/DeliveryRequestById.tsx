@@ -26,7 +26,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [loading, setLoading] = useState(false);
   const [geolocating, setGeolocating] = useState(false);
-  
+
   const [vendorLocation, setVendorLocation] = useState<UserLocation | null>(null);
   const [clientLocation, setClientLocation] = useState<UserLocation | null>(null);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
@@ -97,20 +97,20 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       toast.info('Géolocalisation en cours...');
       const success = await handleGeolocate();
       if (!success) return;
-      
+
       // Récupérer les valeurs mises à jour après handleGeolocate
       // On doit refaire les appels car setState est async
       const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
       const clientLoc = await UserGeolocService.getUserLocation(clientId);
       if (!vendorLoc || !clientLoc) return;
-      
+
       const estimate = await PricingService.estimateDeliveryPrice(
         vendorLoc.latitude,
         vendorLoc.longitude,
         clientLoc.latitude,
         clientLoc.longitude
       );
-      
+
       vLoc = vendorLoc;
       cLoc = clientLoc;
       price = estimate.totalPrice;
@@ -285,7 +285,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             size="lg"
             onClick={handleCreateDelivery}
             disabled={!vendorId || !clientId || loading || geolocating}
-            style={{ 
+            style={{
               background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
               color: 'white'
             }}

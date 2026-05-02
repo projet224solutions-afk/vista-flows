@@ -25,6 +25,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
 
   useEffect(() => {
     loadVendorData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const loadVendorData = async () => {
@@ -187,8 +188,8 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
                 {isActive ? 'Boutique active' : 'Boutique inactive'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {isActive 
-                  ? 'Vos produits sont visibles par les clients' 
+                {isActive
+                  ? 'Vos produits sont visibles par les clients'
                   : 'Vos produits ne sont pas visibles'}
               </p>
             </div>

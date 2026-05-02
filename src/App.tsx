@@ -1,4 +1,4 @@
-﻿import { Suspense, memo, useEffect, useState } from "react";
+import { Suspense, memo, useEffect, useState } from "react";
 import { resolvePostAuthRouteSync } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CognitoAuthProvider } from "@/contexts/CognitoAuthContext";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
@@ -18,6 +18,8 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import EscrowDisputePage from "./components/escrow/EscrowDisputePage";
+import VendorDisputePage from "./components/vendor/VendorDisputePage";
 import { NotificationsRealtimeListener } from "@/components/common/NotificationsRealtimeListener";
 import DeepLinkInitializer from "@/components/DeepLinkInitializer";
 
@@ -68,7 +70,7 @@ const DriverSettings = lazyWithRetry(() => import("./pg/driver/DriverSettings"))
 const DriverHelp = lazyWithRetry(() => import("./pg/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pg/TaxiMotoDriver"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pg/DriverSubscriptionPage"));
-const VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
+const _VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pg/TaxiMotoClient"));
 const TaxiMotoRouter = lazyWithRetry(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazyWithRetry(() => import("./pg/SyndicatDashboardUltraPro"));
@@ -80,7 +82,7 @@ const PdgSecurity = lazyWithRetry(() => import("./pg/PdgSecurity"));
 const PdgDebug = lazyWithRetry(() => import("./pg/PdgDebug"));
 const CompetitiveAnalysis = lazyWithRetry(() => import("./pg/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazyWithRetry(() => import("./pg/pdg/ApiSupervision"));
-const SystemDebugPage = lazyWithRetry(() => import("./pg/pdg/SystemDebugPage"));
+const _SystemDebugPage = lazyWithRetry(() => import("./pg/pdg/SystemDebugPage"));
 const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
 const MonitoringDashboard = lazyWithRetry(() => import("./pg/pdg/MonitoringDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pg/BureauDashboard"));
@@ -147,7 +149,7 @@ const PageLoader = memo(() => {
 
   if (timedOut) {
     return (
-      <div style={{ 
+      <div style={{
         minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: '#fff', fontFamily: 'system-ui, sans-serif'
       }}>
@@ -172,12 +174,12 @@ const PageLoader = memo(() => {
   }
 
   return (
-    <div style={{ 
+    <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: '#fff'
     }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ 
+        <div style={{
           fontSize: '24px', fontWeight: '700', color: '#023288', marginBottom: '16px',
           fontFamily: 'system-ui, sans-serif'
         }}>224Solutions</div>
@@ -254,6 +256,16 @@ const queryClient = new QueryClient({
 function AppPrefetcher() {
   usePrefetchCriticalData();
   return null;
+}
+
+function RoutedEscrowDisputePage() {
+  const { escrowId = "" } = useParams<{ escrowId: string }>();
+  return <EscrowDisputePage escrowId={escrowId} />;
+}
+
+function RoutedVendorDisputePage() {
+  const { escrowId = "" } = useParams<{ escrowId: string }>();
+  return <VendorDisputePage escrowId={escrowId} />;
 }
 
 function App() {
@@ -364,7 +376,7 @@ function App() {
                 <Route path="/digital-products" element={<DigitalProducts />} />
                 <Route path="/digital-product/:id" element={<DigitalProductDetail />} />
                 <Route path="/boutiques" element={<NearbyBoutiques />} />
-                
+
                 <Route path="/services-proximite" element={<ServicesProximite />} />
                 <Route path="/services-proximite/:id" element={<ServiceDetail />} />
                 {/* Page publique menu restaurant pour commande client */}
@@ -392,10 +404,10 @@ function App() {
                 <Route path="/payment/success" element={<PaymentSuccessRedirect />} />
                 <Route path="/mes-commandes" element={<MesCommandes />} />
                 <Route path="/profile/:userId" element={<UserPublicProfile />} />
-                
+
                 {/* Affiliate Routes - Vendeur */}
                 <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
-                
+
                 {/* Affiliate Routes - Agent (redirection vers page de connexion) */}
                 <Route path="/register" element={<AgentAffiliateRedirect />} />
                 <Route path="/r/:token" element={<AgentAffiliateRedirect />} />
@@ -420,7 +432,7 @@ function App() {
                 <Route
                   path="/vendeur/*"
                   element={
-                    <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                    <ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess>
                       <VendeurDashboard />
                     </ProtectedRoute>
                   }
@@ -488,7 +500,7 @@ function App() {
                   path="/payment-core"
                   element={<PaymentCorePage />}
                 />
-                
+
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/digital-purchase/:productId" element={<DigitalPurchaseDownload />} />
                 <Route path="/my-digital-purchases" element={<MyDigitalPurchases />} />
@@ -585,7 +597,7 @@ function App() {
                 <Route path="/pdg224solutionssoulbah" element={<ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}><PDG224Solutions /></ProtectedRoute>} />
                 <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><PDGCopilotDashboard /></ProtectedRoute>} />
                 <Route path="/pdg/monitoring" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><MonitoringDashboard /></ProtectedRoute>} />
-                
+
                 {/* Agent & Bureau Login with MFA */}
                 <Route path="/agent/login" element={<AgentLogin />} />
                 <Route path="/agent-login" element={<Navigate to="/agent/login" replace />} />
@@ -593,7 +605,7 @@ function App() {
                 <Route path="/bureau-login" element={<Navigate to="/bureau/login" replace />} />
                 <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
                 <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
-                
+
                 {/* Agent & Bureau Dashboards */}
                 <Route path="/bureau/:token" element={<BureauDashboard />} />
                 <Route path="/worker/:token" element={<WorkerDashboard />} />
@@ -609,7 +621,7 @@ function App() {
                 <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
                 <Route
                   path="/vendeur-simple"
-                  element={<VendeurDashboard />}
+                  element={<ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess><VendeurDashboard /></ProtectedRoute>}
                 />
 
                 {/* Professional Services Routes */}
@@ -637,6 +649,9 @@ function App() {
                 <Route path="/badge/:vehicleId" element={<BadgeVerification />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                {/* Page justification litige Escrow */}
+                <Route path="/escrow/dispute/:escrowId" element={<RoutedEscrowDisputePage />} />
+                <Route path="/escrow/vendor-dispute/:escrowId" element={<RoutedVendorDisputePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Suspense fallback={null}>

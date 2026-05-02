@@ -37,7 +37,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
   const [kycData, setKycData] = useState<KYCData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Form state
   const [phoneNumber, setPhoneNumber] = useState('');
   const [documentType, setDocumentType] = useState('');
@@ -46,12 +46,13 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
   useEffect(() => {
     loadKYCSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const loadKYCSettings = async () => {
     try {
       setLoading(true);
-      
+
       // 1. Vérifier si le KYC est activé globalement pour les vendeurs
       const { data: settings } = await supabase
         .from('system_settings')
@@ -108,7 +109,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Vous devez être connecté');
       return;
@@ -134,7 +135,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
       if (documentFile) {
         const fileExt = documentFile.name.split('.').pop();
         const fileName = `${vendorId}/${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('kyc-documents')
           .upload(fileName, documentFile);
@@ -330,8 +331,8 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
           <div className="space-y-2">
             <Label htmlFor="docType">Type de document *</Label>
-            <Select 
-              value={documentType} 
+            <Select
+              value={documentType}
               onValueChange={setDocumentType}
               disabled={kycData?.status === 'under_review'}
             >
@@ -352,9 +353,9 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
             <div className="mt-2">
               {documentPreview ? (
                 <div className="relative">
-                  <img 
-                    src={documentPreview} 
-                    alt="Aperçu" 
+                  <img
+                    src={documentPreview}
+                    alt="Aperçu"
                     className="max-h-48 rounded-lg border"
                   />
                   {kycData?.status !== 'under_review' && (

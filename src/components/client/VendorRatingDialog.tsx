@@ -65,7 +65,7 @@ export default function VendorRatingDialog({
 
       onRatingSubmitted?.();
       onOpenChange(false);
-      
+
       // Réinitialiser le formulaire
       setRating(0);
       setComment('');
@@ -110,7 +110,7 @@ export default function VendorRatingDialog({
                 </button>
               ))}
             </div>
-            
+
             {rating > 0 && (
               <p className="text-sm text-muted-foreground">
                 {rating === 1 && 'Très insatisfait'}

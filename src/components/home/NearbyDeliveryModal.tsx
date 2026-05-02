@@ -103,15 +103,15 @@ export function NearbyDeliveryModal({ open, onOpenChange }: NearbyDeliveryModalP
                 Il n'y a pas de livreur disponible pour le moment.
               </p>
               <div className="flex flex-col gap-2 w-full max-w-xs">
-                <Button 
+                <Button
                   onClick={searchDrivers}
                   className="w-full bg-livreur-primary hover:bg-livreur-primary/90"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Nouvelle recherche
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => onOpenChange(false)}
                   className="w-full"
                 >
@@ -160,7 +160,7 @@ export function NearbyDeliveryModal({ open, onOpenChange }: NearbyDeliveryModalP
               </div>
 
               {/* Action button */}
-              <Button 
+              <Button
                 onClick={handleOrderDelivery}
                 className="w-full bg-livreur-primary hover:bg-livreur-primary/90"
                 size="lg"

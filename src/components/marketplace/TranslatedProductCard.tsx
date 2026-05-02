@@ -27,6 +27,9 @@ interface TranslatedProductCardProps {
   isPremium?: boolean;
   stock?: number;
   category?: string;
+  itemType?: 'product' | 'digital_product' | 'professional_service';
+  productMode?: 'direct' | 'affiliate';
+  affiliateUrl?: string;
   deliveryTime?: string;
   onBuy?: () => void;
   onAddToCart?: () => void;
@@ -39,14 +42,14 @@ export function TranslatedProductCard({
   description,
   ...props
 }: TranslatedProductCardProps) {
-  const { 
-    getTranslatedName, 
-    getTranslatedDescription,
+  const {
+    getTranslatedName,
+    _getTranslatedDescription,
     hasTranslation,
     translateProduct,
     needsTranslation
   } = useProductTranslation();
-  
+
   const [translatedTitle, setTranslatedTitle] = useState(title);
   const [isTranslating, setIsTranslating] = useState(false);
 

@@ -98,21 +98,21 @@ class ErrorMonitorService {
    */
   private shouldIgnoreError(message: string, resourceUrl?: string): boolean {
     const textToCheck = `${message} ${resourceUrl || ''}`.toLowerCase();
-    
+
     // Toujours capturer les erreurs critiques
     for (const pattern of CRITICAL_ERROR_PATTERNS) {
       if (textToCheck.includes(pattern.toLowerCase())) {
         return false;
       }
     }
-    
+
     // Ignorer si match avec pattern non critique
     for (const pattern of IGNORED_ERROR_PATTERNS) {
       if (textToCheck.includes(pattern.toLowerCase())) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -135,21 +135,21 @@ class ErrorMonitorService {
 
   private isDuplicate(error: SystemError): boolean {
     const hash = this.generateErrorHash(error);
-    const now = Date.now();
-    
+    const _now = Date.now();
+
     // Vérifier si l'erreur a déjà été traitée récemment
     if (this.processedErrors.has(hash)) {
       return true;
     }
-    
+
     // Ajouter au cache de déduplication
     this.processedErrors.add(hash);
-    
+
     // Nettoyer le cache après la fenêtre de déduplication
     setTimeout(() => {
       this.processedErrors.delete(hash);
     }, this.DEDUP_WINDOW);
-    
+
     return false;
   }
 
@@ -162,7 +162,7 @@ class ErrorMonitorService {
       }
 
       const errorMessage = event.message || 'Uncaught exception without message';
-      
+
       // Filtrer les erreurs non critiques
       if (this.shouldIgnoreError(errorMessage)) {
         return;
@@ -188,7 +188,7 @@ class ErrorMonitorService {
     window.addEventListener('unhandledrejection', (event) => {
       // Prévenir le comportement par défaut pour éviter les logs en double
       event.preventDefault();
-      
+
       // Déterminer le type de raison avec capture robuste
       const reason = event.reason;
       let errorMessage = '';
@@ -218,22 +218,22 @@ class ErrorMonitorService {
       // Cas 3: Object avec message/error
       else if (reason && typeof reason === 'object') {
         // Essayer plusieurs propriétés possibles
-        errorMessage = 
-          reason.message || 
-          reason.error || 
+        errorMessage =
+          reason.message ||
+          reason.error ||
           reason.msg ||
           reason.errorMessage ||
           reason.description ||
           (reason.data?.message) ||
           (reason.response?.data?.message) ||
-          (typeof reason.toString === 'function' && reason.toString() !== '[object Object]' 
-            ? reason.toString() 
+          (typeof reason.toString === 'function' && reason.toString() !== '[object Object]'
+            ? reason.toString()
             : null) ||
           JSON.stringify(reason).substring(0, 500);
-        
+
         errorType = reason.name || reason.type || reason.code || 'object_rejection';
         stackTrace = reason.stack || contextStack;
-        
+
         // Capturer les détails additionnels
         additionalContext = {
           rejectionType: typeof reason,
@@ -299,19 +299,19 @@ class ErrorMonitorService {
     // 3. Intercepter les erreurs de chargement de ressources (images, scripts, CSS)
     window.addEventListener('error', (event) => {
       const target = event.target as any;
-      
+
       // Vérifier que c'est bien une erreur de ressource
       if (target !== window && target?.src) {
         const resourceUrl = target.src || target.href;
         const resourceType = target.tagName?.toLowerCase() || 'unknown';
-        
+
         // Utiliser le filtrage centralisé
-        if (this.shouldIgnoreError('', resourceUrl) || 
-            resourceType === 'audio' || 
+        if (this.shouldIgnoreError('', resourceUrl) ||
+            resourceType === 'audio' ||
             resourceType === 'video') {
           return;
         }
-        
+
         this.logError({
           module: 'frontend_resource',
           error_type: 'resource_load_error',
@@ -344,7 +344,7 @@ class ErrorMonitorService {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       // Insertion en batch pour optimiser les performances
       const errorRecords = errors.map(error => ({
         ...error,
@@ -360,7 +360,7 @@ class ErrorMonitorService {
         console.error('Failed to log errors to database:', dbError);
       } else {
         console.log(`✅ Logged ${errors.length} error(s) to database`);
-        
+
         // Déclencher la vérification des alertes après avoir loggé les erreurs
         if (errors.length > 0) {
           try {
@@ -382,6 +382,21 @@ class ErrorMonitorService {
 
   async logError(error: SystemError): Promise<void> {
     try {
+      // Contrôle de nullité/type sur error
+      if (!error || typeof error !== 'object') {
+        console.error('Erreur système ignorée (objet error invalide):', error);
+        return;
+      }
+      if (!error.error_message || typeof error.error_message !== 'string') {
+        console.error('Erreur système ignorée (message manquant):', error);
+        return;
+      }
+      if (!error.module || typeof error.module !== 'string') {
+        error.module = 'unknown';
+      }
+      if (!error.severity) {
+        error.severity = 'critique';
+      }
       // Vérifier la duplication
       if (this.isDuplicate(error)) {
         console.log('⚠️ Duplicate error ignored:', error.error_message);
@@ -450,7 +465,7 @@ class ErrorMonitorService {
     }
   }
 
-  private async applyFix(fix: AutoFix, error: SystemError): Promise<boolean> {
+  private async applyFix(fix: AutoFix, _error: SystemError): Promise<boolean> {
     try {
       switch (fix.fix_type) {
         case 'reconnect_db':
@@ -502,16 +517,16 @@ class ErrorMonitorService {
     try {
       // Utiliser la fonction RPC pour des stats précises
       const { data: healthResult, error: rpcError } = await supabase.rpc('calculate_system_health');
-      
+
       if (!rpcError && healthResult && typeof healthResult === 'object') {
-        const result = healthResult as { 
-          critical_pending?: number; 
-          moderate_pending?: number; 
+        const result = healthResult as {
+          critical_pending?: number;
+          moderate_pending?: number;
           minor_pending?: number;
           total_pending?: number;
           fixed_last_24h?: number;
         };
-        
+
         return {
           total: (result.total_pending || 0) + (result.fixed_last_24h || 0),
           critical: result.critical_pending || 0,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Package, AlertTriangle, Trash2, RefreshCw, 
+import {
+  Package, AlertTriangle, Trash2, RefreshCw,
   RotateCcw, ClipboardList, Plus, Search
 } from 'lucide-react';
 
@@ -52,7 +52,7 @@ export default function StockAdjustmentForm() {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [formData, setFormData] = useState({
     product_id: '',
     adjustment_type: 'breakage',
@@ -98,6 +98,7 @@ export default function StockAdjustmentForm() {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const selectedProduct = products.find(p => p.id === formData.product_id);
@@ -164,7 +165,7 @@ export default function StockAdjustmentForm() {
     }
   };
 
-  const filteredAdjustments = adjustments.filter(adj => 
+  const filteredAdjustments = adjustments.filter(adj =>
     adj.products?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adj.reason.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -253,7 +254,7 @@ export default function StockAdjustmentForm() {
                 />
                 {selectedProduct && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Stock actuel: {selectedProduct.stock_quantity} | 
+                    Stock actuel: {selectedProduct.stock_quantity} |
                     Après ajustement: {Math.max(0, selectedProduct.stock_quantity - (parseInt(formData.quantity_adjusted) || 0))}
                   </p>
                 )}
@@ -345,7 +346,7 @@ export default function StockAdjustmentForm() {
         {filteredAdjustments.map((adj) => {
           const typeConfig = adjustmentTypes.find(t => t.value === adj.adjustment_type);
           const Icon = typeConfig?.icon || ClipboardList;
-          
+
           return (
             <Card key={adj.id}>
               <CardContent className="p-4">

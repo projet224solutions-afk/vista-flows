@@ -18,8 +18,8 @@ export function VendorKYCStatus({ kycStatus, className = "" }: VendorKYCStatusPr
 
   if (kycStatus === 'verified') {
     return (
-      <Badge 
-        variant="default" 
+      <Badge
+        variant="default"
         className={`bg-green-100 text-green-800 border-green-300 gap-1 ${className}`}
       >
         <ShieldCheck className="w-3 h-3" />
@@ -30,8 +30,8 @@ export function VendorKYCStatus({ kycStatus, className = "" }: VendorKYCStatusPr
 
   if (kycStatus === 'pending') {
     return (
-      <Badge 
-        variant="default" 
+      <Badge
+        variant="default"
         className={`bg-yellow-100 text-yellow-800 border-yellow-300 gap-1 ${className}`}
       >
         <Shield className="w-3 h-3" />

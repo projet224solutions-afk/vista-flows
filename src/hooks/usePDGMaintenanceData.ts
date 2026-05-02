@@ -41,7 +41,7 @@ export function usePDGMaintenanceData() {
     setLoading(true);
     try {
       const startTime = Date.now();
-      
+
       // Tester la connexion aux principales tables
       const [profilesCheck, walletsCheck, productsCheck, ordersCheck] = await Promise.allSettled([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -105,11 +105,11 @@ export function usePDGMaintenanceData() {
         supabase.from('wallet_transactions').select('*', { count: 'exact', head: true })
       ]);
 
-      const totalRecords = 
-        (profilesCount.count || 0) + 
-        (walletsCount.count || 0) + 
-        (productsCount.count || 0) + 
-        (ordersCount.count || 0) + 
+      const totalRecords =
+        (profilesCount.count || 0) +
+        (walletsCount.count || 0) +
+        (productsCount.count || 0) +
+        (ordersCount.count || 0) +
         (transactionsCount.count || 0);
 
       // Estimation du stockage (environ 1KB par enregistrement)
@@ -184,7 +184,7 @@ export function usePDGMaintenanceData() {
       // Vérifier la connectivité et rafraîchir les statistiques
       await checkServicesStatus();
       await loadDatabaseStats();
-      
+
       toast.success('Optimisation de la base de données effectuée');
     } catch (error) {
       console.error('Erreur optimisation:', error);
@@ -200,10 +200,10 @@ export function usePDGMaintenanceData() {
     try {
       // Dans un système réel, cela déclencherait une sauvegarde via l'API Supabase
       toast.info('Backup en cours de création...');
-      
+
       // Simuler un délai
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       setDbStats(prev => ({
         ...prev,
         lastBackup: new Date().toLocaleString('fr-FR')

@@ -1,16 +1,16 @@
 /**
  * DROPSHIP SERVICES INDEX
  * Exporte tous les services du module dropshipping
- * 
+ *
  * @module dropship
  * @version 1.0.0
  * @author 224Solutions
  */
 
 // Marketplace Integration (pour les clients)
-export { 
+export {
   DropshipMarketplaceService,
-  dropshipMarketplaceService as dropshipMarketplace 
+  dropshipMarketplaceService as dropshipMarketplace
 } from './DropshipMarketplaceService';
 
 export type {

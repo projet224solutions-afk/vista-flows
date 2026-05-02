@@ -2,7 +2,7 @@
  * FORMULAIRE CRÉATION DEVIS - INTERFACE VENDEUR
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ interface QuoteItem {
 export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
   const { vendorId } = useVendorId();
   const [loading, setLoading] = useState(false);
-  
+
   // Persistance du formulaire client
   const { values: clientForm, setValues: setClientForm, resetForm: resetClientForm } = useFormPersistence(
     `quote_client_${vendorId}`,
@@ -39,7 +39,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
     },
     { enabled: !!vendorId, maxAge: 60 * 60 * 1000 } // 1 heure
   );
-  
+
   // Persistance des items du devis
   const itemsPersistence = useAppPersistence<QuoteItem[]>({
     key: `quote_items_${vendorId}`,
@@ -47,7 +47,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
     enabled: !!vendorId,
     maxAge: 60 * 60 * 1000,
   });
-  
+
   // Aliases pour compatibilité
   const clientName = clientForm.clientName;
   const setClientName = (v: string) => setClientForm(prev => ({ ...prev, clientName: v }));
@@ -63,7 +63,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
   const setTax = (v: number) => setClientForm(prev => ({ ...prev, tax: v }));
   const notes = clientForm.notes;
   const setNotes = (v: string) => setClientForm(prev => ({ ...prev, notes: v }));
-  
+
   const items = itemsPersistence.state;
   const setItems = itemsPersistence.setState;
 
@@ -99,7 +99,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
 
     try {
       setLoading(true);
-      
+
       // Générer référence unique
       const ref = `DEV-${Date.now().toString().slice(-8)}`;
       const validUntil = new Date();
@@ -130,7 +130,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       if (error) throw error;
 
       // Appeler l'edge function pour générer le PDF
-      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-quote-pdf', {
+      const { data: _pdfData, error: pdfError } = await supabase.functions.invoke('generate-quote-pdf', {
         body: {
           quote_id: quote.id,
           ref: quote.ref,
@@ -159,7 +159,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       // Reset form avec persistance
       resetClientForm();
       itemsPersistence.clear();
-      
+
       onSuccess?.();
     } catch (error: any) {
       console.error('Erreur:', error);
@@ -228,7 +228,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
               Ajouter une ligne
             </Button>
           </div>
-          
+
           {items.map((item, idx) => (
             <div key={idx} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-5 space-y-2">
@@ -282,7 +282,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
             <span>Sous-total:</span>
             <span className="font-semibold">{subtotal.toLocaleString()} GNF</span>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="discount">Remise (GNF)</Label>
@@ -326,8 +326,8 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <Button 
-            onClick={handleGenerate} 
+          <Button
+            onClick={handleGenerate}
             disabled={loading}
             className="flex-1 bg-[#0A84FF] hover:bg-[#0A84FF]/90"
             size="lg"

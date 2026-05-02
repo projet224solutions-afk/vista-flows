@@ -36,7 +36,7 @@ export function OfflineBadge({
   showTooltip = true,
   variant = 'badge'
 }: OfflineBadgeProps) {
-  const { isAllowed, reason, requiresOnline } = useOfflineFeatureAccess(feature);
+  const { isAllowed, reason, _requiresOnline } = useOfflineFeatureAccess(feature);
 
   // Si autorisé, retourner l'enfant tel quel
   if (isAllowed) {

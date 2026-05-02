@@ -12,13 +12,14 @@ export function useSubscription() {
     fetchSubscriptionData();
     const cleanup = setupRealtimeSubscription();
     return cleanup;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSubscriptionData = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         setSubscription(null);
         setProductLimit(null);

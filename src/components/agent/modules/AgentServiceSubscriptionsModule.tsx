@@ -18,11 +18,11 @@ import {
   ServiceSubscriptionStats
 } from '@/services/serviceSubscriptionService';
 import { toast } from 'sonner';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Users, 
-  RefreshCw, 
+import {
+  DollarSign,
+  TrendingUp,
+  Users,
+  RefreshCw,
   Store,
   Calendar,
   CheckCircle,
@@ -39,9 +39,9 @@ interface AgentServiceSubscriptionsModuleProps {
   canManage?: boolean;
 }
 
-export function AgentServiceSubscriptionsModule({ 
-  agentId,
-  canManage = false 
+export function AgentServiceSubscriptionsModule({
+  _agentId,
+  _canManage = false
 }: AgentServiceSubscriptionsModuleProps) {
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [stats, setStats] = useState<ServiceSubscriptionStats | null>(null);
@@ -159,7 +159,7 @@ export function AgentServiceSubscriptionsModule({
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-md bg-gradient-to-br from-emerald-50 to-green-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -173,7 +173,7 @@ export function AgentServiceSubscriptionsModule({
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -185,7 +185,7 @@ export function AgentServiceSubscriptionsModule({
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-yellow-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -268,7 +268,7 @@ export function AgentServiceSubscriptionsModule({
                         <TableCell>
                           <div className="flex items-center gap-1 text-sm text-slate-600">
                             <Calendar className="w-3 h-3" />
-                            {sub.current_period_start 
+                            {sub.current_period_start
                               ? format(new Date(sub.current_period_start), 'dd MMM yyyy', { locale: fr })
                               : 'N/A'
                             }
@@ -295,11 +295,11 @@ export function AgentServiceSubscriptionsModule({
         <TabsContent value="plans" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {plans.map((plan) => (
-              <Card 
-                key={plan.id} 
+              <Card
+                key={plan.id}
                 className={`border-0 shadow-md transition-all duration-200 ${
-                  plan.is_active 
-                    ? 'bg-gradient-to-br from-white to-slate-50' 
+                  plan.is_active
+                    ? 'bg-gradient-to-br from-white to-slate-50'
                     : 'opacity-60 bg-slate-100'
                 }`}
               >
@@ -320,13 +320,13 @@ export function AgentServiceSubscriptionsModule({
                       </span>
                       <span className="text-sm text-slate-500">/mois</span>
                     </div>
-                    
+
                     {plan.yearly_price_gnf && (
                       <div className="text-sm text-slate-600">
                         Annuel: {ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf)}
                       </div>
                     )}
-                    
+
                     {plan.features && plan.features.length > 0 && (
                       <div className="pt-2 border-t">
                         <p className="text-xs font-medium text-slate-500 mb-2">Fonctionnalités:</p>

@@ -3,7 +3,7 @@
  * Centre opérationnel de sécurité 24/7
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import { useSecurityOps } from "@/hooks/useSecurityOps";
 import { toast } from "sonner";
 
 export function SOCDashboard() {
-  const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
-  const [socStatus, setSocStatus] = useState({
+  const { incidents, _alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
+  const [socStatus, _setSocStatus] = useState({
     operational: true,
     activeAnalysts: 3,
     responseTime: '< 2 min',
@@ -50,8 +50,8 @@ export function SOCDashboard() {
               Surveillance et réponse aux incidents 24/7
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleRefresh} 
+          <Button
+            onClick={handleRefresh}
             disabled={loading}
             variant="outline"
             size="sm"
@@ -63,8 +63,8 @@ export function SOCDashboard() {
       <CardContent className="space-y-6">
         {/* Statut SOC */}
         <div className={`p-4 rounded-lg border ${
-          socStatus.operational 
-            ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' 
+          socStatus.operational
+            ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
             : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
         }`}>
           <div className="flex items-center gap-2 mb-2">
@@ -112,7 +112,7 @@ export function SOCDashboard() {
             <h4 className="font-semibold text-sm">Incidents récents</h4>
             <Badge variant="outline">{recentIncidents.length} actifs</Badge>
           </div>
-          
+
           {recentIncidents.length === 0 ? (
             <div className="p-4 border rounded-lg text-center text-muted-foreground">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />

@@ -13,8 +13,8 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   RefreshCw,
-  Filter,
-  Calendar
+  _Filter,
+  _Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -175,7 +175,7 @@ export function WalletTransactionsList() {
                     {tx.amount.toLocaleString()}
                     <span className="text-xs ml-1">{tx.currency}</span>
                   </p>
-                  <Badge 
+                  <Badge
                     variant={tx.status === 'completed' ? 'default' : tx.status === 'pending' ? 'secondary' : 'destructive'}
                     className="text-xs"
                   >

@@ -31,7 +31,7 @@ export function TaxiMotoAdminPanel() {
   const loadStats = async () => {
     const { data: rides } = await supabase.from('taxi_trips').select('status, price_total');
     const { data: drivers } = await supabase.from('taxi_drivers').select('is_online');
-    
+
     setStats({
       activeRides: rides?.filter(r => ['requested', 'accepted', 'started'].includes(r.status || '')).length || 0,
       totalRides: rides?.length || 0,

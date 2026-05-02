@@ -6,7 +6,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Clock, Phone, User, Package } from 'lucide-react';
+import { MapPin, _Navigation, Clock, Phone, User, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import mapboxgl from 'mapbox-gl';
@@ -35,6 +35,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     loadDelivery();
     subscribeToDelivery();
     subscribeToTracking();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryId]);
 
   // Initialiser la carte
@@ -42,7 +43,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     if (!mapContainer.current || map.current) return;
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
-    
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
@@ -119,6 +120,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
         setHasNotifiedTwoMinutes(true);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverPosition, delivery]);
 
   const loadDelivery = async () => {
@@ -149,7 +151,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
         },
         (payload) => {
           setDelivery(payload.new);
-          
+
           // Notifier le client selon le statut
           if (payload.new.status === 'picked_up' && payload.old?.status !== 'picked_up') {
             toast.success('📦 Le livreur a récupéré votre colis !');

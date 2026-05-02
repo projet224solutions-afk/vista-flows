@@ -20,7 +20,7 @@ export function useUniversalEscrow() {
     setCreating(true);
     try {
       const result = await UniversalEscrowService.createEscrow(request);
-      
+
       if (result.success) {
         toast.success('Paiement sécurisé', {
           description: `Fonds bloqués en escrow - ${request.amount.toLocaleString()} GNF`
@@ -53,7 +53,7 @@ export function useUniversalEscrow() {
     setReleasing(true);
     try {
       const result = await UniversalEscrowService.releaseEscrow(escrow_id, notes);
-      
+
       if (result.success) {
         toast.success('Fonds libérés', {
           description: 'Le paiement a été transféré au vendeur'
@@ -84,7 +84,7 @@ export function useUniversalEscrow() {
     setRefunding(true);
     try {
       const result = await UniversalEscrowService.refundEscrow(escrow_id, reason);
-      
+
       if (result.success) {
         toast.success('Remboursement effectué', {
           description: 'Les fonds ont été remboursés'
@@ -150,7 +150,7 @@ export function useUniversalEscrow() {
     releasing,
     refunding,
     escrowStatus,
-    
+
     // Fonctions
     createEscrow,
     releaseEscrow,
@@ -158,7 +158,7 @@ export function useUniversalEscrow() {
     loadEscrowStatus,
     loadUserEscrows,
     calculateFees,
-    
+
     // Helpers
     isEscrowEnabled: UniversalEscrowService.isEscrowEnabled
   };

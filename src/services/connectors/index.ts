@@ -1,7 +1,7 @@
 /**
  * CONNECTORS MODULE - Exports
  * Module de connecteurs dropshipping
- * 
+ *
  * @module connectors
  * @version 1.0.0
  * @author 224Solutions

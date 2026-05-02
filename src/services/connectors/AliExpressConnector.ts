@@ -2,7 +2,7 @@
  * ALIEXPRESS CONNECTOR
  * Connecteur pour la plateforme AliExpress
  * Import produits, sync prix, gestion commandes
- * 
+ *
  * @module AliExpressConnector
  * @version 1.0.0
  * @author 224Solutions
@@ -78,11 +78,11 @@ export class AliExpressConnector extends BaseConnector {
   readonly connectorType: ConnectorType = 'ALIEXPRESS';
   readonly connectorName: string = 'AliExpress';
   readonly connectorVersion: string = '1.0.0';
-  
+
   // URLs AliExpress
   private readonly API_BASE_URL = 'https://api.aliexpress.com/v2';
   private readonly AFFILIATE_BASE_URL = 'https://portals.aliexpress.com';
-  
+
   constructor(config: Partial<ConnectorConfig> = {}) {
     super({
       baseUrl: 'https://api.aliexpress.com/v2',
@@ -101,12 +101,12 @@ export class AliExpressConnector extends BaseConnector {
       ...config
     });
   }
-  
+
   // ==================== AUTHENTICATION ====================
-  
+
   protected async doAuthenticate(): Promise<AuthResult> {
     this.log('info', 'Authentification AliExpress...');
-    
+
     try {
       // En mode sandbox ou sans API key, on simule l'authentification
       if (this.config.sandbox || !this.config.apiKey) {
@@ -118,7 +118,7 @@ export class AliExpressConnector extends BaseConnector {
           scopes: ['product.read', 'order.create', 'tracking.read']
         };
       }
-      
+
       // Authentification réelle via OAuth AliExpress
       // Note: Nécessite un compte développeur AliExpress
       const response = await fetch(`${this.AFFILIATE_BASE_URL}/oauth/token`, {
@@ -133,13 +133,13 @@ export class AliExpressConnector extends BaseConnector {
           code: this.config.accessToken || ''
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`Authentification échouée: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         success: true,
         accessToken: data.access_token,
@@ -156,17 +156,17 @@ export class AliExpressConnector extends BaseConnector {
       };
     }
   }
-  
+
   protected async doValidateConnection(): Promise<boolean> {
     // Vérifier si le token est valide
     return this.status === 'active' && !!this.config.accessToken;
   }
-  
+
   // ==================== PRODUCT IMPORT ====================
-  
+
   protected async doImportProduct(sourceUrl: string): Promise<ProductImportResult> {
     this.log('info', `Import produit depuis: ${sourceUrl}`);
-    
+
     try {
       // Extraire l'ID produit de l'URL
       const productId = this.extractProductId(sourceUrl);
@@ -176,12 +176,12 @@ export class AliExpressConnector extends BaseConnector {
           errors: ['URL invalide - impossible d\'extraire l\'ID produit']
         };
       }
-      
+
       // En mode sandbox, retourner des données simulées
       if (this.config.sandbox) {
         return this.getMockProductImport(productId, sourceUrl);
       }
-      
+
       // Appel API réel
       const productData = await this.fetchProductDetails(productId);
       if (!productData) {
@@ -190,10 +190,10 @@ export class AliExpressConnector extends BaseConnector {
           errors: ['Produit non trouvé sur AliExpress']
         };
       }
-      
+
       // Normaliser le produit
       const normalizedProduct = this.normalizeProduct(productData, sourceUrl);
-      
+
       return {
         success: true,
         productId,
@@ -208,7 +208,7 @@ export class AliExpressConnector extends BaseConnector {
       };
     }
   }
-  
+
   private extractProductId(url: string): string | null {
     // Patterns d'URL AliExpress
     const patterns = [
@@ -217,17 +217,17 @@ export class AliExpressConnector extends BaseConnector {
       /\/(\d{10,})\.html/,
       /\/item\/(\d+)/
     ];
-    
+
     for (const pattern of patterns) {
       const match = url.match(pattern);
       if (match && match[1]) {
         return match[1];
       }
     }
-    
+
     return null;
   }
-  
+
   private async fetchProductDetails(productId: string): Promise<AliExpressProductData | null> {
     try {
       const response = await fetch(`${this.API_BASE_URL}/products/${productId}`, {
@@ -237,18 +237,18 @@ export class AliExpressConnector extends BaseConnector {
         },
         signal: AbortSignal.timeout(this.config.timeout)
       });
-      
+
       if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error: any) {
       this.log('error', `Erreur fetch produit: ${error.message}`);
       return null;
     }
   }
-  
+
   private normalizeProduct(data: AliExpressProductData, sourceUrl: string): NormalizedProduct {
     // Convertir les méthodes de shipping
     const shippingMethods: ShippingMethod[] = (data.shipping?.methods || []).map(m => ({
@@ -258,41 +258,41 @@ export class AliExpressConnector extends BaseConnector {
       currency: data.price.currency,
       trackingAvailable: m.name.toLowerCase().includes('tracking') || m.name.toLowerCase().includes('express')
     }));
-    
+
     // Calculer les délais min/max
     const deliveryDays = shippingMethods.map(m => m.estimatedDays).filter(d => d > 0);
     const minDays = deliveryDays.length > 0 ? Math.min(...deliveryDays) : 15;
     const maxDays = deliveryDays.length > 0 ? Math.max(...deliveryDays) : 45;
-    
+
     return {
       externalId: data.productId,
       sourceUrl,
       sourcePlatform: 'ALIEXPRESS',
-      
+
       title: data.title,
       description: data.description,
       images: data.images || [],
-      
+
       priceCurrency: data.price.currency,
       priceOriginal: data.price.current,
       priceUsd: this.convertToUsd(data.price.current, data.price.currency),
-      
+
       moq: data.moq || 1,
       stockQuantity: data.stock,
-      
+
       variants: data.variants?.map(v => ({
         id: v.id,
         name: v.name,
         value: v.options.join(', '),
         priceModifier: v.priceModifier
       })),
-      
+
       shippingMethods,
       estimatedDeliveryDays: {
         min: minDays,
         max: maxDays
       },
-      
+
       supplierInfo: {
         id: data.seller?.id,
         name: data.seller?.name || 'Vendeur AliExpress',
@@ -300,22 +300,22 @@ export class AliExpressConnector extends BaseConnector {
         verified: (data.seller?.positiveRate || 0) > 95,
         region: 'CHINA'
       },
-      
+
       category: data.category,
       attributes: data.specifications,
-      
+
       isDropship: true,
       isExternalDropship: true,
       platformVerified: (data.seller?.positiveRate || 0) > 95
     };
   }
-  
+
   private parseEstimatedDays(estimatedStr: string): number {
     // Parse "15-30 days" ou "15 days"
     const match = estimatedStr.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 20;
   }
-  
+
   private convertToUsd(amount: number, currency: string): number {
     // Taux de change approximatifs (en production, utiliser une API de taux)
     const rates: Record<string, number> = {
@@ -324,33 +324,33 @@ export class AliExpressConnector extends BaseConnector {
       'EUR': 1.08,
       'GBP': 1.27
     };
-    
+
     const rate = rates[currency] || 1;
     return Math.round(amount * rate * 100) / 100;
   }
-  
+
   private validateProduct(product: NormalizedProduct): string[] {
     const warnings: string[] = [];
-    
+
     if (!product.images || product.images.length === 0) {
       warnings.push('Aucune image trouvée');
     }
-    
+
     if ((product.stockQuantity ?? 0) < 10) {
       warnings.push('Stock faible');
     }
-    
+
     if (product.estimatedDeliveryDays.max > 60) {
       warnings.push('Délai de livraison très long');
     }
-    
+
     if ((product.supplierInfo.rating ?? 0) < 4) {
       warnings.push('Note vendeur basse');
     }
-    
+
     return warnings;
   }
-  
+
   private getMockProductImport(productId: string, sourceUrl: string): ProductImportResult {
     return {
       success: true,
@@ -359,18 +359,18 @@ export class AliExpressConnector extends BaseConnector {
         externalId: productId,
         sourceUrl,
         sourcePlatform: 'ALIEXPRESS',
-        
+
         title: 'Produit Test AliExpress',
         titleTranslated: 'AliExpress Test Product',
         description: 'Description du produit importé depuis AliExpress',
         images: [
           'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'
         ],
-        
+
         priceCurrency: 'USD',
         priceOriginal: 15.99,
         priceUsd: 15.99,
-        
+
         moq: 1,
         stockQuantity: 500,
         priceTiers: [
@@ -378,14 +378,14 @@ export class AliExpressConnector extends BaseConnector {
           { minQuantity: 10, price: 14.99, currency: 'USD' },
           { minQuantity: 50, price: 12.99, currency: 'USD' }
         ],
-        
+
         shippingMethods: [
           { name: 'AliExpress Standard', estimatedDays: 20, price: 0, currency: 'USD', trackingAvailable: true },
           { name: 'ePacket', estimatedDays: 15, price: 2.99, currency: 'USD', trackingAvailable: true }
         ],
-        
+
         estimatedDeliveryDays: { min: 15, max: 30 },
-        
+
         supplierInfo: {
           id: 'seller_' + productId,
           name: 'Top Seller Store',
@@ -396,10 +396,10 @@ export class AliExpressConnector extends BaseConnector {
           tradeAssurance: false,
           region: 'CHINA'
         },
-        
+
         category: 'Electronics',
         tags: ['dropship', 'aliexpress', 'china'],
-        
+
         isDropship: true,
         isExternalDropship: true,
         platformVerified: true
@@ -407,16 +407,16 @@ export class AliExpressConnector extends BaseConnector {
       warnings: ['Mode sandbox - données simulées']
     };
   }
-  
+
   // ==================== PRICE SYNC ====================
-  
+
   protected async doSyncPrice(productIds?: string[]): Promise<SyncResult> {
     const startedAt = new Date();
     let pricesUpdated = 0;
     const errors: SyncResult['errors'] = [];
-    
+
     this.log('sync', `Sync prix pour ${productIds?.length || 'tous les'} produits`);
-    
+
     try {
       // En mode sandbox, simuler la synchronisation
       if (this.config.sandbox) {
@@ -433,7 +433,7 @@ export class AliExpressConnector extends BaseConnector {
           durationMs: 500
         };
       }
-      
+
       // Sync réelle pour chaque produit
       for (const productId of productIds || []) {
         try {
@@ -451,7 +451,7 @@ export class AliExpressConnector extends BaseConnector {
           });
         }
       }
-      
+
       return {
         success: errors.length === 0,
         syncType: 'price',
@@ -479,16 +479,16 @@ export class AliExpressConnector extends BaseConnector {
       };
     }
   }
-  
+
   // ==================== AVAILABILITY SYNC ====================
-  
+
   protected async doSyncAvailability(productIds?: string[]): Promise<SyncResult> {
     const startedAt = new Date();
     let stocksUpdated = 0;
     const errors: SyncResult['errors'] = [];
-    
+
     this.log('sync', `Sync disponibilité pour ${productIds?.length || 'tous les'} produits`);
-    
+
     try {
       if (this.config.sandbox) {
         return {
@@ -504,7 +504,7 @@ export class AliExpressConnector extends BaseConnector {
           durationMs: 500
         };
       }
-      
+
       for (const productId of productIds || []) {
         try {
           const productData = await this.fetchProductDetails(productId);
@@ -520,7 +520,7 @@ export class AliExpressConnector extends BaseConnector {
           });
         }
       }
-      
+
       return {
         success: errors.length === 0,
         syncType: 'availability',
@@ -548,12 +548,12 @@ export class AliExpressConnector extends BaseConnector {
       };
     }
   }
-  
+
   // ==================== ORDER CREATION ====================
-  
+
   protected async doCreateSupplierOrder(orderData: OrderData): Promise<SupplierOrderResult> {
     this.log('order', `Création commande fournisseur AliExpress: ${orderData.orderId}`);
-    
+
     try {
       if (this.config.sandbox) {
         // Simuler la création de commande
@@ -568,7 +568,7 @@ export class AliExpressConnector extends BaseConnector {
           currency: 'USD'
         };
       }
-      
+
       // Appel API réel pour créer la commande
       const response = await fetch(`${this.API_BASE_URL}/orders`, {
         method: 'POST',
@@ -593,13 +593,13 @@ export class AliExpressConnector extends BaseConnector {
         }),
         signal: AbortSignal.timeout(this.config.timeout)
       });
-      
+
       if (!response.ok) {
         throw new Error(`Erreur création commande: ${response.status}`);
       }
-      
+
       const result: AliExpressOrderResponse = await response.json();
-      
+
       return {
         success: true,
         supplierOrderId: result.orderId,
@@ -617,12 +617,12 @@ export class AliExpressConnector extends BaseConnector {
       };
     }
   }
-  
+
   // ==================== TRACKING ====================
-  
+
   protected async doPushTracking(trackingData: TrackingData): Promise<TrackingResult> {
     this.log('info', `Récupération tracking: ${trackingData.trackingNumber}`);
-    
+
     try {
       if (this.config.sandbox) {
         return {
@@ -637,20 +637,20 @@ export class AliExpressConnector extends BaseConnector {
           ]
         };
       }
-      
+
       // Appel API tracking
       const response = await fetch(`${this.API_BASE_URL}/tracking/${trackingData.trackingNumber}`, {
         headers: {
           'Authorization': `Bearer ${this.config.accessToken}`
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`Erreur tracking: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         success: true,
         trackingUpdated: true,

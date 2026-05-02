@@ -42,7 +42,7 @@ export function useConfigData(autoLoad: boolean = true) {
   const loadConfigs = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: configError } = await supabase
         .from('commission_config')
@@ -59,7 +59,7 @@ export function useConfigData(autoLoad: boolean = true) {
 
       // Calculer les statistiques
       const uniqueServices = new Set(configData.map(c => c.service_name)).size;
-      
+
       const newStats: ConfigStats = {
         total_configs: configData.length,
         active_configs: configData.filter(c => c.is_active).length,
@@ -83,7 +83,7 @@ export function useConfigData(autoLoad: boolean = true) {
   const createConfig = useCallback(async (configData: Omit<CommissionConfig, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase.from('commission_config').insert({
         ...configData,
         created_by: user?.id

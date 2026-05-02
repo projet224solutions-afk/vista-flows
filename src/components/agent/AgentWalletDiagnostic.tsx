@@ -39,10 +39,10 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
 
       if (agentError) {
         console.error('Erreur agent:', agentError);
-        setDiagnosticStatus(prev => ({ 
-          ...prev, 
-          agentExists: false, 
-          checking: false 
+        setDiagnosticStatus(prev => ({
+          ...prev,
+          agentExists: false,
+          checking: false
         }));
         return;
       }
@@ -85,7 +85,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
       toast.info('Tentative de création du wallet...');
 
       // Créer le wallet manuellement
-      const { data, error } = await supabase
+      const { _data, error } = await supabase
         .from('agent_wallets')
         .insert({
           agent_id: agentId,
@@ -120,6 +120,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
     if (agentId) {
       runDiagnostic();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   return (

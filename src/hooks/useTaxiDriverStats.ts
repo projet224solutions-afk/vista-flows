@@ -47,11 +47,11 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
       let vehiclePlate = '';
       let giletNumber = '';
       let serialNumber = '';
-      
+
       if (driverData?.vehicle) {
         try {
-          const vehicleData = typeof driverData.vehicle === 'string' 
-            ? JSON.parse(driverData.vehicle) 
+          const vehicleData = typeof driverData.vehicle === 'string'
+            ? JSON.parse(driverData.vehicle)
             : driverData.vehicle;
           vehiclePlate = vehicleData.vehicle_plate || '';
           giletNumber = vehicleData.gilet_number || '';
@@ -65,17 +65,17 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
       const rides = await TaxiMotoService.getDriverRides(driverId, 100);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const todayRides = rides.filter((r: any) => {
         const rideDate = new Date(r.requested_at || r.updated_at);
         return rideDate >= today && r.status === 'completed';
       });
-      
+
       // Calculer les gains du jour depuis driver_share
       const todayEarnings = todayRides.reduce((sum, r) => {
         return sum + (r.driver_share || 0);
       }, 0);
-      
+
       // Calculer le temps en ligne aujourd'hui
       let onlineMinutes = 0;
       todayRides.forEach(ride => {
@@ -85,7 +85,7 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
           onlineMinutes += Math.floor((end.getTime() - start.getTime()) / 60000);
         }
       });
-      
+
       const hours = Math.floor(onlineMinutes / 60);
       const mins = onlineMinutes % 60;
 
@@ -132,7 +132,7 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
     if (driverId) {
       loadDriverStats();
       loadRideHistory();
-      
+
       // Recharger les stats toutes les 30 secondes
       const statsInterval = setInterval(() => {
         loadDriverStats();
@@ -156,7 +156,7 @@ export function useTaxiDriverStats(driverId: string | null): UseTaxiDriverStatsR
           }
         )
         .subscribe();
-      
+
       return () => {
         clearInterval(statsInterval);
         supabase.removeChannel(channel);

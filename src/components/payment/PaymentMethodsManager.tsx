@@ -12,15 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Wallet, 
-  Smartphone, 
-  Banknote, 
-  Plus, 
-  Trash2, 
+import {
+  Wallet,
+  Smartphone,
+  Banknote,
+  Plus,
+  Trash2,
   Check,
   CreditCard,
-  Edit
+  _Edit
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,11 +50,12 @@ export function PaymentMethodsManager() {
     if (user) {
       loadPaymentMethods();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadPaymentMethods = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -66,15 +67,15 @@ export function PaymentMethodsManager() {
 
       if (queryError) {
         console.error('Erreur chargement moyens de paiement:', queryError);
-        
+
         // Si la table n'existe pas ou problème réseau, utiliser des moyens par défaut en mémoire
-        if (queryError.message.includes('does not exist') || 
+        if (queryError.message.includes('does not exist') ||
             queryError.message.includes('schema cache') ||
             queryError.message.includes('Failed to fetch') ||
             queryError.message.includes('NetworkError') ||
             queryError.code === 'PGRST301' ||
             queryError.code === '42P01') {
-          
+
           console.log('Table non trouvée ou erreur réseau, utilisation des moyens par défaut en mémoire');
           const defaultMethods: PaymentMethod[] = [{
             id: 'wallet-default',
@@ -88,7 +89,7 @@ export function PaymentMethodsManager() {
           toast.info('⚠️ Moyens de paiement en mode local. La table doit être créée dans Supabase.');
           return;
         }
-        
+
         setError(`Erreur: ${queryError.message}`);
         toast.error(`Impossible de charger les moyens de paiement: ${queryError.message}`);
         return;
@@ -98,7 +99,7 @@ export function PaymentMethodsManager() {
         id: method.id,
         type: method.method_type as PaymentMethod['type'],
         label: getMethodLabel(method.method_type),
-        details: method.phone_number ? maskPhoneNumber(method.phone_number) : 
+        details: method.phone_number ? maskPhoneNumber(method.phone_number) :
                  method.card_last_four ? `**** ${method.card_last_four}` : undefined,
         is_default: method.is_default || false,
         is_active: method.is_active !== false
@@ -111,7 +112,7 @@ export function PaymentMethodsManager() {
           await createDefaultWallet();
           // Recharger après création
           return loadPaymentMethods();
-        } catch (createError) {
+        } catch (_createError) {
           // Si erreur de création, utiliser le wallet par défaut en mémoire
           console.warn('Impossible de créer le wallet en DB, utilisation en mémoire');
           const defaultMethods: PaymentMethod[] = [{
@@ -129,7 +130,7 @@ export function PaymentMethodsManager() {
       setPaymentMethods(formatted);
     } catch (error: any) {
       console.error('Erreur chargement moyens de paiement:', error);
-      
+
       // En cas d'erreur réseau ou autre, utiliser wallet par défaut en mémoire
       const defaultMethods: PaymentMethod[] = [{
         id: 'wallet-default',
@@ -147,7 +148,7 @@ export function PaymentMethodsManager() {
 
   const createDefaultWallet = async () => {
     if (!user) return;
-    
+
     try {
       const { error } = await (supabase as any)
         .from('user_payment_methods')
@@ -255,7 +256,7 @@ export function PaymentMethodsManager() {
             id: `temp-${Date.now()}`,
             type: newMethodType as PaymentMethod['type'],
             label: getMethodLabel(newMethodType),
-            details: phoneNumber ? maskPhoneNumber(phoneNumber) : 
+            details: phoneNumber ? maskPhoneNumber(phoneNumber) :
                      cardNumber ? `**** ${cardNumber.slice(-4)}` : undefined,
             is_default: isFirstMethod,
             is_active: true
@@ -368,8 +369,8 @@ export function PaymentMethodsManager() {
           {error}
         </p>
         <div className="space-y-2">
-          <Button 
-            onClick={loadPaymentMethods} 
+          <Button
+            onClick={loadPaymentMethods}
             variant="outline"
             size="sm"
           >

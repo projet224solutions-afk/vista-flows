@@ -47,6 +47,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
   useEffect(() => {
     loadShipmentDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shipmentId]);
 
   const loadShipmentDetails = async () => {
@@ -92,7 +93,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           </div>
           <h2 className="text-2xl font-bold text-green-900 mb-2">下单成功 !</h2>
           <p className="text-green-700 mb-6">Commande d'expédition créée avec succès</p>
-          
+
           {/* Numéro de suivi */}
           <div className="bg-white rounded-lg p-4 mb-4 border-2 border-green-300">
             <p className="text-sm text-muted-foreground mb-1">Numéro de suivi</p>

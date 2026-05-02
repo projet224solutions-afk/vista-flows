@@ -33,7 +33,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const loadAlerts = async () => {
     try {
       setLoading(true);
-      
+
       // CENTRALISÉ: Charger depuis vehicles + vehicle_security_log
       // Véhicules actuellement volés (is_stolen = true ou stolen_status = 'stolen')
       const { data: stolenVehicles, error: vehiclesError } = await supabase
@@ -66,7 +66,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         console.error('Erreur Supabase:', vehiclesError);
         throw vehiclesError;
       }
-      
+
       // Transformer en format d'alerte pour compatibilité
       const transformedAlerts: SecurityAlert[] = (stolenVehicles || []).map((v: any) => ({
         id: v.id,
@@ -82,7 +82,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         status: 'active',
         created_at: v.stolen_declared_at || new Date().toISOString()
       }));
-      
+
       console.log('✅ Alertes centralisées chargées:', transformedAlerts.length);
       setAlerts(transformedAlerts);
     } catch (error: any) {
@@ -137,7 +137,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const handleResolve = async (alertId: string) => {
     try {
       // CENTRALISÉ: Utilise le RPC declare_vehicle_recovered
-      const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
+      const { _data, error } = await supabase.rpc('declare_vehicle_recovered', {
         p_vehicle_id: alertId,
         p_bureau_id: bureauId,
         p_recovered_by: null as any, // Sera rempli côté serveur si possible
@@ -148,7 +148,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
       });
 
       if (error) throw error;
-      
+
       toast.success('Véhicule marqué comme récupéré avec succès');
       loadAlerts();
     } catch (error: any) {
@@ -223,7 +223,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                           <strong>Propriétaire:</strong> {alert.owner_name}
                         </div>
                       </div>
-                      
+
                       <div className="pt-2 border-t">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4" />

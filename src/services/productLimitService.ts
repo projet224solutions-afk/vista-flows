@@ -40,7 +40,7 @@ export class ProductLimitService {
           .select('user_id')
           .eq('id', vendorId)
           .single();
-        
+
         if (!vendor) throw new Error('Vendeur introuvable');
         userIdToCheck = vendor.user_id;
       }
@@ -150,7 +150,7 @@ export class ProductLimitService {
           .select('user_id')
           .eq('id', vendorId)
           .single();
-        
+
         if (!vendor) throw new Error('Vendeur introuvable');
         userIdToCheck = vendor.user_id;
       }

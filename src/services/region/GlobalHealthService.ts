@@ -3,10 +3,10 @@
  * Surveillance de la santé de toutes les régions
  */
 
-import { 
-  REGIONS, 
-  RegionConfig, 
-  RegionHealth, 
+import {
+  _REGIONS,
+  RegionConfig,
+  RegionHealth,
   getEnabledRegions,
   GLOBAL_CONFIG,
 } from '@/config/regions';
@@ -102,11 +102,11 @@ class GlobalHealthService {
   async performHealthCheck(): Promise<HealthMetrics> {
     const regions = getEnabledRegions();
     const regionsStatus: RegionHealth[] = [];
-    
+
     for (const region of regions) {
       const health = await this.checkRegionHealth(region);
       regionsStatus.push(health);
-      
+
       // Vérifier les seuils d'alerte
       this.checkAlertThresholds(region, health);
     }
@@ -141,14 +141,14 @@ class GlobalHealthService {
   }
 
   private async checkRegionHealth(region: RegionConfig): Promise<RegionHealth> {
-    const startTime = performance.now();
+    const _startTime = performance.now();
     const metrics = this.metrics.get(region.id);
-    
+
     try {
       // Simuler un health check
       const latency = await this.measureLatency(region);
       const errorRate = metrics ? (metrics.errorCount / Math.max(1, metrics.requestCount)) * 100 : 0;
-      
+
       let status: RegionHealth['status'] = 'healthy';
       if (latency > region.latency.threshold) {
         status = 'degraded';
@@ -166,7 +166,7 @@ class GlobalHealthService {
         errorRate,
         load: metrics?.activeConnections ? Math.min(100, metrics.activeConnections / 10) : 0,
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         regionId: region.id,
         status: 'unhealthy',
@@ -250,8 +250,8 @@ class GlobalHealthService {
   private createAlert(alert: Omit<HealthAlert, 'id' | 'timestamp' | 'acknowledged'>): void {
     // Éviter les alertes dupliquées
     const exists = this.alerts.find(
-      a => a.regionId === alert.regionId && 
-           a.message === alert.message && 
+      a => a.regionId === alert.regionId &&
+           a.message === alert.message &&
            !a.acknowledged &&
            Date.now() - new Date(a.timestamp).getTime() < 300000 // 5 minutes
     );

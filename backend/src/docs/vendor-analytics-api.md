@@ -263,13 +263,13 @@ The following indexes are created for optimal query performance:
 
 ```sql
 -- Primary analytics indexes
-CREATE INDEX idx_analytics_daily_vendor_date 
+CREATE INDEX idx_analytics_daily_vendor_date
   ON analytics_daily_stats(vendor_id, stat_date DESC);
 
-CREATE INDEX idx_product_views_vendor_date 
+CREATE INDEX idx_product_views_vendor_date
   ON product_views_raw(vendor_id, viewed_at DESC);
 
-CREATE INDEX idx_shop_visits_vendor_date 
+CREATE INDEX idx_shop_visits_vendor_date
   ON shop_visits_raw(vendor_id, visited_at DESC);
 ```
 
@@ -328,7 +328,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 async function fetchVendorAnalytics(vendorId: string, period = 'week') {
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   const response = await fetch(
     `${API_URL}/vendor/${vendorId}/analytics/overview?period=${period}`,
     {
@@ -338,7 +338,7 @@ async function fetchVendorAnalytics(vendorId: string, period = 'week') {
       }
     }
   );
-  
+
   return response.json();
 }
 ```

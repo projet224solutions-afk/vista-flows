@@ -2,9 +2,9 @@ import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Calculator, 
-  Trash2, 
+import {
+  Calculator,
+  Trash2,
   CheckSquare,
   Package
 } from 'lucide-react';
@@ -36,11 +36,11 @@ export function NumericKeypadPopup({
   productName,
   maxQuantity
 }: NumericKeypadPopupProps) {
-  
+
   const handleInput = (input: string) => {
     // Empêcher les décimales pour les quantités
     if (mode === 'quantity' && input === '.') return;
-    
+
     // Vérifier la quantité max
     if (mode === 'quantity' && input !== 'clear' && input !== 'enter' && maxQuantity) {
       const newValue = numericInput + input;
@@ -49,7 +49,7 @@ export function NumericKeypadPopup({
         return;
       }
     }
-    
+
     onNumericInput(input);
     if (input === 'enter') {
       onOpenChange(false);
@@ -77,7 +77,7 @@ export function NumericKeypadPopup({
                   {isQuantityMode ? 'Saisir la quantité' : 'Pavé numérique'}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  {isQuantityMode 
+                  {isQuantityMode
                     ? (productName || 'Modifier la quantité')
                     : 'Saisie du montant'
                   }
@@ -107,7 +107,7 @@ export function NumericKeypadPopup({
                 <p className="text-lg font-bold text-primary">{total.toLocaleString()} {currency}</p>
               </div>
             )}
-            
+
             <Input
               type="text"
               value={numericInput || ''}
@@ -115,11 +115,11 @@ export function NumericKeypadPopup({
               placeholder="0"
               className={`text-right text-2xl font-mono font-bold h-14 bg-background border-2 ${isQuantityMode ? 'border-blue-300 focus:border-blue-500' : 'border-primary/30 focus:border-primary'}`}
             />
-            
+
             {!isQuantityMode && receivedAmount > 0 && (
               <div className={`text-sm font-medium px-3 py-2 rounded-lg ${
-                change >= 0 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                change >= 0
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                   : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
               }`}>
                 Rendu: {change.toLocaleString()} {currency}
@@ -140,7 +140,7 @@ export function NumericKeypadPopup({
               </Button>
             ))}
           </div>
-          
+
           {/* Ligne 0, 00, point/backspace */}
           <div className="grid grid-cols-3 gap-2">
             <Button

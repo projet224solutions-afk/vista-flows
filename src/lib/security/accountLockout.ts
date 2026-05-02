@@ -19,7 +19,7 @@ const ATTEMPT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 export const getLockoutRecord = (identifier: string): LockoutRecord => {
   const key = `lockout_${identifier}`;
   const stored = localStorage.getItem(key);
-  
+
   if (!stored) {
     return {
       attempts: 0,
@@ -27,7 +27,7 @@ export const getLockoutRecord = (identifier: string): LockoutRecord => {
       lastAttempt: new Date().toISOString()
     };
   }
-  
+
   try {
     return JSON.parse(stored);
   } catch {
@@ -52,14 +52,14 @@ const saveLockoutRecord = (identifier: string, record: LockoutRecord): void => {
  */
 export const isAccountLocked = (identifier: string): { locked: boolean; remainingTime?: number } => {
   const record = getLockoutRecord(identifier);
-  
+
   if (!record.lockedUntil) {
     return { locked: false };
   }
-  
+
   const lockedUntil = new Date(record.lockedUntil);
   const now = new Date();
-  
+
   if (now < lockedUntil) {
     const remainingMs = lockedUntil.getTime() - now.getTime();
     return {
@@ -67,14 +67,14 @@ export const isAccountLocked = (identifier: string): { locked: boolean; remainin
       remainingTime: Math.ceil(remainingMs / 1000) // secondes
     };
   }
-  
+
   // Le verrouillage a expiré, réinitialiser
   saveLockoutRecord(identifier, {
     attempts: 0,
     lockedUntil: null,
     lastAttempt: now.toISOString()
   });
-  
+
   return { locked: false };
 };
 
@@ -89,7 +89,7 @@ export const recordFailedAttempt = (identifier: string): {
   const record = getLockoutRecord(identifier);
   const now = new Date();
   const lastAttempt = new Date(record.lastAttempt);
-  
+
   // Si la dernière tentative est trop ancienne, réinitialiser
   if (now.getTime() - lastAttempt.getTime() > ATTEMPT_WINDOW_MS) {
     record.attempts = 1;
@@ -97,24 +97,24 @@ export const recordFailedAttempt = (identifier: string): {
   } else {
     record.attempts += 1;
   }
-  
+
   record.lastAttempt = now.toISOString();
-  
+
   // Verrouiller si trop de tentatives
   if (record.attempts >= MAX_ATTEMPTS) {
     const lockUntil = new Date(now.getTime() + LOCKOUT_DURATION_MS);
     record.lockedUntil = lockUntil.toISOString();
-    
+
     saveLockoutRecord(identifier, record);
-    
+
     return {
       locked: true,
       lockoutDuration: LOCKOUT_DURATION_MS / 1000 // secondes
     };
   }
-  
+
   saveLockoutRecord(identifier, record);
-  
+
   return {
     locked: false,
     remainingAttempts: MAX_ATTEMPTS - record.attempts
@@ -135,10 +135,10 @@ export const resetFailedAttempts = (identifier: string): void => {
 export const formatRemainingTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  
+
   if (minutes > 0) {
     return `${minutes} minute${minutes > 1 ? 's' : ''} ${secs} seconde${secs > 1 ? 's' : ''}`;
   }
-  
+
   return `${secs} seconde${secs > 1 ? 's' : ''}`;
 };

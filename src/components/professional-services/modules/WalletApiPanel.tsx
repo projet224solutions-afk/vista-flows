@@ -83,7 +83,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
       } else {
         toast.error('Erreur lors de la soumission');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la soumission');
     } finally {
       setSubmitting(false);
@@ -133,7 +133,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
             </div>
             <h3 className="text-xl font-bold mb-2">API de Paiement 224Wallet</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-              Intégrez les paiements 224Wallet directement dans votre site web ou application. 
+              Intégrez les paiements 224Wallet directement dans votre site web ou application.
               Acceptez les paiements de vos clients en toute sécurité.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 w-full max-w-lg">

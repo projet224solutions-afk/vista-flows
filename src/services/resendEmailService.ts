@@ -62,7 +62,7 @@ class ResendEmailService {
    */
   private showDevelopmentCode(code: string, email: string): void {
     console.log('🔑 CODE MFA DE DÉVELOPPEMENT:', code);
-    
+
     toast.success(`🔐 CODE MFA: ${code}`, {
       duration: 120000, // 2 minutes
       description: `Mode développement - Configurez le backend email pour envoyer de vrais emails\nDestination: ${email}`,
@@ -73,7 +73,7 @@ class ResendEmailService {
         fontWeight: 'bold'
       }
     });
-    
+
     setTimeout(() => {
       alert(`🔐 CODE MFA DE DÉVELOPPEMENT\n\n${code}\n\nCopiez ce code pour continuer\n\n💡 Pour envoyer de vrais emails:\n1. Configurez le backend Node.js\n2. Vérifiez l'endpoint /edge-functions/send-otp-email`);
     }, 500);
@@ -94,13 +94,13 @@ class ResendEmailService {
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
   <div style="max-width: 600px; margin: 40px auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 2px;">
     <div style="background: white; border-radius: 14px; padding: 40px 30px;">
-      
+
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 30px;">
         <h1 style="color: #3b82f6; margin: 0; font-size: 28px;">224SOLUTIONS</h1>
         <p style="color: #64748b; margin: 8px 0 0 0; font-size: 14px;">Authentification Multi-Facteurs</p>
       </div>
-      
+
       <!-- Code Box -->
       <div style="background: linear-gradient(to bottom, #f8fafc, #f1f5f9); padding: 35px 25px; border-radius: 12px; text-align: center; margin: 30px 0; border: 2px solid #e2e8f0;">
         <p style="color: #475569; font-size: 15px; margin: 0 0 15px 0; font-weight: 500;">Votre code de vérification PDG :</p>
@@ -109,7 +109,7 @@ class ResendEmailService {
         </div>
         <p style="color: #64748b; font-size: 13px; margin: 15px 0 0 0;">Valide pendant 10 minutes</p>
       </div>
-      
+
       <!-- Warning Box -->
       <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 6px; margin: 25px 0;">
         <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">
@@ -117,7 +117,7 @@ class ResendEmailService {
           Ce code expire dans 10 minutes. Ne le partagez jamais avec qui que ce soit, même avec le support 224Solutions.
         </p>
       </div>
-      
+
       <!-- Security Notice -->
       <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 25px 0;">
         <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0;">
@@ -125,7 +125,7 @@ class ResendEmailService {
           Si vous n'êtes pas à l'origine de cette demande, ignorez cet email et sécurisez votre compte immédiatement en changeant votre mot de passe.
         </p>
       </div>
-      
+
       <!-- Footer -->
       <div style="text-align: center; margin-top: 40px; padding-top: 25px; border-top: 1px solid #e2e8f0;">
         <p style="color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.6;">
@@ -134,10 +134,10 @@ class ResendEmailService {
           © 2025 - Tous droits réservés
         </p>
       </div>
-      
+
     </div>
   </div>
-  
+
   <!-- Footer Text -->
   <div style="max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
     <p style="color: #9ca3af; font-size: 11px; margin: 0;">

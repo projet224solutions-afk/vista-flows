@@ -26,6 +26,7 @@ export default function AgentActivation() {
 
   useEffect(() => {
     validateToken();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const validateToken = async () => {
@@ -36,11 +37,11 @@ export default function AgentActivation() {
 
     try {
       const result = await agentInvitationService.validateInvitation(token);
-      
+
       if (result.valid && result.invitation) {
         setValid(true);
         setInvitation(result.invitation);
-        // Pr├®-remplir l'email
+        // Pré-remplir l'email
         setFormData(prev => ({ ...prev, email: result.invitation.email }));
       } else {
         toast.error(result.error || 'Invitation invalide');
@@ -55,7 +56,7 @@ export default function AgentActivation() {
 
   const handleActivation = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token) return;
 
     if (formData.password !== formData.confirmPassword) {
@@ -64,14 +65,14 @@ export default function AgentActivation() {
     }
 
     if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caract├¿res');
+      toast.error('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
     try {
       setValidating(true);
 
-      // 1. Cr├®er le compte utilisateur
+      // 1. Créer le compte utilisateur
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -85,7 +86,7 @@ export default function AgentActivation() {
       if (authError) throw authError;
 
       if (!authData.user) {
-        throw new Error('Erreur lors de la cr├®ation du compte');
+        throw new Error('Erreur lors de la création du compte');
       }
 
       // 2. Accepter l'invitation et lier le compte
@@ -98,8 +99,8 @@ export default function AgentActivation() {
         throw new Error(result.error);
       }
 
-      toast.success('­ƒÄë Compte agent activ├® avec succ├¿s!');
-      
+      toast.success('Compte agent activé avec succès !');
+
       // Redirection vers le dashboard agent
       setTimeout(() => {
         navigate('/agent');
@@ -120,7 +121,7 @@ export default function AgentActivation() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <p className="text-lg">V├®rification de l'invitation...</p>
+              <p className="text-lg">Vérification de l'invitation...</p>
             </div>
           </CardContent>
         </Card>
@@ -140,10 +141,10 @@ export default function AgentActivation() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Cette invitation n'est pas valide ou a expir├®.
+              Cette invitation n'est pas valide ou a expiré.
             </p>
             <Button onClick={() => navigate('/')} className="w-full">
-              Retour ├á l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -158,22 +159,22 @@ export default function AgentActivation() {
           <CardHeader>
             <div className="flex items-center gap-3">
               <CheckCircle className="w-10 h-10 text-green-500" />
-              <CardTitle>D├®j├á Connect├®</CardTitle>
+              <CardTitle>Déjà connecté</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Vous ├¬tes d├®j├á connect├®. Souhaitez-vous accepter cette invitation avec ce compte?
+              Vous êtes déjà connecté. Souhaitez-vous accepter cette invitation avec ce compte ?
             </p>
             <div className="flex gap-2">
-              <Button 
-                onClick={() => navigate('/agent')} 
+              <Button
+                onClick={() => navigate('/agent')}
                 variant="outline"
                 className="flex-1"
               >
                 Mon Dashboard
               </Button>
-              <Button 
+              <Button
                 onClick={async () => {
                   if (!token) return;
                   const result = await agentInvitationService.acceptInvitation(token, user.id);
@@ -196,9 +197,9 @@ export default function AgentActivation() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">­ƒÄë Activation Compte Agent</CardTitle>
+          <CardTitle className="text-2xl">Activation Compte Agent</CardTitle>
           <p className="text-muted-foreground">
-            Bienvenue! Cr├®ez votre compte pour acc├®der ├á votre interface agent.
+            Bienvenue ! Créez votre compte pour accéder à votre interface agent.
           </p>
         </CardHeader>
         <CardContent>
@@ -224,7 +225,7 @@ export default function AgentActivation() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 minLength={6}
-                placeholder="Minimum 6 caract├¿res"
+                placeholder="Minimum 6 caractères"
               />
             </div>
 
@@ -245,13 +246,13 @@ export default function AgentActivation() {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">Informations Agent</h4>
                 <p className="text-sm text-muted-foreground">
-                  R├┤le: Agent 224Solutions
+                  Rôle : Agent 224Solutions
                 </p>
               </div>
             )}
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full"
               disabled={validating}
             >
@@ -261,7 +262,7 @@ export default function AgentActivation() {
                   Activation en cours...
                 </>
               ) : (
-                '­ƒÜÇ Activer mon compte'
+                'Activer mon compte'
               )}
             </Button>
           </form>

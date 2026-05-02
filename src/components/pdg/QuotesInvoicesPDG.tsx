@@ -105,7 +105,7 @@ export default function QuotesInvoicesPDG() {
       // Récupérer le fichier via fetch pour contourner les bloqueurs
       const response = await fetch(pdfUrl);
       const blob = await response.blob();
-      
+
       // Créer un lien de téléchargement temporaire
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -115,7 +115,7 @@ export default function QuotesInvoicesPDG() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Téléchargement démarré');
     } catch (error) {
       console.error('Erreur téléchargement:', error);
@@ -130,9 +130,9 @@ export default function QuotesInvoicesPDG() {
       rejected: { label: 'Refusé', variant: 'destructive' as const, icon: XCircle },
       expired: { label: 'Expiré', variant: 'outline' as const, icon: Clock }
     };
-    
+
     const { label, variant, icon: Icon } = config[status as keyof typeof config] || config.pending;
-    
+
     return (
       <Badge variant={variant} className="gap-1">
         <Icon className="w-3 h-3" />
@@ -148,9 +148,9 @@ export default function QuotesInvoicesPDG() {
       cancelled: { label: 'Annulée', variant: 'destructive' as const, icon: XCircle },
       overdue: { label: 'En retard', variant: 'destructive' as const, icon: Clock }
     };
-    
+
     const { label, variant, icon: Icon } = config[status as keyof typeof config] || config.pending;
-    
+
     return (
       <Badge variant={variant} className="gap-1">
         <Icon className="w-3 h-3" />

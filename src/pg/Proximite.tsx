@@ -1,12 +1,12 @@
 ﻿import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Store, 
+import {
+  Store,
   Truck,
-  Scissors, 
-  Utensils, 
+  Scissors,
+  Utensils,
   Bike,
-  Wrench, 
+  Wrench,
   Sparkles,
   Building2,
   ShoppingBag,
@@ -24,8 +24,8 @@ import {
   Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { _Badge } from "@/components/ui/badge";
+import { _cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
 import { useProximityStats } from "@/hooks/useProximityStats";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Couleurs de la charte : Bleu #04439e, Orange #ff4000, Noir #000000
 const BLUE = "#04439e";
 const ORANGE = "#ff4000";
-const BLACK = "#000000";
+const _BLACK = "#000000";
 
 interface ServiceCardItem {
   id: string;
@@ -271,7 +271,7 @@ export default function Proximite() {
         });
 
         const categoryIds = Array.from(categoryCountMap.keys());
-        
+
         const { data: categories, error: categoriesError } = await supabase
           .from('categories')
           .select('id, name, image_url')

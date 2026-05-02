@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { _Card, _CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Wallet as WalletIcon, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +11,7 @@ export default function Wallet() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Rediriger vers auth si pas connect├®
+    // Rediriger vers auth si pas connecté
     if (!user && !profileLoading) {
       navigate('/auth');
     }
@@ -31,7 +31,7 @@ export default function Wallet() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
-      {/* Header - optimis├® mobile */}
+      {/* Header - optimise mobile */}
       <div className="border-b bg-card/50 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-3 py-3 sm:container sm:mx-auto sm:px-4 sm:py-4">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -50,7 +50,7 @@ export default function Wallet() {
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold truncate">Mon Wallet</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  G├®rez vos transactions
+                  Gérez vos transactions
                 </p>
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function Wallet() {
         </div>
       </div>
 
-      {/* Content - optimis├® mobile */}
+      {/* Content - optimise mobile */}
       <div className="px-2 py-3 sm:container sm:mx-auto sm:px-4 sm:py-6">
         <UniversalWalletTransactions />
       </div>

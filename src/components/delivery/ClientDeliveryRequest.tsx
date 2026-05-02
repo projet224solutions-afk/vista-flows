@@ -3,7 +3,7 @@
  * Saisie ID vendeur → récupération auto des infos → calcul prix → confirmation
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,20 +13,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, 
-  Package, 
-  Loader2, 
-  Store, 
-  CheckCircle2, 
+import {
+  MapPin,
+  Package,
+  Loader2,
+  Store,
+  CheckCircle2,
   CreditCard,
   Banknote,
   Scale,
   AlertTriangle,
   Navigation,
-  Clock,
+  _Clock,
   Phone,
-  User
+  _User
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -58,32 +58,32 @@ interface ClientDeliveryRequestProps {
 export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryRequestProps) {
   const { user, profile } = useAuth();
   const [step, setStep] = useState<'vendor' | 'details' | 'confirm'>('vendor');
-  
+
   // Vendor lookup
   const [vendorId, setVendorId] = useState('');
   const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
   const [loadingVendor, setLoadingVendor] = useState(false);
-  
+
   // Client address
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [clientCoords, setClientCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locatingClient, setLocatingClient] = useState(false);
-  
+
   // Package details
-  const [packageType, setPackageType] = useState('standard');
+  const [packageType, _setPackageType] = useState('standard');
   const [packageSize, setPackageSize] = useState('small');
   const [packageWeight, setPackageWeight] = useState('light');
   const [isFragile, setIsFragile] = useState(false);
   const [packageDescription, setPackageDescription] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
-  
+
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<'prepaid' | 'cod'>('prepaid');
-  
+
   // Price estimate
   const [priceEstimate, setPriceEstimate] = useState<PriceEstimate | null>(null);
   const [calculatingPrice, setCalculatingPrice] = useState(false);
-  
+
   // Submit
   const [submitting, setSubmitting] = useState(false);
 
@@ -148,7 +148,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       // Reverse geocoding pour obtenir l'adresse
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
         method: 'POST',
         headers: {
@@ -190,7 +190,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
 
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-delivery-distances`, {
         method: 'POST',
         headers: {
@@ -205,7 +205,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       });
 
       const data = await response.json();
-      
+
       // Ajustement prix selon le type de colis
       let priceMultiplier = 1;
       if (packageSize === 'medium') priceMultiplier = 1.2;

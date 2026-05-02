@@ -1,10 +1,10 @@
 /**
  * 🏪 VENDORS ROUTES - Phase 3
- * 
+ *
  * Tables utilisées :
  *   - `vendors` : business_name, business_type, shop_slug, user_id, is_active, etc.
  *   - `profiles` : pour résolution user_id ↔ vendor
- * 
+ *
  * Toutes les colonnes sont alignées avec le schéma DB existant.
  */
 

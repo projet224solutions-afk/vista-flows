@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PDGCopilotDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { messages, loading, error, sendMessage, analyzeVendor, analyzeCustomer, getFinancialSummary, clearMessages } = usePDGCopilot();
-  
+  const { messages, loading, error, sendMessage, _analyzeVendor, _analyzeCustomer, getFinancialSummary, clearMessages } = usePDGCopilot();
+
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

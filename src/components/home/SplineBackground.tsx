@@ -65,7 +65,7 @@ export function SplineBackground({ className, height = '130vh' }: SplineBackgrou
   // Don't render 3D on mobile for battery/performance
   if (isMobile) {
     return (
-      <div 
+      <div
         className={cn('absolute inset-x-0 top-0 z-0 overflow-hidden pointer-events-none', className)}
         style={{ height }}
       >
@@ -76,8 +76,8 @@ export function SplineBackground({ className, height = '130vh' }: SplineBackgrou
   }
 
   return (
-    <div 
-      className={cn('absolute inset-x-0 top-0 z-0 overflow-hidden pointer-events-none', className)} 
+    <div
+      className={cn('absolute inset-x-0 top-0 z-0 overflow-hidden pointer-events-none', className)}
       style={{ height }}
       ref={containerRef}
     >
@@ -86,18 +86,18 @@ export function SplineBackground({ className, height = '130vh' }: SplineBackgrou
 
       {/* Spline 3D Globe - Web Component - Enlarged */}
       {shouldLoad && (
-        <div 
+        <div
           className={cn(
             'absolute inset-0 opacity-0 transition-opacity duration-1000',
             isLoaded && 'opacity-40 sm:opacity-50'
           )}
-          style={{ 
-            transform: 'scale(1.3)', 
+          style={{
+            transform: 'scale(1.3)',
             transformOrigin: 'center top'
           }}
         >
           {/* @ts-ignore - Web Component */}
-          <spline-viewer 
+          <spline-viewer
             url={SPLINE_SCENE_URL}
             style={{ width: '100%', height: '100%' }}
           />

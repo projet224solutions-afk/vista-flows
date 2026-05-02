@@ -137,7 +137,7 @@ export function useErrorBoundary(options: UseErrorBoundaryOptions): UseErrorBoun
    */
   const capture = useCallback((err: any, errorContext?: Record<string, any>) => {
     const info = extractErrorInfo(err);
-    
+
     const errorInfo: ErrorInfo = {
       type: info.type || 'unknown',
       message: info.message || 'Unknown error',
@@ -194,7 +194,7 @@ export function useErrorBoundary(options: UseErrorBoundaryOptions): UseErrorBoun
       if (error) {
         const pattern = mapToErrorPattern({ message: error.message });
         const recovered = await autoErrorRecovery.handleError(pattern, error.message, context);
-        
+
         if (recovered && isMountedRef.current) {
           setError(prev => prev ? { ...prev, recovered: true } : null);
           onRecovery?.();
@@ -227,11 +227,11 @@ export function useErrorBoundary(options: UseErrorBoundaryOptions): UseErrorBoun
       return result;
     } catch (err) {
       capture(err);
-      
+
       if (fallbackValue !== undefined) {
         return fallbackValue;
       }
-      
+
       return undefined;
     }
   }, [capture, clear]);
@@ -270,7 +270,7 @@ export function useModuleErrorBoundary(moduleName: string) {
 /**
  * Types d'erreurs prédéfinis pour les différents modules
  */
-export type VendorErrorType = 
+export type VendorErrorType =
   | 'product_error'
   | 'inventory_error'
   | 'order_error'
@@ -279,7 +279,7 @@ export type VendorErrorType =
   | 'network_error'
   | 'validation_error';
 
-export type PDGErrorType = 
+export type PDGErrorType =
   | 'stats_loading'
   | 'agent_management'
   | 'syndicat_management'
@@ -288,14 +288,14 @@ export type PDGErrorType =
   | 'permission'
   | 'network';
 
-export type ClientErrorType = 
+export type ClientErrorType =
   | 'cart_error'
   | 'checkout_error'
   | 'payment_error'
   | 'delivery_error'
   | 'network_error';
 
-export type TaxiErrorType = 
+export type TaxiErrorType =
   | 'gps'
   | 'ride_request'
   | 'payment'

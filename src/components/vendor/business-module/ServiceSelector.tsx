@@ -81,8 +81,8 @@ export function ServiceSelector({
             {selectedService ? (
               <>
                 <span className="truncate">{selectedService.business_name}</span>
-                <Badge 
-                  variant={getStatusBadgeVariant(selectedService.status)} 
+                <Badge
+                  variant={getStatusBadgeVariant(selectedService.status)}
                   className="text-xs shrink-0"
                 >
                   {selectedService.service_type?.name || 'Service'}
@@ -119,7 +119,7 @@ export function ServiceSelector({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium truncate">{service.business_name}</span>
-                    <Badge 
+                    <Badge
                       variant={getStatusBadgeVariant(service.status)}
                       className="text-xs shrink-0"
                     >

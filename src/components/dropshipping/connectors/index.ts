@@ -1,7 +1,7 @@
 /**
  * DROPSHIPPING CONNECTORS MODULE - INDEX
  * Exporte tous les composants du module dropshipping
- * 
+ *
  * @module dropshipping/connectors
  * @version 1.0.0
  * @author 224Solutions

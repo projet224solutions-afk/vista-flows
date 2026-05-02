@@ -41,7 +41,7 @@ export function SecurityCertifications() {
         .order('progress', { ascending: false });
 
       if (error) throw error;
-      
+
       setCertifications((data || []) as Certification[]);
     } catch (error) {
       console.error('Erreur chargement certifications:', error);

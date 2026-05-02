@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, Check, X, Store } from 'lucide-react';
-import { 
-  PERMISSION_CATEGORIES, 
+import {
+  PERMISSION_CATEGORIES,
   getPermissionLabel,
   countActivePermissions
 } from '@/constants/agentPermissionCategories';
@@ -33,12 +33,12 @@ interface AgentPermissionsDisplayProps {
   className?: string;
 }
 
-export function AgentPermissionsDisplay({ 
-  permissions, 
-  loading = false, 
+export function AgentPermissionsDisplay({
+  permissions,
+  loading = false,
   compact = false,
-  showAllPermissions = true, // Par défaut, affiche toutes les permissions
-  className 
+  _showAllPermissions = true, // Par défaut, affiche toutes les permissions
+  className
 }: AgentPermissionsDisplayProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     Object.fromEntries(PERMISSION_CATEGORIES.map(cat => [cat.key, true]))
@@ -89,9 +89,9 @@ export function AgentPermissionsDisplay({
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {activePermissions.map((perm) => (
-                  <Badge 
-                    key={perm} 
-                    variant="outline" 
+                  <Badge
+                    key={perm}
+                    variant="outline"
                     className={cn("text-xs", category.bgClass, category.colorClass.replace('text-', 'border-').replace('-600', '-200'))}
                   >
                     {getPermissionLabel(perm)}
@@ -127,9 +127,9 @@ export function AgentPermissionsDisplay({
             const isOpen = openCategories[category.key];
 
             return (
-              <Collapsible 
-                key={category.key} 
-                open={isOpen} 
+              <Collapsible
+                key={category.key}
+                open={isOpen}
                 onOpenChange={() => toggleCategory(category.key)}
               >
                 <CollapsibleTrigger asChild>
@@ -144,8 +144,8 @@ export function AgentPermissionsDisplay({
                       <span className={cn("font-semibold", category.colorClass)}>
                         {category.label}
                       </span>
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className={cn(
                           "text-xs",
                           activeCount > 0 ? "bg-green-100 text-green-700 border-green-300" : "bg-slate-100 text-slate-500"
@@ -154,12 +154,12 @@ export function AgentPermissionsDisplay({
                         {activeCount} / {category.permissions.length}
                       </Badge>
                     </div>
-                    <ChevronDown 
+                    <ChevronDown
                       className={cn(
                         "w-4 h-4 transition-transform",
                         category.colorClass,
                         isOpen && "rotate-180"
-                      )} 
+                      )}
                     />
                   </button>
                 </CollapsibleTrigger>
@@ -168,12 +168,12 @@ export function AgentPermissionsDisplay({
                     {category.permissions.map((perm) => {
                       const isActive = permissions[perm] === true;
                       return (
-                        <div 
-                          key={perm} 
+                        <div
+                          key={perm}
                           className={cn(
                             "flex items-center gap-2 p-2 rounded-md text-sm transition-all",
-                            isActive 
-                              ? "bg-green-50 text-green-800 border border-green-200" 
+                            isActive
+                              ? "bg-green-50 text-green-800 border border-green-200"
                               : "bg-slate-50 text-slate-400 border border-slate-100"
                           )}
                         >

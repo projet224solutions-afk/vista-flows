@@ -113,7 +113,7 @@ export function ProductRecommendationSection({
     if (!touchStartRef.current || !scrollRef.current) return;
     const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
     const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
-    
+
     // Si le mouvement est majoritairement horizontal, on prend le contrôle
     if (dx > dy && dx > 10) {
       isScrollingRef.current = true;

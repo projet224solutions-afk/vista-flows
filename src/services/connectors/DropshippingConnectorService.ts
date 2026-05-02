@@ -2,7 +2,7 @@
  * DROPSHIPPING CONNECTOR SERVICE
  * Service d'orchestration pour tous les connecteurs dropshipping
  * Gère l'import, la synchronisation et les commandes
- * 
+ *
  * @module DropshippingConnectorService
  * @version 1.0.0
  * @author 224Solutions
@@ -61,9 +61,9 @@ class DropshippingConnectorService {
   private syncJobs: Map<string, SyncJob> = new Map();
   private importJobs: Map<string, ImportJob> = new Map();
   private syncIntervals: Map<string, NodeJS.Timeout> = new Map();
-  
+
   // ==================== INITIALIZATION ====================
-  
+
   /**
    * Initialiser un connecteur pour un vendeur
    */
@@ -73,28 +73,28 @@ class DropshippingConnectorService {
     config: Partial<ConnectorConfig> = {}
   ): Promise<IExternalConnector | null> {
     const key = this.getInstanceKey(vendorId, connectorType);
-    
+
     try {
       // Vérifier si déjà initialisé
       if (this.instances.has(key)) {
         return this.instances.get(key)!.connector;
       }
-      
+
       // Créer le connecteur
       const connector = ConnectorFactory.create(connectorType, {
         sandbox: config.sandbox ?? true, // Mode sandbox par défaut
         ...config
       });
-      
+
       // Authentifier
       const authResult = await connector.authenticate();
-      
+
       if (!authResult.success) {
         console.error(`[Connector] Auth failed for ${connectorType}:`, authResult.error);
         toast.error(`Erreur d'authentification ${connectorType}`);
         return null;
       }
-      
+
       // Stocker l'instance
       this.instances.set(key, {
         connector,
@@ -111,15 +111,15 @@ class DropshippingConnectorService {
         },
         lastActivity: new Date()
       });
-      
+
       // Démarrer la sync automatique si configuré
       if (config.autoSync !== false) {
         this.startAutoSync(vendorId, connectorType, config.syncIntervalMinutes || 60);
       }
-      
+
       // Logger dans Supabase
       await this.logActivity(vendorId, connectorType, 'info', `Connecteur ${connectorType} initialisé`);
-      
+
       toast.success(`Connecteur ${connectorType} activé`);
       return connector;
     } catch (error: any) {
@@ -128,7 +128,7 @@ class DropshippingConnectorService {
       return null;
     }
   }
-  
+
   /**
    * Obtenir un connecteur existant
    */
@@ -136,9 +136,9 @@ class DropshippingConnectorService {
     const key = this.getInstanceKey(vendorId, connectorType);
     return this.instances.get(key)?.connector || null;
   }
-  
+
   // ==================== PRODUCT IMPORT ====================
-  
+
   /**
    * Importer un produit depuis une URL
    */
@@ -150,17 +150,17 @@ class DropshippingConnectorService {
     try {
       // Détecter automatiquement la plateforme si non spécifiée
       const connectorType = options.connectorType || this.detectPlatform(sourceUrl);
-      
+
       if (!connectorType) {
         return {
           success: false,
           errors: ['Impossible de détecter la plateforme. Veuillez spécifier le type de connecteur.']
         };
       }
-      
+
       // Obtenir ou initialiser le connecteur
       let connector = this.getConnector(vendorId, connectorType);
-      
+
       if (!connector) {
         connector = await this.initializeConnector(vendorId, connectorType);
         if (!connector) {
@@ -170,7 +170,7 @@ class DropshippingConnectorService {
           };
         }
       }
-      
+
       // Créer un job d'import
       const jobId = `import_${Date.now()}`;
       this.importJobs.set(jobId, {
@@ -180,27 +180,27 @@ class DropshippingConnectorService {
         connectorType,
         status: 'processing'
       });
-      
+
       // Importer le produit
       const result = await connector.importProduct(sourceUrl);
-      
+
       // Mettre à jour le job
       this.importJobs.get(jobId)!.status = result.success ? 'completed' : 'failed';
       this.importJobs.get(jobId)!.result = result;
-      
+
       // Si succès, sauvegarder dans la base de données
       if (result.success && result.normalizedProduct) {
         const savedProduct = await this.saveImportedProduct(vendorId, result.normalizedProduct, connectorType);
-        
+
         if (savedProduct) {
           result.productId = savedProduct.id;
           await this.logActivity(vendorId, connectorType, 'import', `Produit importé: ${result.normalizedProduct.title}`);
         }
       }
-      
+
       // Mettre à jour les métriques
       this.updateMetrics(vendorId, connectorType, { productsImported: 1 });
-      
+
       return result;
     } catch (error: any) {
       console.error('[Connector] Import error:', error);
@@ -210,29 +210,29 @@ class DropshippingConnectorService {
       };
     }
   }
-  
+
   /**
    * Détecter la plateforme depuis l'URL
    */
   detectPlatform(url: string): ConnectorType | null {
     const urlLower = url.toLowerCase();
-    
+
     if (urlLower.includes('aliexpress.com') || urlLower.includes('aliexpress.ru')) {
       return 'ALIEXPRESS';
     }
-    
+
     if (urlLower.includes('alibaba.com')) {
       return 'ALIBABA';
     }
-    
+
     if (urlLower.includes('1688.com')) {
       return '1688';
     }
-    
+
     // URL non reconnue
     return null;
   }
-  
+
   /**
    * Sauvegarder un produit importé dans la base de données
    */
@@ -242,7 +242,7 @@ class DropshippingConnectorService {
     connectorType: ConnectorType
   ): Promise<{ id: string } | null> {
     if (!product) return null;
-    
+
     try {
       // D'abord, créer l'import dans china_product_imports
       const { data: importData, error: importError } = await (supabase as any)
@@ -267,17 +267,17 @@ class DropshippingConnectorService {
         })
         .select()
         .single();
-      
+
       if (importError) {
         console.error('[Connector] Save import error:', importError);
         // Continuer quand même - ce n'est pas bloquant
       }
-      
+
       // Créer le produit dropship directement avec le vendorId (auth.uid())
       // Pas besoin de chercher dans une table vendors séparée
       const marginPercent = 40; // Marge par défaut 40%
       const sellingPrice = product.priceUsd * (1 + marginPercent / 100);
-      
+
       const { data: dropshipProduct, error: productError } = await (supabase as any)
         .from('dropship_products')
         .insert({
@@ -307,32 +307,32 @@ class DropshippingConnectorService {
         })
         .select()
         .single();
-      
+
       if (productError) {
         console.error('[Connector] Save dropship product error:', productError);
         return importData ? { id: importData.id } : null;
       }
-      
+
       // Mettre à jour l'import avec le lien vers le produit dropship
       if (importData && dropshipProduct) {
         await supabase
           .from('china_product_imports')
-          .update({ 
+          .update({
             dropship_product_id: dropshipProduct.id,
             import_status: 'imported'
           })
           .eq('id', importData.id);
       }
-      
+
       return { id: dropshipProduct?.id || importData?.id };
     } catch (error: any) {
       console.error('[Connector] Save product error:', error);
       return null;
     }
   }
-  
+
   // ==================== SYNCHRONIZATION ====================
-  
+
   /**
    * Synchroniser les prix
    */
@@ -342,7 +342,7 @@ class DropshippingConnectorService {
     productIds?: string[]
   ): Promise<SyncResult> {
     const connector = this.getConnector(vendorId, connectorType);
-    
+
     if (!connector) {
       return {
         success: false,
@@ -357,24 +357,24 @@ class DropshippingConnectorService {
         durationMs: 0
       };
     }
-    
+
     const result = await connector.syncPrice(productIds);
-    
+
     // Logger
     await this.logActivity(
-      vendorId, 
-      connectorType, 
-      'sync', 
+      vendorId,
+      connectorType,
+      'sync',
       `Sync prix: ${result.pricesUpdated} mis à jour`,
       { result }
     );
-    
+
     // Mettre à jour les métriques
     this.updateMetrics(vendorId, connectorType, { totalSyncs: 1 });
-    
+
     return result;
   }
-  
+
   /**
    * Synchroniser la disponibilité
    */
@@ -384,7 +384,7 @@ class DropshippingConnectorService {
     productIds?: string[]
   ): Promise<SyncResult> {
     const connector = this.getConnector(vendorId, connectorType);
-    
+
     if (!connector) {
       return {
         success: false,
@@ -399,19 +399,19 @@ class DropshippingConnectorService {
         durationMs: 0
       };
     }
-    
+
     const result = await connector.syncAvailability(productIds);
-    
+
     await this.logActivity(
-      vendorId, 
-      connectorType, 
-      'sync', 
+      vendorId,
+      connectorType,
+      'sync',
       `Sync disponibilité: ${result.stocksUpdated} mis à jour`
     );
-    
+
     return result;
   }
-  
+
   /**
    * Synchronisation complète
    */
@@ -423,43 +423,43 @@ class DropshippingConnectorService {
       this.syncPrices(vendorId, connectorType, productIds),
       this.syncAvailability(vendorId, connectorType, productIds)
     ]);
-    
+
     return { priceSync, availabilitySync };
   }
-  
+
   /**
    * Démarrer la synchronisation automatique
    */
   startAutoSync(vendorId: string, connectorType: ConnectorType, intervalMinutes: number): void {
     const key = this.getInstanceKey(vendorId, connectorType);
-    
+
     // Arrêter l'ancienne sync si elle existe
     this.stopAutoSync(vendorId, connectorType);
-    
+
     // Démarrer la nouvelle
     const interval = setInterval(async () => {
       console.log(`[AutoSync] Running for ${connectorType}...`);
       await this.syncAll(vendorId, connectorType);
     }, intervalMinutes * 60 * 1000);
-    
+
     this.syncIntervals.set(key, interval);
   }
-  
+
   /**
    * Arrêter la synchronisation automatique
    */
   stopAutoSync(vendorId: string, connectorType: ConnectorType): void {
     const key = this.getInstanceKey(vendorId, connectorType);
     const interval = this.syncIntervals.get(key);
-    
+
     if (interval) {
       clearInterval(interval);
       this.syncIntervals.delete(key);
     }
   }
-  
+
   // ==================== ORDER MANAGEMENT ====================
-  
+
   /**
    * Créer une commande fournisseur
    */
@@ -469,7 +469,7 @@ class DropshippingConnectorService {
     orderData: OrderData
   ): Promise<SupplierOrderResult> {
     const connector = this.getConnector(vendorId, connectorType);
-    
+
     if (!connector) {
       return {
         success: false,
@@ -477,26 +477,26 @@ class DropshippingConnectorService {
         errorCode: 'NO_CONNECTOR'
       };
     }
-    
+
     const result = await connector.onOrderCreated(orderData);
-    
+
     if (result.success) {
       // Sauvegarder la commande dans la base
       await this.saveSupplierOrder(vendorId, connectorType, orderData, result);
-      
+
       await this.logActivity(
         vendorId,
         connectorType,
         'order',
         `Commande fournisseur créée: ${result.supplierOrderId}`
       );
-      
+
       this.updateMetrics(vendorId, connectorType, { totalOrders: 1 });
     }
-    
+
     return result;
   }
-  
+
   /**
    * Sauvegarder une commande fournisseur
    */
@@ -525,31 +525,31 @@ class DropshippingConnectorService {
       console.error('[Connector] Save order error:', error);
     }
   }
-  
+
   // ==================== UTILITIES ====================
-  
+
   /**
    * Obtenir les connecteurs disponibles pour un vendeur
    */
   getAvailableConnectors(): ConnectorInfo[] {
     return ConnectorFactory.getAvailableConnectors();
   }
-  
+
   /**
    * Obtenir les connecteurs actifs pour un vendeur
    */
   getActiveConnectors(vendorId: string): ConnectorType[] {
     const active: ConnectorType[] = [];
-    
+
     for (const [key, instance] of this.instances.entries()) {
       if (key.startsWith(`${vendorId}_`)) {
         active.push(instance.connector.connectorType);
       }
     }
-    
+
     return active;
   }
-  
+
   /**
    * Obtenir les métriques d'un connecteur
    */
@@ -557,23 +557,23 @@ class DropshippingConnectorService {
     const key = this.getInstanceKey(vendorId, connectorType);
     return this.instances.get(key)?.metrics || null;
   }
-  
+
   /**
    * Déconnecter un connecteur
    */
   async disconnectConnector(vendorId: string, connectorType: ConnectorType): Promise<void> {
     const key = this.getInstanceKey(vendorId, connectorType);
     const instance = this.instances.get(key);
-    
+
     if (instance) {
       this.stopAutoSync(vendorId, connectorType);
       await instance.connector.disconnect();
       this.instances.delete(key);
-      
+
       await this.logActivity(vendorId, connectorType, 'info', `Connecteur ${connectorType} déconnecté`);
     }
   }
-  
+
   /**
    * Déconnecter tous les connecteurs d'un vendeur
    */
@@ -584,13 +584,13 @@ class DropshippingConnectorService {
       }
     }
   }
-  
+
   // ==================== PRIVATE HELPERS ====================
-  
+
   private getInstanceKey(vendorId: string, connectorType: ConnectorType): string {
     return `${vendorId}_${connectorType}`;
   }
-  
+
   private updateMetrics(
     vendorId: string,
     connectorType: ConnectorType,
@@ -598,7 +598,7 @@ class DropshippingConnectorService {
   ): void {
     const key = this.getInstanceKey(vendorId, connectorType);
     const instance = this.instances.get(key);
-    
+
     if (instance) {
       instance.metrics = {
         ...instance.metrics,
@@ -608,7 +608,7 @@ class DropshippingConnectorService {
       instance.lastActivity = new Date();
     }
   }
-  
+
   private async logActivity(
     vendorId: string,
     connectorType: ConnectorType,
@@ -619,11 +619,11 @@ class DropshippingConnectorService {
     try {
       // Mapper le logType vers les valeurs acceptées par china_dropship_logs
       const dbLogType = (logType === 'import' ? 'import' :
-                        logType === 'order' ? 'order' : 
-                        logType === 'sync' ? 'sync' : 
-                        logType === 'error' || logType === 'critical' ? 'error' : 
+                        logType === 'order' ? 'order' :
+                        logType === 'sync' ? 'sync' :
+                        logType === 'error' || logType === 'critical' ? 'error' :
                         logType === 'api' ? 'api' : 'sync') as 'sync' | 'import' | 'order' | 'alert' | 'error' | 'api';
-      
+
       await (supabase as any)
         .from('china_dropship_logs')
         .insert({

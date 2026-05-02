@@ -5,9 +5,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import MLRecommendationService, { 
-  ProductRecommendation, 
-  RecommendationConfig 
+import MLRecommendationService, {
+  ProductRecommendation,
+  RecommendationConfig
 } from '@/services/ml/MLRecommendationService';
 
 interface UseMLRecommendationsOptions extends RecommendationConfig {
@@ -85,6 +85,7 @@ export function useMLRecommendations(
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, JSON.stringify(config)]);
 
   /**

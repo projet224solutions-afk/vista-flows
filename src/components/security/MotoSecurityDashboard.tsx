@@ -9,18 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-    Shield, 
-    AlertTriangle, 
-    CheckCircle, 
+import {
+    Shield,
+    AlertTriangle,
+    CheckCircle,
     Activity,
     Bell,
-    Settings,
+    _Settings,
     Eye,
     RefreshCw,
-    TrendingUp,
-    TrendingDown,
-    MapPin,
+    _TrendingUp,
+    _TrendingDown,
+    _MapPin,
     Clock
 } from 'lucide-react';
 import { useMotoSecurity } from '@/hooks/useMotoSecurity';
@@ -34,20 +34,20 @@ interface MotoSecurityDashboardProps {
     className?: string;
 }
 
-export default function MotoSecurityDashboard({ 
-    bureauId, 
+export default function MotoSecurityDashboard({
+    bureauId,
     isPDG = false,
-    className 
+    className
 }: MotoSecurityDashboardProps) {
     const [activeTab, setActiveTab] = useState('overview');
-    const { 
-        notifications, 
-        stats, 
-        isConnected, 
-        unreadCount, 
-        markAsRead, 
-        markAllAsRead, 
-        forceSync 
+    const {
+        notifications,
+        stats,
+        isConnected,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        forceSync
     } = useMotoSecurity(bureauId, isPDG);
 
     const handleForceSync = async () => {
@@ -77,23 +77,23 @@ export default function MotoSecurityDashboard({
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
-                            <Badge 
+                            <Badge
                                 variant={isConnected ? "default" : "destructive"}
                                 className="text-sm"
                             >
                                 <Activity className="w-4 h-4 mr-1" />
                                 {isConnected ? "Connecté" : "Déconnecté"}
                             </Badge>
-                            
+
                             {unreadCount > 0 && (
                                 <Badge variant="destructive" className="text-sm">
                                     <Bell className="w-4 h-4 mr-1" />
                                     {unreadCount} non lues
                                 </Badge>
                             )}
-                            
+
                             <Button
                                 onClick={handleForceSync}
                                 variant="outline"
@@ -223,11 +223,11 @@ export default function MotoSecurityDashboard({
                             <CardContent>
                                 <div className="space-y-3">
                                     {notifications.slice(0, 3).map((notification) => (
-                                        <div 
+                                        <div
                                             key={notification.id}
                                             className={`p-3 rounded-lg border ${
-                                                notification.read_at 
-                                                    ? 'bg-gray-50 border-gray-200' 
+                                                notification.read_at
+                                                    ? 'bg-gray-50 border-gray-200'
                                                     : 'bg-blue-50 border-blue-200'
                                             }`}
                                         >
@@ -246,7 +246,7 @@ export default function MotoSecurityDashboard({
                                             </div>
                                         </div>
                                     ))}
-                                    
+
                                     {notifications.length === 0 && (
                                         <p className="text-gray-500 text-sm text-center py-4">
                                             Aucune notification récente
@@ -260,7 +260,7 @@ export default function MotoSecurityDashboard({
 
                 {/* Déclaration de vol */}
                 <TabsContent value="report" className="space-y-6">
-                    <ReportStolenMoto 
+                    <ReportStolenMoto
                         onSuccess={() => {
                             setActiveTab('alerts');
                             toast.success('✅ Déclaration enregistrée - Vérifiez les alertes');
@@ -270,7 +270,7 @@ export default function MotoSecurityDashboard({
 
                 {/* Gestion des alertes */}
                 <TabsContent value="alerts" className="space-y-6">
-                    <MotoSecurityAlerts 
+                    <MotoSecurityAlerts
                         bureauId={bureauId}
                         isPDG={isPDG}
                     />
@@ -299,11 +299,11 @@ export default function MotoSecurityDashboard({
                         <CardContent>
                             <div className="space-y-3">
                                 {notifications.map((notification) => (
-                                    <div 
+                                    <div
                                         key={notification.id}
                                         className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                                            notification.read_at 
-                                                ? 'bg-gray-50 border-gray-200 hover:bg-gray-100' 
+                                            notification.read_at
+                                                ? 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                                                 : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
                                         }`}
                                         onClick={() => markAsRead(notification.id)}
@@ -343,7 +343,7 @@ export default function MotoSecurityDashboard({
                                         </div>
                                     </div>
                                 ))}
-                                
+
                                 {notifications.length === 0 && (
                                     <div className="text-center py-8">
                                         <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />

@@ -15,8 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  RefreshCw, Search, AlertTriangle, CheckCircle, 
+import {
+  RefreshCw, Search, AlertTriangle, CheckCircle,
   TrendingUp, Calendar, Shield, Hash, ChevronLeft, ChevronRight,
   Eye, XCircle, Info, Copy, Check, Wand2, Loader2, Layers
 } from 'lucide-react';
@@ -76,7 +76,7 @@ interface IdSearchResult {
 // Format d'ID standard: 3 lettres majuscules + 4 chiffres (ex: VND0001, CLT0123, AGT0001)
 // Mais on accepte aussi les formats existants pour la recherche
 const ID_FORMAT_REGEX = /^[A-Z]{3}\d{4,}$/;
-const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
+const _SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 
 const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR', 'USR'];
 
@@ -161,12 +161,12 @@ export default function IdNormalizationAudit() {
 
     // Vérifier si c'est un format standard
     const isStandardFormat = ID_FORMAT_REGEX.test(upperCaseId);
-    
+
     // Accepter n'importe quel format alphanumérique pour la recherche
     if (!/^[A-Z0-9]{3,}$/i.test(upperCaseId)) {
-      return { 
-        valid: false, 
-        error: 'L\'ID doit contenir uniquement des lettres et chiffres' 
+      return {
+        valid: false,
+        error: 'L\'ID doit contenir uniquement des lettres et chiffres'
       };
     }
 
@@ -211,10 +211,10 @@ export default function IdNormalizationAudit() {
 
       // Filter non-standard IDs
       const nonStandardIds = (userIdsData || []).filter(item => !isStandardFormat(item.custom_id));
-      
+
       // Get profiles for these users
       const userIds = nonStandardIds.map(item => item.user_id);
-      
+
       if (userIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -247,7 +247,7 @@ export default function IdNormalizationAudit() {
   // Search for a specific ID
   const handleSearchId = async () => {
     const normalizedId = searchId.toUpperCase().trim();
-    
+
     const validation = validateSearchId(normalizedId);
     if (!validation.valid) {
       setSearchError(validation.error || 'Format invalide');
@@ -261,7 +261,8 @@ export default function IdNormalizationAudit() {
 
     try {
       // Search in user_ids table - exact match first
-      let { data: userIdData, error: userIdError } = await supabase
+      // eslint-disable-next-line prefer-const
+      let { data: userIdData, error: _userIdError } = await supabase
         .from('user_ids')
         .select('*')
         .eq('custom_id', normalizedId)
@@ -291,7 +292,7 @@ export default function IdNormalizationAudit() {
           .select('role, full_name, email')
           .eq('id', userIdData.user_id)
           .maybeSingle();
-        
+
         profileData = pData;
         userRole = pData?.role || undefined;
       }
@@ -376,53 +377,53 @@ export default function IdNormalizationAudit() {
       'vendor': 'vendor',
       'vendeur': 'vendor',
       'vnd': 'vendor',
-      
-      // Clients  
+
+      // Clients
       'client': 'client',
       'clt': 'client',
       'customer': 'client',
-      
+
       // Agents
       'agent': 'agent',
       'agt': 'agent',
       'sous-agent': 'agent',
       'sub_agent': 'agent',
-      
+
       // Chauffeurs/Livreurs
       'driver': 'driver',
       'drv': 'driver',
       'chauffeur': 'driver',
-      
+
       // Taxi-Moto (TAX)
       'taxi': 'taxi',
       'tax': 'taxi',
       'taxi-moto': 'taxi',
       'taxi_moto': 'taxi',
       'taximan': 'taxi',
-      
+
       // Livreurs (LIV)
       'livreur': 'livreur',
       'liv': 'livreur',
       'delivery': 'livreur',
       'coursier': 'livreur',
-      
+
       // Bureaux/Syndicats
       'bureau': 'bureau',
       'bur': 'bureau',
       'bst': 'bureau',
       'syndicat': 'bureau',
-      
+
       // PDG/Admin
       'pdg': 'pdg',
       'ceo': 'pdg',
       'admin': 'pdg',
       'administrator': 'pdg',
-      
+
       // Transitaires
       'transitaire': 'transitaire',
       'trs': 'transitaire',
       'freight': 'transitaire',
-      
+
       // Workers
       'worker': 'worker',
       'wrk': 'worker',
@@ -432,7 +433,7 @@ export default function IdNormalizationAudit() {
     };
 
     const result = mapping[roleStr] || null;
-    
+
     // Si pas de correspondance directe, essayer une détection partielle
     if (!result) {
       // Vérifier si le rôle contient un préfixe connu
@@ -443,7 +444,7 @@ export default function IdNormalizationAudit() {
         }
       }
     }
-    
+
     console.log('🔍 Mapped result:', result);
     return result;
   };
@@ -700,11 +701,11 @@ export default function IdNormalizationAudit() {
 
       const logsData = normData || [];
       const userIds = userIdsData || [];
-      
+
       // Calculate standard vs non-standard format counts
       let standardFormatCount = 0;
       let nonStandardFormatCount = 0;
-      
+
       userIds.forEach(item => {
         if (isStandardFormat(item.custom_id)) {
           standardFormatCount++;
@@ -712,7 +713,7 @@ export default function IdNormalizationAudit() {
           nonStandardFormatCount++;
         }
       });
-      
+
       const byRole: Record<string, number> = {};
       const byReason: Record<string, number> = {};
       const dailyCounts: Record<string, number> = {};
@@ -791,6 +792,7 @@ export default function IdNormalizationAudit() {
     loadLogs();
     loadAllUserIds();
     loadNonStandardUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadStats, loadLogs]);
 
   const handleRefresh = () => {
@@ -820,7 +822,7 @@ export default function IdNormalizationAudit() {
       'transitaire': 'bg-orange-500',
       'worker': 'bg-lime-500',
     };
-    
+
     // Trouver le label à afficher
     const roleLabels: Record<string, string> = {
       'vendor': 'VND',
@@ -839,7 +841,7 @@ export default function IdNormalizationAudit() {
       'transitaire': 'TRS',
       'worker': 'WRK',
     };
-    
+
     return (
       <Badge className={`${colors[roleStr] || 'bg-gray-500'} text-white`}>
         {roleLabels[roleStr] || role.toUpperCase()}
@@ -850,8 +852,8 @@ export default function IdNormalizationAudit() {
   const getReasonBadge = (reason: string) => {
     const info = REASONS_MAP[reason] || { label: reason, color: '#6B7280' };
     return (
-      <Badge 
-        variant="outline" 
+      <Badge
+        variant="outline"
         style={{ borderColor: info.color, color: info.color }}
       >
         {info.label}
@@ -1075,7 +1077,7 @@ export default function IdNormalizationAudit() {
                         const isLegacyClientPrefix = prefix === 'CLI';
                         const isValidPrefix = VALID_PREFIXES.includes(prefix);
                         const hasCorrectLength = item.custom_id?.length >= 7;
-                        
+
                         let problem = '';
                         if (isLegacyClientPrefix) {
                           problem = 'Ancien préfixe client "CLI" à migrer vers "CLT"';
@@ -1088,7 +1090,7 @@ export default function IdNormalizationAudit() {
                         } else if (!ID_FORMAT_REGEX.test(item.custom_id)) {
                           problem = 'Format incorrect';
                         }
-                        
+
                         return (
                           <TableRow key={item.id} className="bg-yellow-500/5">
                             <TableCell>
@@ -1165,7 +1167,7 @@ export default function IdNormalizationAudit() {
                   </Table>
                 </ScrollArea>
               )}
-              
+
               {/* Summary */}
               {nonStandardUsers.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
@@ -1239,8 +1241,8 @@ export default function IdNormalizationAudit() {
                   )}
                 </div>
                 <div className="flex items-end">
-                  <Button 
-                    onClick={handleSearchId} 
+                  <Button
+                    onClick={handleSearchId}
                     disabled={searching || !searchId}
                     className="gap-2"
                   >
@@ -1323,8 +1325,8 @@ export default function IdNormalizationAudit() {
                             </h5>
                             <div className="space-y-2">
                               {searchResult.normalization_history.map((log) => (
-                                <div 
-                                  key={log.id} 
+                                <div
+                                  key={log.id}
                                   className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 bg-muted/50 rounded-lg text-sm"
                                 >
                                   <span className="text-muted-foreground whitespace-nowrap">
@@ -1624,13 +1626,13 @@ export default function IdNormalizationAudit() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stats?.dailyTrends || []}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={(v) => format(new Date(v), 'dd/MM')}
                         fontSize={12}
                       />
                       <YAxis fontSize={12} />
-                      <Tooltip 
+                      <Tooltip
                         labelFormatter={(v) => format(new Date(v), 'dd MMMM yyyy', { locale: fr })}
                       />
                       <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />

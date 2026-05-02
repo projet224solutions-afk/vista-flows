@@ -177,7 +177,7 @@ export class DriverSubscriptionService {
         console.error('Erreur récupération abonnement:', error);
         return null; // Au lieu de throw
       }
-      
+
       if (data && data.length > 0) {
         return { ...data[0], user_id: userId } as DriverSubscription;
       }
@@ -219,7 +219,7 @@ export class DriverSubscriptionService {
         const endDate = new Date(data.end_date);
         const now = new Date();
         const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         return {
           id: data.id,
           user_id: data.user_id,
@@ -269,10 +269,10 @@ export class DriverSubscriptionService {
 
       if (subError) {
         console.error('Erreur création abonnement:', subError);
-        
+
         // Extraire le message d'erreur pour l'affichage
         const errorMessage = subError.message || 'Erreur création abonnement';
-        
+
         if (errorMessage.includes('Solde insuffisant')) {
           return { success: false, error: 'Solde insuffisant' };
         }
@@ -282,7 +282,7 @@ export class DriverSubscriptionService {
         if (errorMessage.includes('Configuration')) {
           return { success: false, error: 'Configuration non disponible' };
         }
-        
+
         return { success: false, error: errorMessage };
       }
 

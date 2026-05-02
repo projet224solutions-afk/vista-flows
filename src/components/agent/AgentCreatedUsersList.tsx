@@ -13,11 +13,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  Users, 
-  Search, 
-  Phone, 
-  Mail, 
+import {
+  Users,
+  Search,
+  Phone,
+  Mail,
   RefreshCw,
   UserCheck,
   UserX,
@@ -62,7 +62,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      
+
       // Appeler l'edge function pour récupérer les utilisateurs
       const { data, error } = await supabase.functions.invoke('get-agent-users', {
         body: {}
@@ -176,7 +176,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-6">
         {/* Search */}
         <div className="relative mb-6">
@@ -197,8 +197,8 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
               {searchQuery ? 'Aucun résultat' : 'Aucun utilisateur créé'}
             </h3>
             <p className="text-slate-500 text-sm">
-              {searchQuery 
-                ? 'Aucun utilisateur ne correspond à votre recherche' 
+              {searchQuery
+                ? 'Aucun utilisateur ne correspond à votre recherche'
                 : 'Commencez à créer des utilisateurs pour les voir ici'}
             </p>
           </div>

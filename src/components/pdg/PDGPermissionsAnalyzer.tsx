@@ -27,13 +27,13 @@ export function PDGPermissionsAnalyzer() {
     try {
       // 1. Vérifier les tables principales
       results['Tables'] = await checkTables();
-      
+
       // 2. Vérifier les agents
       results['Agents'] = await checkAgents();
-      
+
       // 3. Vérifier les permissions
       results['Permissions'] = await checkPermissions();
-      
+
       setAnalysis(results);
     } catch (error) {
       console.error('Erreur analyse:', error);
@@ -72,7 +72,7 @@ export function PDGPermissionsAnalyzer() {
             message: `Table '${table}' présente et accessible`
           });
         }
-      } catch (err) {
+      } catch (_err) {
         results.push({
           status: 'error',
           message: `Erreur vérification table '${table}'`,
@@ -114,7 +114,7 @@ export function PDGPermissionsAnalyzer() {
           });
         }
       }
-    } catch (err) {
+    } catch (_err) {
       results.push({
         status: 'error',
         message: 'Erreur vérification agents',
@@ -160,7 +160,7 @@ export function PDGPermissionsAnalyzer() {
           });
         }
       }
-    } catch (err) {
+    } catch (_err) {
       results.push({
         status: 'error',
         message: 'Erreur vérification permissions',
@@ -202,6 +202,7 @@ export function PDGPermissionsAnalyzer() {
 
   useEffect(() => {
     runAnalysis();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -215,7 +216,7 @@ export function PDGPermissionsAnalyzer() {
                 Vérifie l'intégrité du système de permissions agents
               </CardDescription>
             </div>
-            <Button 
+            <Button
               onClick={runAnalysis}
               disabled={loading}
               size="sm"

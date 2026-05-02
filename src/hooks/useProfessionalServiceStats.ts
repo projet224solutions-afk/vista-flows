@@ -105,18 +105,18 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
         if (appointmentsResult.status === 'fulfilled' && appointmentsResult.value.data) {
           const appointments = appointmentsResult.value.data;
           const completedAppointments = appointments.filter(a => a.status === 'completed');
-          
+
           serviceStats.ordersCount = appointments.length;
           serviceStats.pendingCount = appointments.filter(a => a.status === 'pending' || a.status === 'confirmed').length;
           serviceStats.revenue = completedAppointments.reduce((sum, a) => sum + (a.total_price || 0), 0);
-          
+
           serviceStats.todayRevenue = completedAppointments
             .filter(a => new Date(a.appointment_date) >= startOfDay)
             .reduce((sum, a) => sum + (a.total_price || 0), 0);
           serviceStats.monthRevenue = completedAppointments
             .filter(a => new Date(a.appointment_date) >= startOfMonth)
             .reduce((sum, a) => sum + (a.total_price || 0), 0);
-          
+
           serviceStats.hasData = appointments.length > 0;
         }
 
@@ -145,26 +145,26 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
         if (ordersResult.status === 'fulfilled' && ordersResult.value.data) {
           const orders = ordersResult.value.data;
           const completedOrders = orders.filter(o => o.status === 'completed' || o.status === 'delivered');
-          
+
           serviceStats.ordersCount = orders.length;
           serviceStats.pendingCount = orders.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.status || '')).length;
           serviceStats.revenue = completedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-          
+
           const dineIn = completedOrders.filter(o => o.order_type === 'dine_in' || o.order_type === 'sur_place');
           const delivery = completedOrders.filter(o => o.order_type === 'delivery' || o.order_type === 'takeaway' || o.order_type === 'livraison');
-          
+
           serviceStats.revenuePos = dineIn.reduce((sum, o) => sum + (o.total || 0), 0);
           serviceStats.revenueOnline = delivery.reduce((sum, o) => sum + (o.total || 0), 0);
           serviceStats.ordersPos = dineIn.length;
           serviceStats.ordersOnline = delivery.length;
-          
+
           serviceStats.todayRevenue = completedOrders
             .filter(o => new Date(o.created_at || '') >= startOfDay)
             .reduce((sum, o) => sum + (o.total || 0), 0);
           serviceStats.monthRevenue = completedOrders
             .filter(o => new Date(o.created_at || '') >= startOfMonth)
             .reduce((sum, o) => sum + (o.total || 0), 0);
-          
+
           serviceStats.hasData = orders.length > 0;
         }
 
@@ -218,41 +218,41 @@ export function useProfessionalServiceStats({ serviceId, serviceTypeCode }: UseP
       } else if (code.includes('ecommerce') || code.includes('boutique') || code.includes('shop') || code.includes('commerce')) {
         // Stats pour boutique e-commerce
         console.log('🛒 Service e-commerce détecté - serviceId:', serviceId);
-        
+
         // Vérifier d'abord si ce service a des produits dans service_products
         const { data: productsData, error: productsError } = await supabase
           .from('service_products')
           .select('id, is_available, price')
           .eq('professional_service_id', serviceId);
-        
+
         console.log('📦 Produits (service_products) trouvés:', productsData?.length || 0, 'erreur:', productsError);
-        
+
         if (productsData && productsData.length > 0) {
           serviceStats.productsCount = productsData.filter(p => p.is_available).length;
           serviceStats.hasData = true;
         }
-        
+
         // Vérifier les commandes/réservations liées au professional_service
         const { data: bookingsData, error: bookingsError } = await supabase
           .from('service_bookings')
           .select('id, status, total_amount, created_at')
           .eq('professional_service_id', serviceId);
-        
+
         console.log('📋 Réservations (service_bookings) trouvées:', bookingsData?.length || 0, 'erreur:', bookingsError);
-        
+
         if (bookingsData && bookingsData.length > 0) {
           const completedBookings = bookingsData.filter(b => b.status === 'completed');
           serviceStats.ordersCount = bookingsData.length;
           serviceStats.pendingCount = bookingsData.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
           serviceStats.revenue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
-          
+
           serviceStats.todayRevenue = completedBookings
             .filter(b => new Date(b.created_at) >= startOfDay)
             .reduce((sum, b) => sum + (b.total_amount || 0), 0);
           serviceStats.monthRevenue = completedBookings
             .filter(b => new Date(b.created_at) >= startOfMonth)
             .reduce((sum, b) => sum + (b.total_amount || 0), 0);
-          
+
           serviceStats.hasData = true;
         }
       } else {

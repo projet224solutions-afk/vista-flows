@@ -108,17 +108,17 @@ export function UnifiedTransferDialog({
       setWalletCurrency(propCurrency);
       return;
     }
-    
+
     const loadWalletCurrency = async () => {
       if (!user?.id) return;
-      
+
       try {
         const { data } = await supabase
           .from('wallets')
           .select('currency')
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         if (data?.currency) {
           setWalletCurrency(data.currency);
         }
@@ -126,7 +126,7 @@ export function UnifiedTransferDialog({
         console.error('Erreur chargement devise wallet:', error);
       }
     };
-    
+
     loadWalletCurrency();
   }, [user?.id, propCurrency]);
 
@@ -165,6 +165,14 @@ export function UnifiedTransferDialog({
           fee_amount: previewData.fee_amount || 0,
           amount_after_fee: previewData.amount_after_fee || 0,
           rate_displayed: previewData.rate_displayed || 1,
+          official_rate: previewData.official_rate,
+          fx_margin: previewData.fx_margin,
+          rate_source: previewData.rate_source,
+          rate_fetched_at: previewData.rate_fetched_at,
+          rate_source_type: previewData.rate_source_type,
+          rate_source_url: previewData.rate_source_url,
+          rate_is_official: previewData.rate_is_official,
+          rate_is_stale: previewData.rate_is_stale,
           amount_received: previewData.amount_received || 0,
           currency_received: previewData.currency_received || walletCurrency,
           is_international: true,
@@ -448,7 +456,7 @@ export function UnifiedTransferDialog({
                     <span className="text-lg font-bold">{preview?.amount_received?.toLocaleString()} {walletCurrency}</span>
                   </div>
                 </div>
-                
+
                 <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm">
                     <strong>Solde actuel:</strong> {preview?.current_balance?.toLocaleString()} {walletCurrency}

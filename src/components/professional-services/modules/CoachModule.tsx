@@ -12,9 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Dumbbell, 
-  Users, 
+import {
+  Dumbbell,
+  Users,
   Calendar,
   Clock,
   Target,
@@ -22,8 +22,8 @@ import {
   Plus,
   User,
   Activity,
-  CheckCircle,
-  Star,
+  _CheckCircle,
+  _Star,
   MapPin
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -77,7 +77,7 @@ interface Session {
   notes?: string;
 }
 
-export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
+export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
   const [activeTab, setActiveTab] = useState('clients');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);

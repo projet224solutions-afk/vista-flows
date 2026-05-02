@@ -5,6 +5,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { env } from '../config/env.js';
@@ -19,6 +21,64 @@ export interface AuthenticatedUser {
 
 export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
+}
+
+interface JwtFallbackPayload {
+  sub: string;
+  email?: string;
+  role?: string;
+  exp?: number;
+  [key: string]: unknown;
+}
+
+function isTransientSupabaseAuthError(message: string): boolean {
+  return /fetch failed|timeout|timed out|econnreset|connect timeout|network/i.test(message);
+}
+
+async function buildAuthenticatedUser(userId: string, email: string, fallbackRole?: string, emailConfirmedAt?: string | null): Promise<AuthenticatedUser> {
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  return {
+    id: userId,
+    email,
+    role: profile?.role || fallbackRole || 'client',
+    profile: profile || null,
+    emailConfirmedAt: emailConfirmedAt ?? null,
+  };
+}
+
+async function resolveUserFromToken(token: string): Promise<AuthenticatedUser | null> {
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (!error && user) {
+    return buildAuthenticatedUser(user.id, user.email || '', undefined, user.email_confirmed_at);
+  }
+
+  const errorMessage = String(error?.message || 'No user returned');
+  if (!env.JWT_SECRET || !isTransientSupabaseAuthError(errorMessage)) {
+    if (error || !user) {
+      logger.warn(`Invalid token attempt: ${errorMessage}`);
+    }
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtFallbackPayload;
+    if (!decoded?.sub) {
+      logger.warn('JWT fallback verification failed: missing subject');
+      return null;
+    }
+
+    logger.warn(`Supabase auth unavailable, using local JWT fallback for ${decoded.sub}`);
+    return buildAuthenticatedUser(decoded.sub, String(decoded.email || ''), typeof decoded.role === 'string' ? decoded.role : undefined, null);
+  } catch (jwtError: any) {
+    logger.warn(`Invalid token attempt after JWT fallback: ${jwtError?.message || jwtError}`);
+    return null;
+  }
 }
 
 /**
@@ -38,35 +98,20 @@ export async function verifyJWT(req: AuthenticatedRequest, res: Response, next: 
       return;
     }
 
-    // Verify with Supabase
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    const authenticatedUser = await resolveUserFromToken(token);
 
-    if (error || !user) {
-      logger.warn(`Invalid token attempt: ${error?.message || 'No user returned'}`);
+    if (!authenticatedUser) {
       res.status(403).json({
         success: false,
         error: 'Token expiré ou invalide',
-        message: error?.message || 'Le token n\'est pas valide'
+        message: 'Le token n\'est pas valide'
       });
       return;
     }
 
-    // Load profile
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    req.user = authenticatedUser;
 
-    req.user = {
-      id: user.id,
-      email: user.email || '',
-      role: profile?.role || 'client',
-      profile: profile || null,
-      emailConfirmedAt: user.email_confirmed_at
-    };
-
-    logger.info(`Authenticated: ${user.id} (${user.email})`);
+    logger.info(`Authenticated: ${authenticatedUser.id} (${authenticatedUser.email})`);
     next();
   } catch (error: any) {
     logger.error(`Auth middleware error: ${error.message}`);
@@ -90,20 +135,9 @@ export async function optionalJWT(req: AuthenticatedRequest, res: Response, next
   }
 
   try {
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (user) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      req.user = {
-        id: user.id,
-        email: user.email || '',
-        role: profile?.role || 'client',
-        profile: profile || null
-      };
+    const authenticatedUser = await resolveUserFromToken(token);
+    if (authenticatedUser) {
+      req.user = authenticatedUser;
     }
   } catch {
     // Silent fail - user remains anonymous
@@ -144,7 +178,19 @@ export function authenticateInternal(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  if (!env.INTERNAL_API_KEY || apiKey !== env.INTERNAL_API_KEY) {
+  // Timing-safe comparison — empêche les attaques par timing sur la clé API
+  if (!env.INTERNAL_API_KEY) {
+    logger.error('INTERNAL_API_KEY not configured');
+    res.status(503).json({ success: false, error: 'Service unavailable' });
+    return;
+  }
+
+  const expected = Buffer.from(env.INTERNAL_API_KEY, 'utf8');
+  const received = Buffer.from(apiKey.padEnd(env.INTERNAL_API_KEY.length, '\0').slice(0, env.INTERNAL_API_KEY.length), 'utf8');
+  const valid = expected.length === apiKey.length &&
+    crypto.timingSafeEqual(expected, received);
+
+  if (!valid) {
     logger.warn(`Invalid internal API key from IP: ${req.ip}`);
     res.status(403).json({ success: false, error: 'Invalid API key' });
     return;

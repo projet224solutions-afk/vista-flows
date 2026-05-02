@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserPlus, Settings, MessageSquare, Copy, ExternalLink, Edit, TrendingUp, Activity } from 'lucide-react';
+import { Users, UserPlus, _Settings, MessageSquare, Copy, ExternalLink, Edit, _TrendingUp, Activity } from 'lucide-react';
 import { useVendorAgentsData, type VendorAgent } from '@/hooks/useVendorAgentsData';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,14 +16,14 @@ import ProfessionalMessaging from '@/components/messaging/ProfessionalMessaging'
 import { OptimizedPasswordInput } from '@/components/ui/OptimizedPasswordInput';
 
 export default function AgentManagement() {
-  const { 
-    agents, 
-    loading, 
+  const {
+    agents,
+    loading,
     stats,
-    createAgent, 
+    createAgent,
     updateAgent,
     deleteAgent,
-    toggleAgentStatus 
+    toggleAgentStatus
   } = useVendorAgentsData();
   const { toast } = useToast();
 
@@ -285,7 +285,7 @@ export default function AgentManagement() {
 
   const handleCreateAgent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.phone) {
       toast({
         title: "❌ Champs manquants",
@@ -436,7 +436,7 @@ export default function AgentManagement() {
                 </div>
               </div>
             </div>
-            
+
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => {
@@ -527,8 +527,8 @@ export default function AgentManagement() {
                       value={formData.agent_type}
                       onValueChange={(value) => {
                         const newPermissions = getDefaultPermissionsByType(value);
-                        setFormData({ 
-                          ...formData, 
+                        setFormData({
+                          ...formData,
                           agent_type: value as any,
                           permissions: newPermissions
                         });
@@ -600,9 +600,9 @@ export default function AgentManagement() {
                         {Object.entries(formData.permissions)
                           .filter(([_, value]) => value)
                           .map(([key]) => (
-                            <Badge 
-                              key={key} 
-                              variant="secondary" 
+                            <Badge
+                              key={key}
+                              variant="secondary"
                               className="text-xs bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20"
                             >
                               {key.replace(/_/g, ' ')}
@@ -613,13 +613,13 @@ export default function AgentManagement() {
                         <p className="text-xs text-muted-foreground italic">Aucune permission active</p>
                       )}
                     </div>
-                    
+
                     {/* Vue d'ensemble */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-muted-foreground">Vue d'ensemble</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="view_dashboard"
                             checked={formData.permissions.view_dashboard}
                             onCheckedChange={(checked) => setFormData({
@@ -630,7 +630,7 @@ export default function AgentManagement() {
                           <label htmlFor="view_dashboard" className="text-sm">Dashboard</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="view_analytics"
                             checked={formData.permissions.view_analytics}
                             onCheckedChange={(checked) => setFormData({
@@ -648,7 +648,7 @@ export default function AgentManagement() {
                       <Label className="text-sm font-medium text-muted-foreground">Ventes & Commerce</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_pos"
                             checked={formData.permissions.access_pos}
                             onCheckedChange={(checked) => setFormData({
@@ -659,7 +659,7 @@ export default function AgentManagement() {
                           <label htmlFor="access_pos" className="text-sm">Point de vente</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_products"
                             checked={formData.permissions.manage_products}
                             onCheckedChange={(checked) => setFormData({
@@ -670,7 +670,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_products" className="text-sm">Produits</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_orders"
                             checked={formData.permissions.manage_orders}
                             onCheckedChange={(checked) => setFormData({
@@ -681,7 +681,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_orders" className="text-sm">Commandes</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_inventory"
                             checked={formData.permissions.manage_inventory}
                             onCheckedChange={(checked) => setFormData({
@@ -692,7 +692,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_inventory" className="text-sm">Inventaire</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_warehouse"
                             checked={formData.permissions.manage_warehouse}
                             onCheckedChange={(checked) => setFormData({
@@ -703,7 +703,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_warehouse" className="text-sm">Entrepôts</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_suppliers"
                             checked={formData.permissions.manage_suppliers}
                             onCheckedChange={(checked) => setFormData({
@@ -721,7 +721,7 @@ export default function AgentManagement() {
                       <Label className="text-sm font-medium text-muted-foreground">Clients & Marketing</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_agents"
                             checked={formData.permissions.manage_agents}
                             onCheckedChange={(checked) => setFormData({
@@ -732,7 +732,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_agents" className="text-sm">Agents</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_clients"
                             checked={formData.permissions.manage_clients}
                             onCheckedChange={(checked) => setFormData({
@@ -743,7 +743,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_clients" className="text-sm">Clients</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_prospects"
                             checked={formData.permissions.manage_prospects}
                             onCheckedChange={(checked) => setFormData({
@@ -754,7 +754,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_prospects" className="text-sm">Prospects</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_marketing"
                             checked={formData.permissions.manage_marketing}
                             onCheckedChange={(checked) => setFormData({
@@ -772,7 +772,7 @@ export default function AgentManagement() {
                       <Label className="text-sm font-medium text-muted-foreground">Finances</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_wallet"
                             checked={formData.permissions.access_wallet}
                             onCheckedChange={(checked) => setFormData({
@@ -783,7 +783,7 @@ export default function AgentManagement() {
                           <label htmlFor="access_wallet" className="text-sm">Wallet</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_payments"
                             checked={formData.permissions.manage_payments}
                             onCheckedChange={(checked) => setFormData({
@@ -794,7 +794,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_payments" className="text-sm">Paiements</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_payment_links"
                             checked={formData.permissions.manage_payment_links}
                             onCheckedChange={(checked) => setFormData({
@@ -805,7 +805,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_payment_links" className="text-sm">Liens de paiement</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_expenses"
                             checked={formData.permissions.manage_expenses}
                             onCheckedChange={(checked) => setFormData({
@@ -816,7 +816,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_expenses" className="text-sm">Dépenses</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_debts"
                             checked={formData.permissions.manage_debts}
                             onCheckedChange={(checked) => setFormData({
@@ -827,7 +827,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_debts" className="text-sm">Dettes</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_affiliate"
                             checked={formData.permissions.access_affiliate}
                             onCheckedChange={(checked) => setFormData({
@@ -845,7 +845,7 @@ export default function AgentManagement() {
                       <Label className="text-sm font-medium text-muted-foreground">Support & Outils</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_delivery"
                             checked={formData.permissions.manage_delivery}
                             onCheckedChange={(checked) => setFormData({
@@ -856,7 +856,7 @@ export default function AgentManagement() {
                           <label htmlFor="manage_delivery" className="text-sm">Livraisons</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_support"
                             checked={formData.permissions.access_support}
                             onCheckedChange={(checked) => setFormData({
@@ -867,7 +867,7 @@ export default function AgentManagement() {
                           <label htmlFor="access_support" className="text-sm">Support Tickets</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_communication"
                             checked={formData.permissions.access_communication}
                             onCheckedChange={(checked) => setFormData({
@@ -878,7 +878,7 @@ export default function AgentManagement() {
                           <label htmlFor="access_communication" className="text-sm">Communication</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="view_reports"
                             checked={formData.permissions.view_reports}
                             onCheckedChange={(checked) => setFormData({
@@ -896,7 +896,7 @@ export default function AgentManagement() {
                       <Label className="text-sm font-medium text-muted-foreground">Configuration</Label>
                       <div className="grid grid-cols-2 gap-2 pl-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="access_settings"
                             checked={formData.permissions.access_settings}
                             onCheckedChange={(checked) => setFormData({
@@ -985,7 +985,7 @@ export default function AgentManagement() {
                   <p className="text-muted-foreground mb-6">
                     Commencez par ajouter votre premier agent pour déléguer des responsabilités
                   </p>
-                  <Button 
+                  <Button
                     onClick={() => setIsCreateDialogOpen(true)}
                     className="bg-vendeur-gradient"
                   >
@@ -1034,10 +1034,10 @@ export default function AgentManagement() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
+                            <Badge
                               variant={agent.is_active ? 'default' : 'secondary'}
-                              className={agent.is_active 
-                                ? 'bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20' 
+                              className={agent.is_active
+                                ? 'bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20'
                                 : ''
                               }
                             >

@@ -6,7 +6,7 @@
 
 import { useState, useCallback } from 'react';
 
-export type ClientErrorType = 
+export type ClientErrorType =
   | 'ORDER_ERROR'
   | 'PAYMENT_ERROR'
   | 'CART_ERROR'

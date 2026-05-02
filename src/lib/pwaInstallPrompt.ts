@@ -3,7 +3,7 @@
  *
  * Objectif: ne jamais rater l'événement `beforeinstallprompt` (qui peut arriver
  * tôt), et permettre à plusieurs composants/hooks d'y accéder.
- * 
+ *
  * Version 2: Protection contre les erreurs HMR et SSR.
  */
 

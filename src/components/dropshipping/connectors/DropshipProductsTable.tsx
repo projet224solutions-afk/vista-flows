@@ -2,7 +2,7 @@
  * DROPSHIP PRODUCTS TABLE
  * Table de gestion des produits dropshipping importés
  * Affiche les produits, leur statut de sync, et les actions disponibles
- * 
+ *
  * @module DropshipProductsTable
  * @version 1.0.0
  * @author 224Solutions
@@ -59,7 +59,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Filter
+  _Filter
 } from 'lucide-react';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
@@ -114,10 +114,10 @@ function SyncStatusBadge({ status, lastSync }: { status: string; lastSync: strin
         return { icon: AlertTriangle, label: 'Jamais', variant: 'outline' as const, className: '' };
     }
   };
-  
+
   const config = getStatusConfig();
   const Icon = config.icon;
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -152,9 +152,9 @@ function StockStatusBadge({ status, quantity }: { status: string; quantity: numb
         return { label: 'Inconnu', className: 'bg-gray-100 text-gray-800' };
     }
   };
-  
+
   const config = getConfig();
-  
+
   return (
     <Badge variant="outline" className={config.className}>
       {config.label}
@@ -164,7 +164,7 @@ function StockStatusBadge({ status, quantity }: { status: string; quantity: numb
 
 function PriceChangeIndicator({ change, pct }: { change: string | null; pct: number | null }) {
   if (!change || change === 'stable') return <Minus className="w-4 h-4 text-muted-foreground" />;
-  
+
   if (change === 'up') {
     return (
       <TooltipProvider>
@@ -181,7 +181,7 @@ function PriceChangeIndicator({ change, pct }: { change: string | null; pct: num
       </TooltipProvider>
     );
   }
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -216,7 +216,7 @@ export function DropshipProductsTable({
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
-  
+
   // Filtrage des produits
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -224,28 +224,28 @@ export function DropshipProductsTable({
       if (searchQuery && !product.title.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      
+
       // Filtre par connecteur
       if (filterConnector !== 'all' && product.sourceConnector !== filterConnector) {
         return false;
       }
-      
+
       // Filtre par statut
       if (filterStatus === 'published' && !product.isPublished) return false;
       if (filterStatus === 'draft' && product.isPublished) return false;
       if (filterStatus === 'error' && product.syncStatus !== 'error') return false;
       if (filterStatus === 'out_of_stock' && product.stockStatus !== 'out_of_stock') return false;
-      
+
       return true;
     });
   }, [products, searchQuery, filterConnector, filterStatus]);
-  
+
   // Liste des connecteurs uniques
   const connectors = useMemo(() => {
     const unique = new Set(products.map(p => p.sourceConnector));
     return Array.from(unique);
   }, [products]);
-  
+
   // Sélection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -254,7 +254,7 @@ export function DropshipProductsTable({
       setSelectedProducts(new Set());
     }
   };
-  
+
   const handleSelectOne = (productId: string, checked: boolean) => {
     const newSelected = new Set(selectedProducts);
     if (checked) {
@@ -264,21 +264,21 @@ export function DropshipProductsTable({
     }
     setSelectedProducts(newSelected);
   };
-  
+
   // Refresh individuel
   const handleRefresh = async (productId: string) => {
     setRefreshingId(productId);
     await onRefreshProduct(productId);
     setRefreshingId(null);
   };
-  
+
   // Refresh tous
   const handleRefreshAll = async () => {
     setRefreshingAll(true);
     await onRefreshAll();
     setRefreshingAll(false);
   };
-  
+
   return (
     <div className="space-y-4">
       {/* Barre d'outils */}
@@ -294,7 +294,7 @@ export function DropshipProductsTable({
               className="pl-9"
             />
           </div>
-          
+
           {/* Filtre connecteur */}
           <Select value={filterConnector} onValueChange={setFilterConnector}>
             <SelectTrigger className="w-[150px]">
@@ -307,7 +307,7 @@ export function DropshipProductsTable({
               ))}
             </SelectContent>
           </Select>
-          
+
           {/* Filtre statut */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[150px]">
@@ -322,7 +322,7 @@ export function DropshipProductsTable({
             </SelectContent>
           </Select>
         </div>
-        
+
         {/* Actions */}
         <div className="flex gap-2">
           {selectedProducts.size > 0 && (
@@ -330,7 +330,7 @@ export function DropshipProductsTable({
               {selectedProducts.size} sélectionné(s)
             </Button>
           )}
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -346,7 +346,7 @@ export function DropshipProductsTable({
           </Button>
         </div>
       </div>
-      
+
       {/* Statistiques rapides */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-muted/50 rounded-lg p-3">
@@ -372,7 +372,7 @@ export function DropshipProductsTable({
           </p>
         </div>
       </div>
-      
+
       {/* Table */}
       <div className="border rounded-lg overflow-hidden">
         <Table>
@@ -395,7 +395,7 @@ export function DropshipProductsTable({
               <TableHead className="w-[60px]"></TableHead>
             </TableRow>
           </TableHeader>
-          
+
           <TableBody>
             {loading ? (
               <TableRow>
@@ -422,7 +422,7 @@ export function DropshipProductsTable({
                       onCheckedChange={(checked) => handleSelectOne(product.id, checked as boolean)}
                     />
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="w-10 h-10 rounded bg-muted overflow-hidden">
                       <img
@@ -432,7 +432,7 @@ export function DropshipProductsTable({
                       />
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="max-w-[200px]">
                       <p className="font-medium truncate">{product.title}</p>
@@ -441,33 +441,33 @@ export function DropshipProductsTable({
                       </p>
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <Badge variant="outline">{product.sourceConnector}</Badge>
                   </TableCell>
-                  
+
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <span>{formatCurrency(product.costPrice, product.costCurrency)}</span>
                       <PriceChangeIndicator change={product.priceChange} pct={product.priceChangePct} />
                     </div>
                   </TableCell>
-                  
+
                   <TableCell className="text-right">
                     <div>
                       <p className="font-medium">{formatCurrency(product.sellingPrice, 'GNF')}</p>
                       <p className="text-xs text-green-600">+{product.margin.toFixed(0)}%</p>
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <StockStatusBadge status={product.stockStatus} quantity={product.stockQuantity} />
                   </TableCell>
-                  
+
                   <TableCell>
                     <SyncStatusBadge status={product.syncStatus} lastSync={product.lastSyncAt} />
                   </TableCell>
-                  
+
                   <TableCell>
                     {product.isPublished ? (
                       <Badge className="bg-green-500">
@@ -481,7 +481,7 @@ export function DropshipProductsTable({
                       </Badge>
                     )}
                   </TableCell>
-                  
+
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -492,7 +492,7 @@ export function DropshipProductsTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        
+
                         <DropdownMenuItem onClick={() => handleRefresh(product.id)}>
                           {refreshingId === product.id ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -501,20 +501,20 @@ export function DropshipProductsTable({
                           )}
                           Synchroniser
                         </DropdownMenuItem>
-                        
+
                         <DropdownMenuItem onClick={() => onEditProduct(product)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Modifier
                         </DropdownMenuItem>
-                        
+
                         <DropdownMenuItem onClick={() => onViewOnSource(product.sourceUrl)}>
                           <ExternalLink className="w-4 h-4 mr-2" />
                           Voir chez le fournisseur
                         </DropdownMenuItem>
-                        
+
                         <DropdownMenuSeparator />
-                        
-                        <DropdownMenuItem 
+
+                        <DropdownMenuItem
                           onClick={() => onTogglePublish(product.id, !product.isPublished)}
                         >
                           {product.isPublished ? (
@@ -523,8 +523,8 @@ export function DropshipProductsTable({
                             <><Eye className="w-4 h-4 mr-2" /> Publier</>
                           )}
                         </DropdownMenuItem>
-                        
-                        <DropdownMenuItem 
+
+                        <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => onDeleteProduct(product.id)}
                         >
@@ -540,7 +540,7 @@ export function DropshipProductsTable({
           </TableBody>
         </Table>
       </div>
-      
+
       {/* Pagination simple */}
       {filteredProducts.length > 0 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground">

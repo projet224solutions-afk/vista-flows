@@ -37,14 +37,15 @@ export function VendorSubscriptionBanner() {
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, isVendor]);
 
   const loadSubscription = async () => {
     if (!user?.id) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Chercher l'abonnement actif du vendeur
       const { data, error } = await supabase
         .from('subscriptions')
@@ -78,10 +79,10 @@ export function VendorSubscriptionBanner() {
       if (data) {
         const endDate = data.current_period_end ? new Date(data.current_period_end) : null;
         const now = new Date();
-        const daysRemaining = endDate 
+        const daysRemaining = endDate
           ? Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
           : 0;
-        
+
         // Vérifier si l'abonnement est vraiment actif (date de fin dans le futur)
         const isReallyActive = data.status === 'active' && endDate && endDate > now;
 
@@ -136,10 +137,10 @@ export function VendorSubscriptionBanner() {
   return (
     <>
       <Card className={`mb-6 border-2 ${
-        isExpired 
-          ? 'border-destructive bg-destructive/5' 
-          : isExpiringSoon 
-            ? 'border-orange-400 bg-orange-50' 
+        isExpired
+          ? 'border-destructive bg-destructive/5'
+          : isExpiringSoon
+            ? 'border-orange-400 bg-orange-50'
             : 'border-primary/20 bg-gradient-to-r from-primary/5 to-blue-50'
       }`}>
         <CardContent className="py-4">
@@ -163,7 +164,7 @@ export function VendorSubscriptionBanner() {
               {/* Statut */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Statut</span>
-                <Badge 
+                <Badge
                   variant={isActive ? "default" : "destructive"}
                   className="gap-1"
                 >
@@ -195,11 +196,11 @@ export function VendorSubscriptionBanner() {
 
               {/* Jours restants */}
               {subscription?.days_remaining !== undefined && subscription.days_remaining > 0 && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={`gap-1 ${
-                    isExpiringSoon 
-                      ? 'border-orange-400 text-orange-700 bg-orange-100' 
+                    isExpiringSoon
+                      ? 'border-orange-400 text-orange-700 bg-orange-100'
                       : 'border-blue-400 text-blue-700 bg-blue-100'
                   }`}
                 >
@@ -229,8 +230,8 @@ export function VendorSubscriptionBanner() {
         </CardContent>
       </Card>
 
-      <VendorSubscriptionPlanSelector 
-        open={showPlanSelector} 
+      <VendorSubscriptionPlanSelector
+        open={showPlanSelector}
         onOpenChange={setShowPlanSelector}
         onSuccess={loadSubscription}
       />

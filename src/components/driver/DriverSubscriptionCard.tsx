@@ -85,7 +85,7 @@ export function DriverSubscriptionCard() {
                   </div>
                 </Label>
               </div>
-              
+
               <div className={`flex items-center space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer ${billingCycle === 'yearly' ? 'border-primary bg-primary/5' : ''}`}>
                 <RadioGroupItem value="yearly" id="yearly" />
                 <Label htmlFor="yearly" className="flex-1 cursor-pointer">

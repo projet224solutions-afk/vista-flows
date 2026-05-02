@@ -6,10 +6,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Package, 
-  TrendingUp, 
-  Clock, 
+import {
+  Package,
+  TrendingUp,
+  Clock,
   AlertTriangle,
   Globe,
   Star,
@@ -121,13 +121,13 @@ export function ChinaDashboard() {
           <CardContent>
             <div className="space-y-2">
               {priceAlerts.slice(0, 5).map((alert) => (
-                <div 
-                  key={alert.id} 
+                <div
+                  key={alert.id}
                   className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950 rounded-lg"
                 >
                   <div>
                     <Badge variant={alert.alert_type === 'increase' ? 'destructive' : 'default'}>
-                      {alert.alert_type === 'increase' ? '↑ Hausse' : 
+                      {alert.alert_type === 'increase' ? '↑ Hausse' :
                        alert.alert_type === 'decrease' ? '↓ Baisse' : '⚠ Indisponible'}
                     </Badge>
                     <span className="ml-2 text-sm">
@@ -156,17 +156,17 @@ export function ChinaDashboard() {
                 const count = chinaProducts.filter(
                   p => p.platform_type === platform
                 ).length;
-                const percentage = chinaProducts.length 
+                const percentage = chinaProducts.length
                   ? (count / chinaProducts.length * 100).toFixed(0)
                   : 0;
-                
+
                 return (
                   <div key={platform} className="flex items-center gap-3">
                     <Badge className={platformColors[platform]}>
                       {platform}
                     </Badge>
                     <div className="flex-1 bg-muted rounded-full h-2">
-                      <div 
+                      <div
                         className={`h-full rounded-full ${platformColors[platform]}`}
                         style={{ width: `${percentage}%` }}
                       />

@@ -7,11 +7,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { 
-  Send, 
-  Paperclip, 
-  Image as ImageIcon, 
-  Mic, 
+import {
+  Send,
+  Paperclip,
+  Image as ImageIcon,
+  Mic,
   X,
   Loader2,
   FileVideo,
@@ -39,7 +39,7 @@ interface AttachmentPreview {
   isValidDuration?: boolean;
 }
 
-export default function MessageInput({ 
+export default function MessageInput({
   onSendText,
   onSendFile,
   disabled = false,
@@ -68,6 +68,7 @@ export default function MessageInput({
         if (att.previewUrl) URL.revokeObjectURL(att.previewUrl);
       });
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSend = async () => {
@@ -145,7 +146,7 @@ export default function MessageInput({
         files.map(async (file) => {
           const isImage = file.type.startsWith('image/');
           const isVideo = file.type.startsWith('video/');
-          
+
           let previewUrl: string | undefined;
           let duration: number | undefined;
           let isValidDuration = true;
@@ -157,7 +158,7 @@ export default function MessageInput({
           if (isVideo) {
             duration = await getVideoDuration(file);
             isValidDuration = duration <= maxVideoDuration;
-            
+
             if (!isValidDuration) {
               toast.warning(
                 `Vidéo "${file.name}" fait ${Math.round(duration)}s (max ${maxVideoDuration}s)`,
@@ -191,10 +192,10 @@ export default function MessageInput({
       // Détecter iOS
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
       const isSafari = /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/i.test(navigator.userAgent);
-      
+
       console.log('[Audio] Détection plateforme:', { isIOS, isSafari });
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -202,13 +203,13 @@ export default function MessageInput({
           ...(isIOS ? {} : { sampleRate: 44100 }),
         }
       });
-      
+
       // Déterminer le meilleur format supporté
       // iOS Safari: supporte uniquement audio/mp4 ou parfois aucun format spécifique
       // Android/Desktop: webm avec opus est le meilleur choix
       let mimeType = '';
       let fileExtension = 'webm';
-      
+
       // Tester les formats dans l'ordre de préférence
       const formatsToTry = [
         { mime: 'audio/mp4', ext: 'm4a' },
@@ -219,7 +220,7 @@ export default function MessageInput({
         { mime: 'audio/wav', ext: 'wav' },
         { mime: '', ext: 'webm' }, // Fallback sans type MIME spécifié
       ];
-      
+
       for (const format of formatsToTry) {
         if (format.mime === '' || MediaRecorder.isTypeSupported(format.mime)) {
           mimeType = format.mime;
@@ -228,7 +229,7 @@ export default function MessageInput({
           break;
         }
       }
-      
+
       // Configuration du MediaRecorder
       const recorderOptions: MediaRecorderOptions = {};
       if (mimeType) {
@@ -236,9 +237,9 @@ export default function MessageInput({
       }
       // Bitrate pour une meilleure qualité/compatibilité
       recorderOptions.audioBitsPerSecond = 128000;
-      
+
       console.log('[Audio] Options MediaRecorder:', recorderOptions);
-      
+
       let mediaRecorder: MediaRecorder;
       try {
         mediaRecorder = new MediaRecorder(stream, recorderOptions);
@@ -248,14 +249,14 @@ export default function MessageInput({
         mediaRecorder = new MediaRecorder(stream);
         // Récupérer le mimeType réellement utilisé
         mimeType = mediaRecorder.mimeType;
-        fileExtension = mimeType.includes('mp4') ? 'm4a' : 
-                        mimeType.includes('webm') ? 'webm' : 
+        fileExtension = mimeType.includes('mp4') ? 'm4a' :
+                        mimeType.includes('webm') ? 'webm' :
                         mimeType.includes('ogg') ? 'ogg' : 'audio';
       }
-      
+
       // Log le type MIME réellement utilisé
       console.log('[Audio] Type MIME effectif:', mediaRecorder.mimeType);
-      
+
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
@@ -274,11 +275,11 @@ export default function MessageInput({
 
       mediaRecorder.onstop = async () => {
         console.log('[Audio] Enregistrement terminé, chunks:', audioChunksRef.current.length);
-        
+
         // Utiliser le mimeType réel du recorder
         const actualMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        
+
         // Déterminer l'extension basée sur le type MIME réel
         let finalExtension = fileExtension;
         if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
@@ -290,28 +291,28 @@ export default function MessageInput({
         } else if (actualMimeType.includes('wav')) {
           finalExtension = 'wav';
         }
-        
+
         // Créer un vrai objet File
         const audioFile = new File(
-          [audioBlob], 
+          [audioBlob],
           `vocal_${Date.now()}.${finalExtension}`,
           { type: actualMimeType }
         );
-        
+
         console.log('[Audio] Fichier créé:', {
           name: audioFile.name,
           type: audioFile.type,
           size: audioFile.size
         });
-        
+
         stream.getTracks().forEach(track => track.stop());
-        
+
         if (audioFile.size < 1000) {
           toast.error("L'enregistrement est trop court ou vide");
           setIsRecording(false);
           return;
         }
-        
+
         try {
           setIsSending(true);
           await onSendFile(audioFile);
@@ -377,10 +378,10 @@ export default function MessageInput({
           {attachments.map((att, index) => {
             const isImage = att.file.type.startsWith('image/');
             const isVideo = att.file.type.startsWith('video/');
-            
+
             return (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className={cn(
                   "relative rounded-lg border overflow-hidden",
                   isImage || isVideo ? "w-24 h-24" : "flex items-center gap-2 bg-background px-3 py-2 pr-8",
@@ -389,18 +390,18 @@ export default function MessageInput({
               >
                 {/* Prévisualisation image */}
                 {isImage && att.previewUrl && (
-                  <img 
-                    src={att.previewUrl} 
+                  <img
+                    src={att.previewUrl}
                     alt={att.file.name}
                     className="w-full h-full object-cover"
                   />
                 )}
-                
+
                 {/* Prévisualisation vidéo */}
                 {isVideo && att.previewUrl && (
                   <div className="relative w-full h-full bg-black">
-                    <video 
-                      src={att.previewUrl} 
+                    <video
+                      src={att.previewUrl}
                       className="w-full h-full object-cover"
                       muted
                     />
@@ -411,8 +412,8 @@ export default function MessageInput({
                     {att.duration !== undefined && (
                       <div className={cn(
                         "absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-xs font-medium",
-                        att.isValidDuration 
-                          ? "bg-black/70 text-white" 
+                        att.isValidDuration
+                          ? "bg-black/70 text-white"
                           : "bg-destructive text-destructive-foreground"
                       )}>
                         {formatDuration(att.duration)}
@@ -426,7 +427,7 @@ export default function MessageInput({
                     )}
                   </div>
                 )}
-                
+
                 {/* Fichier générique */}
                 {!isImage && !isVideo && (
                   <>
@@ -437,7 +438,7 @@ export default function MessageInput({
                     </div>
                   </>
                 )}
-                
+
                 {/* Bouton supprimer */}
                 <Button
                   size="sm"
@@ -453,7 +454,7 @@ export default function MessageInput({
               </div>
             );
           })}
-          
+
           {loadingPreviews && (
             <div className="w-24 h-24 flex items-center justify-center bg-muted rounded-lg border border-dashed">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />

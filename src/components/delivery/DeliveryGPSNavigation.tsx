@@ -41,7 +41,7 @@ interface DeliveryGPSNavigationProps {
   onContactCustomer?: (phone: string) => void;
 }
 
-export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onContactCustomer }: DeliveryGPSNavigationProps) {
+export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onContactCustomer }: DeliveryGPSNavigationProps) {
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
@@ -142,7 +142,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
       } else {
         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.latitude},${target.longitude}`;
       }
-    } 
+    }
     // Sinon utiliser l'adresse textuelle
     else if (addressText && addressText !== 'Adresse non disponible') {
       const encodedAddress = encodeURIComponent(addressText + ', Guinée');
@@ -152,13 +152,13 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
       } else {
         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
       }
-    } 
+    }
     // Aucune donnée disponible
     else {
       toast.error("Adresse non disponible pour la navigation");
       return;
     }
-    
+
     window.open(mapsUrl, '_blank');
     toast.success("Navigation ouverte dans Google Maps");
   };
@@ -309,7 +309,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
           )}
 
           {/* Bouton navigation Google Maps */}
-          <Button 
+          <Button
             onClick={openGoogleMaps}
             className="w-full text-white gap-2"
             size="lg"

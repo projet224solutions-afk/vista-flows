@@ -1,17 +1,17 @@
 /**
  * 💰 SUBSCRIPTIONS ROUTES - Phase 2 (alignée DB existante)
- * 
+ *
  * Tables utilisées :
  *   - `plans` : id, name, display_name, monthly_price_gnf, yearly_price_gnf, max_products, max_images_per_product, etc.
  *   - `subscriptions` : user_id, plan_id, price_paid_gnf, billing_cycle, status, etc.
- * 
+ *
  * Statuts valides (alignés avec l'existant) :
  *   - active      : abonnement payé et confirmé (ou gratuit)
  *   - trialing    : abonnement payant en attente de confirmation de paiement
  *   - cancelled   : abonnement annulé par l'utilisateur
  *   - expired     : abonnement expiré (période terminée ou trialing jamais confirmé)
  *   - past_due    : échec de renouvellement, paiement en retard
- * 
+ *
  * Flow subscribe → confirm :
  *   1. POST /subscribe crée un abonnement :
  *      - Plan gratuit (price = 0) → statut 'active' immédiatement
@@ -25,6 +25,7 @@ import { verifyJWT, requireRole } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { subscriptionRateLimit } from '../middlewares/routeRateLimiter.js';
 
 const router = Router();
@@ -155,16 +156,16 @@ router.get('/history', verifyJWT, async (req: AuthenticatedRequest, res: Respons
 
 /**
  * POST /api/subscriptions/subscribe
- * 
+ *
  * Initie une souscription — ne met PAS directement en 'active' pour les plans payants.
- * 
+ *
  * Flow :
  *   1. Vérifie que le plan existe et est actif
  *   2. Vérifie qu'il n'y a pas d'abonnement actif (ni en trialing)
  *   3. Si plan gratuit (monthly_price_gnf = 0) → status = 'active' immédiatement
  *   4. Si plan payant → status = 'trialing', avec expiration automatique à +48h
  *   5. L'activation réelle du plan payant se fait via POST /confirm après paiement validé
- * 
+ *
  * Protection anti-fantômes :
  *   - Les abonnements en 'trialing' ont un champ trial_ends_at = now() + 48h
  *   - Le cron/endpoint /expire-stale passe en 'expired' tous les trialing dépassés
@@ -202,8 +203,8 @@ router.post('/subscribe', verifyJWT, subscriptionRateLimit, async (req: Authenti
       .maybeSingle();
 
     if (existing) {
-      res.status(409).json({ 
-        success: false, 
+      res.status(409).json({
+        success: false,
         error: existing.status === 'trialing'
           ? 'Un abonnement en attente de paiement existe déjà. Confirmez-le ou attendez son expiration.'
           : 'Un abonnement actif existe déjà',
@@ -263,13 +264,13 @@ router.post('/subscribe', verifyJWT, subscriptionRateLimit, async (req: Authenti
 
     logger.info(`Subscription created: user=${userId}, plan=${plan.name}, status=${initialStatus}, price=${pricePaid} GNF${trialEndsAt ? `, trialing expires=${trialEndsAt.toISOString()}` : ''}`);
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       data: subscription,
       requires_payment: !isFree,
       trialing_expires_at: trialEndsAt?.toISOString() || null,
-      message: isFree 
-        ? 'Abonnement gratuit activé' 
+      message: isFree
+        ? 'Abonnement gratuit activé'
         : `Abonnement en attente de paiement. Vous avez ${TRIALING_EXPIRY_HOURS}h pour confirmer.`
     });
   } catch (error: any) {
@@ -282,7 +283,7 @@ router.post('/subscribe', verifyJWT, subscriptionRateLimit, async (req: Authenti
  * POST /api/subscriptions/confirm
  * Confirmer un abonnement après paiement validé.
  * Passe le statut de 'trialing' → 'active'.
- * 
+ *
  * Vérifie que le trialing n'est pas expiré avant d'activer.
  */
 router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: AuthenticatedRequest, res: Response) => {
@@ -314,9 +315,9 @@ router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: Authentica
     }
 
     if (subscription.status !== 'trialing') {
-      res.status(400).json({ 
-        success: false, 
-        error: `Impossible de confirmer un abonnement en statut "${subscription.status}"` 
+      res.status(400).json({
+        success: false,
+        error: `Impossible de confirmer un abonnement en statut "${subscription.status}"`
       });
       return;
     }
@@ -330,9 +331,9 @@ router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: Authentica
         .update({ status: 'expired', updated_at: new Date().toISOString() })
         .eq('id', subscription_id);
 
-      res.status(410).json({ 
-        success: false, 
-        error: 'Cet abonnement en attente a expiré. Veuillez souscrire à nouveau.' 
+      res.status(410).json({
+        success: false,
+        error: 'Cet abonnement en attente a expiré. Veuillez souscrire à nouveau.'
       });
       return;
     }
@@ -357,6 +358,20 @@ router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: Authentica
 
     if (updateError) throw updateError;
 
+    const pricePaid = Number(subscription.price_paid_gnf || updated.price_paid_gnf || 0);
+    if (pricePaid > 0) {
+      const commissionResult = await triggerAffiliateCommission(
+        userId,
+        pricePaid,
+        'abonnement',
+        subscription_id
+      );
+
+      if (!commissionResult.success) {
+        logger.warn(`Agent commission not credited for subscription ${subscription_id}: ${commissionResult.error || 'unknown error'}`);
+      }
+    }
+
     logger.info(`Subscription confirmed: ${subscription_id} for user ${userId}`);
     res.json({ success: true, data: updated });
   } catch (error: any) {
@@ -367,10 +382,10 @@ router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: Authentica
 
 /**
  * POST /api/subscriptions/expire-stale
- * 
+ *
  * Nettoyage des abonnements fantômes :
  * Passe en 'expired' tous les abonnements en 'trialing' dont le trial_ends_at est dépassé.
- * 
+ *
  * À appeler via cron ou manuellement (protégé par auth admin/interne).
  */
 router.post('/expire-stale', verifyJWT, requireRole(['admin']), async (_req: AuthenticatedRequest, res: Response) => {
@@ -393,8 +408,8 @@ router.post('/expire-stale', verifyJWT, requireRole(['admin']), async (_req: Aut
     const expiredCount = data?.length || 0;
     logger.info(`Expired ${expiredCount} stale trialing subscriptions`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       expired_count: expiredCount,
       expired_ids: data?.map(s => s.id) || []
     });
@@ -453,7 +468,7 @@ router.post('/cancel', verifyJWT, subscriptionRateLimit, async (req: Authenticat
 /**
  * GET /api/subscriptions/limits
  * Vérifie les limites du plan actuel (produits, images, fonctionnalités).
- * 
+ *
  * Fallback : si aucun abonnement actif, retourne les limites du plan gratuit
  * alignées avec la table `plans` (free: max_products=10, max_images=3).
  */

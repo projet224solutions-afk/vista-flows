@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 /**
- * Dashboard Router - Redirige vers le dashboard appropri├® selon le r├┤le
- * IMPORTANT: Utilise TOUJOURS profile.role comme source de v├®rit├®
+ * Dashboard Router - Redirige vers le dashboard approprié selon le rôle
+ * IMPORTANT: Utilise TOUJOURS profile.role comme source de vérité
  */
 const Dashboard = () => {
   const { user, profile, loading, profileLoading } = useAuth();
@@ -17,27 +17,27 @@ const Dashboard = () => {
     if (loading || profileLoading) return;
 
     if (!user) {
-      // Si pas connect├®, rediriger vers la page d'authentification
+      // Si pas connecté, rediriger vers la page d'authentification
       navigate("/auth");
       return;
     }
 
-    // Attendre que le profil soit charg├® avant de rediriger
+    // Attendre que le profil soit chargé avant de rediriger
     if (!profile) {
-      console.log('ÔÅ│ Attente du chargement du profil...');
+      console.log('⏳ Attente du chargement du profil...');
       return;
     }
 
-    // Redirection selon le r├┤le depuis le PROFIL (source de v├®rit├® s├®curis├®e)
-    // Normaliser le r├┤le en minuscules pour la comparaison
+    // Redirection selon le rôle depuis le PROFIL (source de vérité sécurisée)
+    // Normaliser le rôle en minuscules pour la comparaison
     const role = profile.role?.toLowerCase() || 'client';
-    
+
     const roleRedirects: Record<string, string> = {
       'pdg': '/pdg',
       'admin': '/pdg',
       'ceo': '/pdg',
       'vendeur': '/vendeur',
-      'prestataire': '/home', // G├®r├® dynamiquement ci-dessous
+      'prestataire': '/home', // Géré dynamiquement ci-dessous
       'livreur': '/livreur',
       'taxi': '/taxi-moto/driver',
       'driver': '/taxi-moto/driver',
@@ -49,7 +49,7 @@ const Dashboard = () => {
       'vendor_agent': '/home',
     };
 
-    // Ô£à FIX: Pour les vendor_agents, chercher leur access_token et rediriger vers l'interface agent
+    // ✓ FIX: Pour les vendor_agents, chercher leur access_token et rediriger vers l'interface agent
     if (role === 'vendor_agent') {
       const fetchVendorAgentToken = async () => {
         const { data: vendorAgent } = await supabase
@@ -58,12 +58,12 @@ const Dashboard = () => {
           .eq('user_id', user.id)
           .eq('is_active', true)
           .maybeSingle();
-        
+
         if (vendorAgent?.access_token) {
-          console.log('­ƒÜÇ Dashboard: Redirection agent vendeur vers /vendor-agent/');
+          console.log('🚀 Dashboard: Redirection agent vendeur vers /vendor-agent/');
           navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
         } else {
-          console.log('ÔÜá´©Å Dashboard: Agent vendeur sans token, redirection /home');
+          console.log('⚠️ Dashboard: Agent vendeur sans token, redirection /home');
           navigate('/home', { replace: true });
         }
       };
@@ -71,7 +71,7 @@ const Dashboard = () => {
       return;
     }
 
-    // Ô£à Pour les prestataires, chercher leur professional_service et rediriger
+    // ✓ Pour les prestataires, chercher leur professional_service et rediriger
     if (role === 'prestataire') {
       const fetchPrestaService = async () => {
         const { data: proService } = await supabase
@@ -80,12 +80,12 @@ const Dashboard = () => {
           .eq('user_id', user.id)
           .limit(1)
           .maybeSingle();
-        
+
         if (proService?.id) {
-          console.log('­ƒÜÇ Dashboard: Redirection prestataire vers /dashboard/service/', proService.id);
+          console.log('🚀 Dashboard: Redirection prestataire vers /dashboard/service/', proService.id);
           navigate(`/dashboard/service/${proService.id}`, { replace: true });
         } else {
-          console.log('ÔÜá´©Å Dashboard: Prestataire sans service, redirection /service-selection');
+          console.log('⚠️ Dashboard: Prestataire sans service, redirection /service-selection');
           navigate('/service-selection', { replace: true });
         }
       };
@@ -94,8 +94,8 @@ const Dashboard = () => {
     }
 
     const redirectPath = roleRedirects[role] || '/home';
-    
-    console.log(`­ƒöä Dashboard: Redirection vers ${redirectPath} (r├┤le: ${role})`);
+
+    console.log(`🔄 Dashboard: Redirection vers ${redirectPath} (rôle: ${role})`);
     navigate(redirectPath, { replace: true });
   }, [user, profile, loading, profileLoading, navigate]);
 

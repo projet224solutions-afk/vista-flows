@@ -141,7 +141,7 @@ export default function FeatureDetailSheet({
           <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-300 font-medium">Score de Santé</span>
-              <span 
+              <span
                 className="text-2xl font-bold"
                 style={{ color: score >= 80 ? '#10b981' : score >= 50 ? '#f97316' : '#ef4444' }}
               >
@@ -179,7 +179,7 @@ export default function FeatureDetailSheet({
                 <AlertTriangle className="w-4 h-4" />
                 Anomalies actives
               </div>
-              <p 
+              <p
                 className="text-2xl font-bold"
                 style={{ color: healthData.anomalyCount > 0 ? '#f97316' : '#10b981' }}
               >

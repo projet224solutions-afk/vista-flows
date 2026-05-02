@@ -7,7 +7,7 @@
 import localforage from 'localforage';
 import { supabase } from '@/lib/supabaseClient';
 import { encryptData, decryptData } from './encryption';
-import offlineDB from './offlineDB';
+import _offlineDB from './offlineDB';
 import dualSyncManager from './dualSyncManager';
 
 // Configuration des stores locaux
@@ -42,7 +42,7 @@ export async function saveOffline(
 ): Promise<void> {
   const store = storeType === 'vendor' ? vendorStore : bureauStore;
   const id = data.id || crypto.randomUUID();
-  
+
   const offlineData: OfflineData = {
     id,
     collection,
@@ -54,7 +54,7 @@ export async function saveOffline(
   };
 
   await store.setItem(`${collection}_${id}`, offlineData);
-  
+
   // Tentative de synchronisation immédiate si en ligne
   if (navigator.onLine) {
     await syncSingleData(collection, id, storeType);
@@ -72,12 +72,12 @@ async function syncSingleData(
   const store = storeType === 'vendor' ? vendorStore : bureauStore;
   const key = `${collection}_${id}`;
   const offlineData = await store.getItem<OfflineData>(key);
-  
+
   if (!offlineData || offlineData.sync) return true;
 
   try {
-    const actualData = offlineData.encrypted 
-      ? decryptData(offlineData.data) 
+    const actualData = offlineData.encrypted
+      ? decryptData(offlineData.data)
       : offlineData.data;
 
     // Synchronisation vers Supabase
@@ -97,16 +97,16 @@ async function syncSingleData(
     // Marquer comme synchronisé
     offlineData.sync = true;
     await store.setItem(key, offlineData);
-    
+
     console.log(`✅ Synchronisé: ${collection}/${id}`);
     return true;
   } catch (error: any) {
     console.error(`❌ Erreur sync ${collection}/${id}:`, error);
-    
+
     // Incrémenter le compteur de retry
     offlineData.retryCount++;
     await store.setItem(key, offlineData);
-    
+
     return false;
   }
 }
@@ -124,7 +124,7 @@ export async function syncAllData(
 
   const store = storeType === 'vendor' ? vendorStore : bureauStore;
   const keys = await store.keys();
-  
+
   let success = 0;
   let failed = 0;
 
@@ -165,7 +165,7 @@ export async function getSyncStats(
 }> {
   const store = storeType === 'vendor' ? vendorStore : bureauStore;
   const keys = await store.keys();
-  
+
   let synced = 0;
   let pending = 0;
   let failed = 0;
@@ -200,7 +200,7 @@ export async function cleanupSyncedData(
   const store = storeType === 'vendor' ? vendorStore : bureauStore;
   const keys = await store.keys();
   const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-  
+
   let cleaned = 0;
 
   for (const key of keys) {

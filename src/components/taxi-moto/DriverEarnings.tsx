@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, DollarSign, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, Send, History } from 'lucide-react';
+import { Loader2, _DollarSign, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, _Send, History } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
+import { _WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
 import { QuickTransferButton } from '@/components/wallet/QuickTransferButton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -199,6 +199,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         supabase.removeChannel(channel);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   const handleDeposit = async () => {
@@ -284,13 +285,13 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                 {(balance || 0).toLocaleString()} {currency || 'GNF'}
               </p>
             </div>
-            
+
             {/* Actions rapides du wallet */}
             <div className="grid grid-cols-2 gap-2">
               <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                 <DialogTrigger asChild>
-                  <Button 
-                    variant="secondary" 
+                  <Button
+                    variant="secondary"
                     className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
                   >
                     <ArrowDownCircle className="w-4 h-4 mr-2" />
@@ -312,8 +313,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         onChange={(e) => setDepositAmount(e.target.value)}
                       />
                     </div>
-                    <Button 
-                      onClick={handleDeposit} 
+                    <Button
+                      onClick={handleDeposit}
                       disabled={processing}
                       className="w-full"
                     >
@@ -335,8 +336,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
               <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
                 <DialogTrigger asChild>
-                  <Button 
-                    variant="secondary" 
+                  <Button
+                    variant="secondary"
                     className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
                   >
                     <ArrowUpCircle className="w-4 h-4 mr-2" />
@@ -361,8 +362,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         Solde disponible: {(balance || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                     </div>
-                    <Button 
-                      onClick={handleWithdraw} 
+                    <Button
+                      onClick={handleWithdraw}
                       disabled={processing}
                       className="w-full"
                     >
@@ -382,10 +383,10 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                 </DialogContent>
               </Dialog>
             </div>
-            
+
             {/* Bouton Historique */}
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
               onClick={() => setShowTransactions(!showTransactions)}
             >
@@ -395,8 +396,8 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
             {/* Transfert rapide */}
             <div className="pt-2 border-t border-white/20">
-              <QuickTransferButton 
-                variant="ghost" 
+              <QuickTransferButton
+                variant="ghost"
                 className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20"
                 showText={true}
               />

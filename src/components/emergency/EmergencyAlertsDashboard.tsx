@@ -4,21 +4,21 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { _Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertTriangle, 
-  MapPin, 
-  Phone, 
-  MessageSquare, 
-  Shield, 
-  CheckCircle, 
+import {
+  AlertTriangle,
+  MapPin,
+  _Phone,
+  _MessageSquare,
+  Shield,
+  CheckCircle,
   XCircle,
   Clock,
   Activity,
-  Navigation,
+  _Navigation,
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ interface EmergencyAlertsDashboardProps {
 
 export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> = ({
   bureauId,
-  userRole,
+  _userRole,
   userId,
   userName
 }) => {
@@ -259,7 +259,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-blue-600">
-              {stats?.avg_resolution_time 
+              {stats?.avg_resolution_time
                 ? `${Math.round(parseInt(stats.avg_resolution_time) / 60)}min`
                 : 'N/A'}
             </p>

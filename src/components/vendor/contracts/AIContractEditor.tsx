@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import AIAssistant from './AIAssistant';
-import { 
-  Loader2, 
-  Save, 
-  Download, 
-  Send, 
-  Edit, 
-  Eye, 
+import {
+  Loader2,
+  Save,
+  Download,
+  Send,
+  Edit,
+  Eye,
   FileText,
   Sparkles,
   CheckCircle2,
@@ -160,12 +160,12 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
   const handleSign = async (signatureType: 'vendor' | 'client') => {
     try {
       setLoading(true);
-      
+
       toast({
         title: 'Signature enregistrée',
         description: `La signature ${signatureType === 'vendor' ? 'du vendeur' : 'du client'} a été ajoutée`,
       });
-      
+
       setShowSignDialog(false);
       onSaved();
     } catch (error: any) {
@@ -182,19 +182,19 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
   const handleSend = async (method: 'whatsapp' | 'sms' | 'email' | 'link') => {
     try {
       setLoading(true);
-      
+
       const methods = {
         whatsapp: 'WhatsApp',
         sms: 'SMS',
         email: 'E-mail',
         link: 'lien sécurisé'
       };
-      
+
       toast({
         title: 'Contrat envoyé',
         description: `Le contrat a été envoyé via ${methods[method]}`,
       });
-      
+
       setShowSendDialog(false);
     } catch (error: any) {
       toast({
@@ -412,18 +412,18 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
                   )}
                   Télécharger PDF
                 </Button>
-                
+
                 {isFinalized && (
                   <>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setShowSignDialog(true)}
                       disabled={loading}
                     >
                       <PenTool className="w-4 h-4 mr-2" />
                       Signatures
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => setShowSendDialog(true)}
                       disabled={loading}
@@ -452,16 +452,16 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <Button 
-              onClick={() => handleSign('vendor')} 
+            <Button
+              onClick={() => handleSign('vendor')}
               className="w-full"
               disabled={loading}
             >
               <PenTool className="w-4 h-4 mr-2" />
               Signer en tant que vendeur
             </Button>
-            <Button 
-              onClick={() => handleSign('client')} 
+            <Button
+              onClick={() => handleSign('client')}
               variant="outline"
               className="w-full"
               disabled={loading}
@@ -483,7 +483,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 pt-4">
-            <Button 
+            <Button
               onClick={() => handleSend('whatsapp')}
               variant="outline"
               className="h-20 flex-col"
@@ -492,7 +492,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
               <MessageSquare className="w-6 h-6 mb-2" />
               WhatsApp
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSend('sms')}
               variant="outline"
               className="h-20 flex-col"
@@ -501,7 +501,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
               <Send className="w-6 h-6 mb-2" />
               SMS
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSend('email')}
               variant="outline"
               className="h-20 flex-col"
@@ -510,7 +510,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
               <Mail className="w-6 h-6 mb-2" />
               E-mail
             </Button>
-            <Button 
+            <Button
               onClick={() => handleSend('link')}
               variant="outline"
               className="h-20 flex-col"

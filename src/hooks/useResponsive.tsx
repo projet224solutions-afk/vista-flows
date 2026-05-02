@@ -26,16 +26,16 @@ export interface ResponsiveState {
   isLaptop: boolean;
   isDesktop: boolean;
   isWide: boolean;
-  
+
   // Dimensions
   width: number;
   height: number;
-  
+
   // Orientation
   orientation: Orientation;
   isPortrait: boolean;
   isLandscape: boolean;
-  
+
   // Utilitaires
   isTouchDevice: boolean;
   isStandalone: boolean; // PWA mode
@@ -75,7 +75,7 @@ export function useResponsive(): ResponsiveState {
 function getResponsiveState(): ResponsiveState {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  
+
   // Déterminer le type d'appareil
   let deviceType: DeviceType = 'mobile';
   if (width >= BREAKPOINTS.wide) {
@@ -105,14 +105,14 @@ function getResponsiveState(): ResponsiveState {
     isLaptop: deviceType === 'laptop',
     isDesktop: deviceType === 'desktop',
     isWide: deviceType === 'wide',
-    
+
     width,
     height,
-    
+
     orientation,
     isPortrait: orientation === 'portrait',
     isLandscape: orientation === 'landscape',
-    
+
     isTouchDevice,
     isStandalone,
   };
@@ -154,29 +154,29 @@ export function useResponsiveClasses() {
 
   return {
     // Classes pour conteneurs
-    container: responsive.isMobile 
-      ? 'px-4 py-3' 
-      : responsive.isTablet 
-        ? 'px-6 py-4' 
+    container: responsive.isMobile
+      ? 'px-4 py-3'
+      : responsive.isTablet
+        ? 'px-6 py-4'
         : 'px-8 py-6',
-    
+
     // Classes pour grilles
     grid: responsive.isMobile
       ? 'grid-cols-1'
       : responsive.isTablet
         ? 'grid-cols-2'
         : 'grid-cols-3',
-    
+
     // Classes pour texte
     heading: responsive.isMobile
       ? 'text-2xl'
       : responsive.isTablet
         ? 'text-3xl'
         : 'text-4xl',
-    
+
     // Classes pour spacing
     gap: responsive.isMobile ? 'gap-3' : 'gap-4',
-    
+
     // Classes pour cards
     card: responsive.isMobile
       ? 'p-4'

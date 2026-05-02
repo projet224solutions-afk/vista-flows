@@ -2,7 +2,7 @@
  * HOME PAGE - Ultra Professional Design
  * 224Solutions - Marketplace Landing Page
  * Premium design inspired by Apple, Stripe, Linear
- * OPTIMIS├ë pour les performances
+ * OPTIMISÉ pour les performances
  */
 
 import { useState, useCallback, useMemo } from 'react';
@@ -31,16 +31,16 @@ import RecentlyViewedProducts from '@/components/shared/RecentlyViewedProducts';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
 
-  // V├®rification Supabase c├┤t├® client
+  // Vérification Supabase côté client
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_VITE_SUPABASE_ANON_KEY;
   const supabaseError = !supabaseUrl || !supabaseKey;
 
-  // Stats des services ├á proximit├® (filtr├®s par distance 20km)
+  // Stats des services à proximité (filtrés par distance 20km)
   const { stats: serviceStats } = useNearbyServiceStats();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,11 +112,11 @@ export default function Home() {
       <div className="relative z-10">
         {supabaseError && (
           <div style={{background: '#ffeaea', color: '#b71c1c', padding: 16, borderRadius: 8, margin: 16, textAlign: 'center', fontWeight: 'bold', fontSize: 18}}>
-            ÔØî Erreur critique de connexion Supabase<br />
+            ✕ Erreur critique de connexion Supabase<br />
             <span style={{fontSize: 15, fontWeight: 400}}>
-              V├®rifiez les variables dÔÇÖenvironnement <b>VITE_SUPABASE_URL</b> et <b>VITE_SUPABASE_ANON_KEY</b> dans le fichier <b>.env</b> du frontend.<br />
-              Red├®marrez le serveur Vite apr├¿s modification.<br />
-              (Aucune donn├®e ne peut ├¬tre charg├®e tant que la connexion nÔÇÖest pas valide)
+              Vérifiez les variables d'environnement <b>VITE_SUPABASE_URL</b> et <b>VITE_SUPABASE_ANON_KEY</b> dans le fichier <b>.env</b> du frontend.<br />
+              Redémarrez le serveur Vite après modification.<br />
+              (Aucune donnée ne peut être chargée tant que la connexion n'est pas valide)
             </span>
           </div>
         )}
@@ -166,17 +166,17 @@ export default function Home() {
         <BottomNavigation />
 
         {/* Modals */}
-        <NearbyVendorsModal 
-          open={showVendorsModal} 
-          onOpenChange={setShowVendorsModal} 
+        <NearbyVendorsModal
+          open={showVendorsModal}
+          onOpenChange={setShowVendorsModal}
         />
-        <NearbyTaxiModal 
-          open={showTaxiModal} 
-          onOpenChange={setShowTaxiModal} 
+        <NearbyTaxiModal
+          open={showTaxiModal}
+          onOpenChange={setShowTaxiModal}
         />
-        <NearbyDeliveryModal 
-          open={showDeliveryModal} 
-          onOpenChange={setShowDeliveryModal} 
+        <NearbyDeliveryModal
+          open={showDeliveryModal}
+          onOpenChange={setShowDeliveryModal}
         />
       </div>
     </div>

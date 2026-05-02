@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Mail, 
-  Phone, 
-  Building2, 
+import {
+  Mail,
+  Phone,
+  Building2,
   Calendar,
   TrendingUp,
   Users,
@@ -52,7 +52,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <BureauStatsCards 
+      <BureauStatsCards
         workersCount={stats.workersCount}
         membersCount={stats.membersCount}
         motosCount={stats.motosCount}
@@ -190,9 +190,9 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
             {/* Status */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Statut</span>
-              <Badge 
-                className={bureau.status === 'active' 
-                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" 
+              <Badge
+                className={bureau.status === 'active'
+                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
                   : "bg-slate-100 text-slate-600"
                 }
               >

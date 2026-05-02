@@ -73,7 +73,7 @@ export function useSecurityOps(autoLoad?: boolean) {
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Charger les incidents - gestion silencieuse des erreurs RLS
       const { data: incidentsData, error: incidentsError } = await supabase
@@ -84,7 +84,7 @@ export function useSecurityOps(autoLoad?: boolean) {
 
       // Si erreur RLS ou réseau, retourner des données vides sans erreur
       if (incidentsError) {
-        const isSilentError = incidentsError.message?.includes('permission') || 
+        const isSilentError = incidentsError.message?.includes('permission') ||
                               incidentsError.message?.includes('policy') ||
                               incidentsError.message?.includes('Failed to fetch') ||
                               incidentsError.message?.includes('NetworkError') ||
@@ -94,7 +94,7 @@ export function useSecurityOps(autoLoad?: boolean) {
           console.error('Erreur incidents:', incidentsError);
         }
       }
-      
+
       const mappedIncidents: SecurityIncident[] = (incidentsData || []).map(i => ({
         id: i.id,
         incident_type: i.incident_type,
@@ -117,7 +117,7 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (alertsError) {
-        const isSilentError = alertsError.message?.includes('permission') || 
+        const isSilentError = alertsError.message?.includes('permission') ||
                               alertsError.message?.includes('policy') ||
                               alertsError.message?.includes('Failed to fetch') ||
                               alertsError.message?.includes('NetworkError') ||
@@ -127,7 +127,7 @@ export function useSecurityOps(autoLoad?: boolean) {
           console.error('Erreur alertes:', alertsError);
         }
       }
-      
+
       const mappedAlerts: SecurityAlert[] = (alertsData || []).map(a => ({
         id: a.id,
         incident_id: a.incident_id,
@@ -150,7 +150,7 @@ export function useSecurityOps(autoLoad?: boolean) {
         .limit(50);
 
       if (blockedError) {
-        const isSilentError = blockedError.message?.includes('permission') || 
+        const isSilentError = blockedError.message?.includes('permission') ||
                               blockedError.message?.includes('policy') ||
                               blockedError.message?.includes('column') ||
                               blockedError.message?.includes('Failed to fetch') ||
@@ -162,7 +162,7 @@ export function useSecurityOps(autoLoad?: boolean) {
           console.error('Erreur IPs bloquées:', blockedError);
         }
       }
-      
+
       const mappedBlocked: BlockedIP[] = (blockedData || []).map(b => ({
         id: b.id,
         ip_address: String(b.ip_address),
@@ -203,7 +203,7 @@ export function useSecurityOps(autoLoad?: boolean) {
     } catch (err: any) {
       // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin) ou réseau
       const errorMessage = err?.message || 'Erreur inconnue';
-      const isSilentError = errorMessage.includes('permission') || 
+      const isSilentError = errorMessage.includes('permission') ||
                             errorMessage.includes('policy') ||
                             errorMessage.includes('RLS') ||
                             errorMessage.includes('Failed to fetch') ||
@@ -211,7 +211,7 @@ export function useSecurityOps(autoLoad?: boolean) {
                             errorMessage.includes('fetch') ||
                             err?.code === '42501' ||
                             err?.code === 'PGRST301';
-      
+
       if (!isSilentError) {
         console.error('Erreur chargement données sécurité:', err);
         toast.error('Erreur lors du chargement des données de sécurité');
@@ -239,10 +239,10 @@ export function useSecurityOps(autoLoad?: boolean) {
 
       if (error) throw error;
 
-      setAlerts(alerts.map(a => 
+      setAlerts(alerts.map(a =>
         a.id === alertId ? { ...a, acknowledged: true } : a
       ));
-      
+
       toast.success('Alerte reconnue');
       return true;
     } catch (err: any) {
@@ -284,10 +284,10 @@ export function useSecurityOps(autoLoad?: boolean) {
 
       if (error) throw error;
 
-      setIncidents(incidents.map(i => 
+      setIncidents(incidents.map(i =>
         i.id === id ? { ...i, status: 'contained' as const } : i
       ));
-      
+
       toast.success('Incident contenu');
       return true;
     } catch (err: any) {
@@ -308,10 +308,10 @@ export function useSecurityOps(autoLoad?: boolean) {
 
       if (error) throw error;
 
-      setIncidents(incidents.map(i => 
+      setIncidents(incidents.map(i =>
         i.id === id ? { ...i, status: 'resolved' as const } : i
       ));
-      
+
       toast.success('Incident résolu');
       return true;
     } catch (err: any) {
@@ -374,7 +374,7 @@ export function useSecurityOps(autoLoad?: boolean) {
       } else {
         toast.success('Aucune anomalie détectée');
       }
-      
+
       await loadData();
       return result;
     } catch (err: any) {

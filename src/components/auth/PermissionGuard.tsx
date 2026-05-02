@@ -20,7 +20,7 @@ export function PermissionGuard({
   children,
   fallback
 }: PermissionGuardProps) {
-  const { hasPermission, hasAllPermissions, hasAnyPermission, loading } = useAgentPermissions();
+  const { _hasPermission, hasAllPermissions, hasAnyPermission, loading } = useAgentPermissions();
 
   if (loading) {
     return <div className="p-4 text-gray-500">Vérification des permissions...</div>;
@@ -56,11 +56,11 @@ export function PermissionGuard({
  */
 export function useHasPermission(permissionKey: string | string[]): boolean {
   const { hasPermission, hasAnyPermission } = useAgentPermissions();
-  
+
   if (Array.isArray(permissionKey)) {
     return hasAnyPermission(permissionKey);
   }
-  
+
   return hasPermission(permissionKey);
 }
 

@@ -9,14 +9,14 @@ import { useToast } from '@/hooks/use-toast';
 import {
   universalCommunicationService,
   type Conversation,
-  type Message,
+  type _Message,
   type CommunicationNotification
 } from '@/services/UniversalCommunicationService';
 
 export const useUniversalCommunication = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [notifications, setNotifications] = useState<CommunicationNotification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,10 +25,10 @@ export const useUniversalCommunication = () => {
   // Charger les conversations
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const data = await universalCommunicationService.getConversations(user.id);
       setConversations(data);
@@ -48,7 +48,7 @@ export const useUniversalCommunication = () => {
   // Charger les notifications
   const loadNotifications = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       const data = await universalCommunicationService.getUnreadNotifications(user.id);
       setNotifications(data);
@@ -63,7 +63,7 @@ export const useUniversalCommunication = () => {
     content: string
   ) => {
     if (!user?.id) throw new Error('Non authentifié');
-    
+
     try {
       const message = await universalCommunicationService.sendTextMessage(
         conversationId,
@@ -88,7 +88,7 @@ export const useUniversalCommunication = () => {
     type: 'image' | 'video' | 'file' | 'audio' = 'file'
   ) => {
     if (!user?.id) throw new Error('Non authentifié');
-    
+
     try {
       const message = await universalCommunicationService.sendFileMessage(
         conversationId,
@@ -96,12 +96,12 @@ export const useUniversalCommunication = () => {
         file,
         type
       );
-      
+
       toast({
         title: 'Fichier envoyé',
         description: 'Votre fichier a été envoyé avec succès'
       });
-      
+
       return message;
     } catch (err: any) {
       toast({
@@ -119,21 +119,21 @@ export const useUniversalCommunication = () => {
     name?: string
   ) => {
     if (!user?.id) throw new Error('Non authentifié');
-    
+
     try {
       const conversation = await universalCommunicationService.createConversation(
         participantIds,
         user.id,
         name
       );
-      
+
       setConversations(prev => [conversation, ...prev]);
-      
+
       toast({
         title: 'Conversation créée',
         description: 'Vous pouvez maintenant discuter'
       });
-      
+
       return conversation;
     } catch (err: any) {
       toast({
@@ -148,7 +148,7 @@ export const useUniversalCommunication = () => {
   // Marquer les messages comme lus
   const markAsRead = useCallback(async (conversationId: string) => {
     if (!user?.id) return;
-    
+
     try {
       await universalCommunicationService.markMessagesAsRead(conversationId, user.id);
       await loadConversations(); // Recharger pour mettre à jour les compteurs
@@ -160,7 +160,7 @@ export const useUniversalCommunication = () => {
   // Rechercher des utilisateurs
   const searchUsers = useCallback(async (query: string) => {
     if (!query.trim()) return [];
-    
+
     try {
       const results = await universalCommunicationService.searchUsers(query);
       return results;
@@ -202,7 +202,7 @@ export const useUniversalCommunication = () => {
     loading,
     error,
     stats,
-    
+
     // Actions
     sendMessage,
     sendFile,

@@ -34,7 +34,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   vehiclePlate,
   serialNumber,
   dateOfBirth,
-  joinedDate,
+  _joinedDate,
   expireDate,
   bureauName = '224SOLUTIONS',
   bureauPhone,
@@ -42,7 +42,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   badgeTitle
 }, ref) => {
   const displayTitle = badgeTitle || `TAXI-MOTO ${bureauName.toUpperCase()}`;
-  
+
   // Formater l'ID pour l'affichage (raccourcir si c'est un UUID)
   const formatMemberId = (id: string) => {
     if (!id) return 'N/A';
@@ -54,7 +54,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   };
 
   const displayMemberId = formatMemberId(memberId);
-  
+
   const getVehicleLabel = () => {
     switch (vehicleType) {
       case 'motorcycle': return 'CONDUCTEUR MOTO';
@@ -67,10 +67,10 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   const displayBureauName = bureauName && bureauName !== 'VOTRE BUREAU' ? bureauName : '224SOLUTIONS';
 
   return (
-    <div 
+    <div
       ref={ref}
       className="w-[850px] h-[520px] bg-gradient-to-br from-slate-50 to-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200"
-      style={{ 
+      style={{
         fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
         background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)'
       }}
@@ -138,8 +138,8 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           <div className="relative">
             <div className="w-full aspect-[3/4] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl overflow-hidden border-3 border-white shadow-lg">
               {driverPhoto ? (
-                <img 
-                  src={driverPhoto} 
+                <img
+                  src={driverPhoto}
                   alt={driverName}
                   className="w-full h-full object-cover"
                 />
@@ -261,7 +261,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           <div className="flex items-center gap-3 flex-1 min-h-0">
             {/* Code-barres */}
             <div className="flex-1 bg-white rounded-lg p-2 border border-slate-200 h-full flex items-center justify-center">
-              <Barcode 
+              <Barcode
                 value={displayMemberId}
                 width={1.2}
                 height={50}
@@ -274,7 +274,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
 
             {/* QR Code - Lien vers la page de vérification */}
             <div className="bg-white rounded-lg p-3 border-2 border-slate-200 shadow-sm flex-shrink-0">
-              <QRCodeSVG 
+              <QRCodeSVG
                 value={`${window.location.origin}/badge/${badgeId}`}
                 size={80}
                 level="M"

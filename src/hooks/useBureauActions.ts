@@ -74,7 +74,7 @@ export function useBureauActions({
     targetBureauId?: string
   ): Promise<{ success: boolean; error?: string; worker?: any }> => {
     const effectiveBureauId = targetBureauId || bureauId;
-    
+
     if (!effectiveBureauId) {
       return { success: false, error: 'ID du bureau manquant' };
     }
@@ -196,7 +196,7 @@ export function useBureauActions({
     targetBureauId?: string
   ): Promise<{ success: boolean; error?: string; member?: any }> => {
     const effectiveBureauId = targetBureauId || bureauId;
-    
+
     if (!effectiveBureauId) {
       return { success: false, error: 'ID du bureau manquant' };
     }
@@ -251,7 +251,7 @@ export function useBureauActions({
       if (updates.full_name) workerUpdates.nom = updates.full_name;
       if (updates.email) workerUpdates.email = updates.email;
       if (updates.phone) workerUpdates.telephone = updates.phone;
-      
+
       const { error } = await supabase
         .from('syndicate_workers')
         .update(workerUpdates)
@@ -298,7 +298,7 @@ export function useBureauActions({
     targetBureauId?: string
   ): Promise<{ success: boolean; error?: string; vehicle?: any }> => {
     const effectiveBureauId = targetBureauId || bureauId;
-    
+
     if (!effectiveBureauId) {
       return { success: false, error: 'ID du bureau manquant' };
     }
@@ -371,7 +371,7 @@ export function useBureauActions({
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de la déclaration');
       }
@@ -389,12 +389,12 @@ export function useBureauActions({
     addWorker,
     updateWorker,
     deleteWorker,
-    
+
     // Members
     addMember,
     updateMember,
     validateMember,
-    
+
     // Vehicles
     registerVehicle,
     reportStolenVehicle,

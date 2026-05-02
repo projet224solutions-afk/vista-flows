@@ -53,6 +53,7 @@ export default function ContractsList({ refresh }: ContractsListProps) {
 
   useEffect(() => {
     loadContracts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refresh]);
 
   const loadContracts = async () => {

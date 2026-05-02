@@ -1,13 +1,13 @@
 /**
  * 🔄 SERVICE DE SYNCHRONISATION PDG - 224SOLUTIONS
- * 
+ *
  * Service centralisé pour garantir la cohérence des données entre:
  * - Interface PDG
  * - Module Agents
  * - Module Bureaux/Syndicats
  * - Module Finance
  * - Module Utilisateurs
- * 
+ *
  * PRINCIPE: profiles.public_id est la SOURCE UNIQUE DE VÉRITÉ pour tous les identifiants
  */
 
@@ -51,21 +51,21 @@ class PDGSyncService {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, public_id');
-      
+
       const { data: userIds } = await supabase
         .from('user_ids')
         .select('user_id, custom_id');
 
       const userIdMap = new Map((userIds || []).map(u => [u.user_id, u.custom_id]));
-      const profilesWithoutMatch = (profiles || []).filter(p => 
+      const profilesWithoutMatch = (profiles || []).filter(p =>
         p.public_id && userIdMap.get(p.id) !== p.public_id
       );
-      
+
       checks.push({
         table: 'profiles ↔ user_ids',
         status: profilesWithoutMatch.length === 0 ? 'ok' : 'warning',
-        message: profilesWithoutMatch.length === 0 
-          ? 'IDs synchronisés' 
+        message: profilesWithoutMatch.length === 0
+          ? 'IDs synchronisés'
           : `${profilesWithoutMatch.length} IDs désynchronisés`,
         discrepancies: profilesWithoutMatch.length
       });
@@ -82,15 +82,15 @@ class PDGSyncService {
         .eq('role', 'vendeur');
 
       const vendorProfileMap = new Map(vendorProfiles?.map(p => [p.id, p.public_id]) || []);
-      const vendorMismatches = (vendorDesync || []).filter(v => 
+      const vendorMismatches = (vendorDesync || []).filter(v =>
         vendorProfileMap.get(v.user_id) !== v.vendor_code
       );
 
       checks.push({
         table: 'vendors ↔ profiles',
         status: vendorMismatches.length === 0 ? 'ok' : 'warning',
-        message: vendorMismatches.length === 0 
-          ? 'Codes vendeurs synchronisés' 
+        message: vendorMismatches.length === 0
+          ? 'Codes vendeurs synchronisés'
           : `${vendorMismatches.length} vendeurs désynchronisés`,
         count: vendorCount || 0,
         discrepancies: vendorMismatches.length
@@ -105,8 +105,8 @@ class PDGSyncService {
       checks.push({
         table: 'agents_management (wallets)',
         status: (agentsWithoutWallet?.length || 0) === 0 ? 'ok' : 'warning',
-        message: (agentsWithoutWallet?.length || 0) === 0 
-          ? 'Tous les agents ont un compte utilisateur' 
+        message: (agentsWithoutWallet?.length || 0) === 0
+          ? 'Tous les agents ont un compte utilisateur'
           : `${agentsWithoutWallet?.length} agents sans compte Supabase Auth`,
         discrepancies: agentsWithoutWallet?.length || 0
       });
@@ -115,7 +115,7 @@ class PDGSyncService {
       const { data: allWallets } = await supabase
         .from('wallets')
         .select('id, user_id');
-      
+
       const { data: allProfiles } = await supabase
         .from('profiles')
         .select('id');
@@ -126,8 +126,8 @@ class PDGSyncService {
       checks.push({
         table: 'wallets (orphelins)',
         status: orphanWallets.length === 0 ? 'ok' : 'error',
-        message: orphanWallets.length === 0 
-          ? 'Aucun wallet orphelin' 
+        message: orphanWallets.length === 0
+          ? 'Aucun wallet orphelin'
           : `${orphanWallets.length} wallets sans profil associé`,
         discrepancies: orphanWallets.length
       });
@@ -139,7 +139,7 @@ class PDGSyncService {
         .limit(1000);
 
       const walletIds = new Set(allWallets?.map(w => w.id) || []);
-      const invalidTransactions = (recentTransactions || []).filter(t => 
+      const invalidTransactions = (recentTransactions || []).filter(t =>
         (t.sender_wallet_id && !walletIds.has(t.sender_wallet_id)) ||
         (t.receiver_wallet_id && !walletIds.has(t.receiver_wallet_id))
       );
@@ -147,8 +147,8 @@ class PDGSyncService {
       checks.push({
         table: 'wallet_transactions (intégrité)',
         status: invalidTransactions.length === 0 ? 'ok' : 'error',
-        message: invalidTransactions.length === 0 
-          ? 'Toutes les transactions référencent des wallets valides' 
+        message: invalidTransactions.length === 0
+          ? 'Toutes les transactions référencent des wallets valides'
           : `${invalidTransactions.length} transactions avec wallets invalides`,
         discrepancies: invalidTransactions.length
       });
@@ -193,7 +193,7 @@ class PDGSyncService {
       for (const profile of profilesToSync) {
         // Vérifier si le public_id est déjà utilisé par un autre utilisateur
         const conflictUserId = customIdToUserMap.get(profile.public_id);
-        
+
         if (conflictUserId && conflictUserId !== profile.id) {
           // Il y a un conflit - quelqu'un d'autre utilise déjà ce custom_id
           errors.push(`Conflit: ${profile.public_id} est déjà assigné à un autre utilisateur`);
@@ -221,9 +221,9 @@ class PDGSyncService {
         }
       }
 
-      return { 
-        success: errors.length === 0, 
-        synced, 
+      return {
+        success: errors.length === 0,
+        synced,
         errors,
         details: {
           totalChecked: profilesToSync.length,
@@ -231,10 +231,10 @@ class PDGSyncService {
         }
       };
     } catch (error) {
-      return { 
-        success: false, 
-        synced, 
-        errors: [...errors, error instanceof Error ? error.message : 'Erreur inconnue'] 
+      return {
+        success: false,
+        synced,
+        errors: [...errors, error instanceof Error ? error.message : 'Erreur inconnue']
       };
     }
   }
@@ -261,7 +261,7 @@ class PDGSyncService {
 
       for (const vendor of vendors || []) {
         const correctPublicId = profileMap.get(vendor.user_id);
-        
+
         if (correctPublicId && vendor.vendor_code !== correctPublicId) {
           const { error } = await supabase
             .from('vendors')
@@ -278,10 +278,10 @@ class PDGSyncService {
 
       return { success: errors.length === 0, synced, errors };
     } catch (error) {
-      return { 
-        success: false, 
-        synced, 
-        errors: [...errors, error instanceof Error ? error.message : 'Erreur inconnue'] 
+      return {
+        success: false,
+        synced,
+        errors: [...errors, error instanceof Error ? error.message : 'Erreur inconnue']
       };
     }
   }

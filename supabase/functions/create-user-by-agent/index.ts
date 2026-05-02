@@ -650,26 +650,45 @@ serve(async (req) => {
         user_id: authUser.user.id,
         user_role: body.role
       });
-      
+
       if (linkError) {
         console.error('❌ Erreur création liaison agent_created_users:', linkError);
-        // Ne pas bloquer la création, juste logger l'erreur
       } else {
         console.log('✅ Liaison agent_created_users créée');
       }
 
       // ============================================
-      // ⚠️ NOTE IMPORTANTE: PAS DE COMMISSION AUTOMATIQUE
+      // ✅ AFFILIATION: Lier l'utilisateur à l'agent pour les commissions
       // ============================================
-      // Les commissions ne sont PAS créditées à la création d'un utilisateur.
-      // Les commissions sont uniquement calculées et créditées lors de:
-      // 1. Paiement d'un abonnement par l'utilisateur créé
-      // 2. Achat d'un article par l'utilisateur créé
-      // 3. Transaction financière réelle effectuée par l'utilisateur
-      // 
-      // Cela garantit que l'agent est rémunéré uniquement quand l'utilisateur
-      // génère réellement du revenu pour la plateforme.
-      console.log('ℹ️ Utilisateur créé sans commission immédiate - la commission sera calculée lors du premier paiement');
+      // CRITIQUE: user_agent_affiliations est la table lue par credit_agent_commission
+      // pour calculer les commissions. Sans cette entrée, l'agent ne recevra JAMAIS
+      // de commission quand cet utilisateur achète/souscrit.
+      const { error: affiliationError } = await supabaseClient
+        .from('user_agent_affiliations')
+        .insert({
+          user_id: authUser.user.id,
+          agent_id: effectiveAgentId,
+          is_verified: true,
+          verified_at: new Date().toISOString(),
+          fraud_score: 0,
+          fraud_flags: [],
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .maybeSingle();
+
+      if (affiliationError) {
+        // UNIQUE constraint sur user_id → utilisateur déjà affilié à un agent, non bloquant
+        if (affiliationError.code === '23505') {
+          console.warn('⚠️ Utilisateur déjà affilié à un agent (non bloquant)');
+        } else {
+          console.error('❌ Erreur création user_agent_affiliations:', affiliationError);
+        }
+      } else {
+        console.log('✅ Affiliation user_agent_affiliations créée — commissions activées');
+      }
+
+      console.log('ℹ️ Utilisateur créé — commissions déclenchées sur les prochains achats/abonnements');
     } else {
       console.warn('⚠️ Pas d\'agent_id valide pour créer la liaison agent_created_users');
     }

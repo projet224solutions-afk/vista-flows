@@ -148,7 +148,7 @@ export const useAgentPermissions = (agentId: string | undefined) => {
 
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .rpc('get_agent_permissions' as any, {
           p_agent_id: agentId
@@ -179,7 +179,7 @@ export const useAgentPermissions = (agentId: string | undefined) => {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de la mise à jour');
       }

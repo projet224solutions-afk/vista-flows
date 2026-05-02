@@ -19,6 +19,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
   useEffect(() => {
     if (vendorLoading) return;
     fetchVendorCustomId();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, vendorUserId, vendorLoading]);
 
   const fetchVendorCustomId = async () => {
@@ -85,7 +86,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
             </p>
           </div>
         )}
-        
+
         <div>
           <label className="text-sm font-medium mb-2 block">
             Pourcentage de commission (%)
@@ -115,14 +116,14 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
               ✅ Lien d'affiliation généré avec succès !
             </p>
             <div className="flex items-center gap-2">
-              <Input 
-                value={link} 
-                readOnly 
+              <Input
+                value={link}
+                readOnly
                 className="font-mono text-xs"
                 onClick={(e) => e.currentTarget.select()}
               />
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(link);
@@ -140,9 +141,9 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
                 Copier
               </Button>
             </div>
-            <a 
-              href={link} 
-              target="_blank" 
+            <a
+              href={link}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-blue-600 hover:underline mt-2 inline-block"
             >

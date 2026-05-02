@@ -4,7 +4,7 @@
  * Chaque carte est cliquable et affiche l'état de santé + correction automatique
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -15,7 +15,7 @@ import {
   X,
   Shield,
   Activity,
-  Zap,
+  _Zap,
   Database,
   Wallet,
   ShoppingCart,
@@ -102,7 +102,7 @@ interface FloatingLog {
 }
 
 export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMonitorProps) {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [activeFeatures, setActiveFeatures] = useState<Set<number>>(new Set());
   const [logs, setLogs] = useState<FloatingLog[]>([]);
   const [uptime, setUptime] = useState({ days: 99, hours: 23, mins: 45, secs: 12 });
@@ -330,7 +330,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
           </VisuallyHidden>
           {/* Background Grid Effect */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,136,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,136,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-          
+
           {/* Scanning Line Effect */}
           <motion.div
             className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"
@@ -453,8 +453,8 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                   {showTransactionMenu && (
                     <>
                       {/* Backdrop pour fermer le menu */}
-                      <div 
-                        className="fixed inset-0 z-[100]" 
+                      <div
+                        className="fixed inset-0 z-[100]"
                         onClick={() => setShowTransactionMenu(false)}
                       />
                       <motion.div
@@ -462,34 +462,34 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         className="absolute top-full left-0 right-0 mt-2 z-[101] rounded-lg overflow-hidden shadow-2xl min-w-[200px]"
-                        style={{ 
+                        style={{
                           backgroundColor: '#0f172a',
                           border: '1px solid rgba(16, 185, 129, 0.4)'
                         }}
                       >
                         <div className="p-2 sm:p-3 space-y-1">
-                          <div 
+                          <div
                             className="flex justify-between items-center p-2 sm:p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
                             onClick={() => setShowTransactionMenu(false)}
                           >
                             <span className="text-emerald-400 text-xs sm:text-sm font-medium">📅 Aujourd'hui</span>
                             <span className="text-white font-mono font-bold text-sm sm:text-lg">{transactionBreakdown.today.toLocaleString()}</span>
                           </div>
-                          <div 
+                          <div
                             className="flex justify-between items-center p-2 sm:p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
                             onClick={() => setShowTransactionMenu(false)}
                           >
                             <span className="text-emerald-400 text-xs sm:text-sm font-medium">📆 Semaine</span>
                             <span className="text-white font-mono font-bold text-sm sm:text-lg">{transactionBreakdown.week.toLocaleString()}</span>
                           </div>
-                          <div 
+                          <div
                             className="flex justify-between items-center p-2 sm:p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
                             onClick={() => setShowTransactionMenu(false)}
                           >
                             <span className="text-emerald-400 text-xs sm:text-sm font-medium">🗓️ Mois</span>
                             <span className="text-white font-mono font-bold text-sm sm:text-lg">{transactionBreakdown.month.toLocaleString()}</span>
                           </div>
-                          <div 
+                          <div
                             className="flex justify-between items-center p-2 sm:p-3 hover:bg-emerald-500/20 rounded-lg cursor-pointer transition-colors"
                             onClick={() => setShowTransactionMenu(false)}
                           >
@@ -534,18 +534,18 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                 const isActive = activeFeatures.has(index);
                 const health = getFeatureHealth(feature.domain);
                 const hasIssue = health && health.status !== 'OK';
-                
+
                 return (
                   <motion.div
                     key={feature.name}
                     initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                      opacity: 1, 
+                    animate={{
+                      opacity: 1,
                       scale: 1,
-                      boxShadow: isActive 
-                        ? `0 0 30px ${feature.color}60, 0 0 60px ${feature.color}30` 
+                      boxShadow: isActive
+                        ? `0 0 30px ${feature.color}60, 0 0 60px ${feature.color}30`
                         : hasIssue
-                        ? health.status === 'CRITICAL' 
+                        ? health.status === 'CRITICAL'
                           ? '0 0 20px rgba(239, 68, 68, 0.4)'
                           : '0 0 15px rgba(249, 115, 22, 0.3)'
                         : 'none'
@@ -553,8 +553,8 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                     transition={{ delay: index * 0.02 }}
                     onClick={() => handleFeatureClick(feature)}
                     className={`relative p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border transition-all duration-300 cursor-pointer active:scale-95 sm:hover:scale-105 ${
-                      isActive 
-                        ? 'border-emerald-400 bg-emerald-500/20' 
+                      isActive
+                        ? 'border-emerald-400 bg-emerald-500/20'
                         : hasIssue
                         ? health.status === 'CRITICAL'
                           ? 'border-red-500/50 bg-red-500/10'
@@ -575,31 +575,31 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                         transition={{ duration: 1, repeat: Infinity }}
                       />
                     )}
-                    
+
                     <div className="flex flex-col items-center gap-1 sm:gap-2 relative z-10">
                       <motion.div
-                        animate={{ 
+                        animate={{
                           rotate: isActive ? 360 : 0,
-                          scale: isActive ? 1.2 : 1 
+                          scale: isActive ? 1.2 : 1
                         }}
                         transition={{ duration: 0.5 }}
                         className="p-2 sm:p-3 rounded-lg"
-                        style={{ 
+                        style={{
                           backgroundColor: `${feature.color}20`,
                           boxShadow: isActive ? `0 0 20px ${feature.color}` : 'none'
                         }}
                       >
-                        <Icon 
-                          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" 
+                        <Icon
+                          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
                           style={{ color: feature.color }}
                         />
                       </motion.div>
                       <span className="text-[9px] sm:text-[10px] md:text-xs text-center text-emerald-400/80 font-medium leading-tight line-clamp-2">
                         {feature.name}
                       </span>
-                      <Badge 
+                      <Badge
                         className="text-[8px] sm:text-[10px] px-1 sm:px-2"
-                        style={{ 
+                        style={{
                           backgroundColor: isActive ? feature.color : 'transparent',
                           color: isActive ? 'white' : feature.color,
                           borderColor: feature.color
@@ -637,7 +637,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                   </motion.div>
                   <span className="text-emerald-500/70 text-sm sm:text-lg font-medium">UPTIME</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2 sm:gap-3 font-mono text-2xl sm:text-4xl text-emerald-400 font-bold">
                   <div className="flex flex-col items-center">
                     <span>{String(uptime.days).padStart(2, '0')}</span>
@@ -683,8 +683,8 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
               <span className="whitespace-nowrap hidden sm:inline">DISK: 67%</span>
             </div>
             <div className="text-emerald-400 text-[10px] sm:text-sm font-mono whitespace-nowrap flex-shrink-0">
-              {new Date().toLocaleString('fr-FR', { 
-                hour: '2-digit', 
+              {new Date().toLocaleString('fr-FR', {
+                hour: '2-digit',
                 minute: '2-digit',
                 day: '2-digit',
                 month: '2-digit'

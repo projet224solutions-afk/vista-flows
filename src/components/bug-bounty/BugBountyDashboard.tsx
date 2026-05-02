@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Shield, AlertTriangle, CheckCircle, Clock, XCircle, Trophy } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, Clock, _XCircle, Trophy } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -82,7 +82,7 @@ const statusColors: Record<BugReportStatus, string> = {
 const BugBountyDashboard = () => {
   const queryClient = useQueryClient();
   const { user, profile } = useAuth();
-  
+
   // States avec types stricts
   const [selectedReport, setSelectedReport] = useState<BugReport | null>(null);
   const [adminNotes, setAdminNotes] = useState<string>("");
@@ -98,7 +98,7 @@ const BugBountyDashboard = () => {
     queryKey: ["bug-reports"],
     queryFn: async () => {
       console.log('🔍 Chargement bug reports...');
-      
+
       const { data, error } = await supabase
         .from("bug_reports")
         .select("*")
@@ -119,11 +119,11 @@ const BugBountyDashboard = () => {
     queryKey: ["bug-bounty-stats"],
     queryFn: async () => {
       console.log('📊 Chargement stats bug bounty...');
-      
+
       const { data: allReports, error } = await supabase
         .from("bug_reports")
         .select("status, severity, reward_amount");
-      
+
       if (error) {
         console.error('❌ Erreur chargement stats:', error);
         throw error;
@@ -153,7 +153,7 @@ const BugBountyDashboard = () => {
   const updateReportMutation = useMutation<void, Error, { id: string; updates: Partial<BugReport> }>({
     mutationFn: async ({ id, updates }) => {
       console.log('📝 Mise à jour rapport:', id, updates);
-      
+
       const { error } = await supabase
         .from("bug_reports")
         .update(updates)
@@ -165,7 +165,7 @@ const BugBountyDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-bounty-stats"] });
       toast.success("Rapport mis à jour avec succès");
-      
+
       // Réinitialiser tous les states
       setSelectedReport(null);
       setAdminNotes("");
@@ -174,8 +174,8 @@ const BugBountyDashboard = () => {
     },
     onError: (error: Error) => {
       console.error('❌ Erreur mise à jour rapport:', error);
-      toast.error("Erreur lors de la mise à jour", { 
-        description: error.message 
+      toast.error("Erreur lors de la mise à jour", {
+        description: error.message
       });
     },
   });
@@ -184,16 +184,16 @@ const BugBountyDashboard = () => {
     if (!selectedReport) return;
 
     const updates: Partial<BugReport> = {};
-    
+
     if (adminNotes) updates.admin_notes = adminNotes;
-    
+
     if (newStatus) {
       updates.status = newStatus as BugReportStatus;
       if (newStatus === "resolved" || newStatus === "rewarded") {
         updates.resolved_at = new Date().toISOString();
       }
     }
-    
+
     if (rewardAmount) {
       const amount = parseFloat(rewardAmount);
       if (!isNaN(amount) && amount > 0) {
@@ -304,7 +304,7 @@ const BugBountyDashboard = () => {
         <CardContent>
           <div className="space-y-4">
             {reports?.map((report) => (
-              <Dialog 
+              <Dialog
                 key={report.id}
                 open={selectedReport?.id === report.id}
                 onOpenChange={(open) => {
@@ -318,7 +318,7 @@ const BugBountyDashboard = () => {
                 }}
               >
                 <DialogTrigger asChild>
-                  <Card 
+                  <Card
                     className="cursor-pointer hover:bg-accent/50 transition-colors"
                     onClick={() => {
                       setSelectedReport(report);

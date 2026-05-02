@@ -19,7 +19,7 @@ class RequestDeduplicator {
   private static instance: RequestDeduplicator;
   private pending: Map<string, PendingRequest> = new Map();
   private batchQueues: Map<string, { items: any[]; resolve: ((v: any) => void)[]; timer: ReturnType<typeof setTimeout> | null }> = new Map();
-  
+
   private metrics = {
     totalRequests: 0,
     deduplicatedRequests: 0,
@@ -83,7 +83,7 @@ class RequestDeduplicator {
 
     return new Promise<TResult | undefined>((resolve) => {
       let queue = this.batchQueues.get(batchKey);
-      
+
       if (!queue) {
         queue = { items: [], resolve: [], timer: null };
         this.batchQueues.set(batchKey, queue);
@@ -122,12 +122,12 @@ class RequestDeduplicator {
 
     try {
       const results = await batchFetcher(items);
-      
+
       items.forEach((item: any, index: number) => {
         const key = typeof item === 'string' ? item : item[itemKey];
         resolve[index](results.get(key));
       });
-    } catch (error) {
+    } catch (_error) {
       resolve.forEach(r => r(undefined));
     }
   }

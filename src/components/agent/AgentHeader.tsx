@@ -24,7 +24,7 @@ export default function AgentHeader({ agentCode, pdgUserId, sectionTitle }: Agen
               <p className="text-sm text-muted-foreground">Interface Agent 224Solutions</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4 flex-wrap">
             <AgentIdDisplay agentCode={agentCode} />
             {pdgUserId && (

@@ -152,7 +152,7 @@ export function useVendorEcommerceStats(vendorId: string | null) {
       // 3. Calculer les stats des commandes
       const allOrderStats = calculateOrderStats(allOrders);
       const allSalesStats = calculateSalesStats(allOrders, startOfDay, startOfWeek, startOfMonth);
-      
+
       // Séparer POS vs Online
       const posOrders = allOrders.filter(o => o.source === 'pos');
       const onlineOrders = allOrders.filter(o => o.source !== 'pos');

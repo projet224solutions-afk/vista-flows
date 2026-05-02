@@ -5,23 +5,23 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Shield,
+  CheckCircle2,
+  XCircle,
   Eye,
   FileText,
   Phone,
   User,
-  AlertTriangle,
+  _AlertTriangle,
   Clock,
   Download
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -56,7 +56,7 @@ export function VendorKYCReview() {
   const [filteredRecords, setFilteredRecords] = useState<VendorKYC[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  
+
   // Dialog state
   const [selectedKYC, setSelectedKYC] = useState<VendorKYC | null>(null);
   const [dialogAction, setDialogAction] = useState<'APPROVE' | 'REJECT' | null>(null);
@@ -79,6 +79,7 @@ export function VendorKYCReview() {
 
   useEffect(() => {
     filterRecords();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kycRecords, statusFilter]);
 
   const loadKYCRecords = async () => {
@@ -103,7 +104,7 @@ export function VendorKYCReview() {
       if (error) throw error;
 
       const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
-      
+
       const enrichedData: VendorKYC[] = (data || []).map((record: any) => {
         const profile = profilesMap.get(record.vendor_id);
         return {
@@ -153,7 +154,7 @@ export function VendorKYCReview() {
     try {
       const newStatus = dialogAction === 'APPROVE' ? 'verified' : 'rejected';
       const now = new Date().toISOString();
-      
+
       const updateData: any = {
         status: newStatus,
         updated_at: now
@@ -194,7 +195,7 @@ export function VendorKYCReview() {
       // UPSERT vendor_certifications (create if doesn't exist, update if exists)
       try {
         // First try to update
-        const { data: existingCert, error: checkError } = await supabase
+        const { data: existingCert, error: _checkError } = await supabase
           .from('vendor_certifications')
           .select('id')
           .eq('vendor_id', selectedKYC.vendor_id)
@@ -237,14 +238,14 @@ export function VendorKYCReview() {
       }
 
       toast.success(
-        dialogAction === 'APPROVE' 
-          ? 'KYC approuvé avec succès' 
+        dialogAction === 'APPROVE'
+          ? 'KYC approuvé avec succès'
           : 'KYC rejeté'
       );
-      
+
       // Reload records
       await loadKYCRecords();
-      
+
       // Close dialog
       setSelectedKYC(null);
       setDialogAction(null);
@@ -464,8 +465,8 @@ export function VendorKYCReview() {
       </div>
 
       {/* Approve/Reject Dialog */}
-      <Dialog 
-        open={selectedKYC !== null && dialogAction !== null} 
+      <Dialog
+        open={selectedKYC !== null && dialogAction !== null}
         onOpenChange={(open) => {
           if (!open) {
             setSelectedKYC(null);
@@ -531,7 +532,7 @@ export function VendorKYCReview() {
               onClick={handleAction}
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason.trim())}
               className={
-                dialogAction === 'APPROVE' 
+                dialogAction === 'APPROVE'
                   ? 'bg-green-600 hover:bg-green-700'
                   : ''
               }
@@ -554,9 +555,9 @@ export function VendorKYCReview() {
 
           <div className="max-h-[70vh] overflow-auto">
             {selectedKYC?.id_document_url ? (
-              <img 
-                src={selectedKYC.id_document_url} 
-                alt="Document d'identité" 
+              <img
+                src={selectedKYC.id_document_url}
+                alt="Document d'identité"
                 className="w-full h-auto rounded-lg border"
               />
             ) : (
@@ -571,7 +572,7 @@ export function VendorKYCReview() {
               Fermer
             </Button>
             {selectedKYC?.id_document_url && (
-              <Button 
+              <Button
                 onClick={() => window.open(selectedKYC.id_document_url, '_blank')}
               >
                 <Download className="w-4 h-4 mr-2" />

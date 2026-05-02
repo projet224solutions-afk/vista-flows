@@ -6,9 +6,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Plane, Plus, ExternalLink, 
-  Eye, Star, ShoppingCart
+import {
+  ArrowLeft, Plane, Plus, ExternalLink,
+  Eye, Star, _ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +28,7 @@ interface AirlineAffiliateModuleProps {
 export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  
+
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
@@ -116,8 +116,8 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={onBack}
               className="shrink-0"
@@ -159,14 +159,14 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
             </div>
             <h3 className="font-semibold text-foreground mb-2">Aucune affiliation aérienne</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {isMerchant 
+              {isMerchant
                 ? 'Soyez le premier à ajouter une affiliation compagnie aérienne!'
                 : 'Devenez marchand pour promouvoir des compagnies aériennes!'
               }
             </p>
             <Button onClick={handleAddProduct} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/40">
               <Plus className="w-4 h-4 mr-2" />
-              {user 
+              {user
                 ? (isMerchant ? 'Ajouter une affiliation' : 'Devenir marchand')
                 : 'Se connecter pour vendre'
               }
@@ -175,15 +175,15 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {products.map((product) => (
-              <Card 
+              <Card
                 key={product.id}
                 className="cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
                 onClick={() => handleProductClick(product)}
               >
                 <div className="relative aspect-square bg-muted">
                   {product.images && product.images[0] ? (
-                    <img 
-                      src={product.images[0]} 
+                    <img
+                      src={product.images[0]}
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
@@ -196,7 +196,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
                       <Plane className="w-10 h-10" />
                     </div>
                   )}
-                  
+
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
@@ -216,7 +216,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
                   <h3 className="font-medium text-sm text-foreground line-clamp-2 mb-1">
                     {product.title}
                   </h3>
-                  
+
                   {product.short_description && (
                     <p className="text-xs text-muted-foreground line-clamp-1 mb-2">
                       {product.short_description}
@@ -225,9 +225,9 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
 
                   <div className="flex items-center justify-between">
                     {product.price > 0 ? (
-                      <LocalPrice 
-                        amount={product.price} 
-                        currency={product.currency || 'USD'} 
+                      <LocalPrice
+                        amount={product.price}
+                        currency={product.currency || 'USD'}
                         size="sm"
                         className="font-bold text-primary"
                       />

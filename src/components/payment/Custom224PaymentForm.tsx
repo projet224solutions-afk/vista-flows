@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import {
-  PaymentElement,
+  _PaymentElement,
   useStripe,
   useElements,
   CardNumberElement,
@@ -90,7 +90,7 @@ export function Custom224PaymentForm({
 
     try {
       const cardNumberElement = elements.getElement(CardNumberElement);
-      
+
       if (!cardNumberElement) {
         throw new Error('Élément de carte introuvable');
       }
@@ -283,7 +283,7 @@ export function Custom224PaymentForm({
             <Shield className="w-4 h-4" />
             <span>Paiement sécurisé par Stripe • Cryptage SSL • PCI-DSS</span>
           </div>
-          
+
           {/* Logo 224Solutions */}
           <div className="text-center pt-3 border-t">
             <p className="text-xs text-gray-400">

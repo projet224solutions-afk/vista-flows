@@ -39,17 +39,6 @@ export function MediaAutoCarousel({
   const videoRef = useRef<HTMLVideoElement>(null);
   const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Pas de media
-  if (videos.length === 0 && images.length === 0) {
-    return (
-      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
-          Aucune image
-        </div>
-      </div>
-    );
-  }
-
   // Nettoyer le timer d'image
   const clearImageTimer = useCallback(() => {
     if (imageTimerRef.current) {
@@ -120,9 +109,7 @@ export function MediaAutoCarousel({
   // Autoplay de la vidéo quand elle change
   useEffect(() => {
     if (isPlayingVideo && videoRef.current && isAutoPlaying) {
-      videoRef.current.play().catch(() => {
-        // Autoplay bloqué par le navigateur
-      });
+      videoRef.current.play().catch(() => {});
     }
   }, [isPlayingVideo, currentVideoIndex, isAutoPlaying]);
 
@@ -165,6 +152,17 @@ export function MediaAutoCarousel({
       });
     }
   }, [isHovered, images]);
+
+  // Pas de media
+  if (videos.length === 0 && images.length === 0) {
+    return (
+      <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
+        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+          Aucune image
+        </div>
+      </div>
+    );
+  }
 
   const totalItems = videos.length + images.length;
   const currentIndex = isPlayingVideo ? currentVideoIndex : videos.length + currentImageIndex;
@@ -232,8 +230,8 @@ export function MediaAutoCarousel({
         <div className="absolute top-2 left-2 z-30">
           <div className={cn(
             "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
-            isPlayingVideo 
-              ? "bg-red-500 text-white" 
+            isPlayingVideo
+              ? "bg-red-500 text-white"
               : "bg-black/60 backdrop-blur-sm text-white"
           )}>
             <Play className="w-3 h-3" />
@@ -305,12 +303,12 @@ export function MediaAutoCarousel({
               aria-label={`Video ${index + 1}`}
             />
           ))}
-          
+
           {/* Separator */}
           {videos.length > 0 && images.length > 0 && (
             <div className="w-px h-2 bg-white/30 mx-0.5" />
           )}
-          
+
           {/* Image dots */}
           {images.map((_, index) => (
             <button

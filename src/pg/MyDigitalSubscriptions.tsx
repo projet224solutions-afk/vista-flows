@@ -1,6 +1,6 @@
 ﻿/**
- * ­ƒôï MES ABONNEMENTS NUM├ëRIQUES
- * Page de gestion des abonnements r├®currents aux produits digitaux
+ * 📋 MES ABONNEMENTS NUMÉRIQUES
+ * Page de gestion des abonnements récurrents aux produits digitaux
  */
 
 import { useState, useEffect } from 'react';
@@ -8,16 +8,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle 
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
-import { 
-  ArrowLeft, RefreshCw, Calendar, CreditCard, XCircle, 
-  CheckCircle, Clock, AlertTriangle, Package, TrendingUp, Download 
+import {
+  ArrowLeft, RefreshCw, Calendar, CreditCard, XCircle,
+  CheckCircle, Clock, AlertTriangle, Package, TrendingUp, Download
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -47,15 +47,15 @@ interface DigitalSubscription {
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
   active: { label: 'Actif', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: CheckCircle },
   past_due: { label: 'Paiement en retard', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20', icon: AlertTriangle },
-  cancelled: { label: 'Annul├®', color: 'bg-muted text-muted-foreground border-border', icon: XCircle },
-  expired: { label: 'Expir├®', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Clock },
+  cancelled: { label: 'Annulé', color: 'bg-muted text-muted-foreground border-border', icon: XCircle },
+  expired: { label: 'Expiré', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Clock },
   paused: { label: 'Suspendu', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: Clock },
 };
 
 const cycleLabels: Record<string, string> = {
   monthly: 'Mensuel',
   yearly: 'Annuel',
-  lifetime: '├Ç vie',
+  lifetime: 'À vie',
 };
 
 export default function MyDigitalSubscriptions() {
@@ -70,6 +70,7 @@ export default function MyDigitalSubscriptions() {
 
   useEffect(() => {
     if (user?.id) loadSubscriptions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const loadSubscriptions = async () => {
@@ -126,11 +127,11 @@ export default function MyDigitalSubscriptions() {
 
       if (error) throw error;
 
-      toast({ title: 'Ô£à Abonnement annul├®', description: 'Vous gardez l\'acc├¿s jusqu\'├á la fin de la p├®riode en cours.' });
+      toast({ title: 'Abonnement annulé', description: 'Vous gardez l\'accès jusqu\'à la fin de la période en cours.' });
       setCancelDialogOpen(false);
       setSelectedSubId(null);
       await loadSubscriptions();
-    } catch (error) {
+    } catch (_error) {
       toast({ variant: 'destructive', title: 'Erreur', description: 'Impossible d\'annuler l\'abonnement' });
     } finally {
       setCancelling(false);
@@ -146,7 +147,7 @@ export default function MyDigitalSubscriptions() {
         .eq('buyer_id', user!.id);
 
       if (error) throw error;
-      toast({ title: currentValue ? '­ƒöò Renouvellement d├®sactiv├®' : '­ƒöö Renouvellement activ├®' });
+      toast({ title: currentValue ? 'Renouvellement désactivé' : 'Renouvellement activé' });
       await loadSubscriptions();
     } catch {
       toast({ variant: 'destructive', title: 'Erreur' });
@@ -177,7 +178,7 @@ export default function MyDigitalSubscriptions() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">Mes Abonnements</h1>
-            <p className="text-sm text-muted-foreground">G├®rez vos abonnements aux produits num├®riques</p>
+            <p className="text-sm text-muted-foreground">Gérez vos abonnements aux produits numériques</p>
           </div>
           <Button variant="outline" size="sm" onClick={loadSubscriptions} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -205,7 +206,7 @@ export default function MyDigitalSubscriptions() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{Math.round(totalMonthly).toLocaleString('fr-FR')}</p>
-                <p className="text-xs text-muted-foreground">GNF/mois estim├®</p>
+                <p className="text-xs text-muted-foreground">GNF/mois estimé</p>
               </div>
             </CardContent>
           </Card>
@@ -223,7 +224,7 @@ export default function MyDigitalSubscriptions() {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Aucun abonnement</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Explorez les produits num├®riques avec abonnement sur le marketplace
+                  Explorez les produits numériques avec abonnement sur le marketplace
                 </p>
               </div>
               <Button onClick={() => navigate('/marketplace')} className="mt-2">
@@ -277,7 +278,7 @@ export default function MyDigitalSubscriptions() {
                           </div>
                           <div className="flex items-center gap-1">
                             <RefreshCw className="w-3 h-3" />
-                            <span>{sub.total_payments_made} paiement{sub.total_payments_made > 1 ? 's' : ''} effectu├®{sub.total_payments_made > 1 ? 's' : ''}</span>
+                            <span>{sub.total_payments_made} paiement{sub.total_payments_made > 1 ? 's' : ''} effectué{sub.total_payments_made > 1 ? 's' : ''}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -289,8 +290,8 @@ export default function MyDigitalSubscriptions() {
                         {isActive && sub.billing_cycle === 'monthly' && (
                           <div className="mt-2">
                             <div className="w-full bg-muted rounded-full h-1.5">
-                              <div 
-                                className="bg-primary rounded-full h-1.5 transition-all" 
+                              <div
+                                className="bg-primary rounded-full h-1.5 transition-all"
                                 style={{ width: `${Math.min(100, (daysLeft / 30) * 100)}%` }}
                               />
                             </div>
@@ -308,7 +309,7 @@ export default function MyDigitalSubscriptions() {
                           className="text-xs"
                         >
                           <Download className="w-3 h-3 mr-1" />
-                          Acc├®der au contenu
+                          Accéder au contenu
                         </Button>
                         <Button
                           variant="ghost"
@@ -317,7 +318,7 @@ export default function MyDigitalSubscriptions() {
                           className="text-xs"
                         >
                           <RefreshCw className="w-3 h-3 mr-1" />
-                          {sub.auto_renew ? 'D├®sactiver' : 'Activer'} renouvellement
+                          {sub.auto_renew ? 'Désactiver' : 'Activer'} renouvellement
                         </Button>
                         <div className="flex-1" />
                         <Button
@@ -338,7 +339,7 @@ export default function MyDigitalSubscriptions() {
                     {sub.status === 'cancelled' && sub.current_period_end && new Date(sub.current_period_end) > new Date() && (
                       <div className="border-t border-border px-4 py-2 bg-amber-500/5">
                         <p className="text-xs text-amber-600">
-                          ÔÜá´©Å Acc├¿s maintenu jusqu'au {formatDate(sub.current_period_end)}
+                          Accès maintenu jusqu'au {formatDate(sub.current_period_end)}
                         </p>
                       </div>
                     )}
@@ -356,8 +357,8 @@ export default function MyDigitalSubscriptions() {
           <AlertDialogHeader>
             <AlertDialogTitle>Annuler cet abonnement ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous garderez l'acc├¿s au contenu jusqu'├á la fin de la p├®riode en cours. 
-              Aucun remboursement ne sera effectu├® pour la p├®riode d├®j├á pay├®e.
+              Vous garderez l'accès au contenu jusqu'à la fin de la période en cours.
+              Aucun remboursement ne sera effectué pour la période déjà payée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

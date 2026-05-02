@@ -46,7 +46,7 @@ export function useFeatureAccess() {
     if (!restriction) return true; // Si pas de restriction définie, accès par défaut
 
     const planName = subscription.plan_name?.toLowerCase();
-    
+
     switch (planName) {
       case 'free':
         return restriction.free_plan_access;

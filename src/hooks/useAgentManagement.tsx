@@ -42,7 +42,7 @@ export const useAgentManagement = () => {
         .from('roles')
         .select('*')
         .order('name');
-        
+
       if (error) throw error;
       setRoles((data as unknown[])?.map((role: unknown) => ({
         id: role.id,
@@ -177,6 +177,7 @@ export const useAgentManagement = () => {
         fetchAgents()
       ]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return {

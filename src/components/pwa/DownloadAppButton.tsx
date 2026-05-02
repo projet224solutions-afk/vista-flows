@@ -15,14 +15,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  _AlertDialog,
+  _AlertDialogAction,
+  _AlertDialogCancel,
+  _AlertDialogContent,
+  _AlertDialogDescription,
+  _AlertDialogFooter,
+  _AlertDialogHeader,
+  _AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';

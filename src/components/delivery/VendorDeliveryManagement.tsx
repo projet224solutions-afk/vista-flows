@@ -5,26 +5,26 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { _Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Package, 
-  Truck, 
-  CheckCircle2, 
-  Clock, 
-  MapPin, 
-  Phone, 
+import {
+  Package,
+  Truck,
+  CheckCircle2,
+  _Clock,
+  MapPin,
+  Phone,
   User,
   QrCode,
   Loader2,
   RefreshCw,
-  Eye,
-  Navigation,
-  Bell
+  _Eye,
+  _Navigation,
+  _Bell
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -65,20 +65,20 @@ export function VendorDeliveryManagement() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [vendorId, setVendorId] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
+  const [_selectedOrder, _setSelectedOrder] = useState<DeliveryOrder | null>(null);
   const [generatingCode, setGeneratingCode] = useState<string | null>(null);
 
   // Charger le vendeur
   useEffect(() => {
     const loadVendor = async () => {
       if (!user) return;
-      
+
       const { data } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .single();
-      
+
       if (data) {
         setVendorId(data.id);
       }
@@ -89,7 +89,7 @@ export function VendorDeliveryManagement() {
   // Charger les commandes
   const loadOrders = async () => {
     if (!vendorId) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -111,7 +111,7 @@ export function VendorDeliveryManagement() {
   useEffect(() => {
     if (vendorId) {
       loadOrders();
-      
+
       // Souscription temps réel
       const channel = supabase
         .channel('vendor-deliveries')
@@ -137,6 +137,7 @@ export function VendorDeliveryManagement() {
         supabase.removeChannel(channel);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   // Marquer prêt pour livraison
@@ -145,7 +146,7 @@ export function VendorDeliveryManagement() {
     try {
       // Générer un code de retrait unique
       const pickupCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
+
       const { error } = await supabase
         .from('deliveries')
         .update({
@@ -305,8 +306,8 @@ export function VendorDeliveryManagement() {
                             <DialogTitle>Code de retrait</DialogTitle>
                           </DialogHeader>
                           <div className="flex flex-col items-center gap-4 py-4">
-                            <QRCodeSVG 
-                              value={`224DELIVERY:${order.id}:${(order as any).metadata?.pickup_code}`} 
+                            <QRCodeSVG
+                              value={`224DELIVERY:${order.id}:${(order as any).metadata?.pickup_code}`}
                               size={200}
                             />
                             <p className="text-3xl font-mono font-bold">

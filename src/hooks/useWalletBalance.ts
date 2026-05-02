@@ -20,11 +20,11 @@ export function useWalletBalance(userId: string | undefined) {
         // Si le wallet n'existe pas, utiliser la fonction RPC pour l'initialiser
         if (error.code === 'PGRST116') {
           console.log('⚠️ Wallet non trouvé, initialisation via RPC...');
-          
+
           try {
             const { data: initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: userId });
-            
+
             if (rpcError) {
               console.error('❌ Erreur RPC:', rpcError);
             } else if (initResult) {
@@ -84,6 +84,7 @@ export function useWalletBalance(userId: string | undefined) {
       window.removeEventListener('wallet-updated', handleWalletUpdate);
       channel.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   return { balance, currency, loading, reload: loadBalance };

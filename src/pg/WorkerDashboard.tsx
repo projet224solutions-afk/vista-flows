@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Bike, AlertCircle, Phone, MessageSquare } from 'lucide-react';
+import { _Users, _Bike, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
@@ -22,13 +22,14 @@ export default function WorkerDashboard() {
     if (token) {
       loadWorkerData();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const loadWorkerData = async () => {
     try {
       setLoading(true);
 
-      // Charger les donn├®es du travailleur
+      // Charger les données du travailleur
       const { data: workerData, error: workerError } = await supabase
         .from('syndicate_workers')
         .select('*')
@@ -37,14 +38,14 @@ export default function WorkerDashboard() {
 
       if (workerError) throw workerError;
       if (!workerData) {
-        toast.error('Acc├¿s non trouv├®');
+        toast.error('Accès non trouvé');
         navigate('/');
         return;
       }
 
       setWorker(workerData);
 
-      // Charger les donn├®es du bureau
+      // Charger les données du bureau
       const { data: bureauData } = await supabase
         .from('bureaus')
         .select('*')
@@ -53,7 +54,7 @@ export default function WorkerDashboard() {
 
       setBureau(bureauData);
 
-      // Charger les donn├®es selon les permissions
+      // Charger les données selon les permissions
       const permissions = workerData.permissions as any;
       const promises = [];
 
@@ -74,7 +75,7 @@ export default function WorkerDashboard() {
       );
 
       const results = await Promise.all(promises);
-      
+
       let resultIndex = 0;
       if (permissions.view_members) {
         setMembers(results[resultIndex++].data || []);
@@ -86,7 +87,7 @@ export default function WorkerDashboard() {
 
     } catch (error) {
       console.error('Erreur chargement travailleur:', error);
-      toast.error('Erreur lors du chargement des donn├®es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -105,10 +106,10 @@ export default function WorkerDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Acc├¿s non trouv├®</CardTitle>
+            <CardTitle>Accès non trouvé</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Le lien d'acc├¿s est invalide ou a expir├®.</p>
+            <p>Le lien d'accès est invalide ou a expiré.</p>
           </CardContent>
         </Card>
       </div>
@@ -117,7 +118,7 @@ export default function WorkerDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* En-t├¬te */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{worker.nom}</h1>
@@ -153,7 +154,7 @@ export default function WorkerDashboard() {
         {worker.permissions.view_vehicles && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">V├®hicules</CardTitle>
+              <CardTitle className="text-sm font-medium">Véhicules</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{motos.length}</div>
@@ -221,7 +222,7 @@ export default function WorkerDashboard() {
       {(worker.permissions as any).view_vehicles && (
         <Card>
           <CardHeader>
-            <CardTitle>V├®hicules</CardTitle>
+            <CardTitle>Véhicules</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -230,7 +231,7 @@ export default function WorkerDashboard() {
                   <div>
                     <h3 className="font-medium">{moto.serial_number}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {moto.brand} {moto.model} ÔÇó {moto.year} ÔÇó {moto.color}
+                      {moto.brand} {moto.model} • {moto.year} • {moto.color}
                     </p>
                   </div>
                   <Badge>{moto.status}</Badge>
@@ -238,7 +239,7 @@ export default function WorkerDashboard() {
               ))}
               {motos.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
-                  Aucun v├®hicule
+                  Aucun véhicule
                 </div>
               )}
             </div>
@@ -254,8 +255,8 @@ export default function WorkerDashboard() {
         <CardContent>
           <div className="space-y-4">
             {alerts.map((alert) => (
-              <div 
-                key={alert.id} 
+              <div
+                key={alert.id}
                 className={`flex items-start gap-4 p-4 rounded-lg border ${
                   alert.is_critical ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'
                 }`}
@@ -279,7 +280,7 @@ export default function WorkerDashboard() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>

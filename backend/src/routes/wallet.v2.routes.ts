@@ -34,19 +34,74 @@ async function ignoreSupabaseError(operation: PromiseLike<unknown> | unknown): P
   await Promise.resolve(operation).catch(() => undefined);
 }
 
+async function readSupabaseData<T>(queryPromise: PromiseLike<{ data?: T; error?: { message?: string } | null }>, label: string, fallbackValue: T): Promise<T> {
+  try {
+    const result = await Promise.resolve(queryPromise);
+    if (result?.error) {
+      logger.warn(`[walletV2] ${label} query failed: ${result.error.message}`);
+      return fallbackValue;
+    }
+    return (result?.data ?? fallbackValue) as T;
+  } catch (error: any) {
+    logger.warn(`[walletV2] ${label} query threw: ${error?.message || error}`);
+    return fallbackValue;
+  }
+}
+
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const BCRG_SCRAPE_URLS = [
+  'https://www.bcrg-guinee.org',
+  'https://www.bcrg-guinee.org/cours-de-change',
+  'https://www.bcrg.gov.gn',
+  'https://www.bcrg.gov.gn/cours-de-change',
+];
 
 interface ResolvedRecipient {
   userId: string;
   query: string;
-  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone';
+  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone' | 'pdg_management.email' | 'pdg_management.phone' | 'agents_management.agent_code' | 'agents_management.email' | 'agents_management.phone';
   displayName: string | null;
   email: string | null;
   phone: string | null;
   publicId: string | null;
   customId: string | null;
+}
+
+type WalletForTransfer = {
+  id: string;
+  balance: number;
+  currency: string | null;
+  user_id: string;
+  is_blocked?: boolean | null;
+};
+
+async function ensureTransferWallet(userId: string, fallbackCurrency = 'GNF'): Promise<WalletForTransfer | null> {
+  const { data: existingWallet, error: existingError } = await supabaseAdmin
+    .from('wallets')
+    .select('id, balance, currency, user_id, is_blocked')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingWallet) return existingWallet as WalletForTransfer;
+
+  if (existingError) {
+    logger.warn(`[WalletV2] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
+  }
+
+  const { data: createdWallet, error: createError } = await supabaseAdmin
+    .from('wallets')
+    .insert({ user_id: userId, balance: 0, currency: fallbackCurrency })
+    .select('id, balance, currency, user_id, is_blocked')
+    .single();
+
+  if (createError || !createdWallet) {
+    logger.error(`[WalletV2] Wallet auto-create failed for ${userId}: ${createError?.message || 'no wallet returned'}`);
+    return null;
+  }
+
+  return createdWallet as WalletForTransfer;
 }
 
 function isFxSuccessStatus(status: string | null | undefined): boolean {
@@ -125,6 +180,123 @@ function smartRoundCurrencyAmount(amount: number, currency: string): number {
     : Math.round(amount * 100) / 100;
 }
 
+const FX_MAX_AGE_MINUTES_DEFAULT = 180;
+const FX_MAX_AGE_MINUTES_GNF = 90;
+
+interface StoredFxRow {
+  rate?: number | null;
+  final_rate_usd?: number | null;
+  final_rate_eur?: number | null;
+  margin?: number | null;
+  retrieved_at?: string | null;
+  source?: string | null;
+  source_type?: string | null;
+  source_url?: string | null;
+}
+
+interface PdgRecipient {
+  user_id: string;
+}
+
+interface InternalFxRateResult {
+  rate: number;
+  officialRate: number;
+  margin: number;
+  source: string;
+  fetchedAt: string;
+  sourceType: string | null;
+  sourceUrl: string | null;
+  official: boolean;
+  stale: boolean;
+  refreshAttempted?: boolean;
+  refreshStatus?: number | null;
+  refreshTimedOut?: boolean;
+}
+
+function getFxFreshnessThresholdMinutes(from: string, to: string): number {
+  const sourceCurrency = String(from || '').toUpperCase();
+  const targetCurrency = String(to || '').toUpperCase();
+  return sourceCurrency === 'GNF' || targetCurrency === 'GNF'
+    ? FX_MAX_AGE_MINUTES_GNF
+    : FX_MAX_AGE_MINUTES_DEFAULT;
+}
+
+function isOfficialAfricanFxRow(row: StoredFxRow | null | undefined): boolean {
+  if (!row) return false;
+  if (String(row.source_type || '').toLowerCase() === 'fallback_api') {
+    return false;
+  }
+  return isAfricanBankRow(row);
+}
+
+function isFxTimestampStale(retrievedAt: string | null | undefined, thresholdMinutes: number): boolean {
+  if (!retrievedAt) return true;
+  const timestamp = new Date(retrievedAt).getTime();
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return true;
+  return (Date.now() - timestamp) / 60000 > thresholdMinutes;
+}
+
+function buildInternalFxRateResult(rate: number, row: StoredFxRow | null | undefined, source: string, thresholdMinutes: number): InternalFxRateResult {
+  const rawRate = Number(row?.rate);
+  const margin = Number(row?.margin);
+  return {
+    rate,
+    officialRate: Number.isFinite(rawRate) && rawRate > 0 ? rawRate : rate,
+    margin: Number.isFinite(margin) ? margin : 0,
+    source,
+    fetchedAt: row?.retrieved_at || new Date().toISOString(),
+    sourceType: row?.source_type || null,
+    sourceUrl: resolveOfficialBankSourceUrl(row || null),
+    official: isOfficialAfricanFxRow(row),
+    stale: isFxTimestampStale(row?.retrieved_at, thresholdMinutes),
+  };
+}
+
+async function readLatestFxRows(from: string, to: string): Promise<StoredFxRow[]> {
+  const { data, error } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('rate, final_rate_usd, final_rate_eur, margin, retrieved_at, source, source_type, source_url')
+    .eq('from_currency', from)
+    .eq('to_currency', to)
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as StoredFxRow[];
+}
+
+function filterFxRowsByMinimumRetrievedAt(rows: StoredFxRow[], minimumRetrievedAtIso?: string | null): StoredFxRow[] {
+  if (!minimumRetrievedAtIso) {
+    return rows;
+  }
+
+  const minimumTimestamp = new Date(minimumRetrievedAtIso).getTime();
+  if (!Number.isFinite(minimumTimestamp) || minimumTimestamp <= 0) {
+    return rows;
+  }
+
+  return rows.filter((row) => {
+    const rowTimestamp = row?.retrieved_at ? new Date(row.retrieved_at).getTime() : Number.NaN;
+    return Number.isFinite(rowTimestamp) && rowTimestamp >= minimumTimestamp;
+  });
+}
+
+function pickPreferredFxRow(rows: StoredFxRow[], thresholdMinutes: number): StoredFxRow | null {
+  if (!rows.length) return null;
+
+  const freshOfficial = rows.find((row) => isOfficialAfricanFxRow(row) && !isFxTimestampStale(row.retrieved_at, thresholdMinutes));
+  if (freshOfficial) return freshOfficial;
+
+  const latestOfficial = rows.find((row) => isOfficialAfricanFxRow(row));
+  if (latestOfficial) return latestOfficial;
+
+  return rows[0] || null;
+}
+
 function resolveStoredFxRate(
   row: { rate?: number | null; final_rate_usd?: number | null; final_rate_eur?: number | null; retrieved_at?: string | null } | null | undefined,
   baseCurrency: string,
@@ -157,81 +329,240 @@ function resolveStoredFxRate(
   return Number.NaN;
 }
 
-async function getInternalFxRateFromTable(from: string, to: string): Promise<{ rate: number; source: string; fetchedAt: string }> {
+async function getInternalFxRateFromTable(from: string, to: string, minimumRetrievedAtIso?: string | null): Promise<InternalFxRateResult> {
   const sourceCurrency = String(from || '').toUpperCase();
   const targetCurrency = String(to || '').toUpperCase();
+  const thresholdMinutes = getFxFreshnessThresholdMinutes(sourceCurrency, targetCurrency);
 
   if (sourceCurrency === targetCurrency) {
-    return { rate: 1, source: 'identity', fetchedAt: new Date().toISOString() };
-  }
-
-  const { data: direct } = await supabaseAdmin
-    .from('currency_exchange_rates')
-    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
-    .eq('from_currency', sourceCurrency)
-    .eq('to_currency', targetCurrency)
-    .eq('is_active', true)
-    .order('retrieved_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const directRate = resolveStoredFxRate(direct, sourceCurrency);
-  if (Number.isFinite(directRate) && directRate > 0) {
-    return { rate: directRate, source: 'table-direct', fetchedAt: direct?.retrieved_at || new Date().toISOString() };
-  }
-
-  const { data: inverse } = await supabaseAdmin
-    .from('currency_exchange_rates')
-    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
-    .eq('from_currency', targetCurrency)
-    .eq('to_currency', sourceCurrency)
-    .eq('is_active', true)
-    .order('retrieved_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const inverseRate = resolveStoredFxRate(inverse, targetCurrency);
-  if (Number.isFinite(inverseRate) && inverseRate > 0) {
     return {
-      rate: 1 / inverseRate,
-      source: 'table-inverse',
-      fetchedAt: inverse?.retrieved_at || new Date().toISOString(),
+      rate: 1,
+      officialRate: 1,
+      margin: 0,
+      source: 'identity',
+      fetchedAt: new Date().toISOString(),
+      sourceType: 'identity',
+      sourceUrl: null,
+      official: true,
+      stale: false,
     };
   }
 
-  const [{ data: usdToSource }, { data: usdToTarget }] = await Promise.all([
-    supabaseAdmin
-      .from('currency_exchange_rates')
-      .select('rate, final_rate_usd, retrieved_at')
-      .eq('from_currency', 'USD')
-      .eq('to_currency', sourceCurrency)
-      .eq('is_active', true)
-      .order('retrieved_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabaseAdmin
-      .from('currency_exchange_rates')
-      .select('rate, final_rate_usd, retrieved_at')
-      .eq('from_currency', 'USD')
-      .eq('to_currency', targetCurrency)
-      .eq('is_active', true)
-      .order('retrieved_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const direct = pickPreferredFxRow(
+    filterFxRowsByMinimumRetrievedAt(await readLatestFxRows(sourceCurrency, targetCurrency), minimumRetrievedAtIso),
+    thresholdMinutes,
+  );
+
+  const directRate = resolveStoredFxRate(direct, sourceCurrency);
+  if (Number.isFinite(directRate) && directRate > 0) {
+    return buildInternalFxRateResult(directRate, direct, 'table-direct', thresholdMinutes);
+  }
+
+  const inverse = pickPreferredFxRow(
+    filterFxRowsByMinimumRetrievedAt(await readLatestFxRows(targetCurrency, sourceCurrency), minimumRetrievedAtIso),
+    thresholdMinutes,
+  );
+
+  const inverseRate = resolveStoredFxRate(inverse, targetCurrency);
+  if (Number.isFinite(inverseRate) && inverseRate > 0) {
+    const rawInverseRate = Number(inverse?.rate);
+    const result = buildInternalFxRateResult(1 / inverseRate, inverse, 'table-inverse', thresholdMinutes);
+    return {
+      ...result,
+      officialRate: Number.isFinite(rawInverseRate) && rawInverseRate > 0 ? 1 / rawInverseRate : result.officialRate,
+    };
+  }
+
+  const [usdToSource, usdToTarget] = await Promise.all([
+    readLatestFxRows('USD', sourceCurrency).then((rows) => pickPreferredFxRow(filterFxRowsByMinimumRetrievedAt(rows, minimumRetrievedAtIso), thresholdMinutes)),
+    readLatestFxRows('USD', targetCurrency).then((rows) => pickPreferredFxRow(filterFxRowsByMinimumRetrievedAt(rows, minimumRetrievedAtIso), thresholdMinutes)),
   ]);
 
   const sourceViaUsd = resolveStoredFxRate(usdToSource, 'USD');
   const targetViaUsd = resolveStoredFxRate(usdToTarget, 'USD');
 
   if (Number.isFinite(sourceViaUsd) && sourceViaUsd > 0 && Number.isFinite(targetViaUsd) && targetViaUsd > 0) {
+    const pivotRow = [usdToTarget, usdToSource].find((row) => isOfficialAfricanFxRow(row)) || usdToTarget || usdToSource;
+    const sourceRaw = Number(usdToSource?.rate);
+    const targetRaw = Number(usdToTarget?.rate);
+    const officialRate = Number.isFinite(sourceRaw) && sourceRaw > 0 && Number.isFinite(targetRaw) && targetRaw > 0
+      ? targetRaw / sourceRaw
+      : targetViaUsd / sourceViaUsd;
+    const margin = Math.max(Number(usdToSource?.margin || 0), Number(usdToTarget?.margin || 0), 0);
     return {
       rate: targetViaUsd / sourceViaUsd,
+      officialRate,
+      margin,
       source: 'table-usd-pivot',
-      fetchedAt: usdToTarget?.retrieved_at || usdToSource?.retrieved_at || new Date().toISOString(),
+      fetchedAt: pivotRow?.retrieved_at || new Date().toISOString(),
+      sourceType: pivotRow?.source_type || null,
+      sourceUrl: resolveOfficialBankSourceUrl(pivotRow || null),
+      official: Boolean(isOfficialAfricanFxRow(usdToSource) && isOfficialAfricanFxRow(usdToTarget)),
+      stale: Boolean(isFxTimestampStale(usdToSource?.retrieved_at, thresholdMinutes) || isFxTimestampStale(usdToTarget?.retrieved_at, thresholdMinutes)),
     };
   }
 
   throw new Error(`Taux de change introuvable pour ${sourceCurrency}→${targetCurrency}`);
+}
+
+async function readActivePdgRecipients(): Promise<PdgRecipient[]> {
+  const { data, error } = await supabaseAdmin
+    .from('pdg_management')
+    .select('user_id')
+    .eq('is_active', true);
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data || []) as PdgRecipient[]).filter((item) => Boolean(item.user_id));
+}
+
+async function notifyPdgOfFxVisitFailure(params: {
+  actorId: string | null;
+  triggerSource: string;
+  from: string;
+  to: string;
+  refreshStatus: number | null;
+  refreshTimedOut: boolean;
+  refreshPayload: any;
+  liveVisitAttempted: boolean;
+  refreshStartedAt: string;
+}) {
+  const dedupeCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const alertType = 'fx_live_visit_required_failed';
+  const title = 'Transfert international suspendu: taux officiel live indisponible';
+  const description = `Le backend n'a pas pu verifier en temps reel le taux officiel pour ${params.from}/${params.to}. Les transferts internationaux sur cette paire sont suspendus jusqu'a correction.`;
+
+  const { data: existingAlert } = await supabaseAdmin
+    .from('financial_security_alerts')
+    .select('id')
+    .eq('alert_type', alertType)
+    .eq('is_resolved', false)
+    .gte('created_at', dedupeCutoff)
+    .contains('metadata', { from_currency: params.from, to_currency: params.to, trigger_source: params.triggerSource })
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingAlert) {
+    await ignoreSupabaseError(
+      supabaseAdmin.from('financial_security_alerts').insert({
+        user_id: params.actorId || SYSTEM_USER_ID,
+        alert_type: alertType,
+        severity: 'critical',
+        title,
+        description,
+        metadata: {
+          actor_id: params.actorId,
+          trigger_source: params.triggerSource,
+          from_currency: params.from,
+          to_currency: params.to,
+          refresh_status: params.refreshStatus,
+          refresh_timed_out: params.refreshTimedOut,
+          refresh_payload: params.refreshPayload,
+          live_visit_attempted: params.liveVisitAttempted,
+          refresh_started_at: params.refreshStartedAt,
+        },
+      }),
+    );
+  }
+
+  const pdgRecipients = await readActivePdgRecipients().catch(() => [] as PdgRecipient[]);
+  if (!pdgRecipients.length) {
+    return;
+  }
+
+  const notificationMessage = `Le backend n'a pas pu visiter une source officielle en temps reel pour ${params.from}/${params.to}. Les transferts internationaux ont ete suspendus automatiquement.`;
+
+  const notificationsToInsert: Array<{ user_id: string; title: string; message: string; type: string; read: boolean }> = [];
+
+  for (const recipient of pdgRecipients) {
+    const { data: existingNotification } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', recipient.user_id)
+      .eq('title', title)
+      .eq('message', notificationMessage)
+      .gte('created_at', dedupeCutoff)
+      .limit(1)
+      .maybeSingle();
+
+    if (!existingNotification) {
+      notificationsToInsert.push({
+        user_id: recipient.user_id,
+        title,
+        message: notificationMessage,
+        type: 'security_alert',
+        read: false,
+      });
+    }
+  }
+
+  if (notificationsToInsert.length > 0) {
+    await ignoreSupabaseError(supabaseAdmin.from('notifications').insert(notificationsToInsert));
+  }
+}
+
+async function getFreshAfricanFxRateForTransaction(from: string, to: string, actorId: string | null, triggerSource: string): Promise<InternalFxRateResult> {
+  const sourceCurrency = String(from || '').toUpperCase();
+  const targetCurrency = String(to || '').toUpperCase();
+  const refreshStartedAt = new Date().toISOString();
+  let refreshStatus: number | null = null;
+  let refreshTimedOut = false;
+  let refreshPayload: any = null;
+  let liveVisitAttempted = false;
+  const configuredMargin = await getConfiguredFxMargin();
+
+  liveVisitAttempted = true;
+  const liveBcrgRate = await fetchLiveBcrgUsdGnf().catch(() => null);
+  const directOfficialRate = buildLiveBcrgFxRate(sourceCurrency, targetCurrency, liveBcrgRate, configuredMargin);
+  if (directOfficialRate) {
+    return directOfficialRate;
+  }
+
+  const refreshResult = await triggerAfricanFxCollection(triggerSource, actorId, 6500);
+  refreshStatus = refreshResult.status;
+  refreshTimedOut = refreshResult.timedOut;
+  refreshPayload = refreshResult.payload;
+
+  const refreshedRate = await getInternalFxRateFromTable(sourceCurrency, targetCurrency, refreshStartedAt).catch(() => null);
+
+  if (refreshedRate?.official && !refreshedRate.stale) {
+    return {
+      ...refreshedRate,
+      refreshAttempted: true,
+      refreshStatus: refreshResult.status,
+      refreshTimedOut: refreshResult.timedOut,
+    };
+  }
+
+  const refreshedLiveBcrgRate = await fetchLiveBcrgUsdGnf().catch(() => null);
+  const refreshedDirectOfficialRate = buildLiveBcrgFxRate(sourceCurrency, targetCurrency, refreshedLiveBcrgRate, configuredMargin);
+  if (refreshedDirectOfficialRate) {
+    return {
+      ...refreshedDirectOfficialRate,
+      refreshAttempted: true,
+      refreshStatus: refreshResult.status,
+      refreshTimedOut: refreshResult.timedOut,
+    };
+  }
+
+  await notifyPdgOfFxVisitFailure({
+    actorId,
+    triggerSource,
+    from: sourceCurrency,
+    to: targetCurrency,
+    refreshStatus,
+    refreshTimedOut,
+    refreshPayload,
+    liveVisitAttempted,
+    refreshStartedAt,
+  });
+
+  const freshnessText = refreshedRate
+    ? `source=${refreshedRate.source}, official=${refreshedRate.official}, stale=${refreshedRate.stale}, fetchedAt=${refreshedRate.fetchedAt}`
+    : 'source=none, official=false, stale=true, fetchedAt=none';
+  throw new Error(`Aucun taux officiel africain recent n'est disponible pour ${sourceCurrency}->${targetCurrency} avant conversion (${freshnessText})`);
 }
 
 function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
@@ -267,6 +598,35 @@ function parseFxRateNumber(rawValue: string): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
+function normalizeBcrgUrl(rawUrl: string): string {
+  try {
+    return new URL(rawUrl, BCRG_OFFICIAL_URL).toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
+function extractBcrgFixingUrls(html: string): string[] {
+  const urls: string[] = [];
+  const pushUrl = (value: string) => {
+    const normalized = normalizeBcrgUrl(value);
+    if (!normalized.includes('/cours_des_devises/fixing-du-')) return;
+    if (!urls.includes(normalized)) {
+      urls.push(normalized);
+    }
+  };
+
+  for (const match of html.matchAll(/href=["']([^"']*\/cours_des_devises\/fixing-du-[^"']+)["']/gi)) {
+    pushUrl(match[1]);
+  }
+
+  for (const match of html.matchAll(/https?:\/\/www\.bcrg-guinee\.org\/cours_des_devises\/fixing-du-[^"'\s<]+/gi)) {
+    pushUrl(match[0]);
+  }
+
+  return urls.sort((left, right) => right.localeCompare(left));
+}
+
 function extractBcrgWidgetRate(html: string, currency: 'USD' | 'EUR'): number | null {
   const labelPattern = currency === 'USD' ? '(?:USD|Dollar)' : '(?:EUR|Euro)';
   const patterns = [
@@ -288,12 +648,12 @@ function extractBcrgWidgetRate(html: string, currency: 'USD' | 'EUR'): number | 
   return null;
 }
 
-async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number | null; retrievedAt: string } | null> {
+async function fetchBcrgHtml(url: string): Promise<string | null> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const response = await fetch(BCRG_OFFICIAL_URL, {
+    const response = await fetch(url, {
       headers: {
         'User-Agent': '224Solutions-FX-Monitor/2.0',
         Accept: 'text/html',
@@ -302,25 +662,109 @@ async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number |
     });
 
     if (!response.ok) {
+      logger.warn(`[walletV2] BCRG HTTP ${response.status} sur ${url}`);
       return null;
     }
 
-    const html = await response.text();
+    return await response.text();
+  } catch (error: any) {
+    const message = error?.name === 'AbortError' ? 'timeout' : String(error?.message || error || 'unknown error');
+    logger.warn(`[walletV2] BCRG fetch echoue sur ${url}: ${message}`);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number | null; retrievedAt: string; sourceUrl: string | null } | null> {
+  let homepageHtml: string | null = null;
+
+  try {
+    homepageHtml = await fetchBcrgHtml(BCRG_OFFICIAL_URL);
+  } catch {
+    homepageHtml = null;
+  }
+
+  const fixingUrls = homepageHtml ? extractBcrgFixingUrls(homepageHtml) : [];
+  const urlsToTry = Array.from(new Set([
+    ...fixingUrls,
+    ...BCRG_SCRAPE_URLS,
+  ]));
+
+  for (const url of urlsToTry) {
+    const html = url === BCRG_OFFICIAL_URL && homepageHtml
+      ? homepageHtml
+      : await fetchBcrgHtml(url);
+
+    if (!html) {
+      continue;
+    }
+
     const usdGnf = extractBcrgWidgetRate(html, 'USD');
     if (!usdGnf) {
-      return null;
+      continue;
     }
 
     return {
       usdGnf,
       eurGnf: extractBcrgWidgetRate(html, 'EUR'),
       retrievedAt: new Date().toISOString(),
+      sourceUrl: url,
     };
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return null;
+}
+
+async function getConfiguredFxMargin(): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from('margin_config')
+    .select('config_value')
+    .eq('config_key', 'default_margin')
+    .maybeSingle();
+
+  const margin = Number((data as any)?.config_value ?? 0.03);
+  return Number.isFinite(margin) && margin >= 0 ? margin : 0.03;
+}
+
+function buildLiveBcrgFxRate(
+  from: string,
+  to: string,
+  liveRate: { usdGnf: number; eurGnf: number | null; retrievedAt: string; sourceUrl: string | null } | null,
+  margin = 0,
+): InternalFxRateResult | null {
+  if (!liveRate) return null;
+
+  const sourceCurrency = String(from || '').toUpperCase();
+  const targetCurrency = String(to || '').toUpperCase();
+  const shared: Omit<InternalFxRateResult, 'rate'> = {
+    officialRate: 1,
+    margin,
+    source: 'bcrg-live-widget',
+    fetchedAt: liveRate.retrievedAt,
+    sourceType: 'official_html',
+    sourceUrl: liveRate.sourceUrl || BCRG_OFFICIAL_URL,
+    official: true,
+    stale: false,
+  };
+
+  if (sourceCurrency === 'USD' && targetCurrency === 'GNF' && liveRate.usdGnf > 0) {
+    return { rate: liveRate.usdGnf * (1 + margin), ...shared, officialRate: liveRate.usdGnf };
+  }
+
+  if (sourceCurrency === 'GNF' && targetCurrency === 'USD' && liveRate.usdGnf > 0) {
+    return { rate: 1 / (liveRate.usdGnf * (1 + margin)), ...shared, officialRate: 1 / liveRate.usdGnf };
+  }
+
+  if (sourceCurrency === 'EUR' && targetCurrency === 'GNF' && Number.isFinite(liveRate.eurGnf) && Number(liveRate.eurGnf) > 0) {
+    return { rate: Number(liveRate.eurGnf) * (1 + margin), ...shared, officialRate: Number(liveRate.eurGnf) };
+  }
+
+  if (sourceCurrency === 'GNF' && targetCurrency === 'EUR' && Number.isFinite(liveRate.eurGnf) && Number(liveRate.eurGnf) > 0) {
+    return { rate: 1 / (Number(liveRate.eurGnf) * (1 + margin)), ...shared, officialRate: 1 / Number(liveRate.eurGnf) };
+  }
+
+  return null;
 }
 
 function buildAfricanFxCollectPayload(source: string, actorId: string | null) {
@@ -334,7 +778,7 @@ function buildAfricanFxCollectPayload(source: string, actorId: string | null) {
       { from: 'USD', to: 'GNF' },
       { from: 'EUR', to: 'GNF' },
     ],
-    bcrg_source_urls: [BCRG_OFFICIAL_URL],
+    bcrg_source_urls: BCRG_SCRAPE_URLS,
     preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
   };
 }
@@ -565,6 +1009,118 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     }
   }
 
+  if (normalizedEmail.includes('@')) {
+    const { data: pdgByEmail } = await supabaseAdmin
+      .from('pdg_management')
+      .select('user_id, name, email, phone')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (pdgByEmail?.user_id) {
+      return {
+        userId: String((pdgByEmail as any).user_id),
+        query: candidate,
+        matchedBy: 'pdg_management.email',
+        displayName: String((pdgByEmail as any).name || '') || null,
+        email: String((pdgByEmail as any).email || '') || null,
+        phone: String((pdgByEmail as any).phone || '') || null,
+        publicId: null,
+        customId: null,
+      };
+    }
+  }
+
+  if (phoneCandidates.length > 0) {
+    const pdgPhoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
+    const { data: pdgByPhone } = await supabaseAdmin
+      .from('pdg_management')
+      .select('user_id, name, email, phone')
+      .or(pdgPhoneFilter)
+      .limit(1)
+      .maybeSingle();
+
+    if (pdgByPhone?.user_id) {
+      return {
+        userId: String((pdgByPhone as any).user_id),
+        query: candidate,
+        matchedBy: 'pdg_management.phone',
+        displayName: String((pdgByPhone as any).name || '') || null,
+        email: String((pdgByPhone as any).email || '') || null,
+        phone: String((pdgByPhone as any).phone || '') || null,
+        publicId: null,
+        customId: null,
+      };
+    }
+  }
+
+  // Recherche dans agents_management par code agent (AGT...)
+  {
+    const { data: agentByCode } = await supabaseAdmin
+      .from('agents_management')
+      .select('user_id, name, email, phone, agent_code')
+      .eq('agent_code', normalizedId)
+      .maybeSingle();
+
+    if (agentByCode?.user_id) {
+      return {
+        userId: String((agentByCode as any).user_id),
+        query: candidate,
+        matchedBy: 'agents_management.agent_code',
+        displayName: String((agentByCode as any).name || '') || null,
+        email: String((agentByCode as any).email || '') || null,
+        phone: String((agentByCode as any).phone || '') || null,
+        publicId: String((agentByCode as any).agent_code || '') || null,
+        customId: null,
+      };
+    }
+  }
+
+  // Recherche dans agents_management par email
+  if (normalizedEmail.includes('@')) {
+    const { data: agentByEmail } = await supabaseAdmin
+      .from('agents_management')
+      .select('user_id, name, email, phone, agent_code')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (agentByEmail?.user_id) {
+      return {
+        userId: String((agentByEmail as any).user_id),
+        query: candidate,
+        matchedBy: 'agents_management.email',
+        displayName: String((agentByEmail as any).name || '') || null,
+        email: String((agentByEmail as any).email || '') || null,
+        phone: String((agentByEmail as any).phone || '') || null,
+        publicId: String((agentByEmail as any).agent_code || '') || null,
+        customId: null,
+      };
+    }
+  }
+
+  // Recherche dans agents_management par téléphone
+  if (phoneCandidates.length > 0) {
+    const agentPhoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
+    const { data: agentByPhone } = await supabaseAdmin
+      .from('agents_management')
+      .select('user_id, name, email, phone, agent_code')
+      .or(agentPhoneFilter)
+      .limit(1)
+      .maybeSingle();
+
+    if (agentByPhone?.user_id) {
+      return {
+        userId: String((agentByPhone as any).user_id),
+        query: candidate,
+        matchedBy: 'agents_management.phone',
+        displayName: String((agentByPhone as any).name || '') || null,
+        email: String((agentByPhone as any).email || '') || null,
+        phone: String((agentByPhone as any).phone || '') || null,
+        publicId: String((agentByPhone as any).agent_code || '') || null,
+        customId: null,
+      };
+    }
+  }
+
   return null;
 }
 
@@ -629,38 +1185,19 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
-    const [{ data: senderWallet, error: senderWalletError }, { data: receiverWallet, error: receiverWalletError }] = await Promise.all([
-      supabaseAdmin
-        .from('wallets')
-        .select('id, balance, currency, user_id')
-        .eq('user_id', senderId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from('wallets')
-        .select('id, balance, currency, user_id')
-        .eq('user_id', resolved.userId)
-        .maybeSingle(),
-    ]);
+    const senderWallet = await ensureTransferWallet(senderId);
+    const recipientWallet = senderWallet
+      ? await ensureTransferWallet(resolved.userId, String((senderWallet as any).currency || 'GNF'))
+      : null;
 
-    if (senderWalletError || !senderWallet) {
-      res.status(404).json({ success: false, error: 'Wallet expéditeur introuvable' });
+    if (!senderWallet) {
+      res.status(500).json({ success: false, error: 'Wallet expéditeur indisponible' });
       return;
     }
 
-    let recipientWallet = receiverWallet;
-    if (receiverWalletError || !recipientWallet) {
-      const { data: createdWallet, error: createWalletError } = await supabaseAdmin
-        .from('wallets')
-        .insert({ user_id: resolved.userId })
-        .select('id, balance, currency, user_id')
-        .single();
-
-      if (createWalletError || !createdWallet) {
-        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
-        return;
-      }
-
-      recipientWallet = createdWallet as any;
+    if (!recipientWallet) {
+      res.status(500).json({ success: false, error: 'Wallet destinataire indisponible' });
+      return;
     }
 
     const feePercentage = 0;
@@ -678,15 +1215,32 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
     const isInternational = senderCurrency !== receiverCurrency;
     const amountAfterFee = amount;
     let rateDisplayed = 1;
+    let officialRate = 1;
+    let fxMargin = 0;
     let amountReceived = amountAfterFee;
     let rateSource = 'identity';
     let rateFetchedAt = new Date().toISOString();
+    let rateSourceType: string | null = 'identity';
+    let rateSourceUrl: string | null = null;
+    let rateIsOfficial = true;
+    let rateIsStale = false;
 
     if (isInternational) {
-      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
+      const fxResult = await getFreshAfricanFxRateForTransaction(
+        senderCurrency,
+        receiverCurrency,
+        senderId,
+        'wallet_transfer_preview',
+      );
       rateDisplayed = fxResult.rate;
+      officialRate = fxResult.officialRate;
+      fxMargin = fxResult.margin;
       rateSource = fxResult.source;
       rateFetchedAt = fxResult.fetchedAt;
+      rateSourceType = fxResult.sourceType;
+      rateSourceUrl = fxResult.sourceUrl;
+      rateIsOfficial = fxResult.official;
+      rateIsStale = fxResult.stale;
       amountReceived = smartRoundCurrencyAmount(amountAfterFee * rateDisplayed, receiverCurrency);
     }
 
@@ -720,6 +1274,8 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       amount_received: amountReceived,
       currency_received: receiverCurrency,
       rate_displayed: rateDisplayed,
+      official_rate: officialRate,
+      fx_margin: fxMargin,
       sender_balance: senderBalance,
       balance_after: senderBalance - totalDebit,
       sender_country: mapCurrencyToCountry(senderCurrency),
@@ -728,11 +1284,20 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       frais_international: 0,
       rate_source: rateSource,
       rate_fetched_at: rateFetchedAt,
+      rate_source_type: rateSourceType,
+      rate_source_url: rateSourceUrl,
+      rate_is_official: rateIsOfficial,
+      rate_is_stale: rateIsStale,
       rate_lock_seconds: 60,
     });
   } catch (error: any) {
     logger.error(`Wallet transfer preview error: ${error.message}`);
-    res.status(500).json({ success: false, error: 'Erreur lors de la prévisualisation du transfert' });
+    const message = String(error?.message || 'Erreur lors de la previsualisation du transfert');
+    const isFxError = /Aucun taux officiel africain recent|Taux de change introuvable/i.test(message);
+    res.status(isFxError ? 503 : 500).json({
+      success: false,
+      error: isFxError ? message : 'Erreur lors de la previsualisation du transfert',
+    });
   }
 });
 
@@ -986,7 +1551,10 @@ router.post('/pin/reset', verifyJWT, async (req: AuthenticatedRequest, res: Resp
       return;
     }
 
-    await resetWalletPinWithPassword(req.user!.id, req.user?.email || null, accountPasswordValue, newPinValue);
+    await resetWalletPinWithPassword(req.user!.id, req.user?.email || null, accountPasswordValue, newPinValue, {
+      ipAddress: req.ip || req.headers['x-forwarded-for']?.toString() || null,
+      userAgent: req.headers['user-agent']?.toString() || null,
+    });
     res.json({ success: true, message: 'Code PIN réinitialisé avec succès' });
   } catch (error: any) {
     logger.error(`Wallet pin reset error: ${error.message}`);
@@ -1207,53 +1775,42 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    // Vérifier que le destinataire existe
-    let { data: recipient } = await supabaseAdmin
-      .from('wallets')
-      .select('user_id')
-      .eq('user_id', resolvedRecipientId)
-      .maybeSingle();
-
-    if (!recipient) {
-      // Auto-initialiser le wallet destinataire pour éviter les échecs sur comptes PDG/agent nouvellement créés
-      const { error: initError } = await supabaseAdmin
-        .from('wallets')
-        .insert({ user_id: resolvedRecipientId })
-        .select('user_id')
-        .single();
-
-      if (initError) {
-        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
-        return;
-      }
-
-      recipient = { user_id: resolvedRecipientId } as any;
+    const senderWallet = await ensureTransferWallet(senderId);
+    if (!senderWallet) {
+      res.status(500).json({ success: false, error: 'Wallet expéditeur indisponible' });
+      return;
     }
 
-    const [{ data: senderWallet }, { data: recipientWallet }] = await Promise.all([
-      supabaseAdmin
-        .from('wallets')
-        .select('currency')
-        .eq('user_id', senderId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from('wallets')
-        .select('currency')
-        .eq('user_id', resolvedRecipientId)
-        .maybeSingle(),
-    ]);
+    const recipientWallet = await ensureTransferWallet(resolvedRecipientId, String((senderWallet as any).currency || 'GNF'));
+    if (!recipientWallet) {
+      res.status(500).json({ success: false, error: 'Wallet destinataire indisponible' });
+      return;
+    }
 
     const senderCurrency = String(senderWallet?.currency || 'GNF').toUpperCase();
     const receiverCurrency = String(recipientWallet?.currency || senderCurrency).toUpperCase();
     const isInternational = senderCurrency !== receiverCurrency;
     let rateUsed = 1;
+    let officialRate = 1;
+    let fxMargin = 0;
     let rateSource = 'identity';
+    let rateSourceType: string | null = 'identity';
+    let rateSourceUrl: string | null = null;
     let amountToCredit = amount;
 
     if (isInternational) {
-      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
+      const fxResult = await getFreshAfricanFxRateForTransaction(
+        senderCurrency,
+        receiverCurrency,
+        senderId,
+        'wallet_transfer_execute',
+      );
       rateUsed = fxResult.rate;
+      officialRate = fxResult.officialRate;
+      fxMargin = fxResult.margin;
       rateSource = fxResult.source;
+      rateSourceType = fxResult.sourceType;
+      rateSourceUrl = fxResult.sourceUrl;
       amountToCredit = smartRoundCurrencyAmount(amount * rateUsed, receiverCurrency);
     }
 
@@ -1324,7 +1881,11 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       fee_amount: 0,
       fee_percentage: 0,
       rate_used: rateUsed,
+      official_rate: officialRate,
+      fx_margin: fxMargin,
       rate_source: rateSource,
+      rate_source_type: rateSourceType,
+      rate_source_url: rateSourceUrl,
     });
   } catch (error: any) {
     logger.error(`Wallet transfer error: ${error.message}`);
@@ -1337,7 +1898,12 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       userId: req.user?.id || null,
       payload: { error: error.message },
     });
-    res.status(500).json({ success: false, error: 'Erreur lors du transfert' });
+    const message = String(error?.message || 'Erreur lors du transfert');
+    const isFxError = /Aucun taux officiel africain recent|Taux de change introuvable/i.test(message);
+    res.status(isFxError ? 503 : 500).json({
+      success: false,
+      error: isFxError ? message : 'Erreur lors du transfert',
+    });
   }
 });
 
@@ -1410,15 +1976,15 @@ router.get(
       startOfDay.setUTCHours(0, 0, 0, 0);
       const startOfDayIso = startOfDay.toISOString();
 
-      const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }, { data: marginConfig }] = await Promise.all([
-        supabaseAdmin
+      const [latestAnyRate, latestUsdGnfRate, recentRuns, unresolvedAlerts, todayRates, marginConfig] = await Promise.all([
+        readSupabaseData(supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .order('retrieved_at', { ascending: false })
           .limit(1)
-          .maybeSingle(),
-        supabaseAdmin
+          .maybeSingle(), 'fx-health.latestAnyRate', null),
+        readSupabaseData(supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
@@ -1426,31 +1992,31 @@ router.get(
           .eq('to_currency', 'GNF')
           .order('retrieved_at', { ascending: false })
           .limit(1)
-          .maybeSingle(),
-        supabaseAdmin
+          .maybeSingle(), 'fx-health.latestUsdGnfRate', null),
+        readSupabaseData(supabaseAdmin
           .from('fx_collection_log')
           .select('currency_code, status, source, source_url, source_type, error_message, collected_at')
           .order('collected_at', { ascending: false })
-          .limit(30),
-        supabaseAdmin
+          .limit(30), 'fx-health.recentRuns', [] as any[]),
+        readSupabaseData(supabaseAdmin
           .from('financial_security_alerts')
           .select('id, alert_type, severity, title, description, created_at, metadata')
           .like('alert_type', 'fx_%')
           .eq('is_resolved', false)
           .order('created_at', { ascending: false })
-          .limit(20),
-        supabaseAdmin
+          .limit(20), 'fx-health.unresolvedAlerts', [] as any[]),
+        readSupabaseData(supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .gte('retrieved_at', startOfDayIso)
           .order('retrieved_at', { ascending: false })
-          .limit(200),
-        supabaseAdmin
+          .limit(200), 'fx-health.todayRates', [] as any[]),
+        readSupabaseData(supabaseAdmin
           .from('margin_config')
           .select('config_value')
           .eq('config_key', 'default_margin')
-          .maybeSingle(),
+          .maybeSingle(), 'fx-health.marginConfig', null),
       ]);
 
       const liveBcrgRate = await fetchLiveBcrgUsdGnf();
@@ -1483,7 +2049,7 @@ router.get(
             final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : currentRateBase?.final_rate_eur ?? null,
             source: 'bcrg-live-widget',
             source_type: 'official_html',
-            source_url: BCRG_OFFICIAL_URL,
+            source_url: liveBcrgRate.sourceUrl || BCRG_OFFICIAL_URL,
             retrieved_at: liveBcrgRate.retrievedAt,
           }
         : currentRateBase;
@@ -1497,6 +2063,38 @@ router.get(
         .filter((row) => row.currency_code === 'GNF')
         .slice(0, 2);
       const twoConsecutiveFailures = recentGnfRuns.length >= 2 && recentGnfRuns.every((row) => !isFxSuccessStatus(row.status));
+      const shouldTriggerRefresh = !liveBcrgRate && (stale || !currentRate || twoConsecutiveFailures);
+
+      let refreshMeta = {
+        attempted: false,
+        reason: null as string | null,
+        ok: false,
+        status: null as number | null,
+        timed_out: false,
+        payload: null as any,
+      };
+
+      if (shouldTriggerRefresh) {
+        const refreshReason = !currentRate
+          ? 'missing_current_rate'
+          : twoConsecutiveFailures
+            ? 'two_consecutive_failures'
+            : 'stale_rates';
+
+        const refreshResult = await triggerAfricanFxCollection(`fx_health_${refreshReason}`, _req.user?.id || null, 4000);
+        refreshMeta = {
+          attempted: true,
+          reason: refreshReason,
+          ok: refreshResult.ok,
+          status: refreshResult.status,
+          timed_out: refreshResult.timedOut,
+          payload: refreshResult.payload,
+        };
+
+        if (!refreshResult.ok && !refreshResult.timedOut) {
+          logger.warn(`[walletV2] FX health auto-refresh not confirmed (status=${refreshResult.status ?? 'n/a'})`);
+        }
+      }
 
       const todaysHistory = (todayRates || [])
         .filter((rate: any) => isAfricanBankRow(rate))
@@ -1583,6 +2181,7 @@ router.get(
           configured_margin: currentMargin,
           two_consecutive_failures: twoConsecutiveFailures,
           current_rate: currentRate || null,
+          refresh: refreshMeta,
           recent_runs: runRows.slice(0, 10),
           today_history: todaysHistory,
           gnf_today_history: gnfTodayHistory,

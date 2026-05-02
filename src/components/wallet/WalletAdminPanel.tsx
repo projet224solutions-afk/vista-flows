@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PublicIdBadge } from '@/components/PublicIdBadge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, _DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
@@ -20,7 +20,7 @@ import {
   Search,
   AlertTriangle,
   TrendingUp,
-  Users,
+  _Users,
   DollarSign,
   Activity,
   Shield,
@@ -94,6 +94,8 @@ interface FxHealthData {
     to_currency: string;
     rate: number;
     margin: number | null;
+    final_rate_usd?: number | null;
+    final_rate_eur?: number | null;
     source_type: string | null;
     source_url: string | null;
     retrieved_at: string | null;
@@ -103,6 +105,8 @@ interface FxHealthData {
     to_currency: string;
     rate: number;
     margin: number | null;
+    final_rate_usd?: number | null;
+    final_rate_eur?: number | null;
     source_type: string | null;
     source_url: string | null;
     retrieved_at: string | null;
@@ -166,6 +170,7 @@ export function WalletAdminPanel() {
     loadWallets();
     loadStats();
     loadFxHealth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -340,7 +345,7 @@ export function WalletAdminPanel() {
       setSelectedWallet(null);
       await loadWallets();
 
-    } catch (error: any) {
+    } catch (_error: any) {
       toast.error('Erreur blocage wallet');
     }
   };
@@ -362,14 +367,14 @@ export function WalletAdminPanel() {
       toast.success('Wallet débloqué avec succès');
       await loadWallets();
 
-    } catch (error: any) {
+    } catch (_error: any) {
       toast.error('Erreur déblocage wallet');
     }
   };
 
   const filteredWallets = wallets.filter(w => {
     if (!searchTerm) return true;
-    
+
     const term = searchTerm.toLowerCase();
     return (
       w.public_id?.toLowerCase().includes(term) ||

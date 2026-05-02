@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Navigation, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Navigation, _Clock, DollarSign } from 'lucide-react';
 import { useTaxiMoto } from '@/hooks/useTaxiMoto';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 import TaxiMotoPaymentModal from './TaxiMotoPaymentModal';
@@ -23,7 +23,7 @@ export function TaxiMotoClientInterface() {
     findNearbyDrivers,
     createRide,
     cancelRide,
-    processPayment
+    _processPayment
   } = useTaxiMoto();
 
   const [pickupAddress, setPickupAddress] = useState('');
@@ -85,10 +85,10 @@ export function TaxiMotoClientInterface() {
       // Vérifier d'abord s'il y a des conducteurs disponibles
       const pickupLat = currentLocation.coords.latitude;
       const pickupLng = currentLocation.coords.longitude;
-      
+
       // Rechercher les conducteurs disponibles dans un rayon de 10km
       const availableDrivers = await findNearbyDrivers(pickupLat, pickupLng, 10);
-      
+
       if (!availableDrivers || availableDrivers.length === 0) {
         toast.error('Aucun conducteur disponible actuellement. Veuillez réessayer plus tard.', {
           duration: 5000,
@@ -164,7 +164,7 @@ export function TaxiMotoClientInterface() {
               <span className="font-medium">Montant:</span>
               <span className="text-lg font-bold">{(currentRide as any).estimated_price || (currentRide as any).price_total || 0} GNF</span>
             </div>
-            
+
             <div className="flex gap-2 mt-4">
               {currentRide.status === 'requested' && (
                 <Button onClick={handleCancelRide} variant="destructive" className="flex-1">

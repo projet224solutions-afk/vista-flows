@@ -4,16 +4,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Smartphone, Mail, Key, QrCode, AlertTriangle, Check, Copy, RefreshCw } from 'lucide-react';
+import { Shield, Smartphone, Mail, Key, QrCode, _AlertTriangle, Check, Copy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, _DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { _cn } from '@/lib/utils';
 import useMFA from '@/hooks/useMFA';
 import { MFAMethod, MFAFactor } from '@/services/auth/MFAService';
 import { toast } from 'sonner';
@@ -31,25 +31,25 @@ export function MFARequiredBanner() {
 
   return (
     <>
-      <Alert 
+      <Alert
         variant={isGracePeriodExpired ? 'destructive' : 'default'}
         className="mb-4"
       >
         <Shield className="h-4 w-4" />
         <AlertTitle>
-          {isGracePeriodExpired 
+          {isGracePeriodExpired
             ? 'Configuration MFA obligatoire'
             : 'Sécurisez votre compte'}
         </AlertTitle>
         <AlertDescription className="flex items-center justify-between">
           <span>
-            {isGracePeriodExpired 
+            {isGracePeriodExpired
               ? 'Vous devez configurer l\'authentification à deux facteurs pour continuer.'
-              : gracePeriodEnds 
+              : gracePeriodEnds
                 ? `Configurez le MFA avant le ${new Date(gracePeriodEnds).toLocaleDateString('fr-FR')}`
                 : 'Activez l\'authentification à deux facteurs pour protéger votre compte.'}
           </span>
-          <Button 
+          <Button
             variant={isGracePeriodExpired ? 'destructive' : 'default'}
             size="sm"
             onClick={() => setShowSetup(true)}
@@ -59,8 +59,8 @@ export function MFARequiredBanner() {
         </AlertDescription>
       </Alert>
 
-      <MFASetupDialog 
-        open={showSetup} 
+      <MFASetupDialog
+        open={showSetup}
         onOpenChange={setShowSetup}
         required={isGracePeriodExpired}
       />
@@ -71,12 +71,12 @@ export function MFARequiredBanner() {
 /**
  * Dialog de configuration MFA
  */
-export function MFASetupDialog({ 
-  open, 
+export function MFASetupDialog({
+  open,
   onOpenChange,
-  required = false 
-}: { 
-  open: boolean; 
+  required = false
+}: {
+  open: boolean;
   onOpenChange: (open: boolean) => void;
   required?: boolean;
 }) {
@@ -93,7 +93,7 @@ export function MFASetupDialog({
   const [isVerifying, setIsVerifying] = useState(false);
   const [currentFactorId, setCurrentFactorId] = useState<string | null>(null);
 
-  const { enrollTOTP, enrollSMS, enrollEmail, verifyTOTP, verifyCode, factors } = useMFA();
+  const { enrollTOTP, enrollSMS, enrollEmail, verifyTOTP, verifyCode, _factors } = useMFA();
 
   // Enrôler TOTP
   const handleEnrollTOTP = async () => {
@@ -116,7 +116,7 @@ export function MFASetupDialog({
   // Enrôler SMS
   const handleEnrollSMS = async () => {
     if (!phoneNumber) return;
-    
+
     setIsEnrolling(true);
     try {
       const result = await enrollSMS(phoneNumber);
@@ -131,7 +131,7 @@ export function MFASetupDialog({
   // Enrôler Email
   const handleEnrollEmail = async () => {
     if (!email) return;
-    
+
     setIsEnrolling(true);
     try {
       const result = await enrollEmail(email);
@@ -216,9 +216,9 @@ export function MFASetupDialog({
                 {/* QR Code */}
                 {totpSetup.qr_code && (
                   <div className="flex justify-center">
-                    <img 
-                      src={totpSetup.qr_code} 
-                      alt="QR Code" 
+                    <img
+                      src={totpSetup.qr_code}
+                      alt="QR Code"
                       className="w-48 h-48 rounded-lg"
                     />
                   </div>
@@ -265,8 +265,8 @@ export function MFASetupDialog({
                     Entrez votre numéro avec l'indicatif pays
                   </p>
                 </div>
-                <Button 
-                  onClick={handleEnrollSMS} 
+                <Button
+                  onClick={handleEnrollSMS}
                   disabled={!phoneNumber || isEnrolling}
                   className="w-full"
                 >
@@ -297,8 +297,8 @@ export function MFASetupDialog({
                     placeholder="votre@email.com"
                   />
                 </div>
-                <Button 
-                  onClick={handleEnrollEmail} 
+                <Button
+                  onClick={handleEnrollEmail}
                   disabled={!email || isEnrolling}
                   className="w-full"
                 >
@@ -424,11 +424,11 @@ export function MFAChallengeDialog({
         />
 
         <div className="text-center">
-          <Button 
-            variant="link" 
+          <Button
+            variant="link"
             onClick={() => setShowBackupCode(!showBackupCode)}
           >
-            {showBackupCode 
+            {showBackupCode
               ? 'Utiliser un autre méthode'
               : 'Utiliser un code de récupération'}
           </Button>
@@ -506,7 +506,7 @@ function VerificationCodeInput({
         <Input
           value={code}
           onChange={(e) => {
-            const value = length === 6 
+            const value = length === 6
               ? e.target.value.replace(/\D/g, '').slice(0, length)
               : e.target.value.toUpperCase().slice(0, length);
             setCode(value);
@@ -517,8 +517,8 @@ function VerificationCodeInput({
           onKeyDown={(e) => e.key === 'Enter' && code.length === length && onVerify()}
         />
       </div>
-      <Button 
-        onClick={onVerify} 
+      <Button
+        onClick={onVerify}
         disabled={code.length !== length || isVerifying}
         className="w-full"
       >
@@ -539,13 +539,13 @@ function VerificationCodeInput({
  * Page de gestion MFA (paramètres)
  */
 export function MFASettingsPanel() {
-  const { 
-    status, 
-    factors, 
-    isLoading, 
-    removeFactor, 
+  const {
+    status,
+    factors,
+    isLoading,
+    removeFactor,
     regenerateBackupCodes,
-    refresh 
+    _refresh
   } = useMFA();
   const [showSetup, setShowSetup] = useState(false);
   const [showBackupCodes, setShowBackupCodes] = useState<string[] | null>(null);
@@ -603,7 +603,7 @@ export function MFASettingsPanel() {
           {factors.length > 0 ? (
             <div className="space-y-3">
               {factors.map((factor) => (
-                <div 
+                <div
                   key={factor.id}
                   className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                 >
@@ -623,16 +623,16 @@ export function MFASettingsPanel() {
                   </div>
                   <div className="flex gap-2">
                     {factor.method === 'totp' && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleRegenerateBackupCodes(factor.id)}
                       >
                         <Key className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveFactor(factor.id)}
                       className="text-red-500 hover:text-red-600"
@@ -656,8 +656,8 @@ export function MFASettingsPanel() {
         </CardContent>
       </Card>
 
-      <MFASetupDialog 
-        open={showSetup} 
+      <MFASetupDialog
+        open={showSetup}
         onOpenChange={setShowSetup}
       />
 

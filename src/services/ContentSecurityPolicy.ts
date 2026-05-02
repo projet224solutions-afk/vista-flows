@@ -100,7 +100,7 @@ class ContentSecurityPolicyService {
   private initializeCSP(): void {
     // Générer et appliquer CSP header
     const cspHeader = this.generateCSPHeader();
-    
+
     // Écouter violations CSP
     if (typeof document !== 'undefined') {
       document.addEventListener('securitypolicyviolation', (e) => {
@@ -222,7 +222,7 @@ class ContentSecurityPolicyService {
     }
 
     // Script inline bloqué
-    if (violation.effectiveDirective === 'script-src' && 
+    if (violation.effectiveDirective === 'script-src' &&
         violation.blockedUri === 'inline') {
       return true;
     }
@@ -242,7 +242,7 @@ class ContentSecurityPolicyService {
     try {
       // Envoyer à monitoring service
       const { monitoringService } = await import('./MonitoringService');
-      
+
       await monitoringService.logError(
         'critical',
         'csp_violation',
@@ -339,7 +339,7 @@ class ContentSecurityPolicyService {
       }
 
       return { valid: true };
-    } catch (error) {
+    } catch (_error) {
       return {
         valid: false,
         reason: 'URL invalide',

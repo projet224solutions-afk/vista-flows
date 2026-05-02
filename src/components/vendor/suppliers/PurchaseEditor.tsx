@@ -46,7 +46,7 @@ import {
   Trash2,
   FileText,
   CheckCircle,
-  Download,
+  _Download,
   Lock,
   Package,
   Calculator,
@@ -305,7 +305,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   const generateDocMutation = useMutation({
     mutationFn: async () => {
       // Appel à l'Edge Function pour générer le PDF
-      const { data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
+      const { _data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
         body: {
           purchase_id: purchase.id,
           vendor_id: vendorId,
@@ -317,33 +317,33 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       // Générer le PDF côté client avec jsPDF
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF();
-      
+
       // Header
       doc.setFontSize(20);
       doc.setTextColor(30, 64, 175);
       doc.text('BON D\'ACHAT DE STOCK', 105, 20, { align: 'center' });
-      
+
       doc.setFontSize(12);
       doc.setTextColor(100);
       doc.text(purchase.purchase_number, 105, 28, { align: 'center' });
       doc.text(`Date: ${new Date(purchase.created_at).toLocaleDateString('fr-FR')}`, 105, 35, { align: 'center' });
-      
+
       // Summary box - only purchase total (no profit for supplier document)
       doc.setFillColor(248, 250, 252);
       doc.rect(14, 45, 85, 25, 'F');
       doc.rect(110, 45, 85, 25, 'F');
-      
+
       doc.setFontSize(9);
       doc.setTextColor(100);
       doc.text('TOTAL ACHAT', 56.5, 52, { align: 'center' });
       doc.text('ARTICLES', 152.5, 52, { align: 'center' });
-      
+
       doc.setFontSize(12);
       doc.setTextColor(30, 64, 175);
       doc.text(formatCurrency(totalPurchase), 56.5, 62, { align: 'center' });
       doc.setTextColor(51);
       doc.text(`${items.length} produit(s) / ${items.reduce((s, i) => s + i.quantity, 0)} unité(s)`, 152.5, 62, { align: 'center' });
-      
+
       // Table header
       let yPos = 80;
       doc.setFillColor(30, 64, 175);
@@ -354,7 +354,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       doc.text('Qté', 100, yPos + 5.5);
       doc.text('Prix Unitaire', 130, yPos + 5.5);
       doc.text('Total', 170, yPos + 5.5);
-      
+
       // Table rows (no profit/selling price - supplier document)
       yPos += 8;
       doc.setTextColor(51);
@@ -370,10 +370,10 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         doc.text(formatCurrency(item.total_purchase), 170, yPos + 5.5);
         yPos += 8;
       });
-      
+
       // Save PDF
       doc.save(`${purchase.purchase_number}.pdf`);
-      
+
       // Update status
       const { error } = await supabase
         .from('stock_purchases')
@@ -407,7 +407,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
       if (error) throw error;
       if (!data.success) throw new Error(data.error);
-      
+
       return data;
     },
     onSuccess: () => {
@@ -639,7 +639,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   </div>
                 ))}
               </div>
-              
+
               {/* Marge bénéficiaire */}
               <div className="mt-3 pt-3 border-t flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Marge bénéficiaire</span>
@@ -715,10 +715,10 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 </Label>
                 <Select
                   value={newItem.supplier_id}
-                  onValueChange={(v) => setNewItem({ 
-                    ...newItem, 
-                    supplier_id: v, 
-                    product_id: '', 
+                  onValueChange={(v) => setNewItem({
+                    ...newItem,
+                    supplier_id: v,
+                    product_id: '',
                     product_name: '',
                     purchase_price: 0,
                     selling_price: 0
@@ -768,7 +768,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             {/* Sélection du produit avec images */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Sélectionner un produit existant</Label>
-              
+
               {products.length > 0 ? (
                 <ScrollArea className="h-48 border rounded-lg p-2">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -932,7 +932,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                       </p>
                     </div>
                   </div>
-                  
+
                   {newItem.selling_price < newItem.purchase_price && (
                     <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
                       <AlertTriangle className="h-4 w-4" />
@@ -945,15 +945,15 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           </div>
 
           <DialogFooter className="pt-4 border-t gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsAddItemDialogOpen(false)}
               className="min-w-24"
             >
               Annuler
             </Button>
-            <Button 
-              onClick={handleAddItem} 
+            <Button
+              onClick={handleAddItem}
               disabled={addItemMutation.isPending}
               className="min-w-32 gap-2"
             >

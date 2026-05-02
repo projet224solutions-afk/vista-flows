@@ -17,14 +17,14 @@ import {
     RefreshCw,
     CheckCircle,
     AlertTriangle,
-    Clock,
+    _Clock,
     Upload,
     Download,
-    History,
+    _History,
     Trash2,
     Eye,
     FileText,
-    Image,
+    _Image,
     Receipt
 } from "lucide-react";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ export default function OfflineSyncPanel() {
         forceSync,
         clearSyncErrors,
         getSyncHistory,
-        updateSyncStats,
+        _updateSyncStats,
         hasPendingEvents,
         hasFailedEvents
     } = useOfflineSync();
@@ -58,6 +58,7 @@ export default function OfflineSyncPanel() {
         updateHistory();
         const interval = setInterval(updateHistory, 10000); // Mise à jour toutes les 10s
         return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Gestionnaire de synchronisation forcée

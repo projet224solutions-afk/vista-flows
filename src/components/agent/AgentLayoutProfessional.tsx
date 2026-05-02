@@ -138,7 +138,7 @@ export function AgentLayoutProfessional({
       'manage_real_estate_services': ['manage_real_estate_services'],
       'view_agriculture_services': ['view_agriculture_services', 'manage_agriculture_services'],
       'manage_agriculture_services': ['manage_agriculture_services'],
-      
+
       // Finance
       'view_finance': ['view_finance', 'manage_finance'],
       'manage_finance': ['manage_finance'],
@@ -148,7 +148,7 @@ export function AgentLayoutProfessional({
       'manage_payments': ['manage_payments'],
       'view_financial_module': ['view_financial_module', 'manage_finance', 'view_finance'],
       'manage_wallet_transactions': ['manage_wallet_transactions', 'manage_finance', 'manage_banking'],
-      
+
       // Opérations
       'view_agents': ['view_agents', 'manage_agents'],
       'manage_agents': ['manage_agents'],
@@ -175,7 +175,7 @@ export function AgentLayoutProfessional({
       'manage_communication': ['manage_communication'],
       'view_agent_wallet_audit': ['view_agent_wallet_audit', 'manage_agent_wallet_audit'],
       'manage_agent_wallet_audit': ['manage_agent_wallet_audit'],
-      
+
       // Système
       'view_security': ['view_security', 'manage_security'],
       'manage_security': ['manage_security'],
@@ -191,7 +191,7 @@ export function AgentLayoutProfessional({
       'manage_api': ['manage_api'],
       'view_debug': ['view_debug', 'manage_debug'],
       'manage_debug': ['manage_debug'],
-      
+
       // Intelligence
       'view_reports': ['view_reports', 'manage_reports', 'view_analytics', 'view_finance', 'manage_finance'],
       'manage_reports': ['manage_reports'],
@@ -412,7 +412,7 @@ export function AgentLayoutProfessional({
             <p className="text-xs text-white/50 truncate">{agent.email}</p>
           </div>
         </div>
-        
+
         {/* Agent Code Badge */}
         <div className="flex items-center gap-2 mt-3">
           <Badge className="bg-white/10 text-white/90 hover:bg-white/20 border-0">
@@ -421,8 +421,8 @@ export function AgentLayoutProfessional({
           </Badge>
           <Badge className={cn(
             "border-0",
-            agent.is_active 
-              ? "bg-emerald-500/20 text-emerald-400" 
+            agent.is_active
+              ? "bg-emerald-500/20 text-emerald-400"
               : "bg-red-500/20 text-red-400"
           )}>
             {agent.is_active ? 'Actif' : 'Inactif'}

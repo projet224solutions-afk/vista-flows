@@ -5,19 +5,19 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Bell, 
-  CheckCircle2, 
-  Package, 
+import {
+  Bell,
+  CheckCircle2,
+  Package,
   ImageIcon,
   PenTool,
   Clock,
-  X,
+  _X,
   ExternalLink,
   Loader2
 } from 'lucide-react';
@@ -50,19 +50,19 @@ export function VendorDeliveryNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<DeliveryNotification | null>(null);
-  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [_vendorId, setVendorId] = useState<string | null>(null);
 
   // Charger le vendeur
   useEffect(() => {
     const loadVendor = async () => {
       if (!user) return;
-      
+
       const { data } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .single();
-      
+
       if (data) {
         setVendorId(data.id);
       }
@@ -94,7 +94,7 @@ export function VendorDeliveryNotifications() {
               .select('customer_name, delivery_address, delivery_fee, proof_photo_url, client_signature, completed_at')
               .eq('id', notif.delivery_id)
               .single();
-            
+
             return { ...notif, delivery } as DeliveryNotification;
           }
           return notif as DeliveryNotification;
@@ -137,6 +137,7 @@ export function VendorDeliveryNotifications() {
         supabase.removeChannel(channel);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Marquer comme lu
@@ -201,7 +202,7 @@ export function VendorDeliveryNotifications() {
           <Button variant="outline" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <Badge 
+              <Badge
                 className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs"
               >
                 {unreadCount}
@@ -223,7 +224,7 @@ export function VendorDeliveryNotifications() {
               )}
             </div>
           </DialogHeader>
-          
+
           <ScrollArea className="max-h-[60vh]">
             {loading ? (
               <div className="flex items-center justify-center py-8">
@@ -237,8 +238,8 @@ export function VendorDeliveryNotifications() {
             ) : (
               <div className="space-y-3">
                 {notifications.map((notif) => (
-                  <Card 
-                    key={notif.id} 
+                  <Card
+                    key={notif.id}
                     className={`cursor-pointer transition-colors hover:bg-muted/50 ${
                       !notif.read ? 'border-l-4 border-l-orange-500 bg-orange-50/50 dark:bg-orange-950/10' : ''
                     }`}
@@ -254,7 +255,7 @@ export function VendorDeliveryNotifications() {
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
-                            {typeof notif.delivery?.delivery_address === 'object' 
+                            {typeof notif.delivery?.delivery_address === 'object'
                               ? notif.delivery?.delivery_address?.formatted || notif.delivery?.delivery_address?.street || 'Adresse'
                               : notif.delivery?.delivery_address || 'Adresse'}
                           </p>
@@ -293,7 +294,7 @@ export function VendorDeliveryNotifications() {
               Livraison confirmée
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedNotification && (
             <div className="space-y-4">
               {/* Infos client */}
@@ -306,7 +307,7 @@ export function VendorDeliveryNotifications() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Adresse</span>
                     <span className="text-sm text-right max-w-[60%]">
-                      {typeof selectedNotification.delivery?.delivery_address === 'object' 
+                      {typeof selectedNotification.delivery?.delivery_address === 'object'
                         ? selectedNotification.delivery?.delivery_address?.formatted || selectedNotification.delivery?.delivery_address?.street || 'Adresse'
                         : selectedNotification.delivery?.delivery_address || 'Adresse'}
                     </span>
@@ -320,7 +321,7 @@ export function VendorDeliveryNotifications() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Confirmé le</span>
                     <span className="text-sm">
-                      {selectedNotification.delivery?.completed_at 
+                      {selectedNotification.delivery?.completed_at
                         ? formatDate(selectedNotification.delivery.completed_at)
                         : formatDate(selectedNotification.created_at)}
                     </span>
@@ -335,14 +336,14 @@ export function VendorDeliveryNotifications() {
                     <ImageIcon className="h-4 w-4 text-blue-500" />
                     Photo de preuve
                   </p>
-                  <img 
-                    src={selectedNotification.delivery.proof_photo_url} 
+                  <img
+                    src={selectedNotification.delivery.proof_photo_url}
                     alt="Preuve de livraison"
                     className="w-full h-48 object-cover rounded-lg border"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="w-full"
                     onClick={() => window.open(selectedNotification.delivery?.proof_photo_url || '', '_blank')}
                   >
@@ -360,8 +361,8 @@ export function VendorDeliveryNotifications() {
                     Signature du client
                   </p>
                   <div className="bg-white border rounded-lg p-4">
-                    <img 
-                      src={selectedNotification.delivery.client_signature} 
+                    <img
+                      src={selectedNotification.delivery.client_signature}
                       alt="Signature client"
                       className="w-full h-24 object-contain"
                     />

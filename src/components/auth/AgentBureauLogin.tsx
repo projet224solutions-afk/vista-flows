@@ -90,7 +90,7 @@ export const AgentBureauLogin = ({
             {t('auth.agentBureau.codeSentTo')} <strong>{currentIdentifier}</strong>
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             {error && (

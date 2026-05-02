@@ -1,11 +1,11 @@
 ﻿/**
- * PAGE DE LIVRAISON C├öT├ë CLIENT
- * Commander une livraison et suivre en temps r├®el
+ * PAGE DE LIVRAISON CÔTÉ CLIENT
+ * Commander une livraison et suivre en temps réel
  */
 
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Package, MapPin, Truck } from 'lucide-react';
+import { ArrowLeft, Package, _MapPin, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClientDeliveryRequest } from '@/components/delivery/ClientDeliveryRequest';
@@ -16,8 +16,8 @@ import { useAuth } from '@/hooks/useAuth';
 export default function ClientDelivery() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  
+  const { _user } = useAuth();
+
   const trackingId = searchParams.get('track');
   const [activeTab, setActiveTab] = useState(trackingId ? 'tracking' : 'order');
   const [createdDeliveryId, setCreatedDeliveryId] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function ClientDelivery() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
-      {/* En-t├¬te */}
+      {/* En-tête */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -72,8 +72,8 @@ export default function ClientDelivery() {
 
           <TabsContent value="tracking">
             {createdDeliveryId || trackingId ? (
-              <DeliveryStatusTracker 
-                deliveryId={createdDeliveryId || trackingId!} 
+              <DeliveryStatusTracker
+                deliveryId={createdDeliveryId || trackingId!}
                 userRole="client"
               />
             ) : (

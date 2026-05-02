@@ -5,13 +5,13 @@
  * Option C: Affiliation simple structurée
  */
 
-import { useState } from 'react';
-import { 
-  Plane, Hotel, Search, Users, Briefcase, 
-  ArrowRight, Check, Settings, Globe
+import {} from 'react';
+import {
+  _Plane, _Hotel, Search, Users, Briefcase,
+  _ArrowRight, Check, Settings, _Globe
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { _Button } from '@/components/ui/button';
+import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -86,7 +86,7 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
 
       <div className="grid gap-4">
         {modes.map((mode) => (
-          <Card 
+          <Card
             key={mode.id}
             className={cn(
               'cursor-pointer transition-all duration-200 overflow-hidden',
@@ -132,8 +132,8 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
                 {/* Selection indicator */}
                 <div className={cn(
                   'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0',
-                  currentMode === mode.id 
-                    ? 'bg-primary border-primary' 
+                  currentMode === mode.id
+                    ? 'bg-primary border-primary'
                     : 'border-muted-foreground/30'
                 )}>
                   {currentMode === mode.id && (

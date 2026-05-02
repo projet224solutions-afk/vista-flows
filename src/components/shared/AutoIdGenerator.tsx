@@ -18,11 +18,11 @@ interface AutoIdGeneratorProps {
  * Composant de génération manuelle d'ID
  * Peut être intégré dans n'importe quel formulaire
  */
-export function AutoIdGenerator({ 
-  roleType, 
+export function AutoIdGenerator({
+  roleType,
   onIdGenerated,
   initialId,
-  showCard = true 
+  showCard = true
 }: AutoIdGeneratorProps) {
   const { id, loading, generateId, setId } = useAutoId(roleType, false);
   const [copied, setCopied] = React.useState(false);
@@ -31,6 +31,7 @@ export function AutoIdGenerator({
     if (initialId) {
       setId(initialId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialId]);
 
   const handleGenerate = async () => {
@@ -45,13 +46,13 @@ export function AutoIdGenerator({
 
   const handleCopy = async () => {
     if (!id) return;
-    
+
     try {
       await navigator.clipboard.writeText(id);
       setCopied(true);
       toast.success('ID copié');
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la copie');
     }
   };

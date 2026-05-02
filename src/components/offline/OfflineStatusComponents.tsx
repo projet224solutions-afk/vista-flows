@@ -16,9 +16,9 @@ import useOfflineMode from '@/hooks/useOfflineMode';
  * Bannière de statut offline (fixée en haut)
  */
 export function OfflineBanner() {
-  const { 
-    isOnline, 
-    showOfflineBanner, 
+  const {
+    isOnline,
+    showOfflineBanner,
     dismissOfflineBanner,
     queueStatus,
     processQueue,
@@ -36,8 +36,8 @@ export function OfflineBanner() {
     >
       <div className={cn(
         'px-4 py-3 flex items-center justify-between',
-        isOnline 
-          ? 'bg-green-500 text-white' 
+        isOnline
+          ? 'bg-green-500 text-white'
           : 'bg-amber-500 text-white'
       )}>
         <div className="flex items-center gap-3">
@@ -47,8 +47,8 @@ export function OfflineBanner() {
             <WifiOff className="h-5 w-5 animate-pulse" />
           )}
           <span className="font-medium">
-            {isOnline 
-              ? 'Connexion rétablie' 
+            {isOnline
+              ? 'Connexion rétablie'
               : 'Mode hors ligne'}
           </span>
           {!isOnline && queueStatus.pending > 0 && (
@@ -93,7 +93,7 @@ export function OfflineBanner() {
  * Indicateur compact de synchronisation
  */
 export function SyncIndicator() {
-  const { showSyncIndicator, queueStatus, isOnline } = useOfflineMode();
+  const { showSyncIndicator, queueStatus, _isOnline } = useOfflineMode();
 
   if (!showSyncIndicator && queueStatus.pending === 0) return null;
 
@@ -129,7 +129,7 @@ export function OfflineStatusWidget() {
     offlineStatus,
     queueStatus,
     syncStatus,
-    processQueue,
+    _processQueue,
     syncAll,
     retryFailedOperations,
     clearFailedOperations,
@@ -137,8 +137,8 @@ export function OfflineStatusWidget() {
   } = useOfflineMode();
 
   const totalOperations = queueStatus.pending + queueStatus.processing;
-  const progress = queueStatus.completed > 0 
-    ? (queueStatus.completed / (queueStatus.completed + totalOperations)) * 100 
+  const progress = queueStatus.completed > 0
+    ? (queueStatus.completed / (queueStatus.completed + totalOperations)) * 100
     : 0;
 
   return (
@@ -158,9 +158,9 @@ export function OfflineStatusWidget() {
           </Badge>
         </div>
         <CardDescription>
-          {offlineStatus.wasOffline 
+          {offlineStatus.wasOffline
             ? 'Connexion rétablie après une interruption'
-            : isOnline 
+            : isOnline
               ? 'Toutes vos données sont synchronisées'
               : 'Vos actions seront synchronisées plus tard'}
         </CardDescription>
@@ -267,10 +267,10 @@ export function OfflineStatusWidget() {
 /**
  * Badge inline de statut
  */
-export function OfflineStatusBadge({ 
+export function OfflineStatusBadge({
   showLabel = true,
-  size = 'default' 
-}: { 
+  size = 'default'
+}: {
   showLabel?: boolean;
   size?: 'sm' | 'default' | 'lg';
 }) {
@@ -297,10 +297,10 @@ export function OfflineStatusBadge({
           size === 'default' && 'text-sm',
           size === 'lg' && 'text-base'
         )}>
-          {isOnline 
-            ? queueStatus.pending > 0 
+          {isOnline
+            ? queueStatus.pending > 0
               ? `${queueStatus.pending} en attente`
-              : 'Synchronisé' 
+              : 'Synchronisé'
             : 'Hors ligne'}
         </span>
       )}

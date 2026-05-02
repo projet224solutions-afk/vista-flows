@@ -12,18 +12,18 @@ interface PDGAIAssistantProps {
 }
 
 export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
-  const { 
-    aiActive, 
-    insights, 
-    loading, 
-    messages, 
-    isStreaming, 
-    refreshInsights, 
-    toggleAI, 
+  const {
+    aiActive,
+    insights,
+    loading,
+    messages,
+    isStreaming,
+    refreshInsights,
+    toggleAI,
     sendMessage,
-    clearMessages 
+    clearMessages
   } = usePDGAIAssistant();
-  
+
   const [analyzing, setAnalyzing] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
     try {
       await refreshInsights();
       toast.success('Analyse IA terminée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'analyse IA');
     } finally {
       setAnalyzing(false);
@@ -51,7 +51,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isStreaming) return;
-    
+
     await sendMessage(inputMessage);
     setInputMessage('');
   };

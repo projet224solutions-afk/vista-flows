@@ -1,18 +1,18 @@
 /**
  * CHINA SUPPLIER SCORING HOOK
  * Système de scoring anti-arnaque pour fournisseurs chinois
- * 
+ *
  * @module useSupplierScoring
  * @version 1.0.0
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type {
   SupplierScore,
   SupplierScoreLevel,
-  ChinaSupplierExtension
+  _ChinaSupplierExtension
 } from '@/types/china-dropshipping';
 import { SUPPLIER_SCORE_THRESHOLDS } from '@/types/china-dropshipping';
 
@@ -20,23 +20,23 @@ import { SUPPLIER_SCORE_THRESHOLDS } from '@/types/china-dropshipping';
 
 interface UseSupplierScoringReturn {
   loading: boolean;
-  
+
   // Calculs
   calculateScore: (supplierId: string) => Promise<SupplierScore | null>;
   recalculateAllScores: () => Promise<number>;
-  
+
   // Analyse
   getScoreLevel: (score: number) => SupplierScoreLevel;
   shouldWarn: (score: number) => boolean;
   shouldAutoDisable: (score: number) => boolean;
-  
+
   // Actions automatiques
   checkAndApplyAutoActions: (supplierId: string) => Promise<{
     warned: boolean;
     disabled: boolean;
     reason?: string;
   }>;
-  
+
   // Rapports
   getScoreBreakdown: (supplierId: string) => Promise<ScoreBreakdown | null>;
   getTopSuppliers: (limit?: number) => Promise<SupplierScore[]>;
@@ -45,14 +45,14 @@ interface UseSupplierScoringReturn {
 
 interface ScoreBreakdown {
   supplierId: string;
-  
+
   // Composantes du score
   deliverySuccessScore: number; // 0-25
   onTimeScore: number; // 0-25
   qualityScore: number; // 0-25
   responseTimeScore: number; // 0-15
   disputeScore: number; // 0-10
-  
+
   // Pondération
   weights: {
     deliverySuccess: number;
@@ -61,11 +61,11 @@ interface ScoreBreakdown {
     responseTime: number;
     disputes: number;
   };
-  
+
   // Score final
   totalScore: number;
   level: SupplierScoreLevel;
-  
+
   // Métriques brutes
   metrics: {
     totalOrders: number;
@@ -77,7 +77,7 @@ interface ScoreBreakdown {
     avgResponseHours: number;
     qualityRating: number;
   };
-  
+
   // Recommandations
   recommendations: string[];
 }
@@ -143,30 +143,30 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
       }
 
       const ordersList = orders || [];
-      
+
       // Calcul des métriques
       const totalOrders = ordersList.length;
       const deliveredOrders = ordersList.filter(o => o.status === 'delivered').length;
       const cancelledOrders = ordersList.filter(o => o.status === 'cancelled').length;
       const disputedOrders = ordersList.filter(o => o.status === 'disputed').length;
-      
+
       // Score de livraison réussie (0-100)
-      const deliverySuccessRate = totalOrders > 0 
+      const deliverySuccessRate = totalOrders > 0
         ? ((deliveredOrders + ordersList.filter(o => !['cancelled', 'disputed'].includes(o.status)).length) / totalOrders) * 100
         : 50; // Score par défaut si pas de commandes
-      
+
       // Score de ponctualité (0-100)
       // En production, comparer dates réelles vs estimées
       const onTimeRate = (supplier as any).on_time_rate || 80;
-      
+
       // Score qualité (0-5 -> 0-100)
       const qualityRating = 4.0; // En production, calculer depuis les avis
       const qualityScore = (qualityRating / 5) * 100;
-      
+
       // Score temps de réponse (0-100, basé sur heures)
       const avgResponseHours = (supplier as any).avg_response_time_hours || 12;
       const responseTimeScore = Math.max(0, 100 - (avgResponseHours * 2)); // Pénalité de 2pts par heure
-      
+
       // Score litiges (inverse - moins c'est mieux)
       const disputeRate = totalOrders > 0 ? (disputedOrders / totalOrders) * 100 : 0;
       const disputeScore = Math.max(0, 100 - (disputeRate * 5)); // Pénalité forte pour litiges
@@ -239,7 +239,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
   const recalculateAllScores = useCallback(async (): Promise<number> => {
     try {
       setLoading(true);
-      
+
       const { data: suppliers, error } = await supabase
         .from('china_suppliers')
         .select('id')
@@ -251,7 +251,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
       }
 
       let updatedCount = 0;
-      
+
       for (const supplier of suppliers) {
         const score = await calculateScore(supplier.id);
         if (score) updatedCount++;
@@ -271,7 +271,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
 
   const checkAndApplyAutoActions = useCallback(async (supplierId: string) => {
     const result = { warned: false, disabled: false, reason: undefined as string | undefined };
-    
+
     try {
       const score = await calculateScore(supplierId);
       if (!score) return result;
@@ -280,7 +280,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
       if (shouldWarn(score.overall_score)) {
         result.warned = true;
         result.reason = `Score faible (${score.overall_score}/100)`;
-        
+
         // Envoyer notification admin
         await supabase.from('china_dropship_logs').insert({
           log_type: 'alert',
@@ -297,7 +297,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
       if (shouldAutoDisable(score.overall_score)) {
         result.disabled = true;
         result.reason = `Score critique (${score.overall_score}/100) - Désactivation automatique`;
-        
+
         // Blacklister le fournisseur
         await supabase
           .from('china_suppliers')
@@ -344,7 +344,7 @@ export function useSupplierScoring(): UseSupplierScoringReturn {
 
       // Recommandations basées sur le score
       const recommendations: string[] = [];
-      
+
       if (score.delivery_success_rate < 80) {
         recommendations.push('Améliorer le taux de livraison réussie');
       }

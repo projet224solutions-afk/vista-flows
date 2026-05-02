@@ -2,7 +2,7 @@
  * Page détail d'un bien immobilier
  */
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, _DialogHeader, _DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -12,7 +12,7 @@ import { PropertyImageUpload } from './PropertyImageUpload';
 import {
   MapPin, Bed, Bath, Maximize, Phone, MessageSquare,
   Heart, Share2, ChevronLeft, ChevronRight, Building2,
-  Calendar, Eye, CheckCircle
+  _Calendar, Eye, _CheckCircle
 } from 'lucide-react';
 
 interface PropertyDetailDialogProps {

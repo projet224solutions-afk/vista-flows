@@ -134,7 +134,7 @@ const ClientPasswordChange: React.FC = () => {
 
     } catch (error: any) {
       console.error('[ClientPasswordChange] Erreur complète:', error);
-      
+
       // Gestion des erreurs spécifiques
       if (error.message?.includes('same as the old')) {
         toast.error('Le nouveau mot de passe doit être différent de l\'ancien');
@@ -259,8 +259,8 @@ const ClientPasswordChange: React.FC = () => {
             {/* Vérification de correspondance */}
             {formData.confirmPassword && (
               <p className={`text-xs flex items-center gap-1 ${
-                formData.newPassword === formData.confirmPassword 
-                  ? 'text-green-600' 
+                formData.newPassword === formData.confirmPassword
+                  ? 'text-green-600'
                   : 'text-destructive'
               }`}>
                 {formData.newPassword === formData.confirmPassword ? (

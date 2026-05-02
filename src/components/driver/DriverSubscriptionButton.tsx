@@ -25,9 +25,9 @@ export function DriverSubscriptionButton() {
 
   if (!subscription) {
     return (
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         className="gap-1 text-xs h-8 border-gray-300"
         onClick={() => navigate('/driver-subscription')}
       >
@@ -40,7 +40,7 @@ export function DriverSubscriptionButton() {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: fr });
-    } catch (error) {
+    } catch (_error) {
       return "Date invalide";
     }
   };
@@ -53,12 +53,12 @@ export function DriverSubscriptionButton() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className={`gap-1 text-xs h-8 ${
-            isActive 
-              ? 'border-green-300 bg-green-50 hover:bg-green-100' 
+            isActive
+              ? 'border-green-300 bg-green-50 hover:bg-green-100'
               : isExpired
               ? 'border-red-300 bg-red-50 hover:bg-red-100'
               : 'border-gray-300'
@@ -78,7 +78,7 @@ export function DriverSubscriptionButton() {
             <Calendar className="w-4 h-4" />
             Mon Abonnement
           </h4>
-          
+
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Début:</span>
@@ -108,8 +108,8 @@ export function DriverSubscriptionButton() {
             </div>
           )}
 
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="w-full text-xs h-8"
             onClick={() => navigate('/driver-subscription')}
           >

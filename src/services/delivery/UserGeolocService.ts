@@ -39,7 +39,7 @@ export class UserGeolocService {
       console.log('[UserGeolocService] Getting location for:', identifier);
 
       let profile = null;
-      
+
       // Recherche par UUID
       if (this.isUUID(identifier)) {
         const { data, error } = await supabase
@@ -47,10 +47,10 @@ export class UserGeolocService {
           .select('*')
           .eq('id', identifier)
           .single();
-        
+
         if (!error && data) profile = data;
       }
-      
+
       // Recherche par téléphone si pas trouvé
       if (!profile && this.isPhoneNumber(identifier)) {
         const cleaned = identifier.replace(/[\s\-\+\(\)]/g, '');
@@ -60,10 +60,10 @@ export class UserGeolocService {
           .or(`phone.ilike.%${cleaned}%,phone.ilike.%${identifier}%`)
           .limit(1)
           .single();
-        
+
         if (data) profile = data;
       }
-      
+
       // Recherche par nom si pas trouvé
       if (!profile) {
         const { data } = await supabase
@@ -72,7 +72,7 @@ export class UserGeolocService {
           .or(`first_name.ilike.%${identifier}%,last_name.ilike.%${identifier}%`)
           .limit(1)
           .single();
-        
+
         if (data) profile = data;
       }
 
@@ -131,7 +131,7 @@ export class UserGeolocService {
           .select('id, user_id, business_name, phone, latitude, longitude, address')
           .eq('id', identifier)
           .single();
-        
+
         if (!error && data) vendor = data;
       }
 
@@ -143,7 +143,7 @@ export class UserGeolocService {
           .ilike('business_name', `%${identifier}%`)
           .limit(1)
           .single();
-        
+
         if (data) vendor = data;
       }
 
@@ -156,7 +156,7 @@ export class UserGeolocService {
           .or(`phone.ilike.%${cleaned}%,phone.ilike.%${identifier}%`)
           .limit(1)
           .single();
-        
+
         if (data) vendor = data;
       }
 

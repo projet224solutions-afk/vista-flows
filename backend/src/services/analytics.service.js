@@ -1,6 +1,6 @@
 /**
  * 📊 ANALYTICS TRACKING SERVICE
- * 
+ *
  * Handles all analytics tracking operations:
  * - Product views with 24h deduplication
  * - Shop visits with 24h deduplication
@@ -35,30 +35,30 @@ const TIME_PERIODS = {
 
 /**
  * Detect device type from user agent
- * @param {string} userAgent 
+ * @param {string} userAgent
  * @returns {string}
  */
 function detectDeviceType(userAgent) {
   if (!userAgent) return DEVICE_TYPES.UNKNOWN;
-  
+
   const ua = userAgent.toLowerCase();
-  
+
   // Check for tablets first (they often include 'mobile' in UA)
   if (/ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua)) {
     return DEVICE_TYPES.TABLET;
   }
-  
+
   // Check for mobile
   if (/mobile|iphone|ipod|android.*mobile|webos|blackberry|opera mini|iemobile/i.test(ua)) {
     return DEVICE_TYPES.MOBILE;
   }
-  
+
   return DEVICE_TYPES.DESKTOP;
 }
 
 /**
  * Generate fingerprint hash from request data
- * @param {Object} data 
+ * @param {Object} data
  * @returns {string}
  */
 function generateFingerprint(data) {
@@ -68,13 +68,13 @@ function generateFingerprint(data) {
     data.acceptLanguage || '',
     data.screenResolution || ''
   ].join('|');
-  
+
   return crypto.createHash('sha256').update(components).digest('hex').substring(0, 64);
 }
 
 /**
  * Validate UUID format
- * @param {string} uuid 
+ * @param {string} uuid
  * @returns {boolean}
  */
 function isValidUUID(uuid) {
@@ -84,20 +84,20 @@ function isValidUUID(uuid) {
 
 /**
  * Get date range for a time period
- * @param {string} period 
+ * @param {string} period
  * @returns {Object}
  */
 function getDateRange(period) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
+
   switch (period) {
     case TIME_PERIODS.TODAY:
       return {
         start: today.toISOString(),
         end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
       };
-    
+
     case TIME_PERIODS.THIS_WEEK: {
       const dayOfWeek = today.getDay();
       const startOfWeek = new Date(today);
@@ -107,7 +107,7 @@ function getDateRange(period) {
         end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
       };
     }
-    
+
     case TIME_PERIODS.THIS_MONTH: {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       return {
@@ -115,7 +115,7 @@ function getDateRange(period) {
         end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
       };
     }
-    
+
     default:
       return {
         start: today.toISOString(),
@@ -130,8 +130,8 @@ function getDateRange(period) {
 
 /**
  * Check if IP is blocked for a vendor
- * @param {string} vendorId 
- * @param {string} ipAddress 
+ * @param {string} vendorId
+ * @param {string} ipAddress
  * @returns {Promise<boolean>}
  */
 async function isIPBlocked(vendorId, ipAddress) {
@@ -143,7 +143,7 @@ async function isIPBlocked(vendorId, ipAddress) {
       .eq('ip_address', ipAddress)
       .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
       .single();
-    
+
     return !!data && !error;
   } catch {
     return false;
@@ -152,22 +152,22 @@ async function isIPBlocked(vendorId, ipAddress) {
 
 /**
  * Check if the viewer is the vendor themselves
- * @param {string} vendorId 
- * @param {string|null} userId 
+ * @param {string} vendorId
+ * @param {string|null} userId
  * @returns {Promise<boolean>}
  */
 async function isVendorSelfView(vendorId, userId) {
   if (!userId) return false;
-  
+
   try {
     const { data, error } = await supabaseAdmin
       .from('vendors')
       .select('user_id')
       .eq('id', vendorId)
       .single();
-    
+
     if (error || !data) return false;
-    
+
     return data.user_id === userId;
   } catch {
     return false;
@@ -176,7 +176,7 @@ async function isVendorSelfView(vendorId, userId) {
 
 /**
  * Validate product exists and get vendor ID
- * @param {string} productId 
+ * @param {string} productId
  * @returns {Promise<Object|null>}
  */
 async function getProductInfo(productId) {
@@ -185,18 +185,18 @@ async function getProductInfo(productId) {
     .select('id, vendor_id')
     .eq('id', productId)
     .single();
-  
+
   if (error || !data) {
     logger.warn(`Product not found: ${productId}`);
     return null;
   }
-  
+
   return data;
 }
 
 /**
  * Validate vendor exists
- * @param {string} vendorId 
+ * @param {string} vendorId
  * @returns {Promise<boolean>}
  */
 async function vendorExists(vendorId) {
@@ -205,7 +205,7 @@ async function vendorExists(vendorId) {
     .select('id')
     .eq('id', vendorId)
     .single();
-  
+
   return !!data && !error;
 }
 
@@ -235,42 +235,42 @@ export async function trackProductView({
     if (!productId || !isValidUUID(productId)) {
       return { success: false, error: 'Invalid product ID' };
     }
-    
+
     if (!ipAddress) {
       return { success: false, error: 'IP address is required' };
     }
-    
+
     if (!userId && !sessionId) {
       return { success: false, error: 'Either user ID or session ID is required' };
     }
-    
+
     if (userId && !isValidUUID(userId)) {
       return { success: false, error: 'Invalid user ID format' };
     }
-    
+
     // Get product info
     const product = await getProductInfo(productId);
     if (!product) {
       return { success: false, error: 'Product not found' };
     }
-    
+
     const vendorId = product.vendor_id;
-    
+
     // Anti-fraud checks
     if (await isVendorSelfView(vendorId, userId)) {
       logger.info(`Blocked self-view attempt: vendor ${vendorId}, user ${userId}`);
       return { success: false, error: 'Self-views are not counted', code: 'SELF_VIEW' };
     }
-    
+
     if (await isIPBlocked(vendorId, ipAddress)) {
       logger.info(`Blocked view from banned IP: ${ipAddress} for vendor ${vendorId}`);
       return { success: false, error: 'Access denied', code: 'IP_BLOCKED' };
     }
-    
+
     // Prepare tracking data
     const deviceType = detectDeviceType(userAgent);
     const fingerprint = generateFingerprint({ ipAddress, userAgent, acceptLanguage, screenResolution });
-    
+
     // Call the database function for safe insertion with deduplication
     const { data, error } = await supabaseAdmin.rpc('track_product_view', {
       p_product_id: productId,
@@ -285,33 +285,33 @@ export async function trackProductView({
       p_country_code: countryCode || null,
       p_city: city || null
     });
-    
+
     if (error) {
       logger.error(`Error tracking product view: ${error.message}`);
-      
+
       // Handle unique constraint violation (duplicate within 24h)
       if (error.code === '23505') {
-        return { 
-          success: true, 
-          deduplicated: true, 
-          message: 'View already recorded for today' 
+        return {
+          success: true,
+          deduplicated: true,
+          message: 'View already recorded for today'
         };
       }
-      
+
       return { success: false, error: 'Failed to track view' };
     }
-    
+
     const result = data?.[0] || data;
-    
+
     logger.info(`Product view tracked: product=${productId}, new=${result?.success}`);
-    
+
     return {
       success: true,
       deduplicated: !result?.success,
       viewId: result?.view_id,
       message: result?.message
     };
-    
+
   } catch (error) {
     logger.error(`trackProductView error: ${error.message}`);
     return { success: false, error: 'Internal server error' };
@@ -341,39 +341,39 @@ export async function trackShopVisit({
     if (!vendorId || !isValidUUID(vendorId)) {
       return { success: false, error: 'Invalid vendor ID' };
     }
-    
+
     if (!ipAddress) {
       return { success: false, error: 'IP address is required' };
     }
-    
+
     if (!userId && !sessionId) {
       return { success: false, error: 'Either user ID or session ID is required' };
     }
-    
+
     if (userId && !isValidUUID(userId)) {
       return { success: false, error: 'Invalid user ID format' };
     }
-    
+
     // Validate vendor exists
     if (!await vendorExists(vendorId)) {
       return { success: false, error: 'Vendor not found' };
     }
-    
+
     // Anti-fraud checks
     if (await isVendorSelfView(vendorId, userId)) {
       logger.info(`Blocked self-visit attempt: vendor ${vendorId}, user ${userId}`);
       return { success: false, error: 'Self-visits are not counted', code: 'SELF_VIEW' };
     }
-    
+
     if (await isIPBlocked(vendorId, ipAddress)) {
       logger.info(`Blocked visit from banned IP: ${ipAddress} for vendor ${vendorId}`);
       return { success: false, error: 'Access denied', code: 'IP_BLOCKED' };
     }
-    
+
     // Prepare tracking data
     const deviceType = detectDeviceType(userAgent);
     const fingerprint = generateFingerprint({ ipAddress, userAgent, acceptLanguage, screenResolution });
-    
+
     // Call the database function for safe insertion with deduplication
     const { data, error } = await supabaseAdmin.rpc('track_shop_visit', {
       p_vendor_id: vendorId,
@@ -388,33 +388,33 @@ export async function trackShopVisit({
       p_city: city || null,
       p_entry_page: entryPage || null
     });
-    
+
     if (error) {
       logger.error(`Error tracking shop visit: ${error.message}`);
-      
+
       // Handle unique constraint violation (duplicate within 24h)
       if (error.code === '23505') {
-        return { 
-          success: true, 
-          deduplicated: true, 
-          message: 'Visit already recorded for today' 
+        return {
+          success: true,
+          deduplicated: true,
+          message: 'Visit already recorded for today'
         };
       }
-      
+
       return { success: false, error: 'Failed to track visit' };
     }
-    
+
     const result = data?.[0] || data;
-    
+
     logger.info(`Shop visit tracked: vendor=${vendorId}, new=${result?.success}`);
-    
+
     return {
       success: true,
       deduplicated: !result?.success,
       visitId: result?.visit_id,
       message: result?.message
     };
-    
+
   } catch (error) {
     logger.error(`trackShopVisit error: ${error.message}`);
     return { success: false, error: 'Internal server error' };
@@ -427,8 +427,8 @@ export async function trackShopVisit({
 
 /**
  * Verify vendor ownership
- * @param {string} vendorId 
- * @param {string} userId 
+ * @param {string} vendorId
+ * @param {string} userId
  * @returns {Promise<Object>}
  */
 async function verifyVendorOwnership(vendorId, userId) {
@@ -437,27 +437,27 @@ async function verifyVendorOwnership(vendorId, userId) {
     .select('id, user_id, name')
     .eq('id', vendorId)
     .single();
-  
+
   if (error || !vendor) {
     return { success: false, error: 'Vendor not found' };
   }
-  
+
   if (vendor.user_id !== userId) {
     logger.warn(`Unauthorized analytics access: user ${userId} for vendor ${vendorId}`);
     return { success: false, error: 'Unauthorized access' };
   }
-  
+
   return { success: true, vendor };
 }
 
 /**
  * Get vendor analytics overview using optimized SQL function
- * 
- * @param {string} vendorId 
+ *
+ * @param {string} vendorId
  * @param {string} userId - The authenticated user requesting analytics
  * @param {Object} options - { period, startDate, endDate }
  * @returns {Promise<Object>}
- * 
+ *
  * Response format:
  * {
  *   success: true,
@@ -478,15 +478,15 @@ export async function getVendorAnalytics(vendorId, userId, options = {}) {
     if (!vendorId || !isValidUUID(vendorId)) {
       return { success: false, error: 'Invalid vendor ID' };
     }
-    
+
     // Verify ownership
     const ownershipCheck = await verifyVendorOwnership(vendorId, userId);
     if (!ownershipCheck.success) {
       return ownershipCheck;
     }
-    
+
     const { period = 'week', startDate = null, endDate = null } = options;
-    
+
     // Call the optimized SQL function
     const { data, error } = await supabaseAdmin.rpc('get_vendor_analytics_overview', {
       p_vendor_id: vendorId,
@@ -494,15 +494,15 @@ export async function getVendorAnalytics(vendorId, userId, options = {}) {
       p_start_date: startDate,
       p_end_date: endDate
     });
-    
+
     if (error) {
       logger.error(`get_vendor_analytics_overview error: ${error.message}`);
       return { success: false, error: 'Failed to retrieve analytics' };
     }
-    
+
     // The SQL function returns JSONB, parse it properly
     const analytics = typeof data === 'string' ? JSON.parse(data) : data;
-    
+
     return {
       success: true,
       data: {
@@ -519,7 +519,7 @@ export async function getVendorAnalytics(vendorId, userId, options = {}) {
         generatedAt: new Date().toISOString()
       }
     };
-    
+
   } catch (error) {
     logger.error(`getVendorAnalytics error: ${error.message}`);
     return { success: false, error: 'Failed to retrieve analytics' };
@@ -528,12 +528,12 @@ export async function getVendorAnalytics(vendorId, userId, options = {}) {
 
 /**
  * Get product-level analytics using optimized SQL function
- * 
- * @param {string} vendorId 
- * @param {string} userId 
+ *
+ * @param {string} vendorId
+ * @param {string} userId
  * @param {Object} options - { productId, limit, offset, sortBy, sortDir }
  * @returns {Promise<Object>}
- * 
+ *
  * Response format:
  * {
  *   success: true,
@@ -551,30 +551,30 @@ export async function getVendorAnalytics(vendorId, userId, options = {}) {
  */
 export async function getProductsAnalytics(vendorId, userId, options = {}) {
   try {
-    const { 
-      productId = null, 
-      limit = 50, 
+    const {
+      productId = null,
+      limit = 50,
       offset = 0,
       sortBy = 'views_total',
       sortDir = 'desc'
     } = options;
-    
+
     // Validate vendor ID
     if (!vendorId || !isValidUUID(vendorId)) {
       return { success: false, error: 'Invalid vendor ID' };
     }
-    
+
     // Validate product ID if provided
     if (productId && !isValidUUID(productId)) {
       return { success: false, error: 'Invalid product ID' };
     }
-    
+
     // Verify ownership
     const ownershipCheck = await verifyVendorOwnership(vendorId, userId);
     if (!ownershipCheck.success) {
       return ownershipCheck;
     }
-    
+
     // Call the optimized SQL function
     const { data, error } = await supabaseAdmin.rpc('get_vendor_product_analytics', {
       p_vendor_id: vendorId,
@@ -584,22 +584,22 @@ export async function getProductsAnalytics(vendorId, userId, options = {}) {
       p_sort_by: sortBy,
       p_sort_dir: sortDir
     });
-    
+
     if (error) {
       logger.error(`get_vendor_product_analytics error: ${error.message}`);
       return { success: false, error: 'Failed to retrieve product analytics' };
     }
-    
+
     // Parse result (SQL function returns JSON array)
     const products = Array.isArray(data) ? data : (data ? [data] : []);
-    
+
     // Get total count for pagination
     const { count: totalCount } = await supabaseAdmin
       .from('products')
       .select('id', { count: 'exact', head: true })
       .eq('vendor_id', vendorId)
       .eq('is_active', true);
-    
+
     return {
       success: true,
       data: {
@@ -625,7 +625,7 @@ export async function getProductsAnalytics(vendorId, userId, options = {}) {
         generatedAt: new Date().toISOString()
       }
     };
-    
+
   } catch (error) {
     logger.error(`getProductsAnalytics error: ${error.message}`);
     return { success: false, error: 'Failed to retrieve product analytics' };
@@ -646,23 +646,23 @@ async function getShopVisitsForPeriod(vendorId, startDate, endDate) {
     .eq('vendor_id', vendorId)
     .gte('visited_at', startDate)
     .lt('visited_at', endDate);
-  
+
   if (error) {
     logger.error(`Error fetching shop visits: ${error.message}`);
     return { totalVisits: 0, uniqueVisitors: 0, deviceBreakdown: {} };
   }
-  
+
   const visits = data || [];
   const uniqueVisitors = new Set(
     visits.map(v => v.user_id || v.session_id)
   ).size;
-  
+
   const deviceBreakdown = visits.reduce((acc, v) => {
     const device = v.device_type || 'unknown';
     acc[device] = (acc[device] || 0) + 1;
     return acc;
   }, {});
-  
+
   return {
     totalVisits: visits.length,
     uniqueVisitors,
@@ -682,23 +682,23 @@ async function getProductViewsForPeriod(productId, startDate, endDate) {
     .eq('product_id', productId)
     .gte('viewed_at', startDate)
     .lt('viewed_at', endDate);
-  
+
   if (error) {
     logger.error(`Error fetching product views: ${error.message}`);
     return { totalViews: 0, uniqueViewers: 0, deviceBreakdown: {} };
   }
-  
+
   const views = data || [];
   const uniqueViewers = new Set(
     views.map(v => v.user_id || v.session_id)
   ).size;
-  
+
   const deviceBreakdown = views.reduce((acc, v) => {
     const device = v.device_type || 'unknown';
     acc[device] = (acc[device] || 0) + 1;
     return acc;
   }, {});
-  
+
   return {
     totalViews: views.length,
     uniqueViewers,
@@ -718,17 +718,17 @@ async function getProductViewsSummaryForPeriod(vendorId, startDate, endDate) {
     .eq('vendor_id', vendorId)
     .gte('viewed_at', startDate)
     .lt('viewed_at', endDate);
-  
+
   if (error) {
     logger.error(`Error fetching product views summary: ${error.message}`);
     return { totalViews: 0, uniqueViewers: 0 };
   }
-  
+
   const views = data || [];
   const uniqueViewers = new Set(
     views.map(v => v.user_id || v.session_id)
   ).size;
-  
+
   return {
     totalViews: views.length,
     uniqueViewers
@@ -746,12 +746,12 @@ async function getProductsWithAnalytics(vendorId, { todayRange, weekRange, month
     .eq('vendor_id', vendorId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
-  
+
   if (productsError || !products) {
     logger.error(`Error fetching products: ${productsError?.message}`);
     return [];
   }
-  
+
   // Get analytics for each product
   const productsWithAnalytics = await Promise.all(
     products.map(async (product) => {
@@ -760,7 +760,7 @@ async function getProductsWithAnalytics(vendorId, { todayRange, weekRange, month
         getProductViewsForPeriod(product.id, weekRange.start, weekRange.end),
         getProductViewsForPeriod(product.id, monthRange.start, monthRange.end)
       ]);
-      
+
       return {
         id: product.id,
         name: product.name,
@@ -772,7 +772,7 @@ async function getProductsWithAnalytics(vendorId, { todayRange, weekRange, month
       };
     })
   );
-  
+
   // Sort by month views descending
   return productsWithAnalytics.sort(
     (a, b) => b.views.thisMonth.totalViews - a.views.thisMonth.totalViews
@@ -792,19 +792,19 @@ export async function runDailyAggregation(date = null) {
   try {
     const targetDate = date || new Date(Date.now() - 24 * 60 * 60 * 1000);
     const dateStr = targetDate.toISOString().split('T')[0];
-    
+
     const { error } = await supabaseAdmin.rpc('aggregate_daily_analytics', {
       p_date: dateStr
     });
-    
+
     if (error) {
       logger.error(`Daily aggregation failed: ${error.message}`);
       return { success: false, error: error.message };
     }
-    
+
     logger.info(`Daily aggregation completed for ${dateStr}`);
     return { success: true, date: dateStr };
-    
+
   } catch (error) {
     logger.error(`runDailyAggregation error: ${error.message}`);
     return { success: false, error: error.message };
@@ -818,15 +818,15 @@ export async function runDailyAggregation(date = null) {
 export async function cleanupOldData() {
   try {
     const { data, error } = await supabaseAdmin.rpc('cleanup_old_analytics_data');
-    
+
     if (error) {
       logger.error(`Data cleanup failed: ${error.message}`);
       return { success: false, error: error.message };
     }
-    
+
     logger.info(`Data cleanup completed, deleted ${data} records`);
     return { success: true, deletedCount: data };
-    
+
   } catch (error) {
     logger.error(`cleanupOldData error: ${error.message}`);
     return { success: false, error: error.message };

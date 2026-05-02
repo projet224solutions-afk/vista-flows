@@ -3,11 +3,11 @@
  * Détection automatique de la meilleure région pour l'utilisateur
  */
 
-import { 
-  REGIONS, 
-  RegionConfig, 
-  RegionHealth, 
-  getEnabledRegions, 
+import {
+  REGIONS,
+  RegionConfig,
+  RegionHealth,
+  getEnabledRegions,
   getPrimaryRegion,
   getFailoverRegions,
   GLOBAL_CONFIG,
@@ -64,17 +64,17 @@ class RegionService {
 
     // 2. Obtenir la géolocalisation
     const location = await this.getUserLocation();
-    
+
     // 3. Mesurer la latence vers chaque région
     const latencies = await this.measureAllRegionsLatency();
-    
+
     // 4. Sélectionner la meilleure région
     const optimal = this.selectBestRegion(location, latencies);
-    
+
     // 5. Mettre en cache
     this.cacheRegion(optimal);
     this.currentRegion = optimal;
-    
+
     console.log(`✅ Optimal region selected: ${optimal.displayName} (${optimal.id})`);
     return optimal;
   }
@@ -142,18 +142,18 @@ class RegionService {
    * Mesurer la latence vers une région spécifique
    */
   private async measureRegionLatency(region: RegionConfig): Promise<RegionLatencyResult> {
-    const startTime = performance.now();
-    
+    const _startTime = performance.now();
+
     try {
       // Ping l'endpoint de santé de la région
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
-      
+
       // En développement, on simule la latence basée sur la distance
       const simulatedLatency = this.simulateLatency(region);
-      
+
       clearTimeout(timeout);
-      
+
       return {
         regionId: region.id,
         latency: simulatedLatency,
@@ -185,7 +185,7 @@ class RegionService {
 
     const base = baseLatency[region.id] || 150;
     const variance = Math.random() * 20 - 10; // ±10ms variance
-    
+
     return Math.max(10, base + variance);
   }
 
@@ -193,11 +193,11 @@ class RegionService {
    * Sélectionner la meilleure région
    */
   private selectBestRegion(
-    location: GeoLocation | null, 
+    location: GeoLocation | null,
     latencies: RegionLatencyResult[]
   ): RegionConfig {
     const enabledRegions = getEnabledRegions();
-    
+
     // Si on a des résultats de latence, prendre la plus rapide
     if (latencies.length > 0) {
       const fastestHealthy = latencies.find(l => {
@@ -261,8 +261,8 @@ class RegionService {
    * Vérifier la santé d'une région
    */
   private async checkRegionHealth(region: RegionConfig): Promise<RegionHealth> {
-    const startTime = performance.now();
-    
+    const _startTime = performance.now();
+
     try {
       // Simuler le health check
       const latency = this.simulateLatency(region);
@@ -299,7 +299,7 @@ class RegionService {
     console.log(`🔄 Initiating failover from ${fromRegionId}...`);
 
     const failoverRegions = getFailoverRegions(fromRegionId);
-    
+
     for (const region of failoverRegions) {
       const health = this.regionHealth.get(region.id);
       if (!health || health.status === 'healthy') {
@@ -325,7 +325,7 @@ class RegionService {
       if (cached) {
         const { regionId, timestamp } = JSON.parse(cached);
         const ttl = GLOBAL_CONFIG.loadBalancing.sessionTTL;
-        
+
         if (Date.now() - timestamp < ttl) {
           const region = REGIONS[regionId];
           if (region?.enabled) {

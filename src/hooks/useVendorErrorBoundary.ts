@@ -6,7 +6,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 
-export type VendorErrorType = 
+export type VendorErrorType =
   | 'product'        // Erreurs gestion produits
   | 'order'          // Erreurs commandes
   | 'payment'        // Erreurs paiement
@@ -90,7 +90,7 @@ export function useVendorErrorBoundary() {
   const [currentError, setCurrentError] = useState<VendorError | null>(null);
   const [errorHistory, setErrorHistory] = useState<VendorError[]>([]);
   const [isRecovering, setIsRecovering] = useState(false);
-  
+
   const recoveryActionsRef = useRef<Map<VendorErrorType, RecoveryAction>>(new Map());
   const retryCountRef = useRef<Map<string, number>>(new Map());
   const errorStatsRef = useRef<ErrorStats>({
@@ -115,7 +115,7 @@ export function useVendorErrorBoundary() {
   const classifyError = useCallback((error: any): VendorErrorType => {
     const message = error?.message?.toLowerCase() || '';
     const code = error?.code?.toLowerCase() || '';
-    
+
     if (message.includes('timeout') || code.includes('timeout')) return 'timeout';
     if (message.includes('rate limit') || code === '429') return 'rate_limit';
     if (message.includes('network') || message.includes('fetch')) return 'network';
@@ -129,7 +129,7 @@ export function useVendorErrorBoundary() {
     if (message.includes('validation') || message.includes('invalid')) return 'validation';
     if (message.includes('database') || message.includes('postgres')) return 'database';
     if (message.includes('upload') || message.includes('file')) return 'upload';
-    
+
     return 'unknown';
   }, []);
 
@@ -167,7 +167,7 @@ export function useVendorErrorBoundary() {
 
     // Mettre à jour les stats
     errorStatsRef.current.totalErrors++;
-    errorStatsRef.current.errorsByType[type] = 
+    errorStatsRef.current.errorsByType[type] =
       (errorStatsRef.current.errorsByType[type] || 0) + 1;
     errorStatsRef.current.lastErrorTime = new Date();
 
@@ -250,11 +250,11 @@ export function useVendorErrorBoundary() {
 
     try {
       await recoveryAction.action();
-      
+
       // Succès de la récupération
       clearError();
       toast.success('Récupération réussie');
-      
+
       // Mettre à jour le taux de récupération
       const stats = errorStatsRef.current;
       stats.recoveryRate = Math.round(
@@ -305,12 +305,12 @@ export function useVendorErrorBoundary() {
   // Auto-clear des erreurs non-critiques après un délai
   useEffect(() => {
     if (!currentError) return;
-    
+
     if (currentError.severity === 'low' || currentError.severity === 'medium') {
       const timer = setTimeout(() => {
         clearError();
       }, AUTO_CLEAR_DELAY);
-      
+
       return () => clearTimeout(timer);
     }
   }, [currentError, clearError]);
@@ -318,7 +318,7 @@ export function useVendorErrorBoundary() {
   // Nettoyer les compteurs de retry périodiquement
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = Date.now();
+      const _now = Date.now();
       retryCountRef.current.forEach((count, key) => {
         // Reset après 5 minutes
         if (count > 0) {
@@ -336,22 +336,22 @@ export function useVendorErrorBoundary() {
     errorHistory,
     isRecovering,
     hasError: currentError !== null,
-    
+
     // Actions principales
     captureError,
     captureException,
     clearError,
     clearAllErrors,
-    
+
     // Récupération
     registerRecoveryAction,
     attemptRecovery,
-    
+
     // Utilitaires
     withErrorHandling,
     getStats,
     classifyError,
-    
+
     // Helpers
     isRecoverable,
     errorCount: errorHistory.length,

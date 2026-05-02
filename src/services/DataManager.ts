@@ -48,7 +48,7 @@ export class DataManager {
    */
   async query<T>(queryConfig: DataQuery): Promise<T | null> {
     const cacheKey = this.generateCacheKey(queryConfig);
-    
+
     // Vérifier le cache
     const cached = this.getFromCache<T>(cacheKey);
     if (cached) {
@@ -58,7 +58,7 @@ export class DataManager {
 
     try {
       console.log(`🔍 Fetching data for ${queryConfig.table}`);
-      
+
       // Construire la requête
       let query: any = supabase
         .from(queryConfig.table as any)
@@ -101,8 +101,8 @@ export class DataManager {
 
       // Tri
       if (queryConfig.orderBy) {
-        query = query.order(queryConfig.orderBy.column, { 
-          ascending: queryConfig.orderBy.ascending ?? true 
+        query = query.order(queryConfig.orderBy.column, {
+          ascending: queryConfig.orderBy.ascending ?? true
         });
       }
 
@@ -147,7 +147,7 @@ export class DataManager {
         case 'insert':
           result = await query.insert(mutationConfig.data).select();
           break;
-        
+
         case 'update':
           if (!mutationConfig.filters) {
             throw new Error('Filters required for update operation');
@@ -155,7 +155,7 @@ export class DataManager {
           query = this.applyFilters(query, mutationConfig.filters);
           result = await query.update(mutationConfig.data).select();
           break;
-        
+
         case 'delete':
           if (!mutationConfig.filters) {
             throw new Error('Filters required for delete operation');
@@ -185,9 +185,9 @@ export class DataManager {
   /**
    * 📡 Configuration temps réel
    */
-  private setupRealtime(queryConfig: DataQuery, cacheKey: string) {
+  private setupRealtime(queryConfig: DataQuery, _cacheKey: string) {
     const channelName = `realtime_${queryConfig.table}`;
-    
+
     if (this.subscriptions.has(channelName)) {
       return; // Déjà configuré
     }
@@ -225,7 +225,7 @@ export class DataManager {
     if (!this.listeners.has(table)) {
       this.listeners.set(table, new Set());
     }
-    
+
     this.listeners.get(table)!.add(callback);
 
     // Retourner fonction de désabonnement
@@ -274,10 +274,10 @@ export class DataManager {
 
   private invalidateCache(table: string) {
     // Supprimer toutes les entrées de cache pour cette table
-    const keysToDelete = Array.from(this.cache.keys()).filter(key => 
+    const keysToDelete = Array.from(this.cache.keys()).filter(key =>
       key.startsWith(table)
     );
-    
+
     keysToDelete.forEach(key => this.cache.delete(key));
     console.log(`🗑️ Cache invalidated for ${table} (${keysToDelete.length} entries)`);
   }
@@ -314,12 +314,12 @@ export class DataManager {
     this.subscriptions.forEach(channel => {
       channel.unsubscribe();
     });
-    
+
     // Vider les caches et listeners
     this.cache.clear();
     this.subscriptions.clear();
     this.listeners.clear();
-    
+
     console.log('🧹 DataManager cleaned up');
   }
 }

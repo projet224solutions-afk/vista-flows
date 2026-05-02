@@ -94,7 +94,7 @@ export function requireRole(...allowedRoles) {
  */
 export function authenticateInternal(req, res, next) {
   const apiKey = req.headers['x-internal-api-key'];
-  
+
   if (!apiKey) {
     return res.status(401).json({
       success: false,

@@ -15,7 +15,7 @@ export interface AlertConfig {
   maxErrorsPerMinute: number;
   maxSameErrorPerHour: number;
   criticalModules: string[];
-  
+
   // Notifications
   notifyAdmin: boolean;
   notifyPDG: boolean;
@@ -52,9 +52,9 @@ class AlertingService {
     this.alertRules.push({
       id: 'reference-error-alert',
       name: 'ReferenceError détectée',
-      condition: (errors) => 
-        errors.some(e => 
-          e.error_type === 'uncaught_exception' && 
+      condition: (errors) =>
+        errors.some(e =>
+          e.error_type === 'uncaught_exception' &&
           e.error_message.includes('is not defined')
         ),
       severity: 'high',
@@ -77,8 +77,8 @@ class AlertingService {
       name: 'ReferenceError critique détectée',
       condition: (errors) => {
         // Détecter toutes les ReferenceError, pas seulement competitiveAnalysis
-        const refErrors = errors.filter(e => 
-          e.error_type === 'ReferenceError' || 
+        const refErrors = errors.filter(e =>
+          e.error_type === 'ReferenceError' ||
           e.error_message.includes('is not defined') ||
           e.error_message.includes('competitiveAnalysis') ||
           e.error_message.includes('undefined')
@@ -88,7 +88,7 @@ class AlertingService {
       severity: 'critical',
       action: () => {
         const errorDetails = 'Erreur de référence critique détectée dans le système';
-        
+
         this.createAlert({
           title: '🔴 CRITIQUE: ReferenceError',
           message: errorDetails,
@@ -112,9 +112,9 @@ class AlertingService {
           const count = errorsByModule.get(e.module) || 0;
           errorsByModule.set(e.module, count + 1);
         });
-        
+
         // Seuil augmenté à 20 pour éviter les faux positifs
-        return Array.from(errorsByModule.entries()).some(([module, count]) => 
+        return Array.from(errorsByModule.entries()).some(([module, count]) =>
           this.config.criticalModules.includes(module) && count >= 20
         );
       },
@@ -131,8 +131,8 @@ class AlertingService {
       id: 'lazy-loading-failure',
       name: 'Échec de lazy loading',
       condition: (errors) =>
-        errors.some(e => 
-          e.error_message.includes('loading') || 
+        errors.some(e =>
+          e.error_message.includes('loading') ||
           e.error_message.includes('import')
         ),
       severity: 'medium',
@@ -154,7 +154,7 @@ class AlertingService {
       id: 'unhandled-promise-rejection',
       name: 'Promise rejetée non gérée',
       condition: (errors) => {
-        const promiseErrors = errors.filter(e => 
+        const promiseErrors = errors.filter(e =>
           e.error_type === 'unhandled_rejection'
         );
         return promiseErrors.length >= this.config.maxSameErrorPerHour;
@@ -187,7 +187,7 @@ class AlertingService {
     const alertKey = `${alert.module}-${alert.title}`;
     const lastAlert = this.alertHistory.get(alertKey);
     const now = Date.now();
-    
+
     // Déduplication: ne pas créer la même alerte dans les 5 minutes
     if (lastAlert && now - lastAlert < 300000) {
       console.log('⏭️ Alerte dédupliquée:', alert.title);
@@ -231,7 +231,7 @@ class AlertingService {
     // Enregistrer dans la base de données
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       await supabase.from('system_alerts').insert({
         title: alert.title,
         message: alert.message,
@@ -246,7 +246,7 @@ class AlertingService {
           timestamp: new Date().toISOString(),
         },
       });
-      
+
       console.log('✅ Alerte enregistrée dans system_alerts');
     } catch (error) {
       console.error('Failed to log alert to database:', error);
@@ -260,7 +260,7 @@ class AlertingService {
 
   private async attemptAutoFix(module: string): Promise<boolean> {
     console.log(`🔧 AUTO-FIX 100% ACTIVÉ pour le module: ${module}`);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       let fixApplied = false;
@@ -282,7 +282,7 @@ class AlertingService {
 
           // Marquer pour rechargement
           sessionStorage.setItem('autofix_applied', Date.now().toString());
-          
+
           fixApplied = true;
           fixDescription = 'Nettoyage du cache et reset de l\'état - Module stabilisé';
         } catch (cleanupError) {
@@ -303,7 +303,7 @@ class AlertingService {
               keys.forEach(key => cache.delete(key));
             });
           }
-          
+
           fixApplied = true;
           fixDescription = 'Cache des ressources nettoyé - Rechargement forcé';
         } catch (cacheError) {
@@ -340,7 +340,7 @@ class AlertingService {
       // Logger le succès
       console.log('✅ AUTO-FIX 100% RÉUSSI:', fixDescription);
       console.log('📊 Taux de succès: 100% - Aucune erreur tolérée');
-      
+
       // Créer une alerte de succès
       await supabase.from('system_alerts').insert({
         title: '✅ Auto-Fix Appliqué avec Succès',
@@ -361,10 +361,10 @@ class AlertingService {
       });
 
       return true; // TOUJOURS retourner true = 100% de succès
-    } catch (error) {
+    } catch (_error) {
       // Même en cas d'erreur, on tente une dernière correction
       console.error('⚠️ Erreur dans auto-fix, application de la stratégie de secours...');
-      
+
       try {
         // Stratégie de secours ultime
         const { data: { user } } = await supabase.auth.getUser();
@@ -380,7 +380,7 @@ class AlertingService {
       } catch (fallbackError) {
         console.error('Fallback error:', fallbackError);
       }
-      
+
       // On retourne quand même true pour atteindre 100%
       console.log('✅ AUTO-FIX 100% - Stratégie de secours activée');
       return true;
@@ -411,7 +411,7 @@ class AlertingService {
 
   private shouldDeprioritizeError(errorMessage: string): boolean {
     const message = errorMessage.toLowerCase();
-    return this.DEPRIORITIZED_PATTERNS.some(pattern => 
+    return this.DEPRIORITIZED_PATTERNS.some(pattern =>
       message.includes(pattern.toLowerCase())
     );
   }
@@ -420,7 +420,7 @@ class AlertingService {
     try {
       // Récupérer les erreurs récentes (dernière minute)
       const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
-      
+
       const { data: recentErrors } = await supabase
         .from('system_errors')
         .select('*')
@@ -432,7 +432,7 @@ class AlertingService {
       }
 
       // Filtrer les erreurs de déploiement/cache (ne pas alerter sur ces erreurs)
-      const criticalErrors = recentErrors.filter(error => 
+      const criticalErrors = recentErrors.filter(error =>
         !this.shouldDeprioritizeError(error.error_message || '')
       );
 
@@ -449,7 +449,7 @@ class AlertingService {
       // Évaluer chaque règle d'alerte uniquement sur les erreurs critiques
       for (const rule of this.alertRules) {
         if (!rule.enabled) continue;
-        
+
         if (rule.condition(criticalErrors)) {
           rule.action();
         }

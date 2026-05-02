@@ -131,7 +131,7 @@ export function useWAAP(options: UseWAAPOptions = {}) {
       lastCheckRef.current = now;
 
       const score = waapService.analyzeBehavior(sessionIdRef.current);
-      
+
       setState(prev => ({
         ...prev,
         threatScore: score,
@@ -214,13 +214,13 @@ export function useWAAP(options: UseWAAPOptions = {}) {
  */
 export function useFormProtection() {
   const honeypotFields = waapService.generateHoneypotFields();
-  
+
   const validateForm = useCallback((formData: Record<string, any>): {
     isBot: boolean;
     errors: string[];
   } => {
     const errors: string[] = [];
-    
+
     // Vérifier honeypots
     if (waapService.checkHoneypot(formData)) {
       return { isBot: true, errors: ['Bot détecté'] };

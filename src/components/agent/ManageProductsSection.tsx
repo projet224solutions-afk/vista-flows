@@ -5,14 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,18 +24,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import { 
-  Package, 
-  Search, 
-  Eye, 
-  Edit, 
-  Ban, 
-  Trash2, 
-  AlertTriangle, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Box 
+import {
+  Package,
+  Search,
+  Eye,
+  Edit,
+  Ban,
+  Trash2,
+  AlertTriangle,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Box
 } from 'lucide-react';
 
 interface Product {
@@ -69,7 +69,7 @@ interface ManageProductsSectionProps {
   agentId: string;
 }
 
-export default function ManageProductsSection({ agentId }: ManageProductsSectionProps) {
+export default function ManageProductsSection({ _agentId }: ManageProductsSectionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<VendorInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,13 +103,13 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
         toast.error('Token agent introuvable');
         return;
       }
-      
+
       const { data, error } = await supabase.functions.invoke('agent-get-products', {
         body: { agentToken }
       });
-      
+
       if (error) throw error;
-      
+
       if (data) {
         setProducts(data.products || []);
         setVendors(data.vendors || []);
@@ -183,7 +183,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
   const handleUpdate = async () => {
     if (!editingProduct) return;
-    
+
     try {
       const currentPath = window.location.pathname;
       const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
@@ -391,8 +391,8 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setViewProduct(product)}
                   >

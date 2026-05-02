@@ -46,14 +46,14 @@ export async function checkSupabaseConnection(): Promise<{ success: boolean; mes
 
     if (error) throw error;
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: 'Supabase connection OK',
       latencyMs: Date.now() - start
     };
   } catch (error: any) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: error.message,
       latencyMs: Date.now() - start
     };

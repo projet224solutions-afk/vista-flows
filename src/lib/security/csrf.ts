@@ -88,15 +88,15 @@ export const getCSRFToken = (): string | null => {
     if (!stored) {
       return generateCSRFToken();
     }
-    
+
     const tokenData: CSRFTokenData = JSON.parse(stored);
-    
+
     // Vérifier expiration
     if (new Date(tokenData.expiresAt) < new Date()) {
       sessionStorage.removeItem(CSRF_TOKEN_KEY);
       return generateCSRFToken();
     }
-    
+
     return tokenData.token;
   } catch {
     return generateCSRFToken();
@@ -216,7 +216,7 @@ export const useCSRF = () => {
     invalidateCSRFToken();
     return generateCSRFToken();
   };
-  
+
   return {
     getToken,
     validate,

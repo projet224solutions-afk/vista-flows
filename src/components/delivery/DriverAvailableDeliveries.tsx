@@ -5,12 +5,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  RefreshCw, 
+import {
+  Package,
+  RefreshCw,
   MapPin,
   Navigation,
   Clock,
@@ -18,13 +18,13 @@ import {
   Store,
   Phone,
   CreditCard,
-  Route,
+  _Route,
   Calculator,
   Check,
   X,
   Loader2,
   Truck,
-  WifiOff
+  _WifiOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -59,7 +59,7 @@ interface DriverAvailableDeliveriesProps {
   driverLocation?: { lat: number; lng: number } | null;
 }
 
-export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAvailableDeliveriesProps) {
+export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverAvailableDeliveriesProps) {
   const { user } = useAuth();
   const [deliveries, setDeliveries] = useState<AvailableDelivery[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,13 +84,13 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
       if (error) throw error;
 
-      const validDeliveries = (data || []).filter(d => 
+      const validDeliveries = (data || []).filter(d =>
         d.status === 'pending' && !d.driver_id && d.vendor_name
       );
 
       // Récupérer les configurations de prix des vendeurs
       const vendorIds = [...new Set(validDeliveries.filter(d => d.vendor_id).map(d => d.vendor_id))];
-      let vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
+      const vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
 
       if (vendorIds.length > 0) {
         const { data: vendorData } = await supabase
@@ -257,8 +257,8 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
       {/* Liste des livraisons */}
       {deliveries.map((delivery) => (
-        <Card 
-          key={delivery.id} 
+        <Card
+          key={delivery.id}
           className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-green-50/50 dark:from-orange-950/20 dark:to-green-950/20"
         >
           <CardContent className="pt-4 space-y-4">
@@ -335,10 +335,10 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
                   <p className="font-bold">{formatCurrency(Math.round(delivery.delivery_fee * 0.985))}</p>
                 </div>
               </div>
-              <Badge 
-                variant="secondary" 
-                className={delivery.payment_method === 'cod' 
-                  ? 'bg-yellow-100 text-yellow-800' 
+              <Badge
+                variant="secondary"
+                className={delivery.payment_method === 'cod'
+                  ? 'bg-yellow-100 text-yellow-800'
                   : 'bg-white/20 text-white'
                 }
               >

@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 
-export type BureauErrorType = 
+export type BureauErrorType =
   | 'member_error'           // Erreur gestion membres
   | 'worker_error'           // Erreur travailleurs bureau
   | 'vehicle_error'          // Erreur véhicules/motos

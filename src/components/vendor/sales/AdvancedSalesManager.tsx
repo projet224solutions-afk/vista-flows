@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,9 +15,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  ShoppingCart, RotateCcw, CreditCard, Percent, Plus, 
-  Package, Users, Calendar, Search, Banknote, CheckCircle, Eye, Check
+import {
+  ShoppingCart, RotateCcw, CreditCard, Percent, Plus,
+  Package, Users, _Calendar, Search, Banknote, CheckCircle, Eye, Check
 } from 'lucide-react';
 
 // Type produit pour la sélection
@@ -91,7 +91,7 @@ export default function AdvancedSalesManager() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('credit');
-  
+
   // États pour chaque section
   const [creditSales, setCreditSales] = useState<CreditSale[]>([]);
   const [saleReturns, setSaleReturns] = useState<SaleReturn[]>([]);
@@ -105,7 +105,7 @@ export default function AdvancedSalesManager() {
   const [isCollectPaymentOpen, setIsCollectPaymentOpen] = useState(false);
   const [selectedCreditForPayment, setSelectedCreditForPayment] = useState<CreditSale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
-  
+
   // Dialog pour voir les détails des produits d'une vente à crédit
   const [isCreditDetailsOpen, setIsCreditDetailsOpen] = useState(false);
   const [selectedCreditForDetails, setSelectedCreditForDetails] = useState<CreditSale | null>(null);
@@ -118,10 +118,10 @@ export default function AdvancedSalesManager() {
     notes: '',
     selected_category: ''
   });
-  
+
   // Produits sélectionnés pour crédit (avec quantité)
   const [creditSelectedProducts, setCreditSelectedProducts] = useState<{id: string; name: string; price: number; quantity: number; images?: string[]}[]>([]);
-  
+
   // Recherche produit pour crédits
   const [creditProductSearch, setCreditProductSearch] = useState('');
 
@@ -134,7 +134,7 @@ export default function AdvancedSalesManager() {
     selected_category: '',
     selected_product: ''
   });
-  
+
   // Recherche produit pour retours
   const [returnProductSearch, setReturnProductSearch] = useState('');
 
@@ -157,7 +157,7 @@ export default function AdvancedSalesManager() {
   const loadData = async () => {
     if (!vendorId) return;
     setLoading(true);
-    
+
     try {
       // Ventes à crédit
       const { data: creditData } = await supabase
@@ -165,7 +165,7 @@ export default function AdvancedSalesManager() {
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
-      
+
       setCreditSales((creditData || []).map(c => ({
         id: c.id,
         customer_name: c.customer_name || 'Client',
@@ -185,7 +185,7 @@ export default function AdvancedSalesManager() {
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
-      
+
       setSaleReturns((returnsData || []).map(r => ({
         id: r.id,
         order_id: r.order_id,
@@ -200,7 +200,7 @@ export default function AdvancedSalesManager() {
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
-      
+
       setGroupedSales((groupedData || []).map(g => ({
         id: g.id,
         group_name: g.group_name || 'Groupe',
@@ -216,7 +216,7 @@ export default function AdvancedSalesManager() {
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
-      
+
       setPromotions((promoData || []).map(p => ({
         id: p.id,
         name: p.name,
@@ -225,7 +225,7 @@ export default function AdvancedSalesManager() {
         start_date: p.start_date,
         end_date: p.end_date,
         is_active: p.is_active,
-        applicable_products: Array.isArray(p.applicable_products) 
+        applicable_products: Array.isArray(p.applicable_products)
           ? (p.applicable_products as unknown as string[])
           : [],
         applicable_categories: Array.isArray(p.applicable_categories)
@@ -240,13 +240,13 @@ export default function AdvancedSalesManager() {
         .eq('vendor_id', vendorId)
         .eq('is_active', true)
         .order('name');
-      
+
       console.log('[AdvancedSalesManager] Produits chargés:', productsData?.length || 0, 'pour vendorId:', vendorId);
-      
+
       if (productsError) {
         console.error('[AdvancedSalesManager] Erreur chargement produits:', productsError);
       }
-      
+
       setVendorProducts(productsData || []);
 
       // Catégories actives
@@ -255,7 +255,7 @@ export default function AdvancedSalesManager() {
         .select('id, name')
         .eq('is_active', true)
         .order('name');
-      
+
       setCategories(categoriesData || []);
 
     } catch (error) {
@@ -267,6 +267,7 @@ export default function AdvancedSalesManager() {
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   // Créer une vente à crédit
@@ -275,7 +276,7 @@ export default function AdvancedSalesManager() {
       toast({ title: 'Champs requis manquants', variant: 'destructive' });
       return;
     }
-    
+
     if (creditSelectedProducts.length === 0) {
       toast({ title: 'Veuillez sélectionner au moins un produit', variant: 'destructive' });
       return;
@@ -285,7 +286,7 @@ export default function AdvancedSalesManager() {
       // Calculer le total à partir des produits sélectionnés
       const calculatedTotal = creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
-      
+
       // Préparer les items pour sauvegarde
       const itemsToSave = creditSelectedProducts.map(p => ({
         id: p.id,
@@ -294,7 +295,7 @@ export default function AdvancedSalesManager() {
         quantity: p.quantity,
         images: p.images || []
       }));
-      
+
       const { error } = await supabase
         .from('vendor_credit_sales')
         .insert([{
@@ -378,12 +379,12 @@ export default function AdvancedSalesManager() {
 
       toast({ title: '✅ Promotion créée' });
       setIsNewPromoOpen(false);
-      setNewPromo({ 
-        name: '', 
-        discount_type: 'percentage', 
-        discount_value: '', 
-        start_date: '', 
-        end_date: '', 
+      setNewPromo({
+        name: '',
+        discount_type: 'percentage',
+        discount_value: '',
+        start_date: '',
+        end_date: '',
         selected_products: [],
         selected_categories: []
       });
@@ -428,7 +429,7 @@ export default function AdvancedSalesManager() {
 
       if (error) throw error;
 
-      toast({ 
+      toast({
         title: newStatus === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
         description: `${amount.toLocaleString()} GNF encaissés`
       });
@@ -478,7 +479,7 @@ export default function AdvancedSalesManager() {
 
     return matchesSearch && matchesSelectedCategories;
   });
-  
+
   // Produits dans les catégories sélectionnées (pour mise en évidence)
   const productsInSelectedCategories = newPromo.selected_categories.length > 0
     ? vendorProducts.filter(p => p.category_id && newPromo.selected_categories.includes(p.category_id))
@@ -661,8 +662,8 @@ export default function AdvancedSalesManager() {
                                     newCredit.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
                                   }`}
                                   onClick={() => {
-                                    setNewCredit({ 
-                                      ...newCredit, 
+                                    setNewCredit({
+                                      ...newCredit,
                                       selected_category: newCredit.selected_category === cat.id ? '' : cat.id
                                     });
                                   }}
@@ -670,8 +671,8 @@ export default function AdvancedSalesManager() {
                                   <Checkbox
                                     checked={newCredit.selected_category === cat.id}
                                     onCheckedChange={() => {
-                                      setNewCredit({ 
-                                        ...newCredit, 
+                                      setNewCredit({
+                                        ...newCredit,
                                         selected_category: newCredit.selected_category === cat.id ? '' : cat.id
                                       });
                                     }}
@@ -694,7 +695,7 @@ export default function AdvancedSalesManager() {
                               <Badge variant="secondary">{creditSelectedProducts.length} produit(s)</Badge>
                             )}
                           </div>
-                          
+
                           {/* Liste des produits sélectionnés */}
                           {creditSelectedProducts.length > 0 && (
                             <div className="space-y-2 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
@@ -717,7 +718,7 @@ export default function AdvancedSalesManager() {
                                       size="icon"
                                       className="h-6 w-6"
                                       onClick={() => {
-                                        setCreditSelectedProducts(prev => 
+                                        setCreditSelectedProducts(prev =>
                                           prev.map(p => p.id === sp.id ? {...p, quantity: Math.max(1, p.quantity - 1)} : p)
                                         );
                                       }}
@@ -730,7 +731,7 @@ export default function AdvancedSalesManager() {
                                       size="icon"
                                       className="h-6 w-6"
                                       onClick={() => {
-                                        setCreditSelectedProducts(prev => 
+                                        setCreditSelectedProducts(prev =>
                                           prev.map(p => p.id === sp.id ? {...p, quantity: p.quantity + 1} : p)
                                         );
                                       }}
@@ -757,7 +758,7 @@ export default function AdvancedSalesManager() {
                               </div>
                             </div>
                           )}
-                          
+
                           <div className="relative mb-2">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -803,12 +804,12 @@ export default function AdvancedSalesManager() {
                                           <Check className="w-3 h-3 text-primary-foreground" />
                                         </div>
                                       )}
-                                      
+
                                       {/* Product image */}
                                       <div className="aspect-square rounded-md overflow-hidden mb-1.5 bg-muted">
                                         {product.images && product.images[0] ? (
-                                          <img 
-                                            src={product.images[0]} 
+                                          <img
+                                            src={product.images[0]}
                                             alt={product.name}
                                             className="w-full h-full object-cover"
                                           />
@@ -818,7 +819,7 @@ export default function AdvancedSalesManager() {
                                           </div>
                                         )}
                                       </div>
-                                      
+
                                       {/* Product info */}
                                       <p className="text-xs font-medium truncate">{product.name}</p>
                                       <p className="text-[10px] text-primary font-bold">{product.price.toLocaleString()} GNF</p>
@@ -847,7 +848,7 @@ export default function AdvancedSalesManager() {
               </DialogContent>
             </Dialog>
           </div>
-          
+
           <div className="space-y-2 sm:space-y-3">
             {creditSales.map((sale) => (
               <Card key={sale.id}>
@@ -871,7 +872,7 @@ export default function AdvancedSalesManager() {
                           {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Part.' : 'Att.'}
                         </Badge>
                       </div>
-                      
+
                       {/* Montants + Actions */}
                       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
                         <div className="text-left sm:text-right">
@@ -883,7 +884,7 @@ export default function AdvancedSalesManager() {
                             {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
                           </Badge>
                         </div>
-                        
+
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                           <Button
                             size="sm"
@@ -897,7 +898,7 @@ export default function AdvancedSalesManager() {
                             <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </Button>
                           {sale.status !== 'paid' && (
-                            <Button 
+                            <Button
                               size="sm"
                               className="h-7 sm:h-8 text-xs sm:text-sm px-2 sm:px-3"
                               onClick={() => openCollectPaymentDialog(sale)}
@@ -914,20 +915,20 @@ export default function AdvancedSalesManager() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Liste des produits vendus à crédit */}
                     {sale.items && sale.items.length > 0 && (
                       <div className="border-t pt-3">
                         <p className="text-xs font-medium text-muted-foreground mb-2">Produits vendus:</p>
                         <div className="flex flex-wrap gap-2">
                           {sale.items.map((item, idx) => (
-                            <div 
+                            <div
                               key={idx}
                               className="flex items-center gap-2 bg-muted/50 rounded-lg p-2"
                             >
                               {item.images && item.images[0] ? (
-                                <img 
-                                  src={item.images[0]} 
+                                <img
+                                  src={item.images[0]}
                                   alt={item.name}
                                   className="w-8 h-8 rounded object-cover flex-shrink-0"
                                 />
@@ -970,7 +971,7 @@ export default function AdvancedSalesManager() {
                   Encaisser un paiement
                 </DialogTitle>
               </DialogHeader>
-              
+
               {selectedCreditForPayment && (
                 <div className="space-y-4">
                   <div className="rounded-lg border bg-muted/30 p-4">
@@ -1001,15 +1002,15 @@ export default function AdvancedSalesManager() {
                       className="mt-1"
                     />
                     <div className="flex gap-2 mt-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setPaymentAmount(selectedCreditForPayment.remaining_amount.toString())}
                       >
                         Tout solder
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setPaymentAmount(Math.round(selectedCreditForPayment.remaining_amount / 2).toString())}
                       >
@@ -1041,7 +1042,7 @@ export default function AdvancedSalesManager() {
                   Détails vente à crédit
                 </DialogTitle>
               </DialogHeader>
-              
+
               {selectedCreditForDetails && (
                 <div className="space-y-3 sm:space-y-4 overflow-hidden flex flex-col">
                   {/* Infos client - compact mobile */}
@@ -1077,7 +1078,7 @@ export default function AdvancedSalesManager() {
                         <p className="font-bold text-orange-600 text-xs sm:text-sm">{selectedCreditForDetails.remaining_amount.toLocaleString()}</p>
                       </div>
                     </div>
-                    
+
                     {/* Notes */}
                     {selectedCreditForDetails.notes && (
                       <div className="mt-4 pt-3 border-t">
@@ -1094,13 +1095,13 @@ export default function AdvancedSalesManager() {
                       <div className="space-y-3">
                         {selectedCreditForDetails.items && selectedCreditForDetails.items.length > 0 ? (
                           selectedCreditForDetails.items.map((item, idx) => (
-                            <div 
+                            <div
                               key={idx}
                               className="flex items-center gap-3 p-3 rounded-lg border bg-card"
                             >
                               {item.images && item.images[0] ? (
-                                <img 
-                                  src={item.images[0]} 
+                                <img
+                                  src={item.images[0]}
                                   alt={item.name}
                                   className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
                                 />
@@ -1130,7 +1131,7 @@ export default function AdvancedSalesManager() {
                             <Package className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
                             <p className="text-muted-foreground font-medium">Aucun produit enregistré</p>
                             <p className="text-xs text-muted-foreground mt-2 max-w-[250px] mx-auto">
-                              Cette vente a été créée avant l'ajout de cette fonctionnalité. 
+                              Cette vente a été créée avant l'ajout de cette fonctionnalité.
                               Les nouvelles ventes à crédit afficheront les produits sélectionnés.
                             </p>
                           </div>
@@ -1244,8 +1245,8 @@ export default function AdvancedSalesManager() {
                                     newReturn.selected_category === cat.id ? 'bg-primary/10 border border-primary' : ''
                                   }`}
                                   onClick={() => {
-                                    setNewReturn({ 
-                                      ...newReturn, 
+                                    setNewReturn({
+                                      ...newReturn,
                                       selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
                                       selected_product: '' // Reset product when category changes
                                     });
@@ -1254,8 +1255,8 @@ export default function AdvancedSalesManager() {
                                   <Checkbox
                                     checked={newReturn.selected_category === cat.id}
                                     onCheckedChange={() => {
-                                      setNewReturn({ 
-                                        ...newReturn, 
+                                      setNewReturn({
+                                        ...newReturn,
                                         selected_category: newReturn.selected_category === cat.id ? '' : cat.id,
                                         selected_product: ''
                                       });
@@ -1298,8 +1299,8 @@ export default function AdvancedSalesManager() {
                                       newReturn.selected_product === product.id ? 'bg-primary/10 border border-primary' : ''
                                     }`}
                                     onClick={() => {
-                                      setNewReturn({ 
-                                        ...newReturn, 
+                                      setNewReturn({
+                                        ...newReturn,
                                         selected_product: newReturn.selected_product === product.id ? '' : product.id,
                                         unit_price: product.price.toString()
                                       });
@@ -1308,16 +1309,16 @@ export default function AdvancedSalesManager() {
                                     <Checkbox
                                       checked={newReturn.selected_product === product.id}
                                       onCheckedChange={() => {
-                                        setNewReturn({ 
-                                          ...newReturn, 
+                                        setNewReturn({
+                                          ...newReturn,
                                           selected_product: newReturn.selected_product === product.id ? '' : product.id,
                                           unit_price: product.price.toString()
                                         });
                                       }}
                                     />
                                     {product.images && product.images[0] ? (
-                                      <img 
-                                        src={product.images[0]} 
+                                      <img
+                                        src={product.images[0]}
                                         alt={product.name}
                                         className="w-10 h-10 rounded object-cover flex-shrink-0"
                                       />
@@ -1354,7 +1355,7 @@ export default function AdvancedSalesManager() {
               </DialogContent>
             </Dialog>
           </div>
-          
+
           <div className="space-y-2 sm:space-y-3">
             {saleReturns.map((ret) => (
               <Card key={ret.id}>
@@ -1395,7 +1396,7 @@ export default function AdvancedSalesManager() {
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h3 className="font-semibold text-sm sm:text-base">Ventes groupées</h3>
           </div>
-          
+
           <div className="space-y-2 sm:space-y-3">
             {groupedSales.map((gs) => (
               <Card key={gs.id}>
@@ -1691,17 +1692,17 @@ export default function AdvancedSalesManager() {
               </DialogContent>
             </Dialog>
           </div>
-          
+
           <div className="space-y-2 sm:space-y-3">
             {promotions.map((promo) => {
               const linkedProducts = promo.applicable_products && promo.applicable_products.length > 0
                 ? vendorProducts.filter(p => promo.applicable_products?.includes(p.id))
                 : [];
-              
+
               const linkedCategories = promo.applicable_categories && promo.applicable_categories.length > 0
                 ? categories.filter(c => promo.applicable_categories?.includes(c.id))
                 : [];
-              
+
               return (
                 <Card key={promo.id}>
                   <CardContent className="p-2.5 sm:p-4">
@@ -1718,7 +1719,7 @@ export default function AdvancedSalesManager() {
                             </Badge>
                           </div>
                           <p className="text-[10px] sm:text-sm text-muted-foreground">
-                            {promo.start_date && promo.end_date 
+                            {promo.start_date && promo.end_date
                               ? `${new Date(promo.start_date).toLocaleDateString('fr-FR')} - ${new Date(promo.end_date).toLocaleDateString('fr-FR')}`
                               : 'Sans limite'
                             }
@@ -1739,7 +1740,7 @@ export default function AdvancedSalesManager() {
                                 )}
                               </>
                             ) : null}
-                            
+
                             {linkedCategories.length > 0 ? (
                               <>
                                 {linkedCategories.slice(0, 2).map(c => (
@@ -1754,7 +1755,7 @@ export default function AdvancedSalesManager() {
                                 )}
                               </>
                             ) : null}
-                            
+
                             {linkedProducts.length === 0 && linkedCategories.length === 0 && (
                               <Badge variant="secondary" className="text-xs">
                                 Tous les produits

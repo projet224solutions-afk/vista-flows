@@ -84,7 +84,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').trim();
-    
+
     if (!/^\d{6}$/.test(pastedData)) {
       toast.error('Code invalide. Collez un code à 6 chiffres.');
       return;
@@ -92,7 +92,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 
     const newOtp = pastedData.split('');
     setOtp(newOtp);
-    
+
     // Focus dernier input et submit
     inputRefs.current[5]?.focus();
     handleVerify(pastedData);
@@ -112,7 +112,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 
     try {
       await onVerify(otpCode);
-    } catch (error) {
+    } catch (_error) {
       // Réinitialiser inputs en cas d'erreur
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

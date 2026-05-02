@@ -13,9 +13,9 @@ interface UserIdDisplayProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const UserIdDisplay = ({ 
-  className = '', 
-  showBadge = true, 
+export const UserIdDisplay = ({
+  className = '',
+  showBadge = true,
   layout = 'horizontal',
   size = 'sm'
 }: UserIdDisplayProps) => {
@@ -35,7 +35,7 @@ export const UserIdDisplay = ({
         // Déterminer le préfixe selon le rôle
         let scope = 'users';
         const userRole = profile?.role;
-        
+
         if (userRole === 'vendeur') scope = 'vendors';
         else if (userRole === 'livreur') scope = 'drivers';
         else if (userRole === 'taxi') scope = 'drivers';
@@ -59,7 +59,7 @@ export const UserIdDisplay = ({
 
         // 2. Sinon vérifier si l'utilisateur a un public_id
         const existingId = (profile as any)?.public_id;
-        
+
         if (existingId && validateStandardId(existingId)) {
           setStandardId(existingId);
           console.log('✅ ID standardisé trouvé:', existingId);
@@ -67,7 +67,7 @@ export const UserIdDisplay = ({
           // Générer un nouvel ID standardisé
           console.log('🔄 Génération ID standardisé...');
           const newId = await generateStandardId(scope, false);
-          
+
           if (newId) {
             // Mettre à jour le profil avec le nouvel ID
             const { error: updateError } = await supabase
@@ -95,13 +95,14 @@ export const UserIdDisplay = ({
     };
 
     fetchOrCreateStandardId();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
 
   if (loading) {
     return <span className={`text-muted-foreground ${className}`}>Chargement...</span>;
   }
 
-  const displayName = profile?.first_name && profile?.last_name 
+  const displayName = profile?.first_name && profile?.last_name
     ? `${profile.first_name} ${profile.last_name}`
     : profile?.email?.split('@')[0] || 'Utilisateur';
 
@@ -119,7 +120,7 @@ export const UserIdDisplay = ({
     return (
       <div className={`flex flex-col gap-2 ${className}`}>
         <span className="font-semibold text-foreground">{displayName}</span>
-        <StandardIdBadge 
+        <StandardIdBadge
           standardId={standardId}
           variant="default"
           size={size}
@@ -133,7 +134,7 @@ export const UserIdDisplay = ({
   if (showBadge) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <StandardIdBadge 
+        <StandardIdBadge
           standardId={standardId}
           variant="secondary"
           size={size}

@@ -67,7 +67,7 @@ export function savePOSState(state: Partial<POSPersistedState>): void {
       vendorId: state.vendorId ?? existingData?.vendorId ?? null,
       timestamp: Date.now(),
     };
-    
+
     localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(newState));
   } catch (error) {
     console.error('[POS Persistence] Erreur sauvegarde:', error);
@@ -81,15 +81,15 @@ export function loadPOSState(): POSPersistedState | null {
   try {
     const stored = localStorage.getItem(POS_STORAGE_KEY);
     if (!stored) return null;
-    
+
     const state: POSPersistedState = JSON.parse(stored);
-    
+
     // Vérifier si les données ne sont pas trop anciennes
     if (Date.now() - state.timestamp > MAX_PERSISTENCE_AGE_MS) {
       clearPOSState();
       return null;
     }
-    
+
     return state;
   } catch (error) {
     console.error('[POS Persistence] Erreur chargement:', error);
@@ -122,7 +122,7 @@ export function usePOSPersistence(
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRestoringRef = useRef(false);
   const hasRestoredRef = useRef(false);
-  
+
   // Refs stables pour éviter les re-renders
   const stateRef = useRef(state);
   const onRestoreRef = useRef(onRestore);
@@ -139,11 +139,11 @@ export function usePOSPersistence(
   // Sauvegarde avec debounce
   const debouncedSave = useCallback((newState: Partial<POSPersistedState>) => {
     if (!enabled || isRestoringRef.current) return;
-    
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     saveTimeoutRef.current = setTimeout(() => {
       savePOSState(newState);
     }, SAVE_DEBOUNCE_MS);
@@ -152,11 +152,11 @@ export function usePOSPersistence(
   // Sauvegarde immédiate (pour événements critiques) - utilise stateRef
   const saveImmediately = useCallback(() => {
     if (!enabled) return;
-    
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     savePOSState(stateRef.current);
   }, [enabled]);
 
@@ -164,17 +164,17 @@ export function usePOSPersistence(
   useEffect(() => {
     if (!enabled || hasRestoredRef.current) return;
     hasRestoredRef.current = true;
-    
+
     const savedState = loadPOSState();
     if (savedState && savedState.cart.length > 0) {
       isRestoringRef.current = true;
-      
+
       // Appeler onRestore de manière asynchrone
       setTimeout(() => {
         onRestoreRef.current?.(savedState);
         isRestoringRef.current = false;
       }, 0);
-      
+
       console.log('[POS Persistence] État restauré:', {
         cartItems: savedState.cart.length,
         timestamp: new Date(savedState.timestamp).toLocaleString()
@@ -213,7 +213,7 @@ export function usePOSPersistence(
     // Événements pour desktop
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     // Événements pour mobile (PWA)
     window.addEventListener('pagehide', handlePageHide);
     window.addEventListener('blur', handleBlur);
@@ -223,7 +223,7 @@ export function usePOSPersistence(
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pagehide', handlePageHide);
       window.removeEventListener('blur', handleBlur);
-      
+
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }

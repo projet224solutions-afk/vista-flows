@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
+import {
   MapPin, Package, User, Clock, Truck, Settings, List, CheckCircle, Image, PenTool,
   TrendingUp, Timer, RefreshCw
 } from 'lucide-react';
@@ -49,11 +49,12 @@ export function VendorDeliveriesPanel() {
     if (!vendorLoading && vendorId && user) {
       loadVendorDeliveries();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, user, vendorLoading]);
 
   const loadVendorDeliveries = async () => {
     if (!vendorId || !user) return;
-    
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -78,10 +79,10 @@ export function VendorDeliveriesPanel() {
     const inProgress = deliveries.filter(d => ['assigned', 'picked_up', 'in_transit'].includes(d.status));
     const completed = deliveries.filter(d => d.status === 'delivered');
     const cancelled = deliveries.filter(d => d.status === 'cancelled');
-    
+
     const totalRevenue = completed.reduce((sum, d) => sum + (d.delivery_fee || 0), 0);
     const totalDistance = completed.reduce((sum, d) => sum + (d.distance_km || 0), 0);
-    
+
     return {
       total: deliveries.length,
       pending: pending.length,
@@ -90,7 +91,7 @@ export function VendorDeliveriesPanel() {
       cancelled: cancelled.length,
       totalRevenue,
       totalDistance,
-      successRate: deliveries.length > 0 
+      successRate: deliveries.length > 0
         ? Math.round((completed.length / (deliveries.length - cancelled.length)) * 100) || 0
         : 0
     };
@@ -407,8 +408,8 @@ export function VendorDeliveriesPanel() {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{delivery.customer_name || 'Client'}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {typeof delivery.delivery_address === 'string' 
-                              ? delivery.delivery_address 
+                            {typeof delivery.delivery_address === 'string'
+                              ? delivery.delivery_address
                               : delivery.delivery_address?.address}
                           </p>
                         </div>
@@ -418,8 +419,8 @@ export function VendorDeliveriesPanel() {
                       </div>
                     ))}
                     {pendingDeliveries.length > 5 && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         className="w-full text-sm"
                         onClick={() => setActiveTab('deliveries')}
                       >
@@ -448,15 +449,15 @@ export function VendorDeliveriesPanel() {
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {completedDeliveries.slice(0, 5).map((delivery) => (
-                      <div 
-                        key={delivery.id} 
+                      <div
+                        key={delivery.id}
                         className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors"
                         onClick={() => setSelectedDelivery(delivery)}
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{delivery.customer_name || 'Client'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {delivery.completed_at 
+                            {delivery.completed_at
                               ? format(new Date(delivery.completed_at), 'dd/MM HH:mm', { locale: fr })
                               : '-'}
                           </p>
@@ -467,8 +468,8 @@ export function VendorDeliveriesPanel() {
                       </div>
                     ))}
                     {completedDeliveries.length > 5 && (
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         className="w-full text-sm"
                         onClick={() => setActiveTab('delivered')}
                       >
@@ -499,8 +500,8 @@ export function VendorDeliveriesPanel() {
                   <div className="text-center text-muted-foreground py-8">
                     <Package className="h-12 w-12 mx-auto mb-2 opacity-30" />
                     <p>Aucune livraison en cours</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="mt-4"
                       onClick={() => setShowShipmentManager(true)}
                     >
@@ -555,7 +556,7 @@ export function VendorDeliveriesPanel() {
               Détails de la livraison
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedDelivery && (
             <div className="space-y-4">
               {/* Infos client */}
@@ -572,7 +573,7 @@ export function VendorDeliveriesPanel() {
                 <div>
                   <p className="text-sm font-medium">Livré le</p>
                   <p className="text-sm text-muted-foreground">
-                    {selectedDelivery.completed_at 
+                    {selectedDelivery.completed_at
                       ? format(new Date(selectedDelivery.completed_at), "EEEE dd MMMM yyyy 'à' HH:mm", { locale: fr })
                       : 'Date non disponible'}
                   </p>
@@ -586,9 +587,9 @@ export function VendorDeliveriesPanel() {
                     <Image className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium">Photo de preuve</span>
                   </div>
-                  <img 
-                    src={selectedDelivery.proof_photo_url} 
-                    alt="Preuve de livraison" 
+                  <img
+                    src={selectedDelivery.proof_photo_url}
+                    alt="Preuve de livraison"
                     className="w-full rounded-lg border object-cover max-h-48"
                   />
                 </div>
@@ -607,9 +608,9 @@ export function VendorDeliveriesPanel() {
                     <span className="text-sm font-medium">Signature du client</span>
                   </div>
                   <div className="border rounded-lg p-2 bg-white">
-                    <img 
-                      src={selectedDelivery.client_signature} 
-                      alt="Signature client" 
+                    <img
+                      src={selectedDelivery.client_signature}
+                      alt="Signature client"
                       className="w-full h-24 object-contain"
                     />
                   </div>

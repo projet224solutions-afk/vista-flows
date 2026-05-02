@@ -19,16 +19,17 @@ interface ManageCommissionsSectionProps {
   commissionRate: number;
 }
 
-export function ManageCommissionsSection({ 
-  agentId, 
-  totalCommissions, 
-  commissionRate 
+export function ManageCommissionsSection({
+  agentId,
+  totalCommissions,
+  commissionRate
 }: ManageCommissionsSectionProps) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadCommissions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadCommissions = async () => {

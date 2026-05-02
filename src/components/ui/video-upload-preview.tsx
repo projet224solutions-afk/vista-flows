@@ -6,11 +6,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { 
-  Video, 
-  X, 
-  Upload, 
-  Play, 
+import {
+  Video,
+  X,
+  Upload,
+  Play,
   Pause,
   AlertTriangle,
   Loader2,
@@ -51,6 +51,7 @@ export function VideoUploadPreview({
     if (currentVideoUrl && !videoFile) {
       setPreviewUrl(currentVideoUrl);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideoUrl]);
 
   // Nettoyer l'URL au démontage
@@ -60,6 +61,7 @@ export function VideoUploadPreview({
         URL.revokeObjectURL(previewUrl);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getVideoDuration = (file: File): Promise<number> => {
@@ -98,7 +100,7 @@ export function VideoUploadPreview({
       // Obtenir la durée
       const videoDuration = await getVideoDuration(file);
       const valid = videoDuration <= maxDuration;
-      
+
       setDuration(videoDuration);
       setIsValidDuration(valid);
 
@@ -122,7 +124,7 @@ export function VideoUploadPreview({
       setVideoFile(file);
       setPreviewUrl(url);
       onVideoSelect(file, url);
-      
+
       toast.success('Vidéo ajoutée avec succès');
     } catch (error) {
       console.error('Erreur lecture vidéo:', error);
@@ -198,9 +200,9 @@ export function VideoUploadPreview({
             onClick={togglePlay}
             playsInline
           />
-          
+
           {/* Overlay contrôles */}
-          <div 
+          <div
             className={cn(
               "absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity cursor-pointer",
               isPlaying ? "opacity-0 hover:opacity-100" : "opacity-100"

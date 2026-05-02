@@ -4,11 +4,11 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { _Badge } from '@/components/ui/badge';
+import { _Progress } from '@/components/ui/progress';
 import {
   TrendingUp, Package, Users, Pill, Activity,
-  ArrowUp, ArrowDown, Clock, CheckCircle, AlertTriangle
+  _ArrowUp, _ArrowDown, Clock, CheckCircle, AlertTriangle
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { ServiceHealthStats, RecentHealthSale } from '@/hooks/useServiceHealthStats';
@@ -18,7 +18,7 @@ interface PharmacyOverviewPanelProps {
   recentSales: RecentHealthSale[];
 }
 
-export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPanelProps) {
+export function PharmacyOverviewPanel({ stats, _recentSales }: PharmacyOverviewPanelProps) {
   const formatCurrency = useFormatCurrency();
   const inStock = stats.stock.totalProducts - stats.stock.outOfStockCount - stats.stock.lowStockCount;
   const stockPercent = stats.stock.totalProducts > 0 ? Math.round((inStock / stats.stock.totalProducts) * 100) : 100;

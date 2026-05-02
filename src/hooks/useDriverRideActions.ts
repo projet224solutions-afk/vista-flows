@@ -35,7 +35,7 @@ export function useDriverRideActions({
     try {
       console.log('📞 Appel de TaxiMotoService.acceptRide...');
       await TaxiMotoService.acceptRide(request.id, driverId);
-      
+
       toast.dismiss(`accept-${request.id}`);
       toast.success('✅ Course acceptée avec succès!');
 
@@ -109,7 +109,7 @@ export function useDriverRideActions({
 
     try {
       await TaxiMotoService.updateRideStatus(activeRide.id, dbStatus);
-      
+
       const updatedRide = { ...activeRide, status: newStatus };
       setActiveRide(updatedRide);
 

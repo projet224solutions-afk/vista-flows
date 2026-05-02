@@ -56,7 +56,7 @@ export function usePdgMonitoring() {
     lastCheck: new Date().toISOString(),
     services: []
   });
-  
+
   const [interfaceMetrics, setInterfaceMetrics] = useState<InterfaceMetrics[]>([]);
   const [autoFixes, setAutoFixes] = useState<AutoFix[]>([]);
   const [stats, setStats] = useState<PdgStats>({
@@ -69,7 +69,7 @@ export function usePdgMonitoring() {
     totalTransactions: 0,
     avgResponseTime: 0
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);
   const [lastLoadTime, setLastLoadTime] = useState<number>(0);
@@ -88,13 +88,13 @@ export function usePdgMonitoring() {
     try {
       // Charger les stats globales via la fonction RPC sécurisée
       const globalStats = await InterfaceMetricsService.getGlobalStats();
-      
+
       // Charger les erreurs système
       const errorStats = await errorMonitor.getErrorStats();
 
       // Charger les connexions API
       const apiConnections = await ApiMonitoringService.getAllApiConnections();
-      
+
       // Charger les auto-fixes
       const { data: fixesData } = await supabase
         .from('auto_fixes')
@@ -106,7 +106,7 @@ export function usePdgMonitoring() {
       }
 
       // Charger la santé système
-      const { data: healthData } = await supabase
+      const { data: _healthData } = await supabase
         .from('system_health')
         .select('*')
         .order('timestamp', { ascending: false })
@@ -147,7 +147,7 @@ export function usePdgMonitoring() {
       // Calculer la santé globale via la fonction RPC intelligente
       let adjustedHealthScore = 100;
       let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
-      
+
       try {
         const { data: healthResult } = await supabase.rpc('calculate_system_health');
         if (healthResult && typeof healthResult === 'object' && !Array.isArray(healthResult)) {
@@ -155,7 +155,7 @@ export function usePdgMonitoring() {
           adjustedHealthScore = result.health_score ?? 100;
           healthStatus = (result.health_status as 'healthy' | 'warning' | 'critical') || 'healthy';
         }
-      } catch (e) {
+      } catch (_e) {
         // Fallback au calcul local si RPC échoue
         const criticalCount = errorStats?.critical || 0;
         const pendingCount = errorStats?.pending || 0;
@@ -171,7 +171,7 @@ export function usePdgMonitoring() {
       });
 
       // Utiliser les stats globales si disponibles
-      const totalTransactions = globalStats?.total_orders || 
+      const totalTransactions = globalStats?.total_orders ||
         metrics.reduce((sum, m) => sum + m.transactions, 0);
 
       // Calculer les statistiques globales
@@ -238,7 +238,7 @@ export function usePdgMonitoring() {
   const analyzeErrorWithAI = async (errorId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('ai-error-analyzer', {
-        body: { 
+        body: {
           error: { id: errorId },
           context: { stats, systemHealth }
         }
@@ -261,7 +261,7 @@ export function usePdgMonitoring() {
     try {
       // D'abord analyser avec l'IA
       const analysis = await analyzeErrorWithAI(errorId);
-      
+
       if (analysis?.analysis?.autoFixable) {
         // Appliquer le fix automatique
         const { data, error } = await supabase.functions.invoke('fix-error', {
@@ -288,7 +288,7 @@ export function usePdgMonitoring() {
   const askAICopilot = async (query: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('ai-copilot', {
-        body: { 
+        body: {
           query,
           context: {
             stats,

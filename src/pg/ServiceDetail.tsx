@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, _useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -113,7 +113,7 @@ function computeIsOpen(hours: OpeningHours | undefined): boolean | null {
 
   if (typeof todayHours === 'string') {
     const lower = todayHours.toLowerCase().trim();
-    if (lower === 'ferm├®' || lower === 'closed') return false;
+    if (lower === 'fermé' || lower === 'closed') return false;
     // Try to parse "HH:MM - HH:MM"
     const match = lower.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
     if (match) {
@@ -170,6 +170,7 @@ export default function ServiceDetailPage() {
       loadGalleryImages();
       loadFavoriteStatus();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, positionReady]);
 
   // Check ownership
@@ -195,7 +196,7 @@ export default function ServiceDetailPage() {
   const loadServiceDetails = async () => {
     try {
       setLoading(true);
-      
+
       const { data: proService, error: proError } = await supabase
         .from('professional_services')
         .select(`
@@ -225,7 +226,7 @@ export default function ServiceDetailPage() {
 
       if (!proError && proService) {
         const openingHours = proService.opening_hours as OpeningHours | undefined;
-        
+
         // Only use real coordinates from the DB
         const hasRealCoords = proService.latitude != null && proService.longitude != null &&
           Number.isFinite(Number(proService.latitude)) && Number.isFinite(Number(proService.longitude)) &&
@@ -254,7 +255,7 @@ export default function ServiceDetailPage() {
         };
 
         setService(serviceData);
-        
+
         // Only compute distance if we have real coordinates
         if (hasRealCoords) {
           const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
@@ -323,13 +324,13 @@ export default function ServiceDetailPage() {
 
       const clientIds = data.map(r => r.client_id).filter(Boolean);
       let clientsMap: Record<string, any> = {};
-      
+
       if (clientIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
           .in('id', clientIds);
-        
+
         if (profiles) {
           clientsMap = profiles.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
         }
@@ -339,7 +340,7 @@ export default function ServiceDetailPage() {
         const client = clientsMap[review.client_id];
         return {
           id: review.id,
-          user_name: client?.full_name || 'Client v├®rifi├®',
+          user_name: client?.full_name || 'Client vérifié',
           user_avatar: client?.avatar_url,
           rating: review.rating,
           comment: review.comment,
@@ -393,9 +394,9 @@ export default function ServiceDetailPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !id) return;
-    
+
     if (!file.type.startsWith('image/')) {
-      toast.error('Seules les images sont autoris├®es');
+      toast.error('Seules les images sont autorisées');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -407,11 +408,11 @@ export default function ServiceDetailPage() {
     try {
       const ext = file.name.split('.').pop();
       const filePath = `${id}/${Date.now()}.${ext}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('service-gallery')
         .upload(filePath, file);
-      
+
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
@@ -428,7 +429,7 @@ export default function ServiceDetailPage() {
 
       if (dbError) throw dbError;
 
-      toast.success('Image ajout├®e ├á la galerie !');
+      toast.success('Image ajoutée à la galerie !');
       loadGalleryImages();
     } catch (err: any) {
       console.error('Erreur upload galerie:', err);
@@ -446,7 +447,7 @@ export default function ServiceDetailPage() {
         .delete()
         .eq('id', imageId);
       if (error) throw error;
-      toast.success('Image supprim├®e');
+      toast.success('Image supprimée');
       setGalleryImages(prev => prev.filter(img => img.id !== imageId));
     } catch {
       toast.error('Erreur lors de la suppression');
@@ -463,7 +464,7 @@ export default function ServiceDetailPage() {
         return;
       }
       if (service.vendor_user_id === user.id) {
-        toast.error("Vous ne pouvez pas vous contacter vous-m├¬me");
+        toast.error("Vous ne pouvez pas vous contacter vous-même");
         return;
       }
       navigate(`/communication/direct/${service.vendor_user_id}`);
@@ -483,7 +484,7 @@ export default function ServiceDetailPage() {
       return;
     }
     if (service.vendor_user_id === user.id) {
-      toast.error("Vous ne pouvez pas vous contacter vous-m├¬me");
+      toast.error("Vous ne pouvez pas vous contacter vous-même");
       return;
     }
     navigate(`/communication/direct/${service.vendor_user_id}`);
@@ -503,14 +504,14 @@ export default function ServiceDetailPage() {
 
   const handleReservation = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour r├®server');
+      toast.error('Veuillez vous connecter pour réserver');
       navigate('/auth');
       return;
     }
     if (isRestaurant) {
       setIsReservationModalOpen(true);
     } else {
-      toast.info('Contactez le prestataire pour r├®server');
+      toast.info('Contactez le prestataire pour réserver');
     }
   };
 
@@ -530,7 +531,7 @@ export default function ServiceDetailPage() {
 
       if (result === 'fallback') {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success('Lien copi├® dans le presse-papier');
+        toast.success('Lien copié dans le presse-papier');
       }
     } catch (error) {
       console.error('Erreur partage:', error);
@@ -545,11 +546,11 @@ export default function ServiceDetailPage() {
       if (isFavorite) {
         newFavs = favs.filter(f => f !== id);
         setIsFavorite(false);
-        toast.success('Retir├® des favoris');
+        toast.success('Retiré des favoris');
       } else {
         newFavs = [...favs, id];
         setIsFavorite(true);
-        toast.success('Ajout├® aux favoris');
+        toast.success('Ajouté aux favoris');
       }
       localStorage.setItem('service_favorites', JSON.stringify(newFavs));
     } catch {
@@ -565,7 +566,7 @@ export default function ServiceDetailPage() {
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.address)}`;
       window.open(url, '_blank');
     } else {
-      toast.error('Coordonn├®es non disponibles');
+      toast.error('Coordonnées non disponibles');
     }
   };
 
@@ -576,7 +577,7 @@ export default function ServiceDetailPage() {
       return;
     }
     if (!reviewComment.trim()) {
-      toast.error('Veuillez ├®crire un commentaire');
+      toast.error('Veuillez écrire un commentaire');
       return;
     }
     setSubmittingReview(true);
@@ -606,14 +607,14 @@ export default function ServiceDetailPage() {
     if (service?.is_open === true) {
       return (
         <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-primary text-primary-foreground">
-          Ô£à Ouvert
+          ✓ Ouvert
         </Badge>
       );
     }
     if (service?.is_open === false) {
       return (
         <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-destructive text-destructive-foreground">
-          ­ƒö┤ Ferm├®
+          🔴 Fermé
         </Badge>
       );
     }
@@ -636,7 +637,7 @@ export default function ServiceDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Service non trouv├®</p>
+          <p className="text-muted-foreground mb-4">Service non trouvé</p>
           <Button onClick={() => navigate('/services-proximite')}>
             Retour aux services
           </Button>
@@ -647,18 +648,18 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* ÔòÉÔòÉÔòÉ Hero Image ÔòÉÔòÉÔòÉ */}
+      {/* === Hero Image === */}
       <div className="relative h-72 md:h-[420px] bg-muted overflow-hidden">
         {service.image_url ? (
           <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-primary/10 flex items-center justify-center">
             <span className="text-7xl opacity-60">
-              {service.category === 'restaurant' ? '­ƒì¢´©Å' :
-               service.category === 'sante' ? '­ƒÅÑ' :
-               service.category === 'education' ? '­ƒôÜ' :
-               service.category === 'beaute' ? '­ƒÆç' :
-               service.category === 'commerce' ? '­ƒøì´©Å' : '­ƒöº'}
+              {service.category === 'restaurant' ? '🍽️' :
+               service.category === 'sante' ? '🏥' :
+               service.category === 'education' ? '📚' :
+               service.category === 'beaute' ? '💇' :
+               service.category === 'commerce' ? '🛍️' : '🔧'}
             </span>
           </div>
         )}
@@ -705,7 +706,7 @@ export default function ServiceDetailPage() {
         </div>
       </div>
 
-      {/* ÔòÉÔòÉÔòÉ Main Content ÔòÉÔòÉÔòÉ */}
+      {/* === Main Content === */}
       <div className="max-w-3xl mx-auto px-4 relative">
         <Card className="relative -mt-16 z-20 border-0 shadow-xl rounded-2xl overflow-hidden">
           <CardContent className="p-5 md:p-8">
@@ -730,14 +731,14 @@ export default function ServiceDetailPage() {
                 <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
                   <Navigation className="w-3.5 h-3.5 text-primary" />
                   {formatDistance(distance)}
-                  {usingRealLocation && <span className="text-green-500 text-xs">ÔùÅ</span>}
+                  {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
                 </Badge>
               )}
 
               {/* No coordinates message */}
               {!service.has_real_coordinates && (
                 <Badge variant="secondary" className="text-xs">
-                  ­ƒôì Position non renseign├®e
+                  📍 Position non renseignée
                 </Badge>
               )}
             </div>
@@ -750,7 +751,7 @@ export default function ServiceDetailPage() {
               {service.description}
             </p>
 
-            {/* ÔòÉÔòÉÔòÉ Action Buttons ÔòÉÔòÉÔòÉ */}
+            {/* === Action Buttons === */}
             <div className="flex flex-wrap gap-3">
               {service.phone && (
                 <Button onClick={handleContact} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90">
@@ -764,7 +765,7 @@ export default function ServiceDetailPage() {
               </Button>
               <Button onClick={handleReservation} variant="outline" className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5">
                 <Calendar className="w-4 h-4 mr-2" />
-                R├®server
+                Réserver
               </Button>
               {isRestaurant && (
                 <Button onClick={handleOrderFromRestaurant} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90">
@@ -779,14 +780,14 @@ export default function ServiceDetailPage() {
               <div className="mt-4">
                 <Button onClick={handleLocateRestaurant} variant="outline" className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2">
                   <LocateFixed className="w-4 h-4" />
-                  ­ƒôì Localiser sur la carte
+                  📍 Localiser sur la carte
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* ÔòÉÔòÉÔòÉ Tabs Section ÔòÉÔòÉÔòÉ */}
+        {/* === Tabs Section === */}
         <Tabs defaultValue="info" className="mt-6 mb-6">
           <TabsList className="w-full rounded-xl h-12 bg-muted/60 p-1">
             <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
@@ -800,7 +801,7 @@ export default function ServiceDetailPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* ÔöÇÔöÇÔöÇ Informations ÔöÇÔöÇÔöÇ */}
+          {/* --- Informations --- */}
           <TabsContent value="info">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6 space-y-5">
@@ -825,7 +826,7 @@ export default function ServiceDetailPage() {
                       <Phone className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground">T├®l├®phone</p>
+                      <p className="font-semibold text-foreground">Téléphone</p>
                       <a href={`tel:${service.phone}`} className="text-primary hover:underline text-sm mt-0.5 inline-block">
                         {service.phone}
                       </a>
@@ -849,7 +850,7 @@ export default function ServiceDetailPage() {
 
                 {service.features && service.features.length > 0 && (
                   <div>
-                    <p className="font-semibold text-foreground mb-2">Caract├®ristiques</p>
+                    <p className="font-semibold text-foreground mb-2">Caractéristiques</p>
                     <div className="flex flex-wrap gap-2">
                       {service.features.map((feature, index) => (
                         <Badge key={index} variant="outline" className="rounded-full">{feature}</Badge>
@@ -861,7 +862,7 @@ export default function ServiceDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* ÔöÇÔöÇÔöÇ Horaires ÔöÇÔöÇÔöÇ */}
+          {/* --- Horaires --- */}
           <TabsContent value="hours">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
@@ -881,15 +882,15 @@ export default function ServiceDetailPage() {
                       } else if (typeof hours === 'object' && hours !== null) {
                         const hoursObj = hours as { open?: string; close?: string; closed?: boolean };
                         if (hoursObj.closed) {
-                          hoursDisplay = 'Ferm├®';
+                          hoursDisplay = 'Fermé';
                         } else {
                           hoursDisplay = `${hoursObj.open || '08:00'} - ${hoursObj.close || '18:00'}`;
                         }
                       } else {
-                        hoursDisplay = 'Non d├®fini';
+                        hoursDisplay = 'Non défini';
                       }
 
-                      const isClosed = hoursDisplay.toLowerCase() === 'ferm├®';
+                      const isClosed = hoursDisplay.toLowerCase() === 'fermé';
 
                       return (
                         <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
@@ -904,15 +905,15 @@ export default function ServiceDetailPage() {
                 ) : (
                   <div className="text-center py-8">
                     <Clock className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">Horaires non renseign├®s</p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour conna├«tre ses horaires</p>
+                    <p className="text-muted-foreground">Horaires non renseignés</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour connaëtre ses horaires</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* ÔöÇÔöÇÔöÇ Avis ÔöÇÔöÇÔöÇ */}
+          {/* --- Avis --- */}
           <TabsContent value="reviews">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
@@ -928,7 +929,7 @@ export default function ServiceDetailPage() {
                       }
                       setShowReviewForm(true);
                     }}>
-                      Soyez le premier ├á donner votre avis
+                      Soyez le premier à donner votre avis
                     </Button>
                   </div>
                 ) : (
@@ -953,7 +954,7 @@ export default function ServiceDetailPage() {
                           ))}
                         </div>
                         <Textarea
-                          placeholder="D├®crivez votre exp├®rience..."
+                          placeholder="Décrivez votre expérience..."
                           value={reviewComment}
                           onChange={(e) => setReviewComment(e.target.value)}
                           rows={3}
@@ -1005,7 +1006,7 @@ export default function ServiceDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* ÔòÉÔòÉÔòÉ Gallery ÔòÉÔòÉÔòÉ */}
+        {/* === Gallery === */}
         {(galleryImages.length > 0 || isOwner) && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -1056,7 +1057,7 @@ export default function ServiceDetailPage() {
           </div>
         )}
 
-        {/* ÔòÉÔòÉÔòÉ Restaurant Menu Section ÔòÉÔòÉÔòÉ */}
+        {/* === Restaurant Menu Section === */}
         {isRestaurant && menuItems.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
@@ -1083,7 +1084,7 @@ export default function ServiceDetailPage() {
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">­ƒì¢´©Å</div>
+                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">🍽️</div>
                       )}
                     </div>
                     <CardContent className="p-3 flex-1 flex flex-col justify-between">
@@ -1091,7 +1092,7 @@ export default function ServiceDetailPage() {
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h3 className="font-semibold text-foreground line-clamp-1 text-sm">{item.name}</h3>
                           {item.is_featured && (
-                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">Ô¡É</Badge>
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">⭐</Badge>
                           )}
                         </div>
                         {item.description && (
@@ -1137,7 +1138,7 @@ export default function ServiceDetailPage() {
         )}
       </div>
 
-      {/* Modal de r├®servation restaurant */}
+      {/* Modal de réservation restaurant */}
       {isRestaurant && service && (
         <ReservationModal
           isOpen={isReservationModalOpen}

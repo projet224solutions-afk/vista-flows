@@ -103,7 +103,7 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
       // Ensuite, ajouter les permissions legacy si elles n'existent pas déjà
       if (agentData?.permissions) {
         const legacyPerms = agentData.permissions as any;
-        
+
         // Si c'est un tableau (ancien format)
         if (Array.isArray(legacyPerms)) {
           legacyPerms.forEach((perm: string) => {
@@ -111,7 +111,7 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
               mergedPermissions[perm] = true;
             }
           });
-        } 
+        }
         // Si c'est un objet (format key: boolean)
         else if (typeof legacyPerms === 'object') {
           Object.entries(legacyPerms).forEach(([key, value]) => {

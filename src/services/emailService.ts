@@ -81,7 +81,7 @@ class EmailService {
       };
 
       const success = await this.sendEmail(emailData);
-      
+
       if (success) {
         console.log('✅ Email envoyé avec succès au président:', data.president_email);
         console.log('📧 Contenu de l\'email:', {
@@ -99,15 +99,15 @@ class EmailService {
           bureau_code: data.bureau_code,
           permanent_link: data.permanent_link,
         });
-        
+
         // Simuler un délai d'envoi
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         return true; // Retourner true en mode démo
       }
     } catch (error) {
       console.error('❌ Erreur envoi email président:', error);
-      
+
       // Mode fallback : simuler l'envoi réussi même en cas d'erreur
       console.log('🎭 MODE FALLBACK - Simulation d\'envoi d\'email');
       console.log('📧 Données qui auraient été envoyées:', {
@@ -116,7 +116,7 @@ class EmailService {
         bureau_code: data.bureau_code,
         permanent_link: data.permanent_link,
       });
-      
+
       return true; // Retourner true pour que l'interface fonctionne
     }
   }
@@ -161,12 +161,12 @@ class EmailService {
             <h1>Bureau Syndical Créé</h1>
             <p>Félicitations ${data.president_name} !</p>
         </div>
-        
+
         <div class="content">
             <p>Bonjour <strong>${data.president_name}</strong>,</p>
-            
+
             <p>Nous avons le plaisir de vous informer que votre bureau syndical a été créé avec succès dans le système 224Solutions.</p>
-            
+
             <div class="bureau-info">
                 <h3>📋 Informations du Bureau</h3>
                 <div class="info-row">
@@ -186,7 +186,7 @@ class EmailService {
                     <span class="info-value">${data.president_name}</span>
                 </div>
             </div>
-            
+
             <div class="access-section">
                 <h3>🔐 Accès à votre Interface</h3>
                 <p>Cliquez sur le lien ci-dessous pour accéder à votre interface de gestion :</p>
@@ -195,13 +195,13 @@ class EmailService {
                 </a>
                 <p><small>Ce lien est permanent et sécurisé</small></p>
             </div>
-            
+
             <div class="token-info">
                 <p><strong>🔑 Token d'accès :</strong></p>
                 <div class="token-code">${data.access_token}</div>
                 <p><small>Conservez ce token en lieu sûr. Il vous sera demandé lors de votre première connexion.</small></p>
             </div>
-            
+
             <p><strong>Prochaines étapes :</strong></p>
             <ul>
                 <li>✅ Cliquez sur le lien d'accès ci-dessus</li>
@@ -209,10 +209,10 @@ class EmailService {
                 <li>✅ Ajoutez vos premiers membres</li>
                 <li>✅ Commencez la gestion de votre bureau</li>
             </ul>
-            
+
             <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:support@224solution.net">support@224solution.net</a></p>
         </div>
-        
+
         <div class="footer">
             <p><strong>224SOLUTIONS</strong></p>
             <p>Système de Gestion Syndicale Professionnel</p>
@@ -279,24 +279,24 @@ Pour toute question: support@224solution.net
               <h1 style="color: #3b82f6; margin: 0;">224SOLUTIONS</h1>
               <p style="color: #64748b; margin: 5px 0;">Authentification Multi-Facteurs</p>
             </div>
-            
+
             <div style="background: #f8fafc; padding: 25px; border-radius: 8px; text-align: center; margin: 20px 0;">
               <p style="color: #475569; font-size: 14px; margin: 0 0 10px 0;">Votre code de vérification PDG :</p>
               <div style="font-size: 36px; font-weight: bold; color: #3b82f6; letter-spacing: 8px; font-family: monospace;">
                 ${code}
               </div>
             </div>
-            
+
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
               <p style="margin: 0; color: #92400e; font-size: 13px;">
                 <strong>⚠️ Important :</strong> Ce code expire dans 10 minutes. Ne le partagez avec personne.
               </p>
             </div>
-            
+
             <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin-top: 20px;">
               Si vous n'avez pas demandé ce code, ignorez cet email et sécurisez votre compte immédiatement.
             </p>
-            
+
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
               <p style="color: #94a3b8; font-size: 12px; margin: 0;">
                 224SOLUTIONS - Système de Gestion Professionnel<br/>
@@ -312,14 +312,14 @@ Pour toute question: support@224solution.net
     try {
       console.log('🔑 CODE MFA GÉNÉRÉ:', code);
       console.log('📧 Tentative d\'envoi à:', to);
-      
+
       const success = await this.sendEmail(mfaData);
-      
+
       if (success) {
         console.log('✅ Code MFA envoyé avec succès à:', to);
         // Toujours afficher le code en mode développement
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          toast.success(`Code MFA: ${code}`, { 
+          toast.success(`Code MFA: ${code}`, {
             duration: 60000, // 1 minute
             description: 'Email envoyé + code affiché pour développement'
           });
@@ -331,7 +331,7 @@ Pour toute question: support@224solution.net
     } catch (error) {
       console.error('❌ Erreur envoi code MFA:', error);
       console.log('🔑 CODE MFA DE SECOURS:', code);
-      
+
       // En mode développement, afficher le code de manière très visible
       toast.success(`🔐 CODE MFA: ${code}`, {
         duration: 120000, // 2 minutes
@@ -343,12 +343,12 @@ Pour toute question: support@224solution.net
           fontWeight: 'bold'
         }
       });
-      
+
       // Afficher aussi dans une alerte pour être sûr
       setTimeout(() => {
         alert(`🔐 CODE MFA DE DÉVELOPPEMENT\n\n${code}\n\nCopiez ce code pour continuer\n(Le backend email n'est pas disponible)`);
       }, 500);
-      
+
       return true; // Retourner true pour permettre la suite en dev
     }
   }

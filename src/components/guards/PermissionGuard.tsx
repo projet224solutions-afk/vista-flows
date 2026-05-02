@@ -17,11 +17,11 @@ interface PermissionGuardProps {
  *   <VendorManagement />
  * </PermissionGuard>
  */
-export function PermissionGuard({ 
-  requiredPermission, 
-  children, 
+export function PermissionGuard({
+  requiredPermission,
+  children,
   redirectTo = '/pdg',
-  fallback 
+  fallback
 }: PermissionGuardProps) {
   const { hasAccess, loading } = usePermissionGuard(requiredPermission, redirectTo);
 

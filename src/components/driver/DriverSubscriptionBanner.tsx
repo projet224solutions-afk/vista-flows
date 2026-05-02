@@ -35,7 +35,7 @@ export function DriverSubscriptionBanner() {
               <p className="text-red-400/80 text-xs mt-0.5 leading-relaxed">
                 Vous ne pouvez plus recevoir de courses. Veuillez renouveler pour continuer.
               </p>
-              <Button 
+              <Button
                 onClick={handleSubscribe}
                 size="sm"
                 className="mt-2 h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
@@ -70,7 +70,7 @@ export function DriverSubscriptionBanner() {
               <p className="text-amber-400/80 text-xs mt-0.5">
                 Pensez à renouveler pour éviter toute interruption.
               </p>
-              <Button 
+              <Button
                 onClick={handleSubscribe}
                 size="sm"
                 variant="outline"

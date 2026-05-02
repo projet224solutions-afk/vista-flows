@@ -1,15 +1,39 @@
 ﻿import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, Clock, Star, Search, RefreshCw, Store } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  Building2,
+  Camera,
+  Dumbbell,
+  GraduationCap,
+  Heart,
+  Home,
+  Laptop,
+  MapPin,
+  Phone,
+  RefreshCw,
+  Scissors,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Store,
+  Truck,
+  Utensils,
+  Wrench,
+  Car,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { _Card, _CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
 import { useGeoDistance, formatDistance, calculateDistance } from "@/hooks/useGeoDistance";
+import { getServiceVisual } from "@/config/serviceVisuals";
 
 interface ProfessionalService {
   id: string;
@@ -38,30 +62,36 @@ interface ProfessionalService {
 
 const RADIUS_KM = 20;
 
+type ServiceCategory = {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
 /**
  * Single source of truth for category filters.
  * The `id` matches the `service_types.code` values stored in the database,
  * AND the `?type=` values sent from Proximite.tsx.
  */
-const SERVICE_CATEGORIES = [
-  { id: "all", name: "Tous", icon: "­ƒÅ¬" },
-  { id: "restaurant", name: "Restaurants", icon: "­ƒì¢´©Å" },
-  { id: "beaute", name: "Beaut├® & Coiffure", icon: "­ƒÆç" },
-  { id: "reparation", name: "R├®paration", icon: "­ƒöº" },
-  { id: "menage", name: "Nettoyage & M├®nage", icon: "Ô£¿" },
-  { id: "location", name: "Immobilier", icon: "­ƒÅó" },
-  { id: "education", name: "├ëducation & Formation", icon: "­ƒÄô" },
-  { id: "media", name: "Photo & Vid├®o", icon: "­ƒô©" },
-  { id: "sport", name: "Sport & Fitness", icon: "­ƒÅï´©Å" },
-  { id: "sante", name: "Sant├® & Bien-├¬tre", icon: "­ƒÅÑ" },
-  { id: "informatique", name: "Informatique & Tech", icon: "­ƒÆ╗" },
-  { id: "construction", name: "Construction & BTP", icon: "­ƒÅù´©Å" },
-  { id: "agriculture", name: "Agriculture", icon: "­ƒî¥" },
-  { id: "freelance", name: "Services Pro", icon: "­ƒÆ╝" },
-  { id: "maison", name: "Maison & D├®co", icon: "­ƒÅá" },
-  { id: "ecommerce", name: "Boutique / E-commerce", icon: "­ƒøì´©Å" },
-  { id: "vtc", name: "Transport VTC", icon: "­ƒÜù" },
-  { id: "livraison", name: "Livraison", icon: "­ƒôª" },
+const SERVICE_CATEGORIES: ServiceCategory[] = [
+  { id: "all", name: "Tous", icon: Store },
+  { id: "restaurant", name: "Restaurants", icon: Utensils },
+  { id: "beaute", name: "Beauté & Coiffure", icon: Scissors },
+  { id: "reparation", name: "Réparation", icon: Wrench },
+  { id: "menage", name: "Nettoyage & Ménage", icon: Sparkles },
+  { id: "location", name: "Immobilier", icon: Building2 },
+  { id: "education", name: "Éducation & Formation", icon: GraduationCap },
+  { id: "media", name: "Photo & Vidéo", icon: Camera },
+  { id: "sport", name: "Sport & Fitness", icon: Dumbbell },
+  { id: "sante", name: "Santé & Bien-être", icon: Heart },
+  { id: "informatique", name: "Informatique & Tech", icon: Laptop },
+  { id: "construction", name: "Construction & BTP", icon: Building2 },
+  { id: "agriculture", name: "Agriculture", icon: ShoppingBag },
+  { id: "freelance", name: "Services Pro", icon: Briefcase },
+  { id: "maison", name: "Maison & Déco", icon: Home },
+  { id: "ecommerce", name: "Boutique / E-commerce", icon: Store },
+  { id: "vtc", name: "Transport VTC", icon: Car },
+  { id: "livraison", name: "Livraison", icon: Truck },
 ];
 
 export default function ServicesProximite() {
@@ -84,33 +114,33 @@ export default function ServicesProximite() {
     setSearchParams(searchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Stabiliser la position pour ├®viter les re-renders infinis
+  // Stabiliser la position pour éviter les re-renders infinis
   const positionRef = useRef({ lat: userPosition.latitude, lng: userPosition.longitude });
   const loadingRef = useRef(false);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    document.title = "Services de Proximit├® | 224SOLUTIONS";
+    document.title = "Services de Proximité | 224SOLUTIONS";
   }, []);
 
   const loadServices = useCallback(async (lat: number, lng: number) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
-    
+
     try {
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .from('professional_services')
         .select(`
-          id, 
-          business_name, 
-          description, 
-          address, 
-          phone, 
+          id,
+          business_name,
+          description,
+          address,
+          phone,
           email,
-          logo_url, 
-          rating, 
+          logo_url,
+          rating,
           total_reviews,
           city,
           neighborhood,
@@ -131,7 +161,7 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Pour les services sans GPS, essayer de r├®cup├®rer depuis la table vendors (m├¬me user_id)
+      // Pour les services sans GPS, essayer de récupérer depuis la table vendors (même user_id)
       const servicesWithoutGps = list.filter(s => s.latitude == null || s.longitude == null);
       if (servicesWithoutGps.length > 0) {
         const userIds = [...new Set(servicesWithoutGps.map(s => (s as any).user_id).filter(Boolean))];
@@ -155,7 +185,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre ├á jour en arri├¿re-plan dans la DB
+            // Mettre à jour en arrière-plan dans la DB
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -163,7 +193,7 @@ export default function ServicesProximite() {
                   .from('professional_services')
                   .update({ latitude: vendorGps.lat, longitude: vendorGps.lng })
                   .eq('id', s.id)
-                  .then(() => console.log('Ô£à GPS synced for:', s.business_name));
+                  .then(() => console.log('GPS synced for:', s.business_name));
               }
             }
           }
@@ -176,13 +206,13 @@ export default function ServicesProximite() {
         .map((s) => {
           const lat_val = Number(s.latitude);
           const lng_val = Number(s.longitude);
-          const hasValidCoords = 
+          const hasValidCoords =
             s.latitude != null && s.longitude != null &&
             Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
             !(lat_val === 0 && lng_val === 0);
-          
-          const distance = hasValidCoords 
-            ? calculateDistance(lat, lng, lat_val, lng_val) 
+
+          const distance = hasValidCoords
+            ? calculateDistance(lat, lng, lat_val, lng_val)
             : null;
           return { ...s, distance };
         })
@@ -190,8 +220,8 @@ export default function ServicesProximite() {
           if (s.distance === null) return false;
           return s.distance <= RADIUS_KM;
         });
-      
-      console.log(`­ƒôì Proximit├®: ${beforeFilterCount} services trouv├®s, ${list.length} dans le rayon de ${RADIUS_KM}km`);
+
+      console.log(`Proximité: ${beforeFilterCount} services trouvés, ${list.length} dans le rayon de ${RADIUS_KM} km`);
 
       // Tri: plus proches en premier
       list.sort((a, b) => {
@@ -217,18 +247,18 @@ export default function ServicesProximite() {
   // Charger une seule fois quand positionReady, puis re-charger si la position change de +100m
   useEffect(() => {
     if (!positionReady) return;
-    
+
     const newLat = userPosition.latitude;
     const newLng = userPosition.longitude;
     const prevLat = positionRef.current.lat;
     const prevLng = positionRef.current.lng;
-    
-    const moved = hasLoadedRef.current 
-      ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1 
+
+    const moved = hasLoadedRef.current
+      ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1
       : true;
-    
+
     if (!moved) return;
-    
+
     positionRef.current = { lat: newLat, lng: newLng };
     hasLoadedRef.current = true;
     loadServices(newLat, newLng);
@@ -237,7 +267,7 @@ export default function ServicesProximite() {
   const filteredServices = useMemo(() => {
     let result = services;
 
-    // Filtrer par cat├®gorie ÔÇö match exact sur service_types.code
+    // Filtrer par catégorie - match exact sur service_types.code
     if (selectedCategory !== 'all') {
       result = result.filter((s) => {
         const code = s.service_type?.code?.toLowerCase() || '';
@@ -277,7 +307,7 @@ export default function ServicesProximite() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-foreground truncate">Services de Proximit├®</h1>
+                <h1 className="text-lg font-bold text-foreground truncate">Services de Proximité</h1>
                 <p className="text-xs text-muted-foreground truncate">Dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
@@ -289,13 +319,13 @@ export default function ServicesProximite() {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1">
               <MapPin className="w-3 h-3" />
-              {usingRealLocation ? "Position GPS active" : "GPS d├®sactiv├®"}
+              {usingRealLocation ? "Position GPS active" : "GPS désactivé"}
             </Badge>
             <Badge variant="outline" className="text-xs">
               {filteredServices.length} service{filteredServices.length > 1 ? "s" : ""}
             </Badge>
           </div>
-          
+
           <div className="mt-3 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -308,7 +338,7 @@ export default function ServicesProximite() {
         </div>
       </header>
 
-      {/* Cat├®gories */}
+      {/* Catégories */}
       <section className="px-4 py-4 border-b border-border bg-card">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
           {SERVICE_CATEGORIES.map((category) => (
@@ -319,7 +349,7 @@ export default function ServicesProximite() {
               onClick={() => setSelectedCategory(category.id)}
               className="whitespace-nowrap flex-shrink-0 min-w-fit px-3"
             >
-              <span className="mr-1.5">{category.icon}</span>
+              <category.icon className="mr-1.5 h-4 w-4" />
               <span>{category.name}</span>
             </Button>
           ))}
@@ -336,15 +366,24 @@ export default function ServicesProximite() {
         ) : filteredServices.length === 0 ? (
           <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
             <Store className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm font-medium text-foreground mb-1">Aucun service trouv├®</p>
+            <p className="text-sm font-medium text-foreground mb-1">Aucun service trouvé</p>
             <p className="text-sm text-muted-foreground mb-4">Essayez de modifier les filtres ou la recherche.</p>
             <Button variant="outline" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); }}>
-              R├®initialiser les filtres
+              Réinitialiser les filtres
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredServices.map((service, index) => (
+              (() => {
+                const visual = getServiceVisual({
+                  code: service.service_type?.code,
+                  name: service.service_type?.name,
+                  category: service.service_type?.category,
+                });
+                const Icon = visual.icon;
+
+                return (
               <button
                 key={service.id}
                 onClick={() => handleServiceClick(service.id)}
@@ -362,17 +401,22 @@ export default function ServicesProximite() {
                   {formatDistance(service.distance!)}
                 </div>
 
-                <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
-                  {service.logo_url ? (
+                <div className="mb-3 overflow-hidden rounded-2xl border border-border/50 bg-muted/40">
+                  <div className="relative h-36 w-full overflow-hidden">
                     <img
-                      src={service.logo_url}
-                      alt={`Logo ${service.business_name}`}
-                      className="w-full h-full object-cover"
+                      src={service.logo_url || visual.image}
+                      alt={service.business_name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
-                  ) : (
-                    <Store className="w-7 h-7 text-primary" />
-                  )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                    <div
+                      className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-lg"
+                      style={{ backgroundColor: visual.accent }}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex-1 space-y-2">
@@ -421,6 +465,8 @@ export default function ServicesProximite() {
                   )}
                 </div>
               </button>
+                );
+              })()
             ))}
           </div>
         )}

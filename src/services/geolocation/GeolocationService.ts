@@ -119,7 +119,7 @@ export class GeolocationService {
     /**
      * Démarrer le suivi de position
      */
-    public startTracking(interval: number = 5000): void {
+    public startTracking(_interval: number = 5000): void {
         if (this.isTracking) {
             console.warn('Le suivi est déjà actif');
             return;
@@ -416,7 +416,7 @@ export class GeolocationService {
         console.error(`📍 ${message}:`, error.message);
 
         // Notifier les listeners de l'erreur
-        this.listeners.forEach((callback) => {
+        this.listeners.forEach((_callback) => {
             // Créer un événement d'erreur personnalisé
             const errorEvent = new CustomEvent('geolocationError', {
                 detail: { error, message }

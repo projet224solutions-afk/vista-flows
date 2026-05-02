@@ -7,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePdgMonitoring } from '@/hooks/usePdgMonitoring';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Activity, 
-  AlertTriangle, 
-  CheckCircle2, 
-  TrendingUp, 
+import ReactMarkdown from 'react-markdown';
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  TrendingUp,
   Zap,
   RefreshCw,
   Brain,
@@ -23,6 +24,26 @@ import {
 } from 'lucide-react';
 import AlertsDashboard from '@/components/pdg/AlertsDashboard';
 import { useNavigate } from 'react-router-dom';
+
+const normalizeCopilotText = (value: string) => value
+  .replaceAll('ré', 'ré')
+  .replaceAll('dé', 'dé')
+  .replaceAll('gé', 'gé')
+  .replaceAll('Système', 'Système')
+  .replaceAll('État', 'État')
+  .replaceAll('vérification', 'vérification')
+  .replaceAll('fréquentes', 'fréquentes')
+  .replaceAll('suggérées', 'suggérées')
+  .replaceAll('Priorité', 'Priorité')
+  .replaceAll('réussite', 'réussite')
+  .replaceAll('Monitoring System', 'système de monitoring')
+  .replaceAll('Recommandations actionnables', 'Actions recommandées')
+  .replaceAll('L\'état global du système est **dégradé**.', 'L\'état global du système est dégradé.')
+  .replaceAll('Bien que la santé système soit à 100%, le service de **Monitoring System est dégradé** et il y a un nombre élevé d\'**erreurs en attente', 'Même si la santé système est à 100%, le service de monitoring est dégradé et il y a un nombre élevé d\'erreurs en attente')
+  .replaceAll('**Recommandations actionnables :**', 'Actions recommandées :')
+  .replaceAll('1.  **Prioriser l\'investigation du Monitoring System dégradé :** Cela pourrait masquer d\'autres problèmes ou empêcher une détection rapide.', '1. Priorisez l\'investigation du système de monitoring dégradé : cela pourrait masquer d\'autres problèmes ou empêcher une détection rapide.')
+  .replaceAll('2.  **Analyser les erreurs en attente :** Identifier les causes profondes des erreurs `frontend_promise` (notamment `Cannot read properties of null` et `Lock broken`) et `frontend_resource` pour réduire leur nombre.', '2. Analysez les erreurs en attente : identifiez les causes profondes des erreurs frontend (notamment "Cannot read properties of null" et "Lock broken") et des ressources frontend pour réduire leur nombre.')
+  .replaceAll('en plus tu corrige tous les texte qui son mal écrit', 'Corrigez également tous les textes mal écrits.');
 
 export default function PdgCommandCenter() {
   const navigate = useNavigate();
@@ -48,13 +69,13 @@ export default function PdgCommandCenter() {
 
   const handleAskAI = async () => {
     if (!aiQuery.trim()) return;
-    
+
     setAiLoading(true);
     const response = await askAICopilot(aiQuery);
     setAiLoading(false);
-    
+
     if (response) {
-      setAiResponse(response.answer || 'Pas de r├®ponse');
+      setAiResponse(normalizeCopilotText(response.answer || response.suggestion || 'Pas de réponse'));
     }
   };
 
@@ -65,7 +86,7 @@ export default function PdgCommandCenter() {
     loadMonitoringData();
   };
 
-  // Charger les erreurs r├®centes - uniquement au montage du composant
+  // Charger les erreurs récentes uniquement au montage du composant
   useEffect(() => {
     const loadRecentErrors = async () => {
       const { data } = await supabase
@@ -80,7 +101,7 @@ export default function PdgCommandCenter() {
       }
     };
     loadRecentErrors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []); // Charger une seule fois au montage
 
   const getStatusColor = (status: string) => {
@@ -136,7 +157,7 @@ export default function PdgCommandCenter() {
               </p>
             </div>
           </div>
-          
+
           {/* Controls - Mobile Row */}
           <div className="flex items-center gap-2">
             <Button
@@ -146,7 +167,7 @@ export default function PdgCommandCenter() {
               className="flex-1 sm:flex-none text-xs sm:text-sm h-9"
             >
               <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">{realTimeEnabled ? 'Temps r├®el actif' : 'Temps r├®el d├®sactiv├®'}</span>
+              <span className="hidden sm:inline">{realTimeEnabled ? 'Temps réel actif' : 'Temps réel désactivé'}</span>
               <span className="sm:hidden">{realTimeEnabled ? 'Actif' : 'Inactif'}</span>
             </Button>
             <Button
@@ -165,7 +186,7 @@ export default function PdgCommandCenter() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card>
             <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">Sant├® Syst├¿me</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Santé système</CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
@@ -231,7 +252,7 @@ export default function PdgCommandCenter() {
               <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">
                 <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Vue d'ensemble</span>
-                <span className="sm:hidden">Aper├ºu</span>
+                <span className="sm:hidden">Aperçu</span>
               </TabsTrigger>
               <TabsTrigger value="alerts" className="text-xs sm:text-sm px-2 sm:px-3">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -263,9 +284,9 @@ export default function PdgCommandCenter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>├ëtat des Services</CardTitle>
+                  <CardTitle>État des services</CardTitle>
                   <CardDescription>
-                    Derni├¿re v├®rification: {new Date(systemHealth.lastCheck).toLocaleString()}
+                    Dernière vérification : {new Date(systemHealth.lastCheck).toLocaleString('fr-FR')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -277,7 +298,7 @@ export default function PdgCommandCenter() {
                           <div>
                             <p className="font-medium">{service.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {service.responseTime}ms ÔÇó Erreurs: {service.errorRate}%
+                              {service.responseTime} ms • Erreurs : {service.errorRate}%
                             </p>
                           </div>
                         </div>
@@ -302,7 +323,7 @@ export default function PdgCommandCenter() {
                     onClick={detectAnomalies}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    D├®tecter les Anomalies
+                    Détecter les anomalies
                   </Button>
                   <Button
                     className="w-full justify-start"
@@ -310,7 +331,7 @@ export default function PdgCommandCenter() {
                     onClick={() => navigate('/pdg/debug')}
                   >
                     <AlertTriangle className="h-4 w-4 mr-2" />
-                    Voir les Erreurs D├®taill├®es
+                    Voir les erreurs détaillées
                   </Button>
                   <Button
                     className="w-full justify-start"
@@ -318,7 +339,7 @@ export default function PdgCommandCenter() {
                     onClick={() => navigate('/pdg/security')}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    Centre de S├®curit├®
+                    Centre de sécurité
                   </Button>
                 </CardContent>
               </Card>
@@ -335,9 +356,9 @@ export default function PdgCommandCenter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>├ëtat des Services</CardTitle>
+                  <CardTitle>État des services</CardTitle>
                   <CardDescription>
-                    Derni├¿re v├®rification: {new Date(systemHealth.lastCheck).toLocaleString()}
+                    Dernière vérification : {new Date(systemHealth.lastCheck).toLocaleString('fr-FR')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -349,7 +370,7 @@ export default function PdgCommandCenter() {
                           <div>
                             <p className="font-medium">{service.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {service.responseTime}ms ÔÇó Erreurs: {service.errorRate}%
+                              {service.responseTime} ms • Erreurs : {service.errorRate}%
                             </p>
                           </div>
                         </div>
@@ -374,7 +395,7 @@ export default function PdgCommandCenter() {
                     onClick={detectAnomalies}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    D├®tecter les Anomalies
+                    Détecter les anomalies
                   </Button>
                   <Button
                     className="w-full justify-start"
@@ -382,7 +403,7 @@ export default function PdgCommandCenter() {
                     onClick={() => navigate('/pdg/debug')}
                   >
                     <AlertTriangle className="h-4 w-4 mr-2" />
-                    Voir les Erreurs D├®taill├®es
+                    Voir les erreurs détaillées
                   </Button>
                   <Button
                     className="w-full justify-start"
@@ -390,7 +411,7 @@ export default function PdgCommandCenter() {
                     onClick={() => navigate('/pdg/security')}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    Centre de S├®curit├®
+                    Centre de sécurité
                   </Button>
                 </CardContent>
               </Card>
@@ -402,7 +423,7 @@ export default function PdgCommandCenter() {
             <Card>
               <CardHeader>
                 <CardTitle>Monitoring des Services</CardTitle>
-                <CardDescription>├ëtat d├®taill├® de tous les services connect├®s</CardDescription>
+                <CardDescription>État détaillé de tous les services connectés</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -417,7 +438,7 @@ export default function PdgCommandCenter() {
                                 <h4 className="font-semibold">{service.name}</h4>
                               </div>
                               <div className="text-sm text-muted-foreground space-y-1">
-                                <p>Temps de r├®ponse: {service.responseTime}ms</p>
+                                <p>Temps de réponse : {service.responseTime} ms</p>
                                 <p>Taux d'erreur: {service.errorRate}%</p>
                                 <p>Uptime: {systemHealth.uptime}%</p>
                               </div>
@@ -439,7 +460,7 @@ export default function PdgCommandCenter() {
           <TabsContent value="interfaces">
             <Card>
               <CardHeader>
-                <CardTitle>M├®triques des Interfaces Utilisateur</CardTitle>
+                <CardTitle>Métriques des interfaces utilisateur</CardTitle>
                 <CardDescription>Performance et utilisation par interface</CardDescription>
               </CardHeader>
               <CardContent>
@@ -492,10 +513,10 @@ export default function PdgCommandCenter() {
           {/* Auto-Fixes */}
           <TabsContent value="fixes">
             <div className="space-y-4">
-              {/* Erreurs r├®centes ├á analyser */}
+              {/* Erreurs récentes à analyser */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Erreurs R├®centes - Analyse IA</CardTitle>
+                  <CardTitle>Erreurs récentes - Analyse IA</CardTitle>
                   <CardDescription>
                     Cliquez sur "Analyser avec IA" pour obtenir une solution automatique
                   </CardDescription>
@@ -511,7 +532,7 @@ export default function PdgCommandCenter() {
                                 <div className="flex items-center gap-2">
                                   <Badge variant={
                                     error.severity === 'critique' ? 'destructive' :
-                                    error.severity === 'mod├®r├®e' ? 'secondary' : 'outline'
+                                    error.severity === 'modérée' ? 'secondary' : 'outline'
                                   }>
                                     {error.severity}
                                   </Badge>
@@ -526,16 +547,16 @@ export default function PdgCommandCenter() {
                                     <p className="text-xs">{error.metadata.ai_analysis.cause}</p>
                                     <div className="flex items-center gap-2">
                                       <Badge variant={
-                                        error.metadata.ai_analysis.autoFixable 
-                                          ? 'default' 
+                                        error.metadata.ai_analysis.autoFixable
+                                          ? 'default'
                                           : 'secondary'
                                       }>
-                                        {error.metadata.ai_analysis.autoFixable 
-                                          ? 'Auto-fixable' 
+                                        {error.metadata.ai_analysis.autoFixable
+                                          ? 'Auto-fixable'
                                           : 'Manuel'}
                                       </Badge>
                                       <Badge variant="outline">
-                                        Priorit├®: {error.metadata.ai_analysis.priority}
+                                        Priorité : {error.metadata.ai_analysis.priority}
                                       </Badge>
                                     </div>
                                   </div>
@@ -568,7 +589,7 @@ export default function PdgCommandCenter() {
                 <CardHeader>
                   <CardTitle>Correctifs Automatiques Actifs</CardTitle>
                   <CardDescription>
-                    {autoFixes.length} correctifs g├®n├®r├®s par l'IA
+                    {autoFixes.length} correctifs générés par l'IA
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -590,8 +611,8 @@ export default function PdgCommandCenter() {
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <span>Appliqu├®: {fix.times_applied} fois</span>
-                                <span>Taux de r├®ussite: {fix.success_rate.toFixed(1)}%</span>
+                                <span>Appliqué : {fix.times_applied} fois</span>
+                                <span>Taux de réussite : {fix.success_rate.toFixed(1)}%</span>
                               </div>
                             </div>
                           </CardContent>
@@ -613,13 +634,13 @@ export default function PdgCommandCenter() {
                   IA Copilote
                 </CardTitle>
                 <CardDescription>
-                  Posez vos questions sur l'├®tat du syst├¿me et obtenez des recommandations
+                  Posez vos questions sur l'état du système et obtenez des recommandations claires
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Ex: Quelles sont les erreurs les plus fr├®quentes ?"
+                    placeholder="Ex : Quelles sont les erreurs les plus fréquentes ?"
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleAskAI()}
@@ -636,18 +657,20 @@ export default function PdgCommandCenter() {
                 {aiResponse && (
                   <Card className="bg-muted">
                     <CardContent className="pt-6">
-                      <p className="text-sm whitespace-pre-wrap">{aiResponse}</p>
+                      <div className="prose prose-sm max-w-none text-foreground [&_p]:mb-3 [&_ol]:my-3 [&_ul]:my-3 [&_li]:my-1 [&_strong]:text-foreground">
+                        <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Questions sugg├®r├®es:</p>
+                  <p className="text-sm font-medium">Questions suggérées :</p>
                   <div className="flex flex-wrap gap-2">
                     {[
-                      'Quel est l\'├®tat global du syst├¿me ?',
+                      'Quel est l\'état global du système ?',
                       'Quelles interfaces ont le plus d\'erreurs ?',
-                      'Recommande des optimisations',
+                      'Recommande des améliorations',
                       'Analyse les performances'
                     ].map((suggestion) => (
                       <Button

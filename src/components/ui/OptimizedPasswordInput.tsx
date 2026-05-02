@@ -81,7 +81,7 @@ const OptimizedPasswordInput = memo(({
   const [localValue, setLocalValue] = useState(value);
   const [showPassword, setShowPassword] = useState(false);
   const [strength, setStrength] = useState<PasswordStrength>({ score: 0, message: "", color: "" });
-  
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const strengthDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -90,6 +90,7 @@ const OptimizedPasswordInput = memo(({
     if (value !== localValue) {
       setLocalValue(value);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   // Handler ULTRA LÉGER - mise à jour state local uniquement

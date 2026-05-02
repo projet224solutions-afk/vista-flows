@@ -89,7 +89,7 @@ export function DriverStatsRow({
               )}>
                 <stat.icon className={cn("w-3.5 h-3.5", stat.iconColor)} />
               </div>
-              
+
               {/* Value - optimisé */}
               <div className="flex flex-col w-full">
                 <span className="text-white font-bold text-xs leading-tight truncate">

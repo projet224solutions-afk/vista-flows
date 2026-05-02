@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Search, UserCheck, UserX, Shield, Users, 
-  Store, RefreshCw, Eye, Filter
+import {
+  Search, UserCheck, UserX, _Shield, Users,
+  Store, RefreshCw, _Eye, Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -42,7 +42,7 @@ interface UserProfile {
   created_at: string;
 }
 
-export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModuleProps) {
+export function AgentUsersModule({ _agentId, canManage = false }: AgentUsersModuleProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +55,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
 
   useEffect(() => {
     filterUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, roleFilter, users]);
 
   const loadUsers = async () => {
@@ -104,7 +105,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(u => 
+      filtered = filtered.filter(u =>
         u.first_name?.toLowerCase().includes(term) ||
         u.last_name?.toLowerCase().includes(term) ||
         u.email?.toLowerCase().includes(term) ||

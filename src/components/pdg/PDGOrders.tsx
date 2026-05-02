@@ -87,13 +87,13 @@ export default function PDGOrders() {
 
       console.log('Orders loaded:', data?.length || 0);
       setOrders(data || []);
-      
+
       // Calculer les stats
       const pending = data?.filter(o => o.status === 'pending').length || 0;
       const confirmed = data?.filter(o => o.status === 'confirmed').length || 0;
       const completed = data?.filter(o => o.status === 'delivered').length || 0;
       const cancelled = data?.filter(o => o.status === 'cancelled').length || 0;
-      
+
       setStats({ pending, confirmed, completed, cancelled });
     } catch (error: any) {
       console.error('Erreur chargement commandes:', error);
@@ -105,6 +105,7 @@ export default function PDGOrders() {
 
   useEffect(() => {
     loadOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusBadge = (status: string) => {
@@ -145,7 +146,7 @@ export default function PDGOrders() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Confirmées</CardTitle>

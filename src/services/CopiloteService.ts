@@ -27,11 +27,11 @@ export interface CopiloteResponse {
 }
 
 // 🔒 WHITELIST DES ACTIONS AUTORISÉES (doit correspondre au backend)
-export type AllowedBusinessActionType = 
-  | 'wallet_balance' 
-  | 'transaction_history' 
-  | 'finance_simulation' 
-  | 'rate_show' 
+export type AllowedBusinessActionType =
+  | 'wallet_balance'
+  | 'transaction_history'
+  | 'finance_simulation'
+  | 'rate_show'
   | 'system_stats';
 
 export interface BusinessAction {
@@ -53,7 +53,7 @@ class CopiloteService {
     lastFailureTime: 0,
     state: 'closed'
   };
-  
+
   private readonly MAX_FAILURES = 3;
   private readonly RESET_TIMEOUT = 30000; // 30 secondes
   private readonly HALF_OPEN_TIMEOUT = 10000; // 10 secondes
@@ -63,22 +63,22 @@ class CopiloteService {
    */
   private checkCircuitBreaker(): { allowed: boolean; reason?: string } {
     const now = Date.now();
-    
+
     if (this.circuitBreaker.state === 'open') {
       const timeSinceLastFailure = now - this.circuitBreaker.lastFailureTime;
-      
+
       if (timeSinceLastFailure > this.RESET_TIMEOUT) {
         // Passer en half-open pour tester
         this.circuitBreaker.state = 'half-open';
         return { allowed: true };
       }
-      
-      return { 
-        allowed: false, 
-        reason: 'Circuit breaker ouvert - Service temporairement indisponible' 
+
+      return {
+        allowed: false,
+        reason: 'Circuit breaker ouvert - Service temporairement indisponible'
       };
     }
-    
+
     return { allowed: true };
   }
 
@@ -96,7 +96,7 @@ class CopiloteService {
   private recordFailure(): void {
     this.circuitBreaker.failures++;
     this.circuitBreaker.lastFailureTime = Date.now();
-    
+
     if (this.circuitBreaker.failures >= this.MAX_FAILURES) {
       this.circuitBreaker.state = 'open';
       console.warn('🚨 Circuit breaker ouvert - Trop d\'échecs détectés');
@@ -266,7 +266,7 @@ class CopiloteService {
         await this.logAudit('business_action', action, false, error.message);
         throw error;
       }
-      
+
       this.recordSuccess();
       await this.logAudit('business_action', action, true);
       return data;
@@ -406,7 +406,7 @@ class CopiloteService {
         .eq('pdg_user_id', user.user.id);
 
       return { total_conversations: count || 0, service_status: 'online' };
-    } catch (error) {
+    } catch (_error) {
       return { total_conversations: 0, service_status: 'offline' };
     }
   }

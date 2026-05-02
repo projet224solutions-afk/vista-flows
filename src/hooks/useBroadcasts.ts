@@ -30,7 +30,7 @@ export interface BroadcastStats {
 }
 
 export function useBroadcasts() {
-  const { user, profile } = useAuth();
+  const { user, _profile } = useAuth();
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [stats, setStats] = useState<BroadcastStats>({ total: 0, unread: 0, urgent: 0 });
   const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ export function useBroadcasts() {
     if (!user?.id) return false;
 
     try {
-      const { data, error } = await supabase.rpc('mark_broadcast_read', {
+      const { _data, error } = await supabase.rpc('mark_broadcast_read', {
         p_broadcast_id: broadcastId
       });
 

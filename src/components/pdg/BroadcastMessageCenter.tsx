@@ -43,19 +43,19 @@ import {
   Clock,
   AlertTriangle,
   Bell,
-  Mail,
+  _Mail,
   Image,
   Link,
   Calendar,
-  BarChart3,
+  _BarChart3,
   Eye,
-  CheckCircle,
-  XCircle,
+  _CheckCircle,
+  _XCircle,
   RefreshCw,
   Megaphone,
   Target,
   Zap,
-  TrendingUp,
+  _TrendingUp,
   History
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,7 +75,7 @@ interface BroadcastMessage {
   created_at: string;
 }
 
-interface BroadcastMetrics {
+interface _BroadcastMetrics {
   total_recipients: number;
   total_read: number;
   open_rate: number;

@@ -324,7 +324,7 @@ class MultiCloudHealthService {
       const rt = Date.now() - start;
       if (error) return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', 'degraded', rt, error.message || 'Erreur');
       return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', rt > 5000 ? 'degraded' : 'operational', rt, `${rt}ms`);
-    } catch (e) {
+    } catch (_e) {
       return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', 'degraded', Date.now() - start, 'Timeout');
     }
   }
@@ -391,7 +391,7 @@ class MultiCloudHealthService {
       const rt = Date.now() - start;
       if (error) return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', 'degraded', rt, error.message || 'Erreur');
       return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', rt > 5000 ? 'degraded' : 'operational', rt, `${rt}ms`);
-    } catch (e) {
+    } catch (_e) {
       return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', 'unknown', Date.now() - start, 'Erreur check');
     }
   }

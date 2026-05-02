@@ -1,6 +1,6 @@
 /**
  * 💰 Routes Wallet - Gestion des portefeuilles utilisateurs
- * 
+ *
  * Utilise la service role de Supabase pour contourner les RLS
  * Ces routes doivent être appelées UNIQUEMENT depuis le frontend autorisé
  */
@@ -20,14 +20,14 @@ const supabase = createClient(
 
 /**
  * POST /api/wallet/initialize
- * 
+ *
  * Initialise ou charge le wallet d'un utilisateur
  * La RLS est contournée via la service_role côté backend
- * 
+ *
  * Body: {
  *   user_id: string (UUID de l'utilisateur)
  * }
- * 
+ *
  * Response: {
  *   id: string,
  *   user_id: string,
@@ -58,7 +58,7 @@ router.post('/initialize', verifyJWT, async (req, res) => {
 
     // Vérifier si l'utilisateur existe dans auth.users
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user_id);
-    
+
     if (userError || !userData) {
       logger.error(`User not found: ${user_id}`, userError);
       return res.status(404).json({
@@ -131,7 +131,7 @@ router.post('/initialize', verifyJWT, async (req, res) => {
 
 /**
  * POST /api/wallet/check
- * 
+ *
  * Vérifie et retourne les informations du wallet
  */
 router.post('/check', verifyJWT, async (req, res) => {

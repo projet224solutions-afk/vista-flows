@@ -1,5 +1,5 @@
 ﻿/**
- * PAGE CLIENT LIVRAISON COMPL├êTE
+ * PAGE CLIENT LIVRAISON COMPLÈTE
  * Interface pour commander, suivre et consulter l'historique des livraisons
  * 224Solutions - Delivery System
  */
@@ -80,9 +80,10 @@ export default function DeliveryClient() {
     loadNearbyDrivers();
     loadCurrentDelivery();
     loadDeliveryHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Temps r├®el pour la livraison en cours
+  // Temps réel pour la livraison en cours
   useEffect(() => {
     if (!currentDelivery?.id) return;
 
@@ -96,9 +97,9 @@ export default function DeliveryClient() {
       }, (payload) => {
         console.log('Delivery updated:', payload);
         setCurrentDelivery(payload.new as Delivery);
-        
+
         if (payload.new.status === 'delivered') {
-          toast.success('Livraison termin├®e !');
+          toast.success('Livraison terminée !');
           setCurrentDelivery(null);
           loadDeliveryHistory();
         }
@@ -108,6 +109,7 @@ export default function DeliveryClient() {
     return () => {
       subscription.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDelivery?.id]);
 
   const loadNearbyDrivers = async () => {
@@ -187,14 +189,14 @@ export default function DeliveryClient() {
     }
 
     if (!user) {
-      toast.error('Vous devez ├¬tre connect├® pour commander une livraison');
+      toast.error('Vous devez être connecté pour commander une livraison');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Calculer le prix estim├® (exemple simple)
+      // Calculer le prix estimé (exemple simple)
       const estimatedFee = Math.floor(Math.random() * 15000) + 10000;
 
       const { data, error } = await supabase
@@ -212,7 +214,7 @@ export default function DeliveryClient() {
 
       if (error) throw error;
 
-      toast.success('Commande de livraison cr├®├®e avec succ├¿s !');
+      toast.success('Commande de livraison créée avec succès !');
       setCurrentDelivery(data as any);
       setActiveTab('tracking');
 
@@ -223,8 +225,8 @@ export default function DeliveryClient() {
       setRecipientName('');
       setRecipientPhone('');
     } catch (error) {
-      console.error('Erreur cr├®ation livraison:', error);
-      toast.error('Erreur lors de la cr├®ation de la commande');
+      console.error('Erreur création livraison:', error);
+      toast.error('Erreur lors de la création de la commande');
     } finally {
       setLoading(false);
     }
@@ -238,11 +240,11 @@ export default function DeliveryClient() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: 'En attente', variant: 'secondary' as const },
-      assigned: { label: 'Assign├®e', variant: 'default' as const },
-      picked_up: { label: 'R├®cup├®r├®e', variant: 'default' as const },
+      assigned: { label: 'Assignée', variant: 'default' as const },
+      picked_up: { label: 'Récupérée', variant: 'default' as const },
       in_transit: { label: 'En cours', variant: 'default' as const },
-      delivered: { label: 'Livr├®e', variant: 'default' as const },
-      cancelled: { label: 'Annul├®e', variant: 'destructive' as const }
+      delivered: { label: 'Livrée', variant: 'default' as const },
+      cancelled: { label: 'Annulée', variant: 'destructive' as const }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -280,8 +282,8 @@ export default function DeliveryClient() {
 
             <div className="flex items-center gap-2">
               <UserIdDisplay />
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={handleLogout}
               >
@@ -321,7 +323,7 @@ export default function DeliveryClient() {
                 <h2 className="text-xl font-bold mb-4">Nouvelle livraison</h2>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pickup">Adresse de r├®cup├®ration *</Label>
+                  <Label htmlFor="pickup">Adresse de récupération *</Label>
                   <Input
                     id="pickup"
                     placeholder="Ex: Rue KA001, Kaloum"
@@ -344,7 +346,7 @@ export default function DeliveryClient() {
                   <Label htmlFor="description">Description du colis *</Label>
                   <Textarea
                     id="description"
-                    placeholder="D├®crivez le colis ├á livrer..."
+                    placeholder="Décrivez le colis à livrer..."
                     value={packageDescription}
                     onChange={(e) => setPackageDescription(e.target.value)}
                   />
@@ -362,7 +364,7 @@ export default function DeliveryClient() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">T├®l├®phone du destinataire</Label>
+                    <Label htmlFor="phone">Téléphone du destinataire</Label>
                     <Input
                       id="phone"
                       placeholder="+224 ..."
@@ -372,12 +374,12 @@ export default function DeliveryClient() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={handleBookDelivery} 
+                <Button
+                  onClick={handleBookDelivery}
                   className="w-full"
                   disabled={loading}
                 >
-                  {loading ? 'Cr├®ation en cours...' : 'Commander la livraison'}
+                  {loading ? 'Création en cours...' : 'Commander la livraison'}
                 </Button>
               </CardContent>
             </Card>
@@ -400,7 +402,7 @@ export default function DeliveryClient() {
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span>{driver.rating.toFixed(1)}</span>
-                            <span>ÔÇó</span>
+                            <span>•</span>
                             <span>{driver.completedDeliveries} livraisons</span>
                           </div>
                         </div>
@@ -431,7 +433,7 @@ export default function DeliveryClient() {
                     <div className="flex items-start gap-3 p-3 bg-accent rounded-lg">
                       <MapPin className="w-5 h-5 text-livreur-primary mt-1" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">R├®cup├®ration</p>
+                        <p className="text-sm font-medium text-muted-foreground">Récupération</p>
                         <p className="font-medium">{currentDelivery.pickup_address}</p>
                       </div>
                     </div>
@@ -489,7 +491,7 @@ export default function DeliveryClient() {
                 <CardContent className="p-12 text-center">
                   <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">Aucune livraison en cours</p>
-                  <Button 
+                  <Button
                     className="mt-4"
                     onClick={() => setActiveTab('booking')}
                   >
@@ -502,8 +504,8 @@ export default function DeliveryClient() {
 
           {/* Onglet Wallet */}
           <TabsContent value="wallet">
-            <UniversalWalletDashboard 
-              userId={user?.id || ''} 
+            <UniversalWalletDashboard
+              userId={user?.id || ''}
               showTransactions={true}
             />
           </TabsContent>
@@ -535,7 +537,7 @@ export default function DeliveryClient() {
                         </div>
                         <div className="text-sm space-y-1">
                           <p><span className="text-muted-foreground">De:</span> {delivery.pickup_address}</p>
-                          <p><span className="text-muted-foreground">├Ç:</span> {delivery.delivery_address}</p>
+                          <p><span className="text-muted-foreground">À:</span> {delivery.delivery_address}</p>
                           <p className="font-semibold text-livreur-primary">
                             {formatCurrency(delivery.delivery_fee)}
                           </p>

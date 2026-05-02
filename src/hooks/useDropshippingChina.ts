@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import type {
   ChinaImport,
   PriceAlert,
-  ChinaTracking,
+  _ChinaTracking,
   ChinaCost,
   SupplierReview,
   ChinaSettings,
@@ -137,7 +137,7 @@ export function useDropshippingChina() {
         .select('quality_score')
         .eq('supplier_region', 'CHINA');
 
-      const avgScore = suppliersData?.length 
+      const avgScore = suppliersData?.length
         ? suppliersData.reduce((sum, s) => sum + (s.quality_score || 0), 0) / suppliersData.length
         : 0;
 
@@ -301,7 +301,7 @@ export function useDropshippingChina() {
     };
 
     const priceUsd = supplierPrice * (rates[supplierCurrency] || 1);
-    
+
     // Frais selon méthode transport
     const shippingCosts: Record<string, { domestic: number; intl: number }> = {
       express: { domestic: 1, intl: 15 },
@@ -417,7 +417,7 @@ export function useDropshippingChina() {
   ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       await supabase
         .from('dropship_china_logs')
         .insert([{

@@ -13,15 +13,15 @@ import { toast } from "sonner";
 import { Shield, Trophy, Award } from "lucide-react";
 
 const bugReportSchema = z.object({
-  reporter_name: z.string().min(2, "Le nom doit contenir au moins 2 caract├¿res").max(100),
+  reporter_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(100),
   reporter_email: z.string().email("Email invalide").max(255),
   reporter_github: z.string().max(100).optional(),
-  title: z.string().min(5, "Le titre doit contenir au moins 5 caract├¿res").max(200),
-  description: z.string().min(20, "La description doit contenir au moins 20 caract├¿res").max(5000),
+  title: z.string().min(5, "Le titre doit contenir au moins 5 caractères").max(200),
+  description: z.string().min(20, "La description doit contenir au moins 20 caractères").max(5000),
   severity: z.enum(["critical", "high", "medium", "low", "info"]),
   category: z.enum(["authentication", "authorization", "injection", "xss", "csrf", "data_exposure", "crypto", "business_logic", "other"]),
-  steps_to_reproduce: z.string().min(20, "Veuillez fournir des ├®tapes d├®taill├®es").max(5000),
-  impact: z.string().min(20, "Veuillez d├®crire l'impact").max(5000),
+  steps_to_reproduce: z.string().min(20, "Veuillez fournir des étapes détaillées").max(5000),
+  impact: z.string().min(20, "Veuillez décrire l'impact").max(5000),
   proof_of_concept: z.string().max(10000).optional(),
   suggested_fix: z.string().max(5000).optional(),
 });
@@ -46,8 +46,8 @@ const BugBounty = () => {
 
       if (error) throw error;
 
-      toast.success("Rapport envoy├® avec succ├¿s!", {
-        description: "Notre ├®quipe de s├®curit├® examinera votre rapport. Merci pour votre contribution!",
+      toast.success("Rapport envoyé avec succès !", {
+        description: "Notre équipe de sécurité examinera votre rapport. Merci pour votre contribution !",
       });
       form.reset();
     } catch (error: any) {
@@ -70,7 +70,7 @@ const BugBounty = () => {
           </div>
           <h1 className="text-4xl font-bold">Programme Bug Bounty 224Solutions</h1>
           <p className="text-xl text-muted-foreground">
-            Aidez-nous ├á s├®curiser notre plateforme et gagnez des r├®compenses
+            Aidez-nous à sécuriser notre plateforme et gagnez des récompenses
           </p>
         </div>
 
@@ -82,7 +82,7 @@ const BugBounty = () => {
               <CardTitle className="text-lg">Critique</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">500-2000Ôé¼</p>
+              <p className="text-2xl font-bold">500-2000€</p>
             </CardContent>
           </Card>
 
@@ -92,7 +92,7 @@ const BugBounty = () => {
               <CardTitle className="text-lg">Haute</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">200-500Ôé¼</p>
+              <p className="text-2xl font-bold">200-500€</p>
             </CardContent>
           </Card>
 
@@ -102,7 +102,7 @@ const BugBounty = () => {
               <CardTitle className="text-lg">Moyenne</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">50-200Ôé¼</p>
+              <p className="text-2xl font-bold">50-200€</p>
             </CardContent>
           </Card>
 
@@ -112,7 +112,7 @@ const BugBounty = () => {
               <CardTitle className="text-lg">Basse</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">10-50Ôé¼</p>
+              <p className="text-2xl font-bold">10-50€</p>
             </CardContent>
           </Card>
         </div>
@@ -120,9 +120,9 @@ const BugBounty = () => {
         {/* Submission Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Soumettre une vuln├®rabilit├®</CardTitle>
+            <CardTitle>Soumettre une vulnérabilité</CardTitle>
             <CardDescription>
-              Remplissez ce formulaire pour signaler une vuln├®rabilit├® de s├®curit├®
+              Remplissez ce formulaire pour signaler une vulnérabilité de sécurité
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -168,7 +168,7 @@ const BugBounty = () => {
                         <Input placeholder="@username" {...field} />
                       </FormControl>
                       <FormDescription>
-                        Pour appara├«tre dans le Hall of Fame
+                        Pour apparaître dans le Hall of Fame
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -180,7 +180,7 @@ const BugBounty = () => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Titre de la vuln├®rabilit├® *</FormLabel>
+                      <FormLabel>Titre de la vulnérabilité *</FormLabel>
                       <FormControl>
                         <Input placeholder="SQL Injection dans la page de connexion" {...field} />
                       </FormControl>
@@ -195,11 +195,11 @@ const BugBounty = () => {
                     name="severity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>S├®v├®rit├® *</FormLabel>
+                        <FormLabel>Sévérité *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="S├®lectionnez la s├®v├®rit├®" />
+                              <SelectValue placeholder="Sélectionnez la sévérité" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -220,11 +220,11 @@ const BugBounty = () => {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cat├®gorie *</FormLabel>
+                        <FormLabel>Catégorie *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="S├®lectionnez la cat├®gorie" />
+                              <SelectValue placeholder="Sélectionnez la catégorie" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -233,9 +233,9 @@ const BugBounty = () => {
                             <SelectItem value="injection">Injection SQL/NoSQL</SelectItem>
                             <SelectItem value="xss">XSS (Cross-Site Scripting)</SelectItem>
                             <SelectItem value="csrf">CSRF</SelectItem>
-                            <SelectItem value="data_exposure">Exposition de donn├®es</SelectItem>
+                            <SelectItem value="data_exposure">Exposition de données</SelectItem>
                             <SelectItem value="crypto">Cryptographie</SelectItem>
-                            <SelectItem value="business_logic">Logique m├®tier</SelectItem>
+                            <SelectItem value="business_logic">Logique métier</SelectItem>
                             <SelectItem value="other">Autre</SelectItem>
                           </SelectContent>
                         </Select>
@@ -250,10 +250,10 @@ const BugBounty = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description d├®taill├®e *</FormLabel>
+                      <FormLabel>Description détaillée *</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="D├®crivez la vuln├®rabilit├® en d├®tail..."
+                          placeholder="Décrivez la vulnérabilité en détail..."
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -268,7 +268,7 @@ const BugBounty = () => {
                   name="steps_to_reproduce"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>├ëtapes pour reproduire *</FormLabel>
+                      <FormLabel>Étapes pour reproduire *</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="1. Allez sur la page X&#10;2. Cliquez sur Y&#10;3. Entrez Z..."
@@ -289,7 +289,7 @@ const BugBounty = () => {
                       <FormLabel>Impact *</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="D├®crivez l'impact potentiel de cette vuln├®rabilit├®..."
+                          placeholder="Décrivez l'impact potentiel de cette vulnérabilité..."
                           className="min-h-[100px]"
                           {...field}
                         />
@@ -307,13 +307,13 @@ const BugBounty = () => {
                       <FormLabel>Preuve de concept (optionnel)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Code, captures d'├®cran, vid├®o, etc..."
+                          placeholder="Code, captures d'écran, vidéo, etc..."
                           className="min-h-[100px]"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Ajoutez du code, des liens vers des captures d'├®cran, etc.
+                        Ajoutez du code, des liens vers des captures d'écran, etc.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -328,7 +328,7 @@ const BugBounty = () => {
                       <FormLabel>Suggestion de correction (optionnel)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Comment pourrait-on corriger cette vuln├®rabilit├®..."
+                          placeholder="Comment pourrait-on corriger cette vulnérabilité..."
                           className="min-h-[100px]"
                           {...field}
                         />
@@ -349,33 +349,33 @@ const BugBounty = () => {
         {/* Rules */}
         <Card>
           <CardHeader>
-            <CardTitle>R├¿gles du programme</CardTitle>
+            <CardTitle>Règles du programme</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="font-semibold mb-2">Ô£à Scope autoris├®</h3>
+              <h3 className="font-semibold mb-2">Scope autorisé</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>224solution.net et tous ses sous-domaines</li>
                 <li>Applications mobiles officielles</li>
-                <li>APIs publiques document├®es</li>
+                <li>APIs publiques documentées</li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">ÔØî Hors scope</h3>
+              <h3 className="font-semibold mb-2">Hors scope</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Attaques par d├®ni de service (DoS/DDoS)</li>
+                <li>Attaques par déni de service (DoS/DDoS)</li>
                 <li>Spam ou phishing</li>
                 <li>Tests sur des comptes qui ne vous appartiennent pas</li>
                 <li>Social engineering</li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">­ƒôï Conditions</h3>
+              <h3 className="font-semibold mb-2">Conditions</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Divulgation responsable uniquement</li>
-                <li>Ne pas exploiter la vuln├®rabilit├® au-del├á du n├®cessaire</li>
-                <li>Ne pas acc├®der aux donn├®es d'autres utilisateurs</li>
-                <li>Rapport clair et d├®taill├®</li>
+                <li>Ne pas exploiter la vulnérabilité au-delà du nécessaire</li>
+                <li>Ne pas accéder aux données d'autres utilisateurs</li>
+                <li>Rapport clair et détaillé</li>
               </ul>
             </div>
           </CardContent>

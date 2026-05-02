@@ -51,9 +51,9 @@ export async function checkSupabaseConnection() {
       .from('profiles')
       .select('count')
       .limit(1);
-    
+
     if (error) throw error;
-    
+
     return { success: true, message: 'Supabase connection OK' };
   } catch (error) {
     return { success: false, message: error.message };

@@ -17,9 +17,9 @@ import {
   Video,
   MoreVertical,
   Paperclip,
-  Smile,
-  Image as ImageIcon,
-  Mic,
+  _Smile,
+  Image as _ImageIcon,
+  _Mic,
   Check,
   CheckCheck,
   Clock,
@@ -68,12 +68,12 @@ interface MobileChatLayoutProps {
   conversations: ChatConversation[];
   messages: ChatMessage[];
   currentUserId?: string;
-  
+
   // État
   selectedConversation: ChatConversation | null;
   isLoading?: boolean;
   isSending?: boolean;
-  
+
   // Callbacks
   onSelectConversation: (conversation: ChatConversation) => void;
   onSendMessage: (message: string, attachments?: File[]) => void;
@@ -81,7 +81,7 @@ interface MobileChatLayoutProps {
   onStartCall?: (type: 'audio' | 'video') => void;
   onNewConversation?: () => void;
   onSearch?: (query: string) => void;
-  
+
   // Options
   showConversationList?: boolean;
   showHeader?: boolean;
@@ -118,11 +118,11 @@ function MessageBubble({ message, isOwn, locale }: { message: ChatMessage; isOwn
           </AvatarFallback>
         </Avatar>
       )}
-      
+
       <div className={cn(
         "max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm min-w-0",
-        isOwn 
-          ? "bg-primary text-primary-foreground rounded-br-md" 
+        isOwn
+          ? "bg-primary text-primary-foreground rounded-br-md"
           : "bg-muted rounded-bl-md"
       )}>
         {!isOwn && message.sender_name && (
@@ -130,19 +130,19 @@ function MessageBubble({ message, isOwn, locale }: { message: ChatMessage; isOwn
             {message.sender_name}
           </p>
         )}
-        
+
         {message.type === 'image' && message.file_url && (
-          <img 
-            src={message.file_url} 
-            alt="Image" 
+          <img
+            src={message.file_url}
+            alt="Image"
             className="rounded-lg max-w-full mb-2"
           />
         )}
-        
+
         {message.type === 'file' && message.file_url && (
-          <a 
-            href={message.file_url} 
-            target="_blank" 
+          <a
+            href={message.file_url}
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm underline mb-2"
           >
@@ -150,11 +150,11 @@ function MessageBubble({ message, isOwn, locale }: { message: ChatMessage; isOwn
             {message.file_name || 'Fichier'}
           </a>
         )}
-        
+
         {message.content && (
           <p className="text-sm leading-relaxed break-words">{message.content}</p>
         )}
-        
+
         <div className={cn(
           "flex items-center justify-end gap-1 mt-1",
           isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
@@ -168,14 +168,14 @@ function MessageBubble({ message, isOwn, locale }: { message: ChatMessage; isOwn
 }
 
 // Composant Conversation Item
-function ConversationItem({ 
-  conversation, 
-  isSelected, 
+function ConversationItem({
+  conversation,
+  isSelected,
   onClick,
   t,
   locale
-}: { 
-  conversation: ChatConversation; 
+}: {
+  conversation: ChatConversation;
   isSelected: boolean;
   onClick: () => void;
   t: (key: string) => string;
@@ -209,7 +209,7 @@ function ConversationItem({
           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
         )}
       </div>
-      
+
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center justify-between gap-2">
           <span className="font-medium truncate">{conversation.name}</span>
@@ -248,7 +248,7 @@ export default function MobileChatLayout({
   onStartCall,
   onNewConversation,
   onSearch,
-  showConversationList = true,
+  _showConversationList = true,
   showHeader = true,
   showCallButtons = true,
   title = 'Messages',
@@ -262,10 +262,10 @@ export default function MobileChatLayout({
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Locale pour date-fns basée sur la langue globale
   const currentLocale = dateLocales[language] || enUS;
-  
+
   // Valeurs par défaut traduites
   const defaultEmptyMessage = emptyStateMessage || t('messaging.selectConversation') || 'Select a conversation';
   const defaultPlaceholder = placeholder || t('messaging.placeholder') || 'Type your message...';
@@ -306,7 +306,7 @@ export default function MobileChatLayout({
 
   // Filter conversations
   const filteredConversations = searchQuery
-    ? conversations.filter(c => 
+    ? conversations.filter(c =>
         c.name?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : conversations;
@@ -325,9 +325,9 @@ export default function MobileChatLayout({
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold">{title}</h1>
               {onNewConversation && (
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  size="icon"
+                  variant="ghost"
                   onClick={onNewConversation}
                   className="h-9 w-9"
                 >
@@ -335,7 +335,7 @@ export default function MobileChatLayout({
                 </Button>
               )}
             </div>
-            
+
             {/* Barre de recherche */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -348,7 +348,7 @@ export default function MobileChatLayout({
             </div>
           </div>
         )}
-        
+
         {/* Liste */}
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
@@ -376,7 +376,7 @@ export default function MobileChatLayout({
           </div>
         </ScrollArea>
       </div>
-      
+
       {/* Zone de chat */}
       <div className={cn(
         "flex-1 flex flex-col bg-background",
@@ -386,42 +386,42 @@ export default function MobileChatLayout({
           <>
             {/* Header chat */}
             <div className="flex items-center gap-3 p-3 border-b border-border bg-card">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleBack}
                 className="md:hidden h-9 w-9"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              
+
               <Avatar className="w-10 h-10">
                 <AvatarImage src={selectedConversation.avatar} />
                 <AvatarFallback className="bg-primary/10 text-primary">
                   {selectedConversation.name?.charAt(0)?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{selectedConversation.name}</h2>
                 {selectedConversation.isOnline && (
                   <p className="text-xs text-green-500">En ligne</p>
                 )}
               </div>
-              
+
               {showCallButtons && onStartCall && (
                 <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => onStartCall('audio')}
                     className="h-9 w-9"
                   >
                     <Phone className="w-4 h-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => onStartCall('video')}
                     className="h-9 w-9"
                   >
@@ -429,12 +429,12 @@ export default function MobileChatLayout({
                   </Button>
                 </div>
               )}
-              
+
               <Button variant="ghost" size="icon" className="h-9 w-9">
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               {messages.length === 0 ? (
@@ -446,9 +446,9 @@ export default function MobileChatLayout({
               ) : (
                 <>
                   {messages.map((msg) => (
-                    <MessageBubble 
-                      key={msg.id} 
-                      message={msg} 
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
                       isOwn={msg.sender_id === currentUserId || msg.isOwn}
                       locale={currentLocale}
                     />
@@ -457,22 +457,22 @@ export default function MobileChatLayout({
                 </>
               )}
             </ScrollArea>
-            
+
             {/* Input */}
             <div className="p-3 border-t border-border bg-card">
-              <form 
+              <form
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                 className="flex items-center gap-2"
               >
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   className="h-10 w-10 flex-shrink-0"
                 >
                   <Paperclip className="w-5 h-5" />
                 </Button>
-                
+
                 <Input
                   ref={inputRef}
                   value={message}
@@ -481,9 +481,9 @@ export default function MobileChatLayout({
                   className="flex-1 bg-muted/50 border-0"
                   disabled={isSending}
                 />
-                
-                <Button 
-                  type="submit" 
+
+                <Button
+                  type="submit"
                   size="icon"
                   disabled={!message.trim() || isSending}
                   className="h-10 w-10 flex-shrink-0 rounded-full"

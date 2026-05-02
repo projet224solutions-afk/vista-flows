@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -21,7 +21,7 @@ import {
   Phone,
   Video,
   Search,
-  Users,
+  _Users,
   Hash,
   Plus,
   ArrowLeft,
@@ -52,18 +52,18 @@ interface UniversalCommunicationHubProps {
   refreshTrigger?: number;
 }
 
-export default function UniversalCommunicationHub({ 
+export default function UniversalCommunicationHub({
   className,
   selectedConversationId,
-  refreshTrigger 
+  refreshTrigger
 }: UniversalCommunicationHubProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isMobile } = useResponsive();
   const { searchById, loading: searchLoading } = useSearchUserId();
   const { isUserOnline, getUserStatus } = useUserPresence();
-  const { userLanguage, isLoading: isTranslating } = useAutoTranslation({ autoTranslate: true });
-  
+  const { userLanguage, isLoading: _isTranslating } = useAutoTranslation({ autoTranslate: true });
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showSearchById, setShowSearchById] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -76,7 +76,7 @@ export default function UniversalCommunicationHub({
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showMobileChat, setShowMobileChat] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Charger les conversations
@@ -85,6 +85,7 @@ export default function UniversalCommunicationHub({
       loadConversations();
       loadNotifications();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refreshTrigger]);
 
   // 🔔 Real-time subscription pour synchroniser les badges
@@ -122,6 +123,7 @@ export default function UniversalCommunicationHub({
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Sélectionner automatiquement une conversation
@@ -132,6 +134,7 @@ export default function UniversalCommunicationHub({
         handleSelectConversation(conv);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedConversationId, conversations]);
 
   // S'abonner aux notifications avec cleanup proper
@@ -139,7 +142,7 @@ export default function UniversalCommunicationHub({
     if (!user?.id) return;
 
     console.log('[Hub] 🔔 Subscription notifications pour:', user.id);
-    
+
     const channel = universalCommunicationService.subscribeToNotifications(
       user.id,
       (notification) => {
@@ -148,7 +151,7 @@ export default function UniversalCommunicationHub({
           title: notification.title,
           description: notification.body
         });
-        
+
         // Son de notification avec fallback
         try {
           const audio = new Audio('/notification.mp3');
@@ -182,7 +185,7 @@ export default function UniversalCommunicationHub({
       selectedConversation.id,
       (message) => {
         console.log('[Hub] 📨 Nouveau message:', message.id);
-        
+
         setMessages(prev => {
           // Éviter les doublons
           if (prev.some(m => m.id === message.id)) {
@@ -191,7 +194,7 @@ export default function UniversalCommunicationHub({
           }
           return [...prev, message];
         });
-        
+
         // Scroll automatique avec délai pour le rendu
         setTimeout(() => scrollToBottom(), 100);
 
@@ -240,12 +243,12 @@ export default function UniversalCommunicationHub({
 
     try {
       console.log('[Hub] 📥 Chargement messages pour:', conversationId);
-      
+
       const data = await universalCommunicationService.getMessages(conversationId);
-      
+
       setMessages(data);
       console.log('[Hub] ✅ Messages chargés:', data.length);
-      
+
       // Scroll avec délai pour le rendu
       setTimeout(() => scrollToBottom(), 150);
 
@@ -255,7 +258,7 @@ export default function UniversalCommunicationHub({
           .catch(err => {
             console.warn('[Hub] ⚠️ Erreur mark as read (non-bloquant):', err);
           });
-        
+
         // Recharger conversations pour mettre à jour le compteur
         loadConversations().catch(err => {
           console.warn('[Hub] ⚠️ Erreur reload conversations (non-bloquant):', err);
@@ -268,7 +271,7 @@ export default function UniversalCommunicationHub({
         conversationId,
         stack: error?.stack
       });
-      
+
       toast({
         title: 'Erreur de chargement',
         description: errorMessage.includes('timeout')
@@ -309,7 +312,7 @@ export default function UniversalCommunicationHub({
     // Validation: au moins un message ou fichier
     const hasMessage = message?.trim().length > 0;
     const hasAttachments = attachments && attachments.length > 0;
-    
+
     if (!hasMessage && !hasAttachments) {
       console.warn('[Hub] ⚠️ Message et pièces jointes vides');
       return;
@@ -336,14 +339,14 @@ export default function UniversalCommunicationHub({
             else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) fileType = 'audio';
 
             console.log('[Hub] 📤 Envoi fichier:', { name: file.name, type: fileType, size: file.size });
-            
+
             await universalCommunicationService.sendFileMessage(
               selectedConversation.id,
               user.id,
               file,
               fileType
             );
-            
+
             console.log('[Hub] ✅ Fichier envoyé:', file.name);
           } catch (fileError: any) {
             console.error('[Hub] ❌ Erreur envoi fichier:', fileError);
@@ -359,7 +362,7 @@ export default function UniversalCommunicationHub({
       // Envoyer le message texte
       if (hasMessage) {
         const trimmedMessage = message.trim();
-        
+
         // Validation longueur (5000 chars max)
         if (trimmedMessage.length > 5000) {
           toast({
@@ -371,16 +374,16 @@ export default function UniversalCommunicationHub({
         }
 
         console.log('[Hub] 📤 Envoi message texte:', { length: trimmedMessage.length });
-        
+
         await universalCommunicationService.sendTextMessage(
           selectedConversation.id,
           user.id,
           trimmedMessage
         );
-        
+
         console.log('[Hub] ✅ Message texte envoyé');
       }
-      
+
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue';
       console.error('[Hub] ❌ Erreur lors de l\'envoi:', {
@@ -389,10 +392,10 @@ export default function UniversalCommunicationHub({
         conversationId: selectedConversation?.id,
         userId: user?.id
       });
-      
+
       toast({
         title: 'Erreur d\'envoi',
-        description: errorMessage.includes('timeout') 
+        description: errorMessage.includes('timeout')
           ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
           : `Impossible d'envoyer le message: ${errorMessage}`,
         variant: 'destructive'
@@ -402,7 +405,7 @@ export default function UniversalCommunicationHub({
 
   const handleStartCall = async (type: 'audio' | 'video') => {
     console.log('📞 handleStartCall appelé:', { type, selectedConversation, userId: user?.id });
-    
+
     if (!selectedConversation) {
       toast({
         title: 'Erreur',
@@ -411,7 +414,7 @@ export default function UniversalCommunicationHub({
       });
       return;
     }
-    
+
     if (!user?.id) {
       toast({
         title: 'Erreur',
@@ -488,11 +491,11 @@ export default function UniversalCommunicationHub({
       toast({ title: "Erreur", description: "Veuillez entrer un ID", variant: "destructive" });
       return;
     }
-    
+
     try {
       // Utiliser le hook useSearchUserId pour la recherche
       const profile = await searchById(customId);
-      
+
       if (!profile) {
         // Le hook affiche déjà un toast d'erreur
         return;
@@ -502,7 +505,7 @@ export default function UniversalCommunicationHub({
         toast({ title: "Erreur", description: "Vous ne pouvez pas vous contacter", variant: "destructive" });
         return;
       }
-      
+
       await handleCreateConversation(profile.id);
       setShowNewConversation(false);
       setUserIdSearch('');
@@ -525,7 +528,7 @@ export default function UniversalCommunicationHub({
       setShowNewConversation(false);
       setShowMobileChat(true);
       toast({ title: 'Conversation créée', description: 'Vous pouvez maintenant discuter' });
-    } catch (error) {
+    } catch (_error) {
       toast({ title: 'Erreur', description: 'Impossible de créer la conversation', variant: 'destructive' });
     }
   };
@@ -542,7 +545,7 @@ export default function UniversalCommunicationHub({
     try {
       const directConvId = `direct_${selectedUser.id}`;
       const existingConv = conversations.find(c => c.id === directConvId);
-      
+
       if (existingConv) {
         setSelectedConversation(existingConv);
         loadMessages(existingConv.id);
@@ -561,7 +564,7 @@ export default function UniversalCommunicationHub({
         setConversations(prev => [newConv, ...prev]);
         setSelectedConversation(newConv);
       }
-      
+
       setShowSearchById(false);
       setShowMobileChat(true);
       toast({ title: 'Conversation ouverte', description: `Avec ${selectedUser.first_name} ${selectedUser.last_name}` });
@@ -577,7 +580,7 @@ export default function UniversalCommunicationHub({
     return format(date, 'dd/MM', { locale: fr });
   };
 
-  const unreadCount = notifications.length;
+  const _unreadCount = notifications.length;
   const filteredConversations = searchQuery
     ? conversations.filter(c => {
         const other = getOtherParticipant(c);
@@ -606,17 +609,17 @@ export default function UniversalCommunicationHub({
                 Messages
               </h1>
               <div className="flex items-center gap-1">
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  size="icon"
+                  variant="ghost"
                   onClick={() => setShowSearchById(true)}
                   className="h-8 w-8"
                 >
                   <Hash className="w-4 h-4" />
                 </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
+                <Button
+                  size="icon"
+                  variant="ghost"
                   onClick={() => setShowNewConversation(true)}
                   className="h-8 w-8"
                 >
@@ -624,7 +627,7 @@ export default function UniversalCommunicationHub({
                 </Button>
               </div>
             </div>
-            
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -635,7 +638,7 @@ export default function UniversalCommunicationHub({
               />
             </div>
           </div>
-          
+
           {/* Liste */}
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
@@ -651,7 +654,7 @@ export default function UniversalCommunicationHub({
                   const otherUserId = other?.user_id;
                   const isOnline = otherUserId ? isUserOnline(otherUserId) : false;
                   const presenceStatus = otherUserId ? getUserStatus(otherUserId) : null;
-                  
+
                   return (
                     <button
                       key={conv.id}
@@ -672,11 +675,11 @@ export default function UniversalCommunicationHub({
                         {/* Indicateur de présence */}
                         <span className={cn(
                           "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
-                          isOnline ? "bg-green-500" : 
+                          isOnline ? "bg-green-500" :
                           presenceStatus?.status === 'away' ? "bg-yellow-500" : "bg-gray-400"
                         )} />
                       </div>
-                      
+
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5 min-w-0">
@@ -708,7 +711,7 @@ export default function UniversalCommunicationHub({
           </ScrollArea>
         </div>
       )}
-      
+
       {/* Zone de chat */}
       {showChatPanel && (
         <div className="flex-1 flex flex-col bg-background h-full min-w-0">
@@ -716,15 +719,15 @@ export default function UniversalCommunicationHub({
           <>
             {/* Header chat */}
             <div className="flex items-center gap-3 p-3 border-b border-border bg-card">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowMobileChat(false)}
                 className="md:hidden h-9 w-9"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              
+
               <div className="relative">
                 <Avatar className="w-10 h-10">
                   <AvatarImage src={getOtherParticipant(selectedConversation)?.user?.avatar_url} />
@@ -738,31 +741,31 @@ export default function UniversalCommunicationHub({
                   isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-green-500" : "bg-gray-400"
                 )} />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">
                   {getOtherParticipant(selectedConversation)?.user?.first_name}{' '}
                   {getOtherParticipant(selectedConversation)?.user?.last_name}
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
-                  {isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') 
-                    ? '🟢 En ligne' 
+                  {isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '')
+                    ? '🟢 En ligne'
                     : 'Hors ligne'}
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleStartCall('audio')}
                   className="h-9 w-9"
                 >
                   <Phone className="w-4 h-4" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleStartCall('video')}
                   className="h-9 w-9"
                 >
@@ -770,7 +773,7 @@ export default function UniversalCommunicationHub({
                 </Button>
               </div>
             </div>
-            
+
             {/* Messages */}
             <ScrollArea className="flex-1 p-4">
               {messages.length === 0 ? (
@@ -784,14 +787,14 @@ export default function UniversalCommunicationHub({
                   {messages.map((msg) => {
                     const isOwn = msg.sender_id === user?.id;
                     return (
-                      <div 
-                        key={msg.id} 
+                      <div
+                        key={msg.id}
                         className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}
                       >
                         <div className={cn(
                           "max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm min-w-0",
-                          isOwn 
-                            ? "bg-primary text-primary-foreground rounded-br-md" 
+                          isOwn
+                            ? "bg-primary text-primary-foreground rounded-br-md"
                             : "bg-muted rounded-bl-md"
                         )}>
                           {msg.file_url && msg.type === 'image' && (
@@ -804,7 +807,7 @@ export default function UniversalCommunicationHub({
                             <audio controls src={msg.file_url} className="w-full max-w-[220px] mb-2" />
                           )}
                           {msg.file_url && msg.type === 'file' && (
-                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer" 
+                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-2 text-sm underline mb-2">
                               <Paperclip className="w-4 h-4 flex-shrink-0" />
                               <span className="truncate">{msg.file_name || 'Fichier'}</span>
@@ -837,7 +840,7 @@ export default function UniversalCommunicationHub({
                 </>
               )}
             </ScrollArea>
-            
+
             {/* Input */}
             <div className="p-3 border-t border-border bg-card">
               <ImprovedMessageInput
@@ -869,7 +872,7 @@ export default function UniversalCommunicationHub({
               <TabsTrigger value="search">Par nom</TabsTrigger>
               <TabsTrigger value="id">Par ID</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="search" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <Search className="h-5 w-5 mt-2" />
@@ -903,7 +906,7 @@ export default function UniversalCommunicationHub({
                 ))}
               </ScrollArea>
             </TabsContent>
-            
+
             <TabsContent value="id" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <Input
@@ -913,8 +916,8 @@ export default function UniversalCommunicationHub({
                   onChange={(e) => setUserIdSearch(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === 'Enter' && !searchLoading && handleSearchById()}
                 />
-                <Button 
-                  onClick={handleSearchById} 
+                <Button
+                  onClick={handleSearchById}
                   disabled={!userIdSearch.trim() || searchLoading}
                 >
                   {searchLoading ? (
@@ -937,16 +940,16 @@ export default function UniversalCommunicationHub({
         <Dialog open={!!activeCall} onOpenChange={() => handleEndCall()}>
           <DialogContent className="max-w-4xl">
             {callType === 'video' ? (
-              <AgoraVideoCall 
-                channel={activeCall.agora_channel || `call_${activeCall.id}`} 
-                isIncoming={false} 
-                onCallEnd={handleEndCall} 
+              <AgoraVideoCall
+                channel={activeCall.agora_channel || `call_${activeCall.id}`}
+                isIncoming={false}
+                onCallEnd={handleEndCall}
               />
             ) : (
-              <AgoraAudioCall 
-                channel={activeCall.agora_channel || `call_${activeCall.id}`} 
-                isIncoming={false} 
-                onCallEnd={handleEndCall} 
+              <AgoraAudioCall
+                channel={activeCall.agora_channel || `call_${activeCall.id}`}
+                isIncoming={false}
+                onCallEnd={handleEndCall}
               />
             )}
           </DialogContent>

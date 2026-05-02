@@ -3,13 +3,13 @@
  * Hook Supabase avec toutes les protections Enterprise
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRobustQuery, useRobustMutation, RobustQueryOptions } from './useRobustQuery';
 import { retryPresets } from '@/lib/retryWithBackoff';
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import { _PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
-type SupabaseTable = keyof (typeof supabase)['from'] extends (table: infer T) => any ? T : never;
+type _SupabaseTable = keyof (typeof supabase)['from'] extends (table: infer T) => any ? T : never;
 
 interface UseSupabaseRobustOptions<T> extends Omit<RobustQueryOptions<T>, 'key'> {
   table: string;
@@ -147,7 +147,7 @@ export function useSupabaseDelete(table: string) {
   return useRobustMutation<void, string | string[]>(
     async (ids) => {
       const idArray = Array.isArray(ids) ? ids : [ids];
-      
+
       const { error } = await (supabase.from as any)(table)
         .delete()
         .in('id', idArray);

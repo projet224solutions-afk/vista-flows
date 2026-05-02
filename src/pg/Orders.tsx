@@ -11,7 +11,7 @@ export default function Orders() {
 
   const subtitle = useMemo(() => {
     if (!profile?.role) return "Suivez et consultez vos commandes.";
-    if (profile.role === "vendeur") return "Commandes pass├®es depuis votre compte.";
+    if (profile.role === "vendeur") return "Commandes passées depuis votre compte.";
     return "Suivez et consultez vos commandes.";
   }, [profile?.role]);
 

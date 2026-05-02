@@ -3,8 +3,8 @@
  */
 import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { _Badge } from '@/components/ui/badge';
+import { Wallet, _TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface RealEstateWalletWidgetProps {
   className?: string;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, Volume2, Volume, FileVideo, Image as ImageIcon, Mic, AlertCircle, Smartphone } from 'lucide-react';
+import { MoreVertical, Trash2, Copy, Reply, Edit, Download, Play, Pause, _Volume2, _Volume, _FileVideo, Image as ImageIcon, Mic, AlertCircle, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -36,21 +36,21 @@ const detectPlatform = () => {
 // Vérifier si un format audio est supporté pour la lecture
 const canPlayAudioFormat = (url: string, fileName?: string, hasIOSUrl?: boolean): boolean => {
   const { isIOS, isSafari } = detectPlatform();
-  
+
   // Si on a une URL iOS disponible, on peut toujours lire
   if ((isIOS || isSafari) && hasIOSUrl) {
     return true;
   }
-  
+
   // Extraire l'extension du fichier
   const ext = (fileName || url).split('.').pop()?.toLowerCase() || '';
-  
+
   // Sur iOS Safari, seuls ces formats sont supportés
   if (isIOS || isSafari) {
     const iosSupportedFormats = ['mp3', 'mp4', 'm4a', 'aac', 'wav', 'caf'];
     return iosSupportedFormats.includes(ext);
   }
-  
+
   // Sur autres navigateurs, la plupart des formats sont supportés
   return true;
 };
@@ -59,7 +59,7 @@ const canPlayAudioFormat = (url: string, fileName?: string, hasIOSUrl?: boolean)
 const getAudioErrorMessage = (fileName?: string): string => {
   const { isIOS } = detectPlatform();
   const ext = (fileName || '').split('.').pop()?.toLowerCase() || '';
-  
+
   if (isIOS && (ext === 'webm' || ext === 'ogg')) {
     return `Le format .${ext} n'est pas supporté sur iPhone. Téléchargez le fichier pour l'écouter.`;
   }
@@ -87,11 +87,11 @@ interface MessageItemProps {
   onReply?: () => void;
 }
 
-export default function MessageItem({ 
-  message, 
-  onDelete, 
-  onEdit, 
-  onReply 
+export default function MessageItem({
+  message,
+  onDelete,
+  onEdit,
+  onReply
 }: MessageItemProps) {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -112,9 +112,11 @@ export default function MessageItem({
   useEffect(() => {
     return () => {
       // Cleanup audio/video si composant unmount
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       Object.values(audioRefs.current).forEach(audio => {
         if (audio) audio.pause();
       });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       Object.values(videoRefs.current).forEach(video => {
         if (video) video.pause();
       });
@@ -125,7 +127,7 @@ export default function MessageItem({
   const setAudioRef = (id: string, element: HTMLAudioElement | null) => {
     if (element) {
       audioRefs.current[id] = element;
-      
+
       const handleLoadedMetadata = () => {
         setAudioDurations(prev => ({ ...prev, [id]: element.duration }));
         setAudioLoading(prev => ({ ...prev, [id]: false }));
@@ -141,7 +143,7 @@ export default function MessageItem({
         console.error('[Audio] Erreur de lecture:', e, element.error);
         setAudioErrors(prev => ({ ...prev, [id]: true }));
         setAudioLoading(prev => ({ ...prev, [id]: false }));
-        
+
         // Log l'erreur pour debug
         const errorCodes: Record<number, string> = {
           1: 'MEDIA_ERR_ABORTED',
@@ -159,7 +161,7 @@ export default function MessageItem({
       const handleLoadStart = () => {
         setAudioLoading(prev => ({ ...prev, [id]: true }));
       };
-      
+
       element.addEventListener('loadedmetadata', handleLoadedMetadata);
       element.addEventListener('timeupdate', handleTimeUpdate);
       element.addEventListener('ended', handleEnded);
@@ -208,7 +210,7 @@ export default function MessageItem({
   const toggleAudio = async (audioId: string) => {
     const audio = audioRefs.current[audioId];
     if (!audio) return;
-    
+
     // Si erreur, proposer le téléchargement
     if (audioErrors[audioId]) {
       toast({
@@ -217,7 +219,7 @@ export default function MessageItem({
       });
       return;
     }
-    
+
     if (playingAudioId === audioId) {
       audio.pause();
       setPlayingAudioId(null);
@@ -228,13 +230,13 @@ export default function MessageItem({
           otherAudio.pause();
         }
       });
-      
+
       try {
         await audio.play();
         setPlayingAudioId(audioId);
       } catch (error: any) {
         console.error('[Audio] Erreur lecture:', error);
-        
+
         // Gestion spéciale pour les erreurs de format sur iOS
         if (error.name === 'NotSupportedError' || error.name === 'NotAllowedError') {
           setAudioErrors(prev => ({ ...prev, [audioId]: true }));
@@ -252,10 +254,10 @@ export default function MessageItem({
     }
   };
 
-  const toggleVideo = (videoId: string) => {
+  const _toggleVideo = (videoId: string) => {
     const video = videoRefs.current[videoId];
     if (!video) return;
-    
+
     if (playingVideoId === videoId) {
       video.pause();
       setPlayingVideoId(null);
@@ -321,7 +323,7 @@ export default function MessageItem({
                       <Edit className="w-4 h-4 mr-2" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => {
                         setDeleteForEveryone(false);
                         setShowDeleteDialog(true);
@@ -331,7 +333,7 @@ export default function MessageItem({
                       <Trash2 className="w-4 h-4 mr-2" />
                       Supprimer pour moi
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => {
                         setDeleteForEveryone(true);
                         setShowDeleteDialog(true);
@@ -344,7 +346,7 @@ export default function MessageItem({
                   </>
                 )}
                 {!message.isOwn && (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => {
                       setDeleteForEveryone(false);
                       setShowDeleteDialog(true);
@@ -400,12 +402,12 @@ export default function MessageItem({
                     <div key={index} className="rounded overflow-hidden">
                       {/* Image */}
                       {attachment.type.startsWith('image/') && (
-                        <div 
+                        <div
                           className="cursor-pointer hover:opacity-90 transition-opacity relative group"
                           onClick={() => handleImageClick(attachment.url)}
                         >
-                          <img 
-                            src={attachment.url} 
+                          <img
+                            src={attachment.url}
                             alt={attachment.name}
                             className="max-w-full w-auto max-h-[300px] rounded-lg"
                           />
@@ -414,7 +416,7 @@ export default function MessageItem({
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Audio/Vocal */}
                       {(attachment.type.startsWith('audio/') || attachment.type === 'voice' || attachment.name.includes('vocal')) && (
                         <div className={cn(
@@ -465,7 +467,7 @@ export default function MessageItem({
                                   <Play className="w-4 h-4" />
                                 )}
                               </Button>
-                              
+
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div className="flex items-center gap-2">
                                   <Mic className="w-3 h-3 text-muted-foreground flex-shrink-0" />
@@ -473,28 +475,28 @@ export default function MessageItem({
                                     {attachment.name || 'Message vocal'}
                                   </span>
                                 </div>
-                                
+
                                 {/* Barre de progression */}
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 h-1.5 bg-background/20 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                       className="h-full bg-primary transition-all duration-100"
-                                      style={{ 
-                                        width: audioDurations[`attachment-${index}`] > 0 
-                                          ? `${(audioCurrentTimes[`attachment-${index}`] / audioDurations[`attachment-${index}`]) * 100}%` 
-                                          : '0%' 
+                                      style={{
+                                        width: audioDurations[`attachment-${index}`] > 0
+                                          ? `${(audioCurrentTimes[`attachment-${index}`] / audioDurations[`attachment-${index}`]) * 100}%`
+                                          : '0%'
                                       }}
                                     />
                                   </div>
                                   <span className="text-xs text-muted-foreground tabular-nums min-w-[35px]">
-                                    {formatTime(playingAudioId === `attachment-${index}` 
+                                    {formatTime(playingAudioId === `attachment-${index}`
                                       ? audioCurrentTimes[`attachment-${index}`] || 0
                                       : audioDurations[`attachment-${index}`] || 0
                                     )}
                                   </span>
                                 </div>
                               </div>
-                              
+
                               <a
                                 href={attachment.url}
                                 download={attachment.name || 'vocal.m4a'}
@@ -506,8 +508,8 @@ export default function MessageItem({
                               </a>
                             </>
                           )}
-                          
-                          <audio 
+
+                          <audio
                             ref={(el) => setAudioRef(`attachment-${index}`, el)}
                             src={attachment.url}
                             preload="metadata"
@@ -515,11 +517,11 @@ export default function MessageItem({
                           />
                         </div>
                       )}
-                      
+
                       {/* Vidéo */}
                       {attachment.type.startsWith('video/') && (
                         <div className="relative rounded-lg overflow-hidden bg-black">
-                          <video 
+                          <video
                             ref={(el) => setVideoRef(`attachment-${index}`, el)}
                             src={attachment.url}
                             className="w-full max-h-[400px]"
@@ -530,16 +532,16 @@ export default function MessageItem({
                           />
                         </div>
                       )}
-                      
+
                       {/* Fichier générique */}
-                      {!attachment.type.startsWith('image/') && 
-                       !attachment.type.startsWith('audio/') && 
+                      {!attachment.type.startsWith('image/') &&
+                       !attachment.type.startsWith('audio/') &&
                        !attachment.type.startsWith('video/') &&
                        attachment.type !== 'voice' &&
                        !attachment.name.includes('vocal') && (
-                        <a 
-                          href={attachment.url} 
-                          target="_blank" 
+                        <a
+                          href={attachment.url}
+                          target="_blank"
                           rel="noopener noreferrer"
                           download={attachment.name}
                           className="flex items-center gap-2 p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
@@ -560,12 +562,12 @@ export default function MessageItem({
                 <div className="mt-2 rounded overflow-hidden">
                   {/* Image */}
                   {message.type === 'image' && (
-                    <div 
+                    <div
                       className="cursor-pointer hover:opacity-90 transition-opacity relative group"
                       onClick={() => handleImageClick(message.file_url!)}
                     >
-                      <img 
-                        src={message.file_url} 
+                      <img
+                        src={message.file_url}
                         alt={message.file_name || 'Image'}
                         className="max-w-full w-auto max-h-[300px] rounded-lg"
                       />
@@ -574,10 +576,10 @@ export default function MessageItem({
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Audio/Vocal - détection améliorée pour .webm et fichiers vocaux */}
-                  {(message.type === 'audio' || 
-                    message.file_name?.includes('vocal') || 
+                  {(message.type === 'audio' ||
+                    message.file_name?.includes('vocal') ||
                     message.file_name?.endsWith('.webm') ||
                     message.file_name?.endsWith('.mp3') ||
                     message.file_name?.endsWith('.wav') ||
@@ -586,22 +588,23 @@ export default function MessageItem({
                     message.file_name?.endsWith('.mp4')) && (() => {
                     // Détection plateforme
                     const platformInfo = detectPlatform();
-                    
+
                     // URL audio à utiliser (iOS convertie si disponible)
-                    const audioUrl = platformInfo.isIOS && message.file_url_ios 
-                      ? message.file_url_ios 
+                    const audioUrl = platformInfo.isIOS && message.file_url_ios
+                      ? message.file_url_ios
                       : message.file_url!;
-                    
+                    const audioId = `direct-audio-${message.id}`;
+
                     // Vérifier la compatibilité du format AVANT de tenter la lecture
                     const hasIOSUrl = !!message.file_url_ios;
                     const isFormatSupported = canPlayAudioFormat(audioUrl, message.file_name, hasIOSUrl);
-                    const hasError = audioErrors['direct-audio'] || !isFormatSupported;
-                    
+                    const hasError = audioErrors[audioId] || !isFormatSupported;
+
                     return (
                     <div className={cn(
                       "flex items-center gap-3 p-3 rounded-xl",
-                      message.isOwn 
-                        ? "bg-primary-foreground/10" 
+                      message.isOwn
+                        ? "bg-primary-foreground/10"
                         : "bg-muted/50",
                       hasError && "border border-red-500/30"
                     )}>
@@ -641,7 +644,7 @@ export default function MessageItem({
                             Télécharger
                           </a>
                         </>
-                      ) : audioLoading['direct-audio'] ? (
+                      ) : audioLoading[audioId] ? (
                         // État de chargement
                         <>
                           <div className="h-11 w-11 rounded-full flex-shrink-0 bg-muted/50 flex items-center justify-center animate-pulse">
@@ -666,16 +669,17 @@ export default function MessageItem({
                           <Button
                             size="sm"
                             variant={message.isOwn ? "secondary" : "outline"}
-                            onClick={() => toggleAudio('direct-audio')}
+                            onClick={() => toggleAudio(audioId)}
+                            aria-label={playingAudioId === audioId ? 'Mettre en pause' : 'Lire le message vocal'}
                             className="h-11 w-11 rounded-full flex-shrink-0 shadow-sm"
                           >
-                            {playingAudioId === 'direct-audio' ? (
+                            {playingAudioId === audioId ? (
                               <Pause className="w-5 h-5" />
                             ) : (
                               <Play className="w-5 h-5 ml-0.5" />
                             )}
                           </Button>
-                          
+
                           <div className="flex-1 min-w-0 space-y-1.5">
                             {/* Indicateur vocal */}
                             <div className="flex items-center gap-2">
@@ -684,44 +688,44 @@ export default function MessageItem({
                                 Message vocal
                               </span>
                             </div>
-                            
+
                             {/* Barre de progression interactive */}
                             <div className="flex items-center gap-2">
-                              <div 
+                              <div
                                 className={cn(
                                   "flex-1 h-2 rounded-full overflow-hidden cursor-pointer",
                                   message.isOwn ? "bg-primary-foreground/20" : "bg-muted"
                                 )}
                                 onClick={(e) => {
-                                  const audio = audioRefs.current['direct-audio'];
-                                  if (audio && audioDurations['direct-audio']) {
+                                  const audio = audioRefs.current[audioId];
+                                  if (audio && audioDurations[audioId]) {
                                     const rect = e.currentTarget.getBoundingClientRect();
                                     const percent = (e.clientX - rect.left) / rect.width;
-                                    audio.currentTime = percent * audioDurations['direct-audio'];
+                                    audio.currentTime = percent * audioDurations[audioId];
                                   }
                                 }}
                               >
-                                <div 
+                                <div
                                   className={cn(
                                     "h-full transition-all duration-100 rounded-full",
                                     message.isOwn ? "bg-primary-foreground" : "bg-primary"
                                   )}
-                                  style={{ 
-                                    width: audioDurations['direct-audio'] > 0 
-                                      ? `${(audioCurrentTimes['direct-audio'] / audioDurations['direct-audio']) * 100}%` 
-                                      : '0%' 
+                                  style={{
+                                    width: audioDurations[audioId] > 0
+                                      ? `${((audioCurrentTimes[audioId] || 0) / audioDurations[audioId]) * 100}%`
+                                      : '0%'
                                   }}
                                 />
                               </div>
                               <span className="text-xs tabular-nums min-w-[40px] opacity-70">
-                                {formatTime(playingAudioId === 'direct-audio'
-                                  ? audioCurrentTimes['direct-audio'] || 0
-                                  : audioDurations['direct-audio'] || 0
+                                {formatTime(playingAudioId === audioId
+                                  ? audioCurrentTimes[audioId] || 0
+                                  : audioDurations[audioId] || 0
                                 )}
                               </span>
                             </div>
                           </div>
-                          
+
                           {/* Bouton Télécharger */}
                           <a
                             href={audioUrl}
@@ -729,8 +733,8 @@ export default function MessageItem({
                             onClick={(e) => e.stopPropagation()}
                             className={cn(
                               "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                              message.isOwn 
-                                ? "hover:bg-primary-foreground/20" 
+                              message.isOwn
+                                ? "hover:bg-primary-foreground/20"
                                 : "hover:bg-muted"
                             )}
                             title="Télécharger"
@@ -739,11 +743,11 @@ export default function MessageItem({
                           </a>
                         </>
                       )}
-                      
+
                       {/* Ne charger l'audio que si le format est supporté */}
                       {isFormatSupported && (
-                        <audio 
-                          ref={(el) => setAudioRef('direct-audio', el)}
+                        <audio
+                          ref={(el) => setAudioRef(audioId, el)}
                           src={audioUrl}
                           preload="metadata"
                           className="hidden"
@@ -752,11 +756,11 @@ export default function MessageItem({
                     </div>
                     );
                   })()}
-                  
+
                   {/* Vidéo */}
                   {message.type === 'video' && (
                     <div className="relative rounded-lg overflow-hidden bg-black">
-                      <video 
+                      <video
                         ref={(el) => setVideoRef('direct-video', el)}
                         src={message.file_url}
                         className="w-full max-h-[400px]"
@@ -767,17 +771,17 @@ export default function MessageItem({
                       />
                     </div>
                   )}
-                  
+
                   {/* Fichier - exclure les fichiers audio */}
-                  {message.type === 'file' && 
+                  {message.type === 'file' &&
                    !message.file_name?.includes('vocal') &&
                    !message.file_name?.endsWith('.webm') &&
                    !message.file_name?.endsWith('.mp3') &&
                    !message.file_name?.endsWith('.wav') &&
                    !message.file_name?.endsWith('.ogg') &&
                    !message.file_name?.endsWith('.m4a') && (
-                    <a 
-                      href={message.file_url} 
+                    <a
+                      href={message.file_url}
                       download={message.file_name}
                       className="flex items-center gap-2 p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
                     >
@@ -811,7 +815,7 @@ export default function MessageItem({
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce message ?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteForEveryone 
+              {deleteForEveryone
                 ? "Ce message sera supprimé pour tous les participants. Cette action est irréversible."
                 : "Ce message sera supprimé uniquement pour vous. Les autres participants pourront toujours le voir."}
             </AlertDialogDescription>

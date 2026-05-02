@@ -1,7 +1,7 @@
 /**
  * EDGE FUNCTIONS MIGRATION - AUTH ROUTES
  * Migrates Supabase Edge Functions to Node.js/Express
- * 
+ *
  * Functions Migrated:
  * - auth/login
  * - auth/verify-otp

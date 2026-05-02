@@ -232,7 +232,7 @@ export function WAFDashboard() {
               Ajouter règle
             </Button>
           </div>
-          
+
           {rules.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -252,7 +252,7 @@ export function WAFDashboard() {
                       </p>
                     </div>
                   </div>
-                  <Badge 
+                  <Badge
                     className={`cursor-pointer ${rule.status === 'active' ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'}`}
                     onClick={() => toggleRuleStatus(rule.id, rule.status)}
                   >
@@ -263,14 +263,14 @@ export function WAFDashboard() {
                   <div className="flex items-center justify-between text-xs">
                     <span>Efficacité</span>
                     <span className="font-medium">
-                      {stats.blockedRequests > 0 
-                        ? ((rule.blocked_requests / stats.blockedRequests) * 100).toFixed(1) 
+                      {stats.blockedRequests > 0
+                        ? ((rule.blocked_requests / stats.blockedRequests) * 100).toFixed(1)
                         : 0}%
                     </span>
                   </div>
-                  <Progress 
-                    value={stats.blockedRequests > 0 ? (rule.blocked_requests / stats.blockedRequests) * 100 : 0} 
-                    className="h-1" 
+                  <Progress
+                    value={stats.blockedRequests > 0 ? (rule.blocked_requests / stats.blockedRequests) * 100 : 0}
+                    className="h-1"
                   />
                 </div>
               </div>

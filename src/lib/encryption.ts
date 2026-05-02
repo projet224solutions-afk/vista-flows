@@ -39,12 +39,12 @@ export function decryptData<T = any>(encryptedData: string): T {
   try {
     const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
-    
+
     if (!jsonString) {
       // Si le décryptage échoue, tenter de parser comme JSON non crypté
       return JSON.parse(encryptedData);
     }
-    
+
     return JSON.parse(jsonString);
   } catch (error) {
     console.error('Erreur de décryptage:', error);

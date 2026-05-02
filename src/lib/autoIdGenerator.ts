@@ -95,7 +95,7 @@ const ID_CONFIGS: Record<RoleType, IdConfig> = {
  */
 export async function generateAutoId(roleType: RoleType): Promise<string> {
   const config = ID_CONFIGS[roleType];
-  
+
   try {
     // Récupérer tous les IDs existants pour ce préfixe
     const { data: userIdsData, error: userIdsError } = await supabase
@@ -134,7 +134,7 @@ export async function generateAutoId(roleType: RoleType): Promise<string> {
     }
 
     const newId = `${config.prefix}${nextNumber.toString().padStart(config.length, '0')}`;
-    
+
     // Vérifier aussi dans la table de rôle (double sécurité)
     const { data: roleData } = await supabase
       .from(config.table as any)
@@ -152,10 +152,10 @@ export async function generateAutoId(roleType: RoleType): Promise<string> {
       console.log(`⚠️ ID ${newId} existe dans ${config.table}, utilise ${altId}`);
       return altId;
     }
-    
+
     console.log(`✅ ID généré pour ${roleType}: ${newId} (premier gap ou suivant)`);
     return newId;
-    
+
   } catch (error) {
     console.error(`Erreur génération ID ${roleType}:`, error);
     // Fallback: timestamp pour garantir l'unicité

@@ -67,7 +67,7 @@ export default function EscrowManagementDialog({
   const [selectedOrderNumber, setSelectedOrderNumber] = useState<string | undefined>(undefined);
   const [actionType, setActionType] = useState<'release' | 'refund' | 'request' | null>(null);
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
-  
+
   const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo';
 
   const handleAction = async () => {
@@ -137,9 +137,9 @@ export default function EscrowManagementDialog({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium">
-                              {transaction.order?.order_number 
-                                ? `Commande: ${transaction.order.order_number}` 
-                                : transaction.order_id 
+                              {transaction.order?.order_number
+                                ? `Commande: ${transaction.order.order_number}`
+                                : transaction.order_id
                                   ? `ID: ${transaction.order_id.slice(0, 8)}...`
                                   : 'Commande sans ID'}
                             </h4>
@@ -148,13 +148,13 @@ export default function EscrowManagementDialog({
                               {config.label}
                             </Badge>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                             <div>
                               <p>Montant: <span className="font-semibold text-foreground">
                                 {transaction.amount.toLocaleString()} {transaction.currency}
                               </span></p>
-                              <p>Commission: {transaction.commission_percent}% 
+                              <p>Commission: {transaction.commission_percent}%
                                 ({transaction.commission_amount.toLocaleString()} {transaction.currency})
                               </p>
                             </div>

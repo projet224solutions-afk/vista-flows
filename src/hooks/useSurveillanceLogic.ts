@@ -41,7 +41,7 @@ export interface Correction {
 }
 
 export function useSurveillanceLogic() {
-  const { user, profile } = useAuth();
+  const { _user, profile } = useAuth();
   const [anomalies, setAnomalies] = useState<LogicAnomaly[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(false);
@@ -199,6 +199,7 @@ export function useSurveillanceLogic() {
         setLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isPDG, loadAnomalies, loadSystemHealth]
   );
 

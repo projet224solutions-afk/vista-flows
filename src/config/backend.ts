@@ -19,6 +19,10 @@ function isPublic224Host(hostname: string): boolean {
   return /(^|\.)224solution\.net$/i.test(hostname);
 }
 
+function isVercelPreviewHost(hostname: string): boolean {
+  return /(^|\.)vercel\.app$/i.test(hostname);
+}
+
 function resolveBackendBaseUrl(): string {
   // 1. Mobile-specific URL takes highest priority (Capacitor/native context)
   const mobileUrl = import.meta.env.VITE_BACKEND_MOBILE_URL?.trim();
@@ -80,7 +84,7 @@ function resolveBackendBaseUrl(): string {
     }
 
     // Public web deployment: prefer the dedicated API host instead of the SPA origin.
-    if (isPublic224Host(hostname)) {
+    if (isPublic224Host(hostname) || isVercelPreviewHost(hostname)) {
       return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
     }
 
@@ -95,6 +99,7 @@ function resolveBackendBaseUrl(): string {
 
 export const backendConfig = {
   baseUrl: resolveBackendBaseUrl(),
+  publicBaseUrl: normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL),
 };
 
 export function resolveBackendUrl(path: string): string {

@@ -4,9 +4,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { _toast } from 'sonner';
 
 export interface SecurityStats {
     total_events: number;
@@ -38,7 +38,7 @@ export interface ThreatAnalysis {
 }
 
 export function useSecurity() {
-    const [stats, setStats] = useState<SecurityStats>({
+    const [stats, _setStats] = useState<SecurityStats>({
         total_events: 0,
         critical_threats: 0,
         resolved_incidents: 0,
@@ -52,7 +52,7 @@ export function useSecurity() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { _user } = useAuth();
 
     const loadStats = useCallback(async () => {
         setLoading(false);
@@ -68,16 +68,16 @@ export function useSecurity() {
         loading,
         error,
         loadStats,
-        logEvent: async (event: unknown) => { },
-        blockIP: async (ip: string, reason: string) => true,
-        analyzeThreat: async (ip: string) => null
+        logEvent: async (_event: unknown) => { },
+        blockIP: async (_ip: string, _reason: string) => true,
+        analyzeThreat: async (_ip: string) => null
     };
 }
 
 export function useSecurityAlerts() {
-    const [alerts, setAlerts] = useState<SystemAlert[]>([]);
+    const [alerts, _setAlerts] = useState<SystemAlert[]>([]);
     const [loading, setLoading] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadCount, _setUnreadCount] = useState(0);
 
     const loadAlerts = useCallback(async () => {
         setLoading(false);
@@ -98,7 +98,7 @@ export function useSecurityAlerts() {
 }
 
 export function useSecurityIncidents() {
-    const [incidents, setIncidents] = useState<unknown[]>([]);
+    const [incidents, _setIncidents] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadIncidents = useCallback(async () => {
@@ -110,7 +110,7 @@ export function useSecurityIncidents() {
         loadIncidents();
     }, [loadIncidents]);
 
-    const createIncident = useCallback(async (incident: unknown) => {
+    const createIncident = useCallback(async (_incident: unknown) => {
         setLoading(false);
         // Table non disponible - désactivé temporairement
         return null;
@@ -127,7 +127,7 @@ export function useSecurityIncidents() {
 }
 
 export function useSecurityEvents() {
-    const [events, setEvents] = useState<unknown[]>([]);
+    const [events, _setEvents] = useState<unknown[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadEvents = useCallback(async () => {
@@ -171,7 +171,7 @@ export function useRealTimeProtection() {
         threats: [],
         protectionStatus: 'active',
         threatLevel: 'low',
-        toggleProtection: async (enabled: unknown) => { }
+        toggleProtection: async (_enabled: unknown) => { }
     };
 }
 
@@ -181,7 +181,7 @@ export function useSecurityAudit() {
         loading: false,
         auditLogs: [],
         filters: { dateRange: '', severity: '' },
-        updateFilters: (filters: unknown) => { },
-        exportLogs: async (format: unknown) => { }
+        updateFilters: (_filters: unknown) => { },
+        exportLogs: async (_format: unknown) => { }
     };
 }

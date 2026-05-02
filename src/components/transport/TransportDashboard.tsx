@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Navigation, Users, MapPin, Clock, DollarSign, Phone, MessageSquare, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
+import { Navigation, Users, MapPin, Clock, DollarSign, Phone, MessageSquare, _AlertTriangle, CheckCircle, Eye } from 'lucide-react';
 import TransportService, { TransportRequest, TransportUser } from '../../services/transport/TransportService';
 import TransportRequestForm from './TransportRequestForm';
 import TransportTracking from './TransportTracking';
@@ -17,7 +17,7 @@ interface TransportDashboardProps {
 
 const TransportDashboard: React.FC<TransportDashboardProps> = ({
   userType,
-  userId,
+  _userId,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('requests');
@@ -40,25 +40,26 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
     loadData();
     const interval = setInterval(loadData, 10000); // Actualiser toutes les 10 secondes
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Charger les demandes
       const requestsResponse = await fetch('/api/transport/requests');
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         setRequests(requestsData);
-        
+
         // Calculer les statistiques
         setStats({
           totalRequests: requestsData.length,
-          activeRequests: requestsData.filter((r: TransportRequest) => 
+          activeRequests: requestsData.filter((r: TransportRequest) =>
             ['pending', 'accepted', 'picked_up'].includes(r.status)
           ).length,
-          completedRequests: requestsData.filter((r: TransportRequest) => 
+          completedRequests: requestsData.filter((r: TransportRequest) =>
             r.status === 'delivered'
           ).length,
           totalEarnings: requestsData
@@ -146,7 +147,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
               </p>
             </div>
           </div>
-          
+
           {userType === 'client' && (
             <button
               onClick={() => setShowRequestForm(true)}
@@ -168,7 +169,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             </div>
             <p className="text-2xl font-bold text-blue-600">{stats.totalRequests}</p>
           </div>
-          
+
           <div className="p-4 bg-yellow-50 rounded-lg">
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-yellow-600" />
@@ -176,7 +177,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             </div>
             <p className="text-2xl font-bold text-yellow-600">{stats.activeRequests}</p>
           </div>
-          
+
           <div className="p-4 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -184,7 +185,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             </div>
             <p className="text-2xl font-bold text-green-600">{stats.completedRequests}</p>
           </div>
-          
+
           <div className="p-4 bg-purple-50 rounded-lg">
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-purple-600" />
@@ -208,7 +209,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
           >
             Demandes
           </button>
-          
+
           {userType === 'admin' && (
             <button
               onClick={() => setActiveTab('transporters')}
@@ -221,7 +222,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
               Transporteurs
             </button>
           )}
-          
+
           <button
             onClick={() => setActiveTab('stats')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -275,7 +276,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                             {formatTime(request.createdAt)}
                           </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-blue-600" />
@@ -286,7 +287,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                             <span className="text-sm text-gray-700">{request.deliveryAddress}</span>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center gap-4">
                             <span className="text-sm text-gray-600">
@@ -301,7 +302,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                           </span>
                         </div>
                       </div>
-                      
+
                       <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
@@ -340,7 +341,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         user.isOnline ? 'bg-green-500' : 'bg-gray-400'
                       }`}></div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Note</span>
@@ -355,7 +356,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         <span className="font-medium text-green-600">{user.earnings} GNF</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-3">
                       <button className="flex-1 bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm hover:bg-blue-200 transition-colors">
                         <Phone className="w-4 h-4 inline mr-1" />
@@ -393,7 +394,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 bg-green-50 rounded-lg">
                 <h3 className="text-lg font-semibold text-green-800 mb-4">Revenus</h3>
                 <div className="space-y-3">
@@ -411,7 +412,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 bg-purple-50 rounded-lg">
                 <h3 className="text-lg font-semibold text-purple-800 mb-4">Sécurité</h3>
                 <div className="space-y-3">

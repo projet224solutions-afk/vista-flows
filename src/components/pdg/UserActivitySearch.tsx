@@ -13,22 +13,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Search, 
-  User, 
-  Wallet, 
-  ShoppingCart, 
-  Shield, 
+import {
+  Search,
+  User,
+  Wallet,
+  ShoppingCart,
+  Shield,
   MessageSquare,
   Car,
   Package,
   Star,
-  Clock,
+  _Clock,
   Download,
   RefreshCw,
   Mail,
   Phone,
-  MapPin,
+  _MapPin,
   Calendar,
   Activity,
   TrendingUp,
@@ -51,21 +51,21 @@ import {
   ArrowUpRight,
   ArrowDownLeft
 } from 'lucide-react';
-import { useUserActivityTracker, UserActivitySummary, MessageActivity } from '@/hooks/useUserActivityTracker';
+import { useUserActivityTracker, _UserActivitySummary, MessageActivity } from '@/hooks/useUserActivityTracker';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Composant pour afficher une stat
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
+function StatCard({
+  icon: Icon,
+  label,
+  value,
   subValue,
-  trend 
-}: { 
-  icon: any; 
-  label: string; 
-  value: string | number; 
+  trend
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
   subValue?: string;
   trend?: 'up' | 'down' | 'neutral';
 }) {
@@ -117,7 +117,7 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
             Message {message.direction === 'sent' ? 'envoyé' : 'reçu'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Métadonnées */}
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -169,9 +169,9 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
                   {message.file_name && <p>Nom: {message.file_name}</p>}
                   {message.file_size && <p>Taille: {(message.file_size / 1024).toFixed(2)} KB</p>}
                   {message.file_url && (
-                    <a 
-                      href={message.file_url} 
-                      target="_blank" 
+                    <a
+                      href={message.file_url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary underline flex items-center gap-1"
                     >
@@ -213,16 +213,16 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
 }
 
 // Composant pour afficher un événement dans la timeline
-function TimelineEvent({ 
-  icon: Icon, 
-  title, 
-  description, 
-  time, 
-  status 
-}: { 
-  icon: any; 
-  title: string; 
-  description?: string; 
+function _TimelineEvent({
+  icon: Icon,
+  title,
+  description,
+  time,
+  status
+}: {
+  icon: any;
+  title: string;
+  description?: string;
   time: string;
   status?: 'success' | 'warning' | 'error' | 'info';
 }) {
@@ -369,7 +369,7 @@ export function UserActivitySearch() {
                   <p className="font-medium text-destructive">
                     {searchError?.message || error}
                   </p>
-                  
+
                   {searchError?.searchedId && (
                     <p className="text-sm text-muted-foreground mt-1">
                       ID recherché: <code className="font-mono bg-muted px-1 rounded">{searchError.searchedId}</code>
@@ -466,8 +466,8 @@ export function UserActivitySearch() {
               {/* Bouton de correction */}
               {searchError?.needsCorrection && (
                 <div className="pt-2 border-t flex items-center gap-2">
-                  <Button 
-                    variant="default" 
+                  <Button
+                    variant="default"
                     size="sm"
                     onClick={() => {
                       // Rediriger vers l'onglet de correction d'ID
@@ -500,9 +500,9 @@ export function UserActivitySearch() {
                 {/* Avatar */}
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
                   {activityData.profile?.avatar_url ? (
-                    <img 
-                      src={activityData.profile.avatar_url} 
-                      alt="Avatar" 
+                    <img
+                      src={activityData.profile.avatar_url}
+                      alt="Avatar"
                       className="h-16 w-16 rounded-full object-cover"
                     />
                   ) : (
@@ -523,7 +523,7 @@ export function UserActivitySearch() {
                       {activityData.customId}
                     </Badge>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {activityData.profile?.email && (
                       <span className="flex items-center gap-1">
@@ -584,45 +584,45 @@ export function UserActivitySearch() {
 
               {/* Stats en grille */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-                <StatCard 
-                  icon={Wallet} 
-                  label="Solde wallet" 
+                <StatCard
+                  icon={Wallet}
+                  label="Solde wallet"
                   value={formatAmount(activityData.wallet?.balance || 0)}
                 />
-                <StatCard 
-                  icon={Activity} 
-                  label="Transactions" 
+                <StatCard
+                  icon={Activity}
+                  label="Transactions"
                   value={activityData.totalTransactions}
                 />
-                <StatCard 
-                  icon={ShoppingCart} 
-                  label="Commandes" 
+                <StatCard
+                  icon={ShoppingCart}
+                  label="Commandes"
                   value={activityData.totalOrders}
                 />
-                <StatCard 
-                  icon={Shield} 
-                  label="Connexions" 
+                <StatCard
+                  icon={Shield}
+                  label="Connexions"
                   value={activityData.totalLogins}
                 />
-                <StatCard 
-                  icon={MessageSquare} 
-                  label="Messages" 
+                <StatCard
+                  icon={MessageSquare}
+                  label="Messages"
                   value={activityData.totalMessages}
                   subValue={`${activityData.messagesSent} env. / ${activityData.messagesReceived} reçus`}
                 />
-                <StatCard 
-                  icon={Star} 
-                  label="Avis" 
+                <StatCard
+                  icon={Star}
+                  label="Avis"
                   value={activityData.totalReviews}
                 />
-                <StatCard 
-                  icon={Heart} 
-                  label="Favoris" 
+                <StatCard
+                  icon={Heart}
+                  label="Favoris"
                   value={activityData.totalFavorites}
                 />
-                <StatCard 
-                  icon={Bell} 
-                  label="Notifications" 
+                <StatCard
+                  icon={Bell}
+                  label="Notifications"
                   value={activityData.totalNotifications}
                 />
               </div>
@@ -690,8 +690,8 @@ export function UserActivitySearch() {
                     Tous les Messages - Contenu Complet
                   </CardTitle>
                   <CardDescription>
-                    {activityData.totalMessages} messages • 
-                    <Send className="h-3 w-3 inline mx-1" /> {activityData.messagesSent} envoyés • 
+                    {activityData.totalMessages} messages •
+                    <Send className="h-3 w-3 inline mx-1" /> {activityData.messagesSent} envoyés •
                     <Inbox className="h-3 w-3 inline mx-1" /> {activityData.messagesReceived} reçus
                   </CardDescription>
                 </CardHeader>
@@ -722,7 +722,7 @@ export function UserActivitySearch() {
                                   {format(new Date(msg.created_at), 'dd/MM/yyyy HH:mm')}
                                 </span>
                               </div>
-                              
+
                               {/* Aperçu du contenu */}
                               <div className="bg-white dark:bg-gray-900 p-2 rounded border">
                                 {msg.type === 'text' ? (
@@ -743,13 +743,13 @@ export function UserActivitySearch() {
 
                               {/* Destinataire/Expéditeur */}
                               <p className="text-xs text-muted-foreground mt-1">
-                                {msg.direction === 'sent' 
-                                  ? `→ ${msg.recipient_id.slice(0, 8)}...` 
+                                {msg.direction === 'sent'
+                                  ? `→ ${msg.recipient_id.slice(0, 8)}...`
                                   : `← ${msg.sender_id.slice(0, 8)}...`
                                 }
                               </p>
                             </div>
-                            
+
                             {/* Bouton voir détails */}
                             <MessageDetailDialog message={msg} />
                           </div>
@@ -767,8 +767,8 @@ export function UserActivitySearch() {
                 <CardHeader>
                   <CardTitle className="text-lg">Historique des Transactions</CardTitle>
                   <CardDescription>
-                    {activityData.totalTransactions} transactions • 
-                    Envoyé: {formatAmount(activityData.totalSpent)} • 
+                    {activityData.totalTransactions} transactions •
+                    Envoyé: {formatAmount(activityData.totalSpent)} •
                     Reçu: {formatAmount(activityData.totalReceived)}
                   </CardDescription>
                 </CardHeader>
@@ -784,8 +784,8 @@ export function UserActivitySearch() {
                           .map((tx) => (
                           <div key={tx.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
-                              tx.direction === 'sent' 
-                                ? 'bg-red-100 text-red-600' 
+                              tx.direction === 'sent'
+                                ? 'bg-red-100 text-red-600'
                                 : 'bg-green-100 text-green-600'
                             }`}>
                               {tx.direction === 'sent' ? (
@@ -802,8 +802,8 @@ export function UserActivitySearch() {
                             </div>
                             <div className="text-right">
                               <p className={`font-bold ${
-                                tx.direction === 'sent' 
-                                  ? 'text-red-600' 
+                                tx.direction === 'sent'
+                                  ? 'text-red-600'
                                   : 'text-green-600'
                               }`}>
                                 {tx.direction === 'sent' ? '-' : '+'}
@@ -895,7 +895,7 @@ export function UserActivitySearch() {
                   <CardTitle className="text-lg">Historique de Sécurité</CardTitle>
                   <CardDescription>
                     {activityData.totalLogins} connexions réussies • Dernière: {
-                      activityData.lastLogin 
+                      activityData.lastLogin
                         ? formatDistanceToNow(new Date(activityData.lastLogin), { addSuffix: true, locale: fr })
                         : 'N/A'
                     }
@@ -1080,9 +1080,9 @@ export function UserActivitySearch() {
                           <div key={r.id} className="p-2 mb-2 bg-muted/30 rounded-lg">
                             <div className="flex gap-0.5 mb-1">
                               {Array.from({ length: 5 }).map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`h-3 w-3 ${i < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${i < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                                 />
                               ))}
                             </div>

@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
+import {
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
   Database,
   Server,
   Activity,
@@ -34,7 +34,7 @@ interface SystemStatus {
 export default function SystemDebugPage() {
   const [status, setStatus] = React.useState<SystemStatus | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [applying, setApplying] = React.useState(false);
+  const [_applying, setApplying] = React.useState(false);
 
   const checkTables = async (): Promise<TableCheck[]> => {
     const requiredTables = [
@@ -93,10 +93,10 @@ export default function SystemDebugPage() {
       const dbTime = Date.now() - dbStart;
 
       // Check auth
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      const { data: { _session }, error: authError } = await supabase.auth.getSession();
 
       // Check storage
-      const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
+      const { data: _buckets, error: storageError } = await supabase.storage.listBuckets();
 
       // Check tables
       const tables = await checkTables();
@@ -106,7 +106,7 @@ export default function SystemDebugPage() {
       const storageStatus = storageError ? 'degraded' : 'healthy';
 
       const missingTables = tables.filter(t => !t.exists).length;
-      const overall = missingTables > 0 ? 'degraded' 
+      const overall = missingTables > 0 ? 'degraded'
                     : databaseStatus === 'critical' ? 'critical'
                     : databaseStatus === 'degraded' || authStatus === 'degraded' ? 'degraded'
                     : 'healthy';
@@ -134,14 +134,14 @@ export default function SystemDebugPage() {
     }
   };
 
-  const applyMigration = async () => {
+  const _applyMigration = async () => {
     setApplying(true);
     try {
       // Lire le contenu de la migration
       const migrationUrl = '/supabase/migrations/20240130_security_services_infrastructure.sql';
-      
-      console.log('Migration ├á appliquer:', migrationUrl);
-      alert('Migration ├á appliquer manuellement via Supabase Dashboard ou CLI: supabase db push');
+
+      console.log('Migration à appliquer :', migrationUrl);
+      alert('Migration à appliquer manuellement via Supabase Dashboard ou via la CLI : supabase db push');
 
     } catch (error) {
       console.error('Error applying migration:', error);
@@ -152,6 +152,7 @@ export default function SystemDebugPage() {
 
   React.useEffect(() => {
     checkSystemStatus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusIcon = (status: string) => {
@@ -185,7 +186,7 @@ export default function SystemDebugPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>V├®rification du syst├¿me...</p>
+          <p>Vérification du système...</p>
         </div>
       </div>
     );
@@ -198,7 +199,7 @@ export default function SystemDebugPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
           <AlertDescription>
-            Impossible de v├®rifier l'├®tat du syst├¿me
+            Impossible de vérifier l'état du système
           </AlertDescription>
         </Alert>
       </div>
@@ -212,14 +213,14 @@ export default function SystemDebugPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Diagnostic Syst├¿me</h1>
+          <h1 className="text-3xl font-bold">Diagnostic système</h1>
           <p className="text-gray-600 mt-1">
-            V├®rification de l'├®tat du Monitoring System et des services de s├®curit├®
+            Vérification de l'état du système de monitoring et des services de sécurité
           </p>
         </div>
         <Button onClick={checkSystemStatus} variant="outline">
           <RefreshCw className="mr-2 h-4 w-4" />
-          Rafra├«chir
+          Rafraîchir
         </Button>
       </div>
 
@@ -228,7 +229,7 @@ export default function SystemDebugPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Statut Global du Syst├¿me
+            Statut global du système
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -237,7 +238,7 @@ export default function SystemDebugPage() {
             <div>
               <div className="text-2xl font-bold capitalize">{status.overall}</div>
               <div className="text-sm text-gray-600">
-                Derni├¿re v├®rification: {new Date(status.timestamp).toLocaleString('fr-FR')}
+                Dernière vérification : {new Date(status.timestamp).toLocaleString('fr-FR')}
               </div>
             </div>
           </div>
@@ -251,18 +252,18 @@ export default function SystemDebugPage() {
           <AlertTitle>Migration requise</AlertTitle>
           <AlertDescription className="mt-2">
             <p className="mb-3">
-              {missingTables.length} table(s) manquante(s) pour les services de s├®curit├®.
-              Le Monitoring System est d├®grad├® car ces tables sont n├®cessaires.
+              {missingTables.length} table(s) manquante(s) pour les services de sécurité.
+              Le système de monitoring est dégradé car ces tables sont nécessaires.
             </p>
             <div className="space-y-2">
               <p className="font-semibold">Pour corriger:</p>
               <ol className="list-decimal list-inside space-y-1 text-sm">
                 <li>Ouvrir un terminal dans le projet</li>
-                <li>Ex├®cuter: <code className="bg-red-200 px-2 py-1 rounded">supabase db push</code></li>
+                <li>Exécuter : <code className="bg-red-200 px-2 py-1 rounded">supabase db push</code></li>
                 <li>Ou appliquer manuellement la migration dans Supabase Dashboard</li>
               </ol>
               <p className="text-sm mt-3">
-                ­ƒôä Fichier: <code className="bg-red-200 px-2 py-1 rounded">
+                Fichier : <code className="bg-red-200 px-2 py-1 rounded">
                   supabase/migrations/20240130_security_services_infrastructure.sql
                 </code>
               </p>
@@ -271,13 +272,13 @@ export default function SystemDebugPage() {
         </Alert>
       )}
 
-      {/* Composants Syst├¿me */}
+      {/* Composants système */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Database className="h-4 w-4" />
-              Base de Donn├®es
+              Base de données
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -325,10 +326,10 @@ export default function SystemDebugPage() {
         </Card>
       </div>
 
-      {/* Tables de S├®curit├® */}
+      {/* Tables de sécurité */}
       <Card>
         <CardHeader>
-          <CardTitle>Tables Services de S├®curit├®</CardTitle>
+          <CardTitle>Tables des services de sécurité</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -368,28 +369,28 @@ export default function SystemDebugPage() {
       {/* Instructions de Correction */}
       <Card>
         <CardHeader>
-          <CardTitle>­ƒöº Instructions de Correction</CardTitle>
+          <CardTitle>Instructions de correction</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2">├ëtape 1: V├®rifier Supabase CLI</h3>
+            <h3 className="font-semibold mb-2">Étape 1 : Vérifier Supabase CLI</h3>
             <code className="block bg-gray-100 p-3 rounded text-sm">
               supabase --version
             </code>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2">├ëtape 2: Appliquer la migration</h3>
+            <h3 className="font-semibold mb-2">Étape 2 : Appliquer la migration</h3>
             <code className="block bg-gray-100 p-3 rounded text-sm">
               supabase db push
             </code>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2">├ëtape 3: V├®rifier le r├®sultat</h3>
+            <h3 className="font-semibold mb-2">Étape 3 : Vérifier le résultat</h3>
             <p className="text-sm text-gray-600">
-              Rafra├«chir cette page apr├¿s l'application de la migration.
-              Toutes les tables doivent ├¬tre marqu├®es comme "OK" en vert.
+              Rafraîchir cette page après l'application de la migration.
+              Toutes les tables doivent être marquées comme "OK" en vert.
             </p>
           </div>
 
@@ -402,7 +403,7 @@ export default function SystemDebugPage() {
                 <li>Ouvrir Supabase Dashboard</li>
                 <li>Aller dans "SQL Editor"</li>
                 <li>Copier le contenu de <code>supabase/migrations/20240130_security_services_infrastructure.sql</code></li>
-                <li>Coller et ex├®cuter le SQL</li>
+                <li>Coller et exécuter le SQL</li>
               </ol>
             </AlertDescription>
           </Alert>
@@ -412,7 +413,7 @@ export default function SystemDebugPage() {
       {/* Guides Documentation */}
       <Card>
         <CardHeader>
-          <CardTitle>­ƒôÜ Documentation</CardTitle>
+          <CardTitle>Documentation</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="text-sm">
@@ -420,7 +421,7 @@ export default function SystemDebugPage() {
             <ul className="list-disc list-inside space-y-1 text-gray-600">
               <li><code>QUICK_START_SECURITY.md</code> - Installation rapide (30 min)</li>
               <li><code>SECURITY_SERVICES_GUIDE.md</code> - Guide complet utilisation</li>
-              <li><code>SECURITY_IMPLEMENTATION_REPORT.md</code> - Rapport impl├®mentation</li>
+              <li><code>SECURITY_IMPLEMENTATION_REPORT.md</code> - Rapport d'implémentation</li>
               <li><code>SECURITY_AUDIT_REPORT.md</code> - Rapport audit initial</li>
             </ul>
           </div>

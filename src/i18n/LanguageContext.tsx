@@ -23,7 +23,23 @@ const STORAGE_KEY = 'app_language';
 const MANUAL_LANG_KEY = 'app_language_manual'; // Indique si l'utilisateur a VRAIMENT choisi manuellement
 const COUNTRY_KEY = 'user_country';
 const GEO_CACHE_KEY = 'geo_detection_cache';
-const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
+const _GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
+
+function safeGetLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorageItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore storage failures in embedded/local preview contexts
+  }
+}
 
 // Détecte la langue du navigateur
 const detectBrowserLanguage = (): string => {
@@ -42,7 +58,7 @@ const detectBrowserLanguage = (): string => {
 const detectCountryFromCache = (): { country: string | null; language: string | null } => {
   try {
     // Vérifier le cache de géo-détection
-    const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+    const geoCacheRaw = safeGetLocalStorageItem(GEO_CACHE_KEY);
     if (geoCacheRaw) {
       const geoCache = JSON.parse(geoCacheRaw);
       if (geoCache?.data?.country) {
@@ -56,7 +72,7 @@ const detectCountryFromCache = (): { country: string | null; language: string | 
     }
 
     // Fallback: user_country dans localStorage
-    const cachedCountry = localStorage.getItem(COUNTRY_KEY);
+    const cachedCountry = safeGetLocalStorageItem(COUNTRY_KEY);
     if (cachedCountry) {
       const language = getLanguageForCountry(cachedCountry);
       const isSupported = supportedLanguages.some(l => l.code === language);
@@ -74,13 +90,13 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<string>(() => {
     // Priorité: localStorage (choix manuel) > navigateur > défaut
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetLocalStorageItem(STORAGE_KEY);
     if (stored && supportedLanguages.some(l => l.code === stored)) {
       return stored;
     }
     return detectBrowserLanguage();
   });
-  
+
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [hasAutoDetected, setHasAutoDetected] = useState(false);
 
@@ -88,28 +104,28 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   useEffect(() => {
     const detect = async () => {
       // Vérifier si l'utilisateur a VRAIMENT choisi manuellement (pas juste une ancienne valeur)
-      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+      const hasManualChoice = safeGetLocalStorageItem(MANUAL_LANG_KEY) === 'true';
       if (hasManualChoice) {
         console.log('🌍 Langue choisie manuellement, pas de sync auto');
         return;
       }
 
       // Essayer de récupérer depuis le cache de géo-détection (ignorer les fallback)
-      const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+      const geoCacheRaw = safeGetLocalStorageItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         try {
           const geoCache = JSON.parse(geoCacheRaw);
           if (geoCache?.data?.country && geoCache?.data?.language && geoCache?.data?.detectionMethod !== 'fallback') {
             const country = geoCache.data.country;
             const detectedLang = geoCache.data.language;
-            
+
             // Vérifier si la langue est supportée
             if (supportedLanguages.some(l => l.code === detectedLang)) {
               console.log(`🌍 Auto-sync langue (geo-cache): pays=${country}, langue=${detectedLang}`);
               setUserCountry(country);
               if (detectedLang !== language) {
                 setLanguageState(detectedLang);
-                localStorage.setItem(STORAGE_KEY, detectedLang);
+                safeSetLocalStorageItem(STORAGE_KEY, detectedLang);
               }
               setHasAutoDetected(true);
               return;
@@ -121,16 +137,16 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       // Fallback: lire depuis le cache local (pas d'appel réseau)
       const { country, language: detectedLang } = detectCountryFromCache();
       setUserCountry(country);
-      
+
       // Si on a une langue détectée et pas encore auto-détecté
       if (detectedLang && !hasAutoDetected) {
         console.log(`🌍 Auto-détection cache: pays=${country}, langue=${detectedLang}`);
         setLanguageState(detectedLang);
-        localStorage.setItem(STORAGE_KEY, detectedLang);
+        safeSetLocalStorageItem(STORAGE_KEY, detectedLang);
         setHasAutoDetected(true);
       }
     };
-    
+
     detect();
   }, [hasAutoDetected, language]);
 
@@ -138,11 +154,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   useEffect(() => {
     const syncFromGeoCache = () => {
       // Ne pas écraser si choix manuel explicite
-      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+      const hasManualChoice = safeGetLocalStorageItem(MANUAL_LANG_KEY) === 'true';
       if (hasManualChoice) return;
 
       try {
-        const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+        const geoCacheRaw = safeGetLocalStorageItem(GEO_CACHE_KEY);
         if (geoCacheRaw) {
           const geoCache = JSON.parse(geoCacheRaw);
           // Ignorer les fallback
@@ -151,7 +167,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
             if (supportedLanguages.some(l => l.code === detectedLang) && detectedLang !== language) {
               console.log(`🌍 Sync langue (geo-cache): ${detectedLang}`);
               setLanguageState(detectedLang);
-              localStorage.setItem(STORAGE_KEY, detectedLang);
+              safeSetLocalStorageItem(STORAGE_KEY, detectedLang);
               setUserCountry(geoCache.data.country);
             }
           }
@@ -164,7 +180,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 
     // Vérifier périodiquement si le cache géo a changé
     const checkInterval = setInterval(syncFromGeoCache, 2000);
-    
+
     // Écouter les changements de storage
     const handleStorage = (e: StorageEvent) => {
       if (e.key === GEO_CACHE_KEY) {
@@ -193,19 +209,19 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
 
     setLanguageState(lang);
-    localStorage.setItem(STORAGE_KEY, lang);
-    localStorage.setItem(MANUAL_LANG_KEY, 'true'); // Marquer comme choix manuel explicite
+    safeSetLocalStorageItem(STORAGE_KEY, lang);
+    safeSetLocalStorageItem(MANUAL_LANG_KEY, 'true'); // Marquer comme choix manuel explicite
     console.log(`🌍 Langue définie manuellement: ${lang}`);
   }, []);
 
   // Fonction de traduction
   const t = useCallback((key: string): string => {
     const langTranslations = translations[language] || translations[defaultLanguage];
-    return langTranslations[key] || translations[defaultLanguage]?.[key] || key;
+    return langTranslations[key] || translations.en?.[key] || translations[defaultLanguage]?.[key] || key;
   }, [language]);
 
   // Vérifier si RTL - utiliser notre helper centralisé
-  const currentIsRTL = isRTLLanguage(language) || 
+  const currentIsRTL = isRTLLanguage(language) ||
     supportedLanguages.find(l => l.code === language)?.dir === 'rtl';
 
   const value: LanguageContextType = {
@@ -228,7 +244,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 const defaultContextValue: LanguageContextType = {
   language: defaultLanguage,
   setLanguage: () => console.warn('LanguageProvider not mounted'),
-  t: (key: string) => translations[defaultLanguage]?.[key] || key,
+  t: (key: string) => translations.en?.[key] || translations[defaultLanguage]?.[key] || key,
   userCountry: null,
   isRTL: false,
   supportedLanguages
@@ -236,12 +252,12 @@ const defaultContextValue: LanguageContextType = {
 
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
-  
+
   if (!context) {
     console.warn('⚠️ useLanguage utilisé hors du LanguageProvider, fallback activé');
     return defaultContextValue;
   }
-  
+
   return context;
 };
 

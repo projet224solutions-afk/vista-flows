@@ -24,15 +24,15 @@ class MapService {
     const R = 6371; // Rayon de la Terre en km
     const dLat = this.toRad(point2.latitude - point1.latitude);
     const dLon = this.toRad(point2.longitude - point1.longitude);
-    
-    const a = 
+
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.toRad(point1.latitude)) * Math.cos(this.toRad(point2.latitude)) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
-    
+
     return distance;
   }
 
@@ -66,10 +66,10 @@ class MapService {
   async calculateRoute(start: Location, end: Location): Promise<Route> {
     try {
       console.log('[MapService] Calculating route from', start, 'to', end);
-      
+
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-route`, {
         method: 'POST',
         headers: {
@@ -93,7 +93,7 @@ class MapService {
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       return {
         distance: data.distance, // déjà en km
         duration: data.duration, // déjà en minutes
@@ -115,10 +115,10 @@ class MapService {
   async geocodeAddress(address: string): Promise<GeocodeResult[]> {
     try {
       console.log('[MapService] Geocoding address:', address);
-      
+
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
         method: 'POST',
         headers: {
@@ -173,7 +173,7 @@ class MapService {
     try {
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
         method: 'POST',
         headers: {

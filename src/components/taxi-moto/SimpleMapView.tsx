@@ -35,7 +35,7 @@ export function SimpleMapView({
             ))}
           </div>
         </div>
-        
+
         <div className="relative z-10 space-y-4 p-6 w-full">
           <div className="flex items-center gap-2 mb-6">
             <div className="p-3 bg-blue-600 rounded-lg">

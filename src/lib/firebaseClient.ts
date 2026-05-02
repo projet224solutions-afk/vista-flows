@@ -20,12 +20,12 @@ let initializationPromise: Promise<boolean> | null = null;
 async function fetchFirebaseConfig(): Promise<Record<string, string> | null> {
   try {
     const { data, error } = await supabase.functions.invoke('firebase-config');
-    
+
     if (error || !data?.configured) {
       console.warn('⚠️ Configuration Firebase non disponible:', error?.message || 'Non configuré');
       return null;
     }
-    
+
     return data;
   } catch (err) {
     console.warn('⚠️ Impossible de récupérer la config Firebase:', err);
@@ -37,10 +37,10 @@ async function fetchFirebaseConfig(): Promise<Record<string, string> | null> {
 async function initializeFirebase(): Promise<boolean> {
   if (isInitialized) return true;
   if (typeof window === 'undefined') return false;
-  
+
   try {
     const config = await fetchFirebaseConfig();
-    
+
     if (!config || !config.apiKey || !config.projectId) {
       console.warn('⚠️ Firebase: Configuration incomplète, fonctionnant en mode Supabase uniquement');
       return false;

@@ -13,7 +13,7 @@ import { getPdgVisibilityOverview, updatePdgVisibilityConfig } from '@/services/
 import { toast } from 'sonner';
 
 export default function PDGProductsManagement() {
-  const { products, vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
+  const { products, _vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
   const [visibilityOverview, setVisibilityOverview] = useState<any>(null);
   const [savingVisibilityConfig, setSavingVisibilityConfig] = useState(false);
   const [visibilityConfig, setVisibilityConfig] = useState({
@@ -30,7 +30,7 @@ export default function PDGProductsManagement() {
     min_quality_threshold: 20,
     rotation_factor: 10,
   });
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [viewProduct, setViewProduct] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -87,9 +87,9 @@ export default function PDGProductsManagement() {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (!matchesSearch) return false;
-    
+
     switch (filterType) {
       case 'orphan':
         return !product.vendor_is_active;
@@ -109,7 +109,7 @@ export default function PDGProductsManagement() {
 
   const handleUpdate = async () => {
     if (!editingProduct) return;
-    
+
     const success = await updateProduct(editingProduct.id, {
       name: editingProduct.name,
       description: editingProduct.description,
@@ -343,30 +343,30 @@ export default function PDGProductsManagement() {
               />
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant={filterType === 'all' ? 'default' : 'outline'} 
+              <Button
+                variant={filterType === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterType('all')}
               >
                 Tous ({stats.total})
               </Button>
-              <Button 
-                variant={filterType === 'active' ? 'default' : 'outline'} 
+              <Button
+                variant={filterType === 'active' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterType('active')}
               >
                 Actifs ({stats.active})
               </Button>
-              <Button 
-                variant={filterType === 'inactive' ? 'default' : 'outline'} 
+              <Button
+                variant={filterType === 'inactive' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilterType('inactive')}
               >
                 Inactifs ({stats.inactive})
               </Button>
               {stats.orphanProducts > 0 && (
-                <Button 
-                  variant={filterType === 'orphan' ? 'destructive' : 'outline'} 
+                <Button
+                  variant={filterType === 'orphan' ? 'destructive' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('orphan')}
                   className={filterType !== 'orphan' ? 'border-red-500 text-red-500 hover:bg-red-50' : ''}
@@ -397,9 +397,9 @@ export default function PDGProductsManagement() {
                 <div className="flex items-center gap-4 flex-1">
                   <div className="relative">
                     {product.images?.[0] ? (
-                      <img 
-                        src={product.images[0]} 
-                        alt={product.name} 
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
                         className="w-12 h-12 object-cover rounded-lg"
                       />
                     ) : (
@@ -447,8 +447,8 @@ export default function PDGProductsManagement() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setViewProduct(product)}
                   >
@@ -617,8 +617,8 @@ export default function PDGProductsManagement() {
             <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
               Annuler
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
             >
               Supprimer

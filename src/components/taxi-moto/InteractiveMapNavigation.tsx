@@ -40,10 +40,10 @@ interface InteractiveMapNavigationProps {
   onContactCustomer?: (phone: string) => void;
 }
 
-export function InteractiveMapNavigation({ 
-  activeRide, 
-  currentLocation, 
-  onContactCustomer 
+export function InteractiveMapNavigation({
+  activeRide,
+  currentLocation,
+  onContactCustomer
 }: InteractiveMapNavigationProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -65,7 +65,7 @@ export function InteractiveMapNavigation({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: currentLocation 
+      center: currentLocation
         ? [currentLocation.longitude, currentLocation.latitude]
         : [9.5, -13.7], // Conakry par défaut
       zoom: 13,
@@ -80,6 +80,7 @@ export function InteractiveMapNavigation({
         map.current = null;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Mettre à jour la position du chauffeur en temps réel
@@ -324,8 +325,8 @@ export function InteractiveMapNavigation({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div 
-            ref={mapContainer} 
+          <div
+            ref={mapContainer}
             className="w-full h-[400px] relative"
             style={{ minHeight: '400px' }}
           />

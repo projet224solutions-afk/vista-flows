@@ -129,7 +129,7 @@ export function SupplierCatalog({ vendorId }: SupplierCatalogProps) {
                 {/* Informations */}
                 <div className="space-y-2">
                   <h3 className="font-semibold line-clamp-2">{product.product_name}</h3>
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Fournisseur:</span>
                     <span className="font-medium">{product.supplier.business_name}</span>

@@ -4,7 +4,7 @@ import { getCurrencyByCode } from '@/data/currencies';
  * Liste des devises sans décimales
  */
 const NO_DECIMAL_CURRENCIES = [
-  'GNF', 'JPY', 'KRW', 'VND', 'XOF', 'XAF', 'UGX', 'RWF', 'BIF', 
+  'GNF', 'JPY', 'KRW', 'VND', 'XOF', 'XAF', 'UGX', 'RWF', 'BIF',
   'DJF', 'KMF', 'PYG', 'CLP', 'ISK', 'VUV', 'SLL'
 ];
 
@@ -15,17 +15,17 @@ const NO_DECIMAL_CURRENCIES = [
 export function formatCurrency(amount: number, currencyCode: string = 'GNF'): string {
   const code = currencyCode?.toUpperCase() || 'GNF';
   const currency = getCurrencyByCode(code);
-  
+
   // Déterminer les décimales selon la devise
   const decimals = NO_DECIMAL_CURRENCIES.includes(code) || (currency?.decimals === 0) ? 0 : 2;
-  
+
   // Arrondir le montant
   const roundedAmount = decimals === 0 ? Math.round(amount) : Math.round(amount * 100) / 100;
-  
+
   // Formatage manuel pour garantir la compatibilité (évite les bugs Intl sur mobile)
   // S'assurer que le montant est un nombre valide
   const safeAmount = typeof roundedAmount === 'number' && isFinite(roundedAmount) ? roundedAmount : 0;
-  
+
   // Choisir la locale adaptée à la devise pour un formatage correct (séparateurs)
   const locale = ['USD', 'GBP', 'CAD', 'AUD', 'HKD', 'SGD', 'NZD'].includes(code) ? 'en-US' : 'fr-FR';
 
@@ -37,24 +37,24 @@ export function formatCurrency(amount: number, currencyCode: string = 'GNF'): st
     });
   } catch {
     // Fallback si toLocaleString échoue
-    formattedAmount = decimals === 0 
+    formattedAmount = decimals === 0
       ? safeAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
       : safeAmount.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
-  
+
   // Supprimer tout zéro initial parasite (ex: "050 000" -> "50 000")
   formattedAmount = formattedAmount.replace(/^0+(?=\d)/, '');
 
   // Utiliser le symbole de la devise ou le code
   const symbol = currency?.symbol || code;
-  
+
   // Position du symbole selon la devise
   const symbolBefore = ['USD', 'GBP', 'CAD', 'AUD', 'HKD', 'SGD', 'NZD', 'MXN'].includes(code);
-  
+
   if (symbolBefore) {
     return `${symbol}${formattedAmount}`;
   }
-  
+
   return `${formattedAmount} ${symbol}`;
 }
 
@@ -74,7 +74,7 @@ export function formatCompactCurrency(amount: number, currencyCode: string = 'GN
   if (amount >= 1_000) {
     return `${symbol}${(amount / 1_000).toFixed(1)}K`;
   }
-  
+
   return formatCurrency(amount, currencyCode);
 }
 
@@ -83,16 +83,16 @@ export function formatCompactCurrency(amount: number, currencyCode: string = 'GN
  */
 export function formatPhoneNumber(phone: string): string {
   if (!phone) return '';
-  
+
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
-  
+
   // Format based on length
   if (digits.length === 9) {
     // Guinea format: XXX XX XX XX
     return `${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5, 7)} ${digits.slice(7)}`;
   }
-  
+
   // Default: just add spaces every 3 digits
   return digits.replace(/(\d{3})(?=\d)/g, '$1 ');
 }
@@ -102,7 +102,7 @@ export function formatPhoneNumber(phone: string): string {
  */
 export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  
+
   return d.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'short',
@@ -116,7 +116,7 @@ export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOpt
  */
 export function formatDateTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  
+
   return d.toLocaleString('fr-FR', {
     day: '2-digit',
     month: 'short',
@@ -142,6 +142,6 @@ export function formatRelativeTime(date: string | Date): string {
   if (diffMin < 60) return `Il y a ${diffMin} min`;
   if (diffHour < 24) return `Il y a ${diffHour}h`;
   if (diffDay < 7) return `Il y a ${diffDay}j`;
-  
+
   return formatDate(d);
 }

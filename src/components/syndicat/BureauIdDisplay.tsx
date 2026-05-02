@@ -9,10 +9,10 @@ interface BureauIdDisplayProps {
   layout?: 'horizontal' | 'vertical';
 }
 
-export function BureauIdDisplay({ 
-  bureauCode, 
+export function BureauIdDisplay({
+  bureauCode,
   bureauName,
-  className = '', 
+  className = '',
   layout = 'horizontal'
 }: BureauIdDisplayProps) {
   const [copied, setCopied] = useState(false);
@@ -27,8 +27,8 @@ export function BureauIdDisplay({
     return (
       <div className={`flex flex-col gap-2 ${className}`}>
         {bureauName && <span className="font-semibold text-foreground">{bureauName}</span>}
-        <Badge 
-          variant="default" 
+        <Badge
+          variant="default"
           className="w-fit cursor-pointer hover:opacity-80 transition-opacity"
           onClick={handleCopy}
         >
@@ -46,8 +46,8 @@ export function BureauIdDisplay({
   return (
     <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg ${className}`}>
       <span className="text-xs font-medium text-primary">ID Bureau:</span>
-      <span 
-        className="text-xs font-mono font-bold text-primary cursor-pointer hover:underline" 
+      <span
+        className="text-xs font-mono font-bold text-primary cursor-pointer hover:underline"
         onClick={handleCopy}
         title="Cliquer pour copier"
       >

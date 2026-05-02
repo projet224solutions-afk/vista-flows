@@ -27,7 +27,7 @@ interface ContractFormProps {
 export default function ContractForm({ onSuccess }: ContractFormProps) {
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState('');
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { _errors } } = useForm();
   const { toast } = useToast();
 
   const selectedContract = CONTRACT_TYPES.find(t => t.value === selectedType);
@@ -38,7 +38,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
 
       const { client_name, client_email, client_phone, client_info, amount, ...fields } = formData;
 
-      const { data, error } = await supabase.functions.invoke('create-contract', {
+      const { _data, error } = await supabase.functions.invoke('create-contract', {
         body: {
           contract_type: selectedType,
           client_name,
@@ -156,10 +156,10 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
               {/* Champs dynamiques selon le type */}
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="font-semibold">Détails du contrat</h3>
-                
+
                 {selectedContract?.fields.map(field => {
                   if (field === 'amount') return null; // Already handled above
-                  
+
                   return (
                     <div key={field} className="space-y-2">
                       <Label htmlFor={field}>

@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Loader2, Calendar, CreditCard, Wallet, Smartphone, CheckCircle2, XCircle, Zap } from 'lucide-react';
+import { Loader2, _Calendar, CreditCard, Wallet, Smartphone, CheckCircle2, XCircle, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useUnifiedSubscription } from '@/hooks/useUnifiedSubscription';
-import { UnifiedPlan } from '@/services/unifiedSubscriptionService';
+import { _UnifiedPlan } from '@/services/unifiedSubscriptionService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -15,7 +15,7 @@ interface UnifiedSubscriptionCardProps {
   compact?: boolean;
 }
 
-export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSubscriptionCardProps) {
+export function UnifiedSubscriptionCard({ _userRole, compact = false }: UnifiedSubscriptionCardProps) {
   const {
     subscription,
     plans,
@@ -124,18 +124,18 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
             {/* Actions sur l'abonnement actif */}
             <div className="flex gap-2">
               {subscription.auto_renew ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={cancelSubscription}
                   className="flex-1"
                 >
                   Désactiver le renouvellement
                 </Button>
               ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={enableAutoRenew}
                   className="flex-1"
                 >
@@ -175,7 +175,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
                     <p className="text-xs text-muted-foreground">30 jours</p>
                   </Label>
                 </div>
-                
+
                 <div className={`flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer transition ${billingCycle === 'yearly' ? 'border-primary bg-primary/5' : ''}`}>
                   <RadioGroupItem value="yearly" id="yearly" />
                   <Label htmlFor="yearly" className="flex-1 cursor-pointer flex items-center justify-between">
@@ -198,7 +198,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
                 {plans.map((plan) => {
                   const planPrice = calculatePrice(plan, billingCycle);
                   return (
-                    <div 
+                    <div
                       key={plan.id}
                       className={`flex items-start space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer transition ${selectedPlanId === plan.id ? 'border-primary bg-primary/5' : ''}`}
                     >
@@ -210,7 +210,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
                             {formatPrice(planPrice)}
                           </p>
                         </div>
-                        
+
                         {!compact && plan.features && plan.features.length > 0 && (
                           <ul className="space-y-1 mt-2">
                             {plan.features.slice(0, 3).map((feature, index) => (
@@ -240,7 +240,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
                     <span className="text-sm font-medium">{formatPrice(walletBalance)}</span>
                   </Label>
                 </div>
-                
+
                 <div className={`flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer ${paymentMethod === 'mobile_money' ? 'border-primary bg-primary/5' : ''}`}>
                   <RadioGroupItem value="mobile_money" id="mobile_money" />
                   <Smartphone className="h-4 w-4" />
@@ -248,7 +248,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
                     Mobile Money
                   </Label>
                 </div>
-                
+
                 <div className={`flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : ''}`}>
                   <RadioGroupItem value="card" id="card" />
                   <CreditCard className="h-4 w-4" />
@@ -279,8 +279,8 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
 
       {(!hasAccess || isExpired) && (
         <CardFooter>
-          <Button 
-            onClick={handleSubscribe} 
+          <Button
+            onClick={handleSubscribe}
             disabled={subscribing || !selectedPlanId}
             className="w-full"
             size="lg"

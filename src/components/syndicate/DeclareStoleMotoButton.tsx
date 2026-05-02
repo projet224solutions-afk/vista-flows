@@ -30,18 +30,18 @@ export default function DeclareStoleMotoButton({
     // Construire l'URL avec les paramètres si disponibles
     let url = '/stolen-moto-declaration';
     const params = new URLSearchParams();
-    
+
     if (vehicleId) {
       params.append('id', vehicleId);
     }
     if (plateNumber) {
       params.append('plate', plateNumber);
     }
-    
+
     if (params.toString()) {
       url += '?' + params.toString();
     }
-    
+
     navigate(url);
   };
 

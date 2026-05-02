@@ -1,6 +1,6 @@
 ﻿/**
- * CATEGORIES PAGE - Cat├®gories de produits et services
- * 224Solutions - Page des cat├®gories
+ * CATEGORIES PAGE - Catégories de produits et services
+ * 224Solutions - Page des catégories
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -31,7 +31,7 @@ const mainCategories: Category[] = [
     name: 'Billetterie',
     icon: <Ticket className="w-6 h-6" />,
     gradient: 'from-orange-500 to-red-500',
-    description: '├ëv├®nements, concerts, spectacles',
+    description: 'Événements, concerts, spectacles',
     path: '/events'
   },
   {
@@ -62,7 +62,7 @@ export default function Categories() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Cat├®gories</h1>
+            <h1 className="text-lg font-bold text-foreground">Catégories</h1>
             <p className="text-xs text-muted-foreground">Explorez nos produits et services</p>
           </div>
         </div>

@@ -19,7 +19,7 @@ interface DriverDiagnosticProps {
 export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: DriverDiagnosticProps) {
   const [realtimeStatus, setRealtimeStatus] = useState<string>('disconnected');
   const [lastNotification, setLastNotification] = useState<any>(null);
-  const [testChannel, setTestChannel] = useState<any>(null);
+  const [_testChannel, setTestChannel] = useState<any>(null);
 
   useEffect(() => {
     if (!driverId || !isOnline) return;

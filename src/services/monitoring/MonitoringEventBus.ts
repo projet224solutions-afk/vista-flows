@@ -100,7 +100,7 @@ class MonitoringEventBus {
    */
   emit(event: MonitoringEvent): void {
     console.debug(`[Monitor] ${event.severity.toUpperCase()} ${event.event_type}: ${event.message}`);
-    
+
     this.eventBuffer.push(event);
     this.trackForAlerts(event);
 
@@ -172,18 +172,18 @@ class MonitoringEventBus {
   private trackForAlerts(event: MonitoringEvent): void {
     const now = Date.now();
     const key = event.event_type;
-    
+
     if (!this.recentEvents.has(key)) {
       this.recentEvents.set(key, []);
     }
-    
+
     const timestamps = this.recentEvents.get(key)!;
     timestamps.push(now);
 
     // Évaluer les règles d'alerte
     for (const rule of ALERT_RULES) {
       if (rule.event_type !== key) continue;
-      
+
       // Vérifier cooldown
       const lastAlert = this.alertCooldowns.get(rule.dedupe_key) || 0;
       if (now - lastAlert < rule.cooldown_ms) continue;
@@ -206,7 +206,7 @@ class MonitoringEventBus {
    */
   private async triggerAlert(rule: AlertRule, count: number): Promise<void> {
     console.warn(`[Monitor] 🚨 ALERT: ${rule.title} (${count} events in window)`);
-    
+
     try {
       await supabase.from('monitoring_alerts' as any).upsert({
         alert_type: rule.event_type,

@@ -11,11 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Smartphone, 
-  CreditCard, 
-  Shield, 
-  Loader2, 
+import {
+  Smartphone,
+  CreditCard,
+  Shield,
+  Loader2,
   AlertCircle,
   CheckCircle,
   Wallet,
@@ -49,6 +49,7 @@ interface JomyPaymentSelectorProps {
   enableEscrow?: boolean;
   recipientId?: string;
   sellerId?: string;
+  cartItems?: Array<{ id: string; name?: string; price: number; quantity: number; vendorId?: string; vendor_id?: string }>;
 }
 
 type PaymentMethodId = 'CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
@@ -79,23 +80,24 @@ export function JomyPaymentSelector({
   onCancel,
   enableEscrow = true,
   recipientId,
-  sellerId
+  sellerId,
+  cartItems,
 }: JomyPaymentSelectorProps) {
   const { user } = useAuth();
   const { initiatePullPayment, pollStatus, isLoading, error } = useChapChapPay();
-  const chapchapLoading = isLoading;
-  
-  const { convert, userCurrency, loading: converterLoading } = usePriceConverter();
-  
+  const _chapchapLoading = isLoading;
+
+  const { convert, userCurrency, loading: _converterLoading } = usePriceConverter();
+
   const displayCurrency = currency.toUpperCase();
   const formattedAmount = formatCurrency(amount, displayCurrency);
-  
+
   // Conversion si devise produit ≠ devise utilisateur
   const converted = useMemo(() => {
     if (!amount || displayCurrency === userCurrency.toUpperCase()) return null;
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
-  
+
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -207,7 +209,7 @@ export function JomyPaymentSelector({
   const handlePayment = async () => {
     console.log('🔵 [JomyPaymentSelector] handlePayment called');
     console.log('🔵 [JomyPaymentSelector] selectedMethod:', selectedMethod);
-    
+
     if (!user) {
       toast.error('Vous devez être connecté pour effectuer un paiement');
       return;
@@ -222,7 +224,7 @@ export function JomyPaymentSelector({
         });
         return;
       }
-      
+
       if (!deliveryAddress.city) {
         toast.error('Ville requise', {
           description: 'Veuillez sélectionner votre ville'
@@ -255,7 +257,7 @@ export function JomyPaymentSelector({
 
     // ChapChapPay - Orange Money, MTN MoMo, PayCard
     const isChapChapPayMethod = selectedMethod === 'CCP_ORANGE' || selectedMethod === 'CCP_MTN' || selectedMethod === 'CCP_PAYCARD';
-    
+
     if (isChapChapPayMethod) {
       if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
         toast.error('Numéro de téléphone invalide');
@@ -289,7 +291,7 @@ export function JomyPaymentSelector({
         // Polling pour vérifier le statut ChapChapPay
         if (result.transactionId) {
           setPaymentStatus('polling');
-          
+
           const finalStatus = await pollStatus(result.transactionId, (status) => {
             if (status.status === 'completed') {
               setPaymentStatus('success');
@@ -395,9 +397,9 @@ export function JomyPaymentSelector({
     onPaymentFailed?.(errorMsg);
   };
 
-  const isConfirmDisabled = 
-    processing || 
-    isLoading || 
+  const isConfirmDisabled =
+    processing ||
+    isLoading ||
     (requiresPhone && (!phoneNumber || phoneNumber.length < 9));
 
   // Affichage succès
@@ -436,7 +438,7 @@ export function JomyPaymentSelector({
                 ≈ {converted.formatted} dans votre devise
               </p>
             )}
-            
+
             {enableEscrow && transactionType !== 'transfer' && (
               <Alert className="mt-3">
                 <Shield className="h-4 w-4" />
@@ -447,7 +449,7 @@ export function JomyPaymentSelector({
             )}
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Erreur — only show ChapChapPay error when a ChapChapPay method is selected */}
           {paymentStatus === 'failed' && (
@@ -478,17 +480,17 @@ export function JomyPaymentSelector({
                     processing && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  <RadioGroupItem 
-                    value={method.id} 
+                  <RadioGroupItem
+                    value={method.id}
                     id={method.id}
                     disabled={processing}
                     className="border-2 flex-shrink-0 focus-visible:ring-1 focus-visible:ring-offset-0"
                   />
-                  
+
                   <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0", method.iconBg)}>
                     {method.icon}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <span className="font-medium block text-sm">{method.name}</span>
                     <span className="text-xs text-muted-foreground block">{method.description}</span>
@@ -561,7 +563,7 @@ export function JomyPaymentSelector({
                 <Truck className="h-4 w-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison.
                   Préparez {formattedAmount} en espèces.
                 </AlertDescription>
               </Alert>
@@ -595,8 +597,10 @@ export function JomyPaymentSelector({
                   transactionType === 'taxi' ? 'taxi-payment' :
                   transactionType === 'delivery' ? 'delivery-payment' :
                   transactionType === 'service' ? 'service-payment' :
+                  transactionType === 'product' ? 'marketplace-escrow-payment' :
                   undefined
                 }
+                extraParams={transactionType === 'product' && cartItems && cartItems.length > 0 ? { cartItems } : undefined}
                 onSuccess={handleStripeSuccess}
                 onCancel={() => setShowStripeInline(false)}
                 onError={handleStripeError}
@@ -612,16 +616,16 @@ export function JomyPaymentSelector({
           ) : (
             /* Boutons standard */
             <div className="pt-4 flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={onCancel} 
+              <Button
+                variant="outline"
+                onClick={onCancel}
                 className="flex-1"
                 disabled={processing}
               >
                 Annuler
               </Button>
-              <Button 
-                onClick={handlePayment} 
+              <Button
+                onClick={handlePayment}
                 disabled={isConfirmDisabled}
                 className="flex-1"
               >

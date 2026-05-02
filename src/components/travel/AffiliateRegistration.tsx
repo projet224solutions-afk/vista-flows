@@ -3,12 +3,12 @@
  */
 
 import { useState } from 'react';
-import { 
-  Users, Check, ArrowRight, Briefcase, 
-  Mail, Phone, FileText, Wallet
+import {
+  Users, Check, ArrowRight, Briefcase,
+  Mail, _Phone, FileText, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,7 +25,7 @@ interface AffiliateRegistrationProps {
 export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistrationProps) {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [_step, _setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: (profile as any)?.full_name || (profile as any)?.name || '',
     email: (profile as any)?.email || user?.email || '',
@@ -55,7 +55,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
     try {
       const affiliateCode = generateAffiliateCode();
 
-      const { data, error } = await (supabase as any)
+      const { _data, error } = await (supabase as any)
         .from('travel_affiliates')
         .insert({
           user_id: user.id,
@@ -196,7 +196,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
             <Checkbox
               id="terms"
               checked={formData.acceptTerms}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setFormData(prev => ({ ...prev, acceptTerms: checked as boolean }))
               }
             />
@@ -212,8 +212,8 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
         <Button variant="outline" onClick={onCancel} className="flex-1">
           Annuler
         </Button>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           disabled={loading || !formData.acceptTerms}
           className="flex-1 gap-2"
         >

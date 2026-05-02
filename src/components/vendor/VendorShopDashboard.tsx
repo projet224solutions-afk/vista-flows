@@ -11,9 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/formatters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ShoppingCart, Package, Users, TrendingUp, 
-  RefreshCw, Eye, Clock, CheckCircle, XCircle, 
+import {
+  ShoppingCart, Package, Users, TrendingUp,
+  RefreshCw, Eye, Clock, CheckCircle, XCircle,
   DollarSign, BarChart3, ShoppingBag, AlertTriangle, Plus
 } from 'lucide-react';
 import { useVendorEcommerceStats } from '@/hooks/useVendorEcommerceStats';
@@ -51,10 +51,10 @@ const statusLabels: Record<string, string> = {
 
 // formatCurrency importé depuis @/lib/formatters
 
-export function VendorShopDashboard({ 
-  vendorId, 
+export function VendorShopDashboard({
+  vendorId,
   businessName,
-  onCreateService 
+  _onCreateService
 }: VendorShopDashboardProps) {
   const { stats, recentOrders, loading, error, refresh } = useVendorEcommerceStats(vendorId);
   const [activeTab, setActiveTab] = useState('overview');
@@ -222,7 +222,7 @@ export function VendorShopDashboard({
                   <span className="text-sm font-medium">Total général</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
                 </div>
-                
+
                 {/* Séparation POS / Online */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -361,8 +361,8 @@ export function VendorShopDashboard({
               ) : (
                 <div className="space-y-3">
                   {recentOrders.map((order) => (
-                    <div 
-                      key={order.id} 
+                    <div
+                      key={order.id}
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1">

@@ -46,7 +46,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
   const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  
+
   const [email, setEmail] = useState('');
   const [expiresIn, setExpiresIn] = useState('24');
 
@@ -67,7 +67,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
 
       if (data.success) {
         setGeneratedLink(data.install_url);
-        
+
         toast.success('🔗 Lien généré !', {
           description: email ? `Email envoyé à ${email}` : 'Copiez et partagez le lien'
         });
@@ -87,7 +87,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
       navigator.clipboard.writeText(generatedLink);
       setCopied(true);
       toast.success('Lien copié !');
-      
+
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -106,7 +106,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
           Lien d'installation
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
                 <Check className="w-5 h-5" />
                 <span className="font-medium">Lien généré avec succès !</span>
               </div>
-              
+
               <div className="mt-3 p-3 bg-white rounded border border-green-300">
                 <p className="text-sm break-all font-mono text-gray-700">
                   {generatedLink}

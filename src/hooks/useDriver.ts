@@ -32,7 +32,7 @@ export function useDriver() {
       const driverData = await DriverService.getDriverByUserId(user.id);
       if (driverData) {
         setDriver(driverData);
-        
+
         // Charger les statistiques
         const driverStats = await DriverService.getDriverStats(driverData.id);
         setStats(driverStats);
@@ -54,7 +54,7 @@ export function useDriver() {
       await DriverService.goOnline(driver.id, location);
       setDriver((prev) => prev ? { ...prev, status: 'online', is_online: true } : null);
       toast.success('✅ Vous êtes maintenant EN LIGNE');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Impossible de passer en ligne');
     }
   }, [driver]);
@@ -69,7 +69,7 @@ export function useDriver() {
       await DriverService.goOffline(driver.id);
       setDriver((prev) => prev ? { ...prev, status: 'offline', is_online: false } : null);
       toast.success('Vous êtes maintenant HORS LIGNE');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Impossible de passer hors ligne');
     }
   }, [driver]);
@@ -84,7 +84,7 @@ export function useDriver() {
       await DriverService.pause(driver.id);
       setDriver((prev) => prev ? { ...prev, status: 'paused' } : null);
       toast.info('⏸️ En pause');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Impossible de mettre en pause');
     }
   }, [driver]);
@@ -124,6 +124,7 @@ export function useDriver() {
     });
 
     return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.id]);
 
   // Charger le profil au montage

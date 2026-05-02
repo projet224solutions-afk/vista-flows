@@ -1,6 +1,6 @@
 /**
  * 🔴 REDIS CONFIGURATION - Phase 6
- * 
+ *
  * Unified Redis client for cache, locks, rate limiting, and queues.
  * Graceful fallback: app works without Redis, just slower.
  */

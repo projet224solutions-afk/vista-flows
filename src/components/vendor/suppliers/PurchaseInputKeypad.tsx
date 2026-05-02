@@ -6,9 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { 
-  Calculator, 
-  Trash2, 
+import {
+  _Calculator,
+  Trash2,
   CheckSquare,
   Package,
   DollarSign,
@@ -50,32 +50,32 @@ export function PurchaseInputKeypad({
       setInputValue('');
       return;
     }
-    
+
     if (input === 'backspace') {
       setInputValue(prev => prev.slice(0, -1));
       return;
     }
-    
+
     if (input === 'enter') {
-      const numValue = mode === 'price' 
-        ? parseFloat(inputValue) || 0 
+      const numValue = mode === 'price'
+        ? parseFloat(inputValue) || 0
         : parseInt(inputValue, 10) || 0;
       onConfirm(numValue);
       onOpenChange(false);
       return;
     }
-    
+
     // Handle decimal point for price mode only
     if (input === '.') {
       if (mode !== 'price') return;
       if (inputValue.includes('.')) return;
     }
-    
+
     setInputValue(prev => prev + input);
   };
 
-  const numericValue = mode === 'price' 
-    ? parseFloat(inputValue) || 0 
+  const numericValue = mode === 'price'
+    ? parseFloat(inputValue) || 0
     : parseInt(inputValue, 10) || 0;
 
   const getModeConfig = () => {
@@ -218,7 +218,7 @@ export function PurchaseInputKeypad({
               ))}
             </div>
           )}
-          
+
           {mode === 'carton' && (
             <div className="grid grid-cols-4 gap-2">
               {[1, 2, 5, 10].map((qty) => (

@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  AlertTriangle, Shield, TrendingUp, Wallet, 
+import {
+  AlertTriangle, Shield, _TrendingUp, Wallet,
   CheckCircle, XCircle, RefreshCw, Activity,
-  DollarSign, FileText, Eye, Clock
+  DollarSign, FileText, _Eye, _Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -70,7 +70,7 @@ interface LedgerEntry {
   ledger_hash: string;
 }
 
-export function AgentBankingModule({ agentId, canManage = false }: AgentBankingModuleProps) {
+export function AgentBankingModule({ _agentId, _canManage = false }: AgentBankingModuleProps) {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [alerts, setAlerts] = useState<FinancialAlert[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -85,11 +85,11 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      
+
       // Load dashboard stats via RPC
       const { data: statsData, error: statsError } = await supabase
         .rpc('get_pdg_financial_dashboard');
-      
+
       if (!statsError && statsData) {
         setDashboardData(statsData as unknown as DashboardData);
       }
@@ -100,7 +100,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (alertsData) {
         setAlerts(alertsData as FinancialAlert[]);
       }
@@ -111,7 +111,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
-      
+
       if (ledgerData) {
         setLedger(ledgerData as LedgerEntry[]);
       }
@@ -291,8 +291,8 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                 ) : (
                   <div className="space-y-3">
                     {alerts.map((alert) => (
-                      <div 
-                        key={alert.id} 
+                      <div
+                        key={alert.id}
                         className={`p-4 rounded-lg border ${!alert.is_read ? 'bg-muted/50' : ''}`}
                       >
                         <div className="flex items-start justify-between">
@@ -336,8 +336,8 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                 ) : (
                   <div className="space-y-2">
                     {ledger.map((entry) => (
-                      <div 
-                        key={entry.id} 
+                      <div
+                        key={entry.id}
                         className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors"
                       >
                         <div className="flex items-center justify-between">

@@ -4,12 +4,12 @@
  */
 
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
-import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { _ErrorBanner } from '@/components/ui/ErrorBanner';
 import { GoOnlineButton } from './GoOnlineButton';
 import { DriverStatsRow } from './DriverStatsRow';
 import { MiniMap } from './MiniMap';
 import { RideRequestCard } from './RideRequestCard';
-import { Car, Crown, Zap, AlertCircle } from 'lucide-react';
+import { Car, _Crown, Zap, AlertCircle } from 'lucide-react';
 import { DriverTutorial } from '@/components/taxi-moto/DriverTutorial';
 import { DriverDiagnostic } from '@/components/taxi-moto/DriverDiagnostic';
 import { DriverVehicleInfo } from './DriverVehicleInfo';
@@ -95,18 +95,18 @@ export function DriverMainDashboard({
             backgroundSize: '24px 24px'
           }}
         />
-        
+
         {/* Accent glow when online */}
         {isOnline && (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
         )}
       </div>
-      
+
       {/* Content */}
       <div className="relative z-10">
         {/* Subscription Banner */}
         <DriverSubscriptionBanner />
-        
+
         {/* Error Banner - compact */}
         {error && (
           <div className="px-2 pt-1">
@@ -119,7 +119,7 @@ export function DriverMainDashboard({
                    'Erreur'}: {error.message}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={onClearError}
                 className="text-red-400/70 hover:text-red-400 text-[10px] underline shrink-0"
               >
@@ -128,9 +128,9 @@ export function DriverMainDashboard({
             </div>
           </div>
         )}
-        
+
         {/* Stats Row */}
-        <DriverStatsRow 
+        <DriverStatsRow
           todayEarnings={stats.todayEarnings || 0}
           todayRides={stats.todayRides || 0}
           rating={stats.rating || 5.0}
@@ -161,7 +161,7 @@ export function DriverMainDashboard({
                   <span className="text-emerald-400 text-[10px] font-medium">En direct</span>
                 </div>
               </div>
-              
+
               {/* Request cards */}
               <div className="space-y-2">
                 {rideRequests.map((request) => (
@@ -212,7 +212,7 @@ export function DriverMainDashboard({
                 )}>
                   {/* Subtle animated gradient */}
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5 animate-pulse" />
-                  
+
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -230,7 +230,7 @@ export function DriverMainDashboard({
 
               {/* Diagnostic when online but no rides */}
               {isOnline && (
-                <DriverDiagnostic 
+                <DriverDiagnostic
                   driverId={driverId}
                   isOnline={isOnline}
                   hasAccess={hasAccess}

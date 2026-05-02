@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -41,13 +41,13 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
   const {
     tables,
     loading,
-    error,
+    _error,
     createTable,
     updateTable,
     updateTableStatus,
     deleteTable,
     getTableStats,
-    refresh,
+    _refresh,
   } = useRestaurantTables(serviceId);
 
   const [showDialog, setShowDialog] = useState(false);
@@ -287,8 +287,8 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
             const location = LOCATIONS.find(l => l.value === table.location);
 
             return (
-              <Card 
-                key={table.id} 
+              <Card
+                key={table.id}
                 className={`relative cursor-pointer transition-all hover:shadow-md ${
                   table.status === 'occupied' ? 'ring-2 ring-red-400' : ''
                 }`}

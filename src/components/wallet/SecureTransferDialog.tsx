@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { useWalletTransfer, TransferPreview } from '@/hooks/useWalletTransfer';
+import { useWalletTransfer, _TransferPreview } from '@/hooks/useWalletTransfer';
 import { UserSearchInput } from '@/components/wallet/UserSearchInput';
 import { ArrowRight, Loader2, Shield, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
@@ -111,7 +111,7 @@ export function SecureTransferDialog({
 
             {/* Destinataire */}
             <div className="space-y-2">
-              <UserSearchInput 
+              <UserSearchInput
                 value={recipientCode}
                 onChange={setRecipientCode}
                 onUserSelect={handleUserSelect}
@@ -179,7 +179,7 @@ export function SecureTransferDialog({
           <div className="space-y-4 py-4">
             <div className="p-4 bg-muted rounded-lg space-y-3">
               <h4 className="font-medium">Récapitulatif du transfert</h4>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Montant envoyé</span>
@@ -278,7 +278,7 @@ export function SecureTransferDialog({
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            
+
             <div>
               <h3 className="text-lg font-semibold text-green-600">Transfert réussi!</h3>
               <p className="text-sm text-muted-foreground mt-1">

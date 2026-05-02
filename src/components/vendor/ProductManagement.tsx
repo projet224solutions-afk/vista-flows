@@ -27,10 +27,10 @@ import { ProductLimitService, ProductLimitStatus } from "@/services/productLimit
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PublicIdBadge } from "@/components/PublicIdBadge";
-import { 
+import {
   Package, Plus, Search, Filter, Edit, Trash2,
   ShoppingCart, TrendingUp, Camera, Save, X, Copy,
-  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode, AlertCircle, Video
+  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, _Barcode, AlertCircle, Video
 } from "lucide-react";
 import { ProductBarcodeDisplay } from "./ProductBarcodeDisplay";
 import { BarcodeLabelsA4Generator } from "./BarcodeLabelsA4Generator";
@@ -90,7 +90,7 @@ export default function ProductManagement() {
   );
   const draftRestoredRef = useRef(false);
   const draftSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   // Product actions hook
   const {
     createProduct,
@@ -228,6 +228,7 @@ export default function ProductManagement() {
     } catch {
       // ignore
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productDraftKey, vendorId, vendorLoading]);
 
   // Sauvegarde automatique (debounced) + sauvegarde immédiate sur sortie d'onglet/app
@@ -270,6 +271,7 @@ export default function ProductManagement() {
     fetchData();
     loadProductLimit();
     loadPremiumStatus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
   // Check if we should open the dialog from URL params (action=new)
@@ -283,6 +285,7 @@ export default function ProductManagement() {
       searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, vendorLoading, vendorId]);
 
   const loadProductLimit = async () => {
@@ -304,24 +307,24 @@ export default function ProductManagement() {
         .select('plan_id')
         .eq('user_id', user.id)
         .eq('status', 'active');
-      
+
       if (subError || !subData || subData.length === 0) {
         setIsPremium(false);
         return;
       }
-      
+
       // Check if ANY subscription is premium/pro/business/enterprise
       const planIds = subData.map(s => s.plan_id);
       const { data: planData } = await supabase
         .from('plans')
         .select('name')
         .in('id', planIds);
-      
+
       const hasPremium = (planData || []).some(p => {
         const name = (p.name as string || '').toLowerCase();
         return name.includes('premium') || name.includes('enterprise') || name.includes('pro') || name.includes('business');
       });
-      
+
       console.log('[Premium Check] Has premium:', hasPremium, planData);
       setIsPremium(hasPremium);
     } catch (e) {
@@ -381,7 +384,7 @@ export default function ProductManagement() {
       setUploadingVideo(true);
       const video = document.createElement('video');
       video.preload = 'metadata';
-      
+
       await new Promise<void>((resolve, reject) => {
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
@@ -423,17 +426,17 @@ export default function ProductManagement() {
 
   const fetchProducts = async () => {
     if (!vendorId) return;
-    
+
     try {
       // 1. Appliquer les limites d'abonnement et désactiver les produits en excès
       const limitStatus = await ProductLimitService.enforceProductLimit(vendorId, user?.id);
       setProductLimitStatus(limitStatus);
-      
+
       // 2. Notifier le vendeur si des produits ont été désactivés
       if (limitStatus.excess_products > 0) {
         ProductLimitService.notifyProductDeactivation(limitStatus);
       }
-      
+
       // 3. Charger les produits mis à jour
       const { data, error } = await supabase
         .from('products')
@@ -445,12 +448,12 @@ export default function ProductManagement() {
         captureError('product', 'Failed to fetch products', error);
         return;
       }
-      
+
       setProducts(data || []);
     } catch (error: any) {
       captureError('product', 'Failed to enforce product limits', error);
       console.error('[ProductLimit] Error:', error);
-      
+
       // Charger quand même les produits même en cas d'erreur
       const { data, error: fetchError } = await supabase
         .from('products')
@@ -476,7 +479,7 @@ export default function ProductManagement() {
       console.error('[Categories] Fetch error:', error);
       return;
     }
-    
+
     console.log('[Categories] Loaded:', data?.length, 'categories', data);
     setCategories(data || []);
   };
@@ -654,7 +657,7 @@ export default function ProductManagement() {
     const files = event.target.files;
     if (!files) return;
 
-    const imageFiles = Array.from(files).filter(file => 
+    const imageFiles = Array.from(files).filter(file =>
       file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
     );
 
@@ -680,9 +683,9 @@ export default function ProductManagement() {
     try {
       setGeneratingDescription(true);
       toast.info('🤖 Génération IA en cours...');
-      
-      const categoryName = categoryMode === 'existing' && formData.category_id 
-        ? categories.find(c => c.id === formData.category_id)?.name 
+
+      const categoryName = categoryMode === 'existing' && formData.category_id
+        ? categories.find(c => c.id === formData.category_id)?.name
         : formData.category_name || undefined;
 
       const { data, error } = await supabase.functions.invoke('generate-product-description', {
@@ -718,9 +721,9 @@ export default function ProductManagement() {
     try {
       setGeneratingImage(true);
       toast.info('🎨 Génération image IA en cours...');
-      
-      const categoryName = categoryMode === 'existing' && formData.category_id 
-        ? categories.find(c => c.id === formData.category_id)?.name 
+
+      const categoryName = categoryMode === 'existing' && formData.category_id
+        ? categories.find(c => c.id === formData.category_id)?.name
         : formData.category_name || undefined;
 
       const { data, error } = await supabase.functions.invoke('generate-product-image', {
@@ -766,14 +769,14 @@ export default function ProductManagement() {
     const prefix = '224'; // Guinea country code
     const randomDigits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('');
     const baseCode = prefix + randomDigits;
-    
+
     // Calculate check digit for EAN-13
     let sum = 0;
     for (let i = 0; i < 12; i++) {
       sum += parseInt(baseCode[i]) * (i % 2 === 0 ? 1 : 3);
     }
     const checkDigit = (10 - (sum % 10)) % 10;
-    
+
     const barcode = baseCode + checkDigit;
     setFormData(prev => ({ ...prev, barcode }));
     toast.success('Code-barres EAN-13 généré');
@@ -792,16 +795,16 @@ export default function ProductManagement() {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || 
+
+      const matchesStatus = statusFilter === 'all' ||
                            (statusFilter === 'active' && product.is_active) ||
                            (statusFilter === 'inactive' && !product.is_active);
-      
+
       const effectiveStock = getEffectiveStock(product);
-      const matchesLowStock = !lowStockFilter || 
+      const matchesLowStock = !lowStockFilter ||
                              effectiveStock <= product.low_stock_threshold;
 
-      const matchesCategory = categoryFilter === 'all' || 
+      const matchesCategory = categoryFilter === 'all' ||
                              product.category_id === categoryFilter;
 
       return matchesSearch && matchesStatus && matchesLowStock && matchesCategory;
@@ -943,9 +946,9 @@ export default function ProductManagement() {
         {/* Boutons en grille sur mobile */}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
           <BarcodeLabelsA4Generator vendorId={vendorId || ''} />
-          <Button 
-            onClick={() => { resetForm(); setShowDialog(true); }} 
-            className="w-full sm:w-auto text-sm" 
+          <Button
+            onClick={() => { resetForm(); setShowDialog(true); }}
+            className="w-full sm:w-auto text-sm"
             disabled={productLimit && !productLimit.can_add}
           >
             <Plus className="h-4 w-4 mr-1 shrink-0" />
@@ -1028,7 +1031,7 @@ export default function ProductManagement() {
                 className="pl-10 h-9 md:h-10 text-sm"
               />
             </div>
-            
+
             {/* Filter Row */}
             <div className="flex flex-wrap gap-2">
               {/* Status Filter */}
@@ -1082,8 +1085,8 @@ export default function ProductManagement() {
       {/* Products Grid */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
         {filteredProducts.map((product) => (
-          <Card 
-            key={product.id} 
+          <Card
+            key={product.id}
             className={`overflow-hidden group hover:shadow-md transition-all ${
               !product.is_active ? 'opacity-60 blur-[1px] hover:blur-[0.5px]' : ''
             }`}
@@ -1119,7 +1122,7 @@ export default function ProductManagement() {
                 </Badge>
               )}
             </div>
-            
+
             {/* Product Info */}
             <CardHeader className="p-2 md:p-4 pb-1 md:pb-2">
               <CardTitle className="text-xs md:text-base line-clamp-2 leading-tight">{product.name}</CardTitle>
@@ -1131,7 +1134,7 @@ export default function ProductManagement() {
                 </Badge>
               )}
             </CardHeader>
-            
+
             <CardContent className="p-2 md:p-4 pt-0 space-y-1.5 md:space-y-3">
               {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -1144,7 +1147,7 @@ export default function ProductManagement() {
                   </span>
                 )}
               </div>
-              
+
               {/* Barcode - Clickable visual barcode */}
               {product.barcode && (
                 <ProductBarcodeDisplay
@@ -1202,8 +1205,8 @@ export default function ProductManagement() {
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Aucun produit trouvé</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4"
               onClick={() => { resetForm(); setShowDialog(true); }}
             >
@@ -1276,7 +1279,7 @@ export default function ProductManagement() {
                   <FolderOpen className="h-4 w-4" />
                   Catégorie
                 </Label>
-                
+
                 <div className="flex gap-2 mb-2">
                   <Button
                     type="button"
@@ -1693,8 +1696,8 @@ export default function ProductManagement() {
                     ) : (
                       <>
                         <Video className="h-6 w-6" />
-                        <Badge 
-                          variant={isPremium ? "default" : "secondary"} 
+                        <Badge
+                          variant={isPremium ? "default" : "secondary"}
                           className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-green-500' : ''}`}
                         >
                           {isPremium ? '✓ Premium' : '🔒 Premium'}

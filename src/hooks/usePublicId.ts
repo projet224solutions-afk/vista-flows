@@ -65,11 +65,11 @@ export const usePublicId = () => {
       const errorMsg = err.message || 'Erreur lors de la génération d\'ID';
       console.error('❌ Erreur génération ID:', errorMsg);
       setError(errorMsg);
-      
+
       if (showToast) {
         toast.error(errorMsg);
       }
-      
+
       setLoading(false);
       return null;
     }

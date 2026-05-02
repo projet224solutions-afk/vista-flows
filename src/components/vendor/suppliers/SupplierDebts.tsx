@@ -57,6 +57,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const loadDebts = async () => {
@@ -85,14 +86,14 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
     } catch (error: any) {
       // Ignorer silencieusement les erreurs RLS ou réseau
       const errorMessage = error?.message?.toLowerCase() || '';
-      const isRlsOrNetworkError = 
-        error?.code === 'PGRST301' || 
+      const isRlsOrNetworkError =
+        error?.code === 'PGRST301' ||
         error?.code === '42501' ||
         errorMessage.includes('permission denied') ||
         errorMessage.includes('rls') ||
         errorMessage.includes('failed to fetch') ||
         errorMessage.includes('networkerror');
-      
+
       if (!isRlsOrNetworkError) {
         console.error('Erreur chargement dettes fournisseurs:', error);
         toast.error('Erreur lors du chargement des dettes');

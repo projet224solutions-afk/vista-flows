@@ -94,7 +94,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
 
       const validProducts = (data || []).filter(p => p.barcode_value);
       setProducts(validProducts);
-      
+
       // Initialiser les quantités à 1
       const initialQuantities: Record<string, number> = {};
       validProducts.forEach(p => {
@@ -154,18 +154,18 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
   };
 
   const drawBarcodeInPDF = (
-    pdf: InstanceType<Awaited<ReturnType<typeof loadJsPDF>>>, 
-    barcodeValue: string, 
-    x: number, 
-    y: number, 
-    width: number, 
+    pdf: InstanceType<Awaited<ReturnType<typeof loadJsPDF>>>,
+    barcodeValue: string,
+    x: number,
+    y: number,
+    width: number,
     height: number
   ) => {
     const encoded = encodeCode128(barcodeValue);
     const barWidth = width / encoded.length;
-    
+
     pdf.setFillColor(0, 0, 0);
-    
+
     let currentX = x;
     for (let i = 0; i < encoded.length; i++) {
       if (encoded[i] === '1') {
@@ -214,7 +214,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           const label = pageLabels[i];
           const col = i % layout.cols;
           const row = Math.floor(i / layout.cols);
-          
+
           const x = marginX + col * layout.labelWidth;
           const y = marginY + row * layout.labelHeight;
 
@@ -232,8 +232,8 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(0, 0, 0);
           const maxNameLength = Math.floor(layout.labelWidth / 2.5);
-          const productName = label.name.length > maxNameLength 
-            ? label.name.substring(0, maxNameLength - 2) + '...' 
+          const productName = label.name.length > maxNameLength
+            ? label.name.substring(0, maxNameLength - 2) + '...'
             : label.name;
           pdf.text(productName, x + layout.labelWidth / 2, y + 5, { align: 'center' });
 
@@ -242,7 +242,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           const barcodeY = y + 7;
           const barcodeWidth = layout.labelWidth - 6;
           const barcodeHeight = layout.labelHeight - 18;
-          
+
           drawBarcodeInPDF(pdf, label.barcode_value || '', barcodeX, barcodeY, barcodeWidth, barcodeHeight);
 
           // Valeur du code-barres (texte sous les barres)
@@ -273,7 +273,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       // Télécharger le PDF
       const fileName = `etiquettes-codes-barres-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
-      
+
       toast.success(`PDF généré avec succès`, {
         description: `${labels.length} étiquette(s) sur ${totalPages} page(s)`
       });
@@ -378,7 +378,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
                 });
               } catch(e) { console.error("Barcode error:", e); }
             `).join('\n')}
-            
+
             window.onload = function() {
               setTimeout(function() { window.print(); }, 600);
             };
@@ -491,22 +491,22 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
               ) : (
                 <div className="space-y-1.5">
                   {products.map(product => (
-                    <div 
+                    <div
                       key={product.id}
                       className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all ${
-                        selectedProducts.has(product.id) 
-                          ? 'bg-primary/10 border-primary/50' 
+                        selectedProducts.has(product.id)
+                          ? 'bg-primary/10 border-primary/50'
                           : 'hover:bg-muted/50 border-transparent'
                       }`}
                       onClick={() => toggleProductSelection(product.id)}
                     >
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedProducts.has(product.id)}
                         onCheckedChange={() => toggleProductSelection(product.id)}
                         onClick={(e) => e.stopPropagation()}
                         className="h-4 w-4"
                       />
-                      
+
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -551,7 +551,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
               <Printer className="h-4 w-4" />
               Imprimer
             </Button>
-            
+
             <Button
               onClick={generatePDF}
               disabled={generating || selectedProducts.size === 0}

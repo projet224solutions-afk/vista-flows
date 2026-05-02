@@ -13,10 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Wrench, Smartphone, Monitor, Car, 
-  Zap, Home, Clock, CheckCircle2, AlertCircle,
-  Calendar, DollarSign, TrendingUp, Users
+import {
+  Wrench, Smartphone, _Monitor, Car,
+  Zap, Home, Clock, CheckCircle2, _AlertCircle,
+  _Calendar, DollarSign, TrendingUp, _Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -77,11 +77,11 @@ const REPAIR_CATEGORIES: RepairCategory[] = [
   }
 ];
 
-export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
+export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [requests, setRequests] = useState<RepairRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({
+  const [stats, _setStats] = useState({
     pendingRequests: 5,
     completedToday: 3,
     revenue: 850000,
@@ -146,7 +146,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         address: ''
       });
       loadRequests();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'enregistrement');
     } finally {
       setLoading(false);
@@ -394,7 +394,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                     const statusInfo = getStatusBadge(request.status);
                     const category = REPAIR_CATEGORIES.find(c => c.id === request.category);
                     const Icon = category?.icon || Wrench;
-                    
+
                     return (
                       <Card key={request.id}>
                         <CardContent className="pt-6">

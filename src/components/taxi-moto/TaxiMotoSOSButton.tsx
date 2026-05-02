@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
+  _DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -86,7 +86,7 @@ export function TaxiMotoSOSButton({
     cooldownTimer.current = setInterval(() => {
       const remaining = taxiMotoSOSService.getCooldownRemaining();
       setCooldownRemaining(remaining);
-      
+
       if (remaining === 0) {
         if (cooldownTimer.current) {
           clearInterval(cooldownTimer.current);
@@ -104,7 +104,7 @@ export function TaxiMotoSOSButton({
     }
 
     setIsPressed(true);
-    
+
     // Timer de 1.5 secondes
     pressTimer.current = setTimeout(async () => {
       setIsPressed(false);
@@ -122,7 +122,7 @@ export function TaxiMotoSOSButton({
   const triggerSOS = async () => {
     try {
       setIsActive(true);
-      
+
       const result = await taxiMotoSOSService.triggerSOS(
         taxiId,
         driverName,
@@ -133,12 +133,12 @@ export function TaxiMotoSOSButton({
 
       if (result.success && result.sos_id) {
         setActiveSOSId(result.sos_id);
-        
+
         toast.success('🚨 SOS ENVOYÉ!', {
           description: '📹 Enregistrement audio/vidéo démarré automatiquement. Bureau Syndicat notifié.',
           duration: 10000
         });
-        
+
         // Démarrer le cooldown
         setCooldownRemaining(60);
         startCooldownTimer();
@@ -157,12 +157,12 @@ export function TaxiMotoSOSButton({
 
   const cancelActiveSOS = async () => {
     if (!activeSOSId) return;
-    
+
     try {
       // Mettre à jour le statut du SOS à "cancelled" ou "resolved"
       const { error } = await supabase
         .from('sos_alerts')
-        .update({ 
+        .update({
           status: 'resolved',
           resolved_at: new Date().toISOString(),
           resolution_notes: 'Annulé par le conducteur - fausse alerte'
@@ -175,7 +175,7 @@ export function TaxiMotoSOSButton({
       setActiveSOSId(null);
       setShowRecorder(false);
       setShowCancelConfirm(false);
-      
+
       // Réinitialiser le cooldown
       setCooldownRemaining(0);
       if (cooldownTimer.current) {
@@ -194,7 +194,7 @@ export function TaxiMotoSOSButton({
   // Variantes de style
   const getButtonClasses = () => {
     const baseClasses = 'font-bold transition-all duration-300';
-    
+
     if (variant === 'floating') {
       return cn(
         baseClasses,
@@ -205,7 +205,7 @@ export function TaxiMotoSOSButton({
         className
       );
     }
-    
+
     if (variant === 'compact') {
       return cn(
         baseClasses,
@@ -216,7 +216,7 @@ export function TaxiMotoSOSButton({
         className
       );
     }
-    
+
     // default
     return cn(
       baseClasses,
@@ -237,7 +237,7 @@ export function TaxiMotoSOSButton({
         </>
       );
     }
-    
+
     if (isActive) {
       return (
         <>
@@ -246,7 +246,7 @@ export function TaxiMotoSOSButton({
         </>
       );
     }
-    
+
     if (isPressed) {
       return (
         <>
@@ -255,7 +255,7 @@ export function TaxiMotoSOSButton({
         </>
       );
     }
-    
+
     return (
       <>
         <AlertTriangle className="w-5 h-5" />
@@ -370,7 +370,7 @@ export function TaxiMotoSOSButton({
               Filmez ou enregistrez la situation pour le Bureau Syndicat
             </DialogDescription>
           </DialogHeader>
-          
+
           {activeSOSId && (
             <SOSMediaRecorder
               sosAlertId={activeSOSId}

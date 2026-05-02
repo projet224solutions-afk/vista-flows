@@ -33,9 +33,9 @@ export default function MyPurchases() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         }>
-          <MyPurchasesOrdersList 
-            title="Mes Achats Personnels" 
-            emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" 
+          <MyPurchasesOrdersList
+            title="Mes Achats Personnels"
+            emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
           />
         </Suspense>
       </div>

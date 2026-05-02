@@ -24,11 +24,11 @@ export const logSecurityEvent = async (event: Omit<SecurityEvent, 'timestamp'>):
     ...event,
     timestamp: new Date().toISOString()
   };
-  
+
   // Logger en console pour debugging
   const emoji = getSeverityEmoji(event.severity);
   console.warn(`${emoji} Security Event [${event.severity.toUpperCase()}]: ${event.type}`, event.details);
-  
+
   try {
     // Enregistrer dans Supabase (using any to bypass type checking for untyped table)
     const { error } = await (supabase as any)
@@ -43,11 +43,11 @@ export const logSecurityEvent = async (event: Omit<SecurityEvent, 'timestamp'>):
         details: event.details,
         created_at: fullEvent.timestamp
       });
-    
+
     if (error) {
       console.error('❌ Erreur enregistrement security event:', error);
     }
-    
+
     // Alertes automatiques pour événements critiques
     if (event.severity === 'critical') {
       await triggerSecurityAlert(fullEvent);
@@ -97,7 +97,7 @@ export const detectSQLInjection = (input: string): boolean => {
     /(\bAND\b.*=.*)/i,
     /(';|";)/
   ];
-  
+
   return sqlPatterns.some(pattern => pattern.test(input));
 };
 
@@ -115,7 +115,7 @@ export const detectXSS = (input: string): boolean => {
     /eval\s*\(/i,
     /expression\s*\(/i
   ];
-  
+
   return xssPatterns.some(pattern => pattern.test(input));
 };
 
@@ -220,7 +220,7 @@ export const getSecurityStats = async (timeframe: 'hour' | 'day' | 'week'): Prom
   try {
     const now = new Date();
     let since: Date;
-    
+
     switch (timeframe) {
       case 'hour':
         since = new Date(now.getTime() - 3600000);
@@ -232,16 +232,16 @@ export const getSecurityStats = async (timeframe: 'hour' | 'day' | 'week'): Prom
         since = new Date(now.getTime() - 604800000);
         break;
     }
-    
+
     const { data, error } = await (supabase as any)
       .from('security_events')
       .select('event_type, severity')
       .gte('created_at', since.toISOString());
-    
+
     if (error || !data) {
       throw error;
     }
-    
+
     const stats = {
       totalEvents: (data as any[]).length,
       criticalEvents: (data as any[]).filter((e: any) => e.severity === 'critical').length,
@@ -250,7 +250,7 @@ export const getSecurityStats = async (timeframe: 'hour' | 'day' | 'week'): Prom
         return acc;
       }, {} as Record<string, number>)
     };
-    
+
     return stats;
   } catch (error) {
     console.error('❌ Erreur récupération stats sécurité:', error);

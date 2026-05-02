@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { _Tooltip, _TooltipContent, _TooltipProvider, _TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,13 +26,13 @@ import {
   transferToWallet,
   withdrawFromWallet,
 } from '@/services/walletBackendService';
-import { 
-  CreditCard, 
-  Wallet, 
-  Plus, 
-  Eye, 
-  EyeOff, 
-  Copy,
+import {
+  _CreditCard,
+  Wallet,
+  _Plus,
+  _Eye,
+  _EyeOff,
+  _Copy,
   ArrowDownToLine,
   ArrowUpFromLine,
   Send,
@@ -67,10 +67,10 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     virtualCard: null
   });
   const [loading, setLoading] = useState(true);
-  const [showCardNumber, setShowCardNumber] = useState(true);
-  const [creatingCard, setCreatingCard] = useState(false);
+  const [_showCardNumber, _setShowCardNumber] = useState(true);
+  const [_creatingCard, setCreatingCard] = useState(false);
   const [userRole, setUserRole] = useState<string>('client');
-  
+
   // États pour les opérations wallet
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -88,12 +88,13 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       loadUserInfo();
       detectUserRole();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Détecter le rôle réel de l'utilisateur (agent, vendeur, etc.)
   const detectUserRole = async () => {
     if (!user) return;
-    
+
     try {
       // Vérifier si c'est un agent
       const { data: agentData } = await supabase
@@ -101,7 +102,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .select('agent_code, type_agent')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (agentData) {
         setUserRole(agentData.type_agent === 'sous_agent' ? 'Sous-Agent' : 'Agent');
         return;
@@ -113,7 +114,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (vendorData) {
         setUserRole('Vendeur');
         return;
@@ -167,7 +168,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
   };
 
-  const createVirtualCard = async () => {
+  const _createVirtualCard = async () => {
     if (!user || !userInfo.wallet) {
       toast.error('Wallet requis pour créer une carte virtuelle');
       return;
@@ -180,12 +181,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       const cvv = Math.floor(Math.random() * 900 + 100).toString();
       const currentDate = new Date();
       const expiryDate = new Date(currentDate.getFullYear() + 3, currentDate.getMonth());
-      
-      const cardHolderName = profile?.first_name && profile?.last_name 
+
+      const cardHolderName = profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`.toUpperCase()
         : user.email?.split('@')[0].toUpperCase() || 'UTILISATEUR 224SOLUTIONS';
 
-      const { data, error } = await supabase
+      const { _data, error } = await supabase
         .from('virtual_cards')
         .insert({
           user_id: user.id,
@@ -213,18 +214,18 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
   };
 
-  const copyCardNumber = () => {
+  const _copyCardNumber = () => {
     if (userInfo.virtualCard) {
       navigator.clipboard.writeText(userInfo.virtualCard.card_number);
       toast.success('Numéro de carte copié !');
     }
   };
 
-  const formatCardNumber = (cardNumber: string) => {
+  const _formatCardNumber = (cardNumber: string) => {
     return cardNumber.replace(/(.{4})/g, '$1 ').trim();
   };
 
-  const maskCardNumber = (cardNumber: string) => {
+  const _maskCardNumber = (cardNumber: string) => {
     return cardNumber.replace(/(.{4})(.{8})(.{4})/, '$1 **** **** $3');
   };
 
@@ -243,7 +244,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
     setProcessing(true);
     console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
-    
+
     try {
       const result = await depositToWallet(amount, 'Dépôt sur le wallet');
 
@@ -256,10 +257,10 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
       setDepositAmount('');
       setDepositOpen(false);
-      
+
       // Recharger les données
       await loadUserInfo();
-      
+
       // Mettre à jour le wallet balance localement
       if (userInfo.wallet) {
         setUserInfo(prev => ({
@@ -298,7 +299,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
     setProcessing(true);
     console.log('🔄 Retrait en cours:', { amount, userId: user.id });
-    
+
     try {
       const result = await withdrawFromWallet(amount, 'Retrait du wallet');
 
@@ -311,10 +312,10 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
       setWithdrawAmount('');
       setWithdrawOpen(false);
-      
+
       // Recharger les données
       await loadUserInfo();
-      
+
       // Mettre à jour le wallet balance localement
       if (userInfo.wallet) {
         setUserInfo(prev => ({
@@ -352,7 +353,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
-    
+
     try {
       const previewResponse = await previewWalletTransfer(recipientId, amount);
       const previewData = (previewResponse as any)?.data || previewResponse;
@@ -376,10 +377,10 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   // Fonction pour confirmer et effectuer un transfert
   const handleConfirmTransfer = async () => {
     if (!user?.id || !transferPreview) return;
-    
+
     setProcessing(true);
     setShowTransferPreview(false);
-    
+
     try {
       const result = await transferToWallet(
         recipientId,
@@ -396,11 +397,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         `✅ Transfert réussi\n💸 Frais appliqués : ${Number(transferPreview.fee_amount || 0).toLocaleString()} ${senderCurrency}\n💰 Montant transféré : ${Number(transferPreview.amount || 0).toLocaleString()} ${senderCurrency}`,
         { duration: 5000 }
       );
-      
+
       setTransferAmount('');
       setRecipientId('');
       setTransferPreview(null);
-      
+
       // Recharger les données
       await loadUserInfo();
     } catch (error: any) {
@@ -428,7 +429,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     );
   }
 
-  const displayName = profile?.first_name && profile?.last_name 
+  const displayName = profile?.first_name && profile?.last_name
     ? `${profile.first_name} ${profile.last_name}`
     : profile?.email?.split('@')[0] || 'Utilisateur';
 
@@ -463,8 +464,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
               </Badge>
             </div>
             <p className="text-2xl font-bold text-green-600 mb-3">
-              {userInfo.wallet ? 
-                `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` : 
+              {userInfo.wallet ?
+                `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` :
                 'Initialisation...'
               }
             </p>
@@ -473,7 +474,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 Wallet en cours de création automatique...
               </p>
             )}
-            
+
             {/* Boutons d'opérations */}
             {userInfo.wallet && (
               <div className="grid grid-cols-3 gap-2 mt-3">
@@ -503,8 +504,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                           onChange={(e) => setDepositAmount(e.target.value)}
                         />
                       </div>
-                      <Button 
-                        onClick={handleDeposit} 
+                      <Button
+                        onClick={handleDeposit}
                         disabled={processing || !depositAmount}
                         className="w-full bg-green-600 hover:bg-green-700"
                       >
@@ -543,8 +544,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                           Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
                         </p>
                       </div>
-                      <Button 
-                        onClick={handleWithdraw} 
+                      <Button
+                        onClick={handleWithdraw}
                         disabled={processing || !withdrawAmount}
                         className="w-full bg-orange-600 hover:bg-orange-700"
                       >
@@ -592,8 +593,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                           Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
                         </p>
                       </div>
-                      <Button 
-                        onClick={handlePreviewTransfer} 
+                      <Button
+                        onClick={handlePreviewTransfer}
                         disabled={processing || !transferAmount || !recipientId}
                         className="w-full bg-blue-600 hover:bg-blue-700"
                       >
@@ -635,7 +636,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                       <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0, transferPreview?.currency_received || transferPreview?.currency_sent)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
                       <strong>Solde actuel:</strong> {formatPrice(transferPreview?.current_balance || 0, transferPreview?.currency_sent)}

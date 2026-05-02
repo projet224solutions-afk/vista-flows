@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  Wallet, 
+import {
+  Wallet,
   RefreshCw,
   History,
   TrendingUp,
@@ -47,34 +47,46 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       loadTransactions();
       subscribeToChanges();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadWalletData = async () => {
     if (!agentId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('agent_wallets')
-        .select('*')
-        .eq('agent_id', agentId)
+      // Résoudre user_id depuis agents_management puis lire wallets (source de vérité)
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData?.user_id) {
+        console.error('❌ Agent non trouvé:', agentError);
+        setLoading(false);
+        return;
+      }
+
+      const { data: walletData, error } = await supabase
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', agentData.user_id)
         .single();
 
       if (error) {
         console.error('❌ Erreur chargement wallet agent:', error);
-        
-        // Si le wallet n'existe pas, essayer de l'initialiser
+
         if (error.code === 'PGRST116') {
           console.log('⚠️ Wallet agent non trouvé, initialisation...');
-          // Le wallet sera créé automatiquement par le trigger
-          // Réessayer après un délai
           setTimeout(() => loadWalletData(), 2000);
           return;
         }
-        
+
         throw error;
       }
 
-      setWallet(data);
+      // Adapter au format AgentWalletInfo pour la compatibilité du rendu
+      setWallet(walletData ? { id: String(walletData.id), agent_id: agentId, balance: walletData.balance || 0, currency: walletData.currency || 'GNF' } : null);
     } catch (error) {
       console.error('Erreur chargement wallet agent:', error);
       toast.error('Impossible de charger le wallet');
@@ -95,7 +107,16 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
     }
   };
 
-  const subscribeToChanges = () => {
+  const subscribeToChanges = async () => {
+    // Résoudre user_id pour souscrire à wallets (source de vérité)
+    const { data: agentData } = await supabase
+      .from('agents_management')
+      .select('user_id')
+      .eq('id', agentId)
+      .single();
+
+    if (!agentData?.user_id) return () => {};
+
     const channel = supabase
       .channel(`agent-wallet-${agentId}`)
       .on(
@@ -103,11 +124,10 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
         {
           event: '*',
           schema: 'public',
-          table: 'agent_wallets',
-          filter: `agent_id=eq.${agentId}`,
+          table: 'wallets',
+          filter: `user_id=eq.${agentData.user_id}`,
         },
         () => {
-          console.log('💰 Wallet agent mis à jour');
           loadWalletData();
         }
       )
@@ -120,7 +140,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
 
   const formatAmount = useFormatCurrency();
 
-  const formatDate = (dateString: string) => {
+  const _formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -130,7 +150,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
     });
   };
 
-  const getTransactionIcon = (type: string) => {
+  const _getTransactionIcon = (type: string) => {
     switch (type) {
       case 'commission':
       case 'credit':
@@ -145,7 +165,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
     }
   };
 
-  const getTransactionColor = (type: string) => {
+  const _getTransactionColor = (type: string) => {
     switch (type) {
       case 'commission':
       case 'credit':
@@ -190,9 +210,9 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
               <p className="text-sm text-blue-700 mt-1">
                 Votre wallet agent est en cours de création. Veuillez patienter.
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={loadWalletData}
                 className="mt-4"
               >

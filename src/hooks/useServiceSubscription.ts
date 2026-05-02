@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { 
-  ServiceSubscriptionService, 
-  ServicePlan, 
-  ActiveServiceSubscription 
+import {
+  ServiceSubscriptionService,
+  ServicePlan,
+  ActiveServiceSubscription
 } from '@/services/serviceSubscriptionService';
 
 interface UseServiceSubscriptionProps {
@@ -20,7 +20,7 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Charger les plans filtrés par type de service
       const plansData = await ServiceSubscriptionService.getPlans(serviceTypeId);
       setPlans(plansData);
@@ -51,8 +51,8 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
       throw new Error('Plan non trouvé');
     }
 
-    const price = billingCycle === 'yearly' 
-      ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12) 
+    const price = billingCycle === 'yearly'
+      ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
       : plan.monthly_price_gnf;
 
     const subscriptionId = await ServiceSubscriptionService.recordSubscriptionPayment({
@@ -87,7 +87,7 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
   const isExpired = subscription?.status === 'expired' || subscription?.status === 'cancelled';
   const isPremium = subscription?.plan_name === 'premium' || subscription?.plan_name === 'pro';
 
-  const daysRemaining = subscription?.current_period_end 
+  const daysRemaining = subscription?.current_period_end
     ? ServiceSubscriptionService.getDaysRemaining(subscription.current_period_end)
     : 0;
 
@@ -95,7 +95,7 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
 
   const canAccessFeature = (feature: string): boolean => {
     if (!subscription) return false;
-    
+
     switch (feature) {
       case 'analytics':
         return subscription.analytics_access;

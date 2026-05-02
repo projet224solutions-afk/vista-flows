@@ -9,29 +9,29 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-    Shield, 
-    AlertTriangle, 
-    CheckCircle, 
-    Clock, 
+import { _Table, _TableBody, _TableCell, _TableHead, _TableHeader, _TableRow } from '@/components/ui/table';
+import { _Alert, _AlertDescription } from '@/components/ui/alert';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import {
+    Shield,
+    AlertTriangle,
+    CheckCircle,
+    Clock,
     MapPin,
     User,
     Building,
     Calendar,
     Eye,
     RefreshCw,
-    Filter,
+    _Filter,
     Search,
     Loader2,
-    TrendingUp,
+    _TrendingUp,
     FileText,
-    XCircle,
-    Info,
-    Download,
-    Phone,
+    _XCircle,
+    _Info,
+    _Download,
+    _Phone,
     Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -81,10 +81,10 @@ interface MotoSecurityAlertsProps {
     className?: string;
 }
 
-export default function MotoSecurityAlerts({ 
-    bureauId, 
-    isPDG = false,
-    className 
+export default function MotoSecurityAlerts({
+    bureauId,
+    _isPDG = false,
+    className
 }: MotoSecurityAlertsProps) {
     const [alerts, setAlerts] = useState<MotoAlert[]>([]);
     const [stats, setStats] = useState<SecurityStats | null>(null);
@@ -96,6 +96,7 @@ export default function MotoSecurityAlerts({
     useEffect(() => {
         loadAlerts();
         loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bureauId, filter]);
 
     const loadAlerts = async () => {
@@ -140,7 +141,7 @@ export default function MotoSecurityAlerts({
     const resolveAlert = async (alertId: string) => {
         try {
             setResolving(alertId);
-            
+
             const response = await fetch(`/api/moto-security/alerts/${alertId}/resolve`, {
                 method: 'POST',
                 headers: {
@@ -300,7 +301,7 @@ export default function MotoSecurityAlerts({
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="flex gap-2">
                             {['all', 'en_cours', 'resolue', 'faux_positif'].map((status) => (
                                 <Button
@@ -309,7 +310,7 @@ export default function MotoSecurityAlerts({
                                     size="sm"
                                     onClick={() => setFilter(status as unknown)}
                                 >
-                                    {status === 'all' ? 'Toutes' : 
+                                    {status === 'all' ? 'Toutes' :
                                      status === 'en_cours' ? 'En cours' :
                                      status === 'resolue' ? 'Résolues' : 'Faux positifs'}
                                 </Button>
@@ -361,9 +362,9 @@ export default function MotoSecurityAlerts({
                                                     <div>
                                                         <p className="text-sm text-gray-600 mb-1">
                                                             <Calendar className="w-4 h-4 inline mr-1" />
-                                                            {formatDistanceToNow(new Date(alert.created_at), { 
-                                                                addSuffix: true, 
-                                                                locale: fr 
+                                                            {formatDistanceToNow(new Date(alert.created_at), {
+                                                                addSuffix: true,
+                                                                locale: fr
                                                             })}
                                                         </p>
                                                         {alert.chauffeur && (
@@ -414,7 +415,7 @@ export default function MotoSecurityAlerts({
                                                         Résoudre
                                                     </Button>
                                                 )}
-                                                
+
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

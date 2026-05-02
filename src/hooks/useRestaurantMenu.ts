@@ -92,7 +92,7 @@ export function useRestaurantMenu(serviceId: string) {
   const createCategory = async (data: { name: string } & Partial<Omit<MenuCategory, 'name'>>) => {
     const { data: newCat, error } = await supabase
       .from('restaurant_menu_categories')
-      .insert([{ 
+      .insert([{
         name: data.name,
         description: data.description,
         icon: data.icon,
@@ -101,11 +101,11 @@ export function useRestaurantMenu(serviceId: string) {
         available_from: data.available_from,
         available_until: data.available_until,
         image_url: data.image_url,
-        professional_service_id: serviceId 
+        professional_service_id: serviceId
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     setCategories(prev => [...prev, newCat]);
     return newCat;
@@ -118,7 +118,7 @@ export function useRestaurantMenu(serviceId: string) {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     setCategories(prev => prev.map(c => c.id === id ? updated : c));
     return updated;
@@ -129,7 +129,7 @@ export function useRestaurantMenu(serviceId: string) {
       .from('restaurant_menu_categories')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
     setCategories(prev => prev.filter(c => c.id !== id));
   };
@@ -138,7 +138,7 @@ export function useRestaurantMenu(serviceId: string) {
   const createMenuItem = async (data: { name: string; price: number } & Partial<Omit<MenuItem, 'name' | 'price'>>) => {
     const { data: newItem, error } = await supabase
       .from('restaurant_menu_items')
-      .insert([{ 
+      .insert([{
         name: data.name,
         price: data.price,
         description: data.description,
@@ -152,11 +152,11 @@ export function useRestaurantMenu(serviceId: string) {
         display_order: data.display_order ?? 0,
         allergens: data.allergens,
         dietary_tags: data.dietary_tags,
-        professional_service_id: serviceId 
+        professional_service_id: serviceId
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     setMenuItems(prev => [...prev, newItem]);
     return newItem;
@@ -169,7 +169,7 @@ export function useRestaurantMenu(serviceId: string) {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     setMenuItems(prev => prev.map(i => i.id === id ? updated : i));
     return updated;
@@ -180,7 +180,7 @@ export function useRestaurantMenu(serviceId: string) {
       .from('restaurant_menu_items')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw error;
     setMenuItems(prev => prev.filter(i => i.id !== id));
   };
@@ -188,7 +188,7 @@ export function useRestaurantMenu(serviceId: string) {
   const toggleItemAvailability = async (id: string) => {
     const item = menuItems.find(i => i.id === id);
     if (!item) return;
-    
+
     await updateMenuItem(id, { is_available: !item.is_available });
   };
 

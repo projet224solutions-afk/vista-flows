@@ -63,7 +63,7 @@ export function HomeHeader({
               <h1 className="font-bold text-white text-lg md:text-xl tracking-tight truncate">
                 224Solutions
               </h1>
-              <button 
+              <button
                 className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors group no-hover-effect"
                 onClick={() => refresh()}
                 disabled={loading}
@@ -114,7 +114,7 @@ export function HomeHeader({
             >
               <ShoppingCart className="w-5 h-5 text-white" />
               {cartCount > 0 && (
-                <Badge 
+                <Badge
                   className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground border-2 border-primary"
                 >
                   {cartCount > 99 ? '99+' : cartCount}

@@ -4,9 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { _Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -15,9 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Star, 
-  CheckCircle2, 
+import {
+  Star,
+  CheckCircle2,
   AlertCircle,
   Search,
   Globe,
@@ -29,7 +29,7 @@ import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 import type { ChinaPlatformType } from '@/types/dropshipping-china';
 
 export function ChinaSuppliersList() {
-  const { chinaSuppliers, loading } = useDropshippingChina();
+  const { chinaSuppliers, _loading } = useDropshippingChina();
   const [search, setSearch] = useState('');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'orders'>('score');
@@ -142,7 +142,7 @@ export function ChinaSuppliersList() {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {chinaSuppliers.length 
+                {chinaSuppliers.length
                   ? (chinaSuppliers.reduce((sum, s) => sum + (s.quality_score || 0), 0) / chinaSuppliers.length).toFixed(1)
                   : '0'}
               </p>
@@ -186,7 +186,7 @@ export function ChinaSuppliersList() {
                     {supplier.country} • {supplier.currency}
                   </p>
                   {supplier.website_url && (
-                    <a 
+                    <a
                       href={supplier.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -204,11 +204,11 @@ export function ChinaSuppliersList() {
                   </div>
                   <div className="flex items-center justify-center gap-1 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star 
+                      <Star
                         key={star}
                         className={`h-3 w-3 ${
-                          star <= (supplier.quality_score || 0) 
-                            ? 'text-yellow-500 fill-yellow-500' 
+                          star <= (supplier.quality_score || 0)
+                            ? 'text-yellow-500 fill-yellow-500'
                             : 'text-gray-300'
                         }`}
                       />

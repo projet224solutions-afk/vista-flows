@@ -6,14 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Bell, 
-  CheckCheck, 
-  Package, 
-  CreditCard, 
-  MessageSquare, 
-  Shield, 
-  AlertTriangle, 
+import {
+  Bell,
+  CheckCheck,
+  Package,
+  CreditCard,
+  MessageSquare,
+  Shield,
+  AlertTriangle,
   Star,
   Gift,
   ArrowLeft,
@@ -46,12 +46,12 @@ const notificationColors: Record<string, string> = {
   system: 'text-gray-600 bg-gray-100',
 };
 
-function NotificationItem({ 
-  notification, 
-  onRead, 
-  onDelete 
-}: { 
-  notification: UserNotification; 
+function NotificationItem({
+  notification,
+  onRead,
+  onDelete
+}: {
+  notification: UserNotification;
   onRead: () => void;
   onDelete: () => void;
 }) {
@@ -60,7 +60,7 @@ function NotificationItem({
   const [iconBg, iconText] = colorClass.split(' ');
 
   return (
-    <Card 
+    <Card
       className={cn(
         "transition-all hover:shadow-md cursor-pointer",
         !notification.read && "bg-primary/5 border-primary/30"
@@ -83,15 +83,15 @@ function NotificationItem({
               {notification.message}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              {formatDistanceToNow(new Date(notification.created_at), { 
-                addSuffix: true, 
-                locale: fr 
+              {formatDistanceToNow(new Date(notification.created_at), {
+                addSuffix: true,
+                locale: fr
               })}
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
@@ -109,18 +109,18 @@ function NotificationItem({
 export default function Notifications() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    notifications, 
-    unreadCount, 
-    loading, 
-    markAsRead, 
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
     markAllAsRead,
-    deleteNotification 
+    deleteNotification
   } = useUserNotifications();
-  
+
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const filteredNotifications = filter === 'unread' 
+  const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.read)
     : notifications;
 
@@ -151,9 +151,9 @@ export default function Notifications() {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="flex items-center justify-between p-4 max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate(-1)}
             >
               <ArrowLeft className="h-5 w-5" />
@@ -168,11 +168,11 @@ export default function Notifications() {
               )}
             </div>
           </div>
-          
+
           {unreadCount > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={markAllAsRead}
               className="gap-2"
             >
@@ -216,8 +216,8 @@ export default function Notifications() {
               {filter === 'unread' ? 'Aucune notification non lue' : 'Aucune notification'}
             </h2>
             <p className="text-muted-foreground">
-              {filter === 'unread' 
-                ? 'Toutes vos notifications ont ├®t├® lues'
+              {filter === 'unread'
+                ? 'Toutes vos notifications ont été lues'
                 : 'Vous recevrez des notifications ici'}
             </p>
           </Card>

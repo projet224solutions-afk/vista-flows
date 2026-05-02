@@ -83,9 +83,9 @@ export class TaxiMotoPricingService {
     const baseFare = config.base_fare;
     const distanceCost = distanceKm * config.per_km_rate;
     const timeCost = durationMin * config.per_minute_rate;
-    
+
     let subtotal = baseFare + distanceCost + timeCost;
-    
+
     // Appliquer le minimum
     if (subtotal < config.minimum_fare) {
       subtotal = config.minimum_fare;
@@ -141,14 +141,14 @@ export class TaxiMotoPricingService {
 
       // Calcul du surge: si demande > offre
       if (driversCount === 0) return 1.5; // 50% de surge si aucun chauffeur
-      
+
       const ratio = demandsCount / driversCount;
-      
+
       if (ratio > 2) return 2.0; // 100% de surge
       if (ratio > 1.5) return 1.75; // 75% de surge
       if (ratio > 1) return 1.5; // 50% de surge
       if (ratio > 0.8) return 1.25; // 25% de surge
-      
+
       return 1.0; // pas de surge
     } catch (err) {
       console.error('[Pricing] Error calculating surge:', err);

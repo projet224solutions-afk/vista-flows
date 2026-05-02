@@ -99,9 +99,9 @@ export function useMotoSecurity(bureauId?: string, isPDG: boolean = false) {
                 return;
             }
 
-            setNotifications(prev => 
-                prev.map(n => 
-                    n.id === notificationId 
+            setNotifications(prev =>
+                prev.map(n =>
+                    n.id === notificationId
                         ? { ...n, read_at: new Date().toISOString() }
                         : n
                 )
@@ -127,7 +127,7 @@ export function useMotoSecurity(bureauId?: string, isPDG: boolean = false) {
                 return;
             }
 
-            setNotifications(prev => 
+            setNotifications(prev =>
                 prev.map(n => ({ ...n, read_at: new Date().toISOString() }))
             );
             setUnreadCount(0);
@@ -192,12 +192,13 @@ export function useMotoSecurity(bureauId?: string, isPDG: boolean = false) {
                 subscription.unsubscribe();
             }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loadNotifications, loadStats]);
 
     // Gérer une nouvelle notification
     const handleNewNotification = useCallback((notification: SecurityNotification) => {
         // Vérifier si la notification nous concerne
-        const isRelevant = 
+        const isRelevant =
             (bureauId && (notification.target_bureau_origin === bureauId || notification.target_bureau_detection === bureauId)) ||
             (isPDG && notification.target_pdg);
 

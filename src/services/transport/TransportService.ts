@@ -5,7 +5,7 @@
  */
 
 import GeolocationService, { Position } from '../geolocation/GeolocationService';
-import EscrowService, { EscrowTransaction } from '../escrow/EscrowService';
+import EscrowService, { _EscrowTransaction } from '../escrow/EscrowService';
 
 export interface TransportUser {
   id: string;
@@ -178,13 +178,13 @@ export class TransportService {
     pickupPosition: Position,
     deliveryPosition: Position,
     notes?: string,
-    dynamicPricing?: boolean
+    _dynamicPricing?: boolean
   ): Promise<TransportRequest> {
     try {
       // Calculer la distance et le temps estimé
       const distance = this.geolocationService.calculateDistance(pickupPosition, deliveryPosition);
       const estimatedTime = Math.ceil(distance / 1000 * 2); // 2 minutes par km
-      
+
       // Calculer le prix (tarif de base + frais 1%)
       const basePrice = this.calculateBasePrice(distance);
       const fees = Math.round(basePrice * 0.01); // 1% de frais
@@ -229,7 +229,7 @@ export class TransportService {
 
       // Trouver le transporteur le plus proche
       const nearestTransportUser = await this.findNearestTransportUser(pickupPosition);
-      
+
       if (nearestTransportUser) {
         // Envoyer la demande au transporteur le plus proche
         await this.sendTransportRequestToUser(request, nearestTransportUser.id);
@@ -285,7 +285,7 @@ export class TransportService {
    * Accepter une demande de transport
    */
   public async acceptTransportRequest(
-    requestId: string, 
+    requestId: string,
     transportUserId: string
   ): Promise<void> {
     try {
@@ -524,7 +524,7 @@ export class TransportService {
    * Mettre à jour le statut d'un transporteur
    */
   public async updateTransportUserStatus(
-    userId: string, 
+    userId: string,
     status: 'online' | 'offline' | 'busy' | 'on_trip',
     position?: Position
   ): Promise<void> {
@@ -620,7 +620,7 @@ export class TransportService {
     const basePrice = 500;
     const pricePerKm = 100;
     const distanceKm = distance / 1000;
-    
+
     return Math.round(basePrice + (distanceKm * pricePerKm));
   }
 
@@ -628,7 +628,7 @@ export class TransportService {
    * Envoyer une demande à un transporteur
    */
   private async sendTransportRequestToUser(
-    request: TransportRequest, 
+    request: TransportRequest,
     transportUserId: string
   ): Promise<void> {
     try {
@@ -761,7 +761,7 @@ export class TransportService {
   private handleWebSocketMessage(event: MessageEvent): void {
     try {
       const data = JSON.parse(event.data);
-      
+
       switch (data.type) {
         case 'transport_request':
           this.handleTransportRequest(data.payload);

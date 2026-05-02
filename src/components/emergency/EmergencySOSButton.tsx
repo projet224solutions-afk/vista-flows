@@ -9,7 +9,7 @@ import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { emergencyService, gpsTrackingService } from '@/services/emergencyService';
 import { useAuth } from '@/hooks/useAuth';
-import type { EmergencyAlert, GPSPosition } from '@/types/emergency';
+import type { EmergencyAlert, _GPSPosition } from '@/types/emergency';
 
 interface EmergencySOSButtonProps {
   driverId?: string;
@@ -154,7 +154,7 @@ export const EmergencySOSButton: React.FC<EmergencySOSButtonProps> = ({
           const audio = new Audio('/sounds/emergency-alert.mp3');
           audio.volume = 0.5;
           audio.play().catch(() => console.log('Son non disponible'));
-        } catch (error) {
+        } catch (_error) {
           console.log('Son d\'urgence non disponible');
         }
       }
@@ -246,7 +246,7 @@ export const EmergencySOSButton: React.FC<EmergencySOSButtonProps> = ({
               <p className="text-xs opacity-90">Position suivie en temps réel</p>
             </div>
           </div>
-          
+
           {activeAlert?.status === 'active' && (
             <Button
               onClick={handleDeactivateEmergency}

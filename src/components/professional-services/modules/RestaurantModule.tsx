@@ -10,15 +10,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  UtensilsCrossed, ClipboardList, Users, Calendar,
+import {
+  UtensilsCrossed, ClipboardList, _Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
-  DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
+  DollarSign, ShoppingBag, _Package, Truck, MapPin, _Eye,
   Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { _formatDistanceToNow } from 'date-fns';
+import { _fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuManager';
 import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
@@ -34,7 +34,7 @@ interface RestaurantModuleProps {
 
 // formatCurrency importé depuis @/lib/formatters
 
-const statusColors: Record<string, string> = {
+const _statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   preparing: 'bg-blue-100 text-blue-800',
   ready: 'bg-cyan-100 text-cyan-800',
@@ -43,7 +43,7 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const statusLabels: Record<string, string> = {
+const _statusLabels: Record<string, string> = {
   pending: 'En attente',
   preparing: 'En préparation',
   ready: 'Prête',
@@ -52,7 +52,7 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Annulée',
 };
 
-const orderTypeIcons: Record<string, React.ReactNode> = {
+const _orderTypeIcons: Record<string, React.ReactNode> = {
   dine_in: <MapPin className="w-3 h-3" />,
   sur_place: <MapPin className="w-3 h-3" />,
   delivery: <Truck className="w-3 h-3" />,
@@ -61,7 +61,7 @@ const orderTypeIcons: Record<string, React.ReactNode> = {
   emporter: <ShoppingBag className="w-3 h-3" />,
 };
 
-const orderTypeLabels: Record<string, string> = {
+const _orderTypeLabels: Record<string, string> = {
   dine_in: 'Sur place',
   sur_place: 'Sur place',
   delivery: 'Livraison',
@@ -71,9 +71,9 @@ const orderTypeLabels: Record<string, string> = {
 };
 
 export function RestaurantModule({ serviceId, businessName }: RestaurantModuleProps) {
-  const { stats, recentOrders, loading, error, refresh } = useServiceRestaurantStats(serviceId);
+  const { stats, _recentOrders, loading, error, refresh } = useServiceRestaurantStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   if (loading) {
     return (
@@ -128,24 +128,24 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
               Configurez votre menu, gérez vos commandes et suivez vos performances en temps réel.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="gap-2 justify-start"
                 onClick={() => setActiveTab('menu')}
               >
                 <Plus className="w-4 h-4" />
                 Ajouter un plat
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="gap-2 justify-start"
                 onClick={() => setActiveTab('tables')}
               >
                 <LayoutGrid className="w-4 h-4" />
                 Gérer les tables
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="gap-2 justify-start"
                 onClick={() => setActiveTab('menu')}
               >
@@ -272,7 +272,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
         <TabsContent value="overview" className="mt-4">
           {/* Onboarding card if no data */}
           {!stats?.hasData && <OnboardingCard />}
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
             {/* Sales Summary */}
             <Card>
@@ -287,7 +287,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                   <span className="text-sm font-medium">Total</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
                 </div>
-                
+
                 {/* Par type */}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center">

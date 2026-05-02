@@ -19,9 +19,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Package, 
-  Clock, 
+import {
+  Package,
+  Clock,
   FileText,
   AlertTriangle,
   Pencil,
@@ -157,7 +157,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
     }
   };
 
-  const handleValidatePurchase = async (purchase: Purchase) => {
+  const _handleValidatePurchase = async (purchase: Purchase) => {
     setValidatingId(purchase.id);
     try {
       // 1. Récupérer les items de l'achat
@@ -173,7 +173,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
       // 2. Appeler la fonction avec tous les paramètres requis
       const { data, error } = await supabase.functions.invoke('validate-purchase', {
-        body: { 
+        body: {
           purchase_id: purchase.id,
           vendor_id: vendorId,
           items: items,
@@ -273,7 +273,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
                 {purchases.map((purchase) => {
                   const config = STATUS_CONFIG[purchase.status];
                   const StatusIcon = config.icon;
-                  const isValidating = validatingId === purchase.id;
+                  const _isValidating = validatingId === purchase.id;
 
                   return (
                     <Card key={purchase.id} className="hover:shadow-md transition-shadow border-l-4 border-l-orange-500">

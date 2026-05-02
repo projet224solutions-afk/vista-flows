@@ -105,7 +105,7 @@ export function useRestaurantReservations(serviceId: string) {
 
   // Mettre à jour le statut
   const updateReservationStatus = async (
-    id: string, 
+    id: string,
     status: RestaurantReservation['status']
   ) => {
     const { data: updated, error } = await supabase
@@ -117,7 +117,7 @@ export function useRestaurantReservations(serviceId: string) {
 
     if (error) throw error;
 
-    setReservations(prev => 
+    setReservations(prev =>
       prev.map(r => r.id === id ? updated as RestaurantReservation : r)
     );
     return updated;
@@ -199,7 +199,7 @@ export function useRestaurantReservations(serviceId: string) {
 
   // Statistiques
   const getReservationStats = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const _today = new Date().toISOString().split('T')[0];
     const todayReservations = getTodayReservations();
 
     return {

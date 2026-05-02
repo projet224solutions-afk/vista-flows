@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Smartphone, Monitor, Tablet, Download, CheckCircle,
-  Crown, Shield, Zap, ArrowRight, ExternalLink,
-  Mail, Phone, User, Calendar
+  Crown, Shield, _Zap, ArrowRight, ExternalLink,
+  _Mail, _Phone, _User, _Calendar
 } from "lucide-react";
 import { useUserActivation } from "@/hooks/useAgentSystem";
 import { useParams, useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ export default function UserActivationPage() {
   const { invitationToken } = useParams<{ invitationToken: string }>();
   const navigate = useNavigate();
   const { activateUser, loading, error } = useUserActivation();
-  
+
   const [selectedDevice, setSelectedDevice] = useState<'mobile' | 'pc' | 'tablet' | null>(null);
   const [activationResult, setActivationResult] = useState<unknown>(null);
   const [isActivated, setIsActivated] = useState(false);
@@ -33,7 +33,7 @@ export default function UserActivationPage() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
       const isTablet = /ipad|android(?!.*mobile)/i.test(userAgent);
-      
+
       if (isTablet) {
         setSelectedDevice('tablet');
       } else if (isMobile) {
@@ -56,7 +56,7 @@ export default function UserActivationPage() {
       const result = await activateUser(invitationToken, selectedDevice);
       setActivationResult(result as unknown || {});
       setIsActivated(true);
-      
+
       // Redirection automatique après 5 secondes
       setTimeout(() => {
         navigate('/');
@@ -94,8 +94,8 @@ export default function UserActivationPage() {
             <p className="text-muted-foreground">
               Ce lien d'invitation n'est pas valide ou a expiré.
             </p>
-            <Button 
-              className="mt-4" 
+            <Button
+              className="mt-4"
               onClick={() => navigate('/')}
             >
               Retour à l'accueil
@@ -122,7 +122,7 @@ export default function UserActivationPage() {
             <Alert className="border-green-200 bg-green-50">
               <Sparkles className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                Votre compte 224Solutions a été activé avec succès ! 
+                Votre compte 224Solutions a été activé avec succès !
                 Bienvenue dans notre écosystème digital.
               </AlertDescription>
             </Alert>
@@ -132,7 +132,7 @@ export default function UserActivationPage() {
               <p className="text-muted-foreground">
                 Pour une expérience optimale, téléchargez notre application :
               </p>
-              
+
               <div className="flex justify-center">
                 <Badge variant="outline" className="px-4 py-2">
                   {getDeviceIcon(selectedDevice || 'pc')}
@@ -141,7 +141,7 @@ export default function UserActivationPage() {
               </div>
 
               {activationResult.downloadUrl && (
-                <Button 
+                <Button
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                   onClick={() => window.open(activationResult.downloadUrl, '_blank')}
@@ -191,7 +191,7 @@ export default function UserActivationPage() {
           <Alert className="border-blue-200 bg-blue-50">
             <Shield className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              Vous avez été invité par un agent certifié 224Solutions. 
+              Vous avez été invité par un agent certifié 224Solutions.
               Votre compte sera automatiquement lié à votre parrain.
             </AlertDescription>
           </Alert>
@@ -207,19 +207,19 @@ export default function UserActivationPage() {
                 { type: 'tablet', label: 'Tablette', desc: 'iPad & Android' },
                 { type: 'pc', label: 'Ordinateur', desc: 'Windows & Mac' }
               ].map((device) => (
-                <Card 
+                <Card
                   key={device.type}
                   className={`cursor-pointer transition-all hover:shadow-lg ${
-                    selectedDevice === device.type 
-                      ? 'ring-2 ring-blue-500 bg-blue-50' 
+                    selectedDevice === device.type
+                      ? 'ring-2 ring-blue-500 bg-blue-50'
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => setSelectedDevice(device.type as unknown)}
                 >
                   <CardContent className="p-4 text-center">
                     <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
-                      selectedDevice === device.type 
-                        ? 'bg-blue-500 text-white' 
+                      selectedDevice === device.type
+                        ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 text-gray-600'
                     }`}>
                       {getDeviceIcon(device.type)}
@@ -267,7 +267,7 @@ export default function UserActivationPage() {
           )}
 
           <div className="flex justify-center">
-            <Button 
+            <Button
               size="lg"
               onClick={handleActivation}
               disabled={!selectedDevice || loading}

@@ -36,14 +36,14 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
           .select('user_id')
           .eq('id', serviceId)
           .single();
-        
+
         if (service?.user_id) {
           const { data: vendor } = await supabase
             .from('vendors')
             .select('id')
             .eq('user_id', service.user_id)
             .single();
-          
+
           if (vendor?.id) {
             setVendorId(vendor.id);
           }
@@ -54,18 +54,18 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
         setLoadingVendor(false);
       }
     };
-    
+
     if (serviceId) {
       fetchVendorId();
     }
   }, [serviceId]);
 
   // Hook dropshipping avec les vraies données
-  const { 
-    stats, 
-    suppliers, 
-    products, 
-    orders, 
+  const {
+    stats,
+    suppliers,
+    _products,
+    orders,
     loading,
     loadStats,
     loadProducts,
@@ -105,10 +105,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <Globe className="w-3 h-3" />
             {suppliers.length} fournisseurs
           </Badge>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
@@ -120,7 +120,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Dropshipping:</strong> Vendez des produits sans gérer de stock. 
+          <strong>Dropshipping:</strong> Vendez des produits sans gérer de stock.
           Les commandes sont automatiquement envoyées aux fournisseurs qui livrent directement vos clients.
         </AlertDescription>
       </Alert>
@@ -207,8 +207,8 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               ) : (
                 <div className="space-y-3">
                   {orders.slice(0, 5).map((order) => (
-                    <div 
-                      key={order.id} 
+                    <div
+                      key={order.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div>
@@ -250,8 +250,8 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="text-4xl">
-                              {supplier.country === 'CN' ? '🇨🇳' : 
-                               supplier.country === 'US' ? '🇺🇸' : 
+                              {supplier.country === 'CN' ? '🇨🇳' :
+                               supplier.country === 'US' ? '🇺🇸' :
                                supplier.country === 'FR' ? '🇫🇷' : '📦'}
                             </div>
                             <div>
@@ -266,10 +266,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                               )}
                             </div>
                           </div>
-                          <Badge 
-                            variant="outline" 
-                            className={supplier.is_verified 
-                              ? "bg-green-50 text-green-700 border-green-200" 
+                          <Badge
+                            variant="outline"
+                            className={supplier.is_verified
+                              ? "bg-green-50 text-green-700 border-green-200"
                               : "bg-yellow-50 text-yellow-700 border-yellow-200"
                             }
                           >

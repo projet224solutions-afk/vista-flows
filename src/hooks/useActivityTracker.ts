@@ -10,15 +10,15 @@ import { trackActivity } from './useSmartRecommendations';
 /** Track automatiquement une vue de produit (avec délai anti-bounce de 3s) */
 export function useTrackProductView(productId: string | null | undefined, vendorId?: string, categoryId?: string) {
   const tracked = useRef<string | null>(null);
-  
+
   useEffect(() => {
     if (!productId || productId === tracked.current) return;
-    
+
     const timer = setTimeout(() => {
       tracked.current = productId;
       trackActivity('product_view', { productId, vendorId, categoryId });
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, [productId, vendorId, categoryId]);
 }

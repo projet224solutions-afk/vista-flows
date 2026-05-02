@@ -9,12 +9,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  ShoppingBag, 
-  Utensils, 
-  Car, 
-  Truck, 
-  Scissors, 
+import {
+  ShoppingBag,
+  Utensils,
+  Car,
+  Truck,
+  Scissors,
   Wrench,
   GraduationCap,
   Laptop,
@@ -212,8 +212,8 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
   };
 
   // Filtrer par recherche
-  const filteredTypes = searchQuery 
-    ? serviceTypes.filter(type => 
+  const filteredTypes = searchQuery
+    ? serviceTypes.filter(type =>
         type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         type.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         type.category.toLowerCase().includes(searchQuery.toLowerCase())

@@ -66,7 +66,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
       if (error) throw error;
       setQuotes((data as any[]) || []);
-      
+
       // Si un devis est sélectionné, le mettre à jour avec les nouvelles données
       if (selectedQuote && data) {
         const updatedQuote = data.find((q: any) => q.id === selectedQuote.id);
@@ -84,6 +84,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
   useEffect(() => {
     loadQuotes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, refresh]);
 
   const getStatusBadge = (status: string) => {
@@ -93,9 +94,9 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       rejected: { label: 'Refusé', variant: 'destructive' as const, icon: XCircle },
       expired: { label: 'Expiré', variant: 'outline' as const, icon: Clock }
     };
-    
+
     const { label, variant, icon: Icon } = config[status as keyof typeof config];
-    
+
     return (
       <Badge variant={variant} className="gap-1">
         <Icon className="w-3 h-3" />
@@ -201,7 +202,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
   const deleteQuote = async (quoteId: string) => {
     try {
       const quote = quotes.find(q => q.id === quoteId);
-      
+
       // Supprimer le PDF du storage si il existe
       if (quote?.pdf_url) {
         const fileName = quote.pdf_url.split('/').pop();
@@ -321,7 +322,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
                         Télécharger PDF
                       </Button>
                     )}
-                    
+
                     {quote.status === 'pending' && (
                       <>
                         <Button
@@ -332,7 +333,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Convertir en Facture
                         </Button>
-                        
+
                         <Button
                           variant="destructive"
                           size="sm"
@@ -380,7 +381,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
           setShowEditDialog(false);
           // Recharger les devis
           await loadQuotes();
-          
+
           // Si le dialog de détails était ouvert, recharger le devis sélectionné avec les données fraîches
           if (showDetails && selectedQuote) {
             const { data: updatedQuote } = await supabase
@@ -388,7 +389,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
               .select('*')
               .eq('id', selectedQuote.id)
               .single();
-            
+
             if (updatedQuote) {
               setSelectedQuote(updatedQuote as Quote);
             }

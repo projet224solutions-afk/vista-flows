@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { 
-  AlertTriangle, 
-  Shield, 
-  CheckCircle, 
+import {
+  AlertTriangle,
+  Shield,
+  CheckCircle,
   XCircle,
   RefreshCw,
   Eye,
@@ -23,7 +23,7 @@ import {
   Wallet,
   ShoppingCart,
   Package,
-  Users,
+  _Users,
   Truck,
   Settings,
   Play,
@@ -127,11 +127,11 @@ const LogicSurveillanceDashboard: React.FC = () => {
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Load dashboard stats via RPC
       const { data: statsData, error: statsError } = await supabase
         .rpc('get_logic_surveillance_dashboard');
-      
+
       if (statsError) throw statsError;
       setDashboardData(statsData as unknown as DashboardData);
 
@@ -140,7 +140,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         .from('logic_validation_rules')
         .select('*')
         .order('domain', { ascending: true });
-      
+
       if (!rulesError && rulesData) {
         setRules(rulesData as ValidationRule[]);
       }
@@ -156,7 +156,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboard();
-    
+
     // Refresh every 30 seconds
     const interval = setInterval(loadDashboard, 30000);
     return () => clearInterval(interval);
@@ -164,7 +164,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
 
   const runFullValidation = async () => {
     if (!user?.id) return;
-    
+
     setRunningValidation(true);
     try {
       // Utiliser detect_all_anomalies au lieu de run_full_system_validation
@@ -174,7 +174,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
       });
 
       if (error) throw error;
-      
+
       toast.success(`Validation terminée: ${data?.length || 0} domaines vérifiés`);
       loadDashboard();
     } catch (error: unknown) {
@@ -217,7 +217,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
             notes: correctionReason
           })
           .eq('id', anomalyId);
-        
+
         if (error) throw error;
       }
 
@@ -243,9 +243,9 @@ const LogicSurveillanceDashboard: React.FC = () => {
           notes: correctionReason || 'Ignoré par le PDG'
         })
         .eq('id', anomalyId);
-      
+
       if (error) throw error;
-      
+
       toast.success('Anomalie ignorée');
       setCorrectionReason('');
       loadDashboard();
@@ -287,7 +287,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
     );
   }
 
-  const healthScore = dashboardData?.last_snapshot 
+  const healthScore = dashboardData?.last_snapshot
     ? Math.round((dashboardData.last_snapshot.passed_checks / Math.max(dashboardData.last_snapshot.total_checks, 1)) * 100)
     : 100;
 
@@ -302,10 +302,10 @@ const LogicSurveillanceDashboard: React.FC = () => {
           </h1>
           <p className="text-muted-foreground">Contrôle d'intégrité en temps réel de toutes les fonctionnalités</p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3">
           {/* Bouton Monitor Live 24/7 - Spectaculaire */}
-          <Button 
+          <Button
             onClick={() => setShowLiveMonitor(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/40 border-0"
           >
@@ -321,9 +321,9 @@ const LogicSurveillanceDashboard: React.FC = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
           </Button>
-          
-          <Button 
-            onClick={runFullValidation} 
+
+          <Button
+            onClick={runFullValidation}
             disabled={runningValidation}
             className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
           >
@@ -497,8 +497,8 @@ const LogicSurveillanceDashboard: React.FC = () => {
                     {dashboardData.recent_anomalies.map((anomaly) => {
                       const DomainIcon = DOMAIN_ICONS[anomaly.domain] || DOMAIN_ICONS.default;
                       return (
-                        <div 
-                          key={anomaly.id} 
+                        <div
+                          key={anomaly.id}
                           className={`p-4 rounded-lg border ${
                             anomaly.status === 'pending' ? 'bg-muted/50 border-orange-200' : ''
                           }`}
@@ -534,7 +534,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                 </p>
                               </div>
                             </div>
-                            
+
                             {anomaly.status === 'pending' && (
                               <div className="flex flex-col gap-2">
                                 <AlertDialog>
@@ -559,13 +559,13 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                     />
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                      <AlertDialogAction 
+                                      <AlertDialogAction
                                         onClick={() => handleCorrection(anomaly.id, 'auto')}
                                         className="bg-green-600"
                                       >
                                         Correction Auto
                                       </AlertDialogAction>
-                                      <AlertDialogAction 
+                                      <AlertDialogAction
                                         onClick={() => handleCorrection(anomaly.id, 'manual')}
                                       >
                                         Correction Manuelle
@@ -573,9 +573,9 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
-                                
-                                <Button 
-                                  size="sm" 
+
+                                <Button
+                                  size="sm"
                                   variant="outline"
                                   onClick={() => ignoreAnomaly(anomaly.id)}
                                 >
@@ -619,8 +619,8 @@ const LogicSurveillanceDashboard: React.FC = () => {
                         </div>
                         <div className="pl-6 space-y-2">
                           {domainRules.map((rule) => (
-                            <div 
-                              key={rule.id} 
+                            <div
+                              key={rule.id}
                               className={`p-3 rounded-lg border ${
                                 rule.is_active ? 'bg-card' : 'bg-muted/50 opacity-60'
                               }`}

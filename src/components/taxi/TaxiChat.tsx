@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Phone, MapPin, Navigation } from 'lucide-react';
+import { Send, Phone, _MapPin, Navigation } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,12 +29,12 @@ interface Message {
   is_read: boolean;
 }
 
-export default function TaxiChat({ 
-  rideId, 
-  recipientId, 
+export default function TaxiChat({
+  rideId,
+  recipientId,
   recipientName,
   recipientRole,
-  currentStatus 
+  currentStatus
 }: TaxiChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -136,6 +136,7 @@ export default function TaxiChat({
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, rideId]);
 
   // Auto-scroll

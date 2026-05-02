@@ -1,6 +1,6 @@
 /**
  * China Admin Module Exports
- * 
+ *
  * @module admin/china
  */
 

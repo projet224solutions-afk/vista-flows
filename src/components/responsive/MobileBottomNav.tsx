@@ -113,7 +113,7 @@ export function MobileHeader({
     >
       <div className="flex items-center justify-between gap-3">
         {leftAction && <div className="flex-shrink-0">{leftAction}</div>}
-        
+
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold text-foreground truncate">{title}</h1>
           {subtitle && (

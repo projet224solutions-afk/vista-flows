@@ -24,7 +24,7 @@ const ENCRYPTION_KEY = getLocalEncryptionKey();
  * Classe principale de sécurité
  */
 export class SecurityLayer {
-  
+
   /**
    * Chiffrement AES-256 des données sensibles
    */
@@ -56,7 +56,7 @@ export class SecurityLayer {
    */
   static sanitizeInput(input: string): string {
     if (!input) return '';
-    
+
     return input
       .trim()
       .replace(/[<>]/g, '') // Supprime < et > pour prévenir XSS
@@ -125,18 +125,18 @@ export class SecurityLayer {
   static checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
     const now = Date.now();
     const storageKey = `rateLimit_${key}`;
-    
+
     try {
       const stored = localStorage.getItem(storageKey);
       const requests: number[] = stored ? JSON.parse(stored) : [];
-      
+
       // Filtrer les requêtes dans la fenêtre de temps
       const recentRequests = requests.filter(timestamp => now - timestamp < windowMs);
-      
+
       if (recentRequests.length >= maxRequests) {
         return false; // Rate limit dépassé
       }
-      
+
       // Ajouter la nouvelle requête
       recentRequests.push(now);
       localStorage.setItem(storageKey, JSON.stringify(recentRequests));
@@ -154,15 +154,15 @@ export class SecurityLayer {
     if (isNaN(amount) || amount <= 0) {
       return { valid: false, error: 'Montant invalide' };
     }
-    
+
     if (amount > 100000000) { // 100 millions max
       return { valid: false, error: 'Montant trop élevé' };
     }
-    
+
     if (amount < 0.01) {
       return { valid: false, error: 'Montant trop faible' };
     }
-    
+
     return { valid: true };
   }
 
@@ -181,15 +181,15 @@ export class SecurityLayer {
     if (a.length !== b.length) {
       return false;
     }
-    
+
     let result = 0;
     for (let i = 0; i < a.length; i++) {
       result |= a.charCodeAt(i) ^ b.charCodeAt(i);
     }
-    
+
     // Ajouter un délai aléatoire pour masquer le timing
     await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
-    
+
     return result === 0;
   }
 
@@ -202,7 +202,7 @@ export class SecurityLayer {
     const array = new Uint8Array(8);
     crypto.getRandomValues(array);
     const cryptoPart = Array.from(array, byte => byte.toString(36)).join('');
-    
+
     return `${timestamp}-${randomPart}-${cryptoPart}`;
   }
 
@@ -211,10 +211,10 @@ export class SecurityLayer {
    */
   static obfuscate(data: string, visibleChars: number = 4): string {
     if (!data || data.length <= visibleChars) return '***';
-    
+
     const visible = data.substring(0, visibleChars);
     const hidden = '*'.repeat(Math.min(data.length - visibleChars, 10));
-    
+
     return `${visible}${hidden}`;
   }
 
@@ -225,16 +225,16 @@ export class SecurityLayer {
     if (!sessionData) {
       return { valid: false, reason: 'Session inexistante' };
     }
-    
+
     if (!sessionData.userId || !sessionData.token) {
       return { valid: false, reason: 'Données de session incomplètes' };
     }
-    
+
     // Vérifier l'expiration
     if (sessionData.expiresAt && new Date(sessionData.expiresAt) < new Date()) {
       return { valid: false, reason: 'Session expirée' };
     }
-    
+
     return { valid: true };
   }
 
@@ -253,7 +253,7 @@ export class SecurityLayer {
       /INSERT INTO/gi,
       /UPDATE.*SET/gi
     ];
-    
+
     for (const action of actions) {
       for (const pattern of suspiciousPatterns) {
         if (pattern.test(action)) {
@@ -262,7 +262,7 @@ export class SecurityLayer {
         }
       }
     }
-    
+
     return false;
   }
 
@@ -279,23 +279,23 @@ export class SecurityLayer {
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
-    
+
     if (file.size > maxSize) {
       return { valid: false, error: 'Fichier trop volumineux (max 10MB)' };
     }
-    
+
     if (!allowedTypes.includes(file.type)) {
       return { valid: false, error: 'Type de fichier non autorisé' };
     }
-    
+
     // Vérifier l'extension
     const extension = file.name.split('.').pop()?.toLowerCase();
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'doc', 'docx'];
-    
+
     if (!extension || !allowedExtensions.includes(extension)) {
       return { valid: false, error: 'Extension de fichier invalide' };
     }
-    
+
     return { valid: true };
   }
 
@@ -306,11 +306,11 @@ export class SecurityLayer {
     if (typeof data === 'string') {
       return this.sanitizeInput(data);
     }
-    
+
     if (Array.isArray(data)) {
       return data.map(item => this.cleanForStorage(item));
     }
-    
+
     if (typeof data === 'object' && data !== null) {
       const cleaned: any = {};
       for (const [key, value] of Object.entries(data)) {
@@ -318,7 +318,7 @@ export class SecurityLayer {
       }
       return cleaned;
     }
-    
+
     return data;
   }
 }
@@ -333,15 +333,15 @@ export function SecureFunction(target: any, propertyKey: string, descriptor: Pro
     try {
       // Log de l'appel
       console.log(`🔒 Fonction sécurisée appelée: ${propertyKey}`);
-      
+
       // Vérification de l'intégrité des arguments
       if (SecurityLayer.detectSuspiciousBehavior(args.map(String))) {
         throw new Error('Comportement suspect détecté');
       }
-      
+
       // Exécution de la fonction originale
       const result = await originalMethod.apply(this, args);
-      
+
       return result;
     } catch (error) {
       console.error(`❌ Erreur dans fonction sécurisée ${propertyKey}:`, error);

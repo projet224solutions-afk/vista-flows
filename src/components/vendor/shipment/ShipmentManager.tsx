@@ -63,6 +63,7 @@ export function ShipmentManager() {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
   const loadShipments = async () => {
@@ -223,7 +224,7 @@ export function ShipmentManager() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -239,7 +240,7 @@ export function ShipmentManager() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -309,7 +310,7 @@ export function ShipmentManager() {
                           {shipment.tracking_number}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-start gap-2 text-sm">
                         <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                         <div>
@@ -317,7 +318,7 @@ export function ShipmentManager() {
                           <p className="text-muted-foreground">{shipment.receiver_address}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Package className="h-3 w-3" />

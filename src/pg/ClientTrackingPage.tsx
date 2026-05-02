@@ -1,9 +1,9 @@
 ﻿/**
  * PAGE DE SUIVI CLIENT
- * Le client suit sa livraison en temps r├®el
+ * Le client suit sa livraison en temps réel
  */
 
-import React, { Suspense } from 'react';
+import React, {} from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -20,7 +20,7 @@ export default function ClientTrackingPage() {
         <div className="text-center">
           <p className="text-muted-foreground">ID de livraison manquant</p>
           <Button onClick={() => navigate('/')} className="mt-4">
-            Retour ├á l'accueil
+            Retour à l'accueil
           </Button>
         </div>
       </div>
@@ -29,7 +29,7 @@ export default function ClientTrackingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
-      {/* En-t├¬te */}
+      {/* En-tête */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">

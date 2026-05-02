@@ -120,8 +120,8 @@ export function useTaxiMoto() {
   const cancelRide = useCallback(async (rideId: string, reason: string) => {
     try {
       setLoading(true);
-      const { data: user } = await supabase.auth.getUser();
-      
+      const { data: _user } = await supabase.auth.getUser();
+
       await TaxiMotoService.updateRideStatus(rideId, 'cancelled_by_customer', {
         cancel_reason: reason,
         cancelled_at: new Date().toISOString()
@@ -172,7 +172,7 @@ export function useTaxiMoto() {
     try {
       setLoading(true);
       const result = await TaxiMotoService.processPayment(rideId, paymentMethod);
-      
+
       if (result.success) {
         toast.success('Paiement effectué avec succès!');
         await loadRideHistory();
@@ -180,7 +180,7 @@ export function useTaxiMoto() {
       } else {
         toast.error(result.error || 'Erreur lors du paiement');
       }
-      
+
       return result;
     } catch (err) {
       console.error('[useTaxiMoto] Error processing payment:', err);

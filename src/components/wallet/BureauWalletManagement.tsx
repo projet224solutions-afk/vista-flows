@@ -27,17 +27,17 @@ interface BureauWalletManagementProps {
   showTransactions?: boolean;
 }
 
-export default function BureauWalletManagement({ 
-  bureauId, 
+export default function BureauWalletManagement({
+  bureauId,
   bureauCode,
-  showTransactions = true 
+  showTransactions = true
 }: BureauWalletManagementProps) {
   const fc = useFormatCurrency();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
-  
+
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +49,7 @@ export default function BureauWalletManagement({
       console.warn('loadWallet: bureauId manquant');
       return;
     }
-    
+
     try {
       setLoading(true);
       console.log('🔍 Chargement wallet bureau pour bureauId:', bureauId);
@@ -62,11 +62,11 @@ export default function BureauWalletManagement({
 
       if (walletError) {
         console.error('❌ Erreur chargement wallet bureau:', walletError);
-        
+
         // Si le wallet n'existe pas, le créer automatiquement
         if (walletError.code === 'PGRST116') {
           console.log('💡 Création automatique du wallet bureau pour:', bureauId);
-          
+
           const { data: newWallet, error: createError } = await supabase
             .from('bureau_wallets')
             .insert({
@@ -94,7 +94,7 @@ export default function BureauWalletManagement({
               status: 'completed',
               date: new Date().toISOString().split('T')[0]
             });
-            
+
             console.log('✅ Wallet bureau créé avec succès:', newWallet);
             setWallet(newWallet);
             toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
@@ -107,7 +107,7 @@ export default function BureauWalletManagement({
           throw walletError;
         }
       }
-      
+
       console.log('✅ Wallet bureau chargé:', walletData);
       setWallet(walletData);
 
@@ -165,11 +165,12 @@ export default function BureauWalletManagement({
     if (!wallet) return '0';
     if (hidden) return '••••••';
     return fc(wallet.balance);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet, loading, hidden]);
 
   const handleDeposit = useCallback(async () => {
     if (!wallet) return;
-    
+
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Montant invalide');
@@ -178,7 +179,7 @@ export default function BureauWalletManagement({
 
     try {
       setBusy(true);
-      
+
       // Créer la transaction de dépôt
       const { error: txError } = await supabase
         .from('bureau_transactions')
@@ -196,7 +197,7 @@ export default function BureauWalletManagement({
       // Mettre à jour le solde
       const { error: updateError } = await supabase
         .from('bureau_wallets')
-        .update({ 
+        .update({
           balance: wallet.balance + amount,
           updated_at: new Date().toISOString()
         })
@@ -219,13 +220,13 @@ export default function BureauWalletManagement({
 
   const handleWithdraw = useCallback(async () => {
     if (!wallet) return;
-    
+
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('Montant invalide');
       return;
     }
-    
+
     if (amount > wallet.balance) {
       toast.error('Solde insuffisant');
       return;
@@ -233,7 +234,7 @@ export default function BureauWalletManagement({
 
     try {
       setBusy(true);
-      
+
       // Créer la transaction de retrait
       const { error: txError } = await supabase
         .from('bureau_transactions')
@@ -251,7 +252,7 @@ export default function BureauWalletManagement({
       // Mettre à jour le solde
       const { error: updateError } = await supabase
         .from('bureau_wallets')
-        .update({ 
+        .update({
           balance: wallet.balance - amount,
           updated_at: new Date().toISOString()
         })

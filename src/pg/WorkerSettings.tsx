@@ -1,6 +1,6 @@
 ﻿/**
- * Page Param├¿tres Travailleur
- * ├ëdition profil: Photo, T├®l├®phone, Email, Adresse, Mot de passe
+ * Page Paramètres Travailleur
+ * Édition profil: Photo, Téléphone, Email, Adresse, Mot de passe
  */
 
 import { useState, useEffect } from 'react';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Save, Upload, Lock, User, Mail, Phone, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, _Upload, Lock, User, Mail, Phone, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -33,6 +33,7 @@ export default function WorkerSettings() {
 
   useEffect(() => {
     loadWorkerData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadWorkerData = async () => {
@@ -57,12 +58,12 @@ export default function WorkerSettings() {
       setFormData({
         email: data.email || '',
         phone: data.phone || '',
-        address: '', // Ajouter si existe dans le sch├®ma
+        address: '', // Ajouter si existe dans le schéma
         newPassword: '',
         confirmPassword: ''
       });
     } catch (err) {
-      console.error('ÔØî Erreur chargement:', err);
+      console.error('Erreur chargement:', err);
       toast.error('Erreur de chargement');
       navigate('/worker');
     } finally {
@@ -73,16 +74,16 @@ export default function WorkerSettings() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // V├®rifier le type
+      // Vérifier le type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        toast.error('Format non support├®. Utilisez JPG, PNG, GIF ou WebP');
+        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
         return;
       }
 
-      // V├®rifier la taille - Max 10 Mo
+      // Vérifier la taille - Max 10 Mo
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas d├®passer 10 Mo');
+        toast.error('L\'image ne doit pas dépasser 10 Mo');
         return;
       }
 
@@ -113,7 +114,7 @@ export default function WorkerSettings() {
 
       return publicUrl;
     } catch (err) {
-      console.error('ÔØî Erreur upload:', err);
+      console.error('Erreur upload:', err);
       return null;
     }
   };
@@ -127,17 +128,17 @@ export default function WorkerSettings() {
       }
 
       if (formData.newPassword && formData.newPassword.length < 6) {
-        throw new Error('Le mot de passe doit contenir au moins 6 caract├¿res');
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
       }
 
-      // Upload photo si chang├®e
+      // Upload photo si changée
       let photoUrl = worker.photo_url;
       if (photoFile) {
         const uploaded = await uploadPhoto(photoFile);
         if (uploaded) photoUrl = uploaded;
       }
 
-      // Pr├®parer les mises ├á jour
+      // Préparer les mises à jour
       const updates: any = {
         email: formData.email,
         phone: formData.phone,
@@ -153,7 +154,7 @@ export default function WorkerSettings() {
         updates.password_hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       }
 
-      // Mise ├á jour
+      // Mise à jour
       const { error } = await supabase
         .from('members')
         .update(updates)
@@ -161,12 +162,12 @@ export default function WorkerSettings() {
 
       if (error) throw error;
 
-      toast.success('Profil mis ├á jour avec succ├¿s');
+      toast.success('Profil mis à jour avec succès');
       navigate('/worker');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de sauvegarde';
       toast.error(errorMessage);
-      console.error('ÔØî Erreur:', err);
+      console.error('Erreur:', err);
     } finally {
       setSaving(false);
     }
@@ -189,7 +190,7 @@ export default function WorkerSettings() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Retour
           </Button>
-          <h1 className="text-3xl font-bold">Param├¿tres du profil</h1>
+          <h1 className="text-3xl font-bold">Paramètres du profil</h1>
           <p className="text-muted-foreground">Modifiez vos informations personnelles</p>
         </div>
 
@@ -223,7 +224,7 @@ export default function WorkerSettings() {
                     disabled={saving}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Formats accept├®s: JPG, PNG, GIF, WebP. Taille max: 10 Mo
+                    Formats acceptés: JPG, PNG, GIF, WebP. Taille max: 10 Mo
                   </p>
                 </div>
               </div>
@@ -253,7 +254,7 @@ export default function WorkerSettings() {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    T├®l├®phone
+                    Téléphone
                   </Label>
                   <Input
                     id="phone"
@@ -275,7 +276,7 @@ export default function WorkerSettings() {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   disabled={saving}
-                  placeholder="Votre adresse compl├¿te"
+                  placeholder="Votre adresse complète"
                 />
               </div>
             </CardContent>
@@ -296,7 +297,7 @@ export default function WorkerSettings() {
                   <Input
                     id="newPassword"
                     type="password"
-                    placeholder="Min. 6 caract├¿res"
+                    placeholder="Min. 6 caractères"
                     value={formData.newPassword}
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                     disabled={saving}
@@ -307,7 +308,7 @@ export default function WorkerSettings() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="R├®p├®ter le mot de passe"
+                    placeholder="Répéter le mot de passe"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     disabled={saving}

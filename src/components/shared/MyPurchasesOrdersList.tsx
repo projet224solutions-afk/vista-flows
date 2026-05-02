@@ -10,10 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
+import { formatCurrency } from '@/lib/utils';
 import { cancelOrder as cancelOrderRequest, listMyOrders } from '@/services/orderBackendService';
 import { toast } from 'sonner';
-import { 
-  Package, CheckCircle, Clock, Truck, XCircle, 
+import {
+  Package, CheckCircle, Clock, Truck, XCircle,
   Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote, ShoppingBag
 } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ProductRatingDialog from '@/components/client/ProductRatingDialog';
 
 interface Order {
   id: string;
@@ -55,6 +57,9 @@ interface EscrowStatus {
   id: string;
   status: string;
   amount: number;
+  commission_amount?: number | null;
+  metadata?: Record<string, any> | null;
+  currency?: string;
 }
 
 interface MyPurchasesOrdersListProps {
@@ -62,10 +67,60 @@ interface MyPurchasesOrdersListProps {
   emptyMessage?: string;
 }
 
+interface RatingOrderData {
+  orderId: string;
+  vendorId: string;
+  vendorName: string;
+}
+
 // Helper pour vérifier si une commande est paiement à la livraison
 const isCashOnDelivery = (order: Order): boolean => {
-  return order.payment_method === 'cash' && 
-         order.shipping_address?.is_cod === true;
+  return order.payment_method === 'cash' &&
+         (order.shipping_address?.is_cod === true || order.metadata?.is_cod === true);
+};
+
+const canCancelOrder = (order: Order): boolean => order.status === 'pending';
+
+const getVendorReceivableAmount = (order: Order, escrow?: EscrowStatus | null): number => {
+  const metadataVendorAmount = Number(escrow?.metadata?.vendor_amount);
+  if (Number.isFinite(metadataVendorAmount)) {
+    return metadataVendorAmount;
+  }
+
+  if (typeof escrow?.amount === 'number' && Number.isFinite(escrow.amount)) {
+    const commissionAmount = Number(escrow.commission_amount);
+    return Math.max(escrow.amount - (Number.isFinite(commissionAmount) ? commissionAmount : 0), 0);
+  }
+
+  return typeof order.total_amount === 'number' && Number.isFinite(order.total_amount)
+    ? order.total_amount
+    : 0;
+};
+
+const getVendorReceivableCurrency = (order: Order, escrow?: EscrowStatus | null): string => {
+  const metadataCurrency = typeof order.metadata?.currency === 'string' ? order.metadata.currency : null;
+  const shippingCurrency = typeof order.shipping_address?.currency === 'string' ? order.shipping_address.currency : null;
+  return escrow?.currency || metadataCurrency || shippingCurrency || 'GNF';
+};
+
+const extractFunctionErrorMessage = async (error: unknown): Promise<string> => {
+  if (error instanceof Error && error.message) {
+    const functionError = error as Error & { context?: { json?: () => Promise<any> } };
+    if (functionError.context?.json) {
+      try {
+        const payload = await functionError.context.json();
+        if (payload?.error && typeof payload.error === 'string') {
+          return payload.error;
+        }
+      } catch {
+        // Ignore JSON parsing issues and fallback to the standard error message.
+      }
+    }
+
+    return error.message;
+  }
+
+  return 'Veuillez réessayer';
 };
 
 // Tracker visuel de progression
@@ -87,19 +142,19 @@ function OrderProgressTracker({ status }: { status: string }) {
       <div className="relative">
         {/* Barre de progression */}
         <div className="absolute top-4 left-0 w-full h-1 bg-muted rounded-full">
-          <div 
+          <div
             className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        
+
         {/* Étapes */}
         <div className="flex justify-between relative">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const isCompleted = currentIndex >= index;
             const isCurrent = currentIndex === index;
-            
+
             return (
               <div key={step.key} className="flex flex-col items-center">
                 <div className={`
@@ -121,9 +176,9 @@ function OrderProgressTracker({ status }: { status: string }) {
   );
 }
 
-export default function MyPurchasesOrdersList({ 
-  title = "Mes achats", 
-  emptyMessage = "Vous n'avez pas encore effectué d'achats" 
+export default function MyPurchasesOrdersList({
+  title = "Mes achats",
+  emptyMessage = "Vous n'avez pas encore effectué d'achats"
 }: MyPurchasesOrdersListProps) {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -136,15 +191,26 @@ export default function MyPurchasesOrdersList({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingOrderData, setRatingOrderData] = useState<RatingOrderData | null>(null);
+  const [pendingRatingOrderData, setPendingRatingOrderData] = useState<RatingOrderData | null>(null);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [refundingOrderId, setRefundingOrderId] = useState<string | null>(null);
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState<string>('');
+  const selectedOrderEscrow = selectedOrder ? escrows[selectedOrder.id] ?? selectedOrder.escrow ?? null : null;
+  const selectedOrderIsCashOnDelivery = selectedOrder ? isCashOnDelivery(selectedOrder) : false;
+  const sellerReceivableAmount = selectedOrder
+    ? getVendorReceivableAmount(selectedOrder, selectedOrderEscrow)
+    : 0;
+  const sellerReceivableCurrency = selectedOrder
+    ? getVendorReceivableCurrency(selectedOrder, selectedOrderEscrow)
+    : 'GNF';
 
   useEffect(() => {
     if (user) {
       loadOrders();
-      
+
       // Écoute temps réel des commandes
       const ordersChannel = supabase
         .channel('my-purchases-orders-realtime')
@@ -170,7 +236,22 @@ export default function MyPurchasesOrdersList({
         supabase.removeChannel(escrowChannel);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    if (!pendingRatingOrderData || showConfirmDialog) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRatingOrderData(pendingRatingOrderData);
+      setShowRatingDialog(true);
+      setPendingRatingOrderData(null);
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingRatingOrderData, showConfirmDialog]);
 
   const loadOrders = async () => {
     try {
@@ -211,42 +292,46 @@ export default function MyPurchasesOrdersList({
   };
 
   const handleConfirmDelivery = (order: Order) => {
+    if (isCashOnDelivery(order)) {
+      void confirmDelivery(order);
+      return;
+    }
+
     setSelectedOrder(order);
     setShowConfirmDialog(true);
   };
 
-  const confirmDelivery = async () => {
-    if (!selectedOrder) return;
+  const confirmDelivery = async (orderOverride?: Order) => {
+    const orderToConfirm = orderOverride ?? selectedOrder;
+    if (!orderToConfirm) return;
 
-    setConfirmingOrderId(selectedOrder.id);
-    setShowConfirmDialog(false);
+    setConfirmingOrderId(orderToConfirm.id);
+    if (!orderOverride) {
+      setShowConfirmDialog(false);
+    }
 
     try {
-      const escrow = escrows[selectedOrder.id];
+      const escrow = escrows[orderToConfirm.id];
+      const requiresEscrowRelease = orderToConfirm.payment_method !== 'cash';
 
-      const isCardOrder = selectedOrder.payment_method === 'card';
-      if (isCardOrder && !escrow) {
-        throw new Error("Commande carte non synchronisée avec l'escrow. Rechargez la page puis réessayez.");
-      }
-
-      if (escrow) {
-        // Avec escrow: appeler la fonction de confirmation + libération escrow
+      if (requiresEscrowRelease) {
+        // Paiements marketplace sécurisés: la function retrouve l'escrow via order_id.
         const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-          body: { order_id: selectedOrder.id }
+          body: { order_id: orderToConfirm.id }
         });
 
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
       } else {
-        // Sans escrow: mettre à jour directement le statut de la commande
+        // Paiement à la livraison: finaliser directement la commande.
         const { error } = await supabase
           .from('orders')
           .update({
             status: 'completed',
-            payment_status: (isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status) as "failed" | "paid" | "pending" | "refunded",
+            payment_status: (isCashOnDelivery(orderToConfirm) ? 'paid' : orderToConfirm.payment_status) as "failed" | "paid" | "pending" | "refunded",
             updated_at: new Date().toISOString()
           })
-          .eq('id', selectedOrder.id);
+          .eq('id', orderToConfirm.id);
 
         if (error) throw error;
       }
@@ -255,13 +340,23 @@ export default function MyPurchasesOrdersList({
         description: escrow ? 'Le paiement a été transféré au vendeur' : 'Merci d\'avoir confirmé la réception'
       });
 
+      setPendingRatingOrderData({
+        orderId: orderToConfirm.id,
+        vendorId: orderToConfirm.vendor_id,
+        vendorName: orderToConfirm.vendors?.business_name || 'ce vendeur'
+      });
+
       await loadOrders();
     } catch (error) {
       console.error('Error confirming delivery:', error);
-      toast.error('Erreur lors de la confirmation');
+      toast.error('Erreur lors de la confirmation', {
+        description: await extractFunctionErrorMessage(error)
+      });
     } finally {
       setConfirmingOrderId(null);
-      setSelectedOrder(null);
+      if (!orderOverride) {
+        setSelectedOrder(null);
+      }
     }
   };
 
@@ -285,12 +380,21 @@ export default function MyPurchasesOrdersList({
 
       if (!response.success) throw new Error(response.error || 'Erreur lors de l\'annulation');
 
-      toast.success('Commande annulée');
+      const refund = (response as any).refund;
+      if (refund?.refunded && refund.amount > 0) {
+        toast.success('Commande annulée — remboursement effectué', {
+          description: `${refund.amount.toLocaleString()} ${refund.currency} remboursés dans votre portefeuille`,
+        });
+      } else {
+        toast.success('Commande annulée');
+      }
 
       await loadOrders();
     } catch (error) {
       console.error('Error cancelling order:', error);
-      toast.error('Erreur lors de l\'annulation');
+      toast.error('Erreur lors de l\'annulation', {
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      });
     } finally {
       setCancellingOrderId(null);
       setSelectedOrder(null);
@@ -327,7 +431,9 @@ export default function MyPurchasesOrdersList({
       await loadOrders();
     } catch (error) {
       console.error('Error requesting refund:', error);
-      toast.error('Erreur lors de la demande');
+      toast.error('Erreur lors de la demande', {
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      });
     } finally {
       setRefundingOrderId(null);
       setSelectedOrder(null);
@@ -465,11 +571,12 @@ export default function MyPurchasesOrdersList({
               <div className="space-y-4">
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
-                  const isCardOrder = order.payment_method === 'card';
-                  const escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
+                  const isCODOrder = isCashOnDelivery(order);
+                  const requiresEscrowRelease = order.payment_method !== 'cash';
+                  const _escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
                   const isDeliveryPending = order.status === 'in_transit' || order.status === 'shipped' || order.status === 'ready';
-                  const isDeliveredButEscrowPending = order.status === 'delivered' && escrowPending;
-                  const canConfirmDelivery = (isDeliveryPending || isDeliveredButEscrowPending) && order.status !== 'cancelled' && (isCardOrder ? escrowPending : (!escrow || escrowPending));
+                  const isDeliveredAwaitingConfirmation = order.status === 'delivered' && (requiresEscrowRelease ? escrow?.status !== 'released' && escrow?.status !== 'refunded' : true);
+                  const canConfirmDelivery = order.status !== 'cancelled' && order.status !== 'completed' && (isDeliveryPending || isDeliveredAwaitingConfirmation);
 
                   return (
                     <Card key={order.id} className="overflow-hidden border">
@@ -503,8 +610,8 @@ export default function MyPurchasesOrdersList({
                         {/* Badges */}
                         <div className="flex flex-wrap gap-2">
                           {getStatusBadge(order.status)}
-                          {escrow && getEscrowBadge(escrow.status)}
-                          {isCashOnDelivery(order) && (
+                          {!isCODOrder && escrow && getEscrowBadge(escrow.status)}
+                          {isCODOrder && (
                             <Badge className="bg-amber-100 text-amber-800">
                               <Banknote className="w-3 h-3 mr-1" /> Paiement à la livraison
                             </Badge>
@@ -512,7 +619,7 @@ export default function MyPurchasesOrdersList({
                         </div>
 
                         {/* Info Escrow */}
-                        {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
+                        {!isCODOrder && escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
                           <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                             <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                             <div>
@@ -526,14 +633,14 @@ export default function MyPurchasesOrdersList({
 
                         {/* Actions */}
                         <div className="space-y-2">
-                          {['pending', 'confirmed', 'preparing'].includes(order.status) && (
+                          {canCancelOrder(order) && (
                             <Button variant="destructive" size="sm" onClick={() => handleCancelOrder(order)} disabled={cancellingOrderId === order.id} className="w-full">
                               {cancellingOrderId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}
                               Annuler la commande
                             </Button>
                           )}
 
-                          {escrow && ['pending', 'held', 'released'].includes(escrow.status) && !['cancelled'].includes(order.status) && (
+                          {!isCODOrder && escrow && ['pending', 'held', 'released'].includes(escrow.status) && !['cancelled'].includes(order.status) && (
                             <Button variant="outline" size="sm" onClick={() => handleRequestRefund(order)} disabled={refundingOrderId === order.id} className="w-full">
                               {refundingOrderId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <DollarSign className="w-4 h-4 mr-2" />}
                               Demander un remboursement
@@ -551,7 +658,9 @@ export default function MyPurchasesOrdersList({
                         {(order.status === 'delivered' || order.status === 'completed') && escrow?.status === 'released' && (
                           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                             <CheckCircle className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-muted-foreground">Terminée - Paiement transféré au vendeur</span>
+                            <span className="text-sm text-muted-foreground">
+                              Terminée - {formatCurrency(getVendorReceivableAmount(order, escrow), getVendorReceivableCurrency(order, escrow))} transférés au vendeur
+                            </span>
                           </div>
                         )}
                       </CardContent>
@@ -570,18 +679,30 @@ export default function MyPurchasesOrdersList({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la réception ?</AlertDialogTitle>
             <AlertDialogDescription>
-              En confirmant, vous attestez avoir reçu votre commande. Le paiement sera transféré au vendeur.
+              En confirmant, vous attestez avoir reçu votre commande.
+              {!selectedOrderIsCashOnDelivery && (
+                <div className="mt-3 rounded-lg border border-primary/15 bg-primary/5 p-3">
+                  <div className="text-sm text-muted-foreground">Montant qui sera libéré au vendeur</div>
+                  <div className="mt-1 text-lg font-semibold text-foreground">
+                    {formatCurrency(sellerReceivableAmount, sellerReceivableCurrency)}
+                  </div>
+                </div>
+              )}
               <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
-                  <span className="text-sm text-orange-800">Action irréversible. Vérifiez votre colis.</span>
+                  <span className="text-sm text-orange-800">
+                    {selectedOrderIsCashOnDelivery
+                      ? 'Action irréversible. Après confirmation, la fenêtre d\'avis s\'ouvrira automatiquement.'
+                      : 'Action irréversible. Vérifiez votre colis.'}
+                  </span>
                 </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelivery}>Confirmer</AlertDialogAction>
+            <AlertDialogAction onClick={() => void confirmDelivery()}>Confirmer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -603,7 +724,11 @@ export default function MyPurchasesOrdersList({
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start gap-2">
                     <Shield className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <span className="text-sm text-blue-800">Votre paiement sera automatiquement remboursé via Escrow.</span>
+                    <span className="text-sm text-blue-800">
+                      {selectedOrderIsCashOnDelivery
+                        ? 'Cette commande est en paiement à la livraison. Aucun remboursement wallet ne sera effectué.'
+                        : 'Votre paiement sera automatiquement remboursé dans votre portefeuille.'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -647,6 +772,20 @@ export default function MyPurchasesOrdersList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {ratingOrderData && (
+        <ProductRatingDialog
+          open={showRatingDialog}
+          onOpenChange={setShowRatingDialog}
+          orderId={ratingOrderData.orderId}
+          vendorId={ratingOrderData.vendorId}
+          vendorName={ratingOrderData.vendorName}
+          onRatingSubmitted={() => {
+            setRatingOrderData(null);
+            setPendingRatingOrderData(null);
+          }}
+        />
+      )}
     </>
   );
 }

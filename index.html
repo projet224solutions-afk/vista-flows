@@ -6,6 +6,10 @@
   <script>
     (function () {
       var host = window.location.hostname;
+      if (host === 'www.224solution.net') {
+        window.location.replace('https://224solution.net' + window.location.pathname + window.location.search + window.location.hash);
+        return;
+      }
       if (host && host.indexOf('224solution.net') !== -1 && window.location.protocol === 'http:') {
         window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
       }
@@ -149,10 +153,20 @@
           setTimeout(function() { if (loader) loader.style.display = 'none'; }, 400);
         }
       }
+
+      function safeRootText(root) {
+        try {
+          return String((root && root.textContent) || '').trim();
+        } catch (e) {
+          return '';
+        }
+      }
       
       function check() {
         var root = document.getElementById('root');
-        return root && root.innerHTML.length > 50;
+        if (!root) return false;
+        if (root.getAttribute('data-app-mounted') === 'true') return true;
+        return root.childElementCount > 0 || safeRootText(root).length > 0;
       }
       
       var interval = setInterval(function() {
@@ -185,7 +199,13 @@
 
       // Global error handler - show error in loader
       window.addEventListener('error', function(e) {
-        if (textEl && !check()) {
+        var appMounted = false;
+        try {
+          appMounted = check();
+        } catch (err) {
+          appMounted = false;
+        }
+        if (textEl && !appMounted) {
           textEl.innerHTML = 'Erreur de chargement.<br><a href="/?resetSw=1" style="color:#023288;text-decoration:underline;margin-top:8px;display:inline-block">Recharger</a>';
         }
       });

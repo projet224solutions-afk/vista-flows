@@ -15,9 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
   Home, Sofa, Lamp, Bed, DollarSign, Package,
-  Plus, ShoppingCart, TrendingUp, Eye, Star,
-  Palette, Ruler, Users, CheckCircle, Clock,
-  Image, MapPin
+  Plus, ShoppingCart, TrendingUp, _Eye, _Star,
+  Palette, _Ruler, _Users, _CheckCircle, _Clock,
+  Image, _MapPin
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -88,7 +88,7 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   delivered: { label: 'Livré', color: 'bg-green-100 text-green-800' },
 };
 
-export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProps) {
+export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModuleProps) {
   const [activeTab, setActiveTab] = useState('catalog');
   const [showNewProject, setShowNewProject] = useState(false);
 
@@ -343,7 +343,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {['Salon Moderne', 'Chambre Cosy', 'Cuisine Ouverte', 'Terrasse Zen', 'Bureau Design', 'Salle de Bain Luxe'].map((room, i) => (
+                {['Salon Moderne', 'Chambre Cosy', 'Cuisine Ouverte', 'Terrasse Zen', 'Bureau Design', 'Salle de Bain Luxe'].map((room, _i) => (
                   <div key={room} className="aspect-[4/3] rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center cursor-pointer hover:shadow-md transition-all group border-2 border-dashed border-muted-foreground/20 hover:border-primary/30">
                     <div className="text-center">
                       <Image className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50 group-hover:text-primary transition-colors" />

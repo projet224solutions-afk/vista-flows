@@ -14,10 +14,10 @@ interface TrendingProductsProps {
 /**
  * Composant des produits tendances (style Amazon Best Sellers)
  */
-export const TrendingProducts = ({ 
+export const TrendingProducts = ({
   days = 7,
   limit = 20,
-  title = "Meilleures ventes" 
+  title = "Meilleures ventes"
 }: TrendingProductsProps) => {
   const { products, loading } = useTrendingProducts(days, limit);
 
@@ -60,8 +60,8 @@ export const TrendingProducts = ({
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.map((item, index) => (
-          <Link 
-            key={item.product_id} 
+          <Link
+            key={item.product_id}
             to={`/product/${item.product_id}`}
             className="block"
           >
@@ -74,8 +74,8 @@ export const TrendingProducts = ({
               <CardContent className="p-4 space-y-2">
                 {item.product?.images && item.product.images[0] && (
                   <div className="relative">
-                    <img 
-                      src={item.product.images[0]} 
+                    <img
+                      src={item.product.images[0]}
                       alt={item.product.name}
                       className="w-full h-48 object-cover rounded"
                     />

@@ -11,13 +11,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAgora } from '@/hooks/useAgora';
 import { useAuth } from '@/hooks/useAuth';
 import { agoraService, RemoteUser } from '@/services/agoraService';
-import { 
-  Phone, 
-  Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  PhoneOff, 
+import {
+  Phone,
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  PhoneOff,
   Wifi,
   Clock
 } from 'lucide-react';
@@ -33,19 +33,19 @@ interface AgoraVideoCallProps {
   onCallEnd?: () => void;
 }
 
-export default function AgoraVideoCall({ 
-  channel, 
-  isIncoming = false, 
+export default function AgoraVideoCall({
+  channel,
+  isIncoming = false,
   callerInfo,
-  onCallEnd 
+  onCallEnd
 }: AgoraVideoCallProps) {
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const { callState, joinCall, toggleMute, toggleVideo, endCall } = useAgora();
-  
+
   const [callDuration, setCallDuration] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
-  
+
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,7 +56,7 @@ export default function AgoraVideoCall({
       onUserJoined: (user) => {
         console.log('👤 Utilisateur rejoint:', user.uid);
         setRemoteUsers(agoraService.getRemoteUsers());
-        
+
         // Jouer la vidéo distante si disponible
         if (user.videoTrack && remoteVideoRef.current) {
           setTimeout(() => {
@@ -81,6 +81,7 @@ export default function AgoraVideoCall({
       console.log('🎥 AgoraVideoCall: Démarrage automatique pour channel:', channel);
       handleJoinCall();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel, isIncoming]);
 
   // Gestion de la durée d'appel
@@ -89,7 +90,7 @@ export default function AgoraVideoCall({
       durationIntervalRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
-      
+
       // Jouer la vidéo locale
       if (localVideoRef.current) {
         setTimeout(() => {
@@ -160,7 +161,7 @@ export default function AgoraVideoCall({
             <h3 className="text-xl font-semibold">{callerInfo?.name}</h3>
             <p className="text-muted-foreground">Appel vidéo</p>
           </div>
-          
+
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
@@ -199,7 +200,7 @@ export default function AgoraVideoCall({
       {/* Interface vidéo principale */}
       <div className="relative w-full h-full">
         {/* Vidéo distante */}
-        <div 
+        <div
           ref={remoteVideoRef}
           className="w-full h-full bg-gray-900 flex items-center justify-center min-h-[400px]"
         >
@@ -220,7 +221,7 @@ export default function AgoraVideoCall({
         </div>
 
         {/* Vidéo locale (picture-in-picture) */}
-        <div 
+        <div
           ref={localVideoRef}
           className="absolute top-4 right-4 w-32 h-24 bg-gray-800 rounded-lg overflow-hidden border-2 border-white shadow-lg"
         >
@@ -238,7 +239,7 @@ export default function AgoraVideoCall({
           <div className="flex items-center gap-2">
             <Wifi className={`w-4 h-4 ${getNetworkQualityColor(callState.networkQuality)}`} />
             <span className="text-sm">
-              Qualité: {callState.networkQuality >= 4 ? 'Excellente' : 
+              Qualité: {callState.networkQuality >= 4 ? 'Excellente' :
                        callState.networkQuality >= 2 ? 'Bonne' : 'Faible'}
             </span>
           </div>
@@ -281,7 +282,7 @@ export default function AgoraVideoCall({
 
         {/* Statut de connexion */}
         <div className="absolute top-4 right-4">
-          <Badge 
+          <Badge
             variant={callState.isConnected ? "default" : "destructive"}
             className="bg-black/50 text-white"
           >

@@ -50,7 +50,7 @@ const CRITICAL_RETRY_CONFIG: Partial<RetryConfig> = {
       'invalid_amount',
       'duplicate_transaction'
     ];
-    return !permanent.some(code => 
+    return !permanent.some(code =>
       error?.message?.toLowerCase().includes(code.replace('_', ' ')) ||
       (error as any)?.code === code
     );
@@ -79,7 +79,7 @@ export function useFinancialTransactionsRobust() {
   // Circuit breakers names par type d'opération
   const cardOmCircuitName = 'financial-card-om';
   const walletCardCircuitName = 'financial-wallet-card';
-  
+
   // Subscribe to circuit state changes
   useEffect(() => {
     const unsubscribe = circuitBreaker.subscribe(cardOmCircuitName, (state) => {
@@ -104,12 +104,12 @@ export function useFinancialTransactionsRobust() {
   // Acquérir verrou de transaction
   const acquireTransactionLock = useCallback((key: string): boolean => {
     const existingLock = transactionLockRef.current.get(key);
-    
+
     // Verrou expiré après 2 minutes
     if (existingLock && Date.now() - existingLock < 120000) {
       return false;
     }
-    
+
     transactionLockRef.current.set(key, Date.now());
     return true;
   }, []);
@@ -123,7 +123,7 @@ export function useFinancialTransactionsRobust() {
   const loadTransactions = useCallback(async (): Promise<boolean> => {
     try {
       setLoading(true);
-      
+
       const data = await retryWithBackoff(async () => {
         const { data, error } = await supabase
           .from('financial_transactions')
@@ -177,7 +177,7 @@ export function useFinancialTransactionsRobust() {
 
     while (Date.now() - startTime < maxWaitMs) {
       const transaction = await checkTransactionStatus(transactionId);
-      
+
       if (transaction) {
         if (transaction.status === 'completed') {
           return transaction;
@@ -200,7 +200,7 @@ export function useFinancialTransactionsRobust() {
     amount: number
   ): Promise<TransactionResult> => {
     const lockKey = `card_to_om_${cardId}_${amount}`;
-    
+
     if (!acquireTransactionLock(lockKey)) {
       return {
         success: false,
@@ -251,7 +251,7 @@ export function useFinancialTransactionsRobust() {
     amount: number
   ): Promise<TransactionResult> => {
     const lockKey = `wallet_to_card_${cardId}_${amount}`;
-    
+
     if (!acquireTransactionLock(lockKey)) {
       return {
         success: false,
@@ -296,9 +296,9 @@ export function useFinancialTransactionsRobust() {
 
       toast.success('✅ Carte virtuelle rechargée avec succès !');
       await loadTransactions();
-      
+
       window.dispatchEvent(new Event('wallet-updated'));
-      
+
       return { success: true, transactionId: result };
 
     } catch (error: any) {
@@ -322,7 +322,7 @@ export function useFinancialTransactionsRobust() {
     amount: number
   ): Promise<TransactionResult> => {
     const lockKey = `card_to_wallet_${cardId}_${amount}`;
-    
+
     if (!acquireTransactionLock(lockKey)) {
       return {
         success: false,
@@ -367,9 +367,9 @@ export function useFinancialTransactionsRobust() {
 
       toast.success('✅ Wallet rechargé avec succès !');
       await loadTransactions();
-      
+
       window.dispatchEvent(new Event('wallet-updated'));
-      
+
       return { success: true, transactionId: result };
 
     } catch (error: any) {
@@ -406,7 +406,7 @@ export function useFinancialTransactionsRobust() {
     try {
       const { error } = await supabase
         .from('financial_transactions')
-        .update({ 
+        .update({
           status: 'cancelled',
           error_message: 'Annulé par l\'utilisateur'
         })
@@ -414,12 +414,12 @@ export function useFinancialTransactionsRobust() {
         .eq('status', 'pending');
 
       if (error) throw error;
-      
+
       await loadTransactions();
       toast.success('Transaction annulée');
       return true;
 
-    } catch (error: any) {
+    } catch (_error: any) {
       toast.error('Impossible d\'annuler la transaction');
       return false;
     }
@@ -432,19 +432,19 @@ export function useFinancialTransactionsRobust() {
     transactions,
     currentOperation,
     lastError,
-    
+
     // Opérations
     loadTransactions,
     transferCardToOrangeMoney,
     rechargeCardFromWallet,
     rechargeWalletFromCard,
-    
+
     // Utilitaires
     calculateFees,
     checkTransactionStatus,
     waitForTransactionConfirmation,
     cancelPendingTransaction,
-    
+
     // Helpers
     canOperate: !processing,
     hasPendingTransactions: transactions.some(t => t.status === 'pending')

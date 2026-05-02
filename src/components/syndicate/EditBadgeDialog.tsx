@@ -47,11 +47,11 @@ export default function EditBadgeDialog({
   const [lastName, setLastName] = useState(initialLastName);
   const [dateOfBirth, setDateOfBirth] = useState(vehicleData.driver_date_of_birth || '');
   const [photoUrl, setPhotoUrl] = useState(vehicleData.driver_photo_url || '');
-  
+
   // Construire le titre du badge automatiquement basé sur la commune ou préfecture
   const locationName = bureauCommune || bureauPrefecture || bureauName;
   const defaultBadgeTitle = locationName && locationName !== 'VOTRE BUREAU'
-    ? `TAXI-MOTO Bureau Syndicat de ${locationName}` 
+    ? `TAXI-MOTO Bureau Syndicat de ${locationName}`
     : 'TAXI-MOTO Bureau Syndicat';
   const [badgeTitle, setBadgeTitle] = useState(defaultBadgeTitle);
   const [uploading, setUploading] = useState(false);
@@ -173,8 +173,8 @@ export default function EditBadgeDialog({
                 </div>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
             >
@@ -230,8 +230,8 @@ export default function EditBadgeDialog({
             <Label>Photo du conducteur</Label>
             {photoUrl && (
               <div className="flex justify-center mb-4">
-                <img 
-                  src={photoUrl} 
+                <img
+                  src={photoUrl}
                   alt="Photo du conducteur"
                   className="w-32 h-32 object-cover rounded-lg border-2 border-border"
                 />

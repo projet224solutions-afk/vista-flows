@@ -2,7 +2,7 @@
  * CHINA DROPSHIPPING HOOK
  * Hook principal pour la gestion du dropshipping Chine
  * Extension modulaire du système existant
- * 
+ *
  * @module useChinaDropshipping
  * @version 1.0.0
  */
@@ -15,19 +15,19 @@ import type {
   ChinaProductImport,
   ChinaSupplierOrder,
   ChinaCostBreakdown,
-  ChinaPriceSync,
+  _ChinaPriceSync,
   ChinaPriceAlert,
   ChinaDropshipSettings,
   ChinaDropshipLog,
-  ChinaDropshipReport,
+  _ChinaDropshipReport,
   ChinaPlatformType,
-  SupplierScore,
-  ChinaLogistics,
+  _SupplierScore,
+  _ChinaLogistics,
   SyncStatus
 } from '@/types/china-dropshipping';
 import {
   DEFAULT_CHINA_SETTINGS,
-  SUPPLIER_SCORE_THRESHOLDS
+  _SUPPLIER_SCORE_THRESHOLDS
 } from '@/types/china-dropshipping';
 
 // ==================== INTERFACES ====================
@@ -36,48 +36,48 @@ interface UseChinaDropshippingReturn {
   // États
   loading: boolean;
   syncStatus: SyncStatus;
-  
+
   // Données
   chinaSuppliers: ChinaSupplierExtension[];
   importedProducts: ChinaProductImport[];
   chinaOrders: ChinaSupplierOrder[];
   priceAlerts: ChinaPriceAlert[];
   settings: ChinaDropshipSettings | null;
-  
+
   // Stats
   stats: ChinaDropshipStats | null;
-  
+
   // Actions Fournisseurs
   loadChinaSuppliers: () => Promise<void>;
   addChinaSupplier: (supplier: Partial<ChinaSupplierExtension>) => Promise<ChinaSupplierExtension | null>;
   updateChinaSupplier: (id: string, updates: Partial<ChinaSupplierExtension>) => Promise<boolean>;
   verifySupplier: (id: string) => Promise<boolean>;
   disableSupplier: (id: string, reason: string) => Promise<boolean>;
-  
+
   // Actions Import Produits
   importFromUrl: (url: string, platform: ChinaPlatformType) => Promise<ChinaProductImport | null>;
   convertToDropshipProduct: (importId: string, vendorMargin: number) => Promise<string | null>;
-  
+
   // Actions Commandes
   loadChinaOrders: () => Promise<void>;
   createSupplierOrder: (customerOrderId: string, items: any[]) => Promise<ChinaSupplierOrder | null>;
   updateOrderStatus: (orderId: string, status: string, note?: string) => Promise<boolean>;
-  
+
   // Actions Sync
   syncPrices: (productIds?: string[]) => Promise<boolean>;
   syncAvailability: (productIds?: string[]) => Promise<boolean>;
-  
+
   // Actions Alertes
   loadAlerts: () => Promise<void>;
   dismissAlert: (alertId: string) => Promise<boolean>;
-  
+
   // Actions Settings
   loadSettings: () => Promise<void>;
   updateSettings: (settings: Partial<ChinaDropshipSettings>) => Promise<boolean>;
-  
+
   // Calculs
   calculateCosts: (productId: string, quantity: number) => Promise<ChinaCostBreakdown | null>;
-  
+
   // Logs
   addLog: (log: Partial<ChinaDropshipLog>) => Promise<void>;
 }
@@ -101,24 +101,24 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
   // États
   const [loading, setLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
-  
+
   // Données
   const [chinaSuppliers, setChinaSuppliers] = useState<ChinaSupplierExtension[]>([]);
-  const [importedProducts, setImportedProducts] = useState<ChinaProductImport[]>([]);
+  const [importedProducts, _setImportedProducts] = useState<ChinaProductImport[]>([]);
   const [chinaOrders, setChinaOrders] = useState<ChinaSupplierOrder[]>([]);
   const [priceAlerts, setPriceAlerts] = useState<ChinaPriceAlert[]>([]);
   const [settings, setSettings] = useState<ChinaDropshipSettings | null>(null);
   const [stats, setStats] = useState<ChinaDropshipStats | null>(null);
-  
+
   // Refs pour éviter les race conditions
   const syncInProgressRef = useRef(false);
-  const retryCountRef = useRef<Map<string, number>>(new Map());
+  const _retryCountRef = useRef<Map<string, number>>(new Map());
 
   // ==================== FOURNISSEURS ====================
 
   const loadChinaSuppliers = useCallback(async () => {
     if (!vendorId) return;
-    
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -139,7 +139,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
     } finally {
       setLoading(false);
     }
-  }, [vendorId]);
+  }, [vendorId, addLog]);
 
   const addChinaSupplier = useCallback(async (
     supplier: Partial<ChinaSupplierExtension>
@@ -151,7 +151,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
 
     try {
       setLoading(true);
-      
+
       const insertData = {
         ...supplier,
         supplier_region: 'CHINA',
@@ -171,17 +171,17 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Fournisseur chinois ajouté');
       await loadChinaSuppliers();
-      
+
       await addLog({
         log_type: 'sync',
         severity: 'info',
         message: `Nouveau fournisseur chinois ajouté: ${supplier.platform_type}`,
         details: { supplier_id: data?.id }
       });
-      
+
       return data as unknown as ChinaSupplierExtension;
     } catch (error: any) {
       console.error('[ChinaDropship] Erreur ajout fournisseur:', error);
@@ -190,7 +190,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
     } finally {
       setLoading(false);
     }
-  }, [vendorId, loadChinaSuppliers]);
+  }, [vendorId, loadChinaSuppliers, addLog]);
 
   const updateChinaSupplier = useCallback(async (
     id: string,
@@ -198,14 +198,14 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
   ): Promise<boolean> => {
     try {
       setLoading(true);
-      
+
       const { error } = await supabase
         .from('china_suppliers')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast.success('Fournisseur mis à jour');
       await loadChinaSuppliers();
       return true;
@@ -238,23 +238,23 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast.warning('Fournisseur désactivé');
       await loadChinaSuppliers();
-      
+
       await addLog({
         log_type: 'alert',
         severity: 'warning',
         message: `Fournisseur désactivé: ${reason}`,
         details: { supplier_id: id, reason }
       });
-      
+
       return true;
     } catch (error: any) {
       console.error('[ChinaDropship] Erreur désactivation:', error);
       return false;
     }
-  }, [loadChinaSuppliers]);
+  }, [loadChinaSuppliers, addLog]);
 
   // ==================== IMPORT PRODUITS ====================
 
@@ -273,7 +273,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
 
       // Extraction des données produit (simulation - en prod, utiliser un scraper)
       const productData = await extractProductFromUrl(url, platform);
-      
+
       if (!productData) {
         throw new Error('Impossible d\'extraire les données du produit');
       }
@@ -302,10 +302,10 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Produit importé avec succès');
       setSyncStatus('success');
-      
+
       await addLog({
         vendor_id: vendorId,
         log_type: 'import',
@@ -313,7 +313,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         message: `Produit importé depuis ${platform}`,
         details: { url, product_id: data?.id }
       });
-      
+
       return data as unknown as ChinaProductImport;
     } catch (error: any) {
       console.error('[ChinaDropship] Erreur import:', error);
@@ -323,7 +323,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
     } finally {
       setLoading(false);
     }
-  }, [vendorId]);
+  }, [vendorId, addLog]);
 
   const convertToDropshipProduct = useCallback(async (
     importId: string,
@@ -346,7 +346,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
       // Calculer le prix de vente
       const costUSD = (imported as any).supplier_price_usd;
       const sellingPriceUSD = costUSD * (1 + vendorMargin / 100);
-      
+
       // Convertir en devise locale (GNF par exemple)
       const exchangeRate = 8500; // USD -> GNF (à dynamiser)
       const sellingPriceLocal = sellingPriceUSD * exchangeRate;
@@ -398,7 +398,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
 
   const loadChinaOrders = useCallback(async () => {
     if (!vendorId) return;
-    
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -465,10 +465,10 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .single();
 
       if (error) throw error;
-      
+
       toast.success('Commande fournisseur créée');
       await loadChinaOrders();
-      
+
       return data as unknown as ChinaSupplierOrder;
     } catch (error: any) {
       console.error('[ChinaDropship] Erreur création commande:', error);
@@ -511,7 +511,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .eq('id', orderId);
 
       if (error) throw error;
-      
+
       toast.success('Statut mis à jour');
       await loadChinaOrders();
       return true;
@@ -532,13 +532,13 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
     try {
       syncInProgressRef.current = true;
       setSyncStatus('syncing');
-      
+
       // Récupérer les produits à synchroniser
       let query = supabase
         .from('china_product_imports')
         .select('*')
         .eq('import_status', 'imported');
-      
+
       if (productIds?.length) {
         query = query.in('id', productIds);
       }
@@ -587,7 +587,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
               alertsGenerated++;
 
               // Auto-désactivation si configuré
-              if (settings?.auto_disable_on_price_spike && 
+              if (settings?.auto_disable_on_price_spike &&
                   changePercent > (settings?.auto_disable_threshold_percent || 30)) {
                 await supabase
                   .from('dropship_products')
@@ -616,7 +616,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
 
       setSyncStatus('success');
       toast.success(`${updatedCount} prix synchronisés, ${alertsGenerated} alertes`);
-      
+
       await addLog({
         vendor_id: vendorId,
         log_type: 'sync',
@@ -633,9 +633,9 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
     } finally {
       syncInProgressRef.current = false;
     }
-  }, [vendorId, settings]);
+  }, [vendorId, settings, addLog]);
 
-  const syncAvailability = useCallback(async (productIds?: string[]): Promise<boolean> => {
+  const syncAvailability = useCallback(async (_productIds?: string[]): Promise<boolean> => {
     // Logique similaire à syncPrices mais pour la disponibilité
     // Implémentation simplifiée
     toast.info('Synchronisation disponibilité en cours...');
@@ -672,7 +672,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
       if (error) throw error;
       await loadAlerts();
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }, [loadAlerts]);
@@ -690,7 +690,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      
+
       if (data) {
         setSettings(data as unknown as ChinaDropshipSettings);
       } else {
@@ -700,13 +700,13 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
           ...DEFAULT_CHINA_SETTINGS,
           local_selling_currency: 'GNF'
         };
-        
+
         const { data: newSettings } = await supabase
           .from('china_dropship_settings')
           .insert(defaultSettings)
           .select()
           .single();
-          
+
         setSettings(newSettings as unknown as ChinaDropshipSettings);
       }
     } catch (error: any) {
@@ -726,11 +726,11 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         .eq('vendor_id', vendorId);
 
       if (error) throw error;
-      
+
       toast.success('Paramètres mis à jour');
       await loadSettings();
       return true;
-    } catch (error: any) {
+    } catch (_error: any) {
       toast.error('Erreur mise à jour paramètres');
       return false;
     }
@@ -763,10 +763,10 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
       const customsDutyPercent = 10; // Taux moyen
       const customsDutyAmount = supplierPriceUSD * (customsDutyPercent / 100);
 
-      const totalCostUSD = supplierPriceUSD + 
-        (domesticShippingCNY / exchangeRateCNYUSD) + 
-        (handlingFeeCNY / exchangeRateCNYUSD) + 
-        internationalShippingUSD + 
+      const totalCostUSD = supplierPriceUSD +
+        (domesticShippingCNY / exchangeRateCNYUSD) +
+        (handlingFeeCNY / exchangeRateCNYUSD) +
+        internationalShippingUSD +
         customsDutyAmount;
 
       // Conversion devise locale
@@ -840,7 +840,7 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
         verifiedSuppliers: chinaSuppliers.filter(s => s.verified_by_admin).length,
         activeProducts: importedProducts.filter(p => p.import_status === 'imported').length,
         pendingOrders: chinaOrders.filter(o => o.status === 'pending_supplier_confirm').length,
-        inTransitOrders: chinaOrders.filter(o => 
+        inTransitOrders: chinaOrders.filter(o =>
           ['shipped_international', 'customs_clearance', 'last_mile_delivery'].includes(o.status)
         ).length,
         avgDeliveryDays: 18, // Calculer depuis l'historique
@@ -865,11 +865,11 @@ export function useChinaDropshipping(vendorId?: string): UseChinaDropshippingRet
       loadAlerts();
       loadSettings();
     }
-  }, [vendorId]);
+  }, [vendorId, loadChinaSuppliers, loadChinaOrders, loadAlerts, loadSettings]);
 
   useEffect(() => {
     loadStats();
-  }, [chinaSuppliers, importedProducts, chinaOrders, priceAlerts]);
+  }, [chinaSuppliers, importedProducts, chinaOrders, priceAlerts, loadStats]);
 
   // ==================== RETURN ====================
 
@@ -915,7 +915,7 @@ async function extractProductFromUrl(
 ): Promise<any> {
   // Simulation - en prod, appeler un service backend
   await new Promise(resolve => setTimeout(resolve, 1500));
-  
+
   // Données simulées
   return {
     id: `${platform}_${Date.now()}`,
@@ -939,12 +939,12 @@ async function extractProductFromUrl(
  * Récupérer le prix actuel d'un produit (simulation)
  */
 async function fetchCurrentPrice(
-  url: string,
-  platform: ChinaPlatformType
+  _url: string,
+  _platform: ChinaPlatformType
 ): Promise<number | null> {
   // Simulation - en prod, appeler l'API du fournisseur
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   // Simuler une variation de prix de ±20%
   const basePrice = 100;
   const variation = (Math.random() - 0.5) * 0.4;
@@ -964,10 +964,10 @@ function calculateShippingCost(
     RAIL: 8,
     SEA: 4
   };
-  
+
   const weightKg = quantity * 0.5; // Estimation poids
   const minCharge = 30;
-  
+
   return Math.max(weightKg * rates[method], minCharge);
 }
 

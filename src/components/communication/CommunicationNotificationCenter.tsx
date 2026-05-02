@@ -16,8 +16,8 @@ interface CommunicationNotificationCenterProps {
   className?: string;
 }
 
-export default function CommunicationNotificationCenter({ 
-  className 
+export default function CommunicationNotificationCenter({
+  className
 }: CommunicationNotificationCenterProps) {
   const { notifications, markNotificationAsRead, loadNotifications } = useUniversalCommunication();
   const { user } = useAuth();
@@ -84,8 +84,8 @@ export default function CommunicationNotificationCenter({
             <Badge variant="destructive">{notifications.length}</Badge>
           </CardTitle>
           {notifications.length > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleMarkAllAsRead}
             >

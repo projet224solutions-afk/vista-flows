@@ -3,18 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, _DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { updateOrderStatus as updateOrderStatusBackend } from "@/services/orderBackendService";
 import { useToast } from "@/hooks/use-toast";
-import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
+import { _GeocodedAddress } from "@/components/vendor/GeocodedAddress";
 import CreditSalesForm from "@/components/vendor/CreditSalesForm";
-import { 
-  ShoppingCart, Search, Filter, Eye, Package, Clock, 
+import {
+  ShoppingCart, Search, Filter, Eye, Package, _Clock,
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw, Banknote, Lock
+  Calendar, User, MapPin, Download, _MoreHorizontal, Shield, RefreshCw, Banknote, Lock
 } from "lucide-react";
 
 interface Address {
@@ -55,6 +56,7 @@ interface Order {
     id: string;
     user_id: string;
     profiles?: {
+      public_id?: string;
       first_name?: string;
       last_name?: string;
       full_name?: string;
@@ -150,20 +152,20 @@ const getPaymentMethodLabel = (order: Order): string => {
   if (isCashOnDeliveryOrder(order)) {
     return 'Paiement à la livraison';
   }
-  const isCOD = order.source === 'online' && 
-                method === 'cash' && 
+  const isCOD = order.source === 'online' &&
+                method === 'cash' &&
                 order.payment_status === 'pending' &&
                 ((order.shipping_address as any)?.is_cod === true || order.metadata?.is_cod === true);
-  
+
   if (isCOD) {
     return '💵 Paiement à la livraison';
   }
-  
+
   return paymentMethodLabels[method || ''] || method || 'Non spécifié';
 };
 
 export default function OrderManagement() {
-  const { vendorId, user, loading: vendorLoading, canAccessPOS, businessType } = useCurrentVendor();
+  const { vendorId, user, loading: vendorLoading, canAccessPOS, _businessType } = useCurrentVendor();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,6 +178,8 @@ export default function OrderManagement() {
   const [activeView, setActiveView] = useState<'pos' | 'online'>('online');
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
   const [mainTab, setMainTab] = useState<'orders' | 'credit'>('orders');
+  const [deliveryDialogOrder, setDeliveryDialogOrder] = useState<Order | null>(null);
+  const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState('3');
 
   useEffect(() => {
     if (!vendorId || vendorLoading) return;
@@ -194,7 +198,7 @@ export default function OrderManagement() {
         (payload) => {
           console.log('🔔 Changement commande (realtime):', payload);
           fetchOrders(); // Recharger toutes les commandes
-          
+
           if (payload.eventType === 'INSERT') {
             const source = (payload.new as any).source;
             toast({
@@ -220,7 +224,7 @@ export default function OrderManagement() {
           console.log('💰 Changement escrow (realtime):', payload);
           const newStatus = (payload.new as any).status;
           const oldStatus = (payload.old as any)?.status;
-          
+
           // Notification quand l'escrow est libéré (client a confirmé la livraison)
           if (newStatus === 'released' && oldStatus !== 'released') {
             toast({
@@ -229,7 +233,7 @@ export default function OrderManagement() {
               duration: 10000
             });
           }
-          
+
           fetchOrders(); // Recharger pour mettre à jour l'affichage
         }
       )
@@ -239,6 +243,7 @@ export default function OrderManagement() {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(escrowChannel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
   const fetchOrders = async () => {
@@ -258,7 +263,7 @@ export default function OrderManagement() {
         .select(`
           *,
           customers(
-            id, 
+            id,
             user_id
           ),
           order_items(
@@ -294,7 +299,7 @@ export default function OrderManagement() {
         .map(o => o.customers.user_id);
 
       // Charger les profils correspondants
-      let profilesMap: Record<string, any> = {};
+      const profilesMap: Record<string, any> = {};
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
@@ -326,14 +331,14 @@ export default function OrderManagement() {
 
       // Charger les infos escrow en une seule requête batch (optimisation)
       const orderIds = enrichedOrders.map(o => o.id);
-      let escrowMap: Record<string, EscrowInfo> = {};
-      
+      const escrowMap: Record<string, EscrowInfo> = {};
+
       if (orderIds.length > 0) {
         const { data: escrowData } = await supabase
           .from('escrow_transactions')
           .select('id, status, amount, created_at, order_id')
           .in('order_id', orderIds);
-        
+
         if (escrowData) {
           escrowData.forEach(e => {
             escrowMap[e.order_id] = {
@@ -345,7 +350,7 @@ export default function OrderManagement() {
           });
         }
       }
-      
+
       const ordersWithEscrow = enrichedOrders.map(order => ({
         ...order,
         escrow: escrowMap[order.id] || undefined
@@ -355,7 +360,7 @@ export default function OrderManagement() {
       console.log('   - Online:', ordersWithEscrow.filter(o => o.source === 'online').length);
       console.log('   - POS:', ordersWithEscrow.filter(o => o.source === 'pos').length);
       console.log('   - With Escrow:', ordersWithEscrow.filter(o => o.escrow).length);
-      
+
       setOrders(ordersWithEscrow);
 
       if (ordersWithEscrow.length === 0) {
@@ -374,8 +379,8 @@ export default function OrderManagement() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = !searchTerm || 
+  const _filteredOrders = orders.filter(order => {
+    const matchesSearch = !searchTerm ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -392,7 +397,7 @@ export default function OrderManagement() {
       const bHasEscrow = !!b.escrow;
       if (aHasEscrow && !bHasEscrow) return -1;
       if (!aHasEscrow && bHasEscrow) return 1;
-      
+
       // Priorité 2: Statut escrow (pending/held avant released)
       if (aHasEscrow && bHasEscrow) {
         const aEscrowPending = ['pending', 'held'].includes(a.escrow!.status);
@@ -400,13 +405,13 @@ export default function OrderManagement() {
         if (aEscrowPending && !bEscrowPending) return -1;
         if (!aEscrowPending && bEscrowPending) return 1;
       }
-      
+
       // Priorité 3: Date (plus récent en premier)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
-  const filteredOnlineOrders = onlineOrders.filter(order => {
-    const matchesSearch = !searchTerm || 
+  const _filteredOnlineOrders = onlineOrders.filter(order => {
+    const matchesSearch = !searchTerm ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -414,13 +419,17 @@ export default function OrderManagement() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled') => {
+  const updateOrderStatus = async (
+    orderId: string,
+    newStatus: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'cancelled',
+    options: { estimated_delivery_days?: number } = {}
+  ) => {
     // Prevent duplicate updates
     if (updatingOrderId === orderId) {
       console.log('⏳ Update already in progress for order:', orderId);
       return;
     }
-    
+
     // Validate required data before proceeding
     if (!vendorId) {
       console.error('❌ No vendorId available');
@@ -431,7 +440,7 @@ export default function OrderManagement() {
       });
       return;
     }
-    
+
     if (!user?.id) {
       console.error('❌ No user authenticated');
       toast({
@@ -441,24 +450,27 @@ export default function OrderManagement() {
       });
       return;
     }
-    
+
     console.log('🔄 Updating order status:', { orderId, newStatus, vendorId });
     setUpdatingOrderId(orderId);
-    
+
     // Store previous state for rollback
     const previousOrders = [...orders];
-    
+
     // Optimistic update
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
+    setOrders(prev => prev.map(order =>
+      order.id === orderId
         ? { ...order, status: newStatus as string, updated_at: new Date().toISOString() }
         : order
     ));
-    
+
     try {
       // Use backend API for proper escrow handling, stock management, and transition guards
       const response = await updateOrderStatusBackend(orderId, newStatus as any, {
         ...(newStatus === 'cancelled' ? { cancellation_reason: 'Annulée par le vendeur' } : {}),
+        ...(newStatus === 'confirmed' && options.estimated_delivery_days
+          ? { estimated_delivery_days: options.estimated_delivery_days }
+          : {}),
       });
 
       if (!response.success) {
@@ -476,10 +488,10 @@ export default function OrderManagement() {
       await fetchOrders();
     } catch (error: any) {
       console.error('❌ Failed to update order status:', error);
-      
+
       // Rollback to previous state
       setOrders(previousOrders);
-      
+
       toast({
         title: "❌ Erreur",
         description: error instanceof Error ? error.message : "Impossible de mettre à jour le statut de la commande.",
@@ -490,20 +502,48 @@ export default function OrderManagement() {
     }
   };
 
+  const openDeliveryDelayDialog = (order: Order) => {
+    if (isCashOnDeliveryOrder(order)) {
+      void updateOrderStatus(order.id, 'confirmed');
+      return;
+    }
+
+    setDeliveryDialogOrder(order);
+    setEstimatedDeliveryDays(String(order.metadata?.estimated_delivery_days || 3));
+  };
+
+  const confirmOrderWithDeliveryDelay = async () => {
+    if (!deliveryDialogOrder) return;
+
+    const days = Number(estimatedDeliveryDays);
+    if (!Number.isInteger(days) || days < 1 || days > 60) {
+      toast({
+        title: "Délai invalide",
+        description: "Indiquez un nombre de jours entre 1 et 60.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orderId = deliveryDialogOrder.id;
+    setDeliveryDialogOrder(null);
+    await updateOrderStatus(orderId, 'confirmed', { estimated_delivery_days: days });
+  };
+
   const getOrderStatusActions = (order: Order) => {
     const actions = [];
-    
+
     if (order.status === 'pending') {
       actions.push(
-        <Button 
-          key="confirm" 
+        <Button
+          key="confirm"
           size="sm"
           disabled={updatingOrderId === order.id}
           className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('✅ Confirming order:', order.id);
-            updateOrderStatus(order.id, 'confirmed');
+            openDeliveryDelayDialog(order);
           }}
         >
           <CheckCircle className="w-4 h-4 mr-1" />
@@ -511,12 +551,12 @@ export default function OrderManagement() {
         </Button>
       );
     }
-    
+
     if (order.status === 'confirmed') {
       actions.push(
-        <Button 
-          key="process" 
-          size="sm" 
+        <Button
+          key="process"
+          size="sm"
           disabled={updatingOrderId === order.id}
           className="bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50"
           onClick={(e) => {
@@ -530,11 +570,11 @@ export default function OrderManagement() {
         </Button>
       );
     }
-    
+
     if (order.status === 'preparing') {
       actions.push(
-        <Button 
-          key="ready" 
+        <Button
+          key="ready"
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={(e) => {
@@ -548,11 +588,11 @@ export default function OrderManagement() {
         </Button>
       );
     }
-    
+
     if (order.status === 'ready') {
       actions.push(
-        <Button 
-          key="ship" 
+        <Button
+          key="ship"
           size="sm"
           className="bg-orange-600 hover:bg-orange-700 text-white"
           onClick={(e) => {
@@ -566,11 +606,11 @@ export default function OrderManagement() {
         </Button>
       );
     }
-    
+
     if (order.status === 'in_transit') {
       actions.push(
-        <Button 
-          key="deliver" 
+        <Button
+          key="deliver"
           size="sm"
           className="bg-green-600 hover:bg-green-700 text-white"
           onClick={(e) => {
@@ -584,12 +624,12 @@ export default function OrderManagement() {
         </Button>
       );
     }
-    
+
     if (!['cancelled', 'delivered', 'completed'].includes(order.status)) {
       actions.push(
-        <Button 
-          key="cancel" 
-          size="sm" 
+        <Button
+          key="cancel"
+          size="sm"
           variant="destructive"
           onClick={(e) => {
             e.stopPropagation();
@@ -611,8 +651,8 @@ export default function OrderManagement() {
   // Actions spécifiques pour les ventes POS - uniquement remboursement
   const getPOSOrderActions = (order: Order) => {
     return [
-      <Button 
-        key="refund" 
+      <Button
+        key="refund"
         size="sm"
         className="bg-red-600 hover:bg-red-700 text-white"
         onClick={async (e) => {
@@ -622,21 +662,21 @@ export default function OrderManagement() {
               // Mettre à jour le statut de paiement en "refunded"
               const { error } = await supabase
                 .from('orders')
-                .update({ 
+                .update({
                   payment_status: 'refunded',
                   status: 'cancelled',
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', order.id)
                 .eq('vendor_id', vendorId);
-              
+
               if (error) throw error;
-              
+
               toast({
                 title: "✅ Remboursement effectué",
                 description: `La commande ${order.order_number} a été remboursée (${order.total_amount.toLocaleString()} GNF)`
               });
-              
+
               // Rafraîchir les commandes
               await fetchOrders();
             } catch (err) {
@@ -657,24 +697,24 @@ export default function OrderManagement() {
   };
 
   // Statistics - Toutes les commandes
-  const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
-  const processingOrders = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
-  const deliveredOrders = orders.filter(o => ['delivered', 'completed'].includes(o.status)).length;
-  const totalRevenue = orders
+  const _totalOrders = orders.length;
+  const _pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const _processingOrders = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
+  const _deliveredOrders = orders.filter(o => ['delivered', 'completed'].includes(o.status)).length;
+  const _totalRevenue = orders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
 
   // Statistics - Ventes en ligne uniquement
   const totalOnlineOrders = onlineOrders.length;
   const pendingOnlineOrders = onlineOrders.filter(o => o.status === 'pending').length;
-  const processingOnlineOrders = onlineOrders.filter(o => 
+  const processingOnlineOrders = onlineOrders.filter(o =>
     ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(o.status)
   ).length;
-  const deliveredOnlineOrders = onlineOrders.filter(o => 
+  const deliveredOnlineOrders = onlineOrders.filter(o =>
     ['delivered', 'completed'].includes(o.status)
   ).length;
-  const totalOnlineRevenue = onlineOrders
+  const _totalOnlineRevenue = onlineOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
 
@@ -704,8 +744,8 @@ export default function OrderManagement() {
           <p className="text-xs md:text-sm text-muted-foreground truncate">Ventes POS (en boutique) et Commandes en ligne</p>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={fetchOrders}
             disabled={isRefreshing}
             className="relative flex-shrink-0 h-9 px-3 text-xs md:text-sm"
@@ -737,10 +777,10 @@ export default function OrderManagement() {
       {/* Boutons Ventes POS et En Ligne - Mobile optimisé */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {/* Bouton Ventes POS - Verrouillé si vendeur "online" uniquement */}
-        <Card 
+        <Card
           className={`border-2 transition-all ${
-            canAccessPOS 
-              ? 'border-vendeur-secondary bg-vendeur-secondary/5 cursor-pointer hover:shadow-lg active:scale-[0.98]' 
+            canAccessPOS
+              ? 'border-vendeur-secondary bg-vendeur-secondary/5 cursor-pointer hover:shadow-lg active:scale-[0.98]'
               : 'border-gray-300 bg-gray-100/50 cursor-not-allowed opacity-60'
           }`}
           onClick={() => {
@@ -789,10 +829,10 @@ export default function OrderManagement() {
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               className={`w-full mt-3 md:mt-4 h-9 text-xs md:text-sm ${
-                canAccessPOS 
-                  ? 'bg-vendeur-secondary hover:bg-vendeur-secondary/90' 
+                canAccessPOS
+                  ? 'bg-vendeur-secondary hover:bg-vendeur-secondary/90'
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
               disabled={!canAccessPOS}
@@ -803,7 +843,7 @@ export default function OrderManagement() {
         </Card>
 
         {/* Bouton Ventes En Ligne */}
-        <Card 
+        <Card
           className="border-2 border-blue-300 bg-blue-50/50 cursor-pointer hover:shadow-lg transition-all active:scale-[0.98]"
           onClick={() => {
             setActiveView('online');
@@ -891,7 +931,7 @@ export default function OrderManagement() {
       {/* Tableau des Ventes POS */}
       {activeView === 'pos' ? (() => {
         const posOrders = orders.filter(o => o.source === 'pos');
-        
+
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1030,7 +1070,7 @@ export default function OrderManagement() {
                         ID: {order.id.slice(0, 8)}
                       </Badge>
                     </div>
-                    
+
                     {/* Badges - wrap on mobile */}
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <Badge className="bg-[hsl(15,100%,50%)] text-white text-[10px] sm:text-xs shrink-0">
@@ -1044,7 +1084,7 @@ export default function OrderManagement() {
                       </Badge>
                     </div>
                   </div>
-                      
+
                   {/* Informations Client - responsive */}
                   <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4 space-y-2">
                     <h4 className="font-semibold text-xs sm:text-sm text-primary mb-2 flex items-center gap-2">
@@ -1055,7 +1095,7 @@ export default function OrderManagement() {
                       <div>
                         <span className="text-muted-foreground">Nom:</span>
                         <span className="ml-2 font-semibold break-all">
-                          {order.customers?.profiles?.full_name 
+                          {order.customers?.profiles?.full_name
                             || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
                             || 'Client'}
                         </span>
@@ -1102,7 +1142,7 @@ export default function OrderManagement() {
                             <div className="flex-1">
                               <p className="font-semibold text-sm">{item.products?.name || 'Produit'}</p>
                               <p className="text-xs text-muted-foreground">
-                                SKU: {item.products?.sku || 'N/A'} | 
+                                SKU: {item.products?.sku || 'N/A'} |
                                 Stock: {item.products?.stock_quantity !== undefined ? item.products.stock_quantity : 'N/A'}
                               </p>
                             </div>
@@ -1137,8 +1177,8 @@ export default function OrderManagement() {
                   {/* Actions */}
                   <div className="flex gap-2 mt-4 flex-wrap">
                     {getPOSOrderActions(order)}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1178,7 +1218,7 @@ export default function OrderManagement() {
         <CardContent>
           {/* Statistiques Commandes En Ligne */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card 
+            <Card
               className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'all' ? 'ring-2 ring-blue-500' : ''}`}
               onClick={() => setOnlineStatusFilter('all')}
             >
@@ -1189,7 +1229,7 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card 
+            <Card
               className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'pending' ? 'ring-2 ring-yellow-500' : ''}`}
               onClick={() => setOnlineStatusFilter('pending')}
             >
@@ -1200,7 +1240,7 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card 
+            <Card
               className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'processing' ? 'ring-2 ring-blue-500' : ''}`}
               onClick={() => setOnlineStatusFilter('processing')}
             >
@@ -1211,7 +1251,7 @@ export default function OrderManagement() {
                 </p>
               </CardContent>
             </Card>
-            <Card 
+            <Card
               className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'delivered' ? 'ring-2 ring-green-500' : ''}`}
               onClick={() => setOnlineStatusFilter('delivered')}
             >
@@ -1236,7 +1276,7 @@ export default function OrderManagement() {
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>
-                  {onlineStatusFilter === 'all' 
+                  {onlineStatusFilter === 'all'
                     ? 'Aucune commande en ligne pour le moment'
                     : `Aucune commande ${onlineStatusFilter === 'pending' ? 'en attente' : onlineStatusFilter === 'processing' ? 'en cours' : 'livrée'}`
                   }
@@ -1260,7 +1300,7 @@ export default function OrderManagement() {
                         ID: {order.id.slice(0, 8)}
                       </Badge>
                     </div>
-                    
+
                     {/* Badges - wrap on mobile */}
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <Badge className="bg-blue-500 text-white text-[10px] sm:text-xs shrink-0">
@@ -1274,11 +1314,11 @@ export default function OrderManagement() {
                       </Badge>
                       {order.escrow && (
                         <Badge className={`text-[10px] sm:text-xs shrink-0 ${
-                          order.escrow.status === 'pending' || order.escrow.status === 'held' 
+                          order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? 'bg-orange-100 text-orange-800 border-orange-300 border-2' :
-                          order.escrow.status === 'released' 
+                          order.escrow.status === 'released'
                             ? 'bg-green-100 text-green-800 border-green-300 border-2' :
-                          order.escrow.status === 'refunded' 
+                          order.escrow.status === 'refunded'
                             ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
                         }`}>
@@ -1297,7 +1337,7 @@ export default function OrderManagement() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Informations Client - responsive */}
                   {order.customers && (
                     <div className="bg-muted/50 rounded-lg p-3 sm:p-4 mb-4 space-y-2">
@@ -1309,7 +1349,7 @@ export default function OrderManagement() {
                         <div>
                           <span className="text-muted-foreground">Nom:</span>
                           <span className="ml-2 font-semibold break-all">
-                            {order.customers?.profiles?.full_name 
+                            {order.customers?.profiles?.full_name
                               || `${order.customers?.profiles?.first_name || ''} ${order.customers?.profiles?.last_name || ''}`.trim()
                               || 'Client'}
                           </span>
@@ -1380,7 +1420,7 @@ export default function OrderManagement() {
                             <div className="flex-1">
                               <p className="font-semibold text-sm">{item.products?.name || 'Produit'}</p>
                               <p className="text-xs text-muted-foreground">
-                                SKU: {item.products?.sku || 'N/A'} | 
+                                SKU: {item.products?.sku || 'N/A'} |
                                 Stock: {item.products?.stock_quantity !== undefined ? item.products.stock_quantity : 'N/A'}
                               </p>
                             </div>
@@ -1453,7 +1493,7 @@ export default function OrderManagement() {
                               : 'text-gray-700'
                           }`}>
                             {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
-                              order.status === 'in_transit' 
+                              order.status === 'in_transit'
                                 ? "⏳ En attente de confirmation de livraison par le client"
                                 : order.status === 'delivered'
                                 ? "📦 Commande livrée - le client doit confirmer la réception"
@@ -1469,8 +1509,8 @@ export default function OrderManagement() {
                   {/* Actions */}
                   <div className="flex gap-2 mt-4 flex-wrap">
                     {getOrderStatusActions(order)}
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1490,6 +1530,52 @@ export default function OrderManagement() {
       </Card>
       )}
 
+
+      <Dialog open={!!deliveryDialogOrder} onOpenChange={(open) => !open && setDeliveryDialogOrder(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Définir le délai de livraison</DialogTitle>
+            <DialogDescription>
+              Ce délai démarre dès la confirmation vendeur. Si le client ne confirme pas la réception 72h après cette date, le système libérera automatiquement l'escrow.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="estimated-delivery-days">Nombre de jours</Label>
+            <Input
+              id="estimated-delivery-days"
+              type="number"
+              min={1}
+              max={60}
+              value={estimatedDeliveryDays}
+              onChange={(event) => setEstimatedDeliveryDays(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  void confirmOrderWithDeliveryDelay();
+                }
+              }}
+            />
+            {deliveryDialogOrder && (
+              <p className="text-xs text-muted-foreground">
+                Commande {deliveryDialogOrder.order_number}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeliveryDialogOrder(null)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => void confirmOrderWithDeliveryDelay()}
+              disabled={deliveryDialogOrder ? updatingOrderId === deliveryDialogOrder.id : false}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle className="w-4 h-4 mr-1" />
+              Confirmer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog des détails de commande */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>

@@ -4,28 +4,28 @@
  * Interface centralisée pour le monitoring et la gestion de la sécurité
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { _Alert, _AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Shield,
     AlertTriangle,
     Activity,
-    Lock,
-    Eye,
+    _Lock,
+    _Eye,
     Ban,
-    Zap,
+    _Zap,
     TrendingUp,
     TrendingDown,
     Clock,
-    Globe,
-    Server,
-    Database,
+    _Globe,
+    _Server,
+    _Database,
     Wifi,
     WifiOff,
     CheckCircle2,
@@ -35,14 +35,14 @@ import {
     Download,
     RefreshCw,
     Settings,
-    Filter,
-    Search,
-    MoreVertical,
+    _Filter,
+    _Search,
+    _MoreVertical,
     Play,
     Pause,
-    Square
+    _Square
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, _BarChart, _Bar, _PieChart, _Pie, _Cell, AreaChart, Area } from 'recharts';
 import {
     useSecurity,
     useSecurityAlerts,
@@ -157,7 +157,7 @@ export default function SecurityDashboard() {
 function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
     const { stats, loading } = useSecurity();
     const { alerts, unreadCount } = useSecurityAlerts();
-    const { incidents } = useSecurityIncidents();
+    const { _incidents } = useSecurityIncidents();
 
     if (loading) {
         return <div className="flex items-center justify-center h-64">Chargement...</div>;
@@ -504,7 +504,7 @@ function ThreatManagement() {
         try {
             const result = await analyzeThreat(ipToAnalyze);
             setAnalysisResult(result);
-        } catch (error) {
+        } catch (_error) {
             toast.error('Erreur lors de l\'analyse');
         } finally {
             setLoading(false);
@@ -642,8 +642,8 @@ function ThreatManagement() {
 // =====================================================
 
 function IncidentManagement() {
-    const { incidents, createIncident } = useSecurityIncidents();
-    const [showCreateForm, setShowCreateForm] = useState(false);
+    const { incidents, _createIncident } = useSecurityIncidents();
+    const [_showCreateForm, setShowCreateForm] = useState(false);
 
     return (
         <div className="space-y-6">

@@ -87,7 +87,7 @@ export default function AIReviewResponseCard({
 
   const getSentimentBadge = () => {
     if (!aiSentiment) return null;
-    
+
     const sentimentConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       positive: { label: '😊 Positif', variant: 'default' },
       neutral: { label: '😐 Neutre', variant: 'secondary' },

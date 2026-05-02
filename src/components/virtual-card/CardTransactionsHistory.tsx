@@ -4,12 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVirtualCard, CardTransaction } from '@/hooks/useVirtualCard';
-import { 
-  ShoppingBag, 
-  Coffee, 
-  Utensils, 
-  Fuel, 
-  Car, 
+import {
+  ShoppingBag,
+  Coffee,
+  Utensils,
+  Fuel,
+  Car,
   Package,
   RefreshCw,
   Receipt,
@@ -47,6 +47,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
     if (cardId) {
       fetchTransactions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardId]);
 
   const formatAmount = (amount: number) => {
@@ -129,12 +130,12 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
                     <p className="text-red-400 font-semibold text-sm">
                       -{formatAmount(tx.amount)}
                     </p>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={cn(
                         "text-[10px] px-1.5",
-                        tx.status === 'completed' 
-                          ? "text-green-400 border-green-400/30" 
+                        tx.status === 'completed'
+                          ? "text-green-400 border-green-400/30"
                           : "text-yellow-400 border-yellow-400/30"
                       )}
                     >

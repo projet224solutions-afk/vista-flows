@@ -5,14 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Scan, 
-  Camera, 
-  Usb, 
-  AlertTriangle, 
-  Check, 
-  X, 
-  Package, 
+import {
+  Scan,
+  Camera,
+  Usb,
+  AlertTriangle,
+  Check,
+  X,
+  Package,
   Eye,
   RefreshCw,
   Loader2,
@@ -63,7 +63,7 @@ export function BarcodeScannerModal({
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cameraToastShown, setCameraToastShown] = useState(false);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const externalInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +74,7 @@ export function BarcodeScannerModal({
       resetState();
       stopCamera();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const resetState = () => {
@@ -97,18 +98,18 @@ export function BarcodeScannerModal({
   // Handle external scanner input
   const handleExternalScan = useCallback((barcode: string) => {
     if (!barcode.trim()) return;
-    
+
     setVerificationState('scanning');
     setIsProcessing(true);
-    
+
     // Rechercher le produit par code-barres
     const product = products.find(p => p.barcode === barcode.trim());
-    
+
     setTimeout(() => {
       if (product) {
         setFoundProduct(product);
         setVerificationState('found');
-        
+
         // Vérifier si le produit a une image pour la vérification visuelle
         if (product.images && product.images.length > 0) {
           setVerificationState('verifying');
@@ -151,8 +152,8 @@ export function BarcodeScannerModal({
     }
 
     toast.success(`${foundProduct.name} ajouté au panier`, {
-      description: saleType === 'carton' 
-        ? `${quantity} carton(s)` 
+      description: saleType === 'carton'
+        ? `${quantity} carton(s)`
         : `${quantity} unité(s)`
     });
 
@@ -161,7 +162,7 @@ export function BarcodeScannerModal({
     setVerificationState('idle');
     setQuantity(1);
     setSaleType('unit');
-    
+
     // Focus pour le prochain scan
     if (scanMode === 'external') {
       externalInputRef.current?.focus();
@@ -172,20 +173,20 @@ export function BarcodeScannerModal({
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: 'environment',
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
       });
-      
+
       setCameraStream(stream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
-      
+
       // Éviter les toasts dupliqués
       if (!cameraToastShown) {
         setCameraToastShown(true);
@@ -229,6 +230,7 @@ export function BarcodeScannerModal({
     } else {
       stopCamera();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanMode, stopCamera]);
 
   // Calculate max quantity based on stock and sale type
@@ -241,8 +243,8 @@ export function BarcodeScannerModal({
   };
 
   // Check if can sell by carton
-  const canSellByCarton = foundProduct?.sell_by_carton && 
-                          foundProduct.units_per_carton && 
+  const canSellByCarton = foundProduct?.sell_by_carton &&
+                          foundProduct.units_per_carton &&
                           foundProduct.stock >= foundProduct.units_per_carton;
 
   return (
@@ -261,7 +263,7 @@ export function BarcodeScannerModal({
             <p className="text-sm text-muted-foreground">
               Choisissez votre méthode de scan :
             </p>
-            
+
             <div className="grid grid-cols-1 gap-3">
               <Button
                 variant="outline"
@@ -274,7 +276,7 @@ export function BarcodeScannerModal({
                   <div className="text-xs text-muted-foreground">USB / Bluetooth</div>
                 </div>
               </Button>
-              
+
               <Button
                 variant="outline"
                 className="h-20 flex flex-col items-center justify-center gap-2 border-2 hover:border-primary hover:bg-primary/5 transition-all"
@@ -294,9 +296,9 @@ export function BarcodeScannerModal({
         {scanMode === 'external' && !foundProduct && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setScanMode('select')}
               >
                 ← Retour
@@ -316,14 +318,14 @@ export function BarcodeScannerModal({
                     <Scan className="h-8 w-8 text-primary animate-pulse" />
                   )}
                 </div>
-                
+
                 <h3 className="font-semibold mb-2">
                   {isProcessing ? 'Recherche du produit...' : 'En attente de scan...'}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Scannez le code-barres avec votre appareil externe
                 </p>
-                
+
                 <Input
                   ref={externalInputRef}
                   placeholder="Le code-barres apparaîtra ici..."
@@ -332,8 +334,8 @@ export function BarcodeScannerModal({
                   className="text-center font-mono text-lg"
                   autoFocus
                 />
-                
-                <Button 
+
+                <Button
                   className="mt-4"
                   onClick={() => handleExternalScan(barcodeInput)}
                   disabled={!barcodeInput.trim() || isProcessing}
@@ -349,9 +351,9 @@ export function BarcodeScannerModal({
         {scanMode === 'camera' && !foundProduct && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setScanMode('select')}
               >
                 ← Retour
@@ -364,14 +366,14 @@ export function BarcodeScannerModal({
 
             <Card className="overflow-hidden">
               <CardContent className="p-0 relative">
-                <video 
-                  ref={videoRef} 
+                <video
+                  ref={videoRef}
                   className="w-full aspect-video bg-black object-cover"
                   playsInline
                   muted
                 />
                 <canvas ref={canvasRef} className="hidden" />
-                
+
                 {/* Overlay de visée */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-3/4 h-1/3 border-2 border-primary rounded-lg relative">
@@ -388,7 +390,7 @@ export function BarcodeScannerModal({
               <p className="text-sm text-muted-foreground mb-3">
                 Positionnez le code-barres dans le cadre
               </p>
-              
+
               <div className="flex gap-2 justify-center items-center">
                 <Input
                   placeholder="Ou saisissez le code"
@@ -396,7 +398,7 @@ export function BarcodeScannerModal({
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   className="flex-1 min-w-0 max-w-[180px] text-center font-mono text-sm"
                 />
-                <Button 
+                <Button
                   onClick={() => handleExternalScan(barcodeInput)}
                   disabled={!barcodeInput.trim()}
                   className="shrink-0"
@@ -424,8 +426,8 @@ export function BarcodeScannerModal({
                   {/* Image produit */}
                   <div className="w-24 h-24 bg-white rounded-lg overflow-hidden border flex-shrink-0">
                     {foundProduct.images && foundProduct.images.length > 0 ? (
-                      <img 
-                        src={foundProduct.images[0]} 
+                      <img
+                        src={foundProduct.images[0]}
                         alt={foundProduct.name}
                         className="w-full h-full object-cover"
                       />
@@ -435,7 +437,7 @@ export function BarcodeScannerModal({
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{foundProduct.name}</h3>
                     <p className="text-sm text-muted-foreground">{foundProduct.category}</p>
@@ -458,7 +460,7 @@ export function BarcodeScannerModal({
                     <AlertTriangle className="inline h-4 w-4 mr-1" />
                     Le produit scanné correspond-il à l'image ci-dessus ?
                   </p>
-                  
+
                   <div className="flex gap-3 justify-center">
                     <Button
                       variant="outline"
@@ -498,7 +500,7 @@ export function BarcodeScannerModal({
                     Le produit physique ne correspond pas à l'image enregistrée.
                     Veuillez vérifier manuellement ou rescanner.
                   </p>
-                  
+
                   <div className="flex gap-3 justify-center">
                     <Button
                       variant="outline"
@@ -542,8 +544,8 @@ export function BarcodeScannerModal({
                   {/* Image produit */}
                   <div className="w-20 h-20 bg-white rounded-lg overflow-hidden border flex-shrink-0">
                     {foundProduct.images && foundProduct.images.length > 0 ? (
-                      <img 
-                        src={foundProduct.images[0]} 
+                      <img
+                        src={foundProduct.images[0]}
                         alt={foundProduct.name}
                         className="w-full h-full object-cover"
                       />
@@ -553,7 +555,7 @@ export function BarcodeScannerModal({
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1">
                     <h3 className="font-semibold">{foundProduct.name}</h3>
                     <p className="text-sm text-muted-foreground">{foundProduct.category}</p>
@@ -583,7 +585,7 @@ export function BarcodeScannerModal({
                         {foundProduct.price.toLocaleString()} GNF
                       </span>
                     </Button>
-                    
+
                     {canSellByCarton && (
                       <Button
                         variant={saleType === 'carton' ? 'default' : 'outline'}
@@ -600,7 +602,7 @@ export function BarcodeScannerModal({
                       </Button>
                     )}
                   </div>
-                  
+
                   {saleType === 'carton' && foundProduct.units_per_carton && (
                     <p className="text-xs text-muted-foreground text-center">
                       1 carton = {foundProduct.units_per_carton} unités
@@ -622,7 +624,7 @@ export function BarcodeScannerModal({
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    
+
                     <div className="w-20">
                       <Input
                         type="number"
@@ -636,7 +638,7 @@ export function BarcodeScannerModal({
                         className="text-center text-lg font-bold"
                       />
                     </div>
-                    
+
                     <Button
                       variant="outline"
                       size="icon"
@@ -646,7 +648,7 @@ export function BarcodeScannerModal({
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  
+
                   {quantity >= getMaxQuantity() && (
                     <p className="text-xs text-amber-600 text-center">
                       Stock maximum atteint
@@ -667,7 +669,7 @@ export function BarcodeScannerModal({
                       ).toLocaleString()} GNF
                     </span>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -683,7 +685,7 @@ export function BarcodeScannerModal({
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Scanner autre
                     </Button>
-                    
+
                     <Button
                       className="flex-1 bg-green-600 hover:bg-green-700"
                       onClick={handleAddToCart}

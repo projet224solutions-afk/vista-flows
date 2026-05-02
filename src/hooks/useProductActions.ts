@@ -98,7 +98,7 @@ export function useProductActions({
       if (!match || !match[1]) return false;
 
       const filePath = match[1];
-      
+
       const { error } = await supabase.storage
         .from('product-videos')
         .remove([filePath]);
@@ -255,7 +255,7 @@ export function useProductActions({
       // ✅ VÉRIFICATION CRITIQUE: Vérifier la limite de produits AVANT de créer
       console.log('🔍 [ProductCreate] Vérification limite de produits...');
       const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId!);
-      
+
       if (!limitCheck) {
         toast.error('Impossible de vérifier les limites d\'abonnement');
         return { success: false };
@@ -273,7 +273,7 @@ export function useProductActions({
         const message = limitCheck.is_unlimited
           ? 'Erreur de vérification de limite'
           : `🚫 Limite atteinte : ${limitCheck.current_count}/${limitCheck.max_products} produits. Mettez à jour votre abonnement pour ajouter plus de produits.`;
-        
+
         toast.error(message, {
           duration: 5000,
           action: {
@@ -281,7 +281,7 @@ export function useProductActions({
             onClick: () => window.location.href = '/subscriptions'
           }
         });
-        
+
         return { success: false };
       }
 
@@ -365,10 +365,10 @@ export function useProductActions({
       return { success: true, product: data };
     } catch (error: any) {
       console.error('[ProductCreate] Error:', error);
-      
+
       // Message d'erreur personnalisé selon le type
       let errorMessage = 'Erreur lors de la création du produit';
-      
+
       if (error.message?.includes('limit') || error.message?.includes('maximum')) {
         errorMessage = '🚫 Limite de produits atteinte. Mettez à jour votre abonnement.';
       } else if (error.code === '23505') {
@@ -376,7 +376,7 @@ export function useProductActions({
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast.error(errorMessage);
       return { success: false };
     }
@@ -433,14 +433,14 @@ export function useProductActions({
 
       // Upload nouvelles vidéos et combiner avec les existantes
       let allVideoUrls: string[] = [...existingVideoUrls];
-      
+
       for (const videoFile of newVideos) {
         const uploadedUrl = await uploadPromotionalVideo(videoFile);
         if (uploadedUrl) {
           allVideoUrls.push(uploadedUrl);
         }
       }
-      
+
       // Limiter à 2 vidéos maximum
       allVideoUrls = allVideoUrls.slice(0, 2);
 

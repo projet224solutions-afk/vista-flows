@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Wallet, Plus, Banknote, Smartphone, Building, 
-  ArrowUpRight, ArrowDownLeft, RefreshCw, MoreVertical,
+import {
+  Wallet, Plus, Banknote, Smartphone, Building,
+  ArrowUpRight, ArrowDownLeft, _RefreshCw, _MoreVertical,
   TrendingUp, TrendingDown
 } from 'lucide-react';
 
@@ -51,7 +51,7 @@ export default function CollectionAccountsManager() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isTransactionOpen, setIsTransactionOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<CollectionAccount | null>(null);
-  
+
   const [newAccount, setNewAccount] = useState({
     account_name: '',
     account_type: 'cash' as const,
@@ -105,6 +105,7 @@ export default function CollectionAccountsManager() {
 
   useEffect(() => {
     loadAccounts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const createAccount = async () => {
@@ -145,8 +146,8 @@ export default function CollectionAccountsManager() {
     }
 
     const balanceBefore = selectedAccount.balance;
-    const balanceAfter = newTransaction.type === 'deposit' 
-      ? balanceBefore + amount 
+    const balanceAfter = newTransaction.type === 'deposit'
+      ? balanceBefore + amount
       : balanceBefore - amount;
 
     if (balanceAfter < 0 && newTransaction.type === 'withdrawal') {
@@ -275,7 +276,7 @@ export default function CollectionAccountsManager() {
         {accounts.map((account) => {
           const config = accountTypeConfig[account.account_type];
           const Icon = config.icon;
-          
+
           return (
             <Card key={account.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
@@ -356,7 +357,7 @@ export default function CollectionAccountsManager() {
               {newTransaction.type === 'deposit' ? 'Enregistrer une entrée' : 'Enregistrer une sortie'}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedAccount && (
             <div className="space-y-4">
               <div className="p-3 bg-muted rounded-lg">

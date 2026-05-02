@@ -41,7 +41,7 @@ export function DriverHeader({
     <header className="relative bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 text-white sticky top-0 z-40 w-full overflow-hidden">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
-      
+
       <div className="relative px-3 py-2.5 safe-area-inset-top w-full">
         <div className="flex items-center justify-between gap-2 w-full">
           {/* Left: Home + Avatar + Status */}
@@ -56,7 +56,7 @@ export function DriverHeader({
             >
               <Home className="w-4 h-4" />
             </Button>
-            
+
             {/* Avatar compact avec status */}
             <div className="relative shrink-0">
               <div className={cn(
@@ -90,10 +90,10 @@ export function DriverHeader({
           {/* Right: Actions compactes */}
           <div className="flex items-center gap-1 shrink-0">
             {/* Quick Transfer removed for mobile space */}
-            
+
             {/* Notifications */}
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               className="relative text-gray-300 hover:text-white hover:bg-white/10 h-8 w-8 rounded-lg"
             >
@@ -104,7 +104,7 @@ export function DriverHeader({
                 </span>
               )}
             </Button>
-            
+
             {/* Logout */}
             <Button
               onClick={onSignOut}
@@ -116,21 +116,21 @@ export function DriverHeader({
             </Button>
           </div>
         </div>
-        
+
         {/* Ligne de statut sous le header - plus compact */}
         <div className="flex items-center justify-between mt-2 gap-2">
           {/* Status badges à gauche */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className={cn(
               "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-              isOnline 
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+              isOnline
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                 : "bg-gray-800 text-gray-400 border border-gray-700"
             )}>
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
               {isOnline ? 'EN LIGNE' : 'HORS LIGNE'}
             </div>
-            
+
             {hasLocation && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 <MapPin className="w-3 h-3" />
@@ -140,7 +140,7 @@ export function DriverHeader({
           </div>
         </div>
       </div>
-      
+
       {/* Bottom border glow when online */}
       {isOnline && (
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />

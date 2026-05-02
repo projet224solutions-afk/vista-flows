@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowUp, 
-  ArrowDown, 
-  Package, 
-  ShoppingCart, 
-  RotateCcw, 
+import {
+  ArrowUp,
+  ArrowDown,
+  Package,
+  ShoppingCart,
+  RotateCcw,
   Truck,
   AlertCircle
 } from "lucide-react";

@@ -10,7 +10,7 @@ interface GeocodedAddressProps {
  * Composant pour afficher une adresse géolocalisée via Google API
  */
 export function GeocodedAddress({ address, className = '' }: GeocodedAddressProps) {
-  const { formatted, loading, error } = useReverseGeocode(address);
+  const { formatted, loading, _error } = useReverseGeocode(address);
 
   return (
     <div className={`flex items-start gap-2 ${className}`}>

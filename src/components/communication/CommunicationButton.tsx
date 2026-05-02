@@ -1,7 +1,7 @@
 /**
  * 💬 BOUTON COMMUNICATION - 224SOLUTIONS
  * Composant professionnel pour initier une conversation
- * 
+ *
  * Features:
  * - Design accessible et responsive
  * - États visuels clairs (loading, disabled)
@@ -71,20 +71,20 @@ export function CommunicationButton({
     onSuccess: onSuccess ? () => onSuccess() : undefined,
     onError
   });
-  
+
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!userId || !targetId || disabled || isLoading) {
       return;
     }
-    
+
     await startConversation(userId, targetId, initialText);
   };
-  
+
   const isDisabled = disabled || isLoading || !userId || !targetId;
-  
+
   return (
     <Button
       onClick={handleClick}
@@ -140,18 +140,18 @@ export function CommunicationIconButton({
     onSuccess: onSuccess ? () => onSuccess() : undefined,
     onError
   });
-  
+
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!userId || !targetId || disabled || isLoading) {
       return;
     }
-    
+
     await startConversation(userId, targetId, initialText);
   };
-  
+
   return (
     <Button
       onClick={handleClick}

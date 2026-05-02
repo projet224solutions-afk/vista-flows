@@ -33,7 +33,7 @@ export default function Devis() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.service_type || !formData.description || !formData.email) {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
@@ -41,7 +41,7 @@ export default function Devis() {
 
     try {
       setLoading(true);
-      
+
       // Enregistrer la demande de devis
       const { error } = await supabase
         .from('devis_requests')
@@ -58,9 +58,9 @@ export default function Devis() {
 
       if (error) throw error;
 
-      toast.success("Demande de devis envoy├®e avec succ├¿s!");
-      
-      // R├®initialiser le formulaire
+      toast.success("Demande de devis envoyée avec succès !");
+
+      // Reinitialiser le formulaire
       setFormData({
         service_type: "",
         description: "",
@@ -70,7 +70,7 @@ export default function Devis() {
         phone: "",
         budget: ""
       });
-      
+
     } catch (error) {
       console.error('Erreur envoi devis:', error);
       toast.error("Erreur lors de l'envoi de la demande");
@@ -103,7 +103,7 @@ export default function Devis() {
               Obtenir un devis gratuit
             </CardTitle>
             <CardDescription>
-              Remplissez ce formulaire pour recevoir un devis personnalis├® pour vos besoins
+              Remplissez ce formulaire pour recevoir un devis personnalisé pour vos besoins
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -111,12 +111,12 @@ export default function Devis() {
               {/* Type de service */}
               <div className="space-y-2">
                 <Label htmlFor="service_type">Type de service *</Label>
-                <Select 
-                  value={formData.service_type} 
+                <Select
+                  value={formData.service_type}
                   onValueChange={(value) => setFormData({...formData, service_type: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="S├®lectionnez un service" />
+                    <SelectValue placeholder="Sélectionnez un service" />
                   </SelectTrigger>
                   <SelectContent>
                     {serviceTypes.map((type) => (
@@ -133,7 +133,7 @@ export default function Devis() {
                 <Label htmlFor="description">Description de votre besoin *</Label>
                 <Textarea
                   id="description"
-                  placeholder="D├®crivez en d├®tail votre projet ou besoin..."
+                  placeholder="Décrivez en détail votre projet ou besoin..."
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   rows={5}
@@ -141,19 +141,19 @@ export default function Devis() {
                 />
               </div>
 
-              {/* Coordonn├®es */}
+              {/* Coordonnees */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">Pr├®nom</Label>
+                  <Label htmlFor="first_name">Prénom</Label>
                   <Input
                     id="first_name"
                     type="text"
-                    placeholder="Votre pr├®nom"
+                    placeholder="Votre prénom"
                     value={formData.first_name}
                     onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="last_name">Nom</Label>
                   <Input
@@ -178,13 +178,13 @@ export default function Devis() {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="phone">T├®l├®phone</Label>
+                  <Label htmlFor="phone">Téléphone</Label>
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="Votre num├®ro"
+                    placeholder="Votre numéro"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   />
@@ -193,7 +193,7 @@ export default function Devis() {
 
               {/* Budget */}
               <div className="space-y-2">
-                <Label htmlFor="budget">Budget estim├® (GNF)</Label>
+                <Label htmlFor="budget">Budget estimé (GNF)</Label>
                 <Input
                   id="budget"
                   type="number"
@@ -210,7 +210,7 @@ export default function Devis() {
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                * Champs obligatoires. Nous vous r├®pondrons dans les plus brefs d├®lais.
+                * Champs obligatoires. Nous vous répondrons dans les plus brefs délais.
               </p>
             </form>
           </CardContent>
@@ -221,10 +221,10 @@ export default function Devis() {
           <CardContent className="p-6">
             <h3 className="font-semibold mb-2">Pourquoi demander un devis ?</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Ô£ô Estimation gratuite et sans engagement</li>
-              <li>Ô£ô R├®ponse personnalis├®e sous 24-48h</li>
-              <li>Ô£ô Conseils d'experts pour votre projet</li>
-              <li>Ô£ô Tarification transparente et comp├®titive</li>
+              <li>✓ Estimation gratuite et sans engagement</li>
+              <li>✓ Réponse personnalisée sous 24-48h</li>
+              <li>✓ Conseils d'experts pour votre projet</li>
+              <li>✓ Tarification transparente et compétitive</li>
             </ul>
           </CardContent>
         </Card>

@@ -53,10 +53,15 @@ interface UsePDGActionsOptions {
   onBureauValidated?: () => void;
 }
 
-export function usePDGActions(options: UsePDGActionsOptions = {}) {
-  
+export function usePDGActions({
+  onAgentCreated,
+  onAgentUpdated,
+  onAgentDeleted,
+  onBureauUpdated,
+}: UsePDGActionsOptions = {}) {
+
   // ==================== AGENTS ====================
-  
+
   const createAgent = useCallback(async (
     agentData: CreateAgentData,
     pdgId: string
@@ -86,7 +91,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       });
 
       if (error) throw error;
-      
+
       if (!data.success) {
         const errorMessage = data.error || 'Erreur lors de la création';
         toast.error(errorMessage);
@@ -94,8 +99,8 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       }
 
       toast.success('Agent créé avec succès');
-      options.onAgentCreated?.();
-      
+      onAgentCreated?.();
+
       return { success: true, agent: data.agent };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur création agent:', error);
@@ -103,7 +108,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onAgentCreated]);
+  }, [onAgentCreated]);
 
   const updateAgent = useCallback(async (
     agentId: string,
@@ -115,7 +120,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       }
 
       const permissionsJsonb = updates.permissions ? updates.permissions : undefined;
-      
+
       const { data, error } = await supabase
         .rpc('update_agent' as any, {
           p_agent_id: agentId,
@@ -130,14 +135,14 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         return { success: false, error: result.error || 'Erreur lors de la mise à jour' };
       }
 
       toast.success('Agent mis à jour avec succès');
-      options.onAgentUpdated?.();
-      
+      onAgentUpdated?.();
+
       return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur mise à jour agent:', error);
@@ -145,7 +150,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onAgentUpdated]);
+  }, [onAgentUpdated]);
 
   const deleteAgent = useCallback(async (
     agentId: string
@@ -166,8 +171,8 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       }
 
       toast.success('Agent supprimé avec succès');
-      options.onAgentDeleted?.();
-      
+      onAgentDeleted?.();
+
       return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur suppression agent:', error);
@@ -175,7 +180,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onAgentDeleted]);
+  }, [onAgentDeleted]);
 
   const toggleAgentStatus = useCallback(async (
     agentId: string,
@@ -195,14 +200,14 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       if (error) throw error;
 
       const result = data as { success: boolean; error?: string; message?: string };
-      
+
       if (!result.success) {
         return { success: false, error: result.error || 'Erreur lors du changement de statut' };
       }
 
       toast.success(isActive ? 'Agent activé' : 'Agent désactivé');
-      options.onAgentUpdated?.();
-      
+      onAgentUpdated?.();
+
       return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur changement statut agent:', error);
@@ -210,10 +215,10 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onAgentUpdated]);
+  }, [onAgentUpdated]);
 
   // ==================== BUREAUX SYNDICATS ====================
-  
+
   const createBureau = useCallback(async (
     bureauData: CreateBureauData
   ): Promise<{ success: boolean; error?: string; bureau?: any }> => {
@@ -227,7 +232,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       }
 
       // Générer un code unique si nécessaire
-      const bureauCode = bureauData.bureau_code.toUpperCase();
+      const _bureauCode = bureauData.bureau_code.toUpperCase();
 
       // Vérifier si le code existe déjà
       // TODO: Créer la table syndicat_bureau dans la base de données
@@ -255,7 +260,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onBureauCreated]);
+  }, []);
 
   const updateBureau = useCallback(async (
     bureauId: string,
@@ -274,8 +279,8 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       if (error) throw error;
 
       toast.success('Bureau mis à jour avec succès');
-      options.onBureauUpdated?.();
-      
+      onBureauUpdated?.();
+
       return { success: true };
     } catch (error: any) {
       console.error('[usePDGActions] Erreur mise à jour bureau:', error);
@@ -283,7 +288,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onBureauUpdated]);
+  }, [onBureauUpdated]);
 
   const deleteBureau = useCallback(async (
     bureauId: string
@@ -305,7 +310,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onBureauDeleted]);
+  }, []);
 
   const validateBureau = useCallback(async (
     bureauId: string
@@ -326,7 +331,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [options.onBureauValidated]);
+  }, []);
 
   return {
     // Agents
@@ -334,7 +339,7 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
     updateAgent,
     deleteAgent,
     toggleAgentStatus,
-    
+
     // Bureaux
     createBureau,
     updateBureau,

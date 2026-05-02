@@ -1,7 +1,7 @@
 ﻿/**
  * DELIVERY DRIVER - INTERFACE ULTRA-PROFESSIONNELLE
  * 224Solutions Delivery System
- * Interface moderne avec glassmorphism, GPS unifi├® et gestion d'erreurs robuste
+ * Interface moderne avec glassmorphism, GPS unifié et gestion d'erreurs robuste
  */
 
 import { useState, useEffect } from 'react';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from "sonner";
-import { MapPin, Package, Clock, Wallet, CheckCircle, Truck, Navigation, TrendingUp } from "lucide-react";
+import { MapPin, Package, Clock, Wallet, CheckCircle, Truck, _Navigation, TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
 import { useGPSLocation } from "@/hooks/useGPSLocation";
@@ -20,7 +20,7 @@ import { useDelivery } from "@/hooks/useDelivery";
 import { useDriver } from "@/hooks/useDriver";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
 import { UserIdDisplay } from "@/components/UserIdDisplay";
-import { DriverStatusToggle } from "@/components/driver/DriverStatusToggle";
+import { _DriverStatusToggle } from "@/components/driver/DriverStatusToggle";
 import { EarningsDisplay } from "@/components/driver/EarningsDisplay";
 import { DeliveryProofUpload } from "@/components/driver/DeliveryProofUpload";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -32,7 +32,7 @@ import { ShoppingBag } from "lucide-react";
 import { lazy, Suspense } from 'react';
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 import { DeliveryGPSNavigation } from "@/components/delivery/DeliveryGPSNavigation";
-import { AlertTriangle } from "lucide-react";
+import { _AlertTriangle } from "lucide-react";
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
@@ -41,47 +41,47 @@ import DeliveryPaymentModal from "@/components/delivery/DeliveryPaymentModal";
 
 export default function DeliveryDriver() {
   const { user, profile } = useAuth();
-  const { 
-    location, 
-    loading: gpsLoading, 
+  const {
+    location,
+    loading: gpsLoading,
     error: gpsError,
     isWatching,
     startWatching,
     stopWatching
   } = useGPSLocation();
-  
+
   const { isMobile } = useResponsive();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  
-  // ├ëtat local
+  const _navigate = useNavigate();
+  const { _t } = useTranslation();
+
+  // État local
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
 
-  // Gestion des erreurs centralis├®e
+  // Gestion des erreurs centralisée
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
-  // V├®rification subscription et KYC
-  const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
+  // Vérification subscription et KYC
+  const { hasAccess, subscription, loading: _subscriptionLoading, isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
-  const { driver, stats, goOnline, goOffline, updateLocation, uploadProof } = useDriver();
+  const { _driver, stats, goOnline, goOffline, _updateLocation, _uploadProof } = useDriver();
 
   // Hook pour les livraisons
   const {
     currentDelivery,
     deliveryHistory,
     nearbyDeliveries,
-    trackingPoints,
+    _trackingPoints,
     loading: deliveryLoading,
     findNearbyDeliveries,
-    loadTracking,
+    _loadTracking,
     subscribeToTracking,
-    trackPosition: trackDeliveryPosition,
-    processPayment: processDeliveryPayment,
+    trackPosition: _trackDeliveryPosition,
+    processPayment: _processDeliveryPayment,
     loadDeliveryHistory,
     loadCurrentDelivery
   } = useDelivery();
@@ -91,7 +91,7 @@ export default function DeliveryDriver() {
     acceptDelivery,
     startDelivery,
     completeDeliveryWithProof,
-    cancelDelivery,
+    _cancelDelivery,
     reportProblem,
   } = useDeliveryActions({
     driverId: user?.id || null,
@@ -106,11 +106,11 @@ export default function DeliveryDriver() {
       setShowProofUpload(false);
       loadCurrentDelivery();
       loadDeliveryHistory();
-      
+
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       }
-      
+
       setTimeout(() => setActiveTab('history'), 1000);
     },
     onDeliveryCancelled: () => {
@@ -138,12 +138,12 @@ export default function DeliveryDriver() {
     if (isOnline && hasAccess && location) {
       startWatching();
       // Note: startWatching() ne prend pas de callbacks selon le hook
-      // TODO: Impl├®menter un effet s├®par├® pour tracker la position
-      /* 
-      // Ancienne version avec callbacks (├á r├®impl├®menter si n├®cessaire):
+      // TODO: Implémenter un effet séparé pour tracker la position
+      /*
+      // Ancienne version avec callbacks (à réimplémenter si nécessaire):
       startWatching(
         (position) => {
-          // Mettre ├á jour position du conducteur
+          // Mettre à jour position du conducteur
           updateLocation({ lat: position.latitude, lng: position.longitude });
 
           // Si livraison active, tracker position
@@ -152,11 +152,11 @@ export default function DeliveryDriver() {
               currentDelivery.id,
               position.latitude,
               position.longitude
-            ).catch(err => console.error('ÔØî Erreur tracking livraison:', err));
+            ).catch(err => console.error('✕ Erreur tracking livraison:', err));
           }
         },
         (error) => {
-          console.error('ÔØî Erreur suivi GPS:', error);
+          console.error('✕ Erreur suivi GPS:', error);
           captureError('gps', error || 'Erreur suivi GPS');
         }
       );
@@ -168,6 +168,7 @@ export default function DeliveryDriver() {
     return () => {
       if (isWatching) stopWatching();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, hasAccess, currentDelivery]);
 
   // Charger livraisons disponibles
@@ -175,22 +176,25 @@ export default function DeliveryDriver() {
     if (!currentDelivery && location) {
       findNearbyDeliveries(location.latitude, location.longitude, 10);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, currentDelivery]);
 
-  // S'abonner au tracking temps r├®el
+  // S'abonner au tracking temps réel
   useEffect(() => {
     if (currentDelivery?.id) {
       const unsubscribe = subscribeToTracking(currentDelivery.id);
       return () => unsubscribe?.();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDelivery?.id]);
 
-  // Charger donn├®es initiales
+  // Charger données initiales
   useEffect(() => {
     if (user?.id) {
       loadCurrentDelivery();
       loadDeliveryHistory();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   /**
@@ -200,37 +204,37 @@ export default function DeliveryDriver() {
     const next = !isOnline;
 
     if (!user?.id) {
-      toast.error('Profil conducteur non trouv├®');
+      toast.error('Profil conducteur non trouvé');
       return;
     }
 
     if (next && !hasAccess) {
-      toast.error('ÔÜá´©Å Abonnement requis', {
+      toast.error('⚠️ Abonnement requis', {
         description: 'Vous devez avoir un abonnement actif pour recevoir des livraisons'
       });
       return;
     }
 
     if (next) {
-      toast.loading('­ƒôì Activation GPS...', { id: 'gps-loading' });
+      toast.loading('📍 Activation GPS...', { id: 'gps-loading' });
 
       try {
-        // V├®rifier que la position GPS est disponible
+        // Vérifier que la position GPS est disponible
         if (!location) {
           toast.dismiss('gps-loading');
           toast.error('Position GPS non disponible');
           return;
         }
 
-        // Mettre ├á jour statut - passer en ligne
+        // Mettre à jour statut - passer en ligne
         setIsOnline(true);
         await goOnline({ lat: location.latitude, lng: location.longitude });
         toast.dismiss('gps-loading');
-        toast.success('­ƒƒó Vous ├¬tes maintenant en ligne');
+        toast.success('🟢 Vous êtes maintenant en ligne');
 
       } catch (error: any) {
         toast.dismiss('gps-loading');
-        console.error('ÔØî Erreur activation:', error);
+        console.error('✕ Erreur activation:', error);
         captureError('network', 'Erreur activation', error);
       }
     } else {
@@ -238,7 +242,7 @@ export default function DeliveryDriver() {
       try {
         setIsOnline(false);
         await goOffline();
-        toast.info('­ƒö┤ Vous ├¬tes maintenant hors ligne');
+        toast.info('🔴 Vous êtes maintenant hors ligne');
       } catch (error) {
         console.error('Erreur changement statut', error);
         toast.error('Erreur lors du changement de statut');
@@ -252,21 +256,21 @@ export default function DeliveryDriver() {
   const handleAcceptDelivery = async (deliveryId: string) => {
     await acceptDelivery(deliveryId);
     setActiveTab('active');
-    toast.success('Ô£à Livraison accept├®e');
+    toast.success('✓ Livraison acceptée');
   };
 
   /**
-   * D├®marrer une livraison (ramassage effectu├®)
+   * Démarrer une livraison (ramassage effectué)
    */
   const handleStartDelivery = async () => {
     if (!currentDelivery) return;
-    
+
     await startDelivery(currentDelivery.id);
-    toast.success('­ƒÜÜ Livraison en cours');
+    toast.success('🚚 Livraison en cours');
   };
 
   /**
-   * Compl├®ter livraison avec preuve
+   * Compléter livraison avec preuve
    */
   const handleCompleteDelivery = async (proofUrl: string, signature?: string) => {
     if (!currentDelivery) return;
@@ -278,17 +282,17 @@ export default function DeliveryDriver() {
     );
 
     setShowProofUpload(false);
-    toast.success('Ô£à Livraison termin├®e');
+    toast.success('✓ Livraison terminée');
   };
 
   /**
-   * Signaler un probl├¿me
+   * Signaler un problème
    */
-  const handleReportProblem = async (problem: string) => {
+  const _handleReportProblem = async (problem: string) => {
     if (!currentDelivery) return;
-    
+
     await reportProblem(currentDelivery.id, problem);
-    toast.success('Probl├¿me signal├®');
+    toast.success('Problème signalé');
   };
 
   /**
@@ -300,7 +304,7 @@ export default function DeliveryDriver() {
 
   // ========== RENDU ==========
 
-  // Banni├¿re d'erreur GPS
+  // Bannière d'erreur GPS
   const renderGPSError = () => {
     if (!gpsError) return null;
 
@@ -319,7 +323,7 @@ export default function DeliveryDriver() {
 
   // Mode hors ligne - Ne plus utiliser isOfflineMode qui n'existe plus
   const renderOfflineMode = () => {
-    // Fonction d├®sactiv├®e car isOfflineMode n'existe plus dans useGPSLocation
+    // Fonction désactivée car isOfflineMode n'existe plus dans useGPSLocation
     return null;
   };
 
@@ -345,7 +349,7 @@ export default function DeliveryDriver() {
             {/* Statut + Solde */}
             <div className="flex items-center gap-4">
               <WalletBalanceWidget />
-              
+
               <button
                 onClick={toggleOnlineStatus}
                 disabled={!hasAccess || gpsLoading}
@@ -380,7 +384,7 @@ export default function DeliveryDriver() {
         {renderGPSError()}
         {renderOfflineMode()}
 
-        {/* Banni├¿re abonnement */}
+        {/* Bannière abonnement */}
         {!hasAccess && (
           <>
             <DriverSubscriptionBanner
@@ -438,7 +442,7 @@ export default function DeliveryDriver() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Taux r├®ussite</p>
+                  <p className="text-sm text-gray-400">Taux réussite</p>
                   <p className="text-2xl font-bold text-white">
                     100%
                   </p>
@@ -586,7 +590,7 @@ export default function DeliveryDriver() {
                       onClick={handleStartDelivery}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                     >
-                      Ramassage effectu├®
+                      Ramassage effectué
                     </Button>
                   )}
 
@@ -595,7 +599,7 @@ export default function DeliveryDriver() {
                       onClick={() => setShowProofUpload(true)}
                       className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/40"
                     >
-                      Livraison effectu├®e
+                      Livraison effectuée
                     </Button>
                   )}
                 </CardContent>
@@ -618,7 +622,7 @@ export default function DeliveryDriver() {
                 {deliveryHistory.length === 0 ? (
                   <div className="text-center py-12 text-gray-400">
                     <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>Aucune livraison termin├®e</p>
+                    <p>Aucune livraison terminée</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -663,9 +667,9 @@ export default function DeliveryDriver() {
           {/* Mes Achats */}
           <TabsContent value="my-purchases">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <MyPurchasesOrdersList 
-                title="Mes Achats Personnels" 
-                emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" 
+              <MyPurchasesOrdersList
+                title="Mes Achats Personnels"
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
               />
             </Suspense>
           </TabsContent>

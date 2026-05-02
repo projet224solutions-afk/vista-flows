@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, _XCircle, AlertTriangle } from 'lucide-react';
 import { VendorCertificationStatus, getCertificationStatusLabel } from '@/types/vendorCertification';
 
 interface CertifiedVendorBadgeProps {
@@ -44,18 +44,18 @@ const sizeClasses = {
   lg: 'text-base px-3 py-1.5'
 };
 
-export function CertifiedVendorBadge({ 
-  status, 
-  showIcon = true, 
+export function CertifiedVendorBadge({
+  status,
+  showIcon = true,
   size = 'md',
-  className = '' 
+  className = ''
 }: CertifiedVendorBadgeProps) {
   const config = statusConfig[status] || statusConfig.NON_CERTIFIE;
   const Icon = config.icon;
   const label = getCertificationStatusLabel(status);
-  
+
   return (
-    <Badge 
+    <Badge
       variant={config.variant}
       className={`${config.className} ${sizeClasses[size]} ${className} inline-flex items-center gap-1`}
     >

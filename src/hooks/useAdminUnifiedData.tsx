@@ -36,7 +36,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
     totalServices: 15,
     activeServices: 15,
   });
-  
+
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,20 +82,20 @@ export function useAdminUnifiedData(enabled: boolean = true) {
       // Utilisateurs
       const totalUsers = usersResult.count || 0;
       const activeUsers = usersResult.data?.filter(u => u.status === 'active').length || 0;
-      const newUsersThisMonth = usersResult.data?.filter(u => 
+      const newUsersThisMonth = usersResult.data?.filter(u =>
         new Date(u.created_at) >= firstDayOfMonth
       ).length || 0;
       const newUsersLastMonth = usersResult.data?.filter(u => {
         const createdAt = new Date(u.created_at);
         return createdAt >= firstDayOfLastMonth && createdAt < firstDayOfMonth;
       }).length || 0;
-      const userGrowth = newUsersLastMonth > 0 
+      const userGrowth = newUsersLastMonth > 0
         ? Math.round(((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth) * 100)
         : 0;
 
       // Commandes
       const totalOrders = ordersResult.count || 0;
-      const ordersThisMonth = ordersResult.data?.filter(o => 
+      const ordersThisMonth = ordersResult.data?.filter(o =>
         new Date(o.created_at) >= firstDayOfMonth
       ).length || 0;
       const ordersLastMonth = ordersResult.data?.filter(o => {
@@ -117,7 +117,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
           return createdAt >= firstDayOfLastMonth && createdAt < firstDayOfMonth;
         })
         .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 0;
-      
+
       const totalRevenue = walletsResult.data?.reduce((sum, w) => sum + (Number(w.balance) || 0), 0) || 0;
       const revenueGrowth = revenueLastMonth > 0
         ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100)
@@ -152,20 +152,20 @@ export function useAdminUnifiedData(enabled: boolean = true) {
 
       // Utilisateurs créés par les agents
       const totalUsersCreatedByAgents = agentCreatedUsersResult.count || 0;
-      const agentCreatedUsersThisMonth = agentCreatedUsersResult.data?.filter(u => 
+      const agentCreatedUsersThisMonth = agentCreatedUsersResult.data?.filter(u =>
         new Date(u.created_at) >= firstDayOfMonth
       ).length || 0;
       const agentCreatedUsersLastMonth = agentCreatedUsersResult.data?.filter(u => {
         const createdAt = new Date(u.created_at);
         return createdAt >= firstDayOfLastMonth && createdAt < firstDayOfMonth;
       }).length || 0;
-      const agentCreatedUsersGrowth = agentCreatedUsersLastMonth > 0 
+      const agentCreatedUsersGrowth = agentCreatedUsersLastMonth > 0
         ? Math.round(((agentCreatedUsersThisMonth - agentCreatedUsersLastMonth) / agentCreatedUsersLastMonth) * 100)
         : 0;
 
       // Taux de conversion
       const conversionRate = totalUsers > 0 ? Number(((totalOrders / totalUsers) * 100).toFixed(1)) : 0;
-      
+
       setData({
         totalUsers,
         activeUsers,
@@ -213,6 +213,7 @@ export function useAdminUnifiedData(enabled: boolean = true) {
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
   return {

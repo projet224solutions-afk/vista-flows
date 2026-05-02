@@ -14,7 +14,7 @@ export class SecureStorage {
   private static async getEncryptionKey(): Promise<CryptoKey> {
     // Vérifier si une clé existe déjà dans sessionStorage
     const storedKey = sessionStorage.getItem(this.ENCRYPTION_KEY_NAME);
-    
+
     if (storedKey) {
       // Importer la clé existante
       const keyData = JSON.parse(storedKey);
@@ -114,7 +114,7 @@ export class SecureStorage {
     try {
       const jsonValue = JSON.stringify(value);
       const { encrypted, iv } = await this.encrypt(jsonValue);
-      
+
       localStorage.setItem(key, JSON.stringify({ encrypted, iv }));
       console.log(`🔒 Donnée chiffrée sauvegardée: ${key}`);
     } catch (error) {
@@ -133,7 +133,7 @@ export class SecureStorage {
       if (!storedData) return null;
 
       const parsed = JSON.parse(storedData);
-      
+
       // Vérifier si données chiffrées
       if (parsed.encrypted && parsed.iv) {
         const decrypted = await this.decrypt(parsed.encrypted, parsed.iv);

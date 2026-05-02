@@ -115,7 +115,7 @@ export function useProximityStats() {
         supabase
           .from('products')
           .select(`
-            id, 
+            id,
             category_id,
             vendor_id,
             categories (id, name)
@@ -279,7 +279,7 @@ export function useProximityStats() {
         const lat = service?.latitude;
         const lng = service?.longitude;
         const hasGps = lat !== null && lat !== undefined && lng !== null && lng !== undefined;
-        
+
         if (!hasGps) {
           dbg.services.noGps++;
           return; // ❌ Pas de GPS = pas visible en proximité

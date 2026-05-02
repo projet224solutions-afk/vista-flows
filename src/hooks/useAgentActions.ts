@@ -45,6 +45,9 @@ export interface CreateSubAgentData {
   commission_rate: number;
   can_create_sub_agent: boolean;
   permissions: string[];
+  agentType?: string;
+  pdgId?: string;
+  accessToken?: string;
 }
 
 interface UseAgentActionsOptions {
@@ -67,12 +70,12 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
     try {
       // Vérifier l'authentification AVANT tout
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         console.error('❌ [useAgentActions] Pas de session active:', sessionError);
-        return { 
-          success: false, 
-          error: '🔒 Session expirée. Veuillez vous reconnecter.' 
+        return {
+          success: false,
+          error: '🔒 Session expirée. Veuillez vous reconnecter.'
         };
       }
 
@@ -103,10 +106,10 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
 
       // Préparer les données pour l'edge function
       // Utiliser le mot de passe fourni ou en générer un automatiquement
-      const password = userData.password && userData.password.length >= 8 
-        ? userData.password 
+      const password = userData.password && userData.password.length >= 8
+        ? userData.password
         : Math.random().toString(36).slice(-8) + 'Aa1!';
-      
+
       const requestBody: any = {
         email: userData.email,
         password: password,
@@ -146,11 +149,11 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
       });
 
       // Log détaillé pour debug
-      console.log('[useAgentActions] Réponse edge function:', { 
-        data, 
+      console.log('[useAgentActions] Réponse edge function:', {
+        data,
         error,
         hasError: !!error,
-        hasData: !!data 
+        hasData: !!data
       });
 
       if (error) {
@@ -160,49 +163,49 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
           context: error.context,
           details: JSON.stringify(error, null, 2)
         });
-        
+
         // Extraire le code de statut si disponible
         const statusMatch = error.message?.match(/status code (\d+)/i);
         const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
-        
+
         console.error('📍 Status Code:', statusCode);
-        
+
         // Erreurs par code de statut
         if (statusCode === 401 || error.message?.includes('UNAUTHORIZED') || error.message?.includes('Non autorisé')) {
-          return { 
-            success: false, 
-            error: '❌ Non autorisé. Vérifiez vos permissions (Code: 401)' 
+          return {
+            success: false,
+            error: '❌ Non autorisé. Vérifiez vos permissions (Code: 401)'
           };
         }
         if (statusCode === 403 || error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
-          return { 
-            success: false, 
-            error: '❌ Permissions insuffisantes pour créer des utilisateurs (Code: 403)' 
+          return {
+            success: false,
+            error: '❌ Permissions insuffisantes pour créer des utilisateurs (Code: 403)'
           };
         }
         if (statusCode === 400 || error.message?.includes('VALIDATION_ERROR')) {
-          return { 
-            success: false, 
-            error: '❌ Données invalides: ' + (error.message || 'Vérifiez le formulaire') 
+          return {
+            success: false,
+            error: '❌ Données invalides: ' + (error.message || 'Vérifiez le formulaire')
           };
         }
         if (statusCode === 500) {
-          return { 
-            success: false, 
-            error: '❌ Erreur serveur (Code: 500). Contactez le support.' 
+          return {
+            success: false,
+            error: '❌ Erreur serveur (Code: 500). Contactez le support.'
           };
         }
-        
-        return { 
-          success: false, 
-          error: `❌ Erreur (Code: ${statusCode || 'inconnu'}): ${error.message || "Erreur lors de la création"}` 
+
+        return {
+          success: false,
+          error: `❌ Erreur (Code: ${statusCode || 'inconnu'}): ${error.message || "Erreur lors de la création"}`
         };
       }
 
       // Vérifier si la réponse contient une erreur
       if (data?.error || data?.code) {
         console.error('[useAgentActions] Erreur dans data:', data);
-        
+
         if (data.code === 'EMAIL_EXISTS') {
           return { success: false, error: '⚠️ Cet email est déjà utilisé par un autre utilisateur' };
         }
@@ -215,7 +218,7 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         if (data.code === 'CANNOT_CREATE_AGENTS') {
           return { success: false, error: '❌ Vous ne pouvez pas créer de sous-agents.' };
         }
-        
+
         return { success: false, error: data.error || `Erreur (${data.code})` };
       }
 
@@ -247,18 +250,18 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
 
       // Vérifier la session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session) {
         console.error('❌ [useAgentActions] Pas de session pour createSubAgent');
-        return { 
-          success: false, 
-          error: '🔒 Session expirée. Veuillez vous reconnecter.' 
+        return {
+          success: false,
+          error: '🔒 Session expirée. Veuillez vous reconnecter.'
         };
       }
 
       // Générer un code agent unique
       const agentCode = `SA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      
+
       // Générer un mot de passe temporaire sécurisé
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!' + Math.random().toString(36).slice(-4);
 
@@ -271,13 +274,15 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
       // Appeler l'edge function pour créer le sous-agent
       const { data, error } = await supabase.functions.invoke('create-sub-agent', {
         body: {
-          pdg_id: subAgentData.pdgId || parentAgentId,
+          pdg_id: subAgentData.pdgId,
           parent_agent_id: parentAgentId,
           agent_code: agentCode,
           name: subAgentData.name,
           email: subAgentData.email,
           phone: subAgentData.phone,
-          agent_type: subAgentData.agentType || 'sales',
+          agent_type: 'sous_agent',
+          type_agent: 'sous_agent',
+          agent_role: subAgentData.agentType || 'sales',
           password: tempPassword,
           permissions: subAgentData.permissions || ['create_users'],
           commission_rate: subAgentData.commission_rate || 5,
@@ -287,17 +292,17 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
 
       if (error) {
         console.error('[useAgentActions] Edge function create-sub-agent error:', error);
-        return { 
-          success: false, 
-          error: error.message || 'Erreur lors de la création du sous-agent' 
+        return {
+          success: false,
+          error: error.message || 'Erreur lors de la création du sous-agent'
         };
       }
 
       if (!data?.success) {
         console.error('[useAgentActions] Create sub-agent failed:', data);
-        return { 
-          success: false, 
-          error: data?.error || 'Erreur lors de la création du sous-agent' 
+        return {
+          success: false,
+          error: data?.error || 'Erreur lors de la création du sous-agent'
         };
       }
 

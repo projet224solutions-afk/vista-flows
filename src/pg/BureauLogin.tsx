@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { OTPInput } from '@/components/auth/OTPInput';
 import { useBureauAuth } from '@/hooks/useBureauAuth';
-import { Building2, Lock, Mail, Phone, ArrowLeft, ShieldCheck, MapPin } from 'lucide-react';
+import { Building2, Lock, Mail, _Phone, ArrowLeft, ShieldCheck, MapPin } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -20,14 +20,14 @@ export const BureauLogin: React.FC = () => {
     password: ''
   });
 
-  // Rediriger si d├®j├á connect├®
+  // Rediriger si déjà connecté
   useEffect(() => {
     if (isAuthenticated()) {
       navigate('/bureau');
     }
   }, [isAuthenticated, navigate]);
 
-  // ├ëtape 1: Soumission login
+  // Étape 1: Soumission login
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -38,7 +38,7 @@ export const BureauLogin: React.FC = () => {
     await login(formData.identifier, formData.password);
   };
 
-  // ├ëtape 2: V├®rification OTP
+  // Étape 2: Vérification OTP
   const handleVerifyOTP = async (otp: string) => {
     await verifyOTP(otp);
   };
@@ -68,7 +68,7 @@ export const BureauLogin: React.FC = () => {
         </div>
 
         {!requiresOTP ? (
-          /* ====== ├ëTAPE 1: LOGIN ====== */
+          /* ====== ÉTAPE 1: LOGIN ====== */
           <Card className="shadow-xl border-t-4 border-t-green-600">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">{t('auth.bureau.loginTitle')}</CardTitle>
@@ -110,7 +110,7 @@ export const BureauLogin: React.FC = () => {
                     <Input
                       id="password"
                       type="password"
-                      placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                      placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       disabled={isLoading}
@@ -120,7 +120,7 @@ export const BureauLogin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Infos s├®curit├® */}
+                {/* Infos sécurité */}
                 <Alert className="bg-green-50 border-green-200">
                   <ShieldCheck className="h-4 w-4 text-green-600" />
                   <AlertDescription className="text-sm text-green-900">
@@ -131,7 +131,7 @@ export const BureauLogin: React.FC = () => {
                 {/* Info bureau */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-900">
-                    ­ƒÆí {t('auth.bureau.infoNote')}
+                    💡 {t('auth.bureau.infoNote')}
                   </p>
                 </div>
 
@@ -159,7 +159,7 @@ export const BureauLogin: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          /* ====== ├ëTAPE 2: V├ëRIFICATION OTP ====== */
+          /* ====== ÉTAPE 2: VÉRIFICATION OTP ====== */
           <div className="space-y-4">
             <OTPInput
               identifier={identifier}

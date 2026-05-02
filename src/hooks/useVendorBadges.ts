@@ -68,7 +68,7 @@ export function useVendorBadges() {
           console.error('Error fetching inventory:', inventoryError);
         }
 
-        const lowStockCount = inventoryData?.filter(item => 
+        const lowStockCount = inventoryData?.filter(item =>
           item.quantity <= item.minimum_stock && item.quantity > 0
         ).length || 0;
 
@@ -90,20 +90,20 @@ export function useVendorBadges() {
     // Set up realtime subscription for updates
     const channel = supabase
       .channel('vendor-badges-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'orders' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
         () => fetchBadges()
       )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'expense_alerts' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'expense_alerts' },
         () => fetchBadges()
       )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'inventory' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory' },
         () => fetchBadges()
       )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'products' }, 
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
         () => fetchBadges()
       )
       .subscribe();

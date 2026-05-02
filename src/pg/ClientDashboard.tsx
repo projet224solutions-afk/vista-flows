@@ -25,7 +25,7 @@ const ProductCard = lazy(() => import("@/components/ProductCard"));
 const UserProfileCard = lazy(() => import("@/components/UserProfileCard"));
 const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
 const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
-const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
+const _WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
 const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
 const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
 const IdSystemIndicator = lazy(() => import("@/components/IdSystemIndicator").then(m => ({ default: m.IdSystemIndicator })));
@@ -39,7 +39,7 @@ const NotificationBellButton = lazy(() => import("@/components/shared/Notificati
 const RecentlyViewedProducts = lazy(() => import("@/components/shared/RecentlyViewedProducts"));
 
 export default function ClientDashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, _profile, signOut } = useAuth();
   const navigate = useNavigate();
   const responsive = useResponsive();
   const { t } = useTranslation();
@@ -47,27 +47,27 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Stats optimis├®es avec SQL
+  // Stats optimisées avec SQL
   const { stats: clientStats, loading: statsLoading, refresh: refreshStats } = useClientStats();
 
   // Produits via hook universel
-  const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
+  const { products: universalProducts, loading: _productsLoading } = useUniversalProducts({
     limit: 50,
     sortBy: 'newest',
     autoLoad: true,
     searchQuery
   });
 
-  // Donn├®es client: commandes, favoris, contact vendeur
+  // Données client: commandes, favoris, contact vendeur
   const {
-    orders,
-    favorites,
-    toggleFavorite,
+    _orders,
+    _favorites,
+    _toggleFavorite,
     contactVendor,
     loadAllData
   } = useClientData();
 
-  // Panier unifi├® via CartContext (seule source de v├®rit├®)
+  // Panier unifié via CartContext (seule source de vérité)
   const { cartItems, addToCart: addToCartContext, removeFromCart, clearCart, getCartTotal, getCartCount } = useCart();
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -90,7 +90,7 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
-  // Charger le customer_id + donn├®es client
+  // Charger le customer_id + données client
   useEffect(() => {
     if (!user?.id) return;
 
@@ -113,7 +113,7 @@ export default function ClientDashboard() {
         if (newCustomer) {
           setCustomerId(newCustomer.id);
         } else {
-          console.error('ÔØî ├ëchec cr├®ation customer:', createError);
+          console.error('✕ Échec création customer:', createError);
         }
       }
     };
@@ -139,8 +139,7 @@ export default function ClientDashboard() {
     loadAllData(user?.id);
     refreshStats();
     setShowPaymentModal(false);
-    toast.success('Paiement r├®ussi ! Redirection vers vos achats...', { duration: 2000 });
-    setTimeout(() => navigate('/my-purchases'), 1500);
+    toast.success('Commande enregistrée avec succès.', { duration: 2000 });
   };
 
   const handleProductClick = (productId: string) => {
@@ -148,7 +147,7 @@ export default function ClientDashboard() {
     setShowProductModal(true);
   };
 
-  // Contact vendeur unifi├® via edge function
+  // Contact vendeur unifié via edge function
   const handleContactVendor = async (product: any) => {
     const vendorUserId = product.vendor_user_id;
     if (!vendorUserId) {
@@ -306,7 +305,7 @@ export default function ClientDashboard() {
               </TabsTrigger>
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                {responsive.isMobile ? 'ÔÜÖ´©Å' : 'Param├¿tres'}
+                {responsive.isMobile ? 'Réglages' : 'Paramètres'}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -330,7 +329,7 @@ export default function ClientDashboard() {
               <Card className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">Votre activit├®</CardDescription>
+                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {statsLoading ? (
@@ -366,7 +365,7 @@ export default function ClientDashboard() {
                           <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>{formatPrice(clientStats?.total_spent || 0)}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total d├®pens├®</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>
                       </button>
                     </div>
                   )}
@@ -400,7 +399,7 @@ export default function ClientDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Produits populaires</CardTitle>
-                    <CardDescription>D├®couvrez nos meilleures ventes</CardDescription>
+                    <CardDescription>Découvrez nos meilleures ventes</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/marketplace')}>
                     Voir tout
@@ -474,7 +473,7 @@ export default function ClientDashboard() {
                           )}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold truncate">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">Qt├®: {item.quantity}</p>
+                            <p className="text-sm text-muted-foreground">Qté: {item.quantity}</p>
                             {item.vendor_name && (
                               <p className="text-xs text-muted-foreground">{item.vendor_name}</p>
                             )}
@@ -507,7 +506,7 @@ export default function ClientDashboard() {
                           onClick={handleCheckout}
                         >
                           <CreditCard className="w-5 h-5 mr-2" />
-                          Proc├®der au paiement
+                          Procéder au paiement
                         </Button>
                       </CardContent>
                     </Card>
@@ -522,7 +521,7 @@ export default function ClientDashboard() {
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Mes commandes</CardTitle>
-                <CardDescription>Suivez l'├®tat de vos commandes et confirmez les livraisons</CardDescription>
+                <CardDescription>Suivez l'état de vos commandes et confirmez les livraisons</CardDescription>
               </CardHeader>
               <CardContent>
                 <ClientOrdersList />
@@ -562,10 +561,10 @@ export default function ClientDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <HandCoins className="w-5 h-5 text-client-primary" />
-                  {isAffiliateEnabled ? t('client.affiliateSpaceTitle') : 'Devenir Affili├®'}
+                  {isAffiliateEnabled ? t('client.affiliateSpaceTitle') : 'Devenir Affilié'}
                 </CardTitle>
                 <CardDescription>
-                  {isAffiliateEnabled 
+                  {isAffiliateEnabled
                     ? t('client.affiliateSpaceDesc')
                     : 'Activez le module affiliation pour gagner des commissions en recommandant nos services.'
                   }
@@ -575,7 +574,7 @@ export default function ClientDashboard() {
                 {isAffiliateEnabled ? (
                   <>
                     <p className="text-sm text-muted-foreground">
-                      Ô£à Module affili├® actif ÔÇö acc├®dez ├á votre espace pour g├®rer vos liens et suivre vos gains.
+                      ✓ Module affilié actif - accédez à votre espace pour gérer vos liens et suivre vos gains.
                     </p>
                     <Button onClick={() => navigate('/affiliate/dashboard')} className="bg-client-primary hover:bg-client-primary/90">
                       {t('client.affiliateOpenSpace')}
@@ -584,9 +583,9 @@ export default function ClientDashboard() {
                 ) : (
                   <>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>­ƒÄ» Partagez vos liens de parrainage et gagnez des commissions sur chaque transaction.</p>
-                      <p>­ƒÆ░ Vos gains sont cr├®dit├®s directement sur votre wallet.</p>
-                      <p>­ƒöÆ Votre compte client reste intact ÔÇö aucune modification de vos donn├®es.</p>
+                      <p>🎯 Partagez vos liens de parrainage et gagnez des commissions sur chaque transaction.</p>
+                      <p>💰 Vos gains sont crédités directement sur votre wallet.</p>
+                      <p>🔒 Votre compte client reste intact - aucune modification de vos données.</p>
                     </div>
                     <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
                       <HandCoins className="w-4 h-4 mr-2" />
@@ -598,7 +597,7 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Param├¿tres */}
+          {/* Paramètres */}
           <TabsContent value="settings" className="animate-fade-in">
             <ClientSettings />
           </TabsContent>
@@ -624,7 +623,7 @@ export default function ClientDashboard() {
         />
       )}
 
-      {/* Modal de d├®tails du produit */}
+      {/* Modal de détails du produit */}
       <ProductDetailModal
         productId={selectedProductId}
         open={showProductModal}
@@ -634,7 +633,7 @@ export default function ClientDashboard() {
         }}
       />
 
-      {/* Modal d├®tail statistiques */}
+      {/* Modal détail statistiques */}
       <ClientStatDetailModal
         open={!!statDetailType}
         onClose={() => setStatDetailType(null)}

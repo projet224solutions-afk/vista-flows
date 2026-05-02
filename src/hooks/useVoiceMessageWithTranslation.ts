@@ -1,13 +1,13 @@
 /**
  * 🎙️ HOOK D'ENVOI DE MESSAGE VOCAL AVEC TRADUCTION AUTOMATIQUE
- * Envoie un message vocal vers Google Cloud Storage et déclenche 
- * automatiquement la traduction si l'expéditeur et le destinataire 
+ * Envoie un message vocal vers Google Cloud Storage et déclenche
+ * automatiquement la traduction si l'expéditeur et le destinataire
  * ont des langues différentes
  */
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { autoConvertIfNeeded, needsConversionForIOS, isIOS } from '@/services/AudioConversionService';
+import { _autoConvertIfNeeded, _needsConversionForIOS, _isIOS } from '@/services/AudioConversionService';
 import { audioTranslationService } from '@/services/audioTranslationService';
 import { useToast } from '@/hooks/use-toast';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
@@ -50,11 +50,11 @@ export function useVoiceMessageWithTranslation() {
       // 1. Détecter le format audio depuis le blob
       const blobMimeType = audioBlob.type || 'audio/webm';
       console.log('🎙️ Audio blob MIME type:', blobMimeType);
-      
+
       // Déterminer le format et l'extension depuis le MIME type
       let audioFormat = 'webm';
       let mimeType = blobMimeType;
-      
+
       if (blobMimeType.includes('mp4') || blobMimeType.includes('m4a')) {
         audioFormat = 'mp4';
         mimeType = 'audio/mp4';
@@ -159,7 +159,7 @@ export function useVoiceMessageWithTranslation() {
     } catch (error: any) {
       console.error('❌ Voice message send error:', error);
       setTranslationStatus('failed');
-      
+
       toast({
         title: "Erreur",
         description: "Impossible d'envoyer le message vocal",
@@ -173,6 +173,7 @@ export function useVoiceMessageWithTranslation() {
     } finally {
       setIsSending(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   /**

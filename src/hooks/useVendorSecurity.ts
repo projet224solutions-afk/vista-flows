@@ -52,7 +52,7 @@ export const useVendorSecurity = () => {
         .select('*')
         .eq('vendor_id', user.id)
         .maybeSingle();
-      
+
       if (kycError) console.error('Error loading KYC:', kycError);
       setKyc(kycData as any);
 
@@ -62,7 +62,7 @@ export const useVendorSecurity = () => {
         .select('*')
         .eq('vendor_id', user.id)
         .maybeSingle();
-      
+
       if (scoreError) console.error('Error loading trust score:', scoreError);
       setTrustScore(scoreData as any);
 
@@ -132,6 +132,7 @@ export const useVendorSecurity = () => {
 
   useEffect(() => {
     loadSecurityData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return {

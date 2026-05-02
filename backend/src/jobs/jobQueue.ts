@@ -1,9 +1,9 @@
 /**
  * 📋 JOB QUEUE SYSTEM - Phase 6
- * 
+ *
  * BullMQ-based async job queue for non-blocking tasks.
  * Falls back to direct execution if Redis unavailable.
- * 
+ *
  * Supported jobs:
  *   - recommendations.recalculate
  *   - pos.reconcile
@@ -192,31 +192,110 @@ registerHandler('escrow.auto-release', async () => {
   const now = new Date().toISOString();
   const { data: escrows } = await supabaseAdmin
     .from('escrow_transactions')
-    .select('id, order_id, seller_id, amount, currency')
+    .select('id, order_id, seller_id, amount, currency, commission_amount, metadata, seller_confirmed_at, orders(id, order_number, status, payment_method, shipping_address, metadata)')
     .eq('status', 'held')
-    .lt('auto_release_at', now);
+    .not('seller_confirmed_at', 'is', null)
+    .lt('auto_release_date', now);
 
   if (!escrows?.length) return;
 
   for (const escrow of escrows) {
     try {
+      const order = Array.isArray((escrow as any).orders) ? (escrow as any).orders[0] : (escrow as any).orders;
+      const orderMetadata =
+        order?.metadata && typeof order.metadata === 'object' && !Array.isArray(order.metadata)
+          ? order.metadata
+          : {};
+      const shippingAddress =
+        order?.shipping_address && typeof order.shipping_address === 'object' && !Array.isArray(order.shipping_address)
+          ? order.shipping_address
+          : {};
+      const isCashOnDelivery =
+        order?.payment_method === 'cash' &&
+        (orderMetadata.is_cod === true || shippingAddress.is_cod === true || orderMetadata.payment_type === 'cash_on_delivery');
+
+      if (
+        !order ||
+        !escrow.seller_confirmed_at ||
+        isCashOnDelivery ||
+        ['pending', 'cancelled', 'completed'].includes(order.status) ||
+        orderMetadata.buyer_confirmed_delivery === true
+      ) {
+        continue;
+      }
+
+      const escrowAmount = Number(escrow.amount || 0);
+      const commissionAmount = Number(
+        (escrow as any).commission_amount && Number.isFinite(Number((escrow as any).commission_amount))
+          ? (escrow as any).commission_amount
+          : escrowAmount * 0.025,
+      );
+      const vendorAmount = Math.max(escrowAmount - commissionAmount, 0);
+
       await supabaseAdmin
         .from('escrow_transactions')
-        .update({ status: 'released', released_at: now })
+        .update({
+          status: 'released',
+          released_at: now,
+          metadata: {
+            ...((escrow as any).metadata && typeof (escrow as any).metadata === 'object' && !Array.isArray((escrow as any).metadata)
+              ? (escrow as any).metadata
+              : {}),
+            auto_confirmed_reception: true,
+            auto_confirmed_reception_at: now,
+            release_reason: 'buyer_confirmation_timeout_72h',
+            vendor_amount: vendorAmount,
+            commission_amount: commissionAmount,
+          },
+        })
         .eq('id', escrow.id);
+
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          status: 'completed',
+          metadata: {
+            ...orderMetadata,
+            delivered_at: orderMetadata.delivered_at || now,
+            auto_confirmed_reception: true,
+            auto_confirmed_reception_at: now,
+            buyer_confirmation_timeout_hours: 72,
+          },
+          updated_at: now,
+        })
+        .eq('id', escrow.order_id);
 
       // Credit seller wallet
       if (escrow.seller_id) {
         await supabaseAdmin.rpc('credit_wallet', {
           p_user_id: escrow.seller_id,
-          p_amount: escrow.amount,
+          p_amount: vendorAmount,
           p_description: `Libération escrow commande`,
           p_transaction_type: 'escrow_release',
           p_reference: escrow.id,
         });
       }
 
-      logger.info(`Escrow auto-released: ${escrow.id}, amount=${escrow.amount}`);
+      if (commissionAmount > 0) {
+        const { data: activePdg } = await supabaseAdmin
+          .from('pdg_management')
+          .select('user_id')
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+
+        if (activePdg?.user_id) {
+          await supabaseAdmin.rpc('credit_wallet', {
+            p_user_id: activePdg.user_id,
+            p_amount: commissionAmount,
+            p_description: `Commission escrow commande`,
+            p_transaction_type: 'escrow_commission',
+            p_reference: escrow.id,
+          });
+        }
+      }
+
+      logger.info(`Escrow auto-released: ${escrow.id}, gross=${escrowAmount}, vendor=${vendorAmount}, commission=${commissionAmount}`);
     } catch (err: any) {
       logger.error(`Escrow release failed: ${escrow.id} — ${err.message}`);
     }

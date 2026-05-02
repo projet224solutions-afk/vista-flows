@@ -1,7 +1,7 @@
 /**
  * MODULE SANTÉ / PHARMACIE — Interface professionnelle
  * Inspiré CVS Health, Boots, Walgreens, McKesson
- * 
+ *
  * Architecture: Composable panels sous-componentisés
  */
 
@@ -90,7 +90,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
               <div className="text-white">
                 <h3 className="text-xl font-bold mb-1">Bienvenue dans votre Pharmacie</h3>
                 <p className="text-white/80 text-sm max-w-md">
-                  Gérez vos médicaments, suivez votre inventaire, traitez les ordonnances 
+                  Gérez vos médicaments, suivez votre inventaire, traitez les ordonnances
                   et analysez vos performances — tout depuis un seul endroit.
                 </p>
               </div>

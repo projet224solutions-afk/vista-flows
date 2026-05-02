@@ -2,7 +2,7 @@
  * SUPPLIER ORDER PANEL
  * Panel de gestion des commandes fournisseurs dropshipping
  * Création automatique ou manuelle de commandes vers les fournisseurs
- * 
+ *
  * @module SupplierOrderPanel
  * @version 1.0.0
  * @author 224Solutions
@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { _Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -42,18 +42,18 @@ import {
   AlertTitle,
 } from '@/components/ui/alert';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+  _Tabs,
+  _TabsContent,
+  _TabsList,
+  _TabsTrigger,
 } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  _Table,
+  _TableBody,
+  _TableCell,
+  _TableHead,
+  _TableHeader,
+  _TableRow,
 } from '@/components/ui/table';
 import {
   Tooltip,
@@ -77,14 +77,14 @@ import {
   MapPin,
   Phone,
   User,
-  Box,
-  DollarSign,
-  Calendar,
+  _Box,
+  _DollarSign,
+  _Calendar,
   FileText,
-  Link2
+  _Link2
 } from 'lucide-react';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
-import { useConnectors } from '@/hooks/useConnectors';
+import { _useConnectors } from '@/hooks/useConnectors';
 import type { ConnectorType, OrderResult, TrackingInfo } from '@/services/connectors';
 
 // ==================== INTERFACES ====================
@@ -132,51 +132,51 @@ interface SupplierOrderPanelProps {
 function getStatusConfig(status: string) {
   switch (status) {
     case 'pending':
-      return { 
-        icon: Clock, 
-        label: 'En attente', 
+      return {
+        icon: Clock,
+        label: 'En attente',
         color: 'bg-yellow-100 text-yellow-800',
         description: 'Commande à passer au fournisseur'
       };
     case 'ordered':
-      return { 
-        icon: Package, 
-        label: 'Commandé', 
+      return {
+        icon: Package,
+        label: 'Commandé',
         color: 'bg-blue-100 text-blue-800',
         description: 'En attente d\'expédition'
       };
     case 'shipped':
-      return { 
-        icon: Truck, 
-        label: 'Expédié', 
+      return {
+        icon: Truck,
+        label: 'Expédié',
         color: 'bg-purple-100 text-purple-800',
         description: 'En cours de livraison'
       };
     case 'delivered':
-      return { 
-        icon: CheckCircle, 
-        label: 'Livré', 
+      return {
+        icon: CheckCircle,
+        label: 'Livré',
         color: 'bg-green-100 text-green-800',
         description: 'Commande livrée au client'
       };
     case 'cancelled':
-      return { 
-        icon: XCircle, 
-        label: 'Annulé', 
+      return {
+        icon: XCircle,
+        label: 'Annulé',
         color: 'bg-gray-100 text-gray-800',
         description: 'Commande annulée'
       };
     case 'error':
-      return { 
-        icon: AlertTriangle, 
-        label: 'Erreur', 
+      return {
+        icon: AlertTriangle,
+        label: 'Erreur',
         color: 'bg-red-100 text-red-800',
         description: 'Erreur lors de la commande'
       };
     default:
-      return { 
-        icon: Clock, 
-        label: status, 
+      return {
+        icon: Clock,
+        label: status,
         color: 'bg-gray-100 text-gray-800',
         description: ''
       };
@@ -199,14 +199,14 @@ function TrackingTimeline({ tracking }: { tracking: TrackingInfo }) {
           </a>
         </Button>
       </div>
-      
+
       <div className="text-sm text-muted-foreground">
         <p>Transporteur: {tracking.carrier}</p>
         {tracking.estimatedDelivery && (
           <p>Livraison estimée: {formatDate(tracking.estimatedDelivery)}</p>
         )}
       </div>
-      
+
       {tracking.events && tracking.events.length > 0 && (
         <div className="relative pl-4 border-l-2 border-muted space-y-3 mt-4">
           {tracking.events.slice(0, 5).map((event, i) => (
@@ -227,13 +227,13 @@ function TrackingTimeline({ tracking }: { tracking: TrackingInfo }) {
   );
 }
 
-function OrderCard({ 
-  order, 
+function OrderCard({
+  order,
   onCreateOrder,
   onRefreshTracking,
   onCancelOrder,
   onAddNote
-}: { 
+}: {
   order: SupplierOrder;
   onCreateOrder: () => Promise<OrderResult | null | void>;
   onRefreshTracking: () => Promise<void>;
@@ -243,22 +243,22 @@ function OrderCard({
   const [loading, setLoading] = useState(false);
   const [noteDialog, setNoteDialog] = useState(false);
   const [note, setNote] = useState('');
-  
+
   const statusConfig = getStatusConfig(order.status);
   const StatusIcon = statusConfig.icon;
-  
+
   const handleCreateOrder = async () => {
     setLoading(true);
     await onCreateOrder();
     setLoading(false);
   };
-  
+
   const handleRefreshTracking = async () => {
     setLoading(true);
     await onRefreshTracking();
     setLoading(false);
   };
-  
+
   const handleAddNote = async () => {
     if (note.trim()) {
       await onAddNote(note);
@@ -266,11 +266,11 @@ function OrderCard({
       setNoteDialog(false);
     }
   };
-  
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
-  
+
   return (
     <>
       <Card>
@@ -278,9 +278,9 @@ function OrderCard({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded bg-muted overflow-hidden">
-                <img 
-                  src={order.productThumbnail} 
-                  alt="" 
+                <img
+                  src={order.productThumbnail}
+                  alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -294,14 +294,14 @@ function OrderCard({
                 </CardDescription>
               </div>
             </div>
-            
+
             <Badge className={statusConfig.color}>
               <StatusIcon className="w-3 h-3 mr-1" />
               {statusConfig.label}
             </Badge>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* Infos commande */}
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -314,7 +314,7 @@ function OrderCard({
               <p className="font-medium">{formatCurrency(order.totalCost, order.currency)}</p>
             </div>
           </div>
-          
+
           {/* Adresse livraison */}
           <Accordion type="single" collapsible>
             <AccordionItem value="shipping">
@@ -332,9 +332,9 @@ function OrderCard({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6"
                             onClick={() => copyToClipboard(order.shippingAddress.name)}
                           >
@@ -345,16 +345,16 @@ function OrderCard({
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
                     <span>{order.shippingAddress.phone}</span>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6"
                             onClick={() => copyToClipboard(order.shippingAddress.phone)}
                           >
@@ -365,7 +365,7 @@ function OrderCard({
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  
+
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                     <div>
@@ -378,9 +378,9 @@ function OrderCard({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6"
                             onClick={() => copyToClipboard(
                               `${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.country}`
@@ -396,7 +396,7 @@ function OrderCard({
                 </div>
               </AccordionContent>
             </AccordionItem>
-            
+
             {/* Tracking */}
             {order.tracking && (
               <AccordionItem value="tracking">
@@ -414,16 +414,16 @@ function OrderCard({
               </AccordionItem>
             )}
           </Accordion>
-          
+
           {/* Numéro commande fournisseur */}
           {order.supplierOrderId && (
             <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg p-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">Réf. fournisseur:</span>
               <code className="font-mono">{order.supplierOrderId}</code>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-6 w-6 ml-auto"
                 onClick={() => copyToClipboard(order.supplierOrderId!)}
               >
@@ -431,18 +431,18 @@ function OrderCard({
               </Button>
             </div>
           )}
-          
+
           {/* Notes */}
           {order.notes && (
             <div className="text-sm bg-yellow-50 rounded-lg p-2 border border-yellow-200">
               <p className="text-yellow-800">{order.notes}</p>
             </div>
           )}
-          
+
           {/* Actions */}
           <div className="flex gap-2 pt-2">
             {order.status === 'pending' && (
-              <Button 
+              <Button
                 className="flex-1"
                 onClick={handleCreateOrder}
                 disabled={loading}
@@ -455,9 +455,9 @@ function OrderCard({
                 Passer la commande
               </Button>
             )}
-            
+
             {order.status === 'shipped' && (
-              <Button 
+              <Button
                 variant="outline"
                 onClick={handleRefreshTracking}
                 disabled={loading}
@@ -470,17 +470,17 @@ function OrderCard({
                 Actualiser
               </Button>
             )}
-            
-            <Button 
+
+            <Button
               variant="outline"
               size="icon"
               onClick={() => setNoteDialog(true)}
             >
               <MessageSquare className="w-4 h-4" />
             </Button>
-            
+
             {['pending', 'ordered'].includes(order.status) && (
-              <Button 
+              <Button
                 variant="outline"
                 size="icon"
                 className="text-red-500 hover:text-red-600"
@@ -492,7 +492,7 @@ function OrderCard({
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Dialog ajout note */}
       <Dialog open={noteDialog} onOpenChange={setNoteDialog}>
         <DialogContent>
@@ -502,7 +502,7 @@ function OrderCard({
               Commande #{order.internalOrderId}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <Textarea
               placeholder="Entrez votre note..."
@@ -511,7 +511,7 @@ function OrderCard({
               rows={4}
             />
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setNoteDialog(false)}>
               Annuler
@@ -529,7 +529,7 @@ function OrderCard({
 // ==================== MAIN COMPONENT ====================
 
 export function SupplierOrderPanel({
-  vendorId,
+  _vendorId,
   orders,
   loading,
   onCreateOrder,
@@ -538,12 +538,12 @@ export function SupplierOrderPanel({
   onAddNote
 }: SupplierOrderPanelProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  
+
   // Filtrer les commandes
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
+  const filteredOrders = filterStatus === 'all'
+    ? orders
     : orders.filter(o => o.status === filterStatus);
-  
+
   // Grouper par statut pour les stats
   const stats = {
     pending: orders.filter(o => o.status === 'pending').length,
@@ -552,11 +552,11 @@ export function SupplierOrderPanel({
     delivered: orders.filter(o => o.status === 'delivered').length,
     error: orders.filter(o => o.status === 'error').length,
   };
-  
+
   const totalPendingCost = orders
     .filter(o => o.status === 'pending')
     .reduce((sum, o) => sum + o.totalCost, 0);
-  
+
   return (
     <div className="space-y-6">
       {/* En-tête avec stats */}
@@ -572,7 +572,7 @@ export function SupplierOrderPanel({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('ordered')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
@@ -584,7 +584,7 @@ export function SupplierOrderPanel({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('shipped')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export function SupplierOrderPanel({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('delivered')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
@@ -608,7 +608,7 @@ export function SupplierOrderPanel({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('error')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
@@ -621,7 +621,7 @@ export function SupplierOrderPanel({
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Alerte commandes en attente */}
       {stats.pending > 0 && (
         <Alert className="bg-yellow-50 border-yellow-200">
@@ -630,12 +630,12 @@ export function SupplierOrderPanel({
             {stats.pending} commande(s) en attente
           </AlertTitle>
           <AlertDescription className="text-yellow-700">
-            Coût total estimé: {formatCurrency(totalPendingCost, 'USD')}. 
+            Coût total estimé: {formatCurrency(totalPendingCost, 'USD')}.
             Passez ces commandes pour éviter les retards de livraison.
           </AlertDescription>
         </Alert>
       )}
-      
+
       {/* Filtre */}
       <div className="flex items-center gap-4">
         <Label>Filtrer par statut:</Label>
@@ -652,14 +652,14 @@ export function SupplierOrderPanel({
             <SelectItem value="error">Erreurs ({stats.error})</SelectItem>
           </SelectContent>
         </Select>
-        
+
         {filterStatus !== 'all' && (
           <Button variant="ghost" size="sm" onClick={() => setFilterStatus('all')}>
             Réinitialiser
           </Button>
         )}
       </div>
-      
+
       {/* Liste des commandes */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
@@ -671,7 +671,7 @@ export function SupplierOrderPanel({
             <Package className="w-12 h-12 text-muted-foreground mb-4" />
             <p className="text-lg font-medium">Aucune commande</p>
             <p className="text-sm text-muted-foreground">
-              {filterStatus === 'all' 
+              {filterStatus === 'all'
                 ? 'Les commandes dropshipping apparaîtront ici'
                 : 'Aucune commande avec ce statut'
               }

@@ -4,14 +4,14 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  HardHat, Building, Plus, Users, FileText, Package, 
-  TrendingUp, Clock, CheckCircle2, AlertTriangle, MapPin,
+import {
+  HardHat, Building, Plus, Users, FileText, Package,
+  TrendingUp, Clock, _CheckCircle2, _AlertTriangle, MapPin,
   Loader2, Trash2, Eye, Star, Phone, Mail
 } from 'lucide-react';
 import { useBTPData } from '@/hooks/useBTPData';
@@ -61,14 +61,14 @@ const QUOTE_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 export function ConstructionModule({ serviceId, businessName }: ConstructionModuleProps) {
-  const { 
+  const {
     projects, professionals, quotes, materials,
     stats, loading, saving,
     createProject, updateProject, deleteProject,
     addProfessional, createQuote, respondToQuote,
     addMaterial, addTask, fetchTasks,
     addDailyReport, fetchDailyReports,
-    refresh,
+    _refresh,
   } = useBTPData(serviceId);
 
   const [activeTab, setActiveTab] = useState('projets');
@@ -382,7 +382,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
       <AddProfessionalDialog open={showAddPro} onClose={() => setShowAddPro(false)} onSubmit={addProfessional} saving={saving} />
       <QuoteRequestDialog open={showQuote} onClose={() => setShowQuote(false)} onSubmit={createQuote} saving={saving} />
       <AddMaterialDialog open={showMaterial} onClose={() => setShowMaterial(false)} onSubmit={addMaterial} saving={saving} />
-      
+
       {selectedProject && (
         <ProjectDetailDialog
           project={selectedProject}

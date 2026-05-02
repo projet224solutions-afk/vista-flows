@@ -53,9 +53,9 @@ export function CardPaymentDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const paymentAmount = parseFloat(amount);
-    
+
     if (!paymentAmount || paymentAmount <= 0) {
       setResult({ success: false, message: 'Montant invalide' });
       return;
@@ -67,9 +67,9 @@ export function CardPaymentDialog({
     }
 
     if (paymentAmount > maxAmount) {
-      setResult({ 
-        success: false, 
-        message: `Montant maximum: ${maxAmount.toLocaleString('fr-FR')} GNF` 
+      setResult({
+        success: false,
+        message: `Montant maximum: ${maxAmount.toLocaleString('fr-FR')} GNF`
       });
       return;
     }
@@ -83,11 +83,11 @@ export function CardPaymentDialog({
     );
 
     if (paymentResult.success) {
-      setResult({ 
-        success: true, 
-        message: `Paiement de ${paymentAmount.toLocaleString('fr-FR')} GNF effectué !` 
+      setResult({
+        success: true,
+        message: `Paiement de ${paymentAmount.toLocaleString('fr-FR')} GNF effectué !`
       });
-      
+
       // Reset et fermer après succès
       setTimeout(() => {
         setAmount('');

@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* 224SOLUTIONS Brand System ÔÇö Charte officielle */
-    /* #023288 Bleu Royal ┬À #04439e Bleu Profond ┬À #ff4000 Orange CTA ┬À #ce3d11 Orange Fonc├® ┬À #000000 Noir */
+    /* 224SOLUTIONS Brand System - Charte officielle */
+    /* #023288 Bleu Royal à #04439e Bleu Profond à #ff4000 Orange CTA à #ce3d11 Orange Foncé à #000000 Noir */
 
     --background: 0 0% 100%;
     --foreground: 0 0% 0%;
@@ -20,7 +20,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* Primary: Bleu Royal #023288 ÔÇö hsl(220, 96%, 27%) */
+    /* Primary: Bleu Royal #023288 - hsl(220, 96%, 27%) */
     --primary: 220 96% 27%;
     --primary-foreground: 0 0% 100%;
 
@@ -35,7 +35,7 @@ All colors MUST be HSL.
     --accent: 15 100% 50%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive: Orange Fonc├® #ce3d11 */
+    /* Destructive: Orange Foncé #ce3d11 */
     --destructive: 15 85% 44%;
     --destructive-foreground: 0 0% 100%;
 
@@ -43,7 +43,7 @@ All colors MUST be HSL.
     --input: 220 14% 96%;
     --ring: 220 96% 27%;
 
-    /* Role-based ÔÇö tous bas├®s sur la charte */
+    /* Role-based - tous basés sur la charte */
     --vendeur-primary: 220 97% 27%;
     --vendeur-secondary: 15 100% 50%;
     --vendeur-accent: 220 97% 95%;
@@ -81,7 +81,7 @@ All colors MUST be HSL.
     --client-accent: 220 97% 95%;
     --client-gradient: hsl(220 97% 27%);
 
-    /* Gradients & effects ÔÇö charte officielle */
+    /* Gradients & effects - charte officielle */
     --gradient-elegant: linear-gradient(135deg, hsl(220 96% 97%), hsl(0 0% 100%));
     --gradient-neon: linear-gradient(135deg, hsl(220 96% 27%), hsl(15 100% 50%));
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
@@ -112,7 +112,7 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* 224SOLUTIONS Dark Mode ÔÇö Charte officielle */
+    /* 224SOLUTIONS Dark Mode - Charte officielle */
     --background: 220 20% 8%;
     --foreground: 0 0% 98%;
 
@@ -162,7 +162,7 @@ All colors MUST be HSL.
     font-family: 'Inter', sans-serif;
   }
 
-  /* SYST├êME HOVER BLEU GLOBAL - Ultra Professionnel */
+  /* SYSTÈME HOVER BLEU GLOBAL - Ultra Professionnel */
   /* Tous les boutons - hover bleu uniforme */
   button:not(:disabled):not([data-radix-collection-item]):not(.no-hover-effect):hover,
   [role="button"]:not(:disabled):not(.no-hover-effect):hover,
@@ -176,7 +176,7 @@ All colors MUST be HSL.
     transition: all 0.2s ease !important;
   }
 
-  /* Links styl├®s comme boutons */
+  /* Links stylés comme boutons */
   a[class*="bg-"]:not(.no-hover-effect):hover,
   a[class*="btn"]:not(.no-hover-effect):hover,
   a.button:hover {
@@ -236,7 +236,7 @@ All colors MUST be HSL.
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -376,14 +376,14 @@ All colors MUST be HSL.
 
   /* Deep shadow for primary buttons */
   .btn-deep-shadow {
-    box-shadow: 
+    box-shadow:
       0 4px 6px -1px hsl(220 97% 27% / 0.3),
       0 2px 4px -2px hsl(220 97% 27% / 0.2),
       inset 0 1px 0 hsl(0 0% 100% / 0.1);
   }
 
   .btn-deep-shadow:hover {
-    box-shadow: 
+    box-shadow:
       0 10px 15px -3px hsl(220 97% 27% / 0.35),
       0 4px 6px -4px hsl(220 97% 27% / 0.25),
       inset 0 1px 0 hsl(0 0% 100% / 0.15);
@@ -391,14 +391,14 @@ All colors MUST be HSL.
 
   /* Mobile-first optimizations for PWA */
   @media (max-width: 767px) {
-    /* Am├®liorer les zones tactiles - WCAG AA minimum 44x44px */
-    button:not(.btn-icon-sm):not(.btn-compact), 
-    a:not(.link-inline):not(.link-compact), 
+    /* Améliorer les zones tactiles - WCAG AA minimum 44x44px */
+    button:not(.btn-icon-sm):not(.btn-compact),
+    a:not(.link-inline):not(.link-compact),
     [role="button"]:not(.btn-icon-sm):not(.btn-compact) {
       min-height: 44px;
     }
 
-    /* D├®sactiver le zoom sur les inputs (iOS) */
+    /* Désactiver le zoom sur les inputs (iOS) */
     input, select, textarea {
       font-size: 16px !important;
     }
@@ -408,13 +408,13 @@ All colors MUST be HSL.
       border-radius: 0.75rem;
     }
 
-    /* Am├®liorer la lisibilit├® */
+    /* Améliorer la lisibilité */
     body {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* G├®rer le safe area sur iOS */
+    /* Gérer le safe area sur iOS */
     .safe-area-inset {
       padding-bottom: env(safe-area-inset-bottom);
     }
@@ -481,7 +481,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* PWA standalone mode - cacher les ├®l├®ments web */
+  /* PWA standalone mode - cacher les éléments web */
   @media (display-mode: standalone) {
     body {
       user-select: none;
@@ -490,7 +490,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* Am├®liorer les performances tactiles */
+  /* Améliorer les performances tactiles */
   * {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -595,7 +595,7 @@ All colors MUST be HSL.
      MARKETPLACE GRID - Grille Responsive Professionnelle
      224Solutions - Standard International E-Commerce
      ================================================ */
-  
+
   /* ================================================
      MARKETPLACE GRID - Grille Responsive Premium
      Mobile: 2 colonnes | Tablette: 2-3 | Desktop: 3-6
@@ -612,13 +612,13 @@ All colors MUST be HSL.
     box-sizing: border-box;
   }
 
-  /* Emp├¬cher les enfants de la grille de d├®border */
+  /* Empêcher les enfants de la grille de déborder */
   .marketplace-grid > * {
     min-width: 0;
     overflow: hidden;
   }
 
-  /* Tr├¿s petits ├®crans */
+  /* Très petits écrans */
   @media (max-width: 360px) {
     .marketplace-grid {
       grid-template-columns: 1fr;
@@ -663,7 +663,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* Grand ├®cran (1537px - 1920px): 5-6 colonnes */
+  /* Grand écran (1537px - 1920px): 5-6 colonnes */
   @media (min-width: 1537px) and (max-width: 1920px) {
     .marketplace-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -709,7 +709,7 @@ All colors MUST be HSL.
     border-color: #04439e;
   }
 
-  /* Container image carr├® - Agrandi pour mobile */
+  /* Container image carré - Agrandi pour mobile */
   .marketplace-card-image-container {
     position: relative;
     width: 100%;
@@ -718,7 +718,7 @@ All colors MUST be HSL.
     overflow: hidden;
   }
 
-  /* Image produit haute qualit├® */
+  /* Image produit haute qualité */
   .marketplace-card-image {
     width: 100%;
     height: 100%;
@@ -730,7 +730,7 @@ All colors MUST be HSL.
     transform: scale(1.08);
   }
 
-  /* Contenu card - Padding responsive et overflow cach├® */
+  /* Contenu card - Padding responsive et overflow caché */
   .marketplace-card-content {
     padding: 0.5rem;
     flex: 1;
@@ -812,7 +812,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* Avis ├®toiles */
+  /* Avis étoiles */
   .marketplace-card-rating {
     display: flex;
     align-items: center;
@@ -915,7 +915,7 @@ All colors MUST be HSL.
   /* ============================================
      PRODUCT IMAGE CAROUSEL ANIMATIONS - PREMIUM
      ============================================ */
-  
+
   /* Slide in from right (next) */
   @keyframes slide-in-right {
     from {
@@ -1025,7 +1025,7 @@ All colors MUST be HSL.
     }
   }
 
-  /* Fix pour les TabsContent - ne pas forcer display sur les onglets cach├®s */
+  /* Fix pour les TabsContent - ne pas forcer display sur les onglets cachés */
   [data-state="inactive"].mobile-landscape-grid,
   [data-state="inactive"].mobile-portrait-grid,
   [data-state="inactive"] .mobile-landscape-grid,

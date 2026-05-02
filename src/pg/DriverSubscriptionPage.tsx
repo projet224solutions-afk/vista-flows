@@ -32,7 +32,7 @@ export default function DriverSubscriptionPage() {
           <div>
             <h1 className="text-2xl font-bold">Abonnement 224Solutions</h1>
             <p className="text-muted-foreground">
-              G├®rez votre abonnement mensuel
+              Gérez votre abonnement mensuel
             </p>
           </div>
         </div>

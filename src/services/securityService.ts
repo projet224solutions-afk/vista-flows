@@ -1,5 +1,5 @@
 // SERVICE DE SÉCURITÉ (VERSION SIMPLIFIÉE)
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 
 export interface SecurityToken {
   id: string;
@@ -13,7 +13,7 @@ class SecurityService {
     return null;
   }
 
-  async validateToken(token: string): Promise<boolean> {
+  async validateToken(_token: string): Promise<boolean> {
     return false;
   }
 }

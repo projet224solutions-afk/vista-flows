@@ -12,40 +12,38 @@ interface AgentWalletDisplayProps {
   compact?: boolean;
 }
 
-export function AgentWalletDisplay({ 
+export function AgentWalletDisplay({
   agentId,
   agentCode,
-  className = '', 
-  compact = false 
+  className = '',
+  compact = false
 }: AgentWalletDisplayProps) {
   const [balance, setBalance] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
-  const [walletId, setWalletId] = useState<string | null>(null);
+  const [agentUserId, setAgentUserId] = useState<string | null>(null);
+  const [walletFound, setWalletFound] = useState(false);
 
-  const loadWallet = async () => {
-    if (!agentId) return;
+  const loadWallet = async (userId?: string) => {
+    const targetUserId = userId || agentUserId;
+    if (!targetUserId) return;
 
     try {
-      setLoading(true);
-      
-      // Récupérer le wallet de l'agent directement depuis agent_wallets
-      const { data: agentWallet, error: walletError } = await supabase
-        .from('agent_wallets')
-        .select('id, balance, currency')
-        .eq('agent_id', agentId)
+      const { data: walletData, error } = await supabase
+        .from('wallets')
+        .select('balance, currency')
+        .eq('user_id', targetUserId)
         .single();
 
-      if (walletError) {
-        console.error('❌ Erreur chargement wallet agent:', walletError);
-        throw walletError;
+      if (error) {
+        console.error('❌ Erreur chargement wallet agent:', error);
+        setWalletFound(false);
+        return;
       }
 
-      if (agentWallet) {
-        setWalletId(agentWallet.id);
-        setBalance(agentWallet.balance || 0);
-        setCurrency(agentWallet.currency || 'GNF');
-      }
+      setBalance(walletData?.balance || 0);
+      setCurrency(walletData?.currency || 'GNF');
+      setWalletFound(true);
     } catch (error) {
       console.error('Erreur chargement wallet agent:', error);
     } finally {
@@ -54,31 +52,60 @@ export function AgentWalletDisplay({
   };
 
   useEffect(() => {
-    loadWallet();
+    if (!agentId) return;
 
-    // Subscribe to wallet changes
-    if (agentId) {
-      const channel = supabase
-        .channel(`agent-wallet-${agentId}`)
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const init = async () => {
+      setLoading(true);
+
+      // Résoudre le user_id depuis agents_management
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData?.user_id) {
+        console.error('❌ Agent non trouvé:', agentError);
+        setLoading(false);
+        return;
+      }
+
+      const userId = agentData.user_id;
+      setAgentUserId(userId);
+
+      await loadWallet(userId);
+
+      // Subscription sur wallets (source de vérité) par user_id
+      channel = supabase
+        .channel(`agent-wallet-display-${agentId}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'agent_wallets',
-            filter: `agent_id=eq.${agentId}`,
+            table: 'wallets',
+            filter: `user_id=eq.${userId}`,
           },
-          () => {
-            console.log('💰 Wallet agent mis à jour');
-            loadWallet();
+          (payload) => {
+            if (payload.new && typeof (payload.new as any).balance === 'number') {
+              setBalance((payload.new as any).balance);
+              setCurrency((payload.new as any).currency || 'GNF');
+            } else {
+              loadWallet(userId);
+            }
           }
         )
         .subscribe();
+    };
 
-      return () => {
-        channel.unsubscribe();
-      };
-    }
+    init();
+
+    return () => {
+      channel?.unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const fc = useFormatCurrency();
@@ -96,7 +123,7 @@ export function AgentWalletDisplay({
     );
   }
 
-  if (!walletId) {
+  if (!walletFound) {
     return (
       <Card className={`${className} border-orange-200 bg-orange-50`}>
         <CardContent className={compact ? "py-2 px-3" : "py-3 px-4"}>
@@ -124,7 +151,7 @@ export function AgentWalletDisplay({
             <Button
               variant="ghost"
               size="sm"
-              onClick={loadWallet}
+              onClick={() => loadWallet()}
               className="h-7 w-7 p-0"
             >
               <RefreshCw className="w-3 h-3" />
@@ -153,7 +180,7 @@ export function AgentWalletDisplay({
           <Button
             variant="outline"
             size="sm"
-            onClick={loadWallet}
+            onClick={() => loadWallet()}
           >
             <RefreshCw className="w-4 h-4" />
           </Button>

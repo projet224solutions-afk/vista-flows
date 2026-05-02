@@ -78,12 +78,12 @@ export default function ServiceDashboard() {
     );
   }
 
-  // Pour les services avec module complet ÔåÆ afficher directement
+  // Pour les services avec module complet → afficher directement
   if (isFullModuleService(service)) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
-          {/* Header avec bouton param├¿tres */}
+          {/* Header avec bouton paramètres */}
            <div className="flex items-center justify-between mb-6">
              <div className="flex items-center gap-3">
                <Store className="w-6 h-6 text-primary" />
@@ -98,7 +98,7 @@ export default function ServiceDashboard() {
                  onClick={() => setSettingsOpen(true)}
                >
                  <Settings className="w-4 h-4" />
-                 <span className="hidden sm:inline">Param├¿tres</span>
+                <span className="hidden sm:inline">Paramètres</span>
                </Button>
              </div>
            </div>
@@ -154,9 +154,9 @@ export default function ServiceDashboard() {
 
           <div id="my-purchases-section" className="mt-4">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <MyPurchasesOrdersList 
-                title="Mes Achats Personnels" 
-                emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" 
+              <MyPurchasesOrdersList
+                title="Mes Achats Personnels"
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
               />
             </Suspense>
           </div>
@@ -172,7 +172,7 @@ export default function ServiceDashboard() {
     );
   }
 
-  // Dashboard g├®n├®rique pour les autres types de services
+  // Dashboard generique pour les autres types de services
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-500',
     active: 'bg-green-500',
@@ -208,12 +208,12 @@ export default function ServiceDashboard() {
                 <ServiceIdBadge serviceId={service.id} compact />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
-                {service.service_type?.name} ÔÇó Commission: {service.service_type?.commission_rate}%
+                {service.service_type?.name} • Commission: {service.service_type?.commission_rate}%
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setSettingsOpen(true)}>
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Param├¿tres</span>
+              <span className="hidden sm:inline">Paramètres</span>
             </Button>
           </div>
         </div>
@@ -255,7 +255,7 @@ export default function ServiceDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Note</CardTitle>
-              <span className="text-sm sm:text-xl">Ô¡É</span>
+              <span className="text-sm sm:text-xl">⭐</span>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               <div className="text-lg sm:text-2xl font-bold">{service.rating.toFixed(1)}/5</div>
@@ -277,7 +277,7 @@ export default function ServiceDashboard() {
                 Wallet
               </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
-              <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">R├®servations</TabsTrigger>
+              <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
               <TabsTrigger value="payment-links" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
                 <CreditCard className="w-3.5 h-3.5" />
                 Paiements
@@ -307,20 +307,20 @@ export default function ServiceDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">T├®l├®phone</p>
-                    <p className="mt-1">{service.phone || 'Non renseign├®'}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Téléphone</p>
+                    <p className="mt-1">{service.phone || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p className="mt-1">{service.email || 'Non renseign├®'}</p>
+                    <p className="mt-1">{service.email || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Adresse</p>
-                    <p className="mt-1">{service.address || 'Non renseign├®e'}</p>
+                    <p className="mt-1">{service.address || 'Non renseignée'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Site Web</p>
-                    <p className="mt-1">{service.website || 'Non renseign├®'}</p>
+                    <p className="mt-1">{service.website || 'Non renseigné'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -355,9 +355,9 @@ export default function ServiceDashboard() {
 
           <TabsContent value="my-purchases">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <MyPurchasesOrdersList 
-                title="Mes Achats Personnels" 
-                emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" 
+              <MyPurchasesOrdersList
+                title="Mes Achats Personnels"
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
               />
             </Suspense>
           </TabsContent>
@@ -368,7 +368,7 @@ export default function ServiceDashboard() {
                 <CardTitle>Avis Clients</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Module de gestion des avis ├á impl├®menter...</p>
+                <p className="text-muted-foreground">Module de gestion des avis à implémenter...</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -376,10 +376,10 @@ export default function ServiceDashboard() {
           <TabsContent value="analytics">
             <Card>
               <CardHeader>
-                <CardTitle>Statistiques D├®taill├®es</CardTitle>
+                <CardTitle>Statistiques Détaillées</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Module d'analytics ├á impl├®menter...</p>
+                <p className="text-muted-foreground">Module d'analytics à implémenter...</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -391,7 +391,7 @@ export default function ServiceDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <ServiceSettingsPanel
         open={settingsOpen}
         onOpenChange={setSettingsOpen}

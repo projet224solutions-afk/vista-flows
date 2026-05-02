@@ -3,13 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  UserPlus, 
-  Users, 
-  ShoppingBag, 
-  Truck, 
-  Car, 
-  Ship, 
+import {
+  UserPlus,
+  Users,
+  ShoppingBag,
+  Truck,
+  Car,
+  Ship,
   Building2,
   Mail,
   Phone,
@@ -62,7 +62,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { createUser } = useAgentActions({ onUserCreated });
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -380,7 +380,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 <Building2 className="w-5 h-5 text-pink-600" />
                 <h3 className="font-semibold text-pink-900 dark:text-pink-100">Informations du Bureau Syndical</h3>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="bureau_code" className="text-sm">Code Bureau *</Label>
@@ -436,7 +436,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 <ShoppingBag className="w-5 h-5 text-blue-600" />
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100">Informations de l'Entreprise</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="service_type" className="text-sm">Type de service *</Label>
@@ -498,7 +498,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 <Building2 className="w-5 h-5 text-teal-600" />
                 <h3 className="font-semibold text-teal-900 dark:text-teal-100">Informations du Service</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="service_type_prest" className="text-sm">Type de service *</Label>
@@ -562,7 +562,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   Informations du Véhicule
                 </h3>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="license_number" className="text-sm">Numéro de permis *</Label>
@@ -637,21 +637,21 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           )}
         </form>
         </div>
-        
+
         {/* Boutons d'action - toujours visibles en bas */}
         <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background rounded-b-lg">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setIsOpen(false)}
             disabled={isSubmitting}
             className="h-11"
           >
             Annuler
           </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting} 
+          <Button
+            type="submit"
+            disabled={isSubmitting}
             className="min-w-[160px] h-11"
             onClick={handleSubmit}
           >

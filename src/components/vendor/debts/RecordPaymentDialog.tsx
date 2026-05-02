@@ -119,12 +119,12 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
         );
         toast.success('Paiement enregistré avec succès');
       }
-      
+
       // Reset form
       setAmount('');
       setComment('');
       setPaymentMethod('cash');
-      
+
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {

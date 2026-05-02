@@ -252,7 +252,7 @@ class RequestQueue {
    */
   private recordProcessingTime(time: number): void {
     this.processingTimes.push(time);
-    
+
     // Garder les 100 derniers
     if (this.processingTimes.length > 100) {
       this.processingTimes.shift();

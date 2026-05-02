@@ -59,6 +59,7 @@ export default function InvoicesList() {
 
   useEffect(() => {
     loadInvoices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const getStatusConfig = (status: string) => {
@@ -82,7 +83,7 @@ export default function InvoicesList() {
         .eq('id', invoiceId);
 
       if (error) throw error;
-      
+
       toast.success(t('invoice.markedAsPaid'));
       loadInvoices();
     } catch (error: any) {
@@ -94,7 +95,7 @@ export default function InvoicesList() {
   const handleDownloadOrGenerate = async (invoice: Invoice) => {
     if (!invoice.pdf_url) {
       try {
-        const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+        const { _data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
           body: {
             invoice_id: invoice.id,
             ref: invoice.ref,

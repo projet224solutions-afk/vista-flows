@@ -1,9 +1,9 @@
 /**
  * USE CHINA REPORTS HOOK
- * 
+ *
  * Hook pour générer et consulter les rapports spécifiques
  * aux opérations de dropshipping Chine.
- * 
+ *
  * @module useChinaReports
  * @version 1.0.0
  */
@@ -11,9 +11,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { 
-  ChinaDropshipReport, 
-  ChinaSupplierExtension,
+import type {
+  ChinaDropshipReport,
+  _ChinaSupplierExtension,
   ChinaSupplierOrder,
   ChinaPlatformType
 } from '@/types/china-dropshipping';
@@ -83,27 +83,27 @@ interface UseChinaReportsReturn {
   loading: boolean;
   currentReport: ChinaDropshipReport | null;
   reports: ChinaDropshipReport[];
-  
+
   // Generation
   generateDailyReport: (date?: Date, filters?: ReportFilters) => Promise<ChinaDropshipReport | null>;
   generateWeeklyReport: (weekStart?: Date, filters?: ReportFilters) => Promise<ChinaDropshipReport | null>;
   generateMonthlyReport: (month: Date, filters?: ReportFilters) => Promise<ChinaDropshipReport | null>;
-  
+
   // Queries
   loadReports: (vendorId: string, limit?: number) => Promise<void>;
   getReportById: (reportId: string) => Promise<ChinaDropshipReport | null>;
-  
+
   // Analytics
   getOrderMetrics: (period: ReportPeriod, filters?: ReportFilters) => Promise<OrderMetrics>;
   getFinancialMetrics: (period: ReportPeriod, filters?: ReportFilters) => Promise<FinancialMetrics>;
   getTopSuppliers: (period: ReportPeriod, limit?: number) => Promise<SupplierRanking[]>;
   getTopProducts: (period: ReportPeriod, limit?: number) => Promise<ProductRanking[]>;
   getCustomsMetrics: (period: ReportPeriod) => Promise<CustomsMetrics>;
-  
+
   // Export
   exportReportCsv: (report: ChinaDropshipReport) => void;
   exportReportPdf: (report: ChinaDropshipReport) => Promise<void>;
-  
+
   // Comparisons
   comparePerformance: (period1: ReportPeriod, period2: ReportPeriod) => Promise<{
     orders: { current: number; previous: number; change: number };
@@ -168,8 +168,8 @@ export const useChinaReports = (): UseChinaReportsReturn => {
   // ============================================================================
 
   const fetchOrders = async (
-    startDate: Date, 
-    endDate: Date, 
+    startDate: Date,
+    endDate: Date,
     filters?: ReportFilters
   ): Promise<ChinaSupplierOrder[]> => {
     let query = supabase
@@ -190,8 +190,8 @@ export const useChinaReports = (): UseChinaReportsReturn => {
     // Transform Json fields to proper types
     return ((data || []) as any[]).map(order => ({
       ...order,
-      status_history: Array.isArray(order.status_history) 
-        ? order.status_history 
+      status_history: Array.isArray(order.status_history)
+        ? order.status_history
         : (order.status_history ? [order.status_history] : []),
       items: Array.isArray(order.items) ? order.items : []
     })) as ChinaSupplierOrder[];
@@ -199,7 +199,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
 
   const fetchLogistics = async (orderIds: string[]) => {
     if (orderIds.length === 0) return [];
-    
+
     const { data, error } = await supabase
       .from('china_logistics')
       .select('*')
@@ -241,7 +241,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       const onTimeCount = deliveredOrders.filter(l => {
         if (!l.actual_delivery_date || !l.estimated_total_days) return false;
         const actualDays = Math.floor(
-          (new Date(l.actual_delivery_date).getTime() - new Date(l.created_at).getTime()) 
+          (new Date(l.actual_delivery_date).getTime() - new Date(l.created_at).getTime())
           / (1000 * 60 * 60 * 24)
         );
         return actualDays <= l.estimated_total_days;
@@ -277,9 +277,9 @@ export const useChinaReports = (): UseChinaReportsReturn => {
   ): Promise<FinancialMetrics> => {
     try {
       const orders = await fetchOrders(period.start, period.end, filters);
-      
+
       const totalCost = orders.reduce((sum, o) => sum + (o.supplier_total_usd || 0), 0);
-      
+
       // Estimate revenue with average markup (this would normally come from sales data)
       const avgMarkup = 1.35; // 35% average margin
       const totalRevenue = totalCost * avgMarkup;
@@ -311,7 +311,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
   ): Promise<SupplierRanking[]> => {
     try {
       const orders = await fetchOrders(period.start, period.end);
-      
+
       // Group by supplier
       const supplierMap = new Map<string, {
         orders: ChinaSupplierOrder[];
@@ -321,7 +321,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
 
       for (const order of orders) {
         if (!order.supplier_id) continue;
-        
+
         const existing = supplierMap.get(order.supplier_id) || {
           orders: [],
           delivered: 0,
@@ -345,12 +345,12 @@ export const useChinaReports = (): UseChinaReportsReturn => {
 
       // Calculate rankings
       const rankings: SupplierRanking[] = [];
-      
+
       for (const [supplierId, data] of supplierMap.entries()) {
         const details = supplierDetails.get(supplierId);
         const totalOrders = data.orders.length;
         const successRate = totalOrders > 0 ? (data.delivered / totalOrders) * 100 : 0;
-        
+
         rankings.push({
           supplierId,
           supplierName: details?.platform_shop_id || supplierId.slice(0, 8),
@@ -373,7 +373,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
 
   const getTopProducts = useCallback(async (
     period: ReportPeriod,
-    limit: number = 10
+    _limit: number = 10
   ): Promise<ProductRanking[]> => {
     try {
       // This would require joining with product data
@@ -391,7 +391,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
     try {
       const orders = await fetchOrders(period.start, period.end);
       const orderIds = orders.map(o => o.id);
-      
+
       const { data: logistics } = await supabase
         .from('china_logistics')
         .select('*')
@@ -454,30 +454,30 @@ export const useChinaReports = (): UseChinaReportsReturn => {
         report_period: period.type,
         period_start: period.start.toISOString().split('T')[0],
         period_end: period.end.toISOString().split('T')[0],
-        
+
         // Order stats
         total_china_orders: orderMetrics.total,
         completed_orders: orderMetrics.completed,
         cancelled_orders: orderMetrics.cancelled,
         disputed_orders: orderMetrics.disputed,
-        
+
         // Financial
         total_revenue_local: financialMetrics.totalRevenue,
         total_cost_usd: financialMetrics.totalCost,
         total_profit_local: financialMetrics.profit,
         net_margin_percent: financialMetrics.marginPercent,
-        
+
         // Delivery
         avg_actual_delivery_days: orderMetrics.avgDeliveryDays,
         avg_estimated_delivery_days: 18,
         delivery_variance_days: orderMetrics.avgDeliveryDays - 18,
         on_time_rate: orderMetrics.onTimeRate,
-        
+
         // Customs
         customs_blocked_orders: customsMetrics.blocked,
         customs_blocked_rate: customsMetrics.blockedRate,
         avg_customs_delay_days: customsMetrics.avgClearanceDays,
-        
+
         // Rankings - Transform SupplierRanking to TopSupplierStat
         top_suppliers: topSuppliers.map(s => ({
           supplier_id: s.supplierId,
@@ -490,12 +490,12 @@ export const useChinaReports = (): UseChinaReportsReturn => {
           score: s.score
         })),
         top_products: [],
-        
+
         // Alerts
         price_increase_alerts: 0,
         stock_out_alerts: 0,
         quality_issues: 0,
-        
+
         generated_at: new Date().toISOString(),
       };
 
@@ -534,6 +534,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       start: getStartOfDay(date),
       end: getEndOfDay(date),
     }, filters);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateWeeklyReport = useCallback(async (
@@ -545,6 +546,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       start: getStartOfWeek(weekStart),
       end: getEndOfWeek(weekStart),
     }, filters);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateMonthlyReport = useCallback(async (
@@ -556,6 +558,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       start: getStartOfMonth(month),
       end: getEndOfMonth(month),
     }, filters);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================================================
@@ -576,8 +579,8 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       // Transform Json fields to proper types
       setReports(((data || []) as any[]).map(report => ({
         ...report,
-        top_suppliers: Array.isArray(report.top_suppliers) 
-          ? report.top_suppliers 
+        top_suppliers: Array.isArray(report.top_suppliers)
+          ? report.top_suppliers
           : (typeof report.top_suppliers === 'string' ? JSON.parse(report.top_suppliers) : []),
         top_products: Array.isArray(report.top_products)
           ? report.top_products
@@ -604,8 +607,8 @@ export const useChinaReports = (): UseChinaReportsReturn => {
       const report = data as any;
       return {
         ...report,
-        top_suppliers: Array.isArray(report.top_suppliers) 
-          ? report.top_suppliers 
+        top_suppliers: Array.isArray(report.top_suppliers)
+          ? report.top_suppliers
           : (typeof report.top_suppliers === 'string' ? JSON.parse(report.top_suppliers) : []),
         top_products: Array.isArray(report.top_products)
           ? report.top_products
@@ -655,7 +658,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
     ];
 
     const csv = [headers.join(','), values.join(',')].join('\n');
-    
+
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -665,7 +668,7 @@ export const useChinaReports = (): UseChinaReportsReturn => {
     toast.success('Rapport CSV téléchargé');
   }, []);
 
-  const exportReportPdf = useCallback(async (report: ChinaDropshipReport) => {
+  const exportReportPdf = useCallback(async (_report: ChinaDropshipReport) => {
     // Would integrate with PDF generation library
     toast.info('Export PDF en développement');
   }, []);

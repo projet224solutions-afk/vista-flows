@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, TrendingUp, Download, Calendar, Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { BarChart3, TrendingUp, Download, _Calendar, _Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { usePDGReportsData } from '@/hooks/usePDGReportsData';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -28,22 +28,22 @@ export default function PDGReportsAnalytics() {
           <p className="text-muted-foreground mt-1">Vue d'ensemble des performances de la plateforme</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant={timeRange === '7d' ? 'default' : 'outline'} 
+          <Button
+            variant={timeRange === '7d' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTimeRange('7d')}
           >
             7 jours
           </Button>
-          <Button 
-            variant={timeRange === '30d' ? 'default' : 'outline'} 
+          <Button
+            variant={timeRange === '30d' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTimeRange('30d')}
           >
             30 jours
           </Button>
-          <Button 
-            variant={timeRange === '90d' ? 'default' : 'outline'} 
+          <Button
+            variant={timeRange === '90d' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTimeRange('90d')}
           >

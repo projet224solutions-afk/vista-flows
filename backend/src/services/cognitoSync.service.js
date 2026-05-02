@@ -81,7 +81,7 @@ export async function syncCognitoUser(cognitoUser, additionalData = {}) {
 export async function getUserByCognitoId(cognitoUserId) {
   try {
     const result = await query(
-      `SELECT u.*, 
+      `SELECT u.*,
               array_agg(ur.role) as roles,
               w.balance, w.currency
        FROM users u

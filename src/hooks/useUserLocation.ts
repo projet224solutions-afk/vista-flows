@@ -63,13 +63,13 @@ export function useUserLocation(): UseUserLocationResult {
     try {
       // 1. Obtenir la position GPS
       const position = await mapService.getCurrentPosition();
-      
+
       // 2. Reverse geocoding pour obtenir l'adresse
       const address = await mapService.reverseGeocode(position.latitude, position.longitude);
-      
+
       // 3. Formater l'adresse (prendre seulement ville/quartier)
       const formattedAddress = formatAddress(address);
-      
+
       const userLocation: UserLocation = {
         latitude: position.latitude,
         longitude: position.longitude,
@@ -79,17 +79,17 @@ export function useUserLocation(): UseUserLocationResult {
 
       setLocation(userLocation);
       setCachedLocation(userLocation);
-      
+
       console.log('📍 Localisation détectée:', userLocation);
     } catch (err: any) {
       console.error('❌ Erreur détection localisation:', err);
-      
+
       // Fallback: essayer la géolocalisation IP
       try {
         const ipLocation = await detectLocationByIP();
         setLocation(ipLocation);
         setCachedLocation(ipLocation);
-      } catch (ipErr) {
+      } catch (_ipErr) {
         setError(err.message || 'Impossible de détecter la localisation');
         // Garder la localisation par défaut
         setLocation({
@@ -126,10 +126,10 @@ function formatAddress(fullAddress: string): string {
 
   // Extraire les parties importantes de l'adresse
   const parts = fullAddress.split(',').map(p => p.trim());
-  
+
   // Prendre les 2 premières parties significatives (quartier, ville)
   const relevantParts = parts.slice(0, 2).filter(p => p.length > 0);
-  
+
   if (relevantParts.length === 0) {
     return 'Conakry, Guinée';
   }

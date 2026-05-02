@@ -5,7 +5,7 @@
  * 224Solutions - Vendor Diagnostic System
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +17,11 @@ import {
     AlertTriangle,
     RefreshCw,
     Settings,
-    Database,
-    User,
-    Wallet,
-    Package,
-    ShoppingCart,
+    _Database,
+    _User,
+    _Wallet,
+    _Package,
+    _ShoppingCart,
     Loader2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -177,7 +177,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
     };
 
     // Suggestions de réparation
-    const getFixSuggestion = (testName: string, error: string): string => {
+    const getFixSuggestion = (testName: string, _error: string): string => {
         switch (testName) {
             case 'Profil vendeur':
                 return 'Créer un profil vendeur pour cet utilisateur';

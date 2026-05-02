@@ -61,8 +61,8 @@ function FeatureRow({ label, icon: Icon, enabled }: { label: string; icon: any; 
 }
 
 /**
- * G├®n├¿re une description marketing dynamique ├á partir des donn├®es r├®elles du plan.
- * Aucune valeur hardcod├®e ÔÇö tout vient de l'objet plan.
+ * Génère une description marketing dynamique à partir des données réelles du plan.
+ * Aucune valeur hardcodée - tout vient de l'objet plan.
  */
 function buildPlanDescription(plan: Plan): string {
   const parts: string[] = [];
@@ -81,7 +81,7 @@ function buildPlanDescription(plan: Plan): string {
 
   // Produits
   if (plan.max_products === null) {
-    parts.push('produits illimit├®s');
+    parts.push('produits illimités');
   } else {
     parts.push(`${plan.max_products} produits`);
   }
@@ -133,13 +133,13 @@ function buildPlanDescription(plan: Plan): string {
 
   // Construct sentence
   const toneMap: Record<string, string> = {
-    free: 'Id├®al pour d├®marrer',
+    free: 'Idéal pour démarrer',
     basic: 'Pour structurer votre boutique',
-    pro: 'Pour acc├®l├®rer votre croissance',
-    business: 'Pour une activit├® ├á grande ├®chelle',
-    premium: 'Pour une gestion avanc├®e et compl├¿te',
+    pro: 'Pour accélérer votre croissance',
+    business: 'Pour une activité à grande échelle',
+    premium: 'Pour une gestion avancée et complète',
   };
-  const tone = toneMap[plan.name] || 'Un plan adapt├® ├á vos besoins';
+  const tone = toneMap[plan.name] || 'Un plan adapté à vos besoins';
 
   return `${tone} avec ${parts.join(', ')}.`;
 }
@@ -352,6 +352,7 @@ export default function VendorSubscriptionPage() {
 
   useEffect(() => {
     void loadProductLimit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscription, activePlan?.id, isDigitalSubscription, vendorId, currentVendorUserId]);
 
   const loadProductLimit = async () => {
@@ -435,7 +436,7 @@ export default function VendorSubscriptionPage() {
     try {
       setProcessing(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error('Vous devez ├¬tre connect├®'); return; }
+      if (!user) { toast.error('Vous devez être connecté'); return; }
 
       const { data: walletData } = await supabase
         .from('wallets')
@@ -459,11 +460,11 @@ export default function VendorSubscriptionPage() {
 
       if (subscriptionId) {
         const endDate = format(calculateEndDate(billingCycle), 'dd/MM/yyyy', { locale: fr });
-        toast.success(`Abonnement ${selectedPlan.display_name} activ├® jusqu'au ${endDate}`);
+        toast.success(`Abonnement ${selectedPlan.display_name} activé jusqu'au ${endDate}`);
         setIsDialogOpen(false);
         refresh();
       } else {
-        throw new Error('├ëchec de la cr├®ation');
+        throw new Error('Échec de la création');
       }
     } catch (error: any) {
       console.error('Subscription error:', error);
@@ -517,7 +518,7 @@ export default function VendorSubscriptionPage() {
                       ? 'Vous utilisez actuellement le plan de base pour votre catalogue digital'
                       : 'Vous utilisez actuellement le plan gratuit'
                     : isExpired
-                      ? 'Votre abonnement a expir├®'
+                      ? 'Votre abonnement a expiré'
                       : `Plan ${subscription.plan_display_name} actif`}
                 </CardDescription>
               </div>
@@ -526,7 +527,7 @@ export default function VendorSubscriptionPage() {
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Actif
                 </Badge>
               ) : isExpired ? (
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Expir├®</Badge>
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Expiré</Badge>
               ) : (
                 <Badge variant="outline" className="bg-muted text-muted-foreground">Gratuit</Badge>
               )}
@@ -594,9 +595,9 @@ export default function VendorSubscriptionPage() {
                     <span className="font-medium">
                       {productLimit
                         ? activePlan.max_products === null
-                          ? `${productLimit.current_count} (illimit├®)`
+                          ? `${productLimit.current_count} (illimité)`
                           : `${productLimit.current_count} / ${activePlan.max_products}`
-                        : activePlan.max_products === null ? 'Illimit├®' : `Max ${activePlan.max_products}`}
+                        : activePlan.max_products === null ? 'Illimité' : `Max ${activePlan.max_products}`}
                     </span>
                   </div>
                   {activePlan.max_products !== null && productLimit && (
@@ -622,7 +623,7 @@ export default function VendorSubscriptionPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{imageLabel}</span>
                   <span className="font-medium">
-                    {activePlan.max_images_per_product === null ? 'Illimit├®' : `Max ${activePlan.max_images_per_product}`}
+                    {activePlan.max_images_per_product === null ? 'Illimité' : `Max ${activePlan.max_images_per_product}`}
                   </span>
                 </div>
               </div>
@@ -706,7 +707,7 @@ export default function VendorSubscriptionPage() {
                           )}
                           {isRecommended && !isCurrentPlan && (
                             <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs border-0">
-                              <Crown className="h-3 w-3 mr-1" /> Recommand├®
+                              <Crown className="h-3 w-3 mr-1" /> Recommandé
                             </Badge>
                           )}
                           {isPopular && !isCurrentPlan && (
@@ -731,13 +732,13 @@ export default function VendorSubscriptionPage() {
                       )}
                     </div>
 
-                    {/* KEY LIMITS ÔÇö highly visible */}
+                    {/* KEY LIMITS - highly visible */}
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2">
                         <Package className="h-5 w-5 text-primary shrink-0" />
                         <div>
                           <p className="text-sm font-bold leading-tight">
-                            {plan.max_products === null ? 'Illimit├®' : plan.max_products}
+                            {plan.max_products === null ? 'Illimité' : plan.max_products}
                           </p>
                           <p className="text-[11px] text-muted-foreground leading-tight">
                             {isDigitalSubscription
@@ -758,7 +759,7 @@ export default function VendorSubscriptionPage() {
                         <ImageIcon className="h-5 w-5 text-primary shrink-0" />
                         <div>
                           <p className="text-sm font-bold leading-tight">
-                            {plan.max_images_per_product === null ? 'Illimit├®' : plan.max_images_per_product}
+                            {plan.max_images_per_product === null ? 'Illimité' : plan.max_images_per_product}
                           </p>
                           <p className="text-[11px] text-muted-foreground leading-tight">
                             {isDigitalSubscription
@@ -781,12 +782,12 @@ export default function VendorSubscriptionPage() {
                     <div className="mb-3">
                       <p className="text-sm font-semibold">
                         {plan.name === 'free'
-                          ? 'Gratuit ÔÇö aucun paiement requis'
+                          ? 'Gratuit - aucun paiement requis'
                           : `${SubscriptionService.formatAmount(plan.monthly_price_gnf)} GNF/mois`}
                       </p>
                       {savingsPercent > 0 && (
                         <p className="text-xs text-green-600 font-medium">
-                          ├ëconomisez {savingsPercent}% en annuel
+                          Économisez {savingsPercent}% en annuel
                         </p>
                       )}
                     </div>
@@ -891,7 +892,7 @@ export default function VendorSubscriptionPage() {
               </div>
               {billingCycle === 'yearly' && selectedPlan && (
                 <p className="text-xs text-green-600 font-medium">
-                  ├ëconomisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
+                  Économisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
                 </p>
               )}
             </div>
@@ -912,7 +913,7 @@ export default function VendorSubscriptionPage() {
                 <Wallet className="w-4 h-4 text-primary" />
                 <span className="font-medium">Paiement par Wallet</span>
               </div>
-              <p className="text-xs text-muted-foreground">Le montant sera d├®bit├® de votre wallet</p>
+              <p className="text-xs text-muted-foreground">Le montant sera débité de votre wallet</p>
             </div>
           </div>
 

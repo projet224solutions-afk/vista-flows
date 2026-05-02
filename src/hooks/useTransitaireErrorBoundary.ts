@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 
-export type TransitaireErrorType = 
+export type TransitaireErrorType =
   | 'shipment_error'      // Erreurs création/gestion expéditions
   | 'customs_error'       // Erreurs traitement douanier
   | 'tracking_error'      // Erreurs suivi en temps réel

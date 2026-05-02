@@ -41,7 +41,7 @@ export default function NearbyBoutiques() {
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
 
   useEffect(() => {
-    document.title = "Boutiques ├á proximit├® | 224SOLUTIONS";
+    document.title = "Boutiques à proximité | 224SOLUTIONS";
   }, []);
 
   const loadVendors = async (overridePosition?: { latitude: number; longitude: number }) => {
@@ -62,10 +62,10 @@ export default function NearbyBoutiques() {
       const { data, error: dbError } = await query;
       if (dbError) throw dbError;
 
-      // Utiliser la position fournie ou la position de useGeoDistance (inclut d├®j├á le fallback Coyah)
+      // Utiliser la position fournie ou la position de useGeoDistance (inclut déjà le fallback Coyah)
       const origin = overridePosition ?? userPosition;
 
-      // On utilise la position (r├®elle ou par d├®faut) pour calculer les distances
+      // On utilise la position (réelle ou par défaut) pour calculer les distances
 
       let list: Vendor[] = (data || []).map((v: any) => ({
         ...v,
@@ -78,7 +78,7 @@ export default function NearbyBoutiques() {
         .map((v) => {
           const lat_val = Number(v.latitude);
           const lng_val = Number(v.longitude);
-          if (v.latitude == null || v.longitude == null || 
+          if (v.latitude == null || v.longitude == null ||
               !Number.isFinite(lat_val) || !Number.isFinite(lng_val) ||
               (lat_val === 0 && lng_val === 0)) {
             return { ...v, distance: null };
@@ -111,10 +111,11 @@ export default function NearbyBoutiques() {
   };
 
   useEffect(() => {
-    // Charger les boutiques d├¿s que la position est pr├¬te.
-    // useGeoDistance g├¿re d├®j├á le fallback (Coyah) en cas d'├®chec GPS.
+    // Charger les boutiques dès que la position est prête.
+    // useGeoDistance gère déjà le fallback (Coyah) en cas d'échec GPS.
     if (!positionReady) return;
     void loadVendors();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positionReady, businessTypeFilter, serviceTypeFilter]);
 
   const filteredVendors = useMemo(() => {
@@ -130,7 +131,7 @@ export default function NearbyBoutiques() {
     });
   }, [vendors, searchQuery]);
 
-  // Handler de navigation optimis├® avec useCallback pour ├®viter les re-cr├®ations
+  // Handler de navigation optimisé avec useCallback pour éviter les re-créations
   const handleVendorNavigate = useCallback((vendorId: string, shopSlug?: string | null) => {
     navigate(`/boutique/${shopSlug || vendorId}`);
   }, [navigate]);
@@ -142,13 +143,13 @@ export default function NearbyBoutiques() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate("/proximite")}
-                aria-label="Retour ├á proximit├®"
+                aria-label="Retour à proximité"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-foreground truncate">Boutiques ├á proximit├®</h1>
-                <p className="text-xs text-muted-foreground truncate">D├®couvrez les vendeurs dans un rayon de {RADIUS_KM} km</p>
+                <h1 className="text-lg font-bold text-foreground truncate">Boutiques à proximité</h1>
+                <p className="text-xs text-muted-foreground truncate">Découvrez les vendeurs dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full" onClick={handleRefresh} disabled={loading} aria-label="Actualiser">
@@ -159,7 +160,7 @@ export default function NearbyBoutiques() {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant={usingRealLocation ? "default" : "secondary"} className="gap-1">
               <MapPin className="w-3 h-3" />
-              {usingRealLocation ? "Position GPS active" : "GPS d├®sactiv├®"}
+              {usingRealLocation ? "Position GPS active" : "GPS désactivé"}
             </Badge>
             <Badge variant="secondary" className="gap-1">
               Rayon: {RADIUS_KM} km
@@ -187,7 +188,7 @@ export default function NearbyBoutiques() {
                 onChange={(e) => setBusinessTypeFilter(e.target.value)}
                 className="bg-transparent text-sm text-foreground border-0 focus:outline-none"
               >
-                <option value="all">Tous</option>
+                <option value="all">Tous</option>
                 <option value="physical">Physique</option>
                 <option value="digital">En ligne</option>
                 <option value="hybrid">Hybride</option>
@@ -200,8 +201,8 @@ export default function NearbyBoutiques() {
                 onChange={(e) => setServiceTypeFilter(e.target.value)}
                 className="bg-transparent text-sm text-foreground border-0 focus:outline-none"
               >
-                <option value="all">Tous</option>
-                <option value="retail">D├®taillant</option>
+                <option value="all">Tous</option>
+                <option value="retail">Détaillant</option>
                 <option value="wholesale">Grossiste</option>
                 <option value="mixed">Mixte</option>
               </select>
@@ -217,18 +218,18 @@ export default function NearbyBoutiques() {
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <Button variant="outline" onClick={handleRefresh} className="gap-2">
               <RefreshCw className="w-4 h-4" />
-              R├®essayer
+              Réessayer
             </Button>
           </div>
         ) : loading ? (
           <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
             <RefreshCw className="w-6 h-6 animate-spin text-primary mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Chargement des boutiquesÔÇª</p>
+            <p className="text-sm text-muted-foreground">Chargement des boutiques...</p>
           </div>
         ) : filteredVendors.length === 0 ? (
           <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
             <Store className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm font-medium text-foreground mb-1">Aucune boutique trouv├®e</p>
+            <p className="text-sm font-medium text-foreground mb-1">Aucune boutique trouvée</p>
             <p className="text-sm text-muted-foreground">Essayez de modifier les filtres ou la recherche.</p>
           </div>
         ) : (

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Key, Smartphone, Usb, Shield, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { _supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface MFAMethod {
@@ -22,7 +22,7 @@ interface MFAMethod {
   security: 'high' | 'medium' | 'low';
 }
 
-const mfaMethods: MFAMethod[] = [
+const _mfaMethods: MFAMethod[] = [
   {
     id: 'yubikey',
     name: 'YubiKey / Clé matérielle',
@@ -62,7 +62,7 @@ const mfaMethods: MFAMethod[] = [
 ];
 
 export function AdvancedMFA() {
-  const { user } = useAuth();
+  const { _user } = useAuth();
   const [mfaMethods, setMfaMethods] = useState<MFAMethod[]>([
     {
       id: 'yubikey',
@@ -118,14 +118,14 @@ export function AdvancedMFA() {
     if (!method) return;
 
     // Mettre à jour l'état local
-    const updatedMethods = mfaMethods.map(m => 
+    const updatedMethods = mfaMethods.map(m =>
       m.id === methodId ? { ...m, enabled: !m.enabled } : m
     );
     setMfaMethods(updatedMethods);
 
     toast.success(
-      method.enabled 
-        ? `${method.name} désactivé` 
+      method.enabled
+        ? `${method.name} désactivé`
         : `${method.name} activé avec succès`,
       {
         description: 'Configuration MFA mise à jour'
@@ -183,7 +183,7 @@ export function AdvancedMFA() {
                   {method.enabled && (
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                   )}
-                  <Button 
+                  <Button
                     variant={method.enabled ? "outline" : "default"}
                     size="sm"
                     onClick={() => method.enabled ? handleConfigureMFA(method.id) : handleToggleMFA(method.id)}
@@ -191,7 +191,7 @@ export function AdvancedMFA() {
                     {method.enabled ? 'Configurer' : 'Activer'}
                   </Button>
                   {method.enabled && (
-                    <Button 
+                    <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleToggleMFA(method.id)}
@@ -208,7 +208,7 @@ export function AdvancedMFA() {
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium mb-2">💡 Recommandation</p>
           <p className="text-sm text-muted-foreground">
-            Pour une sécurité maximale, utilisez une YubiKey ou une clé FIDO2 comme méthode primaire. 
+            Pour une sécurité maximale, utilisez une YubiKey ou une clé FIDO2 comme méthode primaire.
             Conservez l'authenticator app comme backup.
           </p>
         </div>

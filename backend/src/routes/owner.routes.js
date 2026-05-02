@@ -31,7 +31,7 @@ router.use(readOnlyAccess);
 
 /**
  * GET /owner/id-normalization/logs
- * 
+ *
  * Query params:
  * - page: number (default: 1)
  * - limit: number (default: 20, max: 100)
@@ -41,7 +41,7 @@ router.use(readOnlyAccess);
  * - end_date: ISO date string
  * - sort_by: string (default: 'created_at')
  * - sort_order: 'asc' | 'desc' (default: 'desc')
- * 
+ *
  * Response:
  * {
  *   "success": true,
@@ -60,11 +60,11 @@ router.get('/id-normalization/logs', handleGetLogs);
 
 /**
  * GET /owner/id-normalization/stats
- * 
+ *
  * Query params:
  * - start_date: ISO date string (optional)
  * - end_date: ISO date string (optional)
- * 
+ *
  * Response:
  * {
  *   "success": true,
@@ -81,7 +81,7 @@ router.get('/id-normalization/stats', handleGetStats);
 
 /**
  * GET /owner/id-normalization/logs/:logId
- * 
+ *
  * Response:
  * {
  *   "success": true,
@@ -103,7 +103,7 @@ router.get('/id-normalization/logs/:logId', handleGetLogById);
 
 /**
  * GET /owner/id-normalization/reasons
- * 
+ *
  * Response:
  * {
  *   "success": true,

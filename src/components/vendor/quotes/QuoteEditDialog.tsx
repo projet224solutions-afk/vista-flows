@@ -76,9 +76,9 @@ export default function QuoteEditDialog({
       setClientEmail(quote.client_email || '');
       setClientPhone(quote.client_phone || '');
       setClientAddress(quote.client_address || '');
-      
+
       // Normaliser les items qui peuvent avoir des structures différentes (qty/price vs quantity/unit_price)
-      const normalizedItems = (quote.items && quote.items.length > 0) 
+      const normalizedItems = (quote.items && quote.items.length > 0)
         ? quote.items.map((item: any) => ({
             name: item.name || '',
             quantity: item.quantity ?? item.qty ?? 1,
@@ -86,7 +86,7 @@ export default function QuoteEditDialog({
             total: item.total ?? ((item.quantity ?? item.qty ?? 1) * (item.unit_price ?? item.price ?? 0))
           }))
         : [{ name: '', quantity: 1, unit_price: 0, total: 0 }];
-      
+
       setItems(normalizedItems);
       setDiscount(quote.discount || 0);
       setTax(quote.tax || 0);

@@ -15,7 +15,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className, variant = 'icon' }: ThemeToggleProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { _theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch

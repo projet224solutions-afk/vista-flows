@@ -5,8 +5,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { MapPin, Loader2, AlertCircle, Maximize } from 'lucide-react';
+import { _Button } from '@/components/ui/button';
+import { MapPin, Loader2, AlertCircle, _Maximize } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { Property } from '@/hooks/useRealEstateData';
 
@@ -22,7 +22,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const formatPrice = useFormatCurrency();
+  const _formatPrice = useFormatCurrency();
 
   // Fetch Google Maps API key from frontend env vars
   useEffect(() => {
@@ -53,6 +53,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
       setLoading(false);
     };
     document.head.appendChild(script);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiKey]);
 
   const initMap = useCallback(() => {

@@ -39,10 +39,10 @@ const CONTRACT_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  created: 'Cr├®├®',
-  sent: 'Envoy├®',
-  signed: 'Sign├®',
-  archived: 'Archiv├®',
+  created: 'Créé',
+  sent: 'Envoyé',
+  signed: 'Signé',
+  archived: 'Archivé',
 };
 
 export default function ClientContracts() {
@@ -56,6 +56,7 @@ export default function ClientContracts() {
 
   useEffect(() => {
     loadContracts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadContracts = async () => {
@@ -87,25 +88,25 @@ export default function ClientContracts() {
     setIsDrawing(true);
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     ctx.beginPath();
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -120,10 +121,10 @@ export default function ClientContracts() {
   const clearSignature = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
@@ -138,7 +139,7 @@ export default function ClientContracts() {
         throw new Error('Canvas non disponible');
       }
 
-      // V├®rifier si la signature n'est pas vide
+      // Vérifier si la signature n'est pas vide
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         throw new Error('Canvas context non disponible');
@@ -147,7 +148,7 @@ export default function ClientContracts() {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const pixels = imageData.data;
       let hasPixels = false;
-      
+
       for (let i = 3; i < pixels.length; i += 4) {
         if (pixels[i] !== 0) {
           hasPixels = true;
@@ -166,7 +167,7 @@ export default function ClientContracts() {
 
       const signatureData = canvas.toDataURL('image/png');
 
-      const { data, error } = await supabase.functions.invoke('sign-contract', {
+      const { _data, error } = await supabase.functions.invoke('sign-contract', {
         body: {
           contract_id: selectedContract.id,
           signature_data: signatureData,
@@ -177,8 +178,8 @@ export default function ClientContracts() {
       if (error) throw error;
 
       toast({
-        title: 'Contrat sign├®',
-        description: 'Votre signature a ├®t├® enregistr├®e avec succ├¿s',
+        title: 'Contrat signé',
+        description: 'Votre signature a été enregistrée avec succès',
       });
 
       setSelectedContract(null);
@@ -245,13 +246,13 @@ export default function ClientContracts() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date de cr├®ation</p>
+                  <p className="text-sm text-muted-foreground">Date de création</p>
                   <p className="font-medium">
                     {format(new Date(contract.created_at), 'dd MMM yyyy', { locale: fr })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">R├®f├®rence</p>
+                  <p className="text-sm text-muted-foreground">Référence</p>
                   <p className="font-medium font-mono text-sm">
                     {contract.id.substring(0, 8).toUpperCase()}
                   </p>
@@ -291,7 +292,7 @@ export default function ClientContracts() {
               {selectedContract && CONTRACT_LABELS[selectedContract.contract_type]}
             </DialogTitle>
             <DialogDescription>
-              R├®f├®rence: {selectedContract?.id.substring(0, 8).toUpperCase()}
+              Référence: {selectedContract?.id.substring(0, 8).toUpperCase()}
             </DialogDescription>
           </DialogHeader>
 
@@ -342,7 +343,7 @@ export default function ClientContracts() {
               {selectedContract.client_signature_url && (
                 <div className="text-center">
                   <Badge variant="default" className="text-lg py-2 px-4">
-                    Ô£ô Contrat d├®j├á sign├®
+                    ✓ Contrat déjà signé
                   </Badge>
                 </div>
               )}

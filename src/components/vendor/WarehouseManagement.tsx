@@ -13,16 +13,16 @@ import { useWarehouseManagement } from '@/hooks/useWarehouseManagement';
 import { useToast } from '@/hooks/use-toast';
 
 export default function WarehouseManagement() {
-  const { 
-    warehouses, 
-    warehouseStocks,
+  const {
+    warehouses,
+    _warehouseStocks,
     stockMovements,
-    loading, 
-    error, 
-    createWarehouse, 
-    updateWarehouse,
+    loading,
+    error,
+    createWarehouse,
+    _updateWarehouse,
     deleteWarehouse,
-    updateStock,
+    _updateStock,
     transferStock
   } = useWarehouseManagement();
   const { toast } = useToast();
@@ -45,7 +45,7 @@ export default function WarehouseManagement() {
 
   const handleCreateWarehouse = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const warehouseData = {
         name: newWarehouse.name,
@@ -61,7 +61,7 @@ export default function WarehouseManagement() {
       });
       setIsCreateDialogOpen(false);
       setNewWarehouse({ name: '', address: '', contact_person: '', contact_phone: '' });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de créer l'entrepôt",
@@ -72,7 +72,7 @@ export default function WarehouseManagement() {
 
   const handleTransferStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await transferStock(
         transferData.product_id,
@@ -87,7 +87,7 @@ export default function WarehouseManagement() {
       });
       setIsTransferDialogOpen(false);
       setTransferData({ product_id: '', from_warehouse_id: '', to_warehouse_id: '', quantity: '', notes: '' });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible d'effectuer le transfert",
@@ -105,7 +105,7 @@ export default function WarehouseManagement() {
         title: "Entrepôt supprimé",
         description: "L'entrepôt a été supprimé avec succès"
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'entrepôt",
@@ -147,7 +147,7 @@ export default function WarehouseManagement() {
             </div>
           </div>
         </div>
-        
+
         <div className="flex gap-3">
           <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
             <DialogTrigger asChild>
@@ -179,11 +179,11 @@ export default function WarehouseManagement() {
                       required
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="from_warehouse" className="text-sm font-medium">Entrepôt source *</Label>
-                      <select 
+                      <select
                         id="from_warehouse"
                         className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
                         value={transferData.from_warehouse_id}
@@ -198,10 +198,10 @@ export default function WarehouseManagement() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="to_warehouse" className="text-sm font-medium">Entrepôt destination *</Label>
-                      <select 
+                      <select
                         id="to_warehouse"
                         className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
                         value={transferData.to_warehouse_id}
@@ -243,7 +243,7 @@ export default function WarehouseManagement() {
                     />
                   </div>
                 </div>
-                
+
                 <DialogFooter className="mt-6">
                   <Button type="button" variant="outline" onClick={() => setIsTransferDialogOpen(false)}>
                     Annuler
@@ -286,7 +286,7 @@ export default function WarehouseManagement() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="address" className="text-sm font-medium">Adresse complète</Label>
                     <Textarea
@@ -321,7 +321,7 @@ export default function WarehouseManagement() {
                     </div>
                   </div>
                 </div>
-                
+
                 <DialogFooter className="mt-6">
                   <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Annuler
@@ -373,7 +373,7 @@ export default function WarehouseManagement() {
                   </div>
                 </div>
               )}
-              
+
               {warehouse.contact_person && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <Package className="h-4 w-4 text-vendeur-primary flex-shrink-0" />
@@ -388,8 +388,8 @@ export default function WarehouseManagement() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -399,8 +399,8 @@ export default function WarehouseManagement() {
                 >
                   Supprimer
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="flex-1 bg-vendeur-gradient hover:shadow-glow transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -424,7 +424,7 @@ export default function WarehouseManagement() {
               <p className="text-muted-foreground text-center mb-6 max-w-md">
                 Commencez par créer votre premier entrepôt pour gérer vos stocks de manière professionnelle
               </p>
-              <Button 
+              <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-vendeur-gradient hover:shadow-glow transition-all duration-300"
               >
@@ -454,9 +454,9 @@ export default function WarehouseManagement() {
                 <Badge variant="outline" className="bg-vendeur-accent/50 border-vendeur-primary/20">
                   {stockMovements.length} mouvement(s)
                 </Badge>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="hover:shadow-glow transition-all duration-300"
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
@@ -493,7 +493,7 @@ export default function WarehouseManagement() {
                   {stockMovements.slice(0, 10).map((movement) => (
                     <TableRow key={movement.id} className="hover:bg-vendeur-accent/20 transition-colors duration-200">
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={
                             movement.movement_type === 'in' ? 'default' :
                             movement.movement_type === 'out' ? 'destructive' :

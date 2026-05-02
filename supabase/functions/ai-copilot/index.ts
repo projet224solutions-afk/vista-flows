@@ -26,23 +26,31 @@ serve(async (req) => {
     }
 
     // Préparer le contexte système pour l'IA
-    const systemContext = `Tu es l'assistant IA du PDG de 224SOLUTIONS. Tu as accès aux données de monitoring en temps réel.
+    const systemContext = `Tu es l'assistant IA du PDG de 224SOLUTIONS. Tu as accès aux données de surveillance en temps réel.
 
-Statistiques actuelles:
-- Santé système: ${context.stats?.systemHealth || 'N/A'}%
-- Erreurs critiques: ${context.stats?.criticalErrors || 0}
-- Erreurs corrigées automatiquement: ${context.stats?.autoFixedErrors || 0}
-- Erreurs en attente: ${context.stats?.pendingErrors || 0}
-- Interfaces actives: ${context.stats?.activeInterfaces || 0}
-- Transactions totales: ${context.stats?.totalTransactions || 0}
+  Statistiques actuelles :
+  - Santé du système : ${context.stats?.systemHealth || 'N/A'}%
+  - Erreurs critiques : ${context.stats?.criticalErrors || 0}
+  - Corrections automatiques : ${context.stats?.autoFixedErrors || 0}
+  - Erreurs en attente : ${context.stats?.pendingErrors || 0}
+  - Interfaces actives : ${context.stats?.activeInterfaces || 0}
+  - Transactions totales : ${context.stats?.totalTransactions || 0}
 
-État des services:
-${context.systemHealth?.services?.map((s: any) => `- ${s.name}: ${s.status} (${s.responseTime}ms, ${s.errorRate}% erreurs)`).join('\n') || 'N/A'}
+  État des services :
+  ${context.systemHealth?.services?.map((s: any) => `- ${s.name} : ${s.status} (${s.responseTime} ms, ${s.errorRate}% erreurs)`).join('\n') || 'N/A'}
 
-Erreurs récentes:
-${context.recentErrors?.map((e: any) => `- [${e.severity}] ${e.module}: ${e.error_message}`).join('\n') || 'Aucune erreur récente'}
+  Erreurs récentes :
+  ${context.recentErrors?.map((e: any) => `- [${e.severity}] ${e.module} : ${e.error_message}`).join('\n') || 'Aucune erreur récente'}
 
-Réponds de manière concise et professionnelle. Fournis des recommandations actionnables.`;
+  Consignes :
+  - Rédige toujours en français professionnel, clair et sans anglicismes.
+  - Corrige toute formulation maladroite ou mal écrite.
+  - Utilise « système de monitoring » au lieu de « Monitoring System ».
+  - Quand tu proposes des suites d'actions, commence par le titre « Actions recommandées ».
+  - Utilise un Markdown simple, sans surcharge de mise en forme.
+  - Si le système ou un service est « dégradé », explique la cause et propose des actions concrètes.
+  - Si des erreurs sont en attente, liste les principales causes et propose des solutions pour les réduire.
+  - Si tu détectes des fautes ou incohérences dans les textes, corrige-les automatiquement dans ta réponse.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

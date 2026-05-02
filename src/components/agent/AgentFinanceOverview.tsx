@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  DollarSign, TrendingUp, TrendingDown, Wallet, 
+import {
+  DollarSign, TrendingUp, _TrendingDown, Wallet,
   ArrowUpRight, ArrowDownLeft, RefreshCw, Calendar,
   PiggyBank, CreditCard, BarChart3, Activity
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, _subDays, startOfMonth, _endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface AgentFinanceOverviewProps {
@@ -53,6 +53,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
 
   useEffect(() => {
     loadFinancialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadFinancialData = async () => {
@@ -69,12 +70,20 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
 
       if (commError) console.error('Erreur commissions:', commError);
 
-      // Charger le solde du wallet
-      const { data: walletData, error: walletError } = await supabase
-        .from('agent_wallets')
-        .select('balance, currency')
-        .eq('agent_id', agentId)
+      // Résoudre user_id de l'agent puis charger le solde depuis wallets (source de vérité)
+      const { data: agentData } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentId)
         .single();
+
+      const { data: walletData, error: walletError } = agentData?.user_id
+        ? await supabase
+            .from('wallets')
+            .select('balance, currency')
+            .eq('user_id', agentData.user_id)
+            .single()
+        : { data: null, error: null };
 
       if (walletError && walletError.code !== 'PGRST116') {
         console.error('Erreur wallet:', walletError);
@@ -249,7 +258,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <BarChart3 className="w-5 h-5 text-primary" />
                 Dernières Transactions
               </h3>
-              
+
               {recentTransactions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -298,7 +307,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <TrendingUp className="w-5 h-5 text-primary" />
                 Détail des Commissions
               </h3>
-              
+
               {commissions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />

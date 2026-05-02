@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,9 +14,9 @@ import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { _Table, _TableBody, _TableCell, _TableHead, _TableHeader, _TableRow } from '@/components/ui/table';
 import { AgentPermissionsSection } from './AgentPermissionsSection';
-import { useAgentPermissions, AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
+import { _useAgentPermissions, _AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
 
 interface AgentUser {
   id: string;
@@ -49,17 +49,17 @@ interface SubAgent {
 
 export default function PDGAgentsManagement() {
   const { agents, pdgProfile, loading, stats, refetch } = usePDGAgentsData();
-  const { 
-    createAgent: createAgentAction, 
-    updateAgent: updateAgentAction, 
-    deleteAgent: deleteAgentAction, 
-    toggleAgentStatus 
+  const {
+    createAgent: createAgentAction,
+    updateAgent: updateAgentAction,
+    deleteAgent: deleteAgentAction,
+    toggleAgentStatus
   } = usePDGActions({
     onAgentCreated: refetch,
     onAgentUpdated: refetch,
     onAgentDeleted: refetch,
   });
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,7 +101,7 @@ export default function PDGAgentsManagement() {
 
   const handleCreateAgent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!pdgProfile) {
       toast.error('PDG ID manquant');
       return;
@@ -119,7 +119,7 @@ export default function PDGAgentsManagement() {
 
     try {
       setIsSubmitting(true);
-      
+
       const basePermissions = Object.entries(formData.permissions)
         .filter(([_, value]) => value)
         .map(([key]) => key);
@@ -227,7 +227,7 @@ export default function PDGAgentsManagement() {
       });
 
       setAdvancedPermissions({});
-      
+
       setEditingAgent(null);
       setIsDialogOpen(false);
     } catch (error: any) {
@@ -266,7 +266,7 @@ export default function PDGAgentsManagement() {
     try {
       const { data, error } = await supabase
         .rpc('get_agent_permissions' as any, { p_agent_id: agent.id });
-      
+
       if (error) throw error;
       setAdvancedPermissions((data as Record<string, boolean>) || {});
     } catch (error) {
@@ -295,7 +295,7 @@ export default function PDGAgentsManagement() {
 
   const handleConfirmResetPassword = async () => {
     if (!resetPasswordAgent || !newPassword) return;
-    
+
     if (newPassword.length < 8) {
       toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
@@ -303,7 +303,7 @@ export default function PDGAgentsManagement() {
 
     try {
       setIsResettingPassword(true);
-      
+
       const { data, error } = await supabase.functions.invoke('reset-agent-password', {
         body: {
           agent_id: resetPasswordAgent.id,
@@ -312,7 +312,7 @@ export default function PDGAgentsManagement() {
       });
 
       if (error) throw error;
-      
+
       if (data?.success) {
         toast.success(`Mot de passe de ${resetPasswordAgent.name} réinitialisé avec succès`);
         setIsResetPasswordDialogOpen(false);
@@ -386,20 +386,20 @@ export default function PDGAgentsManagement() {
   const handleAgentAction = async (agentId: string, action: 'activate' | 'suspend' | 'delete') => {
     try {
       let confirmMessage = '';
-      let actionName = '';
-      
+      let _actionName = '';
+
       switch (action) {
         case 'activate':
           confirmMessage = 'Êtes-vous sûr de vouloir activer cet agent ?';
-          actionName = 'Activation';
+          _actionName = 'Activation';
           break;
         case 'suspend':
           confirmMessage = 'Êtes-vous sûr de vouloir suspendre cet agent ?';
-          actionName = 'Suspension';
+          _actionName = 'Suspension';
           break;
         case 'delete':
           confirmMessage = 'Êtes-vous sûr de vouloir supprimer cet agent ? Cette action est irréversible.';
-          actionName = 'Suppression';
+          _actionName = 'Suppression';
           break;
       }
 
@@ -425,7 +425,7 @@ export default function PDGAgentsManagement() {
 
   const handleToggleAgentUsers = async (agent: Agent) => {
     const isExpanded = expandedAgents.has(agent.id);
-    
+
     if (isExpanded) {
       // Réduire
       const newExpanded = new Set(expandedAgents);
@@ -462,7 +462,7 @@ export default function PDGAgentsManagement() {
 
   const handleToggleSubAgents = async (agent: Agent) => {
     const isExpanded = expandedSubAgents.has(agent.id);
-    
+
     if (isExpanded) {
       // Réduire
       const newExpanded = new Set(expandedSubAgents);
@@ -493,7 +493,7 @@ export default function PDGAgentsManagement() {
                 .from('agent_created_users')
                 .select('*', { count: 'exact', head: true })
                 .eq('agent_id', subAgent.id);
-              
+
               return {
                 ...subAgent,
                 total_users_created: count || 0
@@ -582,7 +582,7 @@ export default function PDGAgentsManagement() {
                       Permissions Avancées
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="general" className="mt-4">
                     <ScrollArea className="max-h-[50vh] pr-4">
                       <div className="space-y-4">
@@ -635,7 +635,6 @@ export default function PDGAgentsManagement() {
                                 <SelectItem value="principal">Agent Principal</SelectItem>
                                 <SelectItem value="agent_regional">Agent Régional</SelectItem>
                                 <SelectItem value="agent_local">Agent Local</SelectItem>
-                                <SelectItem value="sous_agent">Sous-agent</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -656,7 +655,7 @@ export default function PDGAgentsManagement() {
                           <Label>Permissions de base</Label>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="create_users"
                                 checked={formData.permissions.create_users}
                                 onCheckedChange={(checked) =>
@@ -669,7 +668,7 @@ export default function PDGAgentsManagement() {
                               <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="create_sub_agents"
                                 checked={formData.permissions.create_sub_agents}
                                 onCheckedChange={(checked) =>
@@ -682,7 +681,7 @@ export default function PDGAgentsManagement() {
                               <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="view_reports"
                                 checked={formData.permissions.view_reports}
                                 onCheckedChange={(checked) =>
@@ -695,7 +694,7 @@ export default function PDGAgentsManagement() {
                               <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="manage_commissions"
                                 checked={formData.permissions.manage_commissions}
                                 onCheckedChange={(checked) =>
@@ -708,7 +707,7 @@ export default function PDGAgentsManagement() {
                               <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="manage_users"
                                 checked={formData.permissions.manage_users}
                                 onCheckedChange={(checked) =>
@@ -721,7 +720,7 @@ export default function PDGAgentsManagement() {
                               <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="manage_products"
                                 checked={formData.permissions.manage_products}
                                 onCheckedChange={(checked) =>
@@ -811,7 +810,6 @@ export default function PDGAgentsManagement() {
                             <SelectItem value="principal">Agent Principal</SelectItem>
                             <SelectItem value="agent_regional">Agent Régional</SelectItem>
                             <SelectItem value="agent_local">Agent Local</SelectItem>
-                            <SelectItem value="sous_agent">Sous-agent</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -832,7 +830,7 @@ export default function PDGAgentsManagement() {
                       <Label>Permissions de base</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="create_users_new"
                             checked={formData.permissions.create_users}
                             onCheckedChange={(checked) =>
@@ -845,7 +843,7 @@ export default function PDGAgentsManagement() {
                           <label htmlFor="create_users_new" className="text-sm">Créer des utilisateurs</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="create_sub_agents_new"
                             checked={formData.permissions.create_sub_agents}
                             onCheckedChange={(checked) =>
@@ -858,7 +856,7 @@ export default function PDGAgentsManagement() {
                           <label htmlFor="create_sub_agents_new" className="text-sm">Créer des sous-agents</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="view_reports_new"
                             checked={formData.permissions.view_reports}
                             onCheckedChange={(checked) =>
@@ -871,7 +869,7 @@ export default function PDGAgentsManagement() {
                           <label htmlFor="view_reports_new" className="text-sm">Voir les rapports</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_commissions_new"
                             checked={formData.permissions.manage_commissions}
                             onCheckedChange={(checked) =>
@@ -884,7 +882,7 @@ export default function PDGAgentsManagement() {
                           <label htmlFor="manage_commissions_new" className="text-sm">Gérer les commissions</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_users_new"
                             checked={formData.permissions.manage_users}
                             onCheckedChange={(checked) =>
@@ -897,7 +895,7 @@ export default function PDGAgentsManagement() {
                           <label htmlFor="manage_users_new" className="text-sm">Gérer les utilisateurs</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="manage_products_new"
                             checked={formData.permissions.manage_products}
                             onCheckedChange={(checked) =>
@@ -916,9 +914,9 @@ export default function PDGAgentsManagement() {
               )}
 
               <div className="flex justify-end gap-2 pt-4 border-t mt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   disabled={isSubmitting}
                 >
@@ -1074,13 +1072,13 @@ export default function PDGAgentsManagement() {
                       ) : agentUsersMap[agent.id]?.length > 0 ? (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {agentUsersMap[agent.id].map((user) => (
-                            <div 
-                              key={user.id} 
+                            <div
+                              key={user.id}
                               className="p-3 bg-muted/50 rounded-lg border text-xs space-y-1"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-medium">
-                                  {user.first_name && user.last_name 
+                                  {user.first_name && user.last_name
                                     ? `${user.first_name} ${user.last_name}`
                                     : user.email}
                                 </span>
@@ -1110,7 +1108,7 @@ export default function PDGAgentsManagement() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Section Sous-Agents */}
                 {(agent.can_create_sub_agent || agent.permissions.includes('create_sub_agents')) && (
                   <div className="border-t pt-3 mt-3">
@@ -1135,8 +1133,8 @@ export default function PDGAgentsManagement() {
                         ) : agentSubAgentsMap[agent.id]?.length > 0 ? (
                           <div className="space-y-2 max-h-64 overflow-y-auto">
                             {agentSubAgentsMap[agent.id].map((subAgent) => (
-                              <div 
-                                key={subAgent.id} 
+                              <div
+                                key={subAgent.id}
                                 className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 text-xs space-y-1"
                               >
                                 <div className="flex items-center justify-between">
@@ -1201,12 +1199,12 @@ export default function PDGAgentsManagement() {
                     )}
                   </div>
                 )}
-                
+
                 <div className="flex items-center justify-between text-sm pb-3">
                   <span className="text-muted-foreground">Commissions gagnées:</span>
                   <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
                 </div>
-                
+
                 {/* Lien d'accès à l'interface Agent */}
                 {agent.access_token && (
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -1243,7 +1241,7 @@ export default function PDGAgentsManagement() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="pt-3 flex flex-wrap gap-2 border-t">
                   <Button
                     size="sm"

@@ -61,7 +61,7 @@ export function useClientActions() {
       }
 
       const orderNumber = `ORD-${Date.now()}-${customerId.substring(0, 8)}`;
-      
+
       const orderData: any = {
         customer_id: customerId,
         vendor_id: cartItems[0]?.vendor_id,
@@ -78,7 +78,7 @@ export function useClientActions() {
         payment_method: paymentData.method,
         notes: `Livraison: ${shippingInfo.address}, ${shippingInfo.city}. Tel: ${shippingInfo.phone}`
       };
-      
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert(orderData)

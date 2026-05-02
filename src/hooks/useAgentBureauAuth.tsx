@@ -76,7 +76,7 @@ export const useAgentBureauAuth = () => {
     userType: UserType
   ): Promise<LoginResponse> => {
     setIsLoading(true);
-    
+
     try {
       console.log(`🔐 Connexion ${userType}:`, identifier);
 
@@ -108,7 +108,7 @@ export const useAgentBureauAuth = () => {
       if (data.success) {
         console.log('✅ Mot de passe validé, OTP requis');
         toast.success(data.message || 'Code de sécurité envoyé');
-        
+
         setRequireOtp(true);
         setCurrentIdentifier(identifier);
         setCurrentUserType(userType);
@@ -160,7 +160,7 @@ export const useAgentBureauAuth = () => {
     userType: UserType
   ): Promise<VerifyOtpResponse> => {
     setIsLoading(true);
-    
+
     try {
       console.log('🔐 Vérification OTP:', identifier);
 
@@ -187,11 +187,11 @@ export const useAgentBureauAuth = () => {
       if (data.success) {
         console.log('✅ OTP validé, connexion réussie');
         toast.success('Connexion réussie !');
-        
+
         // Stocker session en localStorage
         localStorage.setItem('agentBureauSession', JSON.stringify(data.session));
         localStorage.setItem('agentBureauUser', JSON.stringify(data.user));
-        
+
         setSession(data.session);
         setUser(data.user);
         setRequireOtp(false);
@@ -205,7 +205,7 @@ export const useAgentBureauAuth = () => {
       } else {
         const errorMsg = data.error || 'Code OTP incorrect';
         toast.error(errorMsg);
-        
+
         if (data.attemptsRemaining !== undefined) {
           toast.warning(`${data.attemptsRemaining} tentative(s) restante(s)`);
         }

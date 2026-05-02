@@ -1,12 +1,12 @@
 /**
  * 🔐 SECURE PAYMENT INVOKE - Wrapper sécurisé pour toutes les opérations financières
- * 
+ *
  * Utilise signedInvoke avec:
  * - HMAC-SHA256 signature
  * - Idempotency key (anti-double-transaction)
  * - Fraud scoring client-side
  * - Retry avec backoff
- * 
+ *
  * 224Solutions
  */
 
@@ -57,7 +57,7 @@ export async function securePaymentInvoke(options: SecureInvokeOptions): Promise
   const lastCallKey = `last_payment_${transactionType}`;
   const lastCall = sessionStorage.getItem(lastCallKey);
   const now = Date.now();
-  
+
   if (lastCall && now - parseInt(lastCall) < 2000) {
     console.warn('🚨 [SECURITY] Rapid successive calls detected');
     return { success: false, error: 'Veuillez patienter avant de réessayer', idempotencyKey };
@@ -73,12 +73,12 @@ export async function securePaymentInvoke(options: SecureInvokeOptions): Promise
       if (error) {
         lastError = error.message || 'Erreur Edge Function';
         console.error(`[SECURE-INVOKE] Attempt ${attempt + 1} failed:`, error);
-        
+
         // Don't retry on auth/validation errors
         if (error.message?.includes('401') || error.message?.includes('signature')) {
           return { success: false, error: lastError, idempotencyKey };
         }
-        
+
         if (attempt < maxRetries) {
           await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
           continue;

@@ -1,7 +1,7 @@
 /**
  * EDGE FUNCTIONS TEMPLATE
  * Use this template to create routes for remaining Edge Functions
- * 
+ *
  * How to use:
  * 1. Copy this file and rename it (e.g., users.routes.ts)
  * 2. Replace CATEGORY and operations with your function details
@@ -34,13 +34,13 @@ interface AuthRequest extends Request {
 /**
  * Description of what this function does
  * Replaces: supabase/functions/CATEGORY/operation-1
- * 
+ *
  * Request body:
  * {
  *   "param1": "value1",
  *   "param2": "value2"
  * }
- * 
+ *
  * Response:
  * {
  *   "success": true,

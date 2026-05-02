@@ -349,7 +349,7 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, vendors(business_type)")
+    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type)")
     .in("id", productIds);
   
   if (error) {
@@ -371,6 +371,7 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
     price: p.price,
     images: p.images || [],
     rating: p.rating,
+    reviews_count: p.reviews_count,
     category_id: p.category_id,
   }));
 }
@@ -378,7 +379,7 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, vendors(business_type)")
+    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type)")
     .eq("is_active", true)
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(50);
@@ -396,6 +397,7 @@ async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
     price: p.price,
     images: p.images || [],
     rating: p.rating,
+    reviews_count: p.reviews_count,
     category_id: p.category_id,
     reason: "Populaire",
     score: 50,

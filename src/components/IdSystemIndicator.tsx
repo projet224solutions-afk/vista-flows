@@ -26,6 +26,7 @@ export function IdSystemIndicator() {
         setPrefix(extractPrefix(publicId));
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   const roleNames: Record<string, string> = {
@@ -62,7 +63,7 @@ export function IdSystemIndicator() {
         <div>
           <p className="text-xs text-muted-foreground mb-1">Votre identifiant</p>
           {(profile as any)?.public_id ? (
-            <StandardIdBadge 
+            <StandardIdBadge
               standardId={(profile as any).public_id}
               size="md"
               copyable={true}

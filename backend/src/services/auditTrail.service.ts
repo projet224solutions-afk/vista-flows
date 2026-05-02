@@ -1,6 +1,6 @@
 /**
  * 🛡️ AUDIT TRAIL SERVICE - Phase 6
- * 
+ *
  * Centralized security audit logging for all sensitive operations.
  * Logs to security_audit_trail table via service_role.
  */

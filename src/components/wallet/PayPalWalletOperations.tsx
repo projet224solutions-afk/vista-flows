@@ -20,7 +20,7 @@ interface PayPalWalletOperationsProps {
   onSuccess?: () => void;
 }
 
-export default function PayPalWalletOperations({ userId, walletId, onSuccess }: PayPalWalletOperationsProps) {
+export default function PayPalWalletOperations({ userId, _walletId, onSuccess }: PayPalWalletOperationsProps) {
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");

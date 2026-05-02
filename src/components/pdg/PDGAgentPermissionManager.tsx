@@ -31,9 +31,9 @@ interface PermissionManagerProps {
 }
 
 export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
-  const { permissions, permissionCatalog, loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
-  const { agents, loading: agentsLoading } = usePDGAgentsData();
-  
+  const { permissions, _permissionCatalog, _loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
+  const { agents, loading: _agentsLoading } = usePDGAgentsData();
+
   const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
   const [grantingPermissions, setGrantingPermissions] = useState(false);
@@ -71,7 +71,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
 
     setGrantingPermissions(true);
     let successCount = 0;
-    
+
     for (const permKey of selectedPermissions) {
       const success = await grantPermission(selectedAgent, permKey);
       if (success) successCount++;
@@ -140,7 +140,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                   <Label className="text-base font-semibold">
                     Permissions accordées ({agentPermissions.length})
                   </Label>
-                  <Button 
+                  <Button
                     onClick={() => setShowDialog(true)}
                     size="sm"
                   >
@@ -160,7 +160,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                               {perm.category}
                             </div>
                             <div className="flex gap-1 mt-2">
-                              <Badge 
+                              <Badge
                                 variant="outline"
                                 className={getRiskColor(perm.risk_level || 'medium')}
                               >
@@ -215,7 +215,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
           <ScrollArea className="flex-1 max-h-[50vh]">
             <div className="space-y-2 pr-4">
               {PERMISSION_CATEGORIES.map((category) => (
-                <Collapsible 
+                <Collapsible
                   key={category.key}
                   open={openCategories.has(category.label)}
                   onOpenChange={() => toggleCategory(category.label)}
@@ -235,7 +235,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                             disabled={grantingPermissions}
                           />
                           <div className="flex-1">
-                            <Label 
+                            <Label
                               htmlFor={permKey}
                               className="font-semibold cursor-pointer text-sm"
                             >
@@ -248,7 +248,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                                   Écriture
                                 </Badge>
                               )}
-                              <Badge 
+                              <Badge
                                 variant="outline"
                                 className={`text-xs ${getRiskColor(permKey.startsWith('manage_') ? 'high' : 'low')}`}
                               >
@@ -267,14 +267,14 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
 
           {/* Boutons d'action */}
           <div className="flex gap-2 justify-end pt-4 border-t">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setShowDialog(false)}
               disabled={grantingPermissions}
             >
               Annuler
             </Button>
-            <Button 
+            <Button
               onClick={handleGrantPermissions}
               disabled={selectedPermissions.size === 0 || grantingPermissions}
             >

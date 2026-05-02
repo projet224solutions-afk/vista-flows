@@ -43,7 +43,7 @@ export class NotificationsService {
   static async markAsRead(notificationId: string) {
     const { error } = await supabase
       .from('taxi_notifications')
-      .update({ 
+      .update({
         payload: { is_read: true, read_at: new Date().toISOString() } as any
       })
       .eq('id', notificationId);
@@ -59,7 +59,7 @@ export class NotificationsService {
   static async markAllAsRead(userId: string) {
     const { error } = await supabase
       .from('taxi_notifications')
-      .update({ 
+      .update({
         payload: { is_read: true, read_at: new Date().toISOString() } as any
       })
       .eq('user_id', userId);
@@ -129,7 +129,7 @@ export class NotificationsService {
   /**
    * Récupère les notifications pour une course spécifique
    */
-  static async getRideNotifications(rideId: string): Promise<TaxiNotification[]> {
+  static async getRideNotifications(_rideId: string): Promise<TaxiNotification[]> {
     const { data, error } = await supabase
       .from('taxi_notifications')
       .select('*')

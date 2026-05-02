@@ -1,7 +1,7 @@
 /**
  * CONNECTOR FACTORY & REGISTRY
  * Factory Pattern pour créer et gérer les connecteurs
- * 
+ *
  * @module ConnectorFactory
  * @version 1.0.0
  * @author 224Solutions
@@ -112,7 +112,7 @@ const CONNECTOR_REGISTRY: Record<ConnectorType, ConnectorInfo> = {
 
 class ConnectorFactoryImpl implements IConnectorFactory {
   private instances: Map<string, IExternalConnector> = new Map();
-  
+
   /**
    * Créer une nouvelle instance de connecteur
    */
@@ -120,24 +120,24 @@ class ConnectorFactoryImpl implements IConnectorFactory {
     switch (type) {
       case 'ALIEXPRESS':
         return new AliExpressConnector(config);
-        
+
       case 'ALIBABA':
         return new AlibabaConnector(config);
-        
+
       case '1688':
         return new Connector1688(config);
-        
+
       case 'PRIVATE':
         return new PrivateSupplierConnector(config);
-        
+
       case 'CUSTOM':
         throw new Error('Custom connector requires manual implementation');
-        
+
       default:
         throw new Error(`Connecteur non supporté: ${type}`);
     }
   }
-  
+
   /**
    * Créer un connecteur fournisseur privé avec configuration
    */
@@ -147,68 +147,68 @@ class ConnectorFactoryImpl implements IConnectorFactory {
   ): PrivateSupplierConnector {
     return new PrivateSupplierConnector(config, supplierConfig);
   }
-  
+
   /**
    * Obtenir ou créer une instance singleton pour un type donné
    */
   getInstance(type: ConnectorType, config: Partial<ConnectorConfig> = {}): IExternalConnector {
     const key = `${type}_${config.apiKey || 'default'}`;
-    
+
     if (!this.instances.has(key)) {
       this.instances.set(key, this.create(type, config));
     }
-    
+
     return this.instances.get(key)!;
   }
-  
+
   /**
    * Obtenir la liste des connecteurs disponibles
    */
   getAvailableConnectors(): ConnectorInfo[] {
     return Object.values(CONNECTOR_REGISTRY);
   }
-  
+
   /**
    * Obtenir les infos d'un connecteur spécifique
    */
   getConnectorInfo(type: ConnectorType): ConnectorInfo | undefined {
     return CONNECTOR_REGISTRY[type];
   }
-  
+
   /**
    * Vérifier si un type de connecteur est supporté
    */
   isSupported(type: ConnectorType): boolean {
     return type in CONNECTOR_REGISTRY;
   }
-  
+
   /**
    * Obtenir les connecteurs par région
    */
   getConnectorsByRegion(region: 'CHINA' | 'LOCAL' | 'INTERNATIONAL' | 'GLOBAL'): ConnectorInfo[] {
     return Object.values(CONNECTOR_REGISTRY).filter(c => c.region === region || c.region === 'GLOBAL');
   }
-  
+
   /**
    * Obtenir les connecteurs stables
    */
   getStableConnectors(): ConnectorInfo[] {
     return Object.values(CONNECTOR_REGISTRY).filter(c => c.status === 'stable');
   }
-  
+
   /**
    * Supprimer une instance
    */
   removeInstance(type: ConnectorType, apiKey?: string): void {
     const key = `${type}_${apiKey || 'default'}`;
     const instance = this.instances.get(key);
-    
+
     if (instance) {
       instance.disconnect();
       this.instances.delete(key);
     }
   }
-  
+
   /**
    * Supprimer toutes les instances
    */

@@ -26,7 +26,7 @@ interface ImportMetaEnv {
   [key: string]: string | undefined;
 }
 
-interface ImportMeta {
+interface _ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
@@ -69,7 +69,7 @@ declare var SpeechRecognition: {
   new(): SpeechRecognition;
 };
 
-declare var webkitSpeechRecognition: {
+declare var _webkitSpeechRecognition: {
   prototype: SpeechRecognition;
   new(): SpeechRecognition;
 };

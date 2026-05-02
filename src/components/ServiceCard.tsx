@@ -38,7 +38,7 @@ export default function ServiceCard({
           <div className="p-3 bg-livreur-accent rounded-lg shrink-0">
             {icon}
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
               <h3 className="font-semibold text-foreground">{title}</h3>
@@ -46,24 +46,24 @@ export default function ServiceCard({
                 <Badge variant="secondary">Indisponible</Badge>
               )}
             </div>
-            
+
             <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
               {description}
             </p>
-            
+
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
               <div className="flex items-center">
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
                 <span>{rating} ({reviewCount})</span>
               </div>
-              
+
               {distance && (
                 <div className="flex items-center">
                   <MapPin className="w-3 h-3 mr-1" />
                   <span>{distance}</span>
                 </div>
               )}
-              
+
               {estimatedTime && (
                 <div className="flex items-center">
                   <Clock className="w-3 h-3 mr-1" />
@@ -71,7 +71,7 @@ export default function ServiceCard({
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">{provider}</p>
@@ -79,8 +79,8 @@ export default function ServiceCard({
                   <p className="font-semibold text-livreur-primary">{price}</p>
                 )}
               </div>
-              
-              <Button 
+
+              <Button
                 onClick={onBook}
                 disabled={!isAvailable}
                 size="sm"

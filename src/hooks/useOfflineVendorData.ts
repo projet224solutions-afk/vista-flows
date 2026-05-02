@@ -361,6 +361,7 @@ export function useOfflineVendorData(): UseOfflineVendorDataReturn {
     }
 
     return sale;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, loadPendingSales]);
 
   const syncSales = useCallback(async (): Promise<{ success: number; failed: number }> => {

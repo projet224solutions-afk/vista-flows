@@ -14,12 +14,12 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Car, Users, MapPin, DollarSign, Clock, Calendar, 
-  Navigation, Phone, Star, CheckCircle2, AlertCircle,
-  TrendingUp, Activity, BarChart3, Settings
+import {
+  Car, Users, MapPin, DollarSign, _Clock, Calendar,
+  Navigation, Phone, Star, _CheckCircle2, AlertCircle,
+  _TrendingUp, Activity, _BarChart3, Settings
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface VTCModuleProps {
@@ -152,7 +152,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
     }
   };
 
-  const calculatePrice = (distance: number, vehicleTypeId: string) => {
+  const _calculatePrice = (distance: number, vehicleTypeId: string) => {
     const vehicle = VEHICLE_TYPES.find(v => v.id === vehicleTypeId);
     if (!vehicle) return 0;
     return vehicle.basePrice + (distance * vehicle.pricePerKm);
@@ -178,7 +178,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         notes: ''
       });
       loadRides();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la création de la course');
     } finally {
       setLoading(false);
@@ -485,7 +485,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
               Module de gestion de flotte disponible. Ajoutez vos véhicules, chauffeurs et suivez leur disponibilité en temps réel.
             </AlertDescription>
           </Alert>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Ma Flotte</CardTitle>

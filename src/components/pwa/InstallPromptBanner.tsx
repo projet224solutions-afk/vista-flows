@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Download, Share, Smartphone } from 'lucide-react';
+import { X, _Download, Share, _Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import IOSInstallGuide from './IOSInstallGuide';
 
@@ -49,10 +49,10 @@ export function InstallPromptBanner() {
     setIsSafari(safari);
 
     // Vérifier si l'app est déjà installée (standalone mode)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
       || (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
-    
+
     if (standalone) {
       return;
     }
@@ -154,7 +154,7 @@ export function InstallPromptBanner() {
           >
             <X className="w-4 h-4" />
           </button>
-          
+
           <div className="flex items-start gap-3">
             <div className="bg-white/10 p-1 rounded-xl flex-shrink-0">
               <img
@@ -191,9 +191,9 @@ export function InstallPromptBanner() {
       </div>
 
       {/* Guide d'installation iOS/Mac */}
-      <IOSInstallGuide 
-        open={showIOSGuide} 
-        onOpenChange={setShowIOSGuide} 
+      <IOSInstallGuide
+        open={showIOSGuide}
+        onOpenChange={setShowIOSGuide}
       />
     </>
   );

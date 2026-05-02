@@ -27,39 +27,39 @@ export const TOPICS = {
   TRANSACTION_COMPLETED: 'transaction-completed',
   TRANSACTION_FAILED: 'transaction-failed',
   PAYMENT_RECEIVED: 'payment-received',
-  
+
   // Commandes
   ORDER_CREATED: 'order-created',
   ORDER_UPDATED: 'order-updated',
   ORDER_SHIPPED: 'order-shipped',
   ORDER_DELIVERED: 'order-delivered',
   ORDER_CANCELLED: 'order-cancelled',
-  
+
   // Utilisateurs
   USER_REGISTERED: 'user-registered',
   USER_VERIFIED: 'user-verified',
   USER_SUBSCRIPTION_CHANGED: 'user-subscription-changed',
-  
+
   // Notifications
   NOTIFICATION_SEND: 'notification-send',
   SMS_SEND: 'sms-send',
   EMAIL_SEND: 'email-send',
-  
+
   // Taxi/Livraison
   RIDE_REQUESTED: 'ride-requested',
   RIDE_ACCEPTED: 'ride-accepted',
   RIDE_STARTED: 'ride-started',
   RIDE_COMPLETED: 'ride-completed',
   DRIVER_LOCATION_UPDATE: 'driver-location-update',
-  
+
   // Wallet
   WALLET_CREDITED: 'wallet-credited',
   WALLET_DEBITED: 'wallet-debited',
   WALLET_TRANSFER: 'wallet-transfer',
-  
+
   // Analytics
   ANALYTICS_EVENT: 'analytics-event',
-  
+
   // Bureaux syndicaux
   BUREAU_MEMBER_ADDED: 'bureau-member-added',
   BUREAU_COTISATION_PAID: 'bureau-cotisation-paid',
@@ -97,16 +97,16 @@ class PubSubService {
         return { success: false, error: error.message };
       }
 
-      return { 
-        success: result.success, 
+      return {
+        success: result.success,
         messageId: result.messageId,
-        error: result.error 
+        error: result.error
       };
     } catch (error) {
       console.error('Pub/Sub publish exception:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -129,19 +129,19 @@ class PubSubService {
         return { success: false, messages: [], count: 0, error: error.message };
       }
 
-      return { 
-        success: result.success, 
+      return {
+        success: result.success,
         messages: result.messages || [],
         count: result.count || 0,
-        error: result.error 
+        error: result.error
       };
     } catch (error) {
       console.error('Pub/Sub pull exception:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         messages: [],
         count: 0,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -161,9 +161,9 @@ class PubSubService {
 
       return { success: result.success, created: result.result?.created, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -183,9 +183,9 @@ class PubSubService {
 
       return { success: result.success, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -206,9 +206,9 @@ class PubSubService {
       const topics = (result.result || []).map((t: any) => t.name?.split('/').pop() || t);
       return { success: result.success, topics, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -217,7 +217,7 @@ class PubSubService {
    * Créer une subscription
    */
   async createSubscription(
-    topicName: string, 
+    topicName: string,
     subscriptionName: string,
     pushEndpoint?: string
   ): Promise<{ success: boolean; created?: boolean; error?: string }> {
@@ -232,9 +232,9 @@ class PubSubService {
 
       return { success: result.success, created: result.result?.created, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -254,9 +254,9 @@ class PubSubService {
 
       return { success: result.success, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -277,9 +277,9 @@ class PubSubService {
       const subscriptions = (result.result || []).map((s: any) => s.name?.split('/').pop() || s);
       return { success: result.success, subscriptions, error: result.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -291,7 +291,7 @@ class PubSubService {
     const created: string[] = [];
     const errors: string[] = [];
 
-    for (const [key, topicName] of Object.entries(TOPICS)) {
+    for (const [_key, topicName] of Object.entries(TOPICS)) {
       const result = await this.createTopic(topicName);
       if (result.success) {
         if (result.created) {
@@ -302,10 +302,10 @@ class PubSubService {
       }
     }
 
-    return { 
-      success: errors.length === 0, 
-      created, 
-      errors 
+    return {
+      success: errors.length === 0,
+      created,
+      errors
     };
   }
 }

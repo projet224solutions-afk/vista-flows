@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CreditCard, Smartphone, Shield, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { _supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type PaymentType = 'ORDER_PAYMENT' | 'SUBSCRIPTION' | 'BOOST' | 'DELIVERY' | 'COMMISSION' | 'WALLET_TOPUP';
@@ -53,10 +53,10 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
   referenceId,
   amount,
   currency = 'GNF',
-  vendorId,
+  _vendorId,
   description,
-  metadata = {},
-  onSuccess,
+  _metadata = {},
+  _onSuccess,
   onError,
   onCancel,
 }) => {
@@ -70,7 +70,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!phone || phone.length < 8) {
       toast.error('Veuillez entrer un numéro de téléphone valide');
       return;
@@ -121,7 +121,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
         </div>
   <CardTitle className="text-lg sm:text-xl">{typeLabels[type]}</CardTitle>
   <CardDescription>{description || `Référence: ${referenceId}`}</CardDescription>
-        
+
         <div className="mt-4 p-4 bg-muted rounded-lg">
           <p className="text-sm text-muted-foreground">Montant à payer</p>
           <p className="text-3xl font-bold text-foreground">
@@ -151,8 +151,8 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
                     htmlFor={method.id}
                     className={`
                       flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
-                      ${selectedMethod === method.id 
-                        ? 'border-primary bg-primary/5' 
+                      ${selectedMethod === method.id
+                        ? 'border-primary bg-primary/5'
                         : 'border-muted hover:border-primary/50'
                       }
                     `}
@@ -203,9 +203,9 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
           {/* Boutons */}
           <div className="flex gap-3 pt-2">
             {onCancel && (
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={onCancel}
                 disabled={isLoading}
                 className="flex-1"
@@ -213,8 +213,8 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
                 Annuler
               </Button>
             )}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading || !phone}
               className="flex-1"
             >

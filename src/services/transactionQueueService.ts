@@ -35,10 +35,10 @@ class TransactionQueueService {
     // Pour le moment, traiter directement
     // TODO: Implémenter file d'attente quand la table sera créée
     try {
-      let result;
+      let _result;
       switch (transaction.transaction_type) {
         case 'transfer':
-          result = await this.processTransfer(transaction.payload);
+          _result = await this.processTransfer(transaction.payload);
           break;
         case 'deposit':
           toast.info('Dépôt en cours de traitement');
@@ -47,10 +47,10 @@ class TransactionQueueService {
           toast.info('Retrait en cours de traitement');
           return 'direct-processing';
         case 'payment':
-          result = await this.processPayment(transaction.payload);
+          _result = await this.processPayment(transaction.payload);
           break;
       }
-      
+
       toast.success('Transaction complétée');
       return 'completed';
     } catch (error) {
@@ -77,19 +77,19 @@ class TransactionQueueService {
       await this.updateStatus(transaction.id!, 'processing');
 
       // Traiter selon le type
-      let result;
+      let _result;
       switch (transaction.transaction_type) {
         case 'transfer':
-          result = await this.processTransfer(transaction.payload);
+          _result = await this.processTransfer(transaction.payload);
           break;
         case 'deposit':
-          result = await this.processDeposit(transaction.payload);
+          _result = await this.processDeposit(transaction.payload);
           break;
         case 'withdrawal':
-          result = await this.processWithdrawal(transaction.payload);
+          _result = await this.processWithdrawal(transaction.payload);
           break;
         case 'payment':
-          result = await this.processPayment(transaction.payload);
+          _result = await this.processPayment(transaction.payload);
           break;
         default:
           throw new Error(`Type de transaction inconnu: ${transaction.transaction_type}`);
@@ -182,7 +182,7 @@ class TransactionQueueService {
   /**
    * Traite un dépôt
    */
-  private async processDeposit(payload: Record<string, any>): Promise<any> {
+  private async processDeposit(_payload: Record<string, any>): Promise<any> {
     // TODO: Implémenter avec les bonnes fonctions RPC
     throw new Error('Deposit processing not yet implemented');
   }
@@ -190,7 +190,7 @@ class TransactionQueueService {
   /**
    * Traite un retrait
    */
-  private async processWithdrawal(payload: Record<string, any>): Promise<any> {
+  private async processWithdrawal(_payload: Record<string, any>): Promise<any> {
     // TODO: Implémenter avec les bonnes fonctions RPC
     throw new Error('Withdrawal processing not yet implemented');
   }
@@ -235,7 +235,7 @@ class TransactionQueueService {
   /**
    * Récupère le statut d'une transaction
    */
-  async getStatus(id: string): Promise<QueuedTransaction | null> {
+  async getStatus(_id: string): Promise<QueuedTransaction | null> {
     // TODO: Implémenter quand la table transaction_queue sera créée
     return null;
   }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard, Smartphone, Banknote } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard, Smartphone, _Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -33,18 +33,18 @@ interface UniversalWalletDashboardProps {
   showTransactions?: boolean;
 }
 
-export default function UniversalWalletDashboard({ 
-  userId, 
+export default function UniversalWalletDashboard({
+  userId,
   userCode,
-  showTransactions = true 
+  showTransactions = true
 }: UniversalWalletDashboardProps) {
   const { convert } = usePriceConverter();
   const { t } = useTranslation();
   const [wallet, setWallet] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [_transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
-  
+
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositMethod, setDepositMethod] = useState<DepositMethod>('card');
@@ -59,10 +59,10 @@ export default function UniversalWalletDashboard({
       console.warn('loadWallet: userId manquant');
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       console.log('🔍 Chargement wallet pour userId:', userId);
 
       const { data: walletData, error: walletError } = await supabase
@@ -73,23 +73,23 @@ export default function UniversalWalletDashboard({
 
       if (walletError) {
         console.error('❌ Erreur chargement wallet:', walletError);
-        
+
         // Si le wallet n'existe pas, l'initialiser via RPC
         if (walletError.code === 'PGRST116') {
           console.log('💡 Initialisation du wallet via RPC pour:', userId);
-          
+
           try {
             const { data: initResult, error: rpcError } = await supabase
               .rpc('initialize_user_wallet', { p_user_id: userId });
-            
+
             console.log('📊 Résultat RPC initialize_user_wallet:', { initResult, rpcError });
-            
+
             if (rpcError) {
               console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
               toast.error(t('wallet.depositError'));
               throw rpcError;
             }
-            
+
             const result = initResult as any;
             if (!result || !result.success) {
               const errorMsg = result?.error || 'Échec initialisation wallet';
@@ -97,21 +97,21 @@ export default function UniversalWalletDashboard({
               toast.error(errorMsg);
               throw new Error(errorMsg);
             }
-            
+
             console.log('✅ Wallet initialisé via RPC:', result);
-            
+
             // Recharger le wallet depuis la base de données
             const { data: reloadedWallet, error: reloadError } = await supabase
               .from('wallets')
               .select('*')
               .eq('user_id', userId)
               .single();
-            
+
             if (reloadError) {
               console.error('❌ Erreur rechargement wallet:', reloadError);
               throw reloadError;
             }
-            
+
             console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
             setWallet(reloadedWallet);
             toast.success(t('wallet.depositSuccess'));
@@ -128,7 +128,7 @@ export default function UniversalWalletDashboard({
           throw walletError;
         }
       }
-      
+
       console.log('✅ Wallet chargé:', walletData);
       setWallet(walletData);
 
@@ -140,7 +140,7 @@ export default function UniversalWalletDashboard({
           .or(`sender_wallet_id.eq.${walletData.id},receiver_wallet_id.eq.${walletData.id}`)
           .order('created_at', { ascending: false })
           .limit(20);
-        
+
         setTransactions(transData || []);
       }
     } catch (error: any) {
@@ -150,6 +150,7 @@ export default function UniversalWalletDashboard({
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, showTransactions]);
 
   React.useEffect(() => {
@@ -194,16 +195,16 @@ export default function UniversalWalletDashboard({
       toast.error(t('wallet.minDeposit'));
       return;
     }
-    
+
     setShowDepositConfirm(false);
-    
+
     try {
       setBusy(true);
 
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      
+
       // ⚡ Update atomique du balance (évite race conditions)
-      const { data: balanceData, error: balanceError } = await supabase
+      const { data: _balanceData, error: balanceError } = await supabase
         .rpc('update_wallet_balance_atomic', {
           p_wallet_id: wallet.id,
           p_amount: amount,
@@ -241,6 +242,7 @@ export default function UniversalWalletDashboard({
     } finally {
       setBusy(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depositAmount, userId, wallet, loadWallet]);
 
   const handleWithdraw = useCallback(async () => {
@@ -258,16 +260,16 @@ export default function UniversalWalletDashboard({
       toast.error(t('wallet.insufficientBalance'));
       return;
     }
-    
+
     setShowWithdrawConfirm(false);
-    
+
     try {
       setBusy(true);
 
       const referenceNumber = `WDR${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      
+
       // ⚡ Update atomique du balance (avec montant négatif pour retrait)
-      const { data: balanceData, error: balanceError } = await supabase
+      const { data: _balanceData, error: balanceError } = await supabase
         .rpc('update_wallet_balance_atomic', {
           p_wallet_id: wallet.id,
           p_amount: -amount, // Négatif pour retrait
@@ -305,6 +307,7 @@ export default function UniversalWalletDashboard({
     } finally {
       setBusy(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [withdrawAmount, userId, wallet, loadWallet]);
 
   if (loading) {
@@ -326,7 +329,7 @@ export default function UniversalWalletDashboard({
               <p className="text-sm text-orange-600 mb-4">
                 {t('error.network')}
               </p>
-              <Button 
+              <Button
                 onClick={loadWallet}
                 variant="outline"
                 className="border-orange-300 text-orange-700 hover:bg-orange-100"
@@ -344,7 +347,7 @@ export default function UniversalWalletDashboard({
   return (
     <div className="space-y-6">
       {/* Carte solde */}
-      <Card className="bg-primary-blue-600 text-white border-0">
+      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-0">
         <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -376,7 +379,7 @@ export default function UniversalWalletDashboard({
               </Button>
             </div>
           </div>
-          
+
           <div className="flex gap-2 mt-4">
             <Badge variant="secondary" className="bg-white/20">
               {t('wallet.walletId')}: {String(wallet.id).slice(0, 8)}...
@@ -472,7 +475,7 @@ export default function UniversalWalletDashboard({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>{t('wallet.quickAmounts')}</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -509,7 +512,7 @@ export default function UniversalWalletDashboard({
                     </p>
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={() => {
                       if (!phoneNumber) {
                         toast.error(t('wallet.enterPhone'));
@@ -524,7 +527,7 @@ export default function UniversalWalletDashboard({
                       setTimeout(() => {
                         toast.success('Demande envoyée ! Confirmez sur votre téléphone.');
                       }, 1500);
-                    }} 
+                    }}
                     disabled={busy || !depositAmount || !phoneNumber}
                     className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'}`}
                   >
@@ -547,8 +550,8 @@ export default function UniversalWalletDashboard({
                     />
                     <p className="text-xs text-muted-foreground">{t('wallet.minAmount')}: 1,000 GNF</p>
                   </div>
-                  <Button 
-                    onClick={() => setShowDepositConfirm(true)} 
+                  <Button
+                    onClick={() => setShowDepositConfirm(true)}
                     disabled={busy || !depositAmount}
                     className="w-full"
                   >
@@ -627,14 +630,14 @@ export default function UniversalWalletDashboard({
                 </p>
               </div>
 
-              <Button 
+              <Button
                 onClick={() => {
                   if ((withdrawMethod === 'orange' || withdrawMethod === 'momo') && !phoneNumber) {
                     toast.error(t('wallet.enterPhone'));
                     return;
                   }
                   setShowWithdrawConfirm(true);
-                }} 
+                }}
                 disabled={busy || !withdrawAmount}
                 variant="destructive"
                 className="w-full"

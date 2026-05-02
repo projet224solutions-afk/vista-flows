@@ -122,6 +122,7 @@ export function StripePaymentWrapper({
     };
 
     initializePayment();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount, currency, sellerId, orderId, serviceId, productId]);
 
   if (loading) {
@@ -139,7 +140,7 @@ export function StripePaymentWrapper({
 
   if (error || !clientSecret || !stripe) {
     const isOfflineError = error?.includes('OFFLINE') || !navigator.onLine;
-    
+
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="pt-6">
@@ -155,8 +156,8 @@ export function StripePaymentWrapper({
                   Veuillez vous reconnecter pour effectuer ce paiement.
                 </p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => window.location.reload()}
                 className="mt-4"
               >

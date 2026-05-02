@@ -5,7 +5,7 @@ import { Plan } from '@/services/subscriptionService';
  * Types de fonctionnalités disponibles dans le système d'abonnement vendeur
  * Chaque fonctionnalité est liée à un ou plusieurs plans
  */
-export type SubscriptionFeature = 
+export type SubscriptionFeature =
   // Modules de base
   | 'pos_system'           // POS - Point de vente
   | 'inventory_management' // Inventaire
@@ -103,7 +103,7 @@ export const MODULE_FEATURE_MAP: Record<string, SubscriptionFeature> = {
 
 /**
  * Mapping des fonctionnalités par plan
- * 
+ *
  * GRATUIT: Fonctionnalités actuelles sans modification
  * BASIC: POS, Inventaire, Produits (restriction), Livraison, Avis, Support, Messages, Copilot, Clients, Wallet (restriction)
  * PRO: BASIC + Clients avancé + Marketing (restriction produits)
@@ -299,7 +299,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'wallet_basic': 'free',
   'ratings': 'free',
   'support_basic': 'free',
-  
+
   // Basic
   'pos_system': 'basic',
   'inventory_management': 'basic',
@@ -313,7 +313,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'email_support': 'basic',
   'auto_billing': 'basic',
   'analytics_basic': 'basic',
-  
+
   // Pro
   'crm_advanced': 'premium',
   'marketing_promotions': 'pro',
@@ -324,7 +324,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'complete_history': 'pro',
   'priority_support': 'pro',
   'featured_products': 'pro',
-  
+
   // Business
   'products_unlimited': 'business',
   'wallet_unlimited': 'business',
@@ -342,7 +342,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'prospect_management': 'business',
   'advanced_integrations': 'business',
   'multi_user': 'business',
-  
+
   // Premium
   'analytics_realtime': 'premium',
   'api_premium': 'premium',
@@ -367,7 +367,7 @@ export function useSubscriptionFeatures() {
     if (loading) {
       return false;
     }
-    
+
     // Pas d'abonnement = accès aux fonctionnalités gratuites uniquement
     if (!subscription) {
       const freeFeatures = PLAN_FEATURES['free'] || [];
@@ -382,7 +382,7 @@ export function useSubscriptionFeatures() {
 
     const planName = subscription.plan_name?.toLowerCase() || 'free';
     const planFeatures = PLAN_FEATURES[planName] || PLAN_FEATURES['free'];
-    
+
     return planFeatures.includes(feature);
   };
 
@@ -399,7 +399,7 @@ export function useSubscriptionFeatures() {
     if (!subscription || subscription.status !== 'active') {
       return PLAN_FEATURES['free'] || [];
     }
-    
+
     const planName = subscription.plan_name?.toLowerCase() || 'free';
     return PLAN_FEATURES[planName] || PLAN_FEATURES['free'];
   };
@@ -415,14 +415,14 @@ export function useSubscriptionFeatures() {
   const isActive = (): boolean => {
     if (!subscription) return false;
     if (subscription.status !== 'active') return false;
-    
+
     // Vérifier aussi la date d'expiration
     if (subscription.current_period_end) {
       const endDate = new Date(subscription.current_period_end);
       const now = new Date();
       if (endDate <= now) return false;
     }
-    
+
     return true;
   };
 

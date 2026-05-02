@@ -1,7 +1,7 @@
 ﻿/**
- * ­ƒÆ│ PAGE PUBLIQUE DE PAIEMENT - /pay/:token
+ * 💳 PAGE PUBLIQUE DE PAIEMENT - /pay/:token
  * Page professionnelle pour payer via un lien de paiement 224SOLUTIONS
- * Supporte: invit├®s (Orange Money, Carte) + connect├®s (Wallet)
+ * Supporte: invités (Orange Money, Carte) + connectés (Wallet)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -90,17 +90,17 @@ function CardPaymentElementForm({ amountLabel, disabled = false, onSuccess, onEr
       });
 
       if (error) {
-        onError(error.message || 'Paiement carte ├®chou├®');
+        onError(error.message || 'Paiement carte échoué');
         return;
       }
 
       if (!paymentIntent) {
-        onError('Aucune confirmation Stripe re├ºue');
+        onError('Aucune confirmation Stripe reçue');
         return;
       }
 
       if (paymentIntent.status !== 'succeeded') {
-        onError(`Paiement non confirm├® (${paymentIntent.status})`);
+        onError(`Paiement non confirmé (${paymentIntent.status})`);
         return;
       }
 
@@ -149,7 +149,7 @@ export default function PaymentLinkPage() {
   const [linkData, setLinkData] = useState<PaymentLinkData | null>(null);
   const [ownerInfo, setOwnerInfo] = useState<OwnerInfo | null>(null);
   const [productInfo, setProductInfo] = useState<any>(null);
-  const [serviceInfo, setServiceInfo] = useState<any>(null);
+  const [_serviceInfo, setServiceInfo] = useState<any>(null);
 
   const [paymentMethod, setPaymentMethod] = useState('');
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
@@ -161,6 +161,7 @@ export default function PaymentLinkPage() {
 
   useEffect(() => {
     if (token) resolveLink();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // Pre-fill customer info if logged in
@@ -224,9 +225,9 @@ export default function PaymentLinkPage() {
         return data;
       }
 
-      console.warn('ÔÜá´©Å [PaymentLink] Backend indisponible pour Stripe, bascule vers la fonction Edge');
+      console.warn('⚠️ [PaymentLink] Backend indisponible pour Stripe, bascule vers la fonction Edge');
     } catch (error) {
-      console.warn('ÔÜá´©Å [PaymentLink] Erreur backend, tentative via la fonction Edge', error);
+      console.warn('⚠️ [PaymentLink] Erreur backend, tentative via la fonction Edge', error);
     }
 
     const { data, error } = await supabase.functions.invoke('process-payment-link', {
@@ -263,11 +264,11 @@ export default function PaymentLinkPage() {
       setCardClientSecret(data.clientSecret);
 
       toast({
-        title: 'Formulaire carte pr├¬t',
+        title: 'Formulaire carte prêt',
         description: 'Entrez vos informations bancaires puis confirmez le paiement.',
       });
     } catch (err: any) {
-      const message = err?.message || 'Erreur de pr├®paration carte';
+      const message = err?.message || 'Erreur de préparation carte';
       setCardError(message);
       toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
     } finally {
@@ -298,7 +299,7 @@ export default function PaymentLinkPage() {
 
       await resolveLink();
       setPaymentSuccess(true);
-      toast({ title: 'Paiement carte r├®ussi !', description: `Transaction ${paymentIntentId}` });
+      toast({ title: 'Paiement carte réussi !', description: `Transaction ${paymentIntentId}` });
     } catch (err: any) {
       const message = err?.message || 'Erreur de finalisation carte';
       setCardError(message);
@@ -315,7 +316,7 @@ export default function PaymentLinkPage() {
     }
 
     if (paymentMethod !== 'wallet' && !user && (!customerInfo.name || !customerInfo.phone)) {
-      toast({ title: "Erreur", description: "Nom et t├®l├®phone requis", variant: "destructive" });
+      toast({ title: "Erreur", description: "Nom et téléphone requis", variant: "destructive" });
       return;
     }
 
@@ -337,15 +338,15 @@ export default function PaymentLinkPage() {
       });
 
       if (!data?.success) {
-        toast({ title: "Erreur", description: data?.error || "Paiement ├®chou├®", variant: "destructive" });
+        toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });
         return;
       }
 
       if (paymentMethod === 'wallet') {
         setPaymentSuccess(true);
-        toast({ title: "Paiement r├®ussi !", description: `Transaction ${data.transactionId}` });
+        toast({ title: "Paiement réussi !", description: `Transaction ${data.transactionId}` });
       } else {
-        toast({ title: "Paiement initi├®", description: data.message || "V├®rifiez votre t├®l├®phone" });
+        toast({ title: "Paiement initié", description: data.message || "Vérifiez votre téléphone" });
         setPaymentSuccess(true);
       }
     } catch (err: any) {
@@ -358,7 +359,7 @@ export default function PaymentLinkPage() {
   const formatCurrency = (amount: number, currency: string) =>
     new Intl.NumberFormat('fr-FR').format(amount) + ' ' + currency;
 
-  // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ LOADING ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // -------- LOADING --------
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -370,7 +371,7 @@ export default function PaymentLinkPage() {
     );
   }
 
-  // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ NOT FOUND ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // -------- NOT FOUND --------
   if (!linkData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -378,7 +379,7 @@ export default function PaymentLinkPage() {
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
             <h2 className="text-xl font-semibold mb-2">Lien introuvable</h2>
-            <p className="text-muted-foreground mb-4">Ce lien de paiement n'existe pas ou a ├®t├® supprim├®.</p>
+            <p className="text-muted-foreground mb-4">Ce lien de paiement n'existe pas ou a été supprimé.</p>
             <Button onClick={() => navigate('/')}><ArrowLeft className="w-4 h-4 mr-2" />Accueil</Button>
           </CardContent>
         </Card>
@@ -386,14 +387,14 @@ export default function PaymentLinkPage() {
     );
   }
 
-  // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ EXPIRED ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // -------- EXPIRED --------
   if (linkData.status === 'expired') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">Lien expir├®</h2>
+            <h2 className="text-xl font-semibold mb-2">Lien expiré</h2>
             <p className="text-muted-foreground mb-4">Contactez le vendeur pour un nouveau lien.</p>
             <Button onClick={() => navigate('/')}><ArrowLeft className="w-4 h-4 mr-2" />Accueil</Button>
           </CardContent>
@@ -402,7 +403,7 @@ export default function PaymentLinkPage() {
     );
   }
 
-  // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ ALREADY PAID ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // -------- ALREADY PAID --------
   if (linkData.status === 'success' || linkData.status === 'paid' || paymentSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -411,7 +412,7 @@ export default function PaymentLinkPage() {
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Paiement confirm├® !</h2>
+            <h2 className="text-xl font-bold mb-2">Paiement confirmé !</h2>
             <p className="text-muted-foreground mb-2">
               {formatCurrency(linkData.amount, linkData.currency)}
             </p>
@@ -419,11 +420,11 @@ export default function PaymentLinkPage() {
               {linkData.title}
             </p>
             {linkData.reference && (
-              <p className="text-xs text-muted-foreground mb-4">R├®f: {linkData.reference}</p>
+              <p className="text-xs text-muted-foreground mb-4">Réf: {linkData.reference}</p>
             )}
             <div className="flex items-center justify-center gap-2 p-3 bg-muted rounded-lg mb-4">
               <Receipt className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Un re├ºu sera envoy├® par notification</span>
+              <span className="text-sm">Un reçu sera envoyé par notification</span>
             </div>
             <Button onClick={() => navigate('/')} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />Retour
@@ -436,14 +437,14 @@ export default function PaymentLinkPage() {
 
   const typeConfig = linkTypeConfig[linkData.linkType] || linkTypeConfig.payment;
 
-  // ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ MAIN PAYMENT PAGE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+  // -------- MAIN PAYMENT PAGE --------
   return (
     <div className="min-h-screen bg-background py-6 px-4">
       <div className="max-w-lg mx-auto space-y-4">
         {/* Header */}
         <div className="text-center">
           <h1 className="text-xl font-bold text-foreground">224SOLUTIONS</h1>
-          <p className="text-sm text-muted-foreground">Paiement s├®curis├®</p>
+          <p className="text-sm text-muted-foreground">Paiement sécurisé</p>
         </div>
 
         {/* Payment Details Card */}
@@ -452,7 +453,7 @@ export default function PaymentLinkPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 {typeConfig.icon}
-                D├®tails
+                Détails
               </CardTitle>
               <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
             </div>
@@ -506,7 +507,7 @@ export default function PaymentLinkPage() {
               )}
               {linkData.reference && (
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>R├®f├®rence</span>
+                  <span>Référence</span>
                   <span>{linkData.reference}</span>
                 </div>
               )}
@@ -518,7 +519,7 @@ export default function PaymentLinkPage() {
               )}
               <Separator className="my-1" />
               <div className="flex justify-between font-bold">
-                <span>Total ├á payer</span>
+                <span>Total à payer</span>
                 <span className="text-primary">{formatCurrency(linkData.amount, linkData.currency)}</span>
               </div>
             </div>
@@ -553,7 +554,7 @@ export default function PaymentLinkPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="cust-phone">T├®l├®phone *</Label>
+                <Label htmlFor="cust-phone">Téléphone *</Label>
                 <Input
                   id="cust-phone"
                   value={customerInfo.phone}
@@ -596,7 +597,7 @@ export default function PaymentLinkPage() {
               </div>
               <div className="text-left">
                 <p className="font-semibold text-sm">Orange Money</p>
-                <p className="text-xs text-muted-foreground">Paiement mobile instantan├®</p>
+                <p className="text-xs text-muted-foreground">Paiement mobile instantané</p>
               </div>
             </button>
 
@@ -643,7 +644,7 @@ export default function PaymentLinkPage() {
             {paymentMethod === 'card' && cardClientSecret && stripePromise && (
               <div className="mt-3 p-3 border rounded-lg bg-muted/30 space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Finalisez le paiement avec votre carte. Le lien passe ├á "pay├®" uniquement apr├¿s confirmation Stripe.
+                  Finalisez le paiement avec votre carte. Le lien passe à "payé" uniquement après confirmation Stripe.
                 </p>
                 <Elements
                   stripe={stripePromise}
@@ -669,7 +670,7 @@ export default function PaymentLinkPage() {
             <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg mt-3">
               <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
               <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                Paiement s├®curis├® et chiffr├® SSL
+                Paiement sécurisé et chiffré SSL
               </p>
             </div>
           </CardContent>
@@ -690,7 +691,7 @@ export default function PaymentLinkPage() {
           ) : paymentMethod === 'card' && cardClientSecret ? (
             <>
               <CheckCircle className="w-5 h-5 mr-2" />
-              Formulaire carte affich├® ci-dessus
+              Formulaire carte affiché ci-dessus
             </>
           ) : paymentMethod === 'card' ? (
             <>
@@ -707,7 +708,7 @@ export default function PaymentLinkPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground">
-          Propuls├® par <span className="font-semibold">224SOLUTIONS</span>
+          Propulsé par <span className="font-semibold">224SOLUTIONS</span>
         </p>
       </div>
     </div>

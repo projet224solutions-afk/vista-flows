@@ -191,32 +191,32 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   ];
 
   const alerts = [
-    { 
-      type: 'warning', 
+    {
+      type: 'warning',
       message: `${stats.pendingValidations || 0} commande(s) en attente de traitement`,
       icon: Clock,
       color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
       action: 'orders',
       show: (stats.pendingValidations || 0) > 0
     },
-    { 
-      type: 'error', 
+    {
+      type: 'error',
       message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nécessitent votre attention`,
       icon: AlertCircle,
       color: 'text-red-600 bg-red-500/10 border-red-500/20',
       action: 'security',
       show: (stats.criticalAlerts || 0) > 0
     },
-    { 
-      type: 'success', 
+    {
+      type: 'success',
       message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
       color: 'text-green-600 bg-green-500/10 border-green-500/20',
       action: 'vendors',
       show: true
     },
-    { 
-      type: 'info', 
+    {
+      type: 'info',
       message: `${stats.onlineDrivers || 0} livreurs en ligne sur ${stats.totalDrivers || 0}`,
       icon: Activity,
       color: 'text-blue-600 bg-blue-500/10 border-blue-500/20',
@@ -232,14 +232,14 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           const TrendIcon = kpi.trend === 'up' ? TrendingUp : TrendingDown;
-          
+
           return (
-            <Card 
+            <Card
               key={kpi.title}
               className="relative overflow-hidden hover:shadow-xl transition-all duration-300 group border border-border/40 bg-card/50 backdrop-blur-sm"
             >
               <div className="absolute top-0 right-0 w-20 sm:w-32 h-20 sm:h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-full -mr-10 sm:-mr-16 -mt-10 sm:-mt-16 group-hover:scale-110 transition-transform duration-500" />
-              
+
               <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 relative z-10 p-3 sm:p-6">
                 <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">
                   {kpi.title}
@@ -248,12 +248,12 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                   <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </CardHeader>
-              
+
               <CardContent className="relative z-10 p-3 sm:p-6 pt-0 sm:pt-0">
                 <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
                   <div className="text-lg sm:text-3xl font-bold truncate">{kpi.value}</div>
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className={cn(
                       "gap-0.5 sm:gap-1 text-[10px] sm:text-xs w-fit",
                       kpi.trend === 'up' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
@@ -455,7 +455,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       {/* Management Sections - Agents & Syndicats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Gestion des Agents */}
-        <Card 
+        <Card
           className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('agents')}
         >
@@ -486,7 +486,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-green-600">{stats.activeAgents || 0}</p>
               </div>
             </div>
-            <Button 
+            <Button
               className="w-full mt-4 bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
@@ -499,7 +499,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         </Card>
 
         {/* Surveillance Logique Globale */}
-        <Card 
+        <Card
           className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950 dark:to-violet-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('debug')}
         >
@@ -530,7 +530,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-purple-600">100%</p>
               </div>
             </div>
-            <Button 
+            <Button
               className="w-full mt-4 bg-purple-600 hover:bg-purple-700 group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
@@ -543,7 +543,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         </Card>
 
         {/* Gestion des Bureaux Syndicats */}
-        <Card 
+        <Card
           className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('syndicat')}
         >
@@ -574,7 +574,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-blue-600">{stats.validatedBureaus || 0}</p>
               </div>
             </div>
-            <Button 
+            <Button
               className="w-full mt-4 bg-blue-600 hover:bg-blue-700 group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();

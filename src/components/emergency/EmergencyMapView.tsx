@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { _toast } from 'sonner';
 import { emergencyService } from '@/services/emergencyService';
 import type { EmergencyAlert, EmergencyGPSTracking } from '@/types/emergency';
 
@@ -63,7 +63,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
   const googleMapsDirectionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${currentLat},${currentLng}`;
 
   // Style de la carte (simulation)
-  const mapMarkers = gpsHistory.slice(0, 10).map((point, index) => ({
+  const _mapMarkers = gpsHistory.slice(0, 10).map((point, index) => ({
     lat: point.latitude,
     lng: point.longitude,
     opacity: 1 - (index * 0.1)
@@ -107,7 +107,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             )}
-            
+
             {/* Iframe Google Maps */}
             <iframe
               src={`https://maps.google.com/maps?q=${currentLat},${currentLng}&z=16&output=embed`}
@@ -153,7 +153,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
         <div className="space-y-2">
           <h4 className="text-sm font-medium">Historique GPS ({gpsHistory.length} points)</h4>
           <div className="max-h-32 overflow-y-auto space-y-1 text-xs">
-            {gpsHistory.slice(0, 5).map((point, index) => (
+            {gpsHistory.slice(0, 5).map((point, _index) => (
               <div
                 key={point.id}
                 className="flex items-center justify-between p-2 bg-muted rounded"

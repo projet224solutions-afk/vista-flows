@@ -1,6 +1,6 @@
 ﻿/**
- * PAGE CLIENT TAXI-MOTO COMPL├êTE
- * Interface unifi├®e pour r├®server, suivre et consulter l'historique des courses
+ * PAGE CLIENT TAXI-MOTO COMPLÈTE
+ * Interface unifiée pour réserver, suivre et consulter l'historique des courses
  * 224Solutions - Taxi-Moto System
  */
 
@@ -71,17 +71,17 @@ export default function TaxiMotoClient() {
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
   const responsive = useResponsive();
-  const { error, capture, clear } = useTaxiErrorBoundary();
+  const { error, _capture, clear } = useTaxiErrorBoundary();
 
   const [activeTab, setActiveTab] = useState('booking');
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
 
-  // Hook de notifications temps r├®el
+  // Hook de notifications temps réel
   useRideNotifications(user?.id, (notification) => {
     console.log('[TaxiMotoClient] Notification received:', notification);
-    
-    // Mettre ├á jour currentRide si n├®cessaire
+
+    // Mettre à jour currentRide si nécessaire
     if (notification.type === 'ride_completed' || notification.type === 'ride_cancelled') {
       setCurrentRide(null);
       if (notification.type === 'ride_completed') {
@@ -94,12 +94,12 @@ export default function TaxiMotoClient() {
   useEffect(() => {
     const initGPS = async () => {
       try {
-        console.log('[TaxiMotoClient] ­ƒôì Demande automatique de position GPS...');
+        console.log('[TaxiMotoClient] 📍 Demande automatique de position GPS...');
         await getCurrentLocation();
-        console.log('[TaxiMotoClient] Ô£à Position GPS obtenue');
+        console.log('[TaxiMotoClient] ✓ Position GPS obtenue');
       } catch (error) {
-        console.error('[TaxiMotoClient] ÔØî Erreur GPS:', error);
-        toast.error('Activez votre GPS pour une meilleure exp├®rience');
+        console.error('[TaxiMotoClient] ✕ Erreur GPS:', error);
+        toast.error('Activez votre GPS pour une meilleure expérience');
       }
     };
 
@@ -110,9 +110,10 @@ export default function TaxiMotoClient() {
     if (location?.latitude && location?.longitude) {
       void loadNearbyDrivers();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.latitude, location?.longitude]);
 
-  // ├ëcouter les mises ├á jour de course
+  // Écouter les mises à jour de course
   useEffect(() => {
     if (!currentRide?.id) return;
 
@@ -141,14 +142,14 @@ export default function TaxiMotoClient() {
     } else if (trip.status === 'in_progress') {
       setCurrentRide(prev => prev ? { ...prev, status: 'in_progress' } : null);
     } else if (trip.status === 'completed') {
-      toast.success('Course termin├®e !');
+      toast.success('Course terminée !');
       setCurrentRide(null);
       setActiveTab('history');
     }
   };
 
   /**
-   * Charge les conducteurs disponibles ├á proximit├®
+   * Charge les conducteurs disponibles à proximité
    */
   const loadNearbyDrivers = async () => {
     try {
@@ -208,7 +209,7 @@ export default function TaxiMotoClient() {
   };
 
   /**
-   * G├¿re la cr├®ation d'une nouvelle course
+   * Gère la création d'une nouvelle course
    */
   const handleRideCreated = (rideData: any) => {
     const newRide: CurrentRide = {
@@ -222,15 +223,15 @@ export default function TaxiMotoClient() {
 
     setCurrentRide(newRide);
     setActiveTab('tracking');
-    toast.success('Course cr├®├®e ! Recherche de conducteur en cours...');
+    toast.success('Course créée ! Recherche de conducteur en cours...');
   };
 
   /**
-   * D├®connexion
+   * Déconnexion
    */
   const handleSignOut = async () => {
     await signOut();
-    toast.success('D├®connexion r├®ussie');
+    toast.success('Déconnexion réussie');
   };
 
   return (
@@ -238,13 +239,13 @@ export default function TaxiMotoClient() {
       {/* Header Responsive */}
       <header className="bg-card/90 backdrop-blur-sm border-b sticky top-0 z-40 shadow-sm">
         <div className={responsive.isMobile ? 'px-3 py-3' : 'px-6 py-4'}>
-          {/* Banni├¿re d'erreur unifi├®e */}
+          {/* Bannière d'erreur unifiée */}
           {error && (
             <ErrorBanner
               title={
                 error.type === 'gps' ? 'GPS inactif' :
-                error.type === 'payment' ? 'Probl├¿me de paiement' :
-                error.type === 'network' ? 'Erreur r├®seau' :
+                error.type === 'payment' ? 'Problème de paiement' :
+                error.type === 'network' ? 'Erreur réseau' :
                 'Erreur'
               }
               message={error.message}
@@ -269,7 +270,7 @@ export default function TaxiMotoClient() {
                 </span>
                 {location && (
                   <>
-                    <span className="text-muted-foreground">ÔÇó</span>
+                    <span className="text-muted-foreground">•</span>
                     <MapPin className="w-3 h-3 text-green-500 flex-shrink-0" />
                     {!responsive.isMobile && (
                       <span className="text-xs text-muted-foreground">GPS actif</span>
@@ -302,7 +303,7 @@ export default function TaxiMotoClient() {
         </div>
       </header>
 
-      {/* Conducteurs ├á proximit├® - Responsive */}
+      {/* Conducteurs à proximité - Responsive */}
       {location && nearbyDrivers.length > 0 && activeTab === 'booking' && (
         <Card className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} bg-card/90 backdrop-blur-sm border-0 shadow-lg`}>
           <CardContent className={responsive.isMobile ? 'p-3' : 'p-4'}>
@@ -312,7 +313,7 @@ export default function TaxiMotoClient() {
                   {nearbyDrivers.length} conducteur{nearbyDrivers.length > 1 ? 's' : ''} {responsive.isMobile ? '' : 'disponibles'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {responsive.isMobile ? `${nearbyDrivers[0].distance}km` : `Le plus proche ├á ${nearbyDrivers[0].distance}km`}
+                  {responsive.isMobile ? `${nearbyDrivers[0].distance}km` : `Le plus proche à ${nearbyDrivers[0].distance}km`}
                 </p>
               </div>
               <div className={`flex ${responsive.isMobile ? '-space-x-1' : '-space-x-2'}`}>
@@ -336,8 +337,8 @@ export default function TaxiMotoClient() {
           <TabsList className={`grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
             <TabsTrigger value="booking" className={responsive.isMobile ? 'text-xs' : ''}>
               <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
-              {!responsive.isMobile && 'R├®server'}
-              {responsive.isMobile && <span className="ml-1">R├®server</span>}
+              {!responsive.isMobile && 'Réserver'}
+              {responsive.isMobile && <span className="ml-1">Réserver</span>}
             </TabsTrigger>
             <TabsTrigger value="tracking" disabled={!currentRide} className={responsive.isMobile ? 'text-xs' : ''}>
               <Clock className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
@@ -359,7 +360,7 @@ export default function TaxiMotoClient() {
             </TabsTrigger>
           </TabsList>
 
-          {/* R├®servation */}
+          {/* Réservation */}
           <TabsContent value="booking" className="mt-4">
             <TaxiMotoBooking
               userLocation={location}
@@ -368,7 +369,7 @@ export default function TaxiMotoClient() {
             />
           </TabsContent>
 
-          {/* Suivi en temps r├®el */}
+          {/* Suivi en temps réel */}
           <TabsContent value="tracking" className="mt-4">
             <TaxiMotoTracking
               currentRide={currentRide}
@@ -384,9 +385,9 @@ export default function TaxiMotoClient() {
           {/* Mes Achats */}
           <TabsContent value="my-purchases" className="mt-4">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <MyPurchasesOrdersList 
-                title="Mes Achats Personnels" 
-                emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace" 
+              <MyPurchasesOrdersList
+                title="Mes Achats Personnels"
+                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
               />
             </Suspense>
           </TabsContent>
@@ -415,9 +416,9 @@ export default function TaxiMotoClient() {
         </Card>
       )}
 
-      {/* Banni├¿re d'installation PWA */}
+      {/* Bannière d'installation PWA */}
       <InstallPromptBanner />
-      
+
       {/* Widget de communication flottant */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>

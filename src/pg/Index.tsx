@@ -1,6 +1,6 @@
 ﻿/**
  * Index.tsx - Page d'accueil principale
- * Composant l├®ger qui charge rapidement et redirige vers Home
+ * Composant léger qui charge rapidement et redirige vers Home
  */
 import { Suspense, lazy } from "react";
 

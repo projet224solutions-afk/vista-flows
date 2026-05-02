@@ -32,6 +32,8 @@ interface UseOfflineStatusOptions {
 
 /** Minimum 60s between pings to avoid flooding on mobile */
 const MIN_PING_INTERVAL = 60_000;
+const OFFLINE_CONFIRMATION_FAILURES = 2;
+const OFFLINE_EVENT_GRACE_MS = 1500;
 
 export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   const {
@@ -59,6 +61,8 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   const lastStatusRef = useRef(state.status);
   const offlineStartRef = useRef<Date | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingOfflineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const consecutiveFailuresRef = useRef(0);
 
   const onOnlineRef = useRef(onOnline);
   const onOfflineRef = useRef(onOffline);
@@ -91,35 +95,49 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     return checkNetworkHealth({ timeoutMs: 3000, retries: 1 });
   }, [enablePing]);
 
-  const updateStatus = useCallback(async (navigatorOnline: boolean) => {
-    if (!navigatorOnline) {
-      const now = new Date();
-      if (lastStatusRef.current !== 'offline') {
-        offlineStartRef.current = now;
-        if (showToastsRef.current) {
-          toast.warning('Mode hors ligne', {
-            description: 'Vos données seront synchronisées au retour de la connexion',
-            duration: 5000,
-          });
-        }
-        onOfflineRef.current?.();
-      }
-      lastStatusRef.current = 'offline';
-      const { connectionType, effectiveType } = getConnectionInfo();
-      setState(prev => ({
-        ...prev, status: 'offline', isOnline: false, isOffline: true,
-        lastOfflineAt: prev.lastOfflineAt || now,
-        offlineDuration: offlineStartRef.current ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000) : 0,
-        connectionType, effectiveType,
-      }));
-      return;
+  const clearPendingOfflineTimer = useCallback(() => {
+    if (pendingOfflineTimerRef.current) {
+      clearTimeout(pendingOfflineTimerRef.current);
+      pendingOfflineTimerRef.current = null;
+    }
+  }, []);
+
+  const markOffline = useCallback(() => {
+    const now = new Date();
+    if (!offlineStartRef.current) {
+      offlineStartRef.current = now;
     }
 
-    const healthResult = await checkConnection();
-    const { connectionType, effectiveType } = getConnectionInfo();
-    const now = new Date();
+    if (lastStatusRef.current !== 'offline') {
+      if (showToastsRef.current) {
+        toast.warning('Mode hors ligne', {
+          description: 'Vos données seront synchronisées au retour de la connexion',
+          duration: 5000,
+        });
+      }
+      onOfflineRef.current?.();
+    }
 
-    if (healthResult.connectivity === 'online') {
+    lastStatusRef.current = 'offline';
+    const { connectionType, effectiveType } = getConnectionInfo();
+    setState(prev => ({
+      ...prev,
+      status: 'offline',
+      isOnline: false,
+      isOffline: true,
+      lastOfflineAt: now,
+      offlineDuration: offlineStartRef.current
+        ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000)
+        : 0,
+      connectionType,
+      effectiveType,
+    }));
+  }, [getConnectionInfo]);
+
+  const markOnline = useCallback((status: 'online' | 'degraded', now: Date, connectionType: string | null, effectiveType: string | null, description?: string) => {
+    clearPendingOfflineTimer();
+
+    if (status === 'online') {
       if (lastStatusRef.current === 'offline') {
         const dur = offlineStartRef.current ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000) : 0;
         if (showToastsRef.current) {
@@ -128,24 +146,60 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
             duration: 4000,
           });
         }
-        offlineStartRef.current = null;
         onOnlineRef.current?.();
       }
+      offlineStartRef.current = null;
+      consecutiveFailuresRef.current = 0;
       lastStatusRef.current = 'online';
       setState(prev => ({
-        ...prev, status: 'online', isOnline: true, isOffline: false,
-        lastOnlineAt: now, offlineDuration: 0, connectionType, effectiveType,
+        ...prev,
+        status: 'online',
+        isOnline: true,
+        isOffline: false,
+        lastOnlineAt: now,
+        offlineDuration: 0,
+        connectionType,
+        effectiveType,
       }));
       return;
     }
 
+    consecutiveFailuresRef.current = 0;
+    if (lastStatusRef.current !== 'degraded' && showToastsRef.current) {
+      toast.warning('Connexion instable', {
+        description: description || 'Le réseau répond, mais certaines données peuvent échouer temporairement.',
+        duration: 5000,
+      });
+    }
+    lastStatusRef.current = 'degraded';
+    setState(prev => ({
+      ...prev,
+      status: 'degraded',
+      isOnline: true,
+      isOffline: false,
+      lastOnlineAt: now,
+      offlineDuration: 0,
+      connectionType,
+      effectiveType,
+    }));
+  }, [clearPendingOfflineTimer]);
+
+  const applyHealthResult = useCallback((healthResult: NetworkHealthResult) => {
+    const { connectionType, effectiveType } = getConnectionInfo();
+    const now = new Date();
+
+    if (healthResult.connectivity === 'online') {
+      markOnline('online', now, connectionType, effectiveType);
+      return;
+    }
+
     if (healthResult.connectivity === 'degraded') {
-      if (lastStatusRef.current !== 'degraded' && showToastsRef.current) {
-        toast.warning('Connexion instable', {
-          description: 'Le réseau répond, mais certaines données peuvent échouer temporairement.',
-          duration: 5000,
-        });
-      }
+      markOnline('degraded', now, connectionType, effectiveType, healthResult.reason);
+      return;
+    }
+
+    consecutiveFailuresRef.current += 1;
+    if (consecutiveFailuresRef.current < OFFLINE_CONFIRMATION_FAILURES) {
       lastStatusRef.current = 'degraded';
       setState(prev => ({
         ...prev,
@@ -160,18 +214,22 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       return;
     }
 
-    {
-      if (lastStatusRef.current !== 'offline') {
-        offlineStartRef.current = now;
-        onOfflineRef.current?.();
-      }
-      lastStatusRef.current = 'offline';
-      setState(prev => ({
-        ...prev, status: 'offline', isOnline: false, isOffline: true,
-        lastOfflineAt: prev.lastOfflineAt || now, connectionType, effectiveType,
-      }));
+    markOffline();
+  }, [getConnectionInfo, markOffline, markOnline]);
+
+  const updateStatus = useCallback(async (navigatorOnline: boolean) => {
+    if (!navigatorOnline) {
+      clearPendingOfflineTimer();
+      pendingOfflineTimerRef.current = setTimeout(() => {
+        pendingOfflineTimerRef.current = null;
+        void checkConnection().then(applyHealthResult).catch(() => markOffline());
+      }, OFFLINE_EVENT_GRACE_MS);
+      return;
     }
-  }, [checkConnection, getConnectionInfo]);
+
+    const healthResult = await checkConnection();
+    applyHealthResult(healthResult);
+  }, [applyHealthResult, checkConnection, clearPendingOfflineTimer, markOffline]);
 
   const checkNow = useCallback(async () => {
     await updateStatus(navigator.onLine);
@@ -202,10 +260,11 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearPendingOfflineTimer();
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       connection?.removeEventListener?.('change', handleConnectionChange);
     };
-  }, [enablePing, pingInterval, updateStatus]);
+  }, [clearPendingOfflineTimer, enablePing, pingInterval, updateStatus]);
 
   return {
     ...state,

@@ -110,7 +110,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       sortBy,
     };
 
-    let lastError: any = null;
+    let _lastError: any = null;
 
     try {
       if (shouldShowLoading) {
@@ -249,7 +249,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const { data, error, count } = result;
 
       if (error) {
-        lastError = error;
+        _lastError = error;
         if (attempt < MAX_RETRIES) {
           console.warn(`[Products] Attempt ${attempt} failed, retrying...`, error.message);
           await new Promise(r => setTimeout(r, 1000 * attempt));
@@ -315,7 +315,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       hasLoadedOnceRef.current = true;
       return; // Success — exit retry loop
     } catch (error) {
-      lastError = error;
+      _lastError = error;
       if (attempt < MAX_RETRIES) {
         const errorMessage = error instanceof Error ? error.message : 'unknown';
         console.warn(`[Products] Attempt ${attempt} failed (${errorMessage}), retrying in ${attempt}s...`);

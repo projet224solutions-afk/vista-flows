@@ -39,13 +39,13 @@ export function usePWAInstall() {
     // Sur iOS, toujours installable via instructions manuelles
     return detectIOS() ? true : false;
   });
-  
+
   const [isInstalled, setIsInstalled] = useState(() => detectStandalone());
-  
+
   // Ces valeurs sont constantes après le premier render
   const isIOSRef = useRef(detectIOS());
   const isSafariRef = useRef(detectSafari());
-  
+
   const [isIOS] = useState(() => isIOSRef.current);
   const [isSafari] = useState(() => isSafariRef.current);
 

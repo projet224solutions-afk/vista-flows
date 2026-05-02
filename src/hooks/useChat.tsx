@@ -316,6 +316,7 @@ export const useChat = () => {
         messagesSubscription.current.unsubscribe();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return {

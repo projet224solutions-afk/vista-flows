@@ -10,22 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-    MapPin,
+    _MapPin,
     Navigation,
-    Clock,
+    _Clock,
     CreditCard,
     Star,
     Loader2,
-    Calendar,
+    _Calendar,
     Users,
-    Zap,
+    _Zap,
     DollarSign,
     Route,
     CheckCircle,
     AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { getVehicleTypeInfo } from "@/services/pricingService";
+import { _getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +66,7 @@ export default function TaxiMotoBooking({
     // États du formulaire - GPS ultra-précis
     const [pickupAddress, setPickupAddress] = useState<ValidatedAddress | null>(null);
     const [destinationAddress, setDestinationAddress] = useState<ValidatedAddress | null>(null);
-    const [selectedVehicleType, setSelectedVehicleType] = useState<'moto_economique' | 'moto_rapide' | 'moto_premium'>('moto_rapide');
+    const [_selectedVehicleType, _setSelectedVehicleType] = useState<'moto_economique' | 'moto_rapide' | 'moto_premium'>('moto_rapide');
     const [scheduledTime, setScheduledTime] = useState('');
     const [isScheduled, setIsScheduled] = useState(false);
 
@@ -84,11 +84,11 @@ export default function TaxiMotoBooking({
         duration: number;
         currency: string;
     } | null>(null);
-    const [priceComparison, setPriceComparison] = useState<unknown[]>([]);
+    const [_priceComparison, setPriceComparison] = useState<unknown[]>([]);
 
     // États de chargement
     const [loadingRoute, setLoadingRoute] = useState(false);
-    const [loadingPrice, setLoadingPrice] = useState(false);
+    const [_loadingPrice, setLoadingPrice] = useState(false);
     const [bookingInProgress, setBookingInProgress] = useState(false);
 
     // État pour l'étape de paiement

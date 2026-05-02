@@ -30,15 +30,15 @@ interface RideRequestNotificationProps {
   isAccepting?: boolean;
 }
 
-export function RideRequestNotification({ 
-  request, 
-  onAccept, 
+export function RideRequestNotification({
+  request,
+  onAccept,
   onDecline,
   index,
   isAccepting = false
 }: RideRequestNotificationProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+
   useEffect(() => {
     // Jouer le son uniquement pour la première notification
     if (index === 0) {

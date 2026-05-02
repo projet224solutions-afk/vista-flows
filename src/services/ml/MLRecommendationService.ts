@@ -46,7 +46,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * Service principal de recommandations
  */
 export class MLRecommendationService {
-  
+
   /**
    * Obtenir des recommandations personnalisées pour un utilisateur
    */
@@ -74,7 +74,7 @@ export class MLRecommendationService {
     try {
       // 1. Récupérer le comportement utilisateur
       const behavior = await this.getUserBehavior(userId);
-      
+
       // 2. Collecter les recommandations de différentes sources
       const recommendations: ProductRecommendation[] = [];
 
@@ -98,10 +98,10 @@ export class MLRecommendationService {
 
       // 3. Fusionner et scorer
       const merged = this.mergeAndScore(recommendations, behavior, exclude_purchased);
-      
+
       // 4. Filtrer par confiance minimum
       const filtered = merged.filter(r => r.confidence >= min_confidence);
-      
+
       // 5. Limiter et trier
       const final = filtered
         .sort((a, b) => b.score - a.score)
@@ -143,7 +143,7 @@ export class MLRecommendationService {
         .gte('viewed_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .order('viewed_at', { ascending: false })
         .limit(50);
-      
+
       if (views) {
         behavior.viewed_products = [...new Set(views.map(v => v.product_id))];
       }
@@ -154,7 +154,7 @@ export class MLRecommendationService {
         .select('product_id, orders!inner(customer_id)')
         .eq('orders.customer_id', userId)
         .limit(100);
-      
+
       if (orders) {
         behavior.purchased_products = [...new Set(orders.map(o => o.product_id))];
       }
@@ -164,7 +164,7 @@ export class MLRecommendationService {
         .from('cart_items')
         .select('product_id')
         .eq('user_id', userId);
-      
+
       if (cart) {
         behavior.cart_products = cart.map((c: any) => c.product_id);
       }
@@ -176,7 +176,7 @@ export class MLRecommendationService {
         .eq('user_id', userId)
         .order('searched_at', { ascending: false })
         .limit(20);
-      
+
       if (searches) {
         behavior.searched_terms = searches.map((s: any) => s.search_term);
       }
@@ -186,7 +186,7 @@ export class MLRecommendationService {
         .from('products')
         .select('category_id')
         .in('id', behavior.purchased_products.slice(0, 20));
-      
+
       if (categories) {
         const categoryCount: Record<string, number> = {};
         categories.forEach((c: any) => {
@@ -205,7 +205,7 @@ export class MLRecommendationService {
         .from('products')
         .select('vendor_id')
         .in('id', behavior.purchased_products.slice(0, 20));
-      
+
       if (vendors) {
         const vendorCount: Record<string, number> = {};
         vendors.forEach(v => {
@@ -429,7 +429,7 @@ export class MLRecommendationService {
       if (trendingStats && trendingStats.length > 0) {
         // Agréger par produit
         const productScores: Record<string, { score: number; product: any }> = {};
-        
+
         trendingStats.forEach((stat: any) => {
           if (!productScores[stat.product_id]) {
             productScores[stat.product_id] = {

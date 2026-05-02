@@ -12,7 +12,7 @@ import { useAgent } from '@/contexts/AgentContext';
 export function useVendorId() {
   const { user } = useAuth();
   const agentContext = useAgent(); // Utilise le contexte avec valeurs par défaut
-  
+
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export function useVendorId() {
         setLoading(true);
         setError(null);
         console.log('🔍 Récupération vendor_id pour user:', user.id);
-        
+
         const { data, error } = await supabase
           .from('vendors')
           .select('id')
@@ -49,7 +49,7 @@ export function useVendorId() {
           console.error('❌ Erreur SQL récupération vendor:', error);
           throw error;
         }
-        
+
         if (!data) {
           console.warn('⚠️ Aucune entrée vendor trouvée pour user:', user.id);
           setError('Erreur: Vendeur non identifié. Veuillez contacter le support.');

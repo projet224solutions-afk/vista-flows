@@ -28,7 +28,7 @@ const statusLabels = {
 };
 
 export default function PaymentManagement() {
-  const { paymentLinks, loading, stats } = usePaymentLinks();
+  const { paymentLinks, loading, _stats } = usePaymentLinks();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function PaymentManagement() {
         const createdAt = new Date(link.created_at);
         const now = new Date();
         const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-        
+
         // Si plus de 24h, considérer comme en retard
         if (hoursDiff > 24) {
           return { ...link, displayStatus: 'overdue' as const };
@@ -52,7 +52,7 @@ export default function PaymentManagement() {
 
   const filteredLinks = linksWithStatus.filter(link => {
     const matchesStatus = filterStatus === 'all' || link.displayStatus === filterStatus;
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       link.produit?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       link.payment_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       link.client?.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -200,9 +200,9 @@ export default function PaymentManagement() {
                           {statusLabels[link.displayStatus]}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          Créé {formatDistanceToNow(new Date(link.created_at), { 
+                          Créé {formatDistanceToNow(new Date(link.created_at), {
                             addSuffix: true,
-                            locale: fr 
+                            locale: fr
                           })}
                         </span>
                       </div>
@@ -215,7 +215,7 @@ export default function PaymentManagement() {
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {link.remise && link.remise > 0 
+                        {link.remise && link.remise > 0
                           ? `Remise: ${link.type_remise === 'percentage' ? `${link.remise}%` : `${link.remise.toFixed(0)} GNF`}`
                           : 'Montant total'
                         }
@@ -237,9 +237,9 @@ export default function PaymentManagement() {
         </CardContent>
       </Card>
 
-      <EscrowManagementDialog 
-        open={escrowDialogOpen} 
-        onOpenChange={setEscrowDialogOpen} 
+      <EscrowManagementDialog
+        open={escrowDialogOpen}
+        onOpenChange={setEscrowDialogOpen}
       />
     </div>
   );

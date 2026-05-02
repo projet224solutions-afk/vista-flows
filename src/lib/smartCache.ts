@@ -1,12 +1,12 @@
 /**
  * 🚀 SMART CACHE SERVICE - 224Solutions Enterprise
  * Cache multi-couches haute performance pour supporter millions de req/sec
- * 
+ *
  * Architecture:
  * L1 → Mémoire (Map) : <1ms, données chaudes
- * L2 → IndexedDB : <5ms, persistance offline  
+ * L2 → IndexedDB : <5ms, persistance offline
  * L3 → Supabase/API : ~100-500ms, source de vérité
- * 
+ *
  * Inspiré de Redis/Memcached mais côté client
  */
 
@@ -54,10 +54,10 @@ export const CACHE_TAGS = {
 
 class SmartCacheService {
   private static instance: SmartCacheService;
-  
+
   // L1 - Cache mémoire (ultra rapide)
   private memoryCache: Map<string, CacheEntry> = new Map();
-  
+
   // Métriques
   private metrics = {
     hits: 0,
@@ -109,7 +109,7 @@ class SmartCacheService {
   ): Promise<T> {
     const ttl = options?.ttl ?? this.config.defaultTTL;
     const tags = options?.tags ?? [];
-    
+
     this.metrics.totalRequests++;
 
     // Force refresh
@@ -134,7 +134,7 @@ class SmartCacheService {
       return l1 as T;
     }
 
-    // Vérifier L2 (IndexedDB) 
+    // Vérifier L2 (IndexedDB)
     if (this.config.enableIndexedDB) {
       const l2 = await this.getFromIndexedDB(key);
       if (l2 !== undefined) {
@@ -159,7 +159,7 @@ class SmartCacheService {
    */
   set<T>(key: string, data: T, ttl = this.config.defaultTTL, tags: string[] = []): void {
     this.setInMemory(key, data, ttl, tags);
-    
+
     if (this.config.enableIndexedDB) {
       this.setInIndexedDB(key, data, ttl, tags).catch(() => {});
     }
@@ -231,7 +231,7 @@ class SmartCacheService {
 
   private setInMemory<T>(key: string, data: T, ttl: number, tags: string[]): void {
     const size = this.estimateSize(data);
-    
+
     // Éviction LRU si nécessaire
     while (
       (this.memoryCache.size >= this.config.maxMemoryEntries ||
@@ -269,7 +269,7 @@ class SmartCacheService {
     // Mettre à jour les stats d'accès
     entry.accessCount++;
     entry.lastAccess = Date.now();
-    
+
     return entry.data;
   }
 
@@ -405,7 +405,7 @@ class SmartCacheService {
     this.cleanupTimer = setInterval(() => {
       let cleaned = 0;
       const now = Date.now();
-      
+
       for (const [key, entry] of this.memoryCache) {
         if (now - entry.timestamp > entry.ttl) {
           this.currentMemorySize -= entry.size;

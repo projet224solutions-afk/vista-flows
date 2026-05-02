@@ -117,7 +117,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
       if (error) throw error;
 
       toast.success(t('invoice.pdfGenerated'));
-      
+
       if (data?.pdf_url) {
         await downloadPDF(data.pdf_url, freshQuote.ref);
       }
@@ -232,7 +232,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
                     const qty = item.quantity ?? item.qty ?? 0;
                     const price = item.unit_price ?? item.price ?? 0;
                     const itemTotal = item.total ?? (qty * price);
-                    
+
                     return (
                       <tr key={idx} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                         <td className="p-3 font-medium">{item.name || ''}</td>
@@ -296,7 +296,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
             <Button variant="outline" onClick={onClose} size="sm" className="gap-1.5">
               {t('invoice.close')}
             </Button>
-            
+
             <Button variant="outline" onClick={generatePDF} size="sm" className="gap-1.5">
               <Download className="w-3.5 h-3.5" />
               {t('invoice.generatePDF')}

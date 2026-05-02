@@ -82,7 +82,7 @@ export function DriverDashboard({
   // Gérer le début/fin de la session en ligne avec localStorage
   useEffect(() => {
     const storageKey = `driver_online_start_${driverId}`;
-    
+
     if (isOnline) {
       // Si le conducteur passe en ligne et n'a pas d'heure de début enregistrée
       const existingStartTime = localStorage.getItem(storageKey);
@@ -109,7 +109,7 @@ export function DriverDashboard({
     }
 
     const storageKey = `driver_online_start_${driverId}`;
-    
+
     const updateTime = () => {
       const startTimeStr = localStorage.getItem(storageKey);
       if (!startTimeStr) {
@@ -121,11 +121,11 @@ export function DriverDashboard({
       const now = new Date();
       const diffMs = now.getTime() - startTime.getTime();
       const totalSeconds = Math.floor(diffMs / 1000);
-      
+
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
-      
+
       setCurrentOnlineTime(`${hours}h ${minutes}m ${seconds}s`);
     };
 
@@ -151,25 +151,25 @@ export function DriverDashboard({
       if (driverError) throw driverError;
 
       // Extraire les infos du véhicule
-      const vehicleData = driverData?.vehicle ? 
-        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle) 
+      const vehicleData = driverData?.vehicle ?
+        (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle)
         : {};
 
       // Charger toutes les courses du conducteur
       const rides = await TaxiMotoService.getDriverRides(driverId, 100);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const todayRides = rides.filter(r => {
         const rideDate = new Date(r.requested_at);
         return rideDate >= today && r.status === 'completed';
       });
-      
+
       // Calculer les gains du jour
       const todayEarnings = todayRides.reduce((sum, r) => {
         return sum + (r.driver_share || 0);
       }, 0);
-      
+
       // Calculer le temps en ligne
       let onlineMinutes = 0;
       todayRides.forEach(ride => {
@@ -179,7 +179,7 @@ export function DriverDashboard({
           onlineMinutes += Math.floor((end.getTime() - start.getTime()) / 60000);
         }
       });
-      
+
       const hours = Math.floor(onlineMinutes / 60);
       const mins = onlineMinutes % 60;
 
@@ -210,6 +210,7 @@ export function DriverDashboard({
   // Chargement initial
   useEffect(() => {
     loadStats();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   // S'abonner aux changements en temps réel
@@ -236,6 +237,7 @@ export function DriverDashboard({
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driverId]);
 
   return (
@@ -251,8 +253,8 @@ export function DriverDashboard({
             className={`font-bold text-xs ${
               driverLoading
                 ? 'bg-gray-300 text-gray-500 cursor-wait'
-                : isOnline 
-                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                : isOnline
+                ? 'bg-green-600 hover:bg-green-700 text-white'
                 : !hasSubscription
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
@@ -288,7 +290,7 @@ export function DriverDashboard({
 
       {/* Statistiques du jour */}
       <div className="grid grid-cols-2 gap-4">
-        <Card 
+        <Card
           className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.todayEarnings > 0) {
@@ -308,7 +310,7 @@ export function DriverDashboard({
           </CardContent>
         </Card>
 
-        <Card 
+        <Card
           className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.todayRides > 0) {
@@ -330,7 +332,7 @@ export function DriverDashboard({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card 
+        <Card
           className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.totalRides > 0) {
@@ -351,7 +353,7 @@ export function DriverDashboard({
           </CardContent>
         </Card>
 
-        <Card 
+        <Card
           className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (isOnline) {

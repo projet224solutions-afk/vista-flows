@@ -36,7 +36,7 @@ export const advancedInputValidation = (req, res, next) => {
     const checkObject = (obj, path = '') => {
       for (const [key, value] of Object.entries(obj)) {
         const currentPath = path ? `${path}.${key}` : key;
-        
+
         if (typeof value === 'string') {
           for (const pattern of dangerousPatterns) {
             if (pattern.test(value)) {
@@ -92,7 +92,7 @@ export const antiBruteForce = (req, res, next) => {
     } else if (attempts.count >= maxAttempts) {
       const remainingTime = Math.ceil((lockoutTime - (now - attempts.lastAttempt)) / 1000 / 60);
       logger.warn(`🚨 Tentative de connexion bloquée pour ${identifier} (${attempts.count} tentatives)`);
-      
+
       return res.status(429).json({
         success: false,
         error: `Trop de tentatives. Réessayez dans ${remainingTime} minutes`
@@ -121,11 +121,11 @@ export const antiBruteForce = (req, res, next) => {
  */
 export const suspiciousActivityDetector = (req, res, next) => {
   const ip = req.ip || 'unknown';
-  
+
   // Vérifier si l'IP est déjà marquée comme suspecte
   if (suspiciousIPs.has(ip)) {
     logger.warn(`🚨 Requête depuis IP suspecte: ${ip}`);
-    
+
     // Ajouter des headers de sécurité supplémentaires
     res.setHeader('X-Security-Warning', 'Suspicious activity detected');
   }
@@ -140,7 +140,7 @@ export const suspiciousActivityDetector = (req, res, next) => {
   ];
 
   const suspiciousCount = suspiciousIndicators.filter(Boolean).length;
-  
+
   if (suspiciousCount >= 2) {
     suspiciousIPs.add(ip);
     logger.error(`🚨 Activité suspecte détectée depuis ${ip}: ${req.method} ${req.path}`);
@@ -192,14 +192,14 @@ export const advancedRateLimit = (options = {}) => {
         if (limit.count >= maxRequests) {
           const retryAfter = Math.ceil((limit.resetTime - now) / 1000);
           res.setHeader('Retry-After', retryAfter.toString());
-          
+
           return res.status(429).json({
             success: false,
             error: 'Trop de requêtes',
             retryAfter
           });
         }
-        
+
         limit.count++;
       } else {
         // Fenêtre expirée, réinitialiser
@@ -255,7 +255,7 @@ export const securityAuditLogger = (req, res, next) => {
   const originalJson = res.json.bind(res);
   res.json = function (body) {
     const duration = Date.now() - startTime;
-    
+
     // Logger les informations de sécurité
     const auditLog = {
       timestamp: new Date().toISOString(),
@@ -271,7 +271,7 @@ export const securityAuditLogger = (req, res, next) => {
     };
 
     logger.info('Security audit:', auditLog);
-    
+
     return originalJson(body);
   };
 
@@ -305,7 +305,7 @@ function obfuscateSensitiveData(data) {
 export const antiEnumeration = (req, res, next) => {
   // Ajouter un délai aléatoire pour masquer le timing
   const delay = Math.random() * 200 + 100; // 100-300ms
-  
+
   setTimeout(next, delay);
 };
 
@@ -315,7 +315,7 @@ export const antiEnumeration = (req, res, next) => {
 export const strictContentType = (allowedTypes = ['application/json']) => {
   return (req, res, next) => {
     const contentType = req.headers['content-type'];
-    
+
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       if (!contentType || !allowedTypes.some(type => contentType.includes(type))) {
         logger.warn(`🚨 Content-Type invalide: ${contentType}`);
@@ -325,7 +325,7 @@ export const strictContentType = (allowedTypes = ['application/json']) => {
         });
       }
     }
-    
+
     next();
   };
 };
@@ -336,7 +336,7 @@ export const strictContentType = (allowedTypes = ['application/json']) => {
 export const encryptSensitiveResponse = (encryptionKey) => {
   return (req, res, next) => {
     const originalJson = res.json.bind(res);
-    
+
     res.json = function (data) {
       if (req.query.encrypted === 'true' && data.sensitive) {
         // Générer un IV aléatoire (16 bytes pour AES)
@@ -357,7 +357,7 @@ export const encryptSensitiveResponse = (encryptionKey) => {
 
       return originalJson(data);
     };
-    
+
     next();
   };
 };

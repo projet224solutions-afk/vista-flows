@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type PDGErrorType = 
+export type PDGErrorType =
   | 'stats_loading'
   | 'agent_management'
   | 'syndicat_management'

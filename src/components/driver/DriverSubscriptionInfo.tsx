@@ -42,7 +42,7 @@ export function DriverSubscriptionInfo() {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd/MM/yyyy", { locale: fr });
-    } catch (error) {
+    } catch (_error) {
       return "Date invalide";
     }
   };
@@ -55,8 +55,8 @@ export function DriverSubscriptionInfo() {
 
   return (
     <Card className={`border-2 ${
-      isActive 
-        ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300' 
+      isActive
+        ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
         : isExpired
         ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
         : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
@@ -79,7 +79,7 @@ export function DriverSubscriptionInfo() {
               {startDate}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between p-3 bg-white/60 rounded-lg">
             <span className="text-sm font-medium text-gray-700">
               📆 Fin de l'abonnement

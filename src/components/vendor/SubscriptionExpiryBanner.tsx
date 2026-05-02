@@ -51,7 +51,7 @@ export function SubscriptionExpiryBanner() {
             )}
           </div>
           <div className="flex items-center gap-3 pt-2">
-            <Button 
+            <Button
               onClick={handleRenew}
               className="bg-orange-600 hover:bg-orange-700 text-white font-semibold"
             >

@@ -6,11 +6,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Star, 
-  MapPin, 
+import {
+  Star,
+  MapPin,
   Phone,
-  Clock,
+  _Clock,
   ArrowRight,
   Briefcase,
   Store
@@ -32,7 +32,7 @@ export function ProfessionalServiceCard({
   className
 }: ProfessionalServiceCardProps) {
   const [imageError, setImageError] = useState(false);
-  const { t } = useTranslation();
+  const { _t } = useTranslation();
 
   // Images par défaut selon le type de service
   const getDefaultImage = () => {
@@ -89,7 +89,7 @@ export function ProfessionalServiceCard({
   };
 
   return (
-    <Card 
+    <Card
       className={cn(
         "group cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300",
         "border-2 border-blue-200 hover:border-blue-400 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-950/20 dark:to-background",
@@ -105,10 +105,10 @@ export function ProfessionalServiceCard({
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           onError={() => setImageError(true)}
         />
-        
+
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
+
         {/* Badge Service Pro */}
         <Badge className="absolute top-3 left-3 bg-blue-600 text-white shadow-lg">
           <Briefcase className="w-3 h-3 mr-1" />
@@ -162,7 +162,7 @@ export function ProfessionalServiceCard({
               </span>
             )}
           </div>
-          
+
           {/* Contact rapide */}
           {item.phone && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">

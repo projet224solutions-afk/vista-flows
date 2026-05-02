@@ -111,9 +111,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
                 min="0"
                 max="100"
                 value={formData.default_margin_percent}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  default_margin_percent: parseFloat(e.target.value) 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  default_margin_percent: parseFloat(e.target.value)
                 }))}
               />
             </div>
@@ -125,9 +125,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
                 min="0"
                 max="100"
                 value={formData.min_margin_percent}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  min_margin_percent: parseFloat(e.target.value) 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  min_margin_percent: parseFloat(e.target.value)
                 }))}
               />
             </div>
@@ -147,9 +147,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
                 min="0"
                 max="30"
                 value={formData.hold_payment_days}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  hold_payment_days: parseInt(e.target.value) 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  hold_payment_days: parseInt(e.target.value)
                 }))}
               />
             </div>
@@ -164,9 +164,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
               <Switch
                 id="auto_release"
                 checked={formData.auto_release_on_delivery}
-                onCheckedChange={(checked) => setFormData(prev => ({ 
-                  ...prev, 
-                  auto_release_on_delivery: checked 
+                onCheckedChange={(checked) => setFormData(prev => ({
+                  ...prev,
+                  auto_release_on_delivery: checked
                 }))}
               />
             </div>
@@ -196,9 +196,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             <Switch
               id="auto_sync"
               checked={formData.auto_sync_enabled}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                auto_sync_enabled: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                auto_sync_enabled: checked
               }))}
             />
           </div>
@@ -212,9 +212,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
                 min="1"
                 max="24"
                 value={formData.sync_frequency_hours}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  sync_frequency_hours: parseInt(e.target.value) 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  sync_frequency_hours: parseInt(e.target.value)
                 }))}
               />
             </div>
@@ -243,9 +243,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             </div>
             <Switch
               checked={formData.notify_low_stock}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                notify_low_stock: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                notify_low_stock: checked
               }))}
             />
           </div>
@@ -258,9 +258,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
                 type="number"
                 min="1"
                 value={formData.low_stock_threshold}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  low_stock_threshold: parseInt(e.target.value) 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  low_stock_threshold: parseInt(e.target.value)
                 }))}
                 className="w-32"
               />
@@ -278,9 +278,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             </div>
             <Switch
               checked={formData.notify_price_changes}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                notify_price_changes: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                notify_price_changes: checked
               }))}
             />
           </div>
@@ -294,9 +294,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             </div>
             <Switch
               checked={formData.notify_supplier_issues}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                notify_supplier_issues: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                notify_supplier_issues: checked
               }))}
             />
           </div>
@@ -321,9 +321,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             </div>
             <Switch
               checked={formData.show_supplier_name}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                show_supplier_name: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                show_supplier_name: checked
               }))}
             />
           </div>
@@ -337,9 +337,9 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
             </div>
             <Switch
               checked={formData.show_estimated_delivery}
-              onCheckedChange={(checked) => setFormData(prev => ({ 
-                ...prev, 
-                show_estimated_delivery: checked 
+              onCheckedChange={(checked) => setFormData(prev => ({
+                ...prev,
+                show_estimated_delivery: checked
               }))}
             />
           </div>

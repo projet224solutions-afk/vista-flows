@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { LocalPrice } from '@/components/ui/LocalPrice';
 import {
   AlertTriangle, CheckCircle, XCircle, User, Phone, Mail,
-  DollarSign, Clock, Shield, RefreshCw
+  _DollarSign, _Clock, Shield, RefreshCw
 } from 'lucide-react';
 import {
   AlertDialog,

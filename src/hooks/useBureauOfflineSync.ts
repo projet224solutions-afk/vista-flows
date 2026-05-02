@@ -30,7 +30,7 @@ export function useBureauOfflineSync(bureauId?: string) {
   });
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [syncErrors, setSyncErrors] = useState<string[]>([]);
-  
+
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialized = useRef(false);
   // Track toast state to avoid duplicates
@@ -75,8 +75,8 @@ export function useBureauOfflineSync(bureauId?: string) {
         bureau_id: event.data.bureau_id,
         type: 'motorcycle'
       };
-      
-      const { data, error } = await supabase
+
+      const { _data, error } = await supabase
         .from('vehicles')
         .upsert(vehicleData, { onConflict: 'serial_number' });
 
@@ -96,7 +96,7 @@ export function useBureauOfflineSync(bureauId?: string) {
    */
   const syncMemberEvent = async (event: any) => {
     try {
-      const { data, error } = await supabase
+      const { _data, error } = await supabase
         .from('syndicate_workers')
         .upsert(event.data);
 
@@ -123,9 +123,9 @@ export function useBureauOfflineSync(bureauId?: string) {
         .select('id')
         .eq('serial_number', event.data.serial_number || event.data.numero_serie)
         .maybeSingle();
-      
+
       if (findError) throw findError;
-      
+
       if (vehicle) {
         const { error } = await supabase.rpc('declare_vehicle_stolen', {
           p_vehicle_id: vehicle.id,
@@ -143,7 +143,7 @@ export function useBureauOfflineSync(bureauId?: string) {
       }
 
       await offlineDB.markEventAsSynced(event.client_event_id);
-      
+
       toast.success('🚨 Alerte de sécurité synchronisée', {
         description: 'Véhicule volé signalé dans le système central'
       });
@@ -232,7 +232,7 @@ export function useBureauOfflineSync(bureauId?: string) {
       toast.error('Impossible de synchroniser hors ligne');
       return;
     }
-    
+
     toast.info('Synchronisation en cours...');
     await syncAllPendingEvents();
   }, [isOnline, syncAllPendingEvents]);
@@ -300,6 +300,7 @@ export function useBureauOfflineSync(bureauId?: string) {
         clearInterval(syncIntervalRef.current);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Écouter les changements de connexion

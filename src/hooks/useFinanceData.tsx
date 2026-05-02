@@ -108,7 +108,7 @@ export function useFinanceData(enabled: boolean = true) {
       let enrichedWallets: any[] = [];
       if (walletsResult.data && walletsResult.data.length > 0) {
         const userIds = walletsResult.data.map(w => w.user_id);
-        
+
         // Two parallel batch queries instead of N individual queries
         const [profilesResult, userIdsResult] = await Promise.all([
           supabase

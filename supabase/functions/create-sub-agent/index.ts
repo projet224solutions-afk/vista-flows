@@ -59,13 +59,14 @@ serve(async (req) => {
     );
 
     const { 
-      pdg_id,
       parent_agent_id, 
       agent_code, 
       name, 
       email, 
       phone,
       agent_type,
+      type_agent,
+      agent_role,
       password,
       permissions, 
       commission_rate,
@@ -75,6 +76,7 @@ serve(async (req) => {
     // Vérifier l'authentification (soit via JWT, soit via access_token)
     const authHeader = req.headers.get("Authorization");
     let authenticatedUserId: string | null = null;
+    let accessTokenVerified = false;
 
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
@@ -103,6 +105,7 @@ serve(async (req) => {
         );
       }
       authenticatedUserId = tokenAgent.user_id;
+      accessTokenVerified = true;
       console.log('✅ User authenticated via access_token');
     } else if (!authenticatedUserId) {
       return new Response(
@@ -112,9 +115,9 @@ serve(async (req) => {
     }
 
     // Validation des données
-    if (!pdg_id || !parent_agent_id || !name || !email || !phone || !agent_type || !password) {
+    if (!parent_agent_id || !name || !email || !phone || !password) {
       return new Response(
-        JSON.stringify({ error: "Données manquantes (pdg_id, parent_agent_id, name, email, phone, agent_type, password requis)" }),
+        JSON.stringify({ error: "Données manquantes (parent_agent_id, name, email, phone, password requis)" }),
         { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -127,14 +130,8 @@ serve(async (req) => {
       );
     }
 
-    // Valider le type d'agent
-    const validAgentTypes = ['sales', 'support', 'manager', 'delivery', 'admin'];
-    if (!validAgentTypes.includes(agent_type)) {
-      return new Response(
-        JSON.stringify({ error: "Type d'agent invalide" }),
-        { status: 400, headers: { ...securityHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const effectiveAgentType = 'sous_agent';
+    const effectiveAgentRole = (agent_role || agent_type || type_agent || 'sales').toString().trim() || 'sales';
 
     // Vérifier que l'agent parent existe
     const { data: parentAgent, error: parentError } = await supabaseServiceClient
@@ -157,18 +154,19 @@ serve(async (req) => {
     // Vérifier si l'utilisateur est le PDG de cet agent (seulement si authenticatedUserId existe)
     let isPdgOwner = false;
     if (authenticatedUserId) {
-      const { data: pdgProfile } = await supabaseServiceClient
-        .from("profiles")
-        .select("id, role")
-        .eq("id", authenticatedUserId)
-        .eq("role", "admin")
+      const { data: pdgOwner } = await supabaseServiceClient
+        .from("pdg_management")
+        .select("id")
+        .eq("id", parentAgent.pdg_id)
+        .eq("user_id", authenticatedUserId)
+        .eq("is_active", true)
         .maybeSingle();
       
-      isPdgOwner = !!(pdgProfile && parentAgent.pdg_id === authenticatedUserId);
+      isPdgOwner = !!pdgOwner;
     }
 
     // Pour l'interface publique avec access_token, on autorise si l'agent correspond
-    const isValidAccessToken = access_token && parentAgent.id === parent_agent_id;
+    const isValidAccessToken = accessTokenVerified && parentAgent.id === parent_agent_id;
 
     if (!isAgentOwner && !isPdgOwner && !isValidAccessToken) {
       console.error("Utilisateur non autorisé - authenticatedUserId:", authenticatedUserId, "agent.user_id:", parentAgent.user_id, "agent.pdg_id:", parentAgent.pdg_id);
@@ -220,7 +218,8 @@ serve(async (req) => {
         name: name.trim(),
         phone: phone.trim(),
         role: 'agent',
-        agent_type: agent_type
+        agent_type: effectiveAgentType,
+        agent_role: effectiveAgentRole
       }
     });
 
@@ -254,15 +253,16 @@ serve(async (req) => {
       .from("agents_management")
       .insert({
         user_id: authUser.user.id,
-        pdg_id: pdg_id,
+        pdg_id: parentAgent.pdg_id,
         parent_agent_id: parent_agent_id,
         agent_code: agent_code,
-        type_agent: agent_type || null,
+        type_agent: effectiveAgentType,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim(),
         permissions: permissions || [],
-        commission_rate: commission_rate || 5,
+        commission_rate: commission_rate ?? 5,
+        commission_sous_agent: commission_rate ?? 5,
         can_create_sub_agent: false, // Les sous-agents ne peuvent pas créer d'autres sous-agents
         is_active: true,
         access_token: subAgentAccessToken, // Token d'accès unique
@@ -331,6 +331,7 @@ serve(async (req) => {
           agent_id: newAgent.id,
           balance: 0,
           currency: 'GNF',
+          currency_type: 'GNF',
           wallet_status: 'active'
         });
       if (directWalletError) {
@@ -371,7 +372,7 @@ serve(async (req) => {
         phone: phone.trim(),
         role: 'agent',
         agent_code: agent_code,
-        agent_type: agent_type,
+        agent_type: effectiveAgentType,
         is_active: true,
         created_at: new Date().toISOString()
       });
@@ -395,7 +396,8 @@ serve(async (req) => {
             name: name,
             email: email,
             parent_agent_id: parent_agent_id,
-            agent_type: agent_type,
+            agent_type: effectiveAgentType,
+            agent_role: effectiveAgentRole,
           },
         });
     }

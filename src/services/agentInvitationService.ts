@@ -58,7 +58,7 @@ export class AgentInvitationService {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // Expire dans 7 jours
 
-      const { data: invitation, error: invitationError } = await supabase
+      const { data: _invitation, error: invitationError } = await supabase
         .from('agent_invitations')
         .insert({
           agent_id: data.agentId,

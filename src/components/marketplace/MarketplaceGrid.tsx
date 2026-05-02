@@ -1,7 +1,7 @@
 /**
  * MARKETPLACE GRID - Grille Responsive Professionnelle
  * 224Solutions - Standard International E-Commerce
- * 
+ *
  * Spécifications:
  * - Mobile (≤600px): 3 colonnes
  * - Tablette (601-1024px): 4 colonnes
@@ -19,7 +19,7 @@ interface MarketplaceGridProps {
 
 export function MarketplaceGrid({ children, className }: MarketplaceGridProps) {
   return (
-    <div 
+    <div
       className={cn(
         'marketplace-grid',
         className

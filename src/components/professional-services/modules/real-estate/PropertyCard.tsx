@@ -1,9 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  MapPin, Eye, Heart, Bed, Bath, Maximize, 
-  Building2, MoreVertical, Pencil, Trash2, CheckCircle
+import {
+  MapPin, Eye, Heart, Bed, Bath, Maximize,
+  _Building2, MoreVertical, _Pencil, Trash2, CheckCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -74,7 +74,7 @@ export function PropertyCard({ property, onStatusChange, onDelete, onClick }: Pr
                 {formatPrice(property.price)}
                 {property.offer_type === 'location' && <span className="text-sm font-normal text-muted-foreground">/mois</span>}
               </p>
-              
+
               {/* Specs */}
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-2">
                 {property.surface > 0 && (

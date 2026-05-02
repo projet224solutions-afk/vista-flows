@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { 
-  Truck, 
-  Loader2, 
+import {
+  Truck,
+  Loader2,
   Save,
   TrendingUp,
   MapPin,
@@ -50,7 +50,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, _error } = await supabase
           .from('vendors')
           .select('delivery_base_price, delivery_price_per_km, delivery_rush_bonus, delivery_enabled')
           .eq('id', vendorId)

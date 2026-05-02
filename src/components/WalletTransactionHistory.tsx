@@ -4,11 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
-  Clock, 
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock,
   XCircle,
   RefreshCw,
   History
@@ -34,9 +34,9 @@ interface WalletTransactionHistoryProps {
   limit?: number;
 }
 
-export const WalletTransactionHistory = ({ 
-  className = '', 
-  limit = 50 
+export const WalletTransactionHistory = ({
+  className = '',
+  limit = 50
 }: WalletTransactionHistoryProps) => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -249,7 +249,7 @@ export const WalletTransactionHistory = ({
   const getTransactionIcon = (transaction: Transaction, status: string) => {
     if (status === 'pending') return <Clock className="w-4 h-4 text-orange-500" />;
     if (status === 'failed') return <XCircle className="w-4 h-4 text-red-500" />;
-    
+
     // Déterminer si c'est un crédit ou débit basé sur sender_id
     const isCredit = transaction.receiver_id === user?.id;
     if (isCredit) return <ArrowUp className="w-4 h-4 text-green-500" />;
@@ -307,8 +307,8 @@ export const WalletTransactionHistory = ({
     );
   }
 
-  const displayedTransactions = showAll 
-    ? transactions 
+  const displayedTransactions = showAll
+    ? transactions
     : transactions.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
@@ -338,8 +338,8 @@ export const WalletTransactionHistory = ({
             <p className="text-sm text-gray-600 mb-4">
               {error}
             </p>
-            <Button 
-              onClick={loadTransactions} 
+            <Button
+              onClick={loadTransactions}
               variant="outline"
               size="sm"
               disabled={loading}
@@ -369,14 +369,14 @@ export const WalletTransactionHistory = ({
                     <p className="font-medium text-gray-800">
                       {transaction.receiver_id === user?.id ? 'Reçu de' : 'Envoyé à'}{' '}
                       <span className="text-foreground">
-                        {transaction.receiver_id === user?.id 
+                        {transaction.receiver_id === user?.id
                           ? (transaction.sender_name || 'Utilisateur')
                           : (transaction.receiver_name || 'Utilisateur')}
                       </span>
                       {' '}
                       <span className="font-mono text-xs text-muted-foreground">
-                        ({transaction.receiver_id === user?.id 
-                          ? transaction.sender_custom_id 
+                        ({transaction.receiver_id === user?.id
+                          ? transaction.sender_custom_id
                           : transaction.receiver_custom_id})
                       </span>
                     </p>
@@ -385,11 +385,11 @@ export const WalletTransactionHistory = ({
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <p className={`font-bold ${
                     transaction.receiver_id === user?.id
-                      ? 'text-green-600' 
+                      ? 'text-green-600'
                       : 'text-red-600'
                   }`}>
                     {formatAmount(transaction.amount, transaction)}
@@ -398,11 +398,11 @@ export const WalletTransactionHistory = ({
                 </div>
               </div>
             ))}
-            
+
             {transactions.length > INITIAL_DISPLAY_COUNT && (
               <div className="text-center pt-4">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setShowAll(!showAll)}
                 >

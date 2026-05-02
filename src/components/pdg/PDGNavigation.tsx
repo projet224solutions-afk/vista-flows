@@ -14,7 +14,7 @@ import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap, Cloud,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone
+  Menu, ChevronRight, Car, _Lock, RefreshCw, Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -123,7 +123,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
   const isMobile = useIsMobile();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { hasPermission, isPDG, isAgent, loading: permissionsLoading } = useCurrentUserPermissions();
+  const { hasPermission, isPDG, _isAgent, loading: permissionsLoading } = useCurrentUserPermissions();
 
   const toggleCategory = (title: string) => {
     setExpandedCategory(expandedCategory === title ? null : title);
@@ -190,8 +190,8 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
         <div className="flex items-center gap-2 w-full">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="gap-2 flex-1 justify-between h-12 px-3 min-w-0"
               >
@@ -226,7 +226,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                   {filteredCategories.map((category) => {
                     const isExpanded = expandedCategory === category.title;
                     const hasActiveItem = category.items.some(item => item.value === activeTab);
-                    
+
                     return (
                       <div key={category.title} className="space-y-1">
                         {/* Header catégorie */}
@@ -253,14 +253,14 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                             <ChevronDown className="w-4 h-4" />
                           )}
                         </button>
-                        
+
                         {/* Items de la catégorie */}
                         {isExpanded && (
                           <div className="pl-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
                             {category.items.map((item) => {
                               const Icon = item.icon;
                               const isActive = activeTab === item.value;
-                              
+
                               return (
                                 <button
                                   key={item.value}
@@ -337,9 +337,9 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
         {filteredCategories.map((category) => {
           const isExpanded = expandedCategory === category.title;
           const hasActiveItem = category.items.some(item => item.value === activeTab);
-          
+
           return (
-            <Card 
+            <Card
               key={category.title}
               className={cn(
                 "overflow-hidden transition-all duration-300 hover:shadow-xl",
@@ -357,7 +357,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
               >
                 {/* Effet de brillance au survol */}
                 <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <div className="flex items-center gap-2 relative z-10">
                   <h3 className="font-bold text-white text-lg">{category.title}</h3>
                   {hasActiveItem && (
@@ -375,7 +375,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
               </div>
 
               {/* Items de navigation avec défilement pour les longues listes */}
-              <CardContent 
+              <CardContent
                 className={cn(
                   "p-2 transition-all duration-300",
                   isExpanded ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0 overflow-hidden"
@@ -389,7 +389,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                     {category.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeTab === item.value;
-                      
+
                       return (
                         <button
                           key={item.value}
@@ -404,7 +404,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                           {isActive && (
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
                           )}
-                          
+
                           <Icon className={cn(
                             "w-4 h-4 transition-transform group-hover:scale-110 relative z-10",
                             isActive && "animate-pulse"

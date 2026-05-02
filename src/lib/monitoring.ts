@@ -10,7 +10,7 @@ let isInitialized = false;
 export async function initMonitoring(): Promise<void> {
   if (isInitialized) return;
   isInitialized = true;
-  
+
   console.log('📊 [Monitoring] Initialisation avancée...');
 
   // Initialiser Sentry si DSN disponible
@@ -47,14 +47,14 @@ export async function initMonitoring(): Promise<void> {
       colno: event.colno,
     };
     console.error('[Monitoring] Erreur globale:', errorData);
-    
+
     if (sentryDsn && event.error) {
       Sentry.captureException(event.error, {
         extra: errorData,
         tags: { type: 'uncaught_error' }
       });
     }
-    
+
     // Enregistrer dans les métriques locales
     performanceTracker.recordError(event.message, event.filename);
   });
@@ -62,13 +62,13 @@ export async function initMonitoring(): Promise<void> {
   // Capturer les rejections de promesses
   window.addEventListener('unhandledrejection', (event) => {
     console.error('[Monitoring] Promise rejetée:', event.reason);
-    
+
     if (sentryDsn) {
       Sentry.captureException(event.reason, {
         tags: { type: 'unhandled_rejection' }
       });
     }
-    
+
     performanceTracker.recordError(
       event.reason?.message || String(event.reason),
       'promise_rejection'
@@ -182,17 +182,17 @@ export const performanceTracker = new PerformanceTracker();
 
 export function logError(error: Error, context?: Record<string, unknown>): void {
   console.error('[Monitoring] Error:', error.message, { error, context });
-  
+
   if (Sentry.isInitialized()) {
     Sentry.captureException(error, { extra: context });
   }
-  
+
   performanceTracker.recordError(error.message, context?.source as string || 'unknown');
 }
 
 export function logEvent(name: string, data?: Record<string, unknown>): void {
   console.log(`[Monitoring] Event: ${name}`, data);
-  
+
   if (Sentry.isInitialized()) {
     Sentry.addBreadcrumb({
       category: 'app.event',

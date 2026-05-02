@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { _Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -55,7 +55,7 @@ interface DropshipOrdersProps {
   onUpdateStatus: (orderId: string, status: string, notes?: string) => Promise<boolean>;
 }
 
-export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrdersProps) {
+export function DropshipOrders({ orders, _loading, onUpdateStatus }: DropshipOrdersProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DropshipOrder | null>(null);
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);
@@ -89,7 +89,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
 
   const handleUpdateTracking = async () => {
     if (!selectedOrder) return;
-    
+
     // Mise à jour avec tracking
     await onUpdateStatus(selectedOrder.id, 'shipped_by_supplier', `Tracking: ${trackingNumber}`);
     setShowTrackingDialog(false);
@@ -145,7 +145,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                   {filteredOrders.map((order) => {
                     const statusConfig = getStatusConfig(order.status);
                     const StatusIcon = statusConfig.icon;
-                    
+
                     return (
                       <TableRow key={order.id}>
                         <TableCell>
@@ -193,7 +193,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                                 </DropdownMenuItem>
                               )}
                               {['supplier_confirmed', 'supplier_processing'].includes(order.status) && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => {
                                     setSelectedOrder(order);
                                     setShowTrackingDialog(true);
@@ -215,9 +215,9 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                                   Compléter
                                 </DropdownMenuItem>
                               )}
-                              
+
                               <DropdownMenuSeparator />
-                              
+
                               {order.tracking_url && (
                                 <DropdownMenuItem asChild>
                                   <a href={order.tracking_url} target="_blank" rel="noopener noreferrer">
@@ -226,9 +226,9 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                                   </a>
                                 </DropdownMenuItem>
                               )}
-                              
+
                               {!['completed', 'cancelled', 'refunded'].includes(order.status) && (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-destructive"
                                   onClick={() => onUpdateStatus(order.id, 'cancelled')}
                                 >
@@ -255,7 +255,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
           <DialogHeader>
             <DialogTitle>Ajouter le numéro de suivi</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="tracking">Numéro de suivi</Label>
@@ -266,7 +266,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                 placeholder="Ex: 1Z999AA10123456784"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optionnel)</Label>
               <Textarea

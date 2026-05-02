@@ -30,15 +30,15 @@ export function calculateEAN13CheckDigit(code: string): number {
 export function generateEAN13Barcode(): string {
   // 200 = Préfixe pour codes internes (non officiels GS1)
   const prefix = '200';
-  
+
   // Générer 9 chiffres basés sur le timestamp + random
   const timestamp = Date.now().toString().slice(-7);
   const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
   const code12 = prefix + timestamp + random;
-  
+
   // Calculer le chiffre de contrôle
   const checkDigit = calculateEAN13CheckDigit(code12);
-  
+
   return code12 + checkDigit.toString();
 }
 

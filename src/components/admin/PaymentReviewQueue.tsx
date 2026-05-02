@@ -5,12 +5,12 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,11 +31,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Shield, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Shield,
   Clock,
   TrendingUp,
   User,
@@ -80,7 +80,7 @@ export function PaymentReviewQueue() {
 
   useEffect(() => {
     fetchPendingPayments();
-    
+
     // Rafraîchir toutes les 30 secondes
     const interval = setInterval(fetchPendingPayments, 30000);
     return () => clearInterval(interval);
@@ -94,7 +94,7 @@ export function PaymentReviewQueue() {
         .order('payment_created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching pending payments:', error);
@@ -332,7 +332,7 @@ export function PaymentReviewQueue() {
 
                     {/* KYC */}
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={payment.seller_kyc_status === 'verified' ? 'default' : 'secondary'}
                       >
                         {payment.seller_kyc_status === 'verified' ? '✓ Vérifié' : 'Non vérifié'}

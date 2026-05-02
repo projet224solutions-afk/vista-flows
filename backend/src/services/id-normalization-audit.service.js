@@ -153,7 +153,7 @@ export async function getNormalizationStats({
     // Aggregate stats
     const byRole = {};
     const byReason = {};
-    
+
     for (const log of allLogs) {
       byRole[log.role_type] = (byRole[log.role_type] || 0) + 1;
     }

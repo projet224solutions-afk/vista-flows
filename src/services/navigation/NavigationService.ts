@@ -3,7 +3,7 @@
  * Navigation étape par étape avec guidage vocal et visuel
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { _supabase } from "@/integrations/supabase/client";
 
 export interface GPSPosition {
   latitude: number;
@@ -67,7 +67,7 @@ export class NavigationService {
    */
   public async getCurrentPosition(): Promise<GPSPosition> {
     console.log('🎯 [NavigationService] Obtention position GPS haute précision...');
-    
+
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error('Géolocalisation non supportée sur cet appareil'));
@@ -102,7 +102,7 @@ export class NavigationService {
         },
         (error) => {
           console.error('❌ [NavigationService] Erreur GPS:', error.message);
-          
+
           let errorMessage = 'Impossible d\'obtenir votre position';
           switch (error.code) {
             case error.PERMISSION_DENIED:
@@ -115,7 +115,7 @@ export class NavigationService {
               errorMessage = 'Délai GPS dépassé. Réessayez.';
               break;
           }
-          
+
           reject(new Error(errorMessage));
         },
         options
@@ -145,7 +145,7 @@ export class NavigationService {
       'ratoma': { latitude: 9.5666, longitude: -13.6397, accuracy: 500, timestamp: Date.now() },
       'dixinn': { latitude: 9.5439, longitude: -13.6687, accuracy: 500, timestamp: Date.now() },
       'matam': { latitude: 9.5314, longitude: -13.6883, accuracy: 500, timestamp: Date.now() },
-      
+
       // Quartiers populaires Conakry
       'kipé': { latitude: 9.5869, longitude: -13.6233, accuracy: 300, timestamp: Date.now() },
       'manéah': { latitude: 9.6409, longitude: -13.4502, accuracy: 300, timestamp: Date.now() },
@@ -157,7 +157,7 @@ export class NavigationService {
       'cosa': { latitude: 9.5624, longitude: -13.6542, accuracy: 300, timestamp: Date.now() },
       'belle vue': { latitude: 9.5477, longitude: -13.6542, accuracy: 300, timestamp: Date.now() },
       'belle-vue': { latitude: 9.5477, longitude: -13.6542, accuracy: 300, timestamp: Date.now() },
-      
+
       // Autres villes Guinée
       'coyah': { latitude: 9.7113, longitude: -13.3721, accuracy: 1000, timestamp: Date.now() },
       'dubréka': { latitude: 9.7906, longitude: -13.5119, accuracy: 1000, timestamp: Date.now() },
@@ -166,7 +166,7 @@ export class NavigationService {
       'labé': { latitude: 11.3182, longitude: -12.2895, accuracy: 1000, timestamp: Date.now() },
       'kankan': { latitude: 10.3853, longitude: -9.3064, accuracy: 1000, timestamp: Date.now() },
       'nzérékoré': { latitude: 7.7562, longitude: -8.8179, accuracy: 1000, timestamp: Date.now() },
-      
+
       // Points d'intérêt Conakry
       'aéroport conakry': { latitude: 9.5769, longitude: -13.6120, accuracy: 200, timestamp: Date.now() },
       'port autonome': { latitude: 9.5146, longitude: -13.7176, accuracy: 200, timestamp: Date.now() },
@@ -176,7 +176,7 @@ export class NavigationService {
     };
 
     const normalized = placeName.toLowerCase().trim();
-    
+
     // Recherche exacte
     if (guineaPlaces[normalized]) {
       console.log(`✅ [NavigationService] Lieu trouvé dans la BD locale: ${placeName}`);
@@ -184,7 +184,7 @@ export class NavigationService {
     }
 
     // Recherche partielle
-    const matches = Object.entries(guineaPlaces).filter(([key]) => 
+    const matches = Object.entries(guineaPlaces).filter(([key]) =>
       key.includes(normalized) || normalized.includes(key)
     );
 
@@ -504,7 +504,7 @@ export class NavigationService {
    */
   private notifyListeners(): void {
     if (!this.currentState) return;
-    
+
     this.listeners.forEach((callback) => {
       try {
         callback(this.currentState!);

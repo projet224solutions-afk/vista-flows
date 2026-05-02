@@ -72,7 +72,7 @@ export function useSecurityData(autoLoad: boolean = true) {
   const loadSecurityData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // Charger les logs d'audit - gestion silencieuse des erreurs RLS
       const { data: audit, error: auditError } = await supabase
@@ -83,7 +83,7 @@ export function useSecurityData(autoLoad: boolean = true) {
 
       // Gestion silencieuse des erreurs RLS ou réseau pour les non-admins
       if (auditError) {
-        const isSilentError = auditError.message?.includes('permission') || 
+        const isSilentError = auditError.message?.includes('permission') ||
                               auditError.message?.includes('policy') ||
                               auditError.message?.includes('Failed to fetch') ||
                               auditError.message?.includes('NetworkError') ||
@@ -102,7 +102,7 @@ export function useSecurityData(autoLoad: boolean = true) {
         .limit(50);
 
       if (fraudError) {
-        const isSilentError = fraudError.message?.includes('permission') || 
+        const isSilentError = fraudError.message?.includes('permission') ||
                               fraudError.message?.includes('policy') ||
                               fraudError.message?.includes('Failed to fetch') ||
                               fraudError.message?.includes('NetworkError') ||
@@ -122,24 +122,24 @@ export function useSecurityData(autoLoad: boolean = true) {
       // Calculer les statistiques
       const now = new Date();
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
-      const recentActions = auditData.filter((log: any) => 
+
+      const recentActions = auditData.filter((log: any) =>
         new Date(log.created_at) > oneDayAgo
       ).length;
 
-      const criticalAlerts = fraudData.filter((log: any) => 
+      const criticalAlerts = fraudData.filter((log: any) =>
         log.risk_level === 'critical'
       ).length;
 
-      const highAlerts = fraudData.filter((log: any) => 
+      const highAlerts = fraudData.filter((log: any) =>
         log.risk_level === 'high'
       ).length;
 
-      const reviewedAlerts = fraudData.filter((log: any) => 
+      const reviewedAlerts = fraudData.filter((log: any) =>
         log.reviewed === true
       ).length;
 
-      const pendingAlerts = fraudData.filter((log: any) => 
+      const pendingAlerts = fraudData.filter((log: any) =>
         log.reviewed === false
       ).length;
 
@@ -158,7 +158,7 @@ export function useSecurityData(autoLoad: boolean = true) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       // Ne pas afficher de toast pour les erreurs RLS (utilisateur non-admin) ou réseau
-      const isSilentError = errorMessage.includes('permission') || 
+      const isSilentError = errorMessage.includes('permission') ||
                             errorMessage.includes('policy') ||
                             errorMessage.includes('RLS') ||
                             errorMessage.includes('Failed to fetch') ||
@@ -166,7 +166,7 @@ export function useSecurityData(autoLoad: boolean = true) {
                             errorMessage.includes('fetch') ||
                             (err as any)?.code === '42501' ||
                             (err as any)?.code === 'PGRST301';
-      
+
       if (!isSilentError) {
         console.error('❌ Erreur chargement sécurité:', err);
         toast.error('Erreur lors du chargement des données de sécurité');

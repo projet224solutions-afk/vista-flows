@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Loader2, WifiOff } from 'lucide-react';
 import CryptoJS from 'crypto-js';
+import { shouldAssumeOffline } from '@/lib/networkHealth';
 
 // Clé de chiffrement dérivée de l'ID utilisateur (unique par session)
 const getEncryptionKey = (): string => {
@@ -17,7 +18,7 @@ const getEncryptionKey = (): string => {
 const encryptData = (data: string): string => {
   try {
     return CryptoJS.AES.encrypt(data, getEncryptionKey()).toString();
-  } catch (e) {
+  } catch (_e) {
     console.error('🔴 Erreur chiffrement');
     return data;
   }
@@ -28,7 +29,7 @@ const decryptData = (encryptedData: string): string | null => {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedData, getEncryptionKey());
     return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (e) {
+  } catch (_e) {
     console.error('🔴 Erreur déchiffrement');
     return null;
   }
@@ -37,6 +38,7 @@ const decryptData = (encryptedData: string): string | null => {
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles: string[];
+  allowOfflineAccess?: boolean;
 }
 
 // Fonction pour vérifier les sessions custom (Agent/Bureau)
@@ -45,11 +47,11 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
   if (allowedRoles.includes('agent') || allowedRoles.includes('admin')) {
     const agentSessionRaw = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
     const agentUserRaw = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
-    
+
     // Déchiffrer si données présentes
     const agentSession = agentSessionRaw ? (decryptData(agentSessionRaw) || agentSessionRaw) : null;
     const agentUser = agentUserRaw ? (decryptData(agentUserRaw) || agentUserRaw) : null;
-    
+
     if (agentSession && agentUser) {
       try {
         const userData = JSON.parse(agentUser);
@@ -85,11 +87,11 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
   if (allowedRoles.includes('syndicat') || allowedRoles.includes('bureau') || allowedRoles.includes('admin')) {
     const bureauSessionRaw = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
     const bureauUserRaw = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
-    
+
     // Déchiffrer si données présentes
     const bureauSession = bureauSessionRaw ? (decryptData(bureauSessionRaw) || bureauSessionRaw) : null;
     const bureauUser = bureauUserRaw ? (decryptData(bureauUserRaw) || bureauUserRaw) : null;
-    
+
     if (bureauSession && bureauUser) {
       try {
         const userData = JSON.parse(bureauUser);
@@ -122,7 +124,7 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
   return { isValid: false, role: null };
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles, allowOfflineAccess = false }: ProtectedRouteProps) {
   const { user, profile, loading, profileLoading } = useAuth();
   const { isOnline } = useOnlineStatus();
   const navigate = useNavigate();
@@ -134,8 +136,13 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   // En mode offline, vérifier le profil en cache localStorage
   const [offlineProfile, setOfflineProfile] = useState<{ role: string } | null>(null);
-  
+
   useEffect(() => {
+    if (!allowOfflineAccess || isOnline || user) {
+      setOfflineProfile(null);
+      return;
+    }
+
     if (!isOnline && !user) {
       // Chercher un profil en cache dans localStorage
       try {
@@ -148,11 +155,11 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             setOfflineProfile(cached);
           }
         }
-      } catch (e) {
+      } catch (_e) {
         console.warn('⚠️ Erreur lecture profil offline');
       }
     }
-  }, [isOnline, user]);
+  }, [allowOfflineAccess, isOnline, user]);
 
   // Vérifier les sessions custom au montage
   useEffect(() => {
@@ -163,14 +170,14 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   // Vérification d'authentification sécurisée - NE PAS rediriger si offline
   useEffect(() => {
     if (!loading && customAuth.checked && !user && !customAuth.isValid) {
-      const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
-      // En mode vraiment offline (navigator.onLine=false), ne pas rediriger si profil cache
-      if (!browserOnline && offlineProfile) {
+      const browserOffline = allowOfflineAccess && shouldAssumeOffline();
+      // En mode vraiment offline, ne pas rediriger si profil cache
+      if (browserOffline && offlineProfile) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
         return;
       }
       // En mode vraiment offline sans profil cache, ne pas rediriger non plus
-      if (!browserOnline) {
+      if (browserOffline) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
         return;
       }
@@ -183,7 +190,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
-  }, [user, loading, navigate, customAuth, isOnline, offlineProfile]);
+  }, [allowOfflineAccess, user, loading, navigate, customAuth, isOnline, offlineProfile]);
 
   // Attendre que les vérifications soient terminées
   if (loading || profileLoading || !customAuth.checked) {
@@ -198,10 +205,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
-  const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
-  const isAuthenticated = !!user || customAuth.isValid || (!browserOnline && !!offlineProfile);
+  const browserOffline = allowOfflineAccess && shouldAssumeOffline();
+  const isAuthenticated = !!user || customAuth.isValid || (allowOfflineAccess && browserOffline && !!offlineProfile);
   const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
-  
+
   // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
   const normalizeRole = (role: string): string => {
     const r = role.toLowerCase();
@@ -209,11 +216,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (r === 'ceo') return 'pdg';
     return r;
   };
-  
+
   const effectiveRole = normalizeRole(rawRole);
   if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {
-    // Vrai mode offline = navigator.onLine est false (pas juste le health check)
-    const trulyOffline = !isOnline && (typeof navigator === 'undefined' || !navigator.onLine);
+    const trulyOffline = !isOnline && browserOffline;
     if (trulyOffline) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">

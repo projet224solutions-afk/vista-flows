@@ -2,7 +2,7 @@
  * 🎯 SERVICE DE COMMUNICATION UNIVERSEL - 224SOLUTIONS
  * Service professionnel pour la gestion des communications
  * Version: 2.0.0
- * 
+ *
  * Features:
  * - Gestion des conversations (création, récupération)
  * - Gestion des messages (texte, fichiers, audio, vidéo)
@@ -21,6 +21,12 @@ import type {
   UserProfile,
   MessageType,
 } from '@/types/communication.types';
+import {
+  buildPhoneSearchTerms,
+  parseUserSearchInput,
+  sanitizePostgrestSearchTerm,
+  stripPhoneToDigits,
+} from '@/lib/communication/userSearch';
 
 // Re-export des types pour compatibilité
 export type {
@@ -59,7 +65,7 @@ function validateUUID(id: string): boolean {
 function getFileType(mimeType: string, fileName: string): MessageType {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType.startsWith('video/')) return 'video';
-  if (mimeType.startsWith('audio/') || fileName.startsWith('audio_')) return 'audio';
+  if (mimeType.startsWith('audio/') || fileName.startsWith('audio_') || fileName.startsWith('vocal_')) return 'audio';
   return 'file';
 }
 
@@ -68,7 +74,7 @@ function getFileType(mimeType: string, fileName: string): MessageType {
 // ============================================================================
 
 class UniversalCommunicationService {
-  
+
   // ==========================================================================
   // CONVERSATIONS
   // ==========================================================================
@@ -89,7 +95,7 @@ class UniversalCommunicationService {
       // Récupérer les conversations avec conversation_id (avec timeout)
       const normalConvsPromise = Promise.race([
         supabase.rpc('get_user_conversations', { p_user_id: userId }),
-        new Promise<{ data: null; error: any }>((_, reject) => 
+        new Promise<{ data: null; error: any }>((_, reject) =>
           setTimeout(() => reject(new Error('Timeout get_user_conversations')), 10000)
         )
       ]);
@@ -111,13 +117,13 @@ class UniversalCommunicationService {
       try {
         const directConvsPromise = Promise.race([
           supabase.rpc('get_user_direct_message_conversations', { p_user_id: userId }),
-          new Promise<{ data: null; error: any }>((_, reject) => 
+          new Promise<{ data: null; error: any }>((_, reject) =>
             setTimeout(() => reject(new Error('Timeout direct messages')), 10000)
           )
         ]);
 
         const { data, error: directError } = await directConvsPromise;
-        
+
         if (directError) {
           console.warn('[Communication] ⚠️ Erreur RPC direct messages (non-bloquant):', directError.message);
         } else {
@@ -148,7 +154,7 @@ class UniversalCommunicationService {
         normal: Array.isArray(normalConvs) ? normalConvs.length : 0,
         direct: directConvs.length
       });
-      
+
       return allConversations as unknown as Conversation[];
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue';
@@ -269,7 +275,7 @@ class UniversalCommunicationService {
         // Conversation directe
         const otherUserId = extractRecipientFromDirectId(conversationId);
         const { data: session } = await supabase.auth.getSession();
-        
+
         if (!session?.session?.user) {
           throw new Error('Non authentifié');
         }
@@ -309,7 +315,7 @@ class UniversalCommunicationService {
 
       const messages = (data || []).reverse();
       console.log('[Communication] Messages chargés:', messages.length);
-      
+
       return messages as Message[];
     } catch (error) {
       console.error('[Communication] Erreur getMessages:', error);
@@ -349,11 +355,11 @@ class UniversalCommunicationService {
 
     while (retryCount < maxRetries) {
       try {
-        console.log('[Communication] 📤 Envoi message texte:', { 
-          conversationId, 
-          senderId, 
+        console.log('[Communication] 📤 Envoi message texte:', {
+          conversationId,
+          senderId,
           length: sanitizedContent.length,
-          retry: retryCount 
+          retry: retryCount
         });
 
         let recipientId: string;
@@ -402,27 +408,27 @@ class UniversalCommunicationService {
         }
 
         // Audit log non-bloquant
-        this.logAudit(senderId, 'message_sent', data.id).catch(err => 
+        this.logAudit(senderId, 'message_sent', data.id).catch(err =>
           console.warn('[Communication] ⚠️ Audit log failed (non-bloquant):', err)
         );
-        
+
         console.log('[Communication] ✅ Message envoyé:', { id: data.id, retry: retryCount });
         return data as Message;
-        
+
       } catch (error: any) {
         retryCount++;
-        
+
         // Erreurs non-retriables
         if (error.message?.includes('invalide') || error.code === '23505') {
           console.error('[Communication] ❌ Erreur non-retriable:', error.message);
           throw error;
         }
-        
+
         if (retryCount >= maxRetries) {
           console.error('[Communication] ❌ Échec après', maxRetries, 'tentatives:', error);
           throw new Error(`Échec envoi message après ${maxRetries} tentatives: ${error.message}`);
         }
-        
+
         // Attendre avant retry (exponential backoff)
         const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
         console.log(`[Communication] ⏳ Retry ${retryCount}/${maxRetries} dans ${delay}ms...`);
@@ -447,11 +453,11 @@ class UniversalCommunicationService {
     }
 
     try {
-      console.log('[Communication] Envoi fichier:', { 
-        conversationId, 
-        senderId, 
+      console.log('[Communication] Envoi fichier:', {
+        conversationId,
+        senderId,
         fileName: file.name,
-        fileSize: file.size 
+        fileSize: file.size
       });
 
       // Déterminer le type de fichier
@@ -461,10 +467,14 @@ class UniversalCommunicationService {
       const fileExt = file.name.split('.').pop() || 'bin';
       const fileName = `${Date.now()}_${crypto.randomUUID()}.${fileExt}`;
       const filePath = `communication/${conversationId}/${fileName}`;
+      const uploadContentType = file.type?.split(';')[0].trim() || 'application/octet-stream';
 
       const { error: uploadError } = await supabase.storage
         .from(STORAGE_BUCKET)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: uploadContentType,
+          upsert: true,
+        });
 
       if (uploadError) {
         console.error('[Communication] Erreur upload:', uploadError);
@@ -478,16 +488,13 @@ class UniversalCommunicationService {
 
       // Déterminer le destinataire
       let recipientId: string;
-      let dbConversationId: string | null;
 
       if (isDirectConversation(conversationId)) {
         recipientId = extractRecipientFromDirectId(conversationId);
-        dbConversationId = null;
       } else {
         const conversation = await this.getConversationById(conversationId);
         const recipient = conversation.participants.find(p => p.user_id !== senderId);
         recipientId = recipient?.user_id || senderId;
-        dbConversationId = conversationId;
       }
 
       // Créer le message avec les informations audio si applicable
@@ -507,9 +514,9 @@ class UniversalCommunicationService {
         const audioExt = file.name.split('.').pop()?.toLowerCase();
         messageData.audio_format = audioExt;
         messageData.audio_mime_type = file.type;
-        console.log('[Communication] 🎤 Format audio détecté:', { 
-          format: audioExt, 
-          mimeType: file.type 
+        console.log('[Communication] 🎤 Format audio détecté:', {
+          format: audioExt,
+          mimeType: file.type
         });
       }
 
@@ -522,17 +529,17 @@ class UniversalCommunicationService {
       if (error) throw error;
 
       await this.logAudit(senderId, 'message_sent', data.id);
-      
+
       console.log('[Communication] Fichier envoyé:', data.id);
 
       // 🎵 Conversion automatique pour iOS si c'est un audio WebM/OGG
       if (fileType === 'audio') {
         const audioExt = file.name.split('.').pop()?.toLowerCase();
         const formatsNeedingConversion = ['webm', 'ogg', 'opus'];
-        
+
         if (audioExt && formatsNeedingConversion.includes(audioExt)) {
           console.log('[Communication] 🔄 Lancement conversion iOS en arrière-plan...');
-          
+
           // Import dynamique pour éviter les dépendances circulaires
           import('@/services/AudioConversionService').then(({ autoConvertIfNeeded }) => {
             autoConvertIfNeeded(data.id, publicUrl, file.name)
@@ -592,7 +599,7 @@ class UniversalCommunicationService {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       if (message.sender_id !== userId) {
         throw new Error('Vous ne pouvez supprimer que vos propres messages');
       }
@@ -603,7 +610,7 @@ class UniversalCommunicationService {
         .eq('id', messageId);
 
       if (error) throw error;
-      
+
       await this.logAudit(userId, 'message_deleted', messageId);
     } catch (error) {
       console.error('[Communication] Erreur deleteMessage:', error);
@@ -628,21 +635,21 @@ class UniversalCommunicationService {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       if (message.sender_id !== userId) {
         throw new Error('Vous ne pouvez modifier que vos propres messages');
       }
 
       const { error } = await supabase
         .from('messages')
-        .update({ 
+        .update({
           content: newContent,
           updated_at: new Date().toISOString()
         })
         .eq('id', messageId);
 
       if (error) throw error;
-      
+
       await this.logAudit(userId, 'message_edited', messageId);
     } catch (error) {
       console.error('[Communication] Erreur editMessage:', error);
@@ -670,7 +677,7 @@ class UniversalCommunicationService {
       // Générer un channel court et valide pour Agora (max 64 chars, alphanumérique)
       const timestamp = Date.now().toString(36);
       const agoraChannel = `call_${timestamp}`;
-      
+
       console.log('[Communication] Création appel avec channel Agora:', agoraChannel);
 
       const { data, error } = await supabase
@@ -699,7 +706,7 @@ class UniversalCommunicationService {
 
       await this.logAudit(callerId, 'call_started', data.id);
       console.log('[Communication] Appel créé:', callWithChannel);
-      
+
       return callWithChannel as Call;
     } catch (error) {
       console.error('[Communication] Erreur startCall:', error);
@@ -782,19 +789,171 @@ class UniversalCommunicationService {
    * Rechercher des utilisateurs
    */
   async searchUsers(query: string): Promise<UserProfile[]> {
-    if (!query.trim() || query.length < 2) {
+    const parsed = parseUserSearchInput(query);
+    if (!parsed.trimmed || parsed.trimmed.length < 2) {
       return [];
     }
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, avatar_url, public_id')
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
-        .limit(10);
+      const search = parsed.trimmed;
+      let profiles: UserProfile[] = [];
+      const addProfiles = (items?: UserProfile[] | null) => {
+        if (items?.length) profiles = profiles.concat(items);
+      };
 
-      if (error) throw error;
-      return (data || []) as UserProfile[];
+      // Recherche par ID interne (UUID)
+      if (parsed.kind === 'uuid') {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+          .eq('id', search)
+          .maybeSingle();
+        if (data) return [data as UserProfile];
+      }
+
+      // Recherche par custom_id (user_ids)
+      if (parsed.kind === 'custom_id') {
+        const { data: userIdData } = await supabase
+          .from('user_ids')
+          .select('user_id')
+          .eq('custom_id', parsed.upper)
+          .maybeSingle();
+        if (userIdData?.user_id) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+            .eq('id', userIdData.user_id)
+            .maybeSingle();
+          if (data) return [data as UserProfile];
+        }
+      }
+
+      // Recherche par public_id
+      const { data: publicIdData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+        .ilike('public_id', `%${parsed.upper}%`)
+        .limit(5);
+      if (publicIdData && publicIdData.length > 0) {
+        profiles = profiles.concat(publicIdData as UserProfile[]);
+      }
+
+      // Recherche par email
+      if (parsed.kind === 'email') {
+        const { data: emailData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+          .ilike('email', `%${search}%`)
+          .limit(5);
+        if (emailData && emailData.length > 0) {
+          profiles = profiles.concat(emailData as UserProfile[]);
+        }
+      }
+
+      // Recherche par téléphone
+      if (parsed.kind === 'phone') {
+        const phoneTerms = buildPhoneSearchTerms(search);
+        const phoneFilters = phoneTerms
+          .map((term) => `phone.ilike.%${term}%`)
+          .join(',');
+
+        if (phoneFilters) {
+          const { data: phoneData } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+            .or(phoneFilters)
+            .limit(5);
+          addProfiles(phoneData as UserProfile[] | null);
+        }
+
+        const referenceDigits = stripPhoneToDigits(search).replace(/^224/, '');
+        if (referenceDigits.length >= 4) {
+          const looseTerm = referenceDigits.slice(-4);
+          const { data: loosePhoneData } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+            .ilike('phone', `%${looseTerm}%`)
+            .limit(20);
+
+          const normalizedMatches = (loosePhoneData || []).filter((profile) => {
+            const candidateDigits = stripPhoneToDigits(profile.phone || '').replace(/^224/, '');
+            return candidateDigits && (candidateDigits.includes(referenceDigits) || referenceDigits.includes(candidateDigits));
+          });
+          addProfiles(normalizedMatches as UserProfile[]);
+        }
+      }
+
+      // Recherche générique (nom, prénom, email, téléphone)
+      const safeSearch = sanitizePostgrestSearchTerm(search);
+      try {
+        const vendorFilters = [
+          `business_name.ilike.%${safeSearch}%`,
+          `email.ilike.%${safeSearch}%`,
+          `public_id.ilike.%${parsed.upper}%`,
+          `vendor_code.ilike.%${parsed.upper}%`,
+          `phone.ilike.%${safeSearch}%`,
+        ];
+
+        if (parsed.kind === 'phone') {
+          buildPhoneSearchTerms(search).forEach((term) => {
+            vendorFilters.push(`phone.ilike.%${term}%`);
+          });
+        }
+
+        const { data: vendorMatches, error: vendorSearchError } = await supabase
+          .from('vendors')
+          .select('user_id, business_name, email, phone, public_id, vendor_code, logo_url')
+          .or(vendorFilters.join(','))
+          .limit(20);
+
+        if (vendorSearchError) {
+          console.warn('[Communication] Recherche vendors ignoree:', vendorSearchError.message);
+        } else {
+          const vendorUserIds = Array.from(
+            new Set((vendorMatches || []).map((vendor) => vendor.user_id).filter(Boolean))
+          );
+
+          if (vendorUserIds.length > 0) {
+            const { data: vendorProfiles } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+              .in('id', vendorUserIds);
+            addProfiles(vendorProfiles as UserProfile[] | null);
+
+            const readableProfileIds = new Set((vendorProfiles || []).map((profile) => profile.id));
+            const fallbackVendorProfiles = (vendorMatches || [])
+              .filter((vendor) => vendor.user_id && !readableProfileIds.has(vendor.user_id))
+              .map((vendor) => ({
+                id: vendor.user_id,
+                first_name: vendor.business_name || 'Vendeur',
+                last_name: '',
+                email: vendor.email || '',
+                avatar_url: vendor.logo_url || undefined,
+                public_id: vendor.public_id || vendor.vendor_code || undefined,
+                phone: vendor.phone || undefined,
+              }));
+            addProfiles(fallbackVendorProfiles as UserProfile[]);
+          }
+        }
+      } catch (vendorError) {
+        console.warn('[Communication] Recherche vendors non bloquante:', vendorError);
+      }
+
+      if (safeSearch.length >= 2) {
+        const { data: genericData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, avatar_url, public_id, phone')
+          .or(`first_name.ilike.%${safeSearch}%,last_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,phone.ilike.%${safeSearch}%`)
+          .limit(10);
+        addProfiles(genericData as UserProfile[] | null);
+      }
+
+      // Supprimer les doublons par id
+      const uniqueProfiles = profiles.filter((profile, index, self) =>
+        index === self.findIndex((p) => p.id === profile.id)
+      );
+
+      return uniqueProfiles;
     } catch (error) {
       console.error('[Communication] Erreur searchUsers:', error);
       throw error;
@@ -915,7 +1074,7 @@ class UniversalCommunicationService {
         async (payload) => {
           try {
             console.log('[Communication] 📨 Nouveau message reçu:', payload.new.id);
-            
+
             // Récupérer le message complet avec le profil (avec timeout)
             const fetchPromise = supabase
               .from('messages')
@@ -1055,7 +1214,7 @@ class UniversalCommunicationService {
       }
     } catch (error: any) {
       this.auditFailureCount++;
-      
+
       console.warn('[Communication] ⚠️ Échec audit log:', {
         error: error.message,
         failureCount: this.auditFailureCount,
@@ -1141,9 +1300,9 @@ class UniversalCommunicationService {
   ): Promise<boolean> {
     try {
       console.log('[Communication] 🗑️ Tentative suppression message:', { messageId, userId, deleteForEveryone });
-      
+
       // Essayer d'abord avec la fonction RPC
-      const { data, error } = await supabase.rpc('soft_delete_message', {
+      const { _data, error } = await supabase.rpc('soft_delete_message', {
         p_message_id: messageId,
         p_user_id: userId,
         p_delete_for_everyone: deleteForEveryone,
@@ -1151,32 +1310,32 @@ class UniversalCommunicationService {
 
       if (error) {
         console.warn('[Communication] RPC soft_delete_message failed:', error.message);
-        
+
         // Fallback: utiliser une requête directe
         if (deleteForEveryone) {
           console.log('[Communication] Tentative suppression pour tous via requête directe');
-          
+
           // Vérifier que l'utilisateur est l'expéditeur
           const { data: msgData, error: selectError } = await supabase
             .from('messages')
             .select('sender_id')
             .eq('id', messageId)
             .single();
-          
+
           if (selectError) {
             console.error('[Communication] Erreur select message:', selectError);
             throw new Error('Message non trouvé');
           }
-            
+
           if (msgData?.sender_id === userId) {
             const { error: updateError } = await supabase
               .from('messages')
-              .update({ 
+              .update({
                 deleted_at: new Date().toISOString(),
                 content: '[Message supprimé]'
               })
               .eq('id', messageId);
-              
+
             if (updateError) {
               console.error('[Communication] Erreur update deleted_at:', updateError);
               throw updateError;
@@ -1187,7 +1346,7 @@ class UniversalCommunicationService {
           }
         } else {
           console.log('[Communication] Tentative suppression pour moi via requête directe');
-          
+
           // Supprimer uniquement pour cet utilisateur
           // Récupérer puis mettre à jour manuellement
           const { data: msgData } = await supabase
@@ -1195,9 +1354,9 @@ class UniversalCommunicationService {
             .select('deleted_for')
             .eq('id', messageId)
             .single();
-            
+
           const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
-          
+
           let updateError: any = null;
           if (!currentDeletedFor.includes(userId)) {
             const newDeletedFor = [...currentDeletedFor, userId];
@@ -1207,26 +1366,26 @@ class UniversalCommunicationService {
               .eq('id', messageId);
             updateError = error;
           }
-          
+
           if (updateError) {
             console.warn('[Communication] Erreur update deleted_for avec SQL:', updateError);
-            
+
             // Fallback 2: récupérer et mettre à jour manuellement
             const { data: msgData } = await supabase
               .from('messages')
               .select('deleted_for')
               .eq('id', messageId)
               .single();
-              
+
             const currentDeletedFor = (msgData?.deleted_for as string[]) || [];
-            
+
             if (!currentDeletedFor.includes(userId)) {
               const newDeletedFor = [...currentDeletedFor, userId];
               const { error: updateError2 } = await supabase
                 .from('messages')
                 .update({ deleted_for: newDeletedFor })
                 .eq('id', messageId);
-                
+
               if (updateError2) {
                 console.error('[Communication] Erreur update deleted_for:', updateError2);
                 throw updateError2;

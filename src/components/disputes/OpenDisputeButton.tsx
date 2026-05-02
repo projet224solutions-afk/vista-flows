@@ -31,7 +31,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.description || formData.description.length < 20) {
       toast.error('Veuillez fournir une description détaillée (minimum 20 caractères)');
       return;
@@ -76,7 +76,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
             Si vous rencontrez un problème avec votre commande, ouvrez un litige pour le résoudre avec le vendeur.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="dispute_type">Type de problème</Label>

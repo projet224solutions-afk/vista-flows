@@ -82,7 +82,7 @@ export default function PDGVendors() {
 
         // Trier côté client pour prendre le meilleur plan (display_order le plus élevé)
         const bestSubscription = subscriptions && subscriptions.length > 0
-          ? subscriptions.sort((a, b) => 
+          ? subscriptions.sort((a, b) =>
               ((b.plans as any)?.display_order || 0) - ((a.plans as any)?.display_order || 0)
             )[0]
           : null;
@@ -100,12 +100,12 @@ export default function PDGVendors() {
       }));
 
       setVendors(enrichedVendors as any);
-      
+
       const active = enrichedVendors.filter(v => v.is_active).length || 0;
       const inactive = enrichedVendors.filter(v => !v.is_active).length || 0;
-      
-      setStats({ 
-        active, 
+
+      setStats({
+        active,
         inactive,
         total: enrichedVendors.length || 0
       });
@@ -123,7 +123,7 @@ export default function PDGVendors() {
     // Abonnement temps réel pour les nouveaux vendeurs
     const channel = supabase
       .channel('vendors-changes')
-      .on('postgres_changes', 
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'vendors' },
         () => {
           console.log('🔄 Nouveau vendeur détecté, rechargement...');
@@ -163,7 +163,7 @@ export default function PDGVendors() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Actifs</CardTitle>

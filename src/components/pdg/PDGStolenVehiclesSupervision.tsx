@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     AlertTriangle,
-    Shield,
+    _Shield,
     ShieldAlert,
     ShieldCheck,
     MapPin,
@@ -91,7 +91,7 @@ export default function PDGStolenVehiclesSupervision() {
         setLoading(true);
         try {
             console.log('🔍 [PDG Security] Début chargement données...');
-            
+
             // Charger tous les véhicules avec stolen_status = 'stolen'
             const { data: vehicles, error: vehiclesError } = await supabase
                 .from('vehicles')
@@ -139,7 +139,7 @@ export default function PDGStolenVehiclesSupervision() {
 
             const stolenCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'stolen').length;
             const recoveredCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'recovered').length;
-            
+
             console.log('📊 [PDG Security] Stats calculées:', { stolenCount, recoveredCount, bureauCount });
 
             setStats({
@@ -230,7 +230,7 @@ export default function PDGStolenVehiclesSupervision() {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'vehicle_fraud_alerts'
-            }, (payload) => {
+            }, (_payload) => {
                 toast.error('⚠️ Alerte de fraude détectée!', {
                     description: 'Activité suspecte sur un véhicule volé',
                     duration: 10000
@@ -255,7 +255,7 @@ export default function PDGStolenVehiclesSupervision() {
         v.bureau_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getStatusBadge = (status: string) => {
+    const _getStatusBadge = (status: string) => {
         switch (status) {
             case 'stolen':
                 return <Badge className="bg-red-600 text-white">🚨 VOLÉE</Badge>;

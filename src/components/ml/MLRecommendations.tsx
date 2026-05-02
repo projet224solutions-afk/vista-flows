@@ -88,7 +88,7 @@ const RecommendationCard = memo(({
   const formatPrice = (price: number) => formatCurrency(price);
 
   return (
-    <Card 
+    <Card
       className="min-w-[180px] max-w-[200px] flex-shrink-0 cursor-pointer hover:shadow-lg transition-all duration-200 group"
       onClick={() => onProductClick?.(recommendation.product_id)}
     >
@@ -100,7 +100,7 @@ const RecommendationCard = memo(({
           loading="lazy"
         />
         {showReason && (
-          <Badge 
+          <Badge
             className={`absolute top-2 left-2 text-xs ${reasonConfig.color}`}
           >
             <ReasonIcon className="w-3 h-3 mr-1" />
@@ -172,7 +172,7 @@ export function MLRecommendations({
 }: MLRecommendationsProps) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  
+
   const {
     recommendations,
     loading,
@@ -239,16 +239,16 @@ export function MLRecommendations({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={refresh}
               disabled={isLoading}
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => navigate('/marketplace')}
             >

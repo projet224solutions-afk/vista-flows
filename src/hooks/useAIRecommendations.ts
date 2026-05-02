@@ -15,6 +15,7 @@ interface AIProduct {
   price: number;
   images: string[];
   rating: number | null;
+  reviews_count?: number | null;
   category_id?: string;
   reason?: string;
   score?: number;
@@ -81,7 +82,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       // Fallback: produits récents bien notés
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, vendor_id, vendors(business_type)')
+        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type)')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(limit * 2);
@@ -94,6 +95,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
           price: p.price,
           images: Array.isArray(p.images) ? (p.images as string[]) : [],
           rating: p.rating,
+          reviews_count: p.reviews_count,
           reason: 'Nouveauté',
         }));
     },
@@ -183,6 +185,7 @@ export function useAITrending(limit = 16, enabled = true) {
           price: p.price,
           images: Array.isArray(p.images) ? (p.images as string[]) : [],
           rating: p.rating,
+          reviews_count: p.reviews_count,
         }));
     },
     enabled: enabled && !authLoading,

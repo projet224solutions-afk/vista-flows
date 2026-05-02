@@ -22,12 +22,12 @@ export function useActiveEmergencyAlerts(bureauId?: string) {
       const data = bureauId
         ? await emergencyService.getBureauAlerts(bureauId)
         : await emergencyService.getActiveAlerts();
-      
+
       // Filtrer uniquement les alertes actives ou en cours
       const activeAlerts = data.filter(
         (alert) => alert.status === 'active' || alert.status === 'in_progress'
       );
-      
+
       setAlerts(activeAlerts);
       setError(null);
     } catch (err) {
@@ -344,7 +344,7 @@ export function useEmergencyGPSTracking(alertId: string | null) {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject);
       });
-      
+
       const tracking = await emergencyService.addGPSTracking({
         alert_id: alertId,
         latitude: position.coords.latitude,
@@ -395,7 +395,7 @@ export function useDriverActiveAlert(driverId: string | undefined) {
       try {
         setIsLoading(true);
         const alerts = await emergencyService.getDriverAlerts(driverId, 1);
-        
+
         // Chercher une alerte active
         const active = alerts.find(
           (alert) => alert.status === 'active' || alert.status === 'in_progress'

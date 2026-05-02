@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAgora } from '@/hooks/useAgora';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Phone, 
-  Mic, 
-  MicOff, 
-  PhoneOff, 
-  Users, 
+import {
+  Phone,
+  Mic,
+  MicOff,
+  PhoneOff,
+  _Users,
   Wifi,
   Clock,
   Volume2,
@@ -33,15 +33,15 @@ interface AgoraAudioCallProps {
   onCallEnd?: () => void;
 }
 
-export default function AgoraAudioCall({ 
-  channel, 
-  isIncoming = false, 
+export default function AgoraAudioCall({
+  channel,
+  isIncoming = false,
   callerInfo,
-  onCallEnd 
+  onCallEnd
 }: AgoraAudioCallProps) {
-  const { user } = useAuth();
-  const { callState, isLoading, joinCall, leaveCall, toggleMute, endCall } = useAgora();
-  
+  const { _user } = useAuth();
+  const { callState, _isLoading, joinCall, _leaveCall, toggleMute, endCall } = useAgora();
+
   const [callDuration, setCallDuration] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
@@ -52,12 +52,13 @@ export default function AgoraAudioCall({
       console.log('🔊 AgoraAudioCall: Démarrage automatique pour channel:', channel);
       handleJoinCall();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel, isIncoming]);
 
   // Gestion de la durée d'appel
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (callState.isInCall) {
       interval = setInterval(() => {
         setCallDuration(prev => prev + 1);
@@ -119,7 +120,7 @@ export default function AgoraAudioCall({
             <h3 className="text-2xl font-semibold">{callerInfo?.name}</h3>
             <p className="text-muted-foreground">Appel vocal</p>
           </div>
-          
+
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
@@ -183,7 +184,7 @@ export default function AgoraAudioCall({
           <div className="flex items-center gap-1">
             <Wifi className={`w-4 h-4 ${getNetworkQualityColor(callState.networkQuality)}`} />
             <span>
-              {callState.networkQuality >= 4 ? 'Excellente' : 
+              {callState.networkQuality >= 4 ? 'Excellente' :
                callState.networkQuality >= 2 ? 'Bonne' : 'Faible'}
             </span>
           </div>
@@ -191,7 +192,7 @@ export default function AgoraAudioCall({
 
         {/* Statut de connexion */}
         <div className="text-center">
-          <Badge 
+          <Badge
             variant={callState.isConnected ? "default" : "destructive"}
             className="text-sm"
           >

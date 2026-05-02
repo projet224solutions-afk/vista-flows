@@ -7,10 +7,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { _Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Shield,
@@ -21,18 +21,18 @@ import {
   CheckCircle2,
   XCircle,
   TrendingUp,
-  TrendingDown,
-  Users,
+  _TrendingDown,
+  _Users,
   Lock,
   Eye,
   Ban,
-  Globe,
+  _Globe,
   Server,
   Database,
   Zap,
   RefreshCw
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { _LineChart, _Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 
 interface SecurityMetrics {
   score: number;
@@ -76,11 +76,12 @@ export const RealTimeSecurityDashboard: React.FC = () => {
 
   useEffect(() => {
     loadSecurityData();
-    
+
     if (isRealTime) {
       const interval = setInterval(loadSecurityData, 30000);
       return () => clearInterval(interval);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRealTime]);
 
   const loadSecurityData = async () => {

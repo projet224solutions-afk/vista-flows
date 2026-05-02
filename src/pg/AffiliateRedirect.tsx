@@ -9,10 +9,11 @@ export default function AffiliateRedirect() {
   const { vendorId } = useParams<{ vendorId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
     handleAffiliateRedirect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
   const handleAffiliateRedirect = async () => {
@@ -23,7 +24,7 @@ export default function AffiliateRedirect() {
     }
 
     try {
-      // R├®cup├®rer le pourcentage d'affiliation
+      // Récupérer le pourcentage d'affiliation
       const affPercentage = searchParams.get('aff');
 
       // Stocker les informations d'affiliation dans localStorage
@@ -35,7 +36,7 @@ export default function AffiliateRedirect() {
         }));
       }
 
-      // V├®rifier que le vendeur existe
+      // Vérifier que le vendeur existe
       const { data: userIdData, error: userIdError } = await supabase
         .from('user_ids')
         .select('user_id')
@@ -50,7 +51,7 @@ export default function AffiliateRedirect() {
         return;
       }
 
-      // R├®cup├®rer les infos du vendeur
+      // Récupérer les infos du vendeur
       const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id, user_id, business_name, business_type')
@@ -65,11 +66,11 @@ export default function AffiliateRedirect() {
         return;
       }
 
-      // Message de succ├¿s
+      // Message de succès
       toast.success(`Bienvenue chez ${vendor.business_name}!`, {
-        description: affPercentage 
-          ? `Lien d'affiliation activ├® (${affPercentage}% de commission)`
-          : 'D├®couvrez nos produits'
+        description: affPercentage
+          ? `Lien d'affiliation activé (${affPercentage}% de commission)`
+          : 'Découvrez nos produits'
       });
 
       const [physicalProductsRes, digitalProductsRes] = await Promise.all([
@@ -119,7 +120,7 @@ export default function AffiliateRedirect() {
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
           <h2 className="text-xl font-semibold">Chargement de la boutique...</h2>
           <p className="text-sm text-muted-foreground text-center">
-            Vous allez ├¬tre redirig├® vers les produits du vendeur
+            Vous allez être redirigé vers les produits du vendeur
           </p>
         </CardContent>
       </Card>

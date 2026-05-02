@@ -1,6 +1,6 @@
 ﻿/**
- * Page de Cr├®ation d'Agent
- * Formulaire complet avec g├®n├®ration auto d'ID
+ * Page de Création d'Agent
+ * Formulaire complet avec génération auto d'ID
  */
 
 import { useState, useEffect } from 'react';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UserPlus, Upload, Loader2, Save, ArrowLeft, AlertCircle } from 'lucide-react';
+import { UserPlus, _Upload, Loader2, Save, ArrowLeft, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -34,13 +34,13 @@ export default function AgentCreation() {
     email: '',
     password: '',
     confirmPassword: '',
-    agentCode: '', // Auto-g├®n├®r├® au format AGT00001
+    agentCode: '', // Auto-généré au format AGT00001
     typeAgent: 'principal',
     canCreateSubAgent: true,
-    mfaEnabled: true // MFA activ├® par d├®faut
+    mfaEnabled: true // MFA activé par défaut
   });
 
-  // G├®n├®rer automatiquement l'ID au chargement
+  // Générer automatiquement l'ID au chargement
   useEffect(() => {
     const generateCode = async () => {
       if (!formData.agentCode) {
@@ -49,16 +49,17 @@ export default function AgentCreation() {
       }
     };
     generateCode();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // V├®rification des permissions
+  // Vérification des permissions
   if (!profile || (profile.role !== 'admin' && !['agent', 'admin'].includes(profile.role as string))) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Acc├¿s refus├®. Seuls les administrateurs et agents principaux peuvent cr├®er des agents.
+            Accès refusé. Seuls les administrateurs et agents principaux peuvent créer des agents.
           </AlertDescription>
         </Alert>
       </div>
@@ -68,16 +69,16 @@ export default function AgentCreation() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // V├®rifier le type
+      // Vérifier le type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        toast.error('Format non support├®. Utilisez JPG, PNG, GIF ou WebP');
+        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
         return;
       }
 
-      // V├®rifier la taille - Max 10 Mo
+      // Vérifier la taille - Max 10 Mo
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas d├®passer 10 Mo');
+        toast.error('L\'image ne doit pas dépasser 10 Mo');
         return;
       }
 
@@ -108,7 +109,7 @@ export default function AgentCreation() {
 
       return publicUrl;
     } catch (err) {
-      console.error('ÔØî Erreur upload photo:', err);
+      console.error('✕ Erreur upload photo:', err);
       return null;
     }
   };
@@ -129,7 +130,7 @@ export default function AgentCreation() {
       }
 
       if (formData.password.length < 6) {
-        throw new Error('Le mot de passe doit contenir au moins 6 caract├¿res');
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
       }
 
       // Upload de la photo si fournie
@@ -145,7 +146,7 @@ export default function AgentCreation() {
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-      // R├®cup├®rer le PDG ID depuis l'utilisateur connect├®
+      // Récupérer le PDG ID depuis l'utilisateur connecté
       const { data: pdgData } = await supabase
         .from('pdg_management')
         .select('id')
@@ -155,17 +156,17 @@ export default function AgentCreation() {
       const pdgId = pdgData?.id;
 
       if (!pdgId) {
-        throw new Error('Impossible de d├®terminer votre organisation');
+        throw new Error('Impossible de déterminer votre organisation');
       }
 
       // S'assurer qu'on a un code agent valide au format AGT00001
       let finalAgentCode = formData.agentCode;
       if (!finalAgentCode || !/^AGT\d{5}$/.test(finalAgentCode)) {
         finalAgentCode = await generateUniqueId('agent');
-        console.log('­ƒöä Code agent reg├®n├®r├®:', finalAgentCode);
+        console.log('🔄 Code agent regénéré:', finalAgentCode);
       }
 
-      // Cr├®er l'agent avec le code correct
+      // Créer l'agent avec le code correct
       const { data: newAgent, error: insertError } = await supabase
         .from('agents_management')
         .insert({
@@ -192,9 +193,9 @@ export default function AgentCreation() {
 
       if (insertError) throw insertError;
 
-      console.log('Ô£à Agent cr├®├® avec succ├¿s:', newAgent);
-      
-      toast.success('Agent cr├®├® avec succ├¿s !', {
+      console.log('✓ Agent créé avec succès:', newAgent);
+
+      toast.success('Agent créé avec succès !', {
         description: `Code agent: ${newAgent.agent_code}`
       });
 
@@ -204,10 +205,10 @@ export default function AgentCreation() {
       }, 1500);
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la cr├®ation';
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création';
       setError(errorMessage);
       toast.error(errorMessage);
-      console.error('ÔØî Erreur cr├®ation agent:', err);
+      console.error('✕ Erreur création agent:', err);
     } finally {
       setLoading(false);
     }
@@ -231,7 +232,7 @@ export default function AgentCreation() {
               <UserPlus className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Cr├®er un nouvel agent</h1>
+              <h1 className="text-3xl font-bold">Créer un nouvel agent</h1>
               <p className="text-muted-foreground">Remplissez le formulaire pour ajouter un agent</p>
             </div>
           </div>
@@ -241,7 +242,7 @@ export default function AgentCreation() {
           <CardHeader>
             <CardTitle>Informations de l'agent</CardTitle>
             <CardDescription>
-              Le code agent sera g├®n├®r├® automatiquement si non fourni
+              Le code agent sera généré automatiquement si non fourni
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -253,7 +254,7 @@ export default function AgentCreation() {
                   {photoPreview && (
                     <img
                       src={photoPreview}
-                      alt="Aper├ºu"
+                      alt="Aperçu"
                       className="w-20 h-20 rounded-full object-cover border-2 border-border"
                     />
                   )}
@@ -268,10 +269,10 @@ export default function AgentCreation() {
                 </div>
               </div>
 
-              {/* Identit├® */}
+              {/* Identité */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Pr├®nom *</Label>
+                  <Label htmlFor="firstName">Prénom *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
@@ -301,11 +302,11 @@ export default function AgentCreation() {
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="S├®lectionner" />
+                    <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">F├®minin</SelectItem>
+                    <SelectItem value="F">Féminin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -313,7 +314,7 @@ export default function AgentCreation() {
               {/* Contact */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">T├®l├®phone *</Label>
+                  <Label htmlFor="phone">Téléphone *</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -338,10 +339,10 @@ export default function AgentCreation() {
                 </div>
               </div>
 
-              {/* Code agent avec g├®n├®ration automatique */}
+              {/* Code agent avec génération automatique */}
               <div className="space-y-2">
                 <Label htmlFor="agentCode">Code Agent</Label>
-                <AutoIdGenerator 
+                <AutoIdGenerator
                   roleType="agent"
                   onIdGenerated={(id) => setFormData({ ...formData, agentCode: id })}
                   showCard={false}
@@ -356,7 +357,7 @@ export default function AgentCreation() {
                   />
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Un code unique sera g├®n├®r├® automatiquement (format: AGT00001)
+                  Un code unique sera généré automatiquement (format: AGT00001)
                 </p>
               </div>
 
@@ -374,7 +375,7 @@ export default function AgentCreation() {
                   <SelectContent>
                     <SelectItem value="principal">Agent Principal</SelectItem>
                     <SelectItem value="sous_agent">Sous-Agent</SelectItem>
-                    <SelectItem value="agent_regional">Agent R├®gional</SelectItem>
+                    <SelectItem value="agent_regional">Agent Régional</SelectItem>
                     <SelectItem value="agent_local">Agent Local</SelectItem>
                   </SelectContent>
                 </Select>
@@ -386,7 +387,7 @@ export default function AgentCreation() {
                   <div>
                     <Label className="text-base font-semibold">Authentification Multi-Facteurs (MFA)</Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Activer MFA pour renforcer la s├®curit├® du compte agent
+                      Activer MFA pour renforcer la sécurité du compte agent
                     </p>
                   </div>
                   <Button
@@ -396,13 +397,13 @@ export default function AgentCreation() {
                     onClick={() => setFormData({ ...formData, mfaEnabled: !formData.mfaEnabled })}
                     disabled={loading}
                   >
-                    {formData.mfaEnabled ? 'Ô£ô Activ├®' : 'D├®sactiv├®'}
+                    {formData.mfaEnabled ? '✓ Activé' : 'Désactivé'}
                   </Button>
                 </div>
                 {formData.mfaEnabled && (
                   <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                     <p className="text-xs text-green-700 dark:text-green-300">
-                      ­ƒöÉ MFA sera activ├® avec TOTP et WebAuthn. L'agent devra configurer son authenticator lors de sa premi├¿re connexion.
+                      🔐 MFA sera activé avec TOTP et WebAuthn. L'agent devra configurer son authenticator lors de sa première connexion.
                     </p>
                   </div>
                 )}
@@ -415,7 +416,7 @@ export default function AgentCreation() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Min. 6 caract├¿res"
+                    placeholder="Min. 6 caractères"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     disabled={loading}
@@ -427,7 +428,7 @@ export default function AgentCreation() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="R├®p├®ter le mot de passe"
+                    placeholder="Répéter le mot de passe"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     disabled={loading}
@@ -463,12 +464,12 @@ export default function AgentCreation() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Cr├®ation en cours...
+                      Création en cours...
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Cr├®er l'agent
+                      Créer l'agent
                     </>
                   )}
                 </Button>

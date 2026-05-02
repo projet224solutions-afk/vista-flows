@@ -11,6 +11,7 @@ import { LogOut, Settings } from 'lucide-react';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useVendorNotifications } from '@/hooks/useVendorNotifications';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Lazy loaded header components (UI non-critique)
 const NetworkStatusIndicator = lazy(() => import('@/components/vendor/NetworkStatusIndicator'));
@@ -52,11 +53,13 @@ interface VendorHeaderProps {
  * Logo et titre de l'application
  */
 const AppBranding = memo(function AppBranding() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-2 min-w-0">
       <SidebarTrigger
         className="h-[60px] w-[60px] sm:h-10 sm:w-10 md:h-8 md:w-8 sm:mr-2 md:mr-4 [&_svg]:h-8 [&_svg]:w-8 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
-        aria-label="Ouvrir/Fermer le menu"
+        aria-label={t('common.toggleMenu')}
       />
 
       <div
@@ -81,12 +84,14 @@ const AppBranding = memo(function AppBranding() {
  * Indicateur de statut utilisateur
  */
 const UserStatus = memo(function UserStatus({ displayName }: { displayName: string }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
       <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
         <span
           className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"
-          aria-label="En ligne"
+          aria-label={t('common.online')}
         />
         <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
           {displayName}
@@ -114,6 +119,8 @@ const HeaderActions = memo(function HeaderActions({
   onNavigateToSettings: () => void;
   vendorUnreadCount: number;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
       {/* Quick Transfer */}
@@ -154,8 +161,8 @@ const HeaderActions = memo(function HeaderActions({
         size="icon"
         className="h-8 w-8 md:h-10 md:w-10"
         onClick={onNavigateToSettings}
-        aria-label="Paramètres"
-        title="Paramètres"
+        aria-label={t('common.settings')}
+        title={t('common.settings')}
       >
         <Settings className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
       </Button>
@@ -166,8 +173,8 @@ const HeaderActions = memo(function HeaderActions({
         size="icon"
         onClick={onSignOut}
         className="h-8 w-8 md:h-10 md:w-10"
-        aria-label="Se déconnecter"
-        title="Se déconnecter"
+        aria-label={t('common.signOut')}
+        title={t('common.signOut')}
       >
         <LogOut className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
       </Button>

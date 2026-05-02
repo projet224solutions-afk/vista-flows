@@ -2,7 +2,7 @@
  * PANNEAU DES COLIS À PROXIMITÉ - AMÉLIORÉ
  * Affiche tous les détails AVANT acceptation:
  * - Distance livreur → vendeur
- * - Distance vendeur → client  
+ * - Distance vendeur → client
  * - Prix total à gagner
  * - Nom et adresse vendeur
  * - Adresse client CACHÉE (sécurité)
@@ -13,9 +13,9 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, Package, Navigation, Phone, Store, Clock, 
-  DollarSign, CreditCard, Truck, Check, X, Loader2, RefreshCw 
+import {
+  _MapPin, Package, Navigation, Phone, Store, Clock,
+  DollarSign, CreditCard, _Truck, Check, _X, Loader2, RefreshCw
 } from 'lucide-react';
 import { DeliveryService, type NearbyDelivery } from '@/services/delivery/DeliveryService';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,10 +37,11 @@ export function NearbyDeliveriesPanel() {
   const [deliveries, setDeliveries] = useState<EnhancedDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
-  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [_userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     loadNearbyDeliveries();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNearbyDeliveries = async () => {
@@ -82,13 +83,13 @@ export function NearbyDeliveriesPanel() {
       const enhanced: EnhancedDelivery[] = (data || []).map((d: any) => {
         const pickup = typeof d.pickup_address === 'object' ? d.pickup_address : {};
         const delivery = typeof d.delivery_address === 'object' ? d.delivery_address : {};
-        
+
         // Calcul simple des distances si position dispo
         let distToVendor = d.distance_to_vendor || 0;
         if (driverPos && pickup.lat && pickup.lng && !distToVendor) {
           distToVendor = calculateDistance(driverPos.lat, driverPos.lng, pickup.lat, pickup.lng);
         }
-        
+
         const distVendorClient = d.distance_vendor_to_client || d.distance_km || 0;
         const totalDist = distToVendor + distVendorClient;
         const earnings = d.driver_earning || d.delivery_fee || Math.round(5000 + totalDist * 2000);
@@ -139,17 +140,17 @@ export function NearbyDeliveriesPanel() {
     setAcceptingId(deliveryId);
     try {
       const acceptedDelivery = await DeliveryService.acceptDelivery(deliveryId);
-      
+
       // Retirer immédiatement de la liste pour un feedback visuel instantané
       setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
-      
+
       toast.success('✅ Livraison acceptée avec succès !', {
         description: 'Rendez-vous chez le vendeur pour récupérer le colis'
       });
-      
+
       // Rafraîchir la liste complète après un court délai
       setTimeout(() => loadNearbyDeliveries(), 1000);
-      
+
       return acceptedDelivery;
     } catch (error: any) {
       console.error('[NearbyDeliveriesPanel] Accept error:', error);

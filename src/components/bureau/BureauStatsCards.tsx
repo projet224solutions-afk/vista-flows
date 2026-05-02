@@ -20,10 +20,10 @@ interface StatCard {
   gradient: string;
 }
 
-export function BureauStatsCards({ 
-  workersCount, 
-  membersCount, 
-  motosCount, 
+export function BureauStatsCards({
+  workersCount,
+  membersCount,
+  motosCount,
   alertsCount,
   walletBalance = 0,
   currency = 'GNF'
@@ -78,7 +78,7 @@ export function BureauStatsCards({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
       {statCards.map((stat, index) => (
-        <Card 
+        <Card
           key={index}
           className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
         >

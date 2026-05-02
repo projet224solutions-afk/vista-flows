@@ -13,15 +13,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { 
-  AlertTriangle, 
-  CheckCircle2, 
-  RefreshCw, 
-  Shield, 
+import {
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
+  Shield,
   Database,
   ArrowRight,
   Wrench,
-  Eye,
+  _Eye,
   XCircle
 } from 'lucide-react';
 
@@ -205,9 +205,9 @@ export function IdAuditManager() {
           // Créer une nouvelle entrée
           const { error: insertError } = await supabase
             .from('user_ids')
-            .insert({ 
-              user_id: userId, 
-              custom_id: discrepancy.profilesPublicId 
+            .insert({
+              user_id: userId,
+              custom_id: discrepancy.profilesPublicId
             });
 
           if (insertError) {
@@ -217,7 +217,7 @@ export function IdAuditManager() {
                 .from('user_ids')
                 .update({ custom_id: discrepancy.profilesPublicId })
                 .eq('user_id', userId);
-              
+
               if (updateError) {
                 console.error(`Erreur insert/update user_ids ${userId}:`, updateError);
                 errors++;
@@ -287,10 +287,10 @@ export function IdAuditManager() {
 
   const fixAllDiscrepancies = async () => {
     if (discrepancies.length === 0) return;
-    
+
     const allIds = new Set(discrepancies.filter(d => d.canAutoFix).map(d => d.userId));
     setSelectedIds(allIds);
-    
+
     // Attendre un tick pour que l'état soit mis à jour
     setTimeout(() => fixSelectedIds(), 100);
   };
@@ -332,6 +332,7 @@ export function IdAuditManager() {
 
   useEffect(() => {
     runAudit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -349,8 +350,8 @@ export function IdAuditManager() {
               </CardDescription>
             </div>
           </div>
-          <Button 
-            onClick={runAudit} 
+          <Button
+            onClick={runAudit}
             disabled={loading}
             variant="outline"
             size="sm"
@@ -417,7 +418,7 @@ export function IdAuditManager() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Désynchronisations détectées</AlertTitle>
             <AlertDescription>
-              {discrepancies.length} utilisateur(s) avec des IDs incohérents. 
+              {discrepancies.length} utilisateur(s) avec des IDs incohérents.
               La source de vérité est <code className="bg-muted px-1 rounded">profiles.public_id</code>.
             </AlertDescription>
           </Alert>
@@ -436,7 +437,7 @@ export function IdAuditManager() {
         {/* Actions */}
         {discrepancies.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={fixAllDiscrepancies}
               disabled={fixing || discrepancies.length === 0}
               className="bg-green-600 hover:bg-green-700"
@@ -462,7 +463,7 @@ export function IdAuditManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[40px]">
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedIds.size === discrepancies.length && discrepancies.length > 0}
                       onCheckedChange={selectAll}
                     />
@@ -483,12 +484,12 @@ export function IdAuditManager() {
               </TableHeader>
               <TableBody>
                 {discrepancies.map((d) => (
-                  <TableRow 
-                    key={d.userId} 
+                  <TableRow
+                    key={d.userId}
                     className={`hover:bg-muted/50 ${d.status === 'conflict' ? 'bg-purple-500/5' : ''}`}
                   >
                     <TableCell>
-                      <Checkbox 
+                      <Checkbox
                         checked={selectedIds.has(d.userId)}
                         onCheckedChange={() => toggleSelection(d.userId)}
                         disabled={!d.canAutoFix}
@@ -515,8 +516,8 @@ export function IdAuditManager() {
                       {d.userIdsCustomId ? (
                         <div className="flex items-center gap-1">
                           <code className={`px-2 py-1 rounded text-xs font-mono ${
-                            d.userIdsCustomId === d.profilesPublicId 
-                              ? 'bg-primary/10 text-primary' 
+                            d.userIdsCustomId === d.profilesPublicId
+                              ? 'bg-primary/10 text-primary'
                               : 'bg-destructive/10 text-destructive'
                           }`}>
                             {d.userIdsCustomId}
@@ -532,8 +533,8 @@ export function IdAuditManager() {
                     <TableCell>
                       {d.vendorCode ? (
                         <code className={`px-2 py-1 rounded text-xs font-mono ${
-                          d.vendorCode === d.profilesPublicId 
-                            ? 'bg-primary/10 text-primary' 
+                          d.vendorCode === d.profilesPublicId
+                            ? 'bg-primary/10 text-primary'
                             : 'bg-amber-500/10 text-amber-600'
                         }`}>
                           {d.vendorCode}

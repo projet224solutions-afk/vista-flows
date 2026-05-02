@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubscriptionService, Plan, PriceHistory } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
-import { DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift, AlertTriangle, Image, Package } from 'lucide-react';
+import { DollarSign, _History, TrendingUp, Users, Edit, RefreshCw, Gift, AlertTriangle, Image, Package } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -59,12 +59,13 @@ export default function SubscriptionManagement() {
     fetchData();
     loadAllSubscriptionsOnMount();
     setupRealtimeSubscription();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAllSubscriptionsOnMount = async () => {
     try {
       setLoadingSubscriptions(true);
-      
+
       // 1. Charger les abonnements vendeurs (table subscriptions)
       const { data: vendorSubs, error: vendorError } = await supabase
         .from('subscriptions')
@@ -155,7 +156,7 @@ export default function SubscriptionManagement() {
       // 6. Garder le plus récent par user
       const uniqueSubscriptions = enrichedData.reduce((acc, sub) => {
         const existingIndex = acc.findIndex(s => s.user_id === sub.user_id && s.source === sub.source);
-        
+
         if (existingIndex === -1) {
           acc.push(sub);
         } else {
@@ -181,13 +182,13 @@ export default function SubscriptionManagement() {
     if (sub.status === 'cancelled') return 'cancelled';
     if (sub.status === 'expired') return 'expired';
     if (sub.status === 'past_due') return 'past_due';
-    
+
     if (sub.current_period_end) {
       const endDate = new Date(sub.current_period_end);
       const now = new Date();
       if (endDate < now) return 'expired';
     }
-    
+
     return sub.status || 'active';
   };
 
@@ -374,7 +375,7 @@ export default function SubscriptionManagement() {
 
       // Résoudre l'ID utilisateur (accepte UUID ou custom_id)
       let resolvedUserId = freeSubscriptionData.userId;
-      
+
       // Si ce n'est pas un UUID, chercher dans user_ids
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(freeSubscriptionData.userId)) {
@@ -458,9 +459,9 @@ export default function SubscriptionManagement() {
 
       const { error } = await supabase
         .from('plans')
-        .update({ 
+        .update({
           max_products: productLimit,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         })
         .eq('id', selectedPlan.id);
 
@@ -513,9 +514,9 @@ export default function SubscriptionManagement() {
 
       const { error } = await supabase
         .from('plans')
-        .update({ 
+        .update({
           max_images_per_product: imageLimit,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         })
         .eq('id', selectedPlan.id);
 
@@ -543,18 +544,18 @@ export default function SubscriptionManagement() {
   const getLimitWarnings = () => {
     const warnings: string[] = [];
     const sortedPlans = [...plans].sort((a, b) => a.monthly_price_gnf - b.monthly_price_gnf);
-    
+
     for (let i = 1; i < sortedPlans.length; i++) {
       const currentPlan = sortedPlans[i];
       const previousPlan = sortedPlans[i - 1];
-      
+
       // Vérifier max_products
       if (currentPlan.max_products !== null && previousPlan.max_products !== null) {
         if (currentPlan.max_products < previousPlan.max_products) {
           warnings.push(`${currentPlan.display_name} (${currentPlan.max_products} produits) < ${previousPlan.display_name} (${previousPlan.max_products} produits)`);
         }
       }
-      
+
       // Vérifier max_images
       if (currentPlan.max_images_per_product !== null && previousPlan.max_images_per_product !== null) {
         if (currentPlan.max_images_per_product < previousPlan.max_images_per_product) {
@@ -562,7 +563,7 @@ export default function SubscriptionManagement() {
         }
       }
     }
-    
+
     return warnings;
   };
 
@@ -854,15 +855,15 @@ export default function SubscriptionManagement() {
                 <TableBody>
                   {plans.map((plan, index) => {
                     const prevPlan = index > 0 ? plans[index - 1] : null;
-                    const hasProductWarning = prevPlan && 
-                      plan.max_products !== null && 
-                      prevPlan.max_products !== null && 
+                    const hasProductWarning = prevPlan &&
+                      plan.max_products !== null &&
+                      prevPlan.max_products !== null &&
                       plan.max_products < prevPlan.max_products;
-                    const hasImageWarning = prevPlan && 
-                      plan.max_images_per_product !== null && 
-                      prevPlan.max_images_per_product !== null && 
+                    const hasImageWarning = prevPlan &&
+                      plan.max_images_per_product !== null &&
+                      prevPlan.max_images_per_product !== null &&
                       plan.max_images_per_product < prevPlan.max_images_per_product;
-                    
+
                     return (
                       <TableRow key={plan.id} className={hasProductWarning || hasImageWarning ? 'bg-destructive/10' : ''}>
                         <TableCell className="font-medium">{plan.display_name}</TableCell>
@@ -1210,7 +1211,7 @@ export default function SubscriptionManagement() {
               {allSubscriptions.length} abonnement(s) au total
             </DialogDescription>
           </DialogHeader>
-          
+
           {loadingSubscriptions ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

@@ -15,6 +15,7 @@ export function DisputesList() {
 
   useEffect(() => {
     loadDisputes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   const loadDisputes = async () => {
@@ -22,10 +23,10 @@ export function DisputesList() {
 
     setLoading(true);
     try {
-      const data = profile.role === 'admin' 
+      const data = profile.role === 'admin'
         ? await DisputeService.getAllDisputes()
         : await DisputeService.getUserDisputes(profile.id);
-      
+
       setDisputes(data);
     } catch (error) {
       console.error('[DisputesList] Error loading disputes:', error);
@@ -89,7 +90,7 @@ export function DisputesList() {
               <div>
                 <CardTitle className="text-lg">{dispute.dispute_number}</CardTitle>
                 <CardDescription>
-                  {getDisputeTypelabel(dispute.dispute_type)} • 
+                  {getDisputeTypelabel(dispute.dispute_type)} •
                   {format(new Date(dispute.created_at), 'PPP', { locale: fr })}
                 </CardDescription>
               </div>

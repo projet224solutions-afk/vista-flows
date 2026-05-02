@@ -14,8 +14,8 @@ interface BureauKYCStatusProps {
   className?: string;
 }
 
-export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatusProps) {
-  const navigate = useNavigate();
+export function BureauKYCStatus({ status, _bureauId, className }: BureauKYCStatusProps) {
+  const _navigate = useNavigate();
 
   const handleVerifyClick = () => {
     // Ne rien faire pour l'instant, la vérification KYC se fait dans l'onglet Settings du dashboard

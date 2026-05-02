@@ -6,11 +6,12 @@
 
 // dotenv.config() appelé dans server.ts
 
-// DEBUG: Affiche le chemin du .env et les variables Supabase au démarrage
-console.log('Chargement .env depuis :', process.env.NODE_ENV);
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
-console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '[OK]' : '[ABSENT]');
-console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '[OK]' : '[ABSENT]');
+// Startup check — visible en développement uniquement
+if (process.env.NODE_ENV !== 'production') {
+  const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET', 'STRIPE_SECRET_KEY']
+    .filter(k => !process.env[k]);
+  if (missing.length) console.warn('[env] Variables manquantes:', missing.join(', '));
+}
 
 function requireEnv(key: string): string {
   const value = process.env[key];
@@ -35,15 +36,20 @@ export const env = {
   // Server
   NODE_ENV: optionalEnv('NODE_ENV', 'development'),
   PORT: optionalEnvInt('PORT', 3001),
-  
+
   // Supabase (required)
   SUPABASE_URL: requireEnv('SUPABASE_URL'),
   SUPABASE_SERVICE_ROLE_KEY: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   SUPABASE_ANON_KEY: optionalEnv('SUPABASE_ANON_KEY', ''),
 
-  // Security
+  // Security — JWT_SECRET obligatoire : un secret vide permet de forger n'importe quel token
   INTERNAL_API_KEY: optionalEnv('INTERNAL_API_KEY', ''),
-  JWT_SECRET: optionalEnv('JWT_SECRET', ''),
+  JWT_SECRET: requireEnv('JWT_SECRET'),
+
+  // Stripe
+  STRIPE_SECRET_KEY: optionalEnv('STRIPE_SECRET_KEY', ''),
+  STRIPE_PUBLISHABLE_KEY: optionalEnv('STRIPE_PUBLISHABLE_KEY', ''),
+  STRIPE_WEBHOOK_SECRET: optionalEnv('STRIPE_WEBHOOK_SECRET', ''),
 
   // OAuth (Google)
   OAUTH_CLIENT_ID: optionalEnv('OAUTH_CLIENT_ID', ''),

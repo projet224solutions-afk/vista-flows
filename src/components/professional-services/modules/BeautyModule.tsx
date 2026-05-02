@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Crown, Users, Calendar, DollarSign, Clock, 
+  Crown, Users, Calendar, DollarSign, Clock,
   CheckCircle, XCircle, RefreshCw, Eye, Plus,
   TrendingUp, Settings
 } from 'lucide-react';
 import { useServiceBeautyStats } from '@/hooks/useServiceBeautyStats';
-import { formatDistanceToNow, format } from 'date-fns';
+import { _formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 
@@ -118,24 +118,24 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                   Configurez vos services, gérez vos rendez-vous et suivez vos performances.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="gap-2 justify-start"
                     onClick={() => setActiveTab('services')}
                   >
                     <Plus className="w-4 h-4" />
                     Ajouter un service
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="gap-2 justify-start"
                     onClick={() => navigate('/vendeur/settings')}
                   >
                     <Users className="w-4 h-4" />
                     Gérer le personnel
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="gap-2 justify-start"
                     onClick={() => navigate('/vendeur/settings')}
                   >
@@ -341,8 +341,8 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
               ) : (
                 <div className="space-y-3">
                   {recentAppointments.map((appointment) => (
-                    <div 
-                      key={appointment.id} 
+                    <div
+                      key={appointment.id}
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1">
@@ -384,8 +384,8 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                 <Crown className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p className="mb-2">Gérez vos prestations et produits de beauté</p>
                 <p className="text-sm">Les services ajoutés seront visibles sur le marketplace</p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="mt-4"
                   onClick={() => navigate('/vendeur/products')}
                 >

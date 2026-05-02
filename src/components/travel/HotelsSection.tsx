@@ -3,9 +3,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { 
-  Hotel, Star, ExternalLink, MapPin, 
-  Calendar, Users, Wifi, Car, Coffee
+import {
+  Hotel, Star, _ExternalLink, MapPin,
+  _Calendar, Users, _Wifi, _Car, _Coffee
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { cn } from '@/lib/utils';
+import { _cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface HotelPartner {
@@ -141,7 +141,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
   };
 
   const filteredHotels = hotels.filter(hotel => {
-    const matchCity = !searchCity || 
+    const matchCity = !searchCity ||
       hotel.city?.toLowerCase().includes(searchCity.toLowerCase()) ||
       hotel.country?.toLowerCase().includes(searchCity.toLowerCase());
     const matchStars = !selectedStars || hotel.star_rating === selectedStars;
@@ -169,7 +169,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
               className="text-sm mb-3"
             />
             <div className="flex gap-2 overflow-x-auto pb-2">
-              <Badge 
+              <Badge
                 variant={selectedStars === null ? "default" : "outline"}
                 className="cursor-pointer whitespace-nowrap"
                 onClick={() => setSelectedStars(null)}
@@ -177,7 +177,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
                 Tous
               </Badge>
               {[5, 4, 3, 2].map((stars) => (
-                <Badge 
+                <Badge
                   key={stars}
                   variant={selectedStars === stars ? "default" : "outline"}
                   className="cursor-pointer whitespace-nowrap flex items-center gap-1"
@@ -199,7 +199,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
         </h3>
         <div className="space-y-3">
           {filteredHotels.map((hotel) => (
-            <Card 
+            <Card
               key={hotel.id}
               className="cursor-pointer hover:shadow-md transition-all overflow-hidden"
               onClick={() => handleHotelClick(hotel)}
@@ -209,8 +209,8 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
                   {/* Image */}
                   <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shrink-0">
                     {hotel.images && hotel.images[0] ? (
-                      <img 
-                        src={hotel.images[0]} 
+                      <img
+                        src={hotel.images[0]}
                         alt={hotel.name}
                         className="w-full h-full object-cover"
                       />
@@ -268,7 +268,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
             {hotelOffers.map((offer) => {
               const hotel = hotels.find(h => h.id === offer.hotel_id);
               return (
-                <Card 
+                <Card
                   key={offer.id}
                   className="cursor-pointer hover:shadow-md transition-all"
                   onClick={() => handleOfferClick(offer)}

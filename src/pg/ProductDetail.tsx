@@ -1,6 +1,6 @@
 ﻿import { useParams, useNavigate, Link } from "react-router-dom";
-import { useEffect, useState, useMemo, useRef } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, CheckCircle2, Volume2 } from "lucide-react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, _CheckCircle2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,13 +13,13 @@ import { trackProductView } from "@/services/analyticsTrackingService";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
-import { usePriceConverter } from "@/hooks/usePriceConverter";
+import { _usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 import { addRecentProduct } from "@/lib/recentProductHistory";
 
-// Mini composant pour afficher l'ic├┤ne certifi├® ├á c├┤t├® du nom vendeur
+// Mini composant pour afficher l'icône certifié à côté du nom vendeur
 function VendorCertBadge({ vendorId }: { vendorId: string }) {
   const { isCertified } = useVendorCertificationCached(vendorId);
   if (!isCertified) return null;
@@ -64,16 +64,20 @@ export default function ProductDetail() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [pendingAudioActivation, setPendingAudioActivation] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
   const hasTrackedView = useRef(false);
-  
+
   // Behavior tracking for AI recommendations
   useBehaviorTracking({ sessionType: 'product_view', productId: id });
 
-  // M├®moriser les vid├®os et images pour le carrousel
+  // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
-  const images = useMemo(() => 
-    product?.images && product.images.length > 0 
-      ? product.images 
+  const images = useMemo(() =>
+    product?.images && product.images.length > 0
+      ? product.images
       : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'],
     [product?.images]
   );
@@ -100,22 +104,91 @@ export default function ProductDetail() {
     if (id) {
       loadProduct();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     setIsVideoMuted(true);
+    setPendingAudioActivation(false);
   }, [id]);
+
+  const ensureAudioPlaybackUnlocked = useCallback(async () => {
+    if (typeof window === 'undefined' || !videoRef.current) return;
+
+    const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextCtor();
+    }
+
+    if (!mediaSourceRef.current || !gainNodeRef.current) {
+      mediaSourceRef.current = audioContextRef.current.createMediaElementSource(videoRef.current);
+      gainNodeRef.current = audioContextRef.current.createGain();
+      mediaSourceRef.current.connect(gainNodeRef.current);
+      gainNodeRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    gainNodeRef.current.gain.value = 1;
+  }, [videoRef]);
+
+  const syncVideoAudioState = useCallback(() => {
+    if (!videoRef.current) return;
+
+    videoRef.current.muted = isVideoMuted;
+    if (!isVideoMuted) {
+      videoRef.current.volume = 1;
+    }
+  }, [isVideoMuted, videoRef]);
+
+  useEffect(() => {
+    syncVideoAudioState();
+  }, [syncVideoAudioState, isPlayingVideo, currentVideoIndex]);
+
+  useEffect(() => {
+    if (!pendingAudioActivation || !videoRef.current) return;
+
+    const videoElement = videoRef.current;
+    ensureAudioPlaybackUnlocked()
+      .catch(() => {
+        // Ignore les erreurs d'unlock et tente quand même la lecture HTML5 standard.
+      })
+      .finally(() => {
+        videoElement.defaultMuted = false;
+        videoElement.muted = false;
+        videoElement.volume = 1;
+        videoElement.play().catch(() => {
+          // Certains navigateurs demandent une interaction supplémentaire après le montage.
+        }).finally(() => {
+          setPendingAudioActivation(false);
+        });
+      });
+  }, [ensureAudioPlaybackUnlocked, pendingAudioActivation, isPlayingVideo, currentVideoIndex, videoRef]);
 
   const enableVideoAudio = () => {
     setIsVideoMuted(false);
+    setPendingAudioActivation(true);
     pauseAutoPlay();
 
     if (videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.volume = 1;
-      videoRef.current.play().catch(() => {
-        // Certains contextes navigateur peuvent encore demander une interaction utilisateur supplémentaire.
-      });
+      ensureAudioPlaybackUnlocked()
+        .catch(() => {
+          // Fallback silencieux si AudioContext n'est pas disponible.
+        })
+        .finally(() => {
+          videoRef.current!.defaultMuted = false;
+          videoRef.current!.muted = false;
+          videoRef.current!.volume = 1;
+          videoRef.current!.play().catch(() => {
+            // Certains contextes navigateur peuvent encore demander une interaction utilisateur supplémentaire.
+          }).finally(() => {
+            setPendingAudioActivation(false);
+          });
+        });
     }
   };
 
@@ -153,26 +226,26 @@ export default function ProductDetail() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUserId(user.id);
-      
+
       // CORRECTION: Charger le customer_id depuis la table customers (UUID), pas user_ids
-      console.log('­ƒöì [ProductDetail] Chargement customer_id pour user:', user.id);
+      console.log('🔍 [ProductDetail] Chargement customer_id pour user:', user.id);
       const { data, error } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (error) {
-        console.error('ÔØî [ProductDetail] Erreur chargement customer_id:', error);
+        console.error('✕ [ProductDetail] Erreur chargement customer_id:', error);
         toast.error('Erreur de chargement du profil client');
         return;
       }
 
       if (data) {
-        console.log('Ô£à [ProductDetail] Customer ID charg├®:', data.id);
+        console.log('✓ [ProductDetail] Customer ID chargé:', data.id);
         setCustomerId(data.id);
       } else {
-        console.warn('ÔÜá´©Å [ProductDetail] Aucun profil customer trouv├® pour user:', user.id);
+        console.warn('⚠️ [ProductDetail] Aucun profil customer trouvé pour user:', user.id);
         toast.error('Profil client manquant', {
           description: 'Veuillez compléter votre profil client'
         });
@@ -223,9 +296,8 @@ export default function ProductDetail() {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('Paiement réussi ! Redirection vers vos achats...', { duration: 2000 });
+    toast.success('Commande enregistrée avec succès.', { duration: 2000 });
     setShowPaymentModal(false);
-    setTimeout(() => navigate('/my-purchases'), 1500);
   };
 
   const handleContact = async () => {
@@ -299,7 +371,7 @@ export default function ProductDetail() {
         type="product"
         price={product.price}
       />
-      
+
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center gap-4">
@@ -331,6 +403,13 @@ export default function ProductDetail() {
                     controls
                     autoPlay
                     muted={isVideoMuted}
+                    playsInline
+                    onClick={() => {
+                      if (isVideoMuted) {
+                        enableVideoAudio();
+                      }
+                    }}
+                    onLoadedMetadata={syncVideoAudioState}
                     onVolumeChange={(event) => {
                       setIsVideoMuted(event.currentTarget.muted);
                     }}
@@ -378,7 +457,7 @@ export default function ProductDetail() {
                 </div>
               )}
             </div>
-            
+
             {/* Thumbnails - Videos + Images */}
             <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
               {/* Video thumbnails */}
@@ -396,7 +475,7 @@ export default function ProductDetail() {
                   </span>
                 </button>
               ))}
-              
+
               {/* Image thumbnails */}
               {images.map((img, idx) => (
                 <button
@@ -421,7 +500,7 @@ export default function ProductDetail() {
                   <Badge variant="default">Disponible</Badge>
                 )}
               </div>
-              
+
               {product.categories && (
                 <Badge variant="secondary" className="mb-2">{product.categories.name}</Badge>
               )}
@@ -452,9 +531,9 @@ export default function ProductDetail() {
                 })();
                 const productCurrency = product.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF');
                 return (
-                  <LocalPrice 
-                    amount={product.price} 
-                    currency={productCurrency} 
+                  <LocalPrice
+                    amount={product.price}
+                    currency={productCurrency}
                     size="xl"
                     className="text-primary mb-4"
                     showOriginal

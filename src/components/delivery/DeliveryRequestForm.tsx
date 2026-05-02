@@ -14,7 +14,7 @@ import useGeolocation from '../../hooks/useGeolocation';
 const DeliveryMap = React.lazy(() => import('./DeliveryMap'));
 import { Position } from '../../services/geolocation/GeolocationService';
 import GeolocationService from '../../services/geolocation/GeolocationService';
-import { DeliveryService } from '../../services/delivery/DeliveryService';
+import { _DeliveryService } from '../../services/delivery/DeliveryService';
 
 interface DeliveryRequestFormProps {
     onRequestCreated?: (requestId: string) => void;
@@ -29,7 +29,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [notes, setNotes] = useState('');
     const [pickupPosition, setPickupPosition] = useState<Position | null>(null);
-    const [deliveryPosition, setDeliveryPosition] = useState<Position | null>(null);
+    const [deliveryPosition, _setDeliveryPosition] = useState<Position | null>(null);
     const [isCalculating, setIsCalculating] = useState(false);
     const [estimatedPrice, setEstimatedPrice] = useState(0);
     const [estimatedDistance, setEstimatedDistance] = useState(0);
@@ -46,20 +46,21 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
         }).catch((error) => {
             console.error('Erreur géolocalisation:', error);
         });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Calculer distance et prix
-    const calculatePriceAndTime = () => {
+    const _calculatePriceAndTime = () => {
         if (pickupPosition && deliveryPosition) {
             const distance = GeolocationService.getInstance().calculateDistance(pickupPosition, deliveryPosition);
             const distanceKm = distance / 1000;
-            
+
             const basePrice = 5000;
             const pricePerKm = 1000;
             const price = Math.round(basePrice + (distanceKm * pricePerKm));
-            
+
             const time = Math.ceil(distanceKm * 3);
-            
+
             setEstimatedPrice(price);
             setEstimatedTime(time);
         }
@@ -70,6 +71,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
         if (pickupPosition && deliveryPosition) {
             calculateEstimations();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pickupPosition, deliveryPosition]);
 
     // Calculer les estimations
@@ -103,10 +105,10 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
     const useCurrentLocation = async () => {
         try {
             const position = await geolocation.getCurrentLocation();
-            setPickupPosition({ 
-                latitude: position.latitude, 
-                longitude: position.longitude, 
-                timestamp: Date.now() 
+            setPickupPosition({
+                latitude: position.latitude,
+                longitude: position.longitude,
+                timestamp: Date.now()
             });
             setPickupAddress(`${position.latitude}, ${position.longitude}`);
         } catch (error) {

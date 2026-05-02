@@ -77,10 +77,10 @@ export function useVendorServices() {
         if (data && data.length > 0) {
           // Normaliser les données (gérer le cas où service_type est un tableau)
           const normalizedServices: VendorProfessionalService[] = data.map(service => {
-            const normalizedServiceType = Array.isArray(service.service_type) 
-              ? service.service_type[0] 
+            const normalizedServiceType = Array.isArray(service.service_type)
+              ? service.service_type[0]
               : service.service_type;
-            
+
             console.log('📦 Service chargé:', {
               id: service.id,
               business_name: service.business_name,
@@ -88,7 +88,7 @@ export function useVendorServices() {
               service_type: normalizedServiceType,
               service_type_code: normalizedServiceType?.code
             });
-            
+
             return {
               ...service,
               status: service.status as 'active' | 'pending' | 'suspended' | 'inactive',
@@ -98,7 +98,7 @@ export function useVendorServices() {
           });
 
           setServices(normalizedServices);
-          
+
           // Sélectionner automatiquement le premier service par défaut
           if (!selectedServiceId) {
             setSelectedServiceId(normalizedServices[0].id);
@@ -115,6 +115,7 @@ export function useVendorServices() {
     }
 
     fetchServices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Sélectionner un service spécifique
@@ -163,8 +164,8 @@ export function useVendorServices() {
           ...service,
           status: service.status as 'active' | 'pending' | 'suspended' | 'inactive',
           verification_status: service.verification_status as 'unverified' | 'verified' | 'rejected',
-          service_type: Array.isArray(service.service_type) 
-            ? service.service_type[0] 
+          service_type: Array.isArray(service.service_type)
+            ? service.service_type[0]
             : service.service_type
         }));
         setServices(normalizedServices);

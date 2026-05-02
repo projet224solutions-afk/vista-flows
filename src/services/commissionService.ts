@@ -152,7 +152,7 @@ export class CommissionService {
         const amount = Number(t.amount);
         return sum + (amount > 0 ? amount : 0);
       }, 0) || 0;
-      
+
       const totalCommission = data?.reduce((sum, t) => sum + Number(t.fee || 0), 0) || 0;
       const transactionCount = data?.length || 0;
 
@@ -187,8 +187,8 @@ export class CommissionService {
       'delivery',          // Livraison
       'livreur'            // Livreur
     ];
-    
-    const revenuePromises = services.map(service => 
+
+    const revenuePromises = services.map(service =>
       this.getServiceRevenue(service, startDate, endDate)
     );
 

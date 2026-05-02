@@ -1,7 +1,7 @@
 /**
  * 💬 HOOK - useCommunicationButton
  * Hook professionnel pour gérer l'initiation de conversations
- * 
+ *
  * Features:
  * - Validation des entrées
  * - Gestion d'état complète
@@ -61,7 +61,7 @@ function validateUUID(id: string | null | undefined): boolean {
 
 export function useCommunicationButton(options: UseCommunicationButtonOptions = {}) {
   const navigate = useNavigate();
-  
+
   const {
     initialMessage = 'Bonjour',
     autoNavigate = true,
@@ -69,13 +69,13 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
     onSuccess,
     onError
   } = options;
-  
+
   const [state, setState] = useState<CommunicationButtonState>({
     isLoading: false,
     error: null,
     conversationId: null
   });
-  
+
   /**
    * Démarre une conversation avec un utilisateur cible
    */
@@ -92,7 +92,7 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       if (onError) onError(error);
       return { success: false, conversationId: null, isNewConversation: false, error };
     }
-    
+
     if (!validateUUID(targetId)) {
       const error = 'ID destinataire invalide';
       setState(prev => ({ ...prev, error }));
@@ -100,7 +100,7 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       if (onError) onError(error);
       return { success: false, conversationId: null, isNewConversation: false, error };
     }
-    
+
     if (userId === targetId) {
       const error = 'Impossible de créer une conversation avec soi-même';
       setState(prev => ({ ...prev, error }));
@@ -108,16 +108,16 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       if (onError) onError(error);
       return { success: false, conversationId: null, isNewConversation: false, error };
     }
-    
+
     // Début du chargement
     setState({ isLoading: true, error: null, conversationId: null });
-    
+
     console.log('📨 [useCommunicationButton] Démarrage conversation...', {
       userId,
       targetId,
       hasMessage: !!(customMessage || initialMessage)
     });
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('communication-handler', {
         body: {
@@ -126,70 +126,70 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
           initialMessage: { text: customMessage || initialMessage }
         }
       });
-      
+
       if (error) {
         throw new Error(error.message || 'Erreur lors de la création de la conversation');
       }
-      
+
       if (!data?.success) {
         throw new Error(data?.error || 'Échec de la création de conversation');
       }
-      
+
       console.log('✅ [useCommunicationButton] Conversation créée:', data);
-      
+
       const result: CommunicationResult = {
         success: true,
         conversationId: data.conversationId,
         isNewConversation: data.isNewConversation || false
       };
-      
+
       // Mettre à jour l'état
       setState({
         isLoading: false,
         error: null,
         conversationId: data.conversationId
       });
-      
+
       // Navigation automatique
       if (autoNavigate && data.conversationId) {
         navigate(`/communication/${data.conversationId}`);
       }
-      
+
       // Toast de succès
       if (showToasts) {
         toast.success(
-          data.isNewConversation 
-            ? 'Nouvelle conversation créée' 
+          data.isNewConversation
+            ? 'Nouvelle conversation créée'
             : 'Conversation ouverte'
         );
       }
-      
+
       // Callback de succès
       if (onSuccess) {
         onSuccess(result);
       }
-      
+
       return result;
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      
+
       console.error('❌ [useCommunicationButton] Erreur:', errorMessage);
-      
+
       setState({
         isLoading: false,
         error: errorMessage,
         conversationId: null
       });
-      
+
       if (showToasts) {
         toast.error(errorMessage);
       }
-      
+
       if (onError) {
         onError(errorMessage);
       }
-      
+
       return {
         success: false,
         conversationId: null,
@@ -198,7 +198,7 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       };
     }
   }, [initialMessage, autoNavigate, showToasts, navigate, onSuccess, onError]);
-  
+
   /**
    * Réinitialise l'état du hook
    */
@@ -209,7 +209,7 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       conversationId: null
     });
   }, []);
-  
+
   /**
    * Navigue vers une conversation existante
    */
@@ -218,13 +218,13 @@ export function useCommunicationButton(options: UseCommunicationButtonOptions = 
       navigate(`/communication/${conversationId}`);
     }
   }, [navigate]);
-  
+
   return {
     // État
     isLoading: state.isLoading,
     error: state.error,
     conversationId: state.conversationId,
-    
+
     // Actions
     startConversation,
     reset,

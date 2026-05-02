@@ -21,7 +21,7 @@ interface SecureButtonProps extends Omit<ButtonProps, 'onClick'> {
 
 /**
  * Bouton sécurisé pour actions financières critiques
- * 
+ *
  * ✅ INP < 200ms garanti
  * ✅ Protection anti-double clic
  * ✅ UI mise à jour avant l'action

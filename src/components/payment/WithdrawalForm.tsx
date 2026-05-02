@@ -15,9 +15,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWallet } from '@/hooks/useWallet';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { 
-  ArrowDownLeft, 
-  AlertTriangle, 
+import {
+  ArrowDownLeft,
+  AlertTriangle,
   Loader2,
   Info,
   CreditCard,
@@ -58,7 +58,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!wallet) {
       setError('Portefeuille non chargé');
       return;
@@ -246,7 +246,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
           {method === 'BANK_TRANSFER' && (
             <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
               <h4 className="font-medium text-sm">Informations Bancaires</h4>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="account_name">
@@ -308,7 +308,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
           {method === 'MOBILE_MONEY' && (
             <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
               <h4 className="font-medium text-sm">Informations Mobile Money</h4>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="provider">
@@ -405,7 +405,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Les demandes de retrait sont traitées sous 24-48h ouvrables. 
+              Les demandes de retrait sont traitées sous 24-48h ouvrables.
               Des frais de transaction peuvent s'appliquer selon la méthode choisie.
             </AlertDescription>
           </Alert>

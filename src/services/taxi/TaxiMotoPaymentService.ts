@@ -77,7 +77,7 @@ export class TaxiMotoPaymentService {
           amount,
           context: { ride_id: rideId, error: debitResult.error }
         });
-        
+
         return {
           success: false,
           error: debitResult.error || 'Erreur de paiement'
@@ -173,7 +173,7 @@ export class TaxiMotoPaymentService {
       }
 
       console.log(`[ChapChapPay] Processing taxi ${provider} payment for ${phoneNumber}`);
-      
+
       // Mettre à jour le statut
       await supabase
         .from('taxi_trips')

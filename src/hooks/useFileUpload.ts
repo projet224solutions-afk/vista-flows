@@ -50,7 +50,7 @@ export function useFileUpload() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  
+
   const { uploadFile: uploadToStorage } = useStorageUpload();
 
   /**
@@ -212,7 +212,7 @@ export function useFileUpload() {
 
       // Déterminer le folder GCS basé sur le type de fichier
       const folder = getFolderFromMimeType(fileToUpload.type);
-      
+
       console.log(`[useFileUpload] Uploading to GCS folder: ${folder}`);
 
       // Upload vers GCS via useStorageUpload

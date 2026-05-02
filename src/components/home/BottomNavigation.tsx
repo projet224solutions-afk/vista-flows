@@ -32,7 +32,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
     { id: 'tracking', icon: MapPin, labelKey: 'nav.tracking', path: '/tracking' },
     { id: 'profil', icon: User, labelKey: 'nav.profile', path: '/profil' },
   ];
-  
+
   const isActive = (path: string | (() => string)) => {
     const actualPath = typeof path === 'function' ? path() : path;
     return location.pathname.startsWith(actualPath);
@@ -78,11 +78,11 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
               >
                 {/* Icon */}
                 <div className={cn('relative p-1 rounded-full transition-all duration-200', active && 'bg-white/15')}>
-                  <Icon 
+                  <Icon
                     className={cn(
                       'w-5 h-5 transition-transform duration-200',
                       active && 'scale-110'
-                    )} 
+                    )}
                     strokeWidth={active ? 2.5 : 2}
                   />
                   {/* Active dot indicator */}
@@ -104,7 +104,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
             );
           })}
         </div>
-        
+
         {/* Safe area spacer for iOS */}
         <div className="h-safe-area-inset-bottom" />
       </div>

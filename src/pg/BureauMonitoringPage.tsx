@@ -1,5 +1,5 @@
 ﻿/**
- * Page de monitoring temps r├®el pour les bureaux/syndicats
+ * Page de monitoring temps réel pour les bureaux/syndicats
  */
 
 import { useState, useEffect } from 'react';
@@ -21,31 +21,31 @@ export default function BureauMonitoringPage() {
       try {
         // Check localStorage first
         const storedBureauId = localStorage.getItem('bureau_id');
-        
+
         if (storedBureauId) {
           setBureauId(storedBureauId);
-          
+
           // Get bureau name
           const { data: bureau } = await supabase
             .from('bureaus')
             .select('commune, prefecture')
             .eq('id', storedBureauId)
             .single();
-            
+
           if (bureau) {
             setBureauName(`${bureau.commune}, ${bureau.prefecture}`);
           }
         } else {
           // Try to get from user profile
           const { data: { user } } = await supabase.auth.getUser();
-          
+
           if (user) {
             const { data: bureau } = await supabase
               .from('bureaus')
               .select('id, commune, prefecture')
               .eq('user_id', user.id)
               .single();
-              
+
             if (bureau) {
               setBureauId(bureau.id);
               setBureauName(`${bureau.commune}, ${bureau.prefecture}`);
@@ -75,9 +75,9 @@ export default function BureauMonitoringPage() {
   if (!bureauId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <h1 className="text-2xl font-bold mb-4">Acc├¿s Non Autoris├®</h1>
+        <h1 className="text-2xl font-bold mb-4">Accès Non Autorisé</h1>
         <p className="text-muted-foreground mb-6">
-          Vous devez ├¬tre connect├® en tant que bureau/syndicat pour acc├®der ├á cette page.
+          Vous devez être connecté en tant que bureau/syndicat pour accéder à cette page.
         </p>
         <Button onClick={() => navigate('/bureau-login')}>
           Se Connecter
@@ -105,8 +105,8 @@ export default function BureauMonitoringPage() {
 
       {/* Main Content */}
       <main className="container py-6">
-        <BureauRealtimeDashboard 
-          bureauId={bureauId} 
+        <BureauRealtimeDashboard
+          bureauId={bureauId}
           bureauName={bureauName}
         />
       </main>

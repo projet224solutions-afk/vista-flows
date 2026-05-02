@@ -10,10 +10,10 @@ interface AgentIdDisplayProps {
   layout?: 'horizontal' | 'vertical';
 }
 
-export function AgentIdDisplay({ 
-  agentCode, 
+export function AgentIdDisplay({
+  agentCode,
   agentName,
-  className = '', 
+  className = '',
   layout = 'horizontal'
 }: AgentIdDisplayProps) {
   const [copied, setCopied] = useState(false);
@@ -29,8 +29,8 @@ export function AgentIdDisplay({
     return (
       <div className={`flex flex-col gap-2 ${className}`}>
         {agentName && <span className="font-semibold text-foreground">{agentName}</span>}
-        <Badge 
-          variant="default" 
+        <Badge
+          variant="default"
           className="w-fit cursor-pointer hover:opacity-80 transition-opacity"
           onClick={handleCopy}
         >
@@ -46,7 +46,7 @@ export function AgentIdDisplay({
   }
 
   return (
-    <div 
+    <div
       className={`inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors ${className}`}
       onClick={handleCopy}
       title="Cliquer pour copier l'ID"

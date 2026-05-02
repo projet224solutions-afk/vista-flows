@@ -10,9 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ShoppingCart, Package, Users, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, RefreshCw,
+import {
+  ShoppingCart, Package, Users, TrendingUp,
+  ArrowUpRight, _ArrowDownRight, RefreshCw,
   Eye, Clock, CheckCircle, XCircle, DollarSign,
   BarChart3, ShoppingBag, AlertTriangle
 } from 'lucide-react';
@@ -216,7 +216,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <span className="text-sm font-medium">Total général</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
                 </div>
-                
+
                 {/* Séparation POS / Online */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -355,8 +355,8 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               ) : (
                 <div className="space-y-3">
                   {recentOrders.map((order) => (
-                    <div 
-                      key={order.id} 
+                    <div
+                      key={order.id}
                       className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1">
@@ -410,17 +410,17 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               ) : (
                 <div className="space-y-3">
                   {topProducts.map((product, index) => (
-                    <div 
-                      key={product.id} 
+                    <div
+                      key={product.id}
                       className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg"
                     >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                         {index + 1}
                       </div>
                       {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name} 
+                        <img
+                          src={product.image}
+                          alt={product.name}
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       ) : (

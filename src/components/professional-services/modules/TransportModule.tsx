@@ -11,11 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+import { _Progress } from '@/components/ui/progress';
 import {
-  Plane, MapPin, Hotel, Users, Calendar, Clock,
-  Plus, DollarSign, TrendingUp, Star, Globe,
-  Ticket, Palmtree, Ship, Car, CheckCircle
+  Plane, MapPin, _Hotel, Users, _Calendar, Clock,
+  Plus, DollarSign, _TrendingUp, Star, Globe,
+  Ticket, _Palmtree, _Ship, _Car, _CheckCircle
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,7 +66,7 @@ const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function TransportModule({ serviceId, businessName }: TransportModuleProps) {
+export function TransportModule({ _serviceId, businessName }: TransportModuleProps) {
   const [activeTab, setActiveTab] = useState('destinations');
   const [showNewBooking, setShowNewBooking] = useState(false);
 
@@ -87,7 +87,7 @@ export function TransportModule({ serviceId, businessName }: TransportModuleProp
 
   // Stats
   const totalDestinations = destinations.length;
-  const totalBookings = bookings.length;
+  const _totalBookings = bookings.length;
   const confirmedBookings = bookings.filter(b => b.status === 'confirme').length;
   const totalRevenue = bookings.filter(b => b.paymentStatus === 'paye').reduce((acc, b) => acc + b.total, 0);
   const pendingRevenue = bookings.filter(b => b.paymentStatus !== 'paye').reduce((acc, b) => acc + b.total, 0);

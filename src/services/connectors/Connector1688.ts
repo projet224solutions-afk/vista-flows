@@ -2,7 +2,7 @@
  * 1688 CONNECTOR
  * Connecteur pour la plateforme 1688.com (Alibaba domestique Chine)
  * Spécialisé pour les petits MOQ et prix usine
- * 
+ *
  * @module Connector1688
  * @version 1.0.0
  * @author 224Solutions
@@ -68,10 +68,10 @@ export class Connector1688 extends BaseConnector {
   readonly connectorType: ConnectorType = '1688';
   readonly connectorName: string = '1688.com';
   readonly connectorVersion: string = '1.0.0';
-  
+
   // URLs 1688
   private readonly API_BASE_URL = 'https://gw.open.1688.com/openapi';
-  
+
   constructor(config: Partial<ConnectorConfig> = {}) {
     super({
       baseUrl: 'https://gw.open.1688.com/openapi',
@@ -90,12 +90,12 @@ export class Connector1688 extends BaseConnector {
       ...config
     });
   }
-  
+
   // ==================== AUTHENTICATION ====================
-  
+
   protected async doAuthenticate(): Promise<AuthResult> {
     this.log('info', 'Authentification 1688...');
-    
+
     try {
       if (this.config.sandbox || !this.config.apiKey) {
         this.log('info', 'Mode sandbox 1688 - authentification simulée');
@@ -106,7 +106,7 @@ export class Connector1688 extends BaseConnector {
           scopes: ['product.read', 'order.create']
         };
       }
-      
+
       // Authentification 1688 Open Platform
       const response = await fetch(`${this.API_BASE_URL}/system/oauth2/getToken`, {
         method: 'POST',
@@ -122,17 +122,17 @@ export class Connector1688 extends BaseConnector {
           code: this.config.accessToken || ''
         })
       });
-      
+
       if (!response.ok) {
         throw new Error(`Auth 1688 failed: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error_description || data.error);
       }
-      
+
       return {
         success: true,
         accessToken: data.access_token,
@@ -147,16 +147,16 @@ export class Connector1688 extends BaseConnector {
       };
     }
   }
-  
+
   protected async doValidateConnection(): Promise<boolean> {
     return this.status === 'active' && !!this.config.accessToken;
   }
-  
+
   // ==================== PRODUCT IMPORT ====================
-  
+
   protected async doImportProduct(sourceUrl: string): Promise<ProductImportResult> {
     this.log('info', `Import produit 1688: ${sourceUrl}`);
-    
+
     try {
       const offerId = this.extractOfferId(sourceUrl);
       if (!offerId) {
@@ -165,11 +165,11 @@ export class Connector1688 extends BaseConnector {
           errors: ['URL 1688 invalide - impossible d\'extraire l\'offerId']
         };
       }
-      
+
       if (this.config.sandbox) {
         return this.getMockProductImport(offerId, sourceUrl);
       }
-      
+
       const productData = await this.fetchProductDetails(offerId);
       if (!productData) {
         return {
@@ -177,9 +177,9 @@ export class Connector1688 extends BaseConnector {
           errors: ['Produit non trouvé sur 1688']
         };
       }
-      
+
       const normalizedProduct = this.normalizeProduct(productData, sourceUrl);
-      
+
       return {
         success: true,
         productId: offerId,
@@ -193,7 +193,7 @@ export class Connector1688 extends BaseConnector {
       };
     }
   }
-  
+
   private extractOfferId(url: string): string | null {
     // Patterns d'URL 1688
     const patterns = [
@@ -202,17 +202,17 @@ export class Connector1688 extends BaseConnector {
       /\/offer\/(\d+)/,
       /offerId=(\d+)/
     ];
-    
+
     for (const pattern of patterns) {
       const match = url.match(pattern);
       if (match && match[1]) {
         return match[1];
       }
     }
-    
+
     return null;
   }
-  
+
   private async fetchProductDetails(offerId: string): Promise<Product1688Data | null> {
     try {
       const response = await fetch(
@@ -229,11 +229,11 @@ export class Connector1688 extends BaseConnector {
           signal: AbortSignal.timeout(this.config.timeout)
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`API Error: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return data.result;
     } catch (error: any) {
@@ -241,7 +241,7 @@ export class Connector1688 extends BaseConnector {
       return null;
     }
   }
-  
+
   private normalizeProduct(data: Product1688Data, sourceUrl: string): NormalizedProduct {
     // Convertir les price tiers 1688
     const priceTiers: PriceTier[] = (data.priceTiers || []).map((tier, index, arr) => ({
@@ -250,28 +250,28 @@ export class Connector1688 extends BaseConnector {
       price: tier.price,
       currency: 'CNY'
     }));
-    
+
     // Prix de base (le prix minimum)
     const basePrice = data.priceRange?.min || data.priceTiers?.[0]?.price || 0;
     const priceUsd = this.convertCnyToUsd(basePrice);
-    
+
     return {
       externalId: data.offerId,
       sourceUrl,
       sourcePlatform: '1688',
-      
+
       title: data.subject,
       description: data.description,
       images: data.images || [],
-      
+
       priceCurrency: 'CNY',
       priceOriginal: basePrice,
       priceUsd,
-      
+
       moq: data.minOrderQuantity || 1,
       stockQuantity: data.stock,
       priceTiers,
-      
+
       shippingMethods: [
         {
           name: 'Domestic China Express',
@@ -289,12 +289,12 @@ export class Connector1688 extends BaseConnector {
           trackingAvailable: true
         }
       ],
-      
+
       estimatedDeliveryDays: {
         min: this.parseDeliveryTime(data.deliveryInfo?.deliveryTime) + 15,
         max: this.parseDeliveryTime(data.deliveryInfo?.deliveryTime) + 35
       },
-      
+
       supplierInfo: {
         id: data.sellerInfo.memberId,
         name: data.sellerInfo.companyName || data.sellerInfo.loginId,
@@ -302,47 +302,47 @@ export class Connector1688 extends BaseConnector {
         verified: data.sellerInfo.isFactory,
         region: 'CHINA'
       },
-      
+
       category: data.categoryName,
       attributes: data.attributes,
-      
+
       isDropship: true,
       isExternalDropship: true,
       platformVerified: data.sellerInfo.creditLevel >= 3
     };
   }
-  
+
   private parseDeliveryTime(deliveryTime?: string): number {
     if (!deliveryTime) return 5;
     const match = deliveryTime.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 5;
   }
-  
+
   private convertCnyToUsd(cny: number): number {
     const rate = 0.14; // Taux approximatif CNY → USD
     return Math.round(cny * rate * 100) / 100;
   }
-  
+
   private validateProduct(product: NormalizedProduct): string[] {
     const warnings: string[] = [];
-    
+
     // 1688 est en chinois - avertir
     warnings.push('⚠️ Plateforme en chinois uniquement');
-    
+
     if (product.moq > 20) {
       warnings.push(`MOQ: ${product.moq} unités minimum`);
     }
-    
+
     if (!product.supplierInfo.verified) {
       warnings.push('Vendeur non vérifié comme usine');
     }
-    
+
     // Prix en CNY
     warnings.push(`Prix en CNY - taux de change appliqué`);
-    
+
     return warnings;
   }
-  
+
   private getMockProductImport(offerId: string, sourceUrl: string): ProductImportResult {
     return {
       success: true,
@@ -351,18 +351,18 @@ export class Connector1688 extends BaseConnector {
         externalId: offerId,
         sourceUrl,
         sourcePlatform: '1688',
-        
+
         title: '工厂直销电子产品 - Factory Direct',
         titleTranslated: 'Factory Direct Electronics Product',
         description: 'Produit usine directe depuis 1688 - Prix grossiste chinois',
         images: [
           'https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=400'
         ],
-        
+
         priceCurrency: 'CNY',
         priceOriginal: 45.00,
         priceUsd: 6.30,
-        
+
         moq: 5,
         stockQuantity: 5000,
         priceTiers: [
@@ -371,14 +371,14 @@ export class Connector1688 extends BaseConnector {
           { minQuantity: 100, maxQuantity: 499, price: 32.00, currency: 'CNY' },
           { minQuantity: 500, price: 28.00, currency: 'CNY' }
         ],
-        
+
         shippingMethods: [
           { name: 'China Domestic', estimatedDays: 3, price: 8, currency: 'CNY', trackingAvailable: true },
           { name: 'International Air', estimatedDays: 15, price: 35, currency: 'CNY', trackingAvailable: true }
         ],
-        
+
         estimatedDeliveryDays: { min: 18, max: 40 },
-        
+
         supplierInfo: {
           id: 'factory_' + offerId,
           name: '深圳市电子科技有限公司',
@@ -388,10 +388,10 @@ export class Connector1688 extends BaseConnector {
           verified: true,
           region: 'CHINA'
         },
-        
+
         category: '3C数码配件',
         tags: ['factory', '1688', 'wholesale', 'china'],
-        
+
         isDropship: true,
         isExternalDropship: true,
         platformVerified: true
@@ -399,12 +399,12 @@ export class Connector1688 extends BaseConnector {
       warnings: ['Mode sandbox', '⚠️ Plateforme en chinois uniquement', 'Prix en CNY']
     };
   }
-  
+
   // ==================== SYNC METHODS ====================
-  
+
   protected async doSyncPrice(productIds?: string[]): Promise<SyncResult> {
     const startedAt = new Date();
-    
+
     if (this.config.sandbox) {
       return {
         success: true,
@@ -419,7 +419,7 @@ export class Connector1688 extends BaseConnector {
         durationMs: 700
       };
     }
-    
+
     return {
       success: true,
       syncType: 'price',
@@ -433,10 +433,10 @@ export class Connector1688 extends BaseConnector {
       durationMs: Date.now() - startedAt.getTime()
     };
   }
-  
+
   protected async doSyncAvailability(productIds?: string[]): Promise<SyncResult> {
     const startedAt = new Date();
-    
+
     if (this.config.sandbox) {
       return {
         success: true,
@@ -451,7 +451,7 @@ export class Connector1688 extends BaseConnector {
         durationMs: 500
       };
     }
-    
+
     return {
       success: true,
       syncType: 'availability',
@@ -465,12 +465,12 @@ export class Connector1688 extends BaseConnector {
       durationMs: Date.now() - startedAt.getTime()
     };
   }
-  
+
   // ==================== ORDER CREATION ====================
-  
+
   protected async doCreateSupplierOrder(orderData: OrderData): Promise<SupplierOrderResult> {
     this.log('order', `Création commande 1688: ${orderData.orderId}`);
-    
+
     try {
       if (this.config.sandbox) {
         const mockOrderId = `1688_${Date.now()}`;
@@ -484,7 +484,7 @@ export class Connector1688 extends BaseConnector {
           currency: 'CNY'
         };
       }
-      
+
       // API 1688 pour créer une commande
       const response = await fetch(
         `${this.API_BASE_URL}/param2/1/com.alibaba.trade/alibaba.trade.create`,
@@ -499,13 +499,13 @@ export class Connector1688 extends BaseConnector {
           })
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`Erreur commande 1688: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       return {
         success: true,
         supplierOrderId: result.orderId,
@@ -521,12 +521,12 @@ export class Connector1688 extends BaseConnector {
       };
     }
   }
-  
+
   // ==================== TRACKING ====================
-  
+
   protected async doPushTracking(trackingData: TrackingData): Promise<TrackingResult> {
     this.log('info', `Tracking 1688: ${trackingData.trackingNumber}`);
-    
+
     if (this.config.sandbox) {
       return {
         success: true,
@@ -541,7 +541,7 @@ export class Connector1688 extends BaseConnector {
         ]
       };
     }
-    
+
     try {
       const response = await fetch(
         `${this.API_BASE_URL}/param2/1/com.alibaba.logistics/alibaba.logistics.trace.get`,
@@ -556,13 +556,13 @@ export class Connector1688 extends BaseConnector {
           })
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`Tracking error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         success: true,
         trackingUpdated: true,

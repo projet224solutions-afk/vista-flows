@@ -6,7 +6,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Package, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MarketplaceGrid } from '@/components/marketplace/MarketplaceGrid';
+import { _MarketplaceGrid } from '@/components/marketplace/MarketplaceGrid';
 import { TranslatedProductCard } from '@/components/marketplace/TranslatedProductCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
@@ -125,7 +125,7 @@ export function LatestProductsSection({
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 md:gap-4">
           {products.slice(0, 4).map((product, index) => (
             <div
               key={product.id}

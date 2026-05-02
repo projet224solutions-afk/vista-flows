@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
+import {
   DollarSign, TrendingUp, Wallet, Download,
   BarChart3, RefreshCw, Activity, PiggyBank,
   CreditCard, Calendar
@@ -51,7 +51,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFullFinanceModuleProps) {
+export function AgentFullFinanceModule({ agentId, _canManage = false }: AgentFullFinanceModuleProps) {
   const [agentStats, setAgentStats] = useState<AgentFinancialStats>({
     totalCommissions: 0,
     pendingCommissions: 0,
@@ -63,7 +63,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
   const [commissions, setCommissions] = useState<any[]>([]);
   const [agentTransactions, setAgentTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [_dateRange, _setDateRange] = useState({ from: '', to: '' });
   const [activeTab, setActiveTab] = useState('overview');
 
   const chartConfig = {
@@ -73,6 +73,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
 
   useEffect(() => {
     loadAgentFinancialData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadAgentFinancialData = async () => {
@@ -87,12 +88,20 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Charger le solde du wallet agent
-      const { data: walletData } = await supabase
-        .from('agent_wallets')
-        .select('balance')
-        .eq('agent_id', agentId)
+      // Résoudre user_id puis charger le solde depuis wallets (source de vérité)
+      const { data: agentUserData } = await supabase
+        .from('agents_management')
+        .select('user_id')
+        .eq('id', agentId)
         .single();
+
+      const { data: walletData } = agentUserData?.user_id
+        ? await supabase
+            .from('wallets')
+            .select('balance')
+            .eq('user_id', agentUserData.user_id)
+            .single()
+        : { data: null };
 
       const commissionsList = (commissionsData || []).map((c: any) => ({
         ...c,
@@ -159,7 +168,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         Object.keys(csvData[0] || {}).join(','),
         ...csvData.map(row => Object.values(row).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -167,9 +176,9 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
       a.download = `commissions_agent_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Export réussi');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'export');
     }
   };
@@ -314,10 +323,10 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                       <XAxis dataKey="date" className="text-xs" />
                       <YAxis className="text-xs" />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="commission" 
-                        stroke="hsl(var(--primary))" 
+                      <Line
+                        type="monotone"
+                        dataKey="commission"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={3}
                         dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                       />

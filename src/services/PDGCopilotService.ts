@@ -12,12 +12,12 @@ export interface VendorAnalysis {
   shop_name: string;
   user_email: string;
   created_at: string;
-  
+
   // Statut
   is_active: boolean;
   subscription_status: string;
   kyc_status: string;
-  
+
   // Activité commerciale
   total_products: number;
   active_products: number;
@@ -25,30 +25,30 @@ export interface VendorAnalysis {
   total_orders: number;
   revenue: number;
   payment_success_rate: number;
-  
+
   // Finances
   wallet_balance: number;
   total_withdrawals: number;
   blocked_funds: number;
   failed_payments: number;
-  
+
   // Clients & Réputation
   total_customers: number;
   recurring_customers: number;
   average_rating: number;
   negative_reviews: number;
   disputes: number;
-  
+
   // Logistique
   successful_deliveries: number;
   failed_deliveries: number;
   support_tickets_open: number;
   support_tickets_closed: number;
-  
+
   // Marketing
   active_campaigns: number;
   campaign_performance: number;
-  
+
   // Conformité & Risque
   alerts: number;
   penalties: number;
@@ -61,26 +61,26 @@ export interface CustomerAnalysis {
   customer_id: string;
   user_email: string;
   created_at: string;
-  
+
   // Activité
   total_orders: number;
   total_spent: number;
   average_order_value: number;
-  
+
   // Paiements
   successful_payments: number;
   failed_payments: number;
   payment_methods: string[];
-  
+
   // Wallet
   wallet_balance: number;
   wallet_transactions: number;
-  
+
   // Réputation
   disputes_filed: number;
   disputes_won: number;
   reliability_score: number;
-  
+
   // Risque
   fraud_alerts: number;
   risk_level: 'low' | 'medium' | 'high';
@@ -206,8 +206,8 @@ export class PDGCopilotService {
         .select('rating')
         .eq('vendor_id', vendorId);
 
-      const average_rating = reviews?.length > 0 
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+      const average_rating = reviews?.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         : 0;
       const negative_reviews = reviews?.filter(r => r.rating <= 2)?.length || 0;
 
@@ -244,37 +244,37 @@ export class PDGCopilotService {
         shop_name: vendor.business_name || 'Inconnu',
         user_email: vendor.email || 'N/A',
         created_at: vendor.created_at,
-        
+
         is_active: vendor.is_active,
         subscription_status: vendor.subscription_tier || 'free',
         kyc_status: vendor.kyc_status || 'pending',
-        
+
         total_products,
         active_products,
         blocked_products,
         total_orders,
         revenue,
         payment_success_rate: Math.round(payment_success_rate),
-        
+
         wallet_balance: wallet?.balance || 0,
         total_withdrawals,
         blocked_funds: 0, // TODO: Calculer si existe
         failed_payments,
-        
+
         total_customers,
         recurring_customers,
         average_rating: Math.round(average_rating * 10) / 10,
         negative_reviews,
         disputes: disputes?.length || 0,
-        
+
         successful_deliveries,
         failed_deliveries,
         support_tickets_open,
         support_tickets_closed,
-        
+
         active_campaigns,
         campaign_performance: 0, // TODO: Calculer
-        
+
         alerts: 0, // TODO: Système d'alertes
         penalties: 0, // TODO: Système de pénalités
         trust_score,
@@ -358,22 +358,22 @@ export class PDGCopilotService {
         customer_id: customerId,
         user_email: profile?.email || 'N/A',
         created_at: customer.created_at,
-        
+
         total_orders,
         total_spent,
         average_order_value: Math.round(average_order_value),
-        
+
         successful_payments,
         failed_payments,
         payment_methods: payment_methods as string[],
-        
+
         wallet_balance: wallet?.balance || 0,
         wallet_transactions: wallet_logs?.length || 0,
-        
+
         disputes_filed: disputes_filed?.length || 0,
         disputes_won,
         reliability_score,
-        
+
         fraud_alerts: 0, // TODO: Système d'alertes fraude
         risk_level,
       };
@@ -477,7 +477,7 @@ export class PDGCopilotService {
   }> {
     try {
       // Tenter de détecter le type d'ID
-      
+
       // 1. Chercher dans vendors
       const { data: vendor } = await supabase
         .from('vendors')

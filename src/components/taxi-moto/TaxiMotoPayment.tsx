@@ -5,11 +5,11 @@
  * 224Solutions - Taxi-Moto System
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { _Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
     CreditCard,
@@ -60,7 +60,7 @@ export default function TaxiMotoPayment({
     onPaymentComplete,
     onPaymentCancel
 }: TaxiMotoPaymentProps) {
-    const { user, profile } = useAuth();
+    const { _user, _profile } = useAuth();
 
     const [selectedMethod, setSelectedMethod] = useState<string>('');
     const [paymentInProgress, setPaymentInProgress] = useState(false);

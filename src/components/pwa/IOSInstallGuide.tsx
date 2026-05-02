@@ -142,7 +142,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               <p className="text-muted-foreground text-sm">
                 Appuyez sur le bouton <strong>Partager</strong> en bas de votre écran
               </p>
-              
+
               {/* Icône Share stylisée */}
               <div className="flex items-center justify-center gap-2 py-2">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
@@ -208,7 +208,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                   <div className="w-2 h-2 bg-blue-500 rounded-full" />
                 </motion.div>
               </div>
-              
+
               {/* Faux éléments du menu */}
               <div className="flex items-center gap-3 p-3 bg-white/60 dark:bg-slate-700/60 rounded-xl opacity-40">
                 <div className="w-10 h-10 bg-gray-300 dark:bg-slate-600 rounded-lg" />
@@ -219,7 +219,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 <div className="h-3 w-20 bg-gray-200 dark:bg-slate-600 rounded" />
               </div>
             </div>
-            
+
             <p className="text-muted-foreground text-sm">
               Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong>
             </p>
@@ -268,7 +268,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                   Ajouter
                 </motion.button>
               </div>
-              
+
               <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl">
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow">
                   <img src="/icon-192.png?v=3" alt="" className="w-10 h-10 rounded-lg" onError={(e) => {

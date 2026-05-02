@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Shield, CheckCircle, Clock, AlertTriangle, RefreshCw, 
-  Award, FileCheck, Calendar, ExternalLink 
+import {
+  Shield, CheckCircle, Clock, AlertTriangle, RefreshCw,
+  Award, FileCheck, Calendar, ExternalLink
 } from "lucide-react";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,8 +105,8 @@ export function ComplianceDashboard() {
 
   const certifiedCount = certifications.filter(c => c.status === 'certified').length;
   const inProgressCount = certifications.filter(c => c.status === 'in_progress').length;
-  const avgProgress = certifications.length > 0 
-    ? certifications.reduce((sum, c) => sum + c.progress, 0) / certifications.length 
+  const avgProgress = certifications.length > 0
+    ? certifications.reduce((sum, c) => sum + c.progress, 0) / certifications.length
     : 0;
 
   return (
@@ -124,8 +124,8 @@ export function ComplianceDashboard() {
                 Normes ISO 27001, PCI-DSS, SOC 2, GDPR - Standards de sécurité internationaux
               </CardDescription>
             </div>
-            <Button 
-              onClick={handleRefresh} 
+            <Button
+              onClick={handleRefresh}
               disabled={loading}
               variant="outline"
               size="sm"
@@ -141,7 +141,7 @@ export function ComplianceDashboard() {
               <span className="font-semibold">Programme de Conformité Actif</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {certifiedCount} certifications actives • {inProgressCount} en cours • 
+              {certifiedCount} certifications actives • {inProgressCount} en cours •
               Progression globale: {avgProgress.toFixed(0)}%
             </p>
             <Progress value={avgProgress} className="h-2 mt-2" />
@@ -228,9 +228,9 @@ export function ComplianceDashboard() {
                     <span>Progression</span>
                     <span className="font-medium">{cert.progress}%</span>
                   </div>
-                  <Progress 
-                    value={cert.progress} 
-                    className="h-2" 
+                  <Progress
+                    value={cert.progress}
+                    className="h-2"
                   />
                 </div>
 
@@ -292,8 +292,8 @@ export function ComplianceDashboard() {
                       </p>
                     </div>
                     <Badge variant={audit.status === 'completed' ? 'default' : 'outline'}>
-                      {audit.status === 'completed' ? 'Terminé' : 
-                       audit.status === 'scheduled' ? 'Planifié' : 
+                      {audit.status === 'completed' ? 'Terminé' :
+                       audit.status === 'scheduled' ? 'Planifié' :
                        audit.status === 'in_progress' ? 'En cours' : audit.status}
                     </Badge>
                   </div>

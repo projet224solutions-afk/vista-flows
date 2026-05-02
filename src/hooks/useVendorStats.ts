@@ -33,21 +33,11 @@ export function useVendorStats() {
     if (!vendorId || isFetchingRef.current) return;
     isFetchingRef.current = true;
 
-    const isOnline = navigator.onLine;
     const cacheKey = `${CACHE_KEY_VENDOR_STATS}_${vendorId}`;
 
     try {
       setLoading(prev => prev); // Don't flash loading on refetch
       setError(null);
-
-      if (!isOnline) {
-        const cachedStats = await getCachedData<VendorStats>(cacheKey);
-        if (cachedStats) { setStats(cachedStats); setLoading(false); isFetchingRef.current = false; return; }
-        setStats({ vendorId, revenue: 0, orders_count: 0, customers_count: 0, products_count: 0, pending_orders: 0, low_stock_products: 0 });
-        setLoading(false);
-        isFetchingRef.current = false;
-        return;
-      }
 
       // 🚀 Parallel with targeted selects
       const [revenueResult, ordersResult, customersResult, productsResult, pendingResult, lowStockResult] = await Promise.allSettled([
@@ -99,7 +89,7 @@ export function useVendorStats() {
     let interval: ReturnType<typeof setInterval> | null = null;
     const startPolling = () => {
       if (interval) return;
-      interval = setInterval(() => { if (navigator.onLine) fetchStats(); }, POLL_INTERVAL);
+      interval = setInterval(() => { void fetchStats(); }, POLL_INTERVAL);
     };
     const stopPolling = () => { if (interval) { clearInterval(interval); interval = null; } };
 

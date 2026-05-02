@@ -8,9 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  ShoppingCart, Search, Package, Clock, 
-  CheckCircle, XCircle, Truck, User, MapPin, 
+import {
+  ShoppingCart, Search, Package, Clock,
+  CheckCircle, XCircle, Truck, User, MapPin,
   RefreshCw, Calendar, TrendingUp, AlertCircle,
   Filter, Shield, Banknote
 } from "lucide-react";
@@ -164,7 +164,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
       <div className="flex items-center justify-between relative">
         {/* Ligne de progression */}
         <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full mx-8" />
-        <div 
+        <div
           className="absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full mx-8 transition-all duration-500"
           style={{ width: `calc(${(currentStep / (orderSteps.length - 1)) * 100}% - 4rem)` }}
         />
@@ -214,7 +214,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
   useEffect(() => {
     loadOrders();
-    
+
     // Écoute en temps réel
     const ordersChannel = supabase
       .channel('agent-orders-realtime')
@@ -234,6 +234,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(escrowChannel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const loadOrders = async () => {
@@ -305,13 +306,13 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       // 5. Récupérer les noms des vendeurs
       const vendorIds = [...new Set(ordersData?.map(o => o.vendor_id).filter(Boolean))];
       let vendorNames: Record<string, string> = {};
-      
+
       if (vendorIds.length > 0) {
         const { data: vendors } = await supabase
           .from('vendors')
           .select('id, business_name')
           .in('id', vendorIds);
-        
+
         if (vendors) {
           vendorNames = Object.fromEntries(vendors.map(v => [v.id, v.business_name || 'Vendeur']));
         }
@@ -319,14 +320,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
       // 6. Récupérer les escrows pour toutes les commandes
       const orderIds = ordersData?.map(o => o.id) || [];
-      let escrowMap: Record<string, EscrowInfo> = {};
-      
+      const escrowMap: Record<string, EscrowInfo> = {};
+
       if (orderIds.length > 0) {
         const { data: escrowData } = await supabase
           .from('escrow_transactions')
           .select('id, status, amount, created_at, order_id')
           .in('order_id', orderIds);
-        
+
         if (escrowData) {
           escrowData.forEach(e => {
             escrowMap[e.order_id] = {
@@ -341,11 +342,11 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
       // 7. Mapper les données
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-      
+
       const mappedOrders: Order[] = (ordersData || []).map(order => {
         const userId = customerUserMap.get(order.customer_id);
         const profile = userId ? profileMap.get(userId) : null;
-        
+
         return {
           id: order.id,
           order_number: order.order_number || order.id.slice(0, 8).toUpperCase(),
@@ -378,7 +379,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   const loadOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
     setLoadingDetails(true);
-    
+
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -406,14 +407,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer_public_id.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -553,9 +554,9 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               <ShoppingCart className="w-5 h-5 text-blue-600" />
               Suivi des commandes de mes utilisateurs
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={loadOrders}
               className="gap-2"
             >
@@ -609,7 +610,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                     key={order.id}
                     className="overflow-hidden hover:shadow-md transition-all cursor-pointer border-l-4"
                     style={{
-                      borderLeftColor: order.escrow?.status === 'pending' ? '#3b82f6' : 
+                      borderLeftColor: order.escrow?.status === 'pending' ? '#3b82f6' :
                                        order.escrow?.status === 'released' ? '#22c55e' :
                                        order.status === 'cancelled' ? '#ef4444' : '#e2e8f0'
                     }}
@@ -664,7 +665,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                           {statusIcons[order.status]}
                           <span className="ml-1">{statusLabels[order.status] || order.status}</span>
                         </Badge>
-                        
+
                         <Badge variant="outline" className={cn("text-xs", paymentStatusColors[order.payment_status])}>
                           <Banknote className="w-3 h-3 mr-1" />
                           {paymentStatusLabels[order.payment_status] || order.payment_status}
@@ -721,7 +722,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                                   ? "text-green-700"
                                   : "text-gray-700"
                               )}>
-                                {formatCurrency(order.escrow.amount)} • 
+                                {formatCurrency(order.escrow.amount)} •
                                 {order.escrow.status === 'pending' || order.escrow.status === 'held'
                                   ? " Le client doit confirmer la réception pour libérer les fonds"
                                   : order.escrow.status === 'released'
@@ -731,7 +732,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                               </p>
                             </div>
                           </div>
-                          
+
                           {/* Workflow info pour l'agent */}
                           {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
                             <div className="mt-3 p-2 bg-white/60 rounded-md">
@@ -833,8 +834,8 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                     Adresse de livraison
                   </h4>
                   <p className="text-sm text-slate-600">
-                    {typeof orderDetails.shipping_address === 'string' 
-                      ? orderDetails.shipping_address 
+                    {typeof orderDetails.shipping_address === 'string'
+                      ? orderDetails.shipping_address
                       : `${orderDetails.shipping_address.street || ''}, ${orderDetails.shipping_address.city || ''}, ${orderDetails.shipping_address.country || ''}`
                     }
                   </p>
@@ -851,8 +852,8 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                   {orderDetails.order_items?.map((item: any) => (
                     <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                       {item.products?.images?.[0] && (
-                        <img 
-                          src={item.products.images[0]} 
+                        <img
+                          src={item.products.images[0]}
                           alt={item.products.name}
                           className="w-12 h-12 rounded-lg object-cover"
                         />

@@ -5,8 +5,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, MapPin, DollarSign, Calendar, TrendingUp } from "lucide-react";
+import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from "@/components/ui/tabs";
+import { Clock, MapPin, _DollarSign, _Calendar, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 
 interface Ride {
@@ -64,15 +64,15 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
   // Grouper par jour pour le graphique
   const dailyStats = useMemo(() => {
     const days: { [key: string]: { rides: number; earnings: number } } = {};
-    
+
     rides.forEach(ride => {
       const date = new Date(ride.completed_at || ride.created_at);
       const key = date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-      
+
       if (!days[key]) {
         days[key] = { rides: 0, earnings: 0 };
       }
-      
+
       days[key].rides += 1;
       days[key].earnings += ride.driver_share || 0;
     });
@@ -137,7 +137,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
               <div key={date} className="flex items-center gap-2">
                 <span className="text-xs text-gray-600 w-16">{date}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full flex items-center justify-end px-2"
                     style={{ width: `${Math.min((data.earnings / (stats.week.earnings / 7)) * 100, 100)}%` }}
                   >
@@ -172,10 +172,10 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
               {rides.map((ride) => {
                 const earnings = ride.driver_share || 0;
                 const rideDate = new Date(ride.completed_at || ride.created_at);
-                const duration = ride.completed_at && ride.accepted_at 
+                const duration = ride.completed_at && ride.accepted_at
                   ? Math.round((new Date(ride.completed_at).getTime() - new Date(ride.accepted_at).getTime()) / 60000)
                   : ride.duration_min || 0;
-                
+
                 return (
                   <div key={ride.id} className="border rounded-lg p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div className="flex justify-between items-start mb-2">

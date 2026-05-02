@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { _Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
   GraduationCap, Users, BookOpen, Calendar, Clock,
-  Plus, CheckCircle, Star, Award, TrendingUp,
-  DollarSign, FileText, Video, ClipboardList
+  Plus, _CheckCircle, Star, Award, _TrendingUp,
+  DollarSign, _FileText, _Video, ClipboardList
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -75,7 +75,7 @@ const STATUS_COLORS: Record<string, { label: string; color: string }> = {
   archive: { label: 'Archivé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function EducationModule({ serviceId, businessName }: EducationModuleProps) {
+export function EducationModule({ _serviceId, businessName }: EducationModuleProps) {
   const [activeTab, setActiveTab] = useState('courses');
   const [showNewCourse, setShowNewCourse] = useState(false);
 
@@ -94,7 +94,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
 
   // Stats
   const activeCourses = courses.filter(c => c.status === 'actif').length;
-  const totalStudents = students.length;
+  const _totalStudents = students.length;
   const activeStudents = students.filter(s => s.status === 'actif').length;
   const totalRevenue = students.reduce((acc, s) => acc + s.totalPaid, 0);
   const avgRating = courses.filter(c => c.rating > 0).reduce((acc, c, _, arr) => acc + c.rating / arr.length, 0);

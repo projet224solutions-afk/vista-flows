@@ -15,14 +15,14 @@ interface UseCopiloteReturn {
   isTyping: boolean;
   userContext: UserContext | null;
   isConnected: boolean;
-  
+
   // Actions
   sendMessage: (message: string) => Promise<void>;
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;
   executeBusinessAction: (action: BusinessAction) => Promise<unknown>;
   analyzeSystem: () => Promise<void>;
-  
+
   // Utilitaires
   getWalletBalance: () => Promise<{ balance: number; currency: string }>;
   getTransactionHistory: (limit?: number) => Promise<unknown[]>;
@@ -58,6 +58,7 @@ export function useCopilote(): UseCopiloteReturn {
     if (isConnected) {
       loadHistory();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected]);
 
   const sendMessage = useCallback(async (message: string) => {
@@ -76,7 +77,7 @@ export function useCopilote(): UseCopiloteReturn {
 
     try {
       const response = await copiloteService.sendMessage(message);
-      
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -86,7 +87,7 @@ export function useCopilote(): UseCopiloteReturn {
 
       setMessages(prev => [...prev, assistantMessage]);
       setUserContext(response.user_context);
-      
+
       toast.success('Réponse reçue du Copilote 224');
     } catch (error) {
       console.error('Erreur lors de l\'envoi:', error);
@@ -195,7 +196,7 @@ export function useCopilote(): UseCopiloteReturn {
 
     try {
       const response = await copiloteService.analyzeSystem();
-      
+
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -205,11 +206,11 @@ export function useCopilote(): UseCopiloteReturn {
 
       setMessages(prev => [...prev, assistantMessage]);
       setUserContext(response.user_context);
-      
+
       toast.success('Analyse système terminée');
     } catch (error) {
       console.error('Erreur lors de l\'analyse système:', error);
-      
+
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -232,14 +233,14 @@ export function useCopilote(): UseCopiloteReturn {
     isTyping,
     userContext,
     isConnected,
-    
+
     // Actions
     sendMessage,
     clearHistory,
     loadHistory,
     executeBusinessAction,
     analyzeSystem,
-    
+
     // Utilitaires
     getWalletBalance,
     getTransactionHistory,

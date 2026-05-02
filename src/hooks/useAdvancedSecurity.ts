@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { RateLimiter } from '@/lib/security/rateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ interface SecurityStatus {
   lastActivity: Date | null;
 }
 
-export const useAdvancedSecurity = (userId?: string) => {
+export const useAdvancedSecurity = (_userId?: string) => {
   const [status, setStatus] = useState<SecurityStatus>({
     rateLimitExceeded: false,
     bruteForceDetected: false,
@@ -23,7 +23,7 @@ export const useAdvancedSecurity = (userId?: string) => {
    */
   const checkIfBlocked = async (identifier: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, _error } = await supabase
         .from('failed_login_attempts')
         .select('*')
         .eq('identifier', identifier)
@@ -34,7 +34,7 @@ export const useAdvancedSecurity = (userId?: string) => {
         setStatus(prev => ({ ...prev, isBlocked: true }));
         return true;
       }
-      
+
       return false;
     } catch {
       return false;
@@ -79,7 +79,7 @@ export const useAdvancedSecurity = (userId?: string) => {
 
       if (existing) {
         const newCount = (existing.attempt_count || 0) + 1;
-        const blockedUntil = newCount >= 5 
+        const blockedUntil = newCount >= 5
           ? new Date(Date.now() + 30 * 60 * 1000) // Bloqué 30 min après 5 tentatives
           : null;
 
@@ -121,10 +121,10 @@ export const useAdvancedSecurity = (userId?: string) => {
         .delete()
         .eq('identifier', identifier);
 
-      setStatus(prev => ({ 
-        ...prev, 
-        bruteForceDetected: false, 
-        isBlocked: false 
+      setStatus(prev => ({
+        ...prev,
+        bruteForceDetected: false,
+        isBlocked: false
       }));
     } catch (error) {
       console.error('Failed to reset failed attempts:', error);

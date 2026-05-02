@@ -1,6 +1,6 @@
 ﻿/**
  * SECURITY MONITORING DASHBOARD
- * 224Solutions - Dashboard complet monitoring s├®curit├® et sant├® syst├¿me
+ * 224Solutions - Dashboard complet monitoring sécurité et santé système
  */
 
 import React from 'react';
@@ -9,11 +9,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  XCircle, 
-  Activity, 
+import {
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Activity,
   Database,
   Server,
   Shield,
@@ -37,11 +37,11 @@ export default function SecurityMonitoring() {
   const [lastUpdate, setLastUpdate] = React.useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = React.useState(true);
 
-  // Charger donn├®es monitoring
+  // Charger données monitoring
   const loadData = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       const [systemHealth, healthCheckReport] = await Promise.all([
         monitoringService.getCurrentHealth(),
         healthCheckService.checkNow()
@@ -52,7 +52,7 @@ export default function SecurityMonitoring() {
       setViolations(cspService.getRecentViolations(20));
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('Erreur chargement donn├®es monitoring:', error);
+      console.error('Erreur chargement données monitoring:', error);
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +63,7 @@ export default function SecurityMonitoring() {
     loadData();
   }, [loadData]);
 
-  // Auto-refresh toutes les 10 secondes si activ├®
+  // Auto-refresh toutes les 10 secondes si activé
   React.useEffect(() => {
     if (!autoRefresh) return;
 
@@ -85,7 +85,7 @@ export default function SecurityMonitoring() {
     }
   };
 
-  // Fonction helper pour obtenir ic├┤ne selon status
+  // Fonction helper pour obtenir icône selon status
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
@@ -115,9 +115,9 @@ export default function SecurityMonitoring() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Monitoring S├®curit├®</h1>
+          <h1 className="text-3xl font-bold">Monitoring Sécurité</h1>
           <p className="text-gray-500">
-            Derni├¿re mise ├á jour: {lastUpdate.toLocaleTimeString()}
+            Dernière mise à jour: {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <div className="flex gap-2">
@@ -136,20 +136,20 @@ export default function SecurityMonitoring() {
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Rafra├«chir
+            Rafraëchir
           </Button>
         </div>
       </div>
 
-      {/* Alerte si syst├¿me d├®grad├® ou critique */}
+      {/* Alerte si système dégradé ou critique */}
       {health && (health.overall === 'degraded' || health.overall === 'critical') && (
         <Alert variant={health.overall === 'critical' ? 'destructive' : 'default'}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>
-            {health.overall === 'critical' ? 'Syst├¿me Critique' : 'Syst├¿me D├®grad├®'}
+            {health.overall === 'critical' ? 'Système Critique' : 'Système Dégradé'}
           </AlertTitle>
           <AlertDescription>
-            Le syst├¿me n├®cessite une attention imm├®diate. V├®rifiez les composants ci-dessous.
+            Le système nécessite une attention immédiate. Vérifiez les composants ci-dessous.
           </AlertDescription>
         </Alert>
       )}
@@ -159,7 +159,7 @@ export default function SecurityMonitoring() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {health && getStatusIcon(health.overall)}
-            Statut Global du Syst├¿me
+            Statut Global du Système
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -175,7 +175,7 @@ export default function SecurityMonitoring() {
             {/* Security */}
             <div className="text-center">
               <Shield className="h-5 w-5 mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500 mb-2">S├®curit├®</p>
+              <p className="text-sm text-gray-500 mb-2">Sécurité</p>
               <Badge className={getStatusColor(health?.security || 'unknown')}>
                 {health?.security?.toUpperCase() || 'UNKNOWN'}
               </Badge>
@@ -184,7 +184,7 @@ export default function SecurityMonitoring() {
             {/* Database */}
             <div className="text-center">
               <Database className="h-5 w-5 mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500 mb-2">Base de Donn├®es</p>
+              <p className="text-sm text-gray-500 mb-2">Base de Données</p>
               <Badge className={getStatusColor(health?.database || 'unknown')}>
                 {health?.database?.toUpperCase() || 'UNKNOWN'}
               </Badge>
@@ -211,7 +211,7 @@ export default function SecurityMonitoring() {
         </CardContent>
       </Card>
 
-      {/* M├®triques Cl├®s */}
+      {/* Métriques Clés */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
@@ -225,7 +225,7 @@ export default function SecurityMonitoring() {
               {health?.metrics.criticalErrors || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              N├®cessitent action imm├®diate
+              Nécessitent action immédiate
             </p>
           </CardContent>
         </Card>
@@ -242,7 +242,7 @@ export default function SecurityMonitoring() {
               {health?.metrics.pendingErrors || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              ├Ç traiter prochainement
+              À traiter prochainement
             </p>
           </CardContent>
         </Card>
@@ -251,7 +251,7 @@ export default function SecurityMonitoring() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Clock className="h-4 w-4 text-blue-600" />
-              Temps de R├®ponse
+              Temps de Réponse
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -259,7 +259,7 @@ export default function SecurityMonitoring() {
               {health?.metrics.responseTime || 0}ms
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Moyenne derni├¿re heure
+              Moyenne dernière heure
             </p>
           </CardContent>
         </Card>
@@ -276,13 +276,13 @@ export default function SecurityMonitoring() {
               {health?.metrics.activeUsers || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Connect├®s derni├¿re heure
+              Connectés dernière heure
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs pour d├®tails */}
+      {/* Tabs pour détails */}
       <Tabs defaultValue="health-checks" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="health-checks">Health Checks</TabsTrigger>
@@ -294,11 +294,11 @@ export default function SecurityMonitoring() {
         <TabsContent value="health-checks" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>V├®rifications Sant├® D├®taill├®es</CardTitle>
+              <CardTitle>Vérifications Santé Détaillées</CardTitle>
               <CardDescription>
-                {healthReport?.checksPerformed || 0} checks effectu├®s - 
-                {healthReport?.checksPassed || 0} r├®ussis - 
-                {healthReport?.checksFailed || 0} ├®chou├®s
+                {healthReport?.checksPerformed || 0} checks effectués -
+                {healthReport?.checksPassed || 0} réussis -
+                {healthReport?.checksFailed || 0} échoués
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -336,15 +336,15 @@ export default function SecurityMonitoring() {
             <CardHeader>
               <CardTitle>Violations Content Security Policy</CardTitle>
               <CardDescription>
-                {violations.length} violations d├®tect├®es r├®cemment
+                {violations.length} violations détectées récemment
               </CardDescription>
             </CardHeader>
             <CardContent>
               {violations.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-600" />
-                  <p>Aucune violation CSP d├®tect├®e</p>
-                  <p className="text-sm">Le syst├¿me est s├®curis├®</p>
+                  <p>Aucune violation CSP détectée</p>
+                  <p className="text-sm">Le système est sécurisé</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -359,7 +359,7 @@ export default function SecurityMonitoring() {
                             {violation.violatedDirective}
                           </p>
                           <p className="text-sm text-red-700 mt-1 break-all">
-                            URI bloqu├®e: {violation.blockedUri}
+                            URI bloquée: {violation.blockedUri}
                           </p>
                           <p className="text-xs text-red-600 mt-1">
                             {new Date(violation.timestamp).toLocaleString()}
@@ -378,27 +378,27 @@ export default function SecurityMonitoring() {
         <TabsContent value="diagnostics" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Diagnostic Syst├¿me</CardTitle>
+              <CardTitle>Diagnostic Système</CardTitle>
               <CardDescription>
-                Informations d├®taill├®es sur l'├®tat du syst├¿me
+                Informations détaillées sur l'état du système
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Uptime */}
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium">Uptime Syst├¿me</p>
+                  <p className="font-medium">Uptime Système</p>
                   <TrendingUp className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-2xl font-bold">
-                  {healthReport ? Math.floor(healthReport.uptime / 3600) : 0}h 
+                  {healthReport ? Math.floor(healthReport.uptime / 3600) : 0}h
                   {healthReport ? Math.floor((healthReport.uptime % 3600) / 60) : 0}m
                 </p>
               </div>
 
               {/* Services Status */}
               <div className="p-4 border rounded-lg">
-                <p className="font-medium mb-3">Services S├®curit├®</p>
+                <p className="font-medium mb-3">Services Sécurité</p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Monitoring Service</span>
@@ -426,7 +426,7 @@ export default function SecurityMonitoring() {
                 </p>
                 <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                   {health?.metrics.criticalErrors > 0 && (
-                    <li>R├®soudre imm├®diatement les {health.metrics.criticalErrors} erreurs critiques</li>
+                    <li>Résoudre immédiatement les {health.metrics.criticalErrors} erreurs critiques</li>
                   )}
                   {health?.metrics.pendingErrors > 10 && (
                     <li>Traiter les {health.metrics.pendingErrors} erreurs en attente</li>
@@ -435,7 +435,7 @@ export default function SecurityMonitoring() {
                     <li>Investiguer les {violations.length} violations CSP</li>
                   )}
                   {health?.overall === 'healthy' && (
-                    <li>Syst├¿me en bon ├®tat, continuer la surveillance</li>
+                    <li>Système en bon état, continuer la surveillance</li>
                   )}
                 </ul>
               </div>

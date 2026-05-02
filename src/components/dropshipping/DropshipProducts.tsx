@@ -9,13 +9,13 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import {
   DropdownMenu,
@@ -23,13 +23,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Package, 
-  Search, 
-  Plus, 
-  RefreshCw, 
+import {
+  Package,
+  Search,
+  Plus,
+  RefreshCw,
   MoreVertical,
-  Edit,
+  _Edit,
   Trash2,
   ExternalLink,
   Eye,
@@ -152,8 +152,8 @@ export function DropshipProducts({
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                             {product.images?.[0] ? (
-                              <img 
-                                src={product.images[0]} 
+                              <img
+                                src={product.images[0]}
                                 alt={product.product_name}
                                 className="w-full h-full object-cover"
                               />
@@ -184,8 +184,8 @@ export function DropshipProducts({
                       </TableCell>
                       <TableCell>
                         <span className={`font-medium ${
-                          calculateMargin(product.selling_price, product.supplier_price) > 20 
-                            ? 'text-green-600' 
+                          calculateMargin(product.selling_price, product.supplier_price) > 20
+                            ? 'text-green-600'
                             : 'text-orange-600'
                         }`}>
                           {calculateMargin(product.selling_price, product.supplier_price).toFixed(1)}%
@@ -219,7 +219,7 @@ export function DropshipProducts({
                                 </a>
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => onUpdate(product.id, { is_active: !product.is_active })}
                             >
                               {product.is_active ? (
@@ -234,7 +234,7 @@ export function DropshipProducts({
                                 </>
                               )}
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => onDelete(product.id)}
                               className="text-destructive"
                             >

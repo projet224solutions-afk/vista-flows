@@ -73,7 +73,7 @@ class KafkaService {
       const { data, error } = await supabase.functions.invoke('pubsub-manage', {
         body: { action: 'listTopics' }
       });
-      
+
       this.isConnected = !error && data?.success;
       console.log(`🔌 Kafka connection status: ${this.isConnected ? 'connected' : 'disconnected'}`);
       return this.isConnected;
@@ -89,7 +89,7 @@ class KafkaService {
    */
   async produce<T>(record: ProducerRecord<T>): Promise<ProduceResult> {
     const timestamp = record.timestamp || Date.now();
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('pubsub-publish', {
         body: {
@@ -109,11 +109,11 @@ class KafkaService {
 
       if (error) {
         console.error(`❌ Produce to ${record.topic} failed:`, error);
-        return { 
-          success: false, 
-          error: error.message, 
-          topic: record.topic, 
-          timestamp 
+        return {
+          success: false,
+          error: error.message,
+          topic: record.topic,
+          timestamp
         };
       }
 
@@ -140,10 +140,10 @@ class KafkaService {
    */
   async produceBatch<T>(records: ProducerRecord<T>[]): Promise<ProduceResult[]> {
     const results = await Promise.all(records.map(record => this.produce(record)));
-    
+
     const successful = results.filter(r => r.success).length;
     console.log(`📦 Batch produced: ${successful}/${records.length} successful`);
-    
+
     return results;
   }
 
@@ -152,7 +152,7 @@ class KafkaService {
    */
   addToBuffer<T>(record: ProducerRecord<T>): void {
     this.messageBuffer.push(record as ProducerRecord);
-    
+
     if (this.messageBuffer.length >= this.batchSize) {
       this.flushBuffer();
     }
@@ -163,10 +163,10 @@ class KafkaService {
    */
   async flushBuffer(): Promise<void> {
     if (this.messageBuffer.length === 0) return;
-    
+
     const messages = [...this.messageBuffer];
     this.messageBuffer = [];
-    
+
     await this.produceBatch(messages);
   }
 
@@ -241,16 +241,16 @@ class KafkaService {
         return { success: false, created: false, error: error.message };
       }
 
-      return { 
-        success: data.success, 
+      return {
+        success: data.success,
         created: data.result?.created || false,
-        error: data.error 
+        error: data.error
       };
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         created: false,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -266,9 +266,9 @@ class KafkaService {
 
       return { success: !error && data?.success, error: error?.message || data?.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -286,16 +286,16 @@ class KafkaService {
         return { success: false, topics: [], error: error.message };
       }
 
-      const topics = (data.result || []).map((t: any) => 
+      const topics = (data.result || []).map((t: any) =>
         typeof t === 'string' ? t : t.name?.split('/').pop() || t
       );
 
       return { success: true, topics };
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         topics: [],
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -315,16 +315,16 @@ class KafkaService {
         body: { action: 'createSubscription', topicName, subscriptionName, pushEndpoint }
       });
 
-      return { 
-        success: !error && data?.success, 
+      return {
+        success: !error && data?.success,
         created: data?.result?.created || false,
-        error: error?.message || data?.error 
+        error: error?.message || data?.error
       };
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         created: false,
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -340,9 +340,9 @@ class KafkaService {
 
       return { success: !error && data?.success, error: error?.message || data?.error };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -360,16 +360,16 @@ class KafkaService {
         return { success: false, subscriptions: [], error: error.message };
       }
 
-      const subscriptions = (data.result || []).map((s: any) => 
+      const subscriptions = (data.result || []).map((s: any) =>
         typeof s === 'string' ? s : s.name?.split('/').pop() || s
       );
 
       return { success: true, subscriptions };
     } catch (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         subscriptions: [],
-        error: error instanceof Error ? error.message : 'Unknown error' 
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -387,14 +387,14 @@ class KafkaService {
     total: number;
   }> {
     console.log('🚀 Initializing all Kafka topics...');
-    
+
     const created: string[] = [];
     const existing: string[] = [];
     const errors: string[] = [];
 
     for (const topicName of ALL_TOPIC_NAMES) {
       const result = await this.createTopic(topicName);
-      
+
       if (result.success) {
         if (result.created) {
           created.push(topicName);
@@ -428,13 +428,13 @@ class KafkaService {
   }> {
     const topicNames = TOPIC_CATEGORIES[category];
     console.log(`🚀 Initializing ${category} topics (${topicNames.length})...`);
-    
+
     const created: string[] = [];
     const errors: string[] = [];
 
     for (const topicName of topicNames) {
       const result = await this.createTopic(topicName);
-      
+
       if (result.success && result.created) {
         created.push(topicName);
       } else if (!result.success) {

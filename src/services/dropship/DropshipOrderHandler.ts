@@ -1,14 +1,14 @@
 /**
  * DROPSHIP ORDER HANDLER SERVICE
  * Gère le flux des commandes contenant des produits dropshipping
- * 
+ *
  * Workflow:
  * 1. Client passe commande normalement (ne sait pas que c'est dropship)
  * 2. Système détecte les items dropship
  * 3. Crée automatiquement les commandes fournisseurs
  * 4. Notifie le vendeur des actions requises
  * 5. Suivi tracking multi-segment
- * 
+ *
  * @module DropshipOrderHandler
  * @version 1.0.0
  * @author 224Solutions
@@ -89,24 +89,24 @@ export interface ProcessOrderResult {
 export class DropshipOrderHandler {
   private static instance: DropshipOrderHandler;
   private connectorService: typeof dropshippingConnectorService;
-  
+
   private constructor() {
     this.connectorService = dropshippingConnectorService;
   }
-  
+
   static getInstance(): DropshipOrderHandler {
     if (!DropshipOrderHandler.instance) {
       DropshipOrderHandler.instance = new DropshipOrderHandler();
     }
     return DropshipOrderHandler.instance;
   }
-  
+
   /**
    * Traite une nouvelle commande et identifie les items dropship
    */
   async processNewOrder(order: CustomerOrder): Promise<ProcessOrderResult> {
     console.log(`[DropshipOrderHandler] Processing order ${order.id}`);
-    
+
     const result: ProcessOrderResult = {
       success: false,
       orderId: order.id,
@@ -116,15 +116,15 @@ export class DropshipOrderHandler {
       supplierOrdersCreated: 0,
       errors: []
     };
-    
+
     try {
       // 1. Identifier les items dropship
       const dropshipItems: Array<OrderItem & { dropshipInfo: any }> = [];
       const regularItems: OrderItem[] = [];
-      
+
       for (const item of order.items) {
         const dropshipInfo = await this.getDropshipProductInfo(item.productId);
-        
+
         if (dropshipInfo) {
           dropshipItems.push({ ...item, dropshipInfo });
           result.dropshipItemsCount++;
@@ -133,17 +133,17 @@ export class DropshipOrderHandler {
           result.regularItemsCount++;
         }
       }
-      
+
       result.hasDropshipItems = dropshipItems.length > 0;
-      
+
       if (!result.hasDropshipItems) {
         console.log(`[DropshipOrderHandler] Order ${order.id} has no dropship items`);
         result.success = true;
         return result;
       }
-      
+
       console.log(`[DropshipOrderHandler] Found ${dropshipItems.length} dropship items`);
-      
+
       // 2. Créer les entrées de commande fournisseur pour chaque item dropship
       for (const item of dropshipItems) {
         try {
@@ -153,26 +153,26 @@ export class DropshipOrderHandler {
           result.errors.push(`Failed to create supplier order for ${item.title}: ${error.message}`);
         }
       }
-      
+
       // 3. Notifier le vendeur
       await this.notifyVendorOfDropshipOrder(order, dropshipItems);
-      
+
       // 4. Logger l'activité
       await this.logOrderActivity(order.id, 'dropship_detected', {
         dropshipItemsCount: result.dropshipItemsCount,
         regularItemsCount: result.regularItemsCount
       });
-      
+
       result.success = result.errors.length === 0;
-      
+
     } catch (error: any) {
       console.error(`[DropshipOrderHandler] Error processing order ${order.id}:`, error);
       result.errors.push(error.message);
     }
-    
+
     return result;
   }
-  
+
   /**
    * Vérifie si un produit est un dropship et récupère ses infos
    */
@@ -182,11 +182,11 @@ export class DropshipOrderHandler {
       .select('*')
       .eq('id', productId)
       .single();
-    
+
     if (error || !data) return null;
     return data;
   }
-  
+
   /**
    * Crée une entrée de commande fournisseur
    */
@@ -213,13 +213,13 @@ export class DropshipOrderHandler {
         supplier_total_cny: (item.dropshipInfo.cost_price * item.quantity) * 7.2,
         notes_internal: `Source: ${item.dropshipInfo.source_connector} | Product: ${item.dropshipInfo.source_product_id}`
       });
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error creating supplier order:', error);
       throw error;
     }
   }
-  
+
   /**
    * Notifie le vendeur d'une commande dropship
    */
@@ -239,7 +239,7 @@ export class DropshipOrderHandler {
           orderId: order.id,
           customerName: order.customerName,
           dropshipItemsCount: dropshipItems.length,
-          totalSupplierCost: dropshipItems.reduce((sum, item) => 
+          totalSupplierCost: dropshipItems.reduce((sum, item) =>
             sum + (item.dropshipInfo.cost_price * item.quantity), 0
           )
         },
@@ -247,7 +247,7 @@ export class DropshipOrderHandler {
         created_at: new Date().toISOString()
       });
   }
-  
+
   /**
    * Log une activité liée à la commande
    */
@@ -266,7 +266,7 @@ export class DropshipOrderHandler {
         created_at: new Date().toISOString()
       });
   }
-  
+
   /**
    * Récupère les commandes fournisseur en attente pour un vendeur
    */
@@ -277,15 +277,15 @@ export class DropshipOrderHandler {
       .eq('vendor_id', vendorId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error fetching pending orders:', error);
       return [];
     }
-    
+
     return (data || []).map(this.mapSupplierOrder);
   }
-  
+
   /**
    * Récupère toutes les commandes fournisseur pour un vendeur
    */
@@ -298,21 +298,21 @@ export class DropshipOrderHandler {
       .select('*')
       .eq('vendor_id', vendorId)
       .order('created_at', { ascending: false });
-    
+
     if (status) {
       query = query.eq('status', status);
     }
-    
+
     const { data, error } = await query;
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error fetching supplier orders:', error);
       return [];
     }
-    
+
     return (data || []).map(this.mapSupplierOrder);
   }
-  
+
   /**
    * Marque une commande fournisseur comme passée
    */
@@ -329,18 +329,18 @@ export class DropshipOrderHandler {
         updated_at: new Date().toISOString()
       })
       .eq('id', supplierOrderId);
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error marking order as ordered:', error);
       return false;
     }
-    
+
     // Mettre à jour le statut de la commande client
     await this.updateCustomerOrderStatus(supplierOrderId, 'processing');
-    
+
     return true;
   }
-  
+
   /**
    * Met à jour le tracking d'une commande fournisseur
    */
@@ -361,18 +361,18 @@ export class DropshipOrderHandler {
         updated_at: new Date().toISOString()
       })
       .eq('id', supplierOrderId);
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error updating tracking:', error);
       return false;
     }
-    
+
     // Mettre à jour le statut de la commande client
     await this.updateCustomerOrderStatus(supplierOrderId, 'shipped');
-    
+
     return true;
   }
-  
+
   /**
    * Marque une commande comme livrée
    */
@@ -385,18 +385,18 @@ export class DropshipOrderHandler {
         updated_at: new Date().toISOString()
       })
       .eq('id', supplierOrderId);
-    
+
     if (error) {
       console.error('[DropshipOrderHandler] Error marking as delivered:', error);
       return false;
     }
-    
+
     // Mettre à jour le statut de la commande client
     await this.updateCustomerOrderStatus(supplierOrderId, 'delivered');
-    
+
     return true;
   }
-  
+
   /**
    * Met à jour le statut de la commande client principale
    */
@@ -410,22 +410,22 @@ export class DropshipOrderHandler {
       .select('customer_order_id')
       .eq('id', supplierOrderId)
       .single();
-    
+
     if (!supplierOrder) return;
-    
+
     // Vérifier si tous les items dropship de la commande ont le même statut
     const { data: allItems } = await supabase
       .from('china_supplier_orders')
       .select('status')
       .eq('customer_order_id', supplierOrder.customer_order_id);
-    
+
     if (!allItems) return;
-    
+
     // Si tous les items ont le statut ou supérieur, mettre à jour la commande
-    const allSameOrHigher = allItems.every(item => 
+    const allSameOrHigher = allItems.every(item =>
       this.getStatusLevel(item.status) >= this.getStatusLevel(status)
     );
-    
+
     if (allSameOrHigher) {
       // Map status to valid order status
       const orderStatus = this.mapToOrderStatus(status);
@@ -438,7 +438,7 @@ export class DropshipOrderHandler {
         .eq('id', supplierOrder.customer_order_id);
     }
   }
-  
+
   /**
    * Map supplier status to order status
    */
@@ -459,7 +459,7 @@ export class DropshipOrderHandler {
     };
     return mapping[status] || 'pending';
   }
-  
+
   /**
    * Obtient le niveau numérique d'un statut pour comparaison
    */
@@ -475,7 +475,7 @@ export class DropshipOrderHandler {
     };
     return levels[status] ?? 0;
   }
-  
+
   /**
    * Map les données DB vers le type DropshipOrderItem
    */
@@ -500,7 +500,7 @@ export class DropshipOrderHandler {
       deliveredAt: data.expected_delivery_date
     };
   }
-  
+
   /**
    * Calcule le profit réel d'une commande dropship
    */
@@ -516,18 +516,18 @@ export class DropshipOrderHandler {
       .select('total_amount')
       .eq('id', orderId)
       .single();
-    
+
     // Récupérer les coûts fournisseur
     const { data: supplierOrders } = await supabase
       .from('china_supplier_orders')
       .select('supplier_total_usd')
       .eq('customer_order_id', orderId);
-    
+
     const revenue = order?.total_amount || 0;
     const supplierCost = (supplierOrders || []).reduce((sum, o) => sum + (o.supplier_total_usd || 0), 0);
     const profit = revenue - supplierCost;
     const marginPercent = revenue > 0 ? (profit / revenue) * 100 : 0;
-    
+
     return {
       revenue,
       supplierCost,

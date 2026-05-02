@@ -11,8 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Shield } from 'lucide-react';
-import { 
-  useSyndicateWorkerPermissions, 
+import {
+  useSyndicateWorkerPermissions,
   SYNDICATE_WORKER_PERMISSIONS,
   SyndicateWorkerPermissionKey,
   SyndicateWorkerPermissions

@@ -1,6 +1,6 @@
 /**
  * 🚀 REAL-TIME ANALYTICS CONTROLLER
- * 
+ *
  * HTTP endpoints for real-time analytics:
  * - GET /realtime/stats/:vendorId - Live stats
  * - GET /realtime/trending/:vendorId - Trending products
@@ -23,27 +23,27 @@ export async function handleGetRealtimeStats(req, res) {
   try {
     const { vendorId } = req.params;
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({
         success: false,
         error: 'Authentication required'
       });
     }
-    
+
     // Verify vendor ownership (basic check - could cache this)
     // Note: Full ownership check should be in middleware
-    
+
     const stats = await getRealtimeStats(vendorId);
-    
+
     // Mark vendor as online for targeted notifications
     await markVendorOnline(vendorId);
-    
+
     return res.status(200).json({
       success: true,
       data: stats
     });
-    
+
   } catch (error) {
     logger.error(`handleGetRealtimeStats error: ${error.message}`);
     return res.status(500).json({
@@ -61,16 +61,16 @@ export async function handleGetTrendingProducts(req, res) {
   try {
     const { vendorId } = req.params;
     const { limit = 5 } = req.query;
-    
+
     if (!req.user?.id) {
       return res.status(401).json({
         success: false,
         error: 'Authentication required'
       });
     }
-    
+
     const trending = await getTrendingProducts(vendorId, parseInt(limit));
-    
+
     return res.status(200).json({
       success: true,
       data: {
@@ -78,7 +78,7 @@ export async function handleGetTrendingProducts(req, res) {
         generatedAt: new Date().toISOString()
       }
     });
-    
+
   } catch (error) {
     logger.error(`handleGetTrendingProducts error: ${error.message}`);
     return res.status(500).json({
@@ -95,21 +95,21 @@ export async function handleGetTrendingProducts(req, res) {
 export async function handleHeartbeat(req, res) {
   try {
     const { vendorId } = req.body;
-    
+
     if (!req.user?.id || !vendorId) {
       return res.status(400).json({
         success: false,
         error: 'vendorId required'
       });
     }
-    
+
     await markVendorOnline(vendorId);
-    
+
     return res.status(200).json({
       success: true,
       message: 'Heartbeat received'
     });
-    
+
   } catch (error) {
     logger.error(`handleHeartbeat error: ${error.message}`);
     return res.status(500).json({ success: false });
@@ -122,7 +122,7 @@ export async function handleHeartbeat(req, res) {
  */
 export async function handleHealthCheck(req, res) {
   const health = await healthCheck();
-  
+
   const status = health.status === 'healthy' ? 200 : 503;
   return res.status(status).json(health);
 }

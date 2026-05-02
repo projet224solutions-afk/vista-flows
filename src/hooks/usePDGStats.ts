@@ -118,33 +118,33 @@ export function usePDGStats() {
       ] = await Promise.all([
         // Utilisateurs
         supabase.from('profiles').select('id, created_at', { count: 'exact' }),
-        
+
         // Commandes totales
         supabase.from('orders').select('id, status', { count: 'exact' }),
-        
+
         // Commandes ce mois
         supabase.from('orders').select('id', { count: 'exact' })
           .gte('created_at', firstDayOfMonth.toISOString()),
-        
+
         // Commandes mois dernier
         supabase.from('orders').select('id', { count: 'exact' })
           .gte('created_at', firstDayOfLastMonth.toISOString())
           .lte('created_at', lastDayOfLastMonth.toISOString()),
-        
+
         // Transactions pour revenue
         supabase.from('enhanced_transactions' as any)
           .select('amount, created_at, status')
           .eq('status', 'completed') as any,
-        
+
         // Produits
         supabase.from('products').select('id, is_active', { count: 'exact' }),
-        
+
         // Vendeurs
         supabase.from('vendors').select('id, is_active', { count: 'exact' }),
-        
+
         // Livreurs - Récupérer les données complètes pour le comptage
         supabase.from('drivers').select('id, is_online'),
-        
+
         // Alertes API - Récupérer toutes les alertes non résolues
         supabase.from('api_alerts')
           .select('id, severity, is_resolved')
@@ -163,14 +163,14 @@ export function usePDGStats() {
 
       // Calculer les statistiques
       const totalUsers = profilesRes.count || 0;
-      const newUsersThisMonth = profilesRes.data?.filter(p => 
+      const newUsersThisMonth = profilesRes.data?.filter(p =>
         new Date(p.created_at) >= firstDayOfMonth
       ).length || 0;
       const newUsersLastMonth = profilesRes.data?.filter(p => {
         const date = new Date(p.created_at);
         return date >= firstDayOfLastMonth && date <= lastDayOfLastMonth;
       }).length || 0;
-      const userGrowth = newUsersLastMonth > 0 
+      const userGrowth = newUsersLastMonth > 0
         ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth * 100)
         : 0;
 

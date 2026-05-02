@@ -6,9 +6,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Car, MapPin, Phone, MessageCircle, 
-  Navigation, Star, Clock, DollarSign 
+import {
+  Car, MapPin, Phone, MessageCircle,
+  Navigation, Star, _Clock, DollarSign
 } from 'lucide-react';
 
 interface ActiveRideCardProps {
@@ -37,12 +37,12 @@ interface ActiveRideCardProps {
   onCancelRide?: () => void;
 }
 
-export function ActiveRideCard({ 
-  ride, 
-  onUpdateStatus, 
+export function ActiveRideCard({
+  ride,
+  onUpdateStatus,
   onContactCustomer,
   onNavigate,
-  onCancelRide 
+  onCancelRide
 }: ActiveRideCardProps) {
   const getStatusInfo = () => {
     switch (ride.status) {
@@ -82,8 +82,8 @@ export function ActiveRideCard({
   };
 
   const statusInfo = getStatusInfo();
-  const targetLocation = ride.status === 'accepted' || ride.status === 'arriving' 
-    ? ride.pickup.coords 
+  const targetLocation = ride.status === 'accepted' || ride.status === 'arriving'
+    ? ride.pickup.coords
     : ride.destination.coords;
 
   return (

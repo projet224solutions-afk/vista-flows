@@ -32,7 +32,7 @@ export function useFirebaseMessaging() {
     const init = async () => {
       // Vérifier le support
       const isSupported = 'Notification' in window && 'serviceWorker' in navigator;
-      
+
       setStatus(prev => ({
         ...prev,
         isSupported,
@@ -63,11 +63,11 @@ export function useFirebaseMessaging() {
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.ready;
-          
+
           // Récupérer la config Firebase via Supabase edge function
           const { supabase } = await import('@/integrations/supabase/client');
           const { data: config, error } = await supabase.functions.invoke('firebase-config');
-          
+
           if (!error && config && config.configured) {
             registration.active?.postMessage({
               type: 'FIREBASE_CONFIG',
@@ -98,7 +98,7 @@ export function useFirebaseMessaging() {
    */
   const enableNotifications = useCallback(async () => {
     console.log('[Hook FCM] 🔔 enableNotifications appelé');
-    
+
     if (!status.isSupported) {
       console.warn('[Hook FCM] Notifications non supportées');
       toast.error('Les notifications ne sont pas supportées sur ce navigateur');
@@ -112,7 +112,7 @@ export function useFirebaseMessaging() {
       // Initialiser Firebase Messaging (silencieux si non configuré)
       const initialized = await firebaseMessaging.initializeMessaging();
       console.log('[Hook FCM] Initialized:', initialized);
-      
+
       if (!initialized) {
         console.log('Firebase Messaging non configuré - utilisation des notifications locales');
         setStatus(prev => ({ ...prev, isLoading: false }));
@@ -139,7 +139,7 @@ export function useFirebaseMessaging() {
           permission: Notification.permission,
           isLoading: false
         }));
-        
+
         if (Notification.permission === 'denied') {
           toast.error('Les notifications sont bloquées. Activez-les dans les paramètres du navigateur.');
         }

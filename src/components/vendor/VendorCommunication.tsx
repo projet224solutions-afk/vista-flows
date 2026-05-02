@@ -37,7 +37,7 @@ export default function VendorCommunication() {
   const {
     callState,
     isInitialized,
-    isLoading,
+    _isLoading,
     startCall,
     endCall,
     toggleMute,
@@ -51,6 +51,7 @@ export default function VendorCommunication() {
   // Charger les contacts
   useEffect(() => {
     loadContacts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadContacts = async () => {

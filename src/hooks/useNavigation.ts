@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  navigationService, 
-  NavigationState, 
+import {
+  navigationService,
+  NavigationState,
   NavigationRoute,
-  GPSPosition 
+  GPSPosition
 } from '@/services/navigation/NavigationService';
 import { toast } from 'sonner';
 
@@ -25,19 +25,19 @@ interface UseNavigationReturn {
   isNavigating: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Données
   currentPosition: GPSPosition | null;
   navigationState: NavigationState | null;
   route: NavigationRoute | null;
-  
+
   // Actions
   startNavigation: (startAddress?: string, endAddress?: string) => Promise<void>;
   stopNavigation: () => void;
   recalculateRoute: () => Promise<void>;
   getCurrentLocation: () => Promise<GPSPosition>;
   searchLocation: (address: string) => Promise<GPSPosition[]>;
-  
+
   // Utils
   formatDistance: (meters: number) => string;
   formatDuration: (seconds: number) => string;
@@ -88,13 +88,13 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
     try {
       console.log(`🗺️ [useNavigation] Recherche: "${address}"`);
       const results = await navigationService.geocodeAddress(address, 'GN');
-      
+
       if (results.length === 0) {
         toast.warning(`Lieu "${address}" introuvable`);
       } else {
         toast.success(`${results.length} résultat(s) trouvé(s)`);
       }
-      
+
       return results;
     } catch (err: any) {
       const errorMsg = err.message || 'Erreur de recherche';
@@ -118,7 +118,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
 
       // 1️⃣ Position de départ
       let startPos: GPSPosition;
-      
+
       if (startAddress) {
         console.log(`📍 Géocodage départ: "${startAddress}"`);
         const results = await navigationService.geocodeAddress(startAddress, 'GN');
@@ -140,7 +140,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
 
       console.log(`🎯 Géocodage destination: "${endAddress}"`);
       const destResults = await navigationService.geocodeAddress(endAddress, 'GN');
-      
+
       if (destResults.length === 0) {
         throw new Error(`Destination "${endAddress}" introuvable`);
       }
@@ -152,7 +152,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
       console.log('🛣️ Calcul itinéraire...');
       const calculatedRoute = await navigationService.calculateRoute(startPos, endPos);
       setRoute(calculatedRoute);
-      
+
       toast.success(
         `🛣️ Itinéraire calculé: ${calculatedRoute.distance.toFixed(1)} km · ${Math.round(calculatedRoute.duration)} min`
       );
@@ -161,7 +161,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
       console.log('🧭 Démarrage navigation...');
       await navigationService.startNavigation(calculatedRoute);
       setIsNavigating(true);
-      
+
       toast.success('🧭 Navigation démarrée!');
       setIsLoading(false);
 
@@ -219,7 +219,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
 
       setRoute(newRoute);
       await navigationService.startNavigation(newRoute);
-      
+
       toast.success('✅ Itinéraire recalculé');
     } catch (err: any) {
       console.error('❌ [useNavigation] Erreur recalcul:', err);
@@ -250,11 +250,11 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
       if (state.isOffRoute && !hasSpokenWarningRef.current) {
         hasSpokenWarningRef.current = true;
         onOffRoute?.();
-        
+
         if (enableVoice) {
           speakInstruction('Attention, vous êtes hors de la route. Recalcul en cours.');
         }
-        
+
         toast.warning('⚠️ Hors route - Recalcul...');
       }
 
@@ -278,6 +278,7 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
     });
 
     return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route, enableVoice, onStepChange, onOffRoute, stopNavigation]);
 
   /**
@@ -335,19 +336,19 @@ export const useNavigation = (options: UseNavigationOptions = {}): UseNavigation
     isNavigating,
     isLoading,
     error,
-    
+
     // Données
     currentPosition,
     navigationState,
     route,
-    
+
     // Actions
     startNavigation,
     stopNavigation,
     recalculateRoute,
     getCurrentLocation,
     searchLocation,
-    
+
     // Utils
     formatDistance,
     formatDuration

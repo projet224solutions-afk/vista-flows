@@ -3,7 +3,7 @@
  * Algorithme: Token Bucket avec sliding window
  */
 
-import { REDIS_CONFIG, CACHE_KEYS } from '@/config/redis';
+import { _REDIS_CONFIG, CACHE_KEYS } from '@/config/redis';
 
 interface RateLimitConfig {
   windowMs: number;      // Fenêtre de temps en ms
@@ -251,7 +251,7 @@ class RateLimiter {
       fn: () => Promise<T>
     ): Promise<T> => {
       const result = await this.checkLimit(identifier, type);
-      
+
       if (!result.allowed) {
         throw new RateLimitError(
           `Rate limit exceeded. Try again in ${result.retryAfter} seconds.`,
@@ -272,7 +272,7 @@ class RateLimiter {
         if (config) {
           const expired = (now - entry.windowStart) >= config.windowMs * 2;
           const unblocked = entry.blocked && entry.blockedUntil && entry.blockedUntil < now;
-          
+
           if (expired && (!entry.blocked || unblocked)) {
             this.limits.delete(key);
           }

@@ -1,6 +1,6 @@
 ﻿/**
- * PAGE PARAM├êTRES LIVREUR
- * Notifications, confidentialit├®, pr├®f├®rences
+ * PAGE PARAMÈTRES LIVREUR
+ * Notifications, confidentialité, préférences
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Globe, Smartphone, Navigation, Volume2 } from 'lucide-react';
+import { Bell, Lock, Globe, _Smartphone, Navigation, _Volume2 } from 'lucide-react';
 import { DriverLayout } from '@/components/driver/DriverLayout';
 import { useTheme } from 'next-themes';
 
@@ -20,7 +20,7 @@ export default function DriverSettings() {
     <DriverLayout currentPage="settings">
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Param├¿tres</h1>
+          <h1 className="text-3xl font-bold">Paramètres</h1>
           <p className="text-muted-foreground">Configurez votre application</p>
         </div>
 
@@ -31,7 +31,7 @@ export default function DriverSettings() {
               <Bell className="h-5 w-5" />
               Notifications
             </CardTitle>
-            <CardDescription>G├®rez vos pr├®f├®rences de notification</CardDescription>
+            <CardDescription>Gérez vos préférences de notification</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -53,7 +53,7 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Notifications push</Label>
-                <p className="text-sm text-muted-foreground">Recevoir des notifications m├¬me hors app</p>
+                <p className="text-sm text-muted-foreground">Recevoir des notifications même hors app</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -73,7 +73,7 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Tracking GPS automatique</Label>
-                <p className="text-sm text-muted-foreground">Partager votre position en temps r├®el</p>
+                <p className="text-sm text-muted-foreground">Partager votre position en temps réel</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -88,14 +88,14 @@ export default function DriverSettings() {
           </CardContent>
         </Card>
 
-        {/* Confidentialit├® */}
+        {/* Confidentialite */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5" />
-              Confidentialit├® et s├®curit├®
+              Confidentialité et sécurité
             </CardTitle>
-            <CardDescription>Prot├®gez vos donn├®es personnelles</CardDescription>
+            <CardDescription>Protégez vos données personnelles</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -120,12 +120,12 @@ export default function DriverSettings() {
           </CardContent>
         </Card>
 
-        {/* Pr├®f├®rences */}
+        {/* Preferences */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Pr├®f├®rences
+              Préférences
             </CardTitle>
             <CardDescription>Langue et affichage</CardDescription>
           </CardHeader>
@@ -133,7 +133,7 @@ export default function DriverSettings() {
             <div className="space-y-2">
               <Label>Langue</Label>
               <select className="w-full p-2 border rounded-lg">
-                <option>Fran├ºais</option>
+                <option>Français</option>
                 <option>English</option>
               </select>
             </div>
@@ -141,10 +141,10 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Mode sombre</Label>
-                <p className="text-sm text-muted-foreground">Activer le th├¿me sombre</p>
+                <p className="text-sm text-muted-foreground">Activer le thème sombre</p>
               </div>
-              <Switch 
-                checked={isDark} 
+              <Switch
+                checked={isDark}
                 onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
               />
             </div>

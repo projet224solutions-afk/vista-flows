@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Link2, Copy, ExternalLink, Plus, BarChart3, 
+import {
+  Link2, Copy, ExternalLink, Plus, BarChart3,
   Users, MousePointer, TrendingUp, Loader2, RefreshCw,
   Calendar
 } from 'lucide-react';
@@ -63,7 +63,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
+
   // Formulaire de création
   const [newLink, setNewLink] = useState({
     name: '',
@@ -75,20 +75,21 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
   // Récupérer le token depuis l'URL si non fourni en props
   const getAgentToken = (): string | null => {
     if (agentToken) return agentToken;
-    
+
     // Essayer de récupérer depuis l'URL
     const pathParts = window.location.pathname.split('/');
     const agentIndex = pathParts.indexOf('agent');
     if (agentIndex !== -1 && pathParts[agentIndex + 1]) {
       return pathParts[agentIndex + 1];
     }
-    
+
     // Essayer depuis sessionStorage
     return sessionStorage.getItem('agent_access_token');
   };
 
   useEffect(() => {
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
   const invokeWithAgentAuth = async (action: string, body?: any) => {
@@ -190,16 +191,16 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
       const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
-      
+
       if (successful) {
         toast.success('Lien copié !', { description: url });
         return;
       }
-    } catch (err) {
+    } catch (_err) {
       document.body.removeChild(textArea);
     }
 

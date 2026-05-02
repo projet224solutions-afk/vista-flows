@@ -59,6 +59,8 @@ export interface WalletPinStatus {
     pinLength: number;
     maxFailedAttempts: number;
     lockoutMinutes: number;
+    resetMaxFailedAttempts?: number;
+    resetLockoutMinutes?: number;
   };
 }
 
@@ -72,6 +74,7 @@ export interface WalletOperationResult {
 
 export interface WalletTransferPreviewResult {
   success: boolean;
+  error?: string;
   is_international: boolean;
   sender?: {
     id: string;
@@ -100,6 +103,14 @@ export interface WalletTransferPreviewResult {
   amount_received: number;
   currency_received: string;
   rate_displayed: number;
+  official_rate?: number;
+  fx_margin?: number;
+  rate_source?: string | null;
+  rate_fetched_at?: string | null;
+  rate_source_type?: string | null;
+  rate_source_url?: string | null;
+  rate_is_official?: boolean;
+  rate_is_stale?: boolean;
   sender_balance: number;
   balance_after: number;
   sender_country?: string | null;
@@ -135,7 +146,7 @@ function extractResponsePayload<T extends Record<string, any>>(response: any): T
   }
 
   if (response && typeof response === 'object') {
-    const { data, error, error_code, details, meta, ...rest } = response;
+    const { _data, _error, _error_code, _details, _meta, ...rest } = response;
     if (Object.keys(rest).length > 0) {
       return rest as T;
     }

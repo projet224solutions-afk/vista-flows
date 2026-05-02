@@ -6,9 +6,9 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { 
-  Calendar, Clock, Users, Check, X, AlertCircle, 
-  Download, RefreshCw, MapPin, Phone, Receipt,
+import {
+  Calendar, Clock, Users, Check, X, AlertCircle,
+  _Download, RefreshCw, MapPin, _Phone, Receipt,
   CheckCircle2, Timer, Armchair, XCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,10 +84,10 @@ const statusConfig = {
   }
 };
 
-export function CustomerReservationTracker({ 
-  reservationId, 
+export function CustomerReservationTracker({
+  reservationId,
   customerEmail,
-  onClose 
+  _onClose
 }: CustomerReservationTrackerProps) {
   const { user } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -97,7 +97,7 @@ export function CustomerReservationTracker({
   const loadReservations = async () => {
     try {
       setLoading(true);
-      
+
       let query = supabase
         .from('restaurant_reservations')
         .select(`
@@ -184,13 +184,13 @@ Merci d'avoir réservé avec 224Solutions !
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     toast.success('Reçu téléchargé !');
   };
 
   useEffect(() => {
     loadReservations();
-    
+
     // Écouter les changements en temps réel
     const channel = supabase
       .channel('reservation-updates')
@@ -213,6 +213,7 @@ Merci d'avoir réservé avec 224Solutions !
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId, customerEmail, user?.email]);
 
   if (loading) {
@@ -262,7 +263,7 @@ Merci d'avoir réservé avec 224Solutions !
         const isPast = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`) < new Date();
 
         return (
-          <Card 
+          <Card
             key={reservation.id}
             className={cn(
               "transition-all",

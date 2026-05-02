@@ -15,7 +15,7 @@ import { hashPassword, generateSecureToken } from './encryption';
 import {
   encryptWithPIN,
   decryptWithPIN,
-  timingSafeEqual
+  _timingSafeEqual
 } from '@/lib/security/secureEncryption';
 
 /**

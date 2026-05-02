@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Layers, Package, Volume2 } from "lucide-react";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { ShoppingCart, MessageCircle, _Star, Truck, Shield, _X, Plus, ExternalLink, Play, _Pause, Layers, Package, Volume2 } from "lucide-react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { toast } from "sonner";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, _Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
@@ -23,6 +23,7 @@ interface Product {
   name: string;
   price: number;
   currency?: string; // Devise du produit
+  product_type?: string;
   description?: string;
   images?: string[];
   promotional_videos?: string[];
@@ -52,22 +53,30 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [pendingAudioActivation, setPendingAudioActivation] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { t } = useTranslation();
   const hasTrackedView = useRef(false);
   const lastTrackedProductId = useRef<string | null>(null);
+  const isAffiliateProduct = product?.is_affiliate === true;
+  const isAffiliateFlightTicket =
+    isAffiliateProduct &&
+    (product.product_type || '').trim().toLowerCase() === 'billet_avion';
 
   // 🧠 Track pour recommandations intelligentes
   useTrackProductView(open && productId ? productId : null);
-  
-  
+
+
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
-  const images = useMemo(() => 
-    product?.images && product.images.length > 0 
-      ? product.images 
+  const images = useMemo(() =>
+    product?.images && product.images.length > 0
+      ? product.images
       : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop'],
     [product?.images]
   );
@@ -77,12 +86,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     currentVideoIndex,
     currentImageIndex,
     isPlayingVideo,
-    isAutoPlaying,
+    _isAutoPlaying,
     videoRef,
     goToVideo,
     goToImage,
     pauseAutoPlay,
-    toggleAutoPlay
+    _toggleAutoPlay
   } = useAutoCarousel({
     videos,
     images,
@@ -98,23 +107,93 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     if (!open) {
       hasTrackedView.current = false;
       setIsVideoMuted(true);
+      setPendingAudioActivation(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, open]);
 
   useEffect(() => {
     setIsVideoMuted(true);
+    setPendingAudioActivation(false);
   }, [productId]);
+
+  const ensureAudioPlaybackUnlocked = useCallback(async () => {
+    if (typeof window === 'undefined' || !videoRef.current) return;
+
+    const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextCtor();
+    }
+
+    if (!mediaSourceRef.current || !gainNodeRef.current) {
+      mediaSourceRef.current = audioContextRef.current.createMediaElementSource(videoRef.current);
+      gainNodeRef.current = audioContextRef.current.createGain();
+      mediaSourceRef.current.connect(gainNodeRef.current);
+      gainNodeRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    gainNodeRef.current.gain.value = 1;
+  }, [videoRef]);
+
+  const syncVideoAudioState = useCallback(() => {
+    if (!videoRef.current) return;
+
+    videoRef.current.muted = isVideoMuted;
+    if (!isVideoMuted) {
+      videoRef.current.volume = 1;
+    }
+  }, [isVideoMuted, videoRef]);
+
+  useEffect(() => {
+    syncVideoAudioState();
+  }, [syncVideoAudioState, isPlayingVideo, currentVideoIndex]);
+
+  useEffect(() => {
+    if (!pendingAudioActivation || !videoRef.current) return;
+
+    const videoElement = videoRef.current;
+    ensureAudioPlaybackUnlocked()
+      .catch(() => {
+        // Ignore les erreurs d'unlock et tente quand même la lecture HTML5 standard.
+      })
+      .finally(() => {
+        videoElement.defaultMuted = false;
+        videoElement.muted = false;
+        videoElement.volume = 1;
+        videoElement.play().catch(() => {
+          // Le navigateur peut bloquer la lecture sonore si la vidéo vient juste d'être montée.
+        }).finally(() => {
+          setPendingAudioActivation(false);
+        });
+      });
+  }, [ensureAudioPlaybackUnlocked, pendingAudioActivation, isPlayingVideo, currentVideoIndex, videoRef]);
 
   const enableVideoAudio = () => {
     setIsVideoMuted(false);
+    setPendingAudioActivation(true);
     pauseAutoPlay();
 
     if (videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.volume = 1;
-      videoRef.current.play().catch(() => {
-        // Le navigateur peut encore imposer une interaction supplémentaire selon le contexte.
-      });
+      ensureAudioPlaybackUnlocked()
+        .catch(() => {
+          // Fallback silencieux si AudioContext n'est pas disponible.
+        })
+        .finally(() => {
+          videoRef.current!.defaultMuted = false;
+          videoRef.current!.muted = false;
+          videoRef.current!.volume = 1;
+          videoRef.current!.play().catch(() => {
+            // Le navigateur peut encore imposer une interaction supplémentaire selon le contexte.
+          }).finally(() => {
+            setPendingAudioActivation(false);
+          });
+        });
     }
   };
 
@@ -234,6 +313,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           title,
           price,
           currency,
+          product_type,
           description,
           images,
           video_url,
@@ -271,6 +351,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           name: digitalProduct.title,
           price: digitalProduct.price || 0,
           currency: derivedCurrency, // Devise du produit
+          product_type: digitalProduct.product_type || undefined,
           description: digitalProduct.description || undefined,
           images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
           promotional_videos: digitalProduct.video_url ? [digitalProduct.video_url] : [],
@@ -310,7 +391,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         description: "Vous allez être redirigé vers la page de paiement du partenaire",
         duration: 2000,
       });
-      
+
       // Ouvrir dans un nouvel onglet après un court délai
       setTimeout(() => {
         window.open(product.affiliate_url, "_blank", "noopener,noreferrer");
@@ -320,7 +401,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast.error('Veuillez vous connecter pour acheter');
         navigate('/auth');
@@ -328,20 +409,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       }
 
       const totalAmount = product.price * quantity;
-      
+
       // Déterminer si c'est un produit numérique (product_mode existe = digital_products)
       const isDigital = !!product.product_mode;
-      
+
       toast.success('Redirection vers le paiement...');
-      navigate(`/payment`, { 
-        state: { 
+      navigate(`/payment`, {
+        state: {
           productId: product.id,
           productName: product.name,
           amount: totalAmount,
           quantity,
           vendorId: product.vendor_id,
           productType: isDigital ? 'digital' : 'physical'
-        } 
+        }
       });
     } catch (error) {
       console.error('Erreur lors de l\'achat:', error);
@@ -351,6 +432,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    if (product.product_mode) {
+      toast.info('Les produits numériques s’achètent directement via le bouton Acheter.');
+      return;
+    }
 
     // Pour les produits affiliés, ne pas ajouter au panier mais informer l'utilisateur
     if (product.is_affiliate && product.affiliate_url) {
@@ -373,7 +459,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         affiliate_url: product.affiliate_url
       });
     }
-    
+
     toast.success(`${quantity} produit(s) ajouté(s) au panier`);
     onClose();
   };
@@ -386,7 +472,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast.error('Veuillez vous connecter pour contacter le vendeur');
         navigate('/auth');
@@ -394,7 +480,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       }
 
       // Vérifier que l'utilisateur a un profil, sinon le créer
-      const { data: senderProfile, error: profileError } = await supabase
+      const { data: senderProfile, error: _profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', user.id)
@@ -409,7 +495,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             email: user.email,
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilisateur'
           });
-        
+
         if (createError) {
           console.error('Erreur création profil:', createError);
           toast.error('Impossible de configurer votre profil. Veuillez réessayer.');
@@ -418,7 +504,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       }
 
       // Vérifier que le vendeur a un profil, sinon le créer automatiquement
-      let { data: recipientProfile, error: recipientError } = await supabase
+      // eslint-disable-next-line prefer-const
+      let { data: recipientProfile, error: _recipientError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .eq('id', product.vendors.user_id)
@@ -426,12 +513,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       if (!recipientProfile) {
         console.log('Profil vendeur non trouvé, création automatique pour:', product.vendors.user_id);
-        
+
         // ✅ Utiliser les infos du vendeur disponibles (pas besoin d'appel admin)
         const vendorName = product.vendors.business_name || 'Vendeur';
         // Générer un email placeholder basé sur l'ID vendeur (sera mis à jour plus tard)
         const vendorEmail = `vendeur_${product.vendors.user_id.slice(0, 8)}@224solution.net`;
-        
+
         const { data: createdProfile, error: createVendorError } = await supabase
           .from('profiles')
           .insert({
@@ -463,7 +550,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       // Créer un message initial
       const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
-      
+
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -479,13 +566,13 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       }
 
       toast.success('Message envoyé au vendeur!');
-      
+
       // Rediriger vers la page de messagerie
       setTimeout(() => {
         onClose();
         navigate(`/messages?recipientId=${product.vendors.user_id}`);
       }, 1000);
-      
+
     } catch (error) {
       console.error('Erreur lors du contact:', error);
       toast.error('Impossible de contacter le vendeur. Veuillez réessayer.');
@@ -537,6 +624,13 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                     controls
                     autoPlay
                     muted={isVideoMuted}
+                    playsInline
+                    onClick={() => {
+                      if (isVideoMuted) {
+                        enableVideoAudio();
+                      }
+                    }}
+                    onLoadedMetadata={syncVideoAudioState}
                     onVolumeChange={(event) => {
                       setIsVideoMuted(event.currentTarget.muted);
                     }}
@@ -584,7 +678,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </div>
               )}
             </div>
-            
+
             {/* Thumbnails - Videos + Images */}
             <div className="grid grid-cols-6 gap-2">
               {/* Video thumbnails */}
@@ -602,7 +696,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   </span>
                 </button>
               ))}
-              
+
               {/* Image thumbnails */}
               {images.map((img, index) => (
                 <button
@@ -650,17 +744,17 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <LocalPrice 
-                  amount={product.price} 
-                  currency={product.currency || 'GNF'} 
+                <LocalPrice
+                  amount={product.price}
+                  currency={product.currency || 'GNF'}
                   size="xl"
                   showOriginal={true}
                   className="text-primary"
                 />
-                {product.is_affiliate ? (
-                  <Badge className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+                {isAffiliateProduct ? (
+                  <Badge className={isAffiliateFlightTicket ? 'bg-orange-500 hover:bg-orange-600 text-white border-0' : 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0'}>
                     <ExternalLink className="w-3 h-3 mr-1" />
-                    Affiliation
+                    {isAffiliateFlightTicket ? 'Partenaire' : 'Affiliation'}
                   </Badge>
                 ) : (
                   <Badge variant="secondary">En stock</Badge>
@@ -713,7 +807,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <Separator />
 
             {/* Quantité - masquer pour les affiliations */}
-            {!product.is_affiliate && (
+            {!isAffiliateProduct && (
               <div>
                 <label className="text-sm font-medium mb-2 block">Quantité</label>
                 <div className="flex items-center gap-3">
@@ -736,16 +830,16 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             )}
 
-            {!product.is_affiliate && <Separator />}
+            {!isAffiliateProduct && <Separator />}
 
             {/* Total - masquer pour les affiliations */}
-            {!product.is_affiliate && (
+            {!isAffiliateProduct && (
               <div className="bg-accent p-4 rounded-lg">
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span className="text-accent-foreground">Total</span>
-                  <LocalPrice 
-                    amount={product.price * quantity} 
-                    currency={product.currency || 'GNF'} 
+                  <LocalPrice
+                    amount={product.price * quantity}
+                    currency={product.currency || 'GNF'}
                     size="lg"
                     className="text-accent-foreground"
                   />
@@ -754,16 +848,25 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             )}
 
             {/* Notice affiliation */}
-            {product.is_affiliate && (
-              <div className="bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+            {isAffiliateProduct && (
+              <div
+                className={isAffiliateFlightTicket
+                  ? 'bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 p-4 rounded-lg border border-orange-200 dark:border-orange-800'
+                  : 'bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800'
+                }
+              >
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
-                    <ExternalLink className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <div className={isAffiliateFlightTicket ? 'p-2 bg-orange-100 dark:bg-orange-900 rounded-full' : 'p-2 bg-purple-100 dark:bg-purple-900 rounded-full'}>
+                    <ExternalLink className={isAffiliateFlightTicket ? 'w-5 h-5 text-orange-600 dark:text-orange-400' : 'w-5 h-5 text-purple-600 dark:text-purple-400'} />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-purple-900 dark:text-purple-100">Produit partenaire</h4>
-                    <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                      En cliquant sur "Acheter", vous serez redirigé vers le site du fournisseur pour finaliser votre achat en toute sécurité.
+                    <h4 className={isAffiliateFlightTicket ? 'font-semibold text-orange-900 dark:text-orange-100' : 'font-semibold text-purple-900 dark:text-purple-100'}>
+                      {isAffiliateFlightTicket ? 'Réservation partenaire' : 'Produit partenaire'}
+                    </h4>
+                    <p className={isAffiliateFlightTicket ? 'text-sm text-orange-700 dark:text-orange-300 mt-1' : 'text-sm text-purple-700 dark:text-purple-300 mt-1'}>
+                      {isAffiliateFlightTicket
+                        ? 'Réservez votre vol en toute sécurité via notre partenaire. En cliquant sur "Réserver votre vol", vous serez redirigé vers sa plateforme pour consulter les disponibilités et finaliser votre réservation.'
+                        : 'En cliquant sur "Acheter", vous serez redirigé vers le site du fournisseur pour finaliser votre achat en toute sécurité.'}
                     </p>
                   </div>
                 </div>
@@ -772,14 +875,14 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
             {/* Actions */}
             <div className="space-y-2">
-              <Button 
-                className={`w-full ${product.is_affiliate ? 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700' : ''}`}
+              <Button
+                className={`w-full ${isAffiliateProduct ? (isAffiliateFlightTicket ? '!bg-orange-500 hover:!bg-orange-600 !text-white !shadow-lg !shadow-orange-500/30 hover:!shadow-orange-500/40' : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700') : ''}`}
                 onClick={handleBuy}
               >
-                {product.is_affiliate ? (
+                {isAffiliateProduct ? (
                   <>
                     <ExternalLink className="w-4 h-4 mr-2" />
-                    Acheter chez le partenaire
+                    {isAffiliateFlightTicket ? 'Réserver votre vol' : 'Acheter chez le partenaire'}
                   </>
                 ) : (
                   <>
@@ -788,10 +891,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   </>
                 )}
               </Button>
-              {!product.is_affiliate && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+              {!isAffiliateProduct && (
+                <Button
+                  variant="outline"
+                  className="w-full"
                   onClick={handleAddToCart}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -799,9 +902,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </Button>
               )}
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1" 
+                <Button
+                  variant="outline"
+                  className="flex-1"
                   onClick={handleContact}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
@@ -830,9 +933,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="space-y-2 pt-4 pb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
-                <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
+                <span>{isAffiliateProduct ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
               </div>
-              {!product.is_affiliate && (
+              {!isAffiliateProduct && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="w-4 h-4" />
                   <span>Livraison rapide disponible</span>
@@ -844,7 +947,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       </TabsContent>
 
       <TabsContent value="reviews">
-        <ProductReviewsSection 
+        <ProductReviewsSection
           productId={product.id}
           productName={product.name}
         />

@@ -1,7 +1,7 @@
 /**
  * PRODUCT IMPORT DIALOG
  * Dialog pour importer des produits depuis les connecteurs dropshipping
- * 
+ *
  * @module ProductImportDialog
  * @version 1.0.0
  * @author 224Solutions
@@ -37,7 +37,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import {
   Loader2,
-  Link2,
+  _Link2,
   Search,
   AlertTriangle,
   Package,
@@ -71,7 +71,7 @@ interface PriceConfig {
 
 function detectConnectorFromUrl(url: string): ConnectorType | null {
   const lowercaseUrl = url.toLowerCase();
-  
+
   if (lowercaseUrl.includes('aliexpress.com') || lowercaseUrl.includes('ae.') || lowercaseUrl.includes('a.aliexpress')) {
     return 'ALIEXPRESS';
   }
@@ -81,18 +81,18 @@ function detectConnectorFromUrl(url: string): ConnectorType | null {
   if (lowercaseUrl.includes('alibaba.com')) {
     return 'ALIBABA';
   }
-  
+
   return null;
 }
 
 function calculateSellingPrice(cost: number, config: PriceConfig): number {
   let price = cost * (1 + config.marginPercent / 100);
   price += config.fixedMargin;
-  
+
   if (config.roundToNearest > 0) {
     price = Math.ceil(price / config.roundToNearest) * config.roundToNearest;
   }
-  
+
   return Math.round(price * 100) / 100;
 }
 
@@ -111,28 +111,28 @@ export function ProductImportDialog({
     importFromId,
     saveProduct
   } = useConnectors(vendorId);
-  
+
   const [step, setStep] = useState<'input' | 'preview' | 'configure'>('input');
   const [importUrl, setImportUrl] = useState('');
   const [importId, setImportId] = useState('');
   const [selectedConnector, setSelectedConnector] = useState<ConnectorType | null>(null);
   const [importedProduct, setImportedProduct] = useState<ProductImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Configuration prix de vente
   const [priceConfig, setPriceConfig] = useState<PriceConfig>({
     marginPercent: 30,
     fixedMargin: 0,
     roundToNearest: 1000
   });
-  
+
   // Options produit
   const [productOptions, setProductOptions] = useState({
     publishImmediately: true,
     syncPrices: true,
     syncStock: true
   });
-  
+
   // Helper pour accéder aux données normalisées
   const productData = importedProduct?.normalizedProduct;
   const productCost = productData?.priceUsd || 0;
@@ -140,12 +140,12 @@ export function ProductImportDialog({
   const productImages = productData?.images || [];
   const productTitle = productData?.title || '';
   const productMoq = productData?.moq || 1;
-  const productShippingTime = productData?.estimatedDeliveryDays 
+  const productShippingTime = productData?.estimatedDeliveryDays
     ? `${productData.estimatedDeliveryDays.min}-${productData.estimatedDeliveryDays.max} jours`
     : null;
   const productVariants = productData?.variants || [];
   const productSourceUrl = productData?.sourceUrl || '';
-  
+
   // Reset à l'ouverture
   useEffect(() => {
     if (open) {
@@ -156,7 +156,7 @@ export function ProductImportDialog({
       setError(null);
     }
   }, [open]);
-  
+
   // Détecter le connecteur depuis l'URL
   useEffect(() => {
     if (importUrl) {
@@ -166,17 +166,17 @@ export function ProductImportDialog({
       }
     }
   }, [importUrl, activeConnectors]);
-  
+
   // Import via URL
   const handleImportFromUrl = async () => {
     if (!importUrl.trim()) {
       setError('Veuillez entrer une URL');
       return;
     }
-    
+
     setError(null);
     const result = await importFromUrl(importUrl);
-    
+
     if (result) {
       setImportedProduct(result);
       setStep('preview');
@@ -184,7 +184,7 @@ export function ProductImportDialog({
       setError('Impossible d\'importer ce produit. Vérifiez l\'URL et réessayez.');
     }
   };
-  
+
   // Import via ID
   const handleImportFromId = async () => {
     if (!selectedConnector) {
@@ -195,10 +195,10 @@ export function ProductImportDialog({
       setError('Veuillez entrer l\'ID du produit');
       return;
     }
-    
+
     setError(null);
     const result = await importFromId(importId, selectedConnector);
-    
+
     if (result) {
       setImportedProduct(result);
       setStep('preview');
@@ -206,24 +206,24 @@ export function ProductImportDialog({
       setError('Produit non trouvé. Vérifiez l\'ID et réessayez.');
     }
   };
-  
+
   // Enregistrer le produit
   const handleSaveProduct = async () => {
     if (!importedProduct) return;
-    
-    const sellingPrice = calculateSellingPrice(productCost, priceConfig);
-    
+
+    const _sellingPrice = calculateSellingPrice(productCost, priceConfig);
+
     const savedProduct = await saveProduct(importedProduct, {
       autoPublish: productOptions.publishImmediately,
       marginPercent: priceConfig.marginPercent
     });
-    
+
     if (savedProduct) {
       onProductImported?.(importedProduct);
       onOpenChange(false);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -238,7 +238,7 @@ export function ProductImportDialog({
             {step === 'configure' && 'Configurez le prix de vente'}
           </DialogDescription>
         </DialogHeader>
-        
+
         {/* ÉTAPE 1: Saisie URL/ID */}
         {step === 'input' && (
           <div className="space-y-6 py-4">
@@ -247,7 +247,7 @@ export function ProductImportDialog({
                 <TabsTrigger value="url">Par URL</TabsTrigger>
                 <TabsTrigger value="id">Par ID</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="url" className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="productUrl">URL du produit</Label>
@@ -274,7 +274,7 @@ export function ProductImportDialog({
                     Copiez-collez l'URL du produit depuis AliExpress, Alibaba ou 1688
                   </p>
                 </div>
-                
+
                 {selectedConnector && (
                   <Alert>
                     <Check className="w-4 h-4" />
@@ -284,7 +284,7 @@ export function ProductImportDialog({
                   </Alert>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="id" className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="connector">Sélectionner le connecteur</Label>
@@ -304,7 +304,7 @@ export function ProductImportDialog({
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="productId">ID du produit</Label>
                   <div className="flex gap-2">
@@ -329,14 +329,14 @@ export function ProductImportDialog({
                 </div>
               </TabsContent>
             </Tabs>
-            
+
             {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="w-4 h-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             {activeConnectors.length === 0 && (
               <Alert>
                 <AlertTriangle className="w-4 h-4" />
@@ -347,7 +347,7 @@ export function ProductImportDialog({
             )}
           </div>
         )}
-        
+
         {/* ÉTAPE 2: Prévisualisation */}
         {step === 'preview' && importedProduct && productData && (
           <div className="space-y-4 py-4">
@@ -368,23 +368,23 @@ export function ProductImportDialog({
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Infos */}
                   <div className="flex-1 space-y-2">
                     <h3 className="font-semibold line-clamp-2">{productTitle}</h3>
-                    
+
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="outline">
                         <DollarSign className="w-3 h-3 mr-1" />
                         Coût: {formatCurrency(productCost, productCurrency)}
                       </Badge>
-                      
+
                       {productMoq > 1 && (
                         <Badge variant="secondary">
                           MOQ: {productMoq} unités
                         </Badge>
                       )}
-                      
+
                       {productShippingTime && (
                         <Badge variant="outline">
                           <Truck className="w-3 h-3 mr-1" />
@@ -392,13 +392,13 @@ export function ProductImportDialog({
                         </Badge>
                       )}
                     </div>
-                    
+
                     {productVariants.length > 0 && (
                       <p className="text-sm text-muted-foreground">
                         {productVariants.length} variante(s) disponible(s)
                       </p>
                     )}
-                    
+
                     <a
                       href={productSourceUrl}
                       target="_blank"
@@ -411,7 +411,7 @@ export function ProductImportDialog({
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Images supplémentaires */}
             {productImages.length > 1 && (
               <div>
@@ -432,7 +432,7 @@ export function ProductImportDialog({
                 </div>
               </div>
             )}
-            
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep('input')}>
                 Retour
@@ -443,7 +443,7 @@ export function ProductImportDialog({
             </div>
           </div>
         )}
-        
+
         {/* ÉTAPE 3: Configuration prix */}
         {step === 'configure' && importedProduct && (
           <div className="space-y-6 py-4">
@@ -465,7 +465,7 @@ export function ProductImportDialog({
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4 pt-4 border-t">
                   {/* Marge en % */}
                   <div className="space-y-2">
@@ -481,7 +481,7 @@ export function ProductImportDialog({
                       step={5}
                     />
                   </div>
-                  
+
                   {/* Marge fixe */}
                   <div className="space-y-2">
                     <Label htmlFor="fixedMargin">Marge fixe (GNF)</Label>
@@ -489,21 +489,21 @@ export function ProductImportDialog({
                       id="fixedMargin"
                       type="number"
                       value={priceConfig.fixedMargin}
-                      onChange={(e) => setPriceConfig(prev => ({ 
-                        ...prev, 
-                        fixedMargin: parseInt(e.target.value) || 0 
+                      onChange={(e) => setPriceConfig(prev => ({
+                        ...prev,
+                        fixedMargin: parseInt(e.target.value) || 0
                       }))}
                     />
                   </div>
-                  
+
                   {/* Arrondi */}
                   <div className="space-y-2">
                     <Label htmlFor="roundTo">Arrondir au multiple de</Label>
                     <Select
                       value={String(priceConfig.roundToNearest)}
-                      onValueChange={(value) => setPriceConfig(prev => ({ 
-                        ...prev, 
-                        roundToNearest: parseInt(value) 
+                      onValueChange={(value) => setPriceConfig(prev => ({
+                        ...prev,
+                        roundToNearest: parseInt(value)
                       }))}
                     >
                       <SelectTrigger>
@@ -519,7 +519,7 @@ export function ProductImportDialog({
                     </Select>
                   </div>
                 </div>
-                
+
                 {/* Profit estimé */}
                 <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                   <p className="text-sm text-green-800">
@@ -534,7 +534,7 @@ export function ProductImportDialog({
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Options */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -542,43 +542,43 @@ export function ProductImportDialog({
                 <Switch
                   id="publish"
                   checked={productOptions.publishImmediately}
-                  onCheckedChange={(checked) => setProductOptions(prev => ({ 
-                    ...prev, 
-                    publishImmediately: checked 
+                  onCheckedChange={(checked) => setProductOptions(prev => ({
+                    ...prev,
+                    publishImmediately: checked
                   }))}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="syncPrices">Synchroniser les prix automatiquement</Label>
                 <Switch
                   id="syncPrices"
                   checked={productOptions.syncPrices}
-                  onCheckedChange={(checked) => setProductOptions(prev => ({ 
-                    ...prev, 
-                    syncPrices: checked 
+                  onCheckedChange={(checked) => setProductOptions(prev => ({
+                    ...prev,
+                    syncPrices: checked
                   }))}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="syncStock">Synchroniser le stock automatiquement</Label>
                 <Switch
                   id="syncStock"
                   checked={productOptions.syncStock}
-                  onCheckedChange={(checked) => setProductOptions(prev => ({ 
-                    ...prev, 
-                    syncStock: checked 
+                  onCheckedChange={(checked) => setProductOptions(prev => ({
+                    ...prev,
+                    syncStock: checked
                   }))}
                 />
               </div>
             </div>
-            
+
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setStep('preview')}>
                 Retour
               </Button>
-              <Button 
+              <Button
                 onClick={handleSaveProduct}
                 disabled={importing}
                 className="bg-green-600 hover:bg-green-700"

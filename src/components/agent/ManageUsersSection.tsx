@@ -84,6 +84,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
   useEffect(() => {
     filterUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, roleFilter, users]);
 
   const loadUsers = async () => {
@@ -121,7 +122,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
     let filtered = users;
 
     if (searchTerm) {
-      filtered = filtered.filter(u => 
+      filtered = filtered.filter(u =>
         u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -149,7 +150,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('agent-toggle-user-status', {
+      const { _data, error } = await supabase.functions.invoke('agent-toggle-user-status', {
         body: { agentToken, userId, currentStatus }
       });
 
@@ -171,7 +172,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('agent-delete-user', {
+      const { _data, error } = await supabase.functions.invoke('agent-delete-user', {
         body: { agentToken, userId }
       });
 
@@ -299,8 +300,8 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       {/* Users List */}
       <div className="grid gap-4">
         {filteredUsers.map((user, index) => (
-          <Card 
-            key={user.id} 
+          <Card
+            key={user.id}
             className="border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-200 animate-fade-in"
             style={{ animationDelay: `${index * 30}ms` }}
           >
@@ -318,7 +319,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-xl font-bold">
-                        {user.first_name || user.last_name 
+                        {user.first_name || user.last_name
                           ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
                           : 'Sans nom'}
                       </h3>
@@ -351,7 +352,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         </>
                       )}
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -395,7 +396,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <p className="font-medium">{user.email}</p>
                       </div>
                     </div>
-                    
+
                     {user.phone && (
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="w-4 h-4 text-muted-foreground" />
@@ -405,7 +406,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         </div>
                       </div>
                     )}
-                    
+
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <div>
