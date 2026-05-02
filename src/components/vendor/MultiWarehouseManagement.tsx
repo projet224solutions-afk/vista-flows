@@ -4,51 +4,51 @@
  * 224SOLUTIONS - Interface vendeur professionnelle
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { _Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { _Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { _Progress } from '@/components/ui/progress';
+import { _Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Warehouse, 
-  Store, 
-  MapPin, 
-  Plus, 
-  ArrowRightLeft, 
-  AlertTriangle, 
+import {
+  Warehouse,
+  _Store,
+  MapPin,
+  Plus,
+  ArrowRightLeft,
+  AlertTriangle,
   Package,
   Truck,
   CheckCircle2,
   XCircle,
   Clock,
-  MoreVertical,
+  _MoreVertical,
   Edit,
-  Trash2,
+  _Trash2,
   Star,
   Eye,
-  Phone,
-  Mail,
+  _Phone,
+  _Mail,
   User,
   TrendingDown,
-  BarChart3,
+  _BarChart3,
   RefreshCw,
-  Search,
-  Filter,
-  ChevronRight,
+  _Search,
+  _Filter,
+  _ChevronRight,
   Building2,
-  ShoppingBag,
-  AlertCircle,
+  _ShoppingBag,
+  _AlertCircle,
   FileDown
 } from 'lucide-react';
 import { useMultiWarehouse, VendorLocation, StockTransfer, CreateLocationInput, CreateTransferInput } from '@/hooks/useMultiWarehouse';
@@ -62,7 +62,7 @@ import { fr } from 'date-fns/locale';
 // Composant pour les stats d'un lieu
 function LocationStatsCard({ stats }: { stats: any }) {
   if (!stats) return null;
-  
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
       <div className="text-center p-2 bg-muted/50 rounded-lg">
@@ -86,13 +86,13 @@ function LocationStatsCard({ stats }: { stats: any }) {
 }
 
 // Carte d'un lieu logistique
-function LocationCard({ 
-  location, 
-  onEdit, 
-  onDelete, 
+function LocationCard({
+  location,
+  onEdit,
+  _onDelete,
   onSetDefault,
-  onViewStock 
-}: { 
+  onViewStock
+}: {
   location: VendorLocation;
   onEdit: () => void;
   onDelete: () => void;
@@ -177,16 +177,16 @@ function LocationCard({
       </CardContent>
 
       <CardFooter className="flex gap-2 pt-3 border-t">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="flex-1"
           onClick={onViewStock}
         >
           <Eye className="w-4 h-4 mr-1" />
           Stock
         </Button>
-        
+
         <Button variant="ghost" size="icon" onClick={onEdit}>
           <Edit className="w-4 h-4" />
         </Button>
@@ -225,15 +225,13 @@ function TransferStatusBadge({ status }: { status: string }) {
 // Composant principal
 export default function MultiWarehouseManagement() {
   const {
-    locations,
     warehouses,
-    posLocations,
     transfers,
     pendingTransfers,
     inTransitTransfers,
     losses,
     totalLossValue,
-    productMappings,
+    _productMappings,
     loading,
     createLocation,
     updateLocation,
@@ -251,18 +249,18 @@ export default function MultiWarehouseManagement() {
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('locations');
-  
+
   // Dialogs
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
+
   // Selected items
   const [selectedLocation, setSelectedLocation] = useState<VendorLocation | null>(null);
   const [selectedTransfer, setSelectedTransfer] = useState<StockTransfer | null>(null);
   const [locationStock, setLocationStock] = useState<any[]>([]);
-  
+
   // Form states
   const [newLocation, setNewLocation] = useState<CreateLocationInput>({
     name: '',
@@ -324,12 +322,12 @@ export default function MultiWarehouseManagement() {
   };
 
   // Toggle POS
-  const handleTogglePOS = async (location: VendorLocation) => {
+  const _handleTogglePOS = async (location: VendorLocation) => {
     await togglePOS(location.id, !location.is_pos_enabled);
   };
 
   // Créer un transfert
-  const handleCreateTransfer = async (e: React.FormEvent) => {
+  const _handleCreateTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (transferForm.items.length === 0) {
       toast({
@@ -359,9 +357,9 @@ export default function MultiWarehouseManagement() {
   };
 
   // Confirmer réception
-  const handleConfirmReception = async () => {
+  const _handleConfirmReception = async () => {
     if (!selectedTransfer) return;
-    
+
     // Pour simplifier, on confirme tout comme reçu
     const items = selectedTransfer.items?.map(item => ({
       product_id: item.product_id,
@@ -372,7 +370,7 @@ export default function MultiWarehouseManagement() {
       transfer_id: selectedTransfer.id,
       items
     });
-    
+
     setShowConfirmDialog(false);
     setSelectedTransfer(null);
   };
@@ -644,7 +642,7 @@ export default function MultiWarehouseManagement() {
                           <div className="text-right">
                             <p className="font-medium">{transfer.total_items || transfer.total_quantity_sent || 0} article(s)</p>
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(transfer.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                              {transfer.created_at ? format(new Date(transfer.created_at), 'dd MMM yyyy HH:mm', { locale: fr }) : '-'}
                             </p>
                           </div>
                           <TransferStatusBadge status={transfer.status} />
@@ -653,15 +651,15 @@ export default function MultiWarehouseManagement() {
                         <div className="flex gap-2 flex-wrap justify-end">
                           {transfer.status === 'pending' && (
                             <>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => handleShipTransfer(transfer)}
                               >
                                 <Truck className="w-4 h-4 mr-1" />
                                 Expédier
                               </Button>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="destructive"
                                 onClick={() => cancelTransfer(transfer.id)}
                               >
@@ -670,7 +668,7 @@ export default function MultiWarehouseManagement() {
                             </>
                           )}
                           {transfer.status === 'in_transit' && (
-                            <Button 
+                            <Button
                               size="sm"
                               onClick={() => {
                                 setSelectedTransfer(transfer);
@@ -775,7 +773,7 @@ export default function MultiWarehouseManagement() {
                           {loss.total_loss_value?.toLocaleString()} GNF
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(loss.reported_at), 'dd/MM/yyyy', { locale: fr })}
+                          {loss.reported_at ? format(new Date(loss.reported_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -805,7 +803,7 @@ export default function MultiWarehouseManagement() {
               )}
             </DialogTitle>
             <DialogDescription>
-              {selectedLocation 
+              {selectedLocation
                 ? "Modifiez les informations de ce lieu"
                 : "Créez un nouvel entrepôt ou site logistique"
               }
@@ -837,8 +835,8 @@ export default function MultiWarehouseManagement() {
 
               <div>
                 <Label htmlFor="type">Type de lieu</Label>
-                <Select 
-                  value={newLocation.location_type} 
+                <Select
+                  value={newLocation.location_type}
                   onValueChange={(v) => setNewLocation(prev => ({ ...prev, location_type: v as any }))}
                 >
                   <SelectTrigger>
@@ -969,9 +967,9 @@ export default function MultiWarehouseManagement() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {stock.product?.images?.[0] && (
-                            <img 
-                              src={stock.product.images[0]} 
-                              alt="" 
+                            <img
+                              src={stock.product.images[0]}
+                              alt=""
                               className="w-8 h-8 rounded object-cover"
                             />
                           )}

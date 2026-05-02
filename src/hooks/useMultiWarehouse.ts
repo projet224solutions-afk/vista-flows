@@ -1071,7 +1071,8 @@ export function useMultiWarehouse() {
   // COMPUTED VALUES
   // =============================================
 
-  const warehouses = locations.filter(l => l.location_type === 'warehouse' && !l.is_pos_enabled);
+  // Inclut les entrepôts POS-activés : un lieu peut être entrepôt ET point de vente
+  const warehouses = locations.filter(l => l.location_type === 'warehouse');
   const posLocations = locations.filter(l => l.is_pos_enabled);
   const activeLocations = locations.filter(l => l.is_active);
   const defaultLocation = locations.find(l => l.is_default);
