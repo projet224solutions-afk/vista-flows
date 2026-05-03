@@ -11,6 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const logLevel = process.env.LOG_LEVEL || 'info';
+const isServerlessRuntime = !!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.VERCEL;
 
 // Format personnalisé
 const customFormat = winston.format.combine(
@@ -29,34 +30,36 @@ const customFormat = winston.format.combine(
   })
 );
 
-// Configuration du logger
-export const logger = winston.createLogger({
-  level: logLevel,
-  format: customFormat,
-  transports: [
-    // Console
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }),
+const transports = [
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
+  }),
+];
 
-    // Fichier pour toutes les logs
+if (!isServerlessRuntime) {
+  transports.push(
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/backend.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5
     }),
-
-    // Fichier pour les erreurs uniquement
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/error.log'),
       level: 'error',
       maxsize: 5242880,
       maxFiles: 5
     })
-  ],
+  );
+}
+
+// Configuration du logger
+export const logger = winston.createLogger({
+  level: logLevel,
+  format: customFormat,
+  transports,
   exitOnError: false
 });
 
