@@ -5,12 +5,16 @@
 
 import express from 'express';
 import multer from 'multer';
+import { mkdirSync } from 'fs';
 import { authenticateToken } from '../middlewares/auth.js';
 import { uploadRateLimiter } from '../middlewares/rateLimiter.js';
 import { logger } from '../config/logger.js';
 
 const router = express.Router();
-const uploadDestination = process.env.UPLOAD_PATH || (process.env.VERCEL ? '/tmp/uploads' : './uploads/');
+const uploadDestination = process.env.VERCEL ? '/tmp/uploads' : (process.env.UPLOAD_PATH || './uploads/');
+
+// Ensure upload directory exists (writable /tmp on Lambda, local dir otherwise)
+try { mkdirSync(uploadDestination, { recursive: true }); } catch (_) { /* ignore if already exists */ }
 
 // Configuration Multer
 const upload = multer({
