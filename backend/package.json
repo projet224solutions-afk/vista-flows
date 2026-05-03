@@ -2,7 +2,7 @@
   "name": "backend-224solutions",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "npx --yes tsx src/server.ts",
     "dev": "npx --yes tsx watch src/server.ts"
@@ -29,7 +29,8 @@
     "stripe": "^22.0.1",
     "tsx": "^4.21.0",
     "winston": "^3.18.3",
-    "xss-clean": "^0.1.4"
+    "xss-clean": "^0.1.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",

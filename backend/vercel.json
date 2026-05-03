@@ -1,4 +1,6 @@
 {
+  "framework": null,
+  "buildCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
