@@ -50,6 +50,14 @@
       "destination": "https://backend-kappa-green-63.vercel.app/internal/:path*"
     },
     {
+      "source": "/edge-functions/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/edge-functions/:path*"
+    },
+    {
+      "source": "/webhooks/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/webhooks/:path*"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }
