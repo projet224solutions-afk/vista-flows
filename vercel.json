@@ -1,0 +1,57 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.224solution.net"
+        }
+      ],
+      "destination": "https://224solution.net/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/s/:path*",
+      "destination": "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/short-link/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://backend-kappa-green-63.vercel.app/health"
+    },
+    {
+      "source": "/healthz",
+      "destination": "https://backend-kappa-green-63.vercel.app/healthz"
+    },
+    {
+      "source": "/healthz.json",
+      "destination": "https://backend-kappa-green-63.vercel.app/healthz.json"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/auth/:path*"
+    },
+    {
+      "source": "/jobs/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/jobs/:path*"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/media/:path*"
+    },
+    {
+      "source": "/internal/:path*",
+      "destination": "https://backend-kappa-green-63.vercel.app/internal/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -49,9 +49,9 @@ export const REGIONS: Record<string, RegionConfig> = {
     currency: 'GNF',
     languages: ['fr', 'ff', 'sus'],
     endpoints: {
-      api: 'https://api-africa.224solution.net',
-      cdn: 'https://cdn-africa.224solution.net',
-      websocket: 'wss://ws-africa.224solution.net',
+      api: 'https://224solution.net',
+      cdn: 'https://224solution.net',
+      websocket: 'wss://224solution.net',
       database: 'https://db-africa.supabase.co',
     },
     latency: {
