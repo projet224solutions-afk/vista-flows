@@ -290,7 +290,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.errors.map(e => ({
+        details: validation.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),

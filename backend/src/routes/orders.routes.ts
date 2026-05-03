@@ -538,7 +538,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       res.status(400).json({
         success: false,
         error: 'Données de commande invalides',
-        details: validation.error.errors.map(e => ({
+        details: validation.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -791,7 +791,7 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
       res.status(400).json({
         success: false,
         error: 'Données de commande digitale invalides',
-        details: validation.error.errors.map(e => ({
+        details: validation.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -1223,7 +1223,7 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
 
     const validation = statusSchema.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({ success: false, error: 'Données invalides', details: validation.error.errors });
+      res.status(400).json({ success: false, error: 'Données invalides', details: validation.error.issues });
       return;
     }
 

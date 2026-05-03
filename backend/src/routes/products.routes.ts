@@ -291,7 +291,7 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.errors.map(e => ({
+        details: validation.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -403,7 +403,7 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.errors.map(e => ({
+        details: validation.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
