@@ -4,6 +4,9 @@
 -- Script idempotent: sécurisé à exécuter plusieurs fois
 -- =====================================================
 
+-- Timeout verrou : échoue proprement si un autre process bloque un accès DDL
+SET lock_timeout = '10s';
+
 -- ============================================================
 -- MIGRATION: 20260129220000_multi_warehouse_pos_system.sql
 -- ============================================================
@@ -155,8 +158,20 @@ CREATE TABLE IF NOT EXISTS public.location_stock (
   UNIQUE(location_id, product_id)
 );
 
--- Ajouter available_quantity si elle n'existe pas (AVANT les index)
+-- Ajouter toutes les colonnes manquantes si elles n'existent pas (AVANT les index)
 ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS available_quantity INTEGER DEFAULT 0;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS reserved_quantity INTEGER DEFAULT 0;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS minimum_stock INTEGER DEFAULT 5;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS maximum_stock INTEGER;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS reorder_point INTEGER DEFAULT 10;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS reorder_quantity INTEGER DEFAULT 20;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS bin_location TEXT;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS lot_number TEXT;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS expiry_date DATE;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS cost_price DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS last_purchase_price DECIMAL(15,2);
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS last_stock_update TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.location_stock ADD COLUMN IF NOT EXISTS last_sale_at TIMESTAMPTZ;
 
 -- Index pour performance (APRÈS les colonnes)
 CREATE INDEX IF NOT EXISTS idx_location_stock_location ON location_stock(location_id);
@@ -242,6 +257,8 @@ ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_items_received
 ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_items_missing INTEGER DEFAULT 0;
 ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
 ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS destination_type TEXT DEFAULT 'warehouse';
+ALTER TABLE public.stock_transfers ADD COLUMN IF NOT EXISTS approval_status TEXT DEFAULT 'approved';
 
 -- Index (APRÈS les colonnes)
 CREATE INDEX IF NOT EXISTS idx_stock_transfers_vendor ON stock_transfers(vendor_id);
@@ -278,9 +295,13 @@ CREATE TABLE IF NOT EXISTS public.stock_transfer_items (
   UNIQUE(transfer_id, product_id)
 );
 
--- Ajouter colonnes calculées si elles n'existent pas (AVANT les index)
+-- Ajouter colonnes si elles n'existent pas (AVANT les index)
 ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS quantity_missing INTEGER DEFAULT 0;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS unit_cost DECIMAL(15,2) DEFAULT 0;
 ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS total_value DECIMAL(15,2) DEFAULT 0;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS reception_notes TEXT;
+ALTER TABLE public.stock_transfer_items ADD COLUMN IF NOT EXISTS missing_reason TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_transfer_items_transfer ON stock_transfer_items(transfer_id);
 CREATE INDEX IF NOT EXISTS idx_transfer_items_product ON stock_transfer_items(product_id);
@@ -341,6 +362,7 @@ ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS quantity INTEGER;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS unit_cost DECIMAL(15,2) DEFAULT 0;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS total_loss_value DECIMAL(15,2) DEFAULT 0;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS reason TEXT;
+ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS is_validated BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS validated_by UUID;
 ALTER TABLE public.stock_losses ADD COLUMN IF NOT EXISTS validated_at TIMESTAMPTZ;
@@ -435,11 +457,21 @@ CREATE INDEX IF NOT EXISTS idx_stock_history_reference ON location_stock_history
 -- 7. MISE À JOUR TABLE ORDERS POUR MULTI-POS
 -- ===========================================
 
--- Ajouter la colonne location_id aux commandes
+-- Ajouter colonnes orders si elles n'existent pas
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES public.vendor_locations(id);
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS pos_cashier_id UUID REFERENCES auth.users(id);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'GNF';
 
 CREATE INDEX IF NOT EXISTS idx_orders_location ON orders(location_id);
+
+-- Ajouter colonnes order_items si elles n'existent pas
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS product_name TEXT;
+
+-- Ajouter colonnes escrow_transactions si elles n'existent pas
+ALTER TABLE public.escrow_transactions ADD COLUMN IF NOT EXISTS payer_id UUID;
+ALTER TABLE public.escrow_transactions ADD COLUMN IF NOT EXISTS receiver_id UUID;
+ALTER TABLE public.escrow_transactions ADD COLUMN IF NOT EXISTS auto_release_at TIMESTAMPTZ;
+ALTER TABLE public.escrow_transactions ADD COLUMN IF NOT EXISTS payment_method TEXT;
 
 -- ===========================================
 -- 8. LIAISON ACHATS → ENTREPÔT
@@ -1094,16 +1126,14 @@ GRANT EXECUTE ON FUNCTION get_location_stats(UUID) TO authenticated;
 -- ===========================================
 
 -- Créer un lieu par défaut pour chaque vendeur qui a des entrepôts
-INSERT INTO vendor_locations (vendor_id, name, code, location_type, is_default, address, contact_person, contact_phone, created_at)
-SELECT 
+INSERT INTO vendor_locations (vendor_id, name, code, location_type, is_default, address, created_at)
+SELECT
   w.vendor_id,
   w.name,
   'ENT' || ROW_NUMBER() OVER (PARTITION BY w.vendor_id ORDER BY w.created_at),
   'warehouse',
   ROW_NUMBER() OVER (PARTITION BY w.vendor_id ORDER BY w.created_at) = 1,
   w.address,
-  w.contact_person,
-  w.contact_phone,
   w.created_at
 FROM warehouses w
 WHERE NOT EXISTS (
@@ -1138,9 +1168,9 @@ COMMENT ON TABLE stock_losses IS 'Pertes et manquants de stock';
 COMMENT ON TABLE location_permissions IS 'Permissions des utilisateurs par lieu';
 COMMENT ON TABLE location_stock_history IS 'Historique des mouvements de stock par lieu';
 
-COMMENT ON FUNCTION create_stock_transfer IS 'Crée un nouveau transfert de stock avec validation';
-COMMENT ON FUNCTION ship_transfer IS 'Expédie un transfert (passe en transit et décrémente le stock source)';
-COMMENT ON FUNCTION confirm_transfer_reception IS 'Confirme la réception avec gestion des manquants';
+COMMENT ON FUNCTION create_stock_transfer(UUID, UUID, UUID, JSONB, TEXT, UUID) IS 'Crée un nouveau transfert de stock avec validation';
+COMMENT ON FUNCTION ship_transfer(UUID, UUID, TEXT) IS 'Expédie un transfert (passe en transit et décrémente le stock source)';
+COMMENT ON FUNCTION confirm_transfer_reception(UUID, JSONB, UUID, TEXT) IS 'Confirme la réception avec gestion des manquants';
 
 
 -- ============================================================
@@ -1732,6 +1762,10 @@ $$;
 
 REVOKE ALL ON FUNCTION public.credit_agent_commission(uuid, numeric, text, uuid, jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.credit_agent_commission(uuid, numeric, text, uuid, jsonb) TO service_role;
+
+-- Ensure currency_type column exists on agent_wallets before view and functions reference it
+ALTER TABLE public.agent_wallets ADD COLUMN IF NOT EXISTS currency_type TEXT DEFAULT 'GNF';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_wallets_agent_currency ON public.agent_wallets(agent_id, currency_type);
 
 DROP VIEW IF EXISTS public.agent_commission_stats;
 CREATE VIEW public.agent_commission_stats AS
@@ -3036,7 +3070,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_order_core IS
+COMMENT ON FUNCTION public.create_order_core(text, uuid, uuid, uuid, text, text, jsonb, text, jsonb, int, uuid, numeric) IS
   'Création atomique commande + items + décrément stock + escrow (avec payer_id, receiver_id) + débit wallet optionnel. Tous en une seule transaction PostgreSQL.';
 
 -- Pas de changement de GRANT nécessaire (SECURITY DEFINER, pas de revoke/grant supplémentaire requis)
@@ -3057,8 +3091,6 @@ COMMENT ON FUNCTION public.create_order_core IS
 --   5. confirm_transfer_reception : utilise to_location_id (obsolète)
 --   6. get_location_stats : utilise les anciennes colonnes
 -- =====================================================
-
-BEGIN;
 
 -- =====================================================
 -- 1. COLONNES MANQUANTES DANS stock_transfers
@@ -3114,6 +3146,8 @@ SET quantity_lost = COALESCE(NULLIF(quantity_lost, 0), quantity_missing, 0);
 -- =====================================================
 -- L'ancienne version avait p_user_id / p_notes
 -- Le hook appelle p_shipped_by / p_shipping_notes
+-- DROP préalable obligatoire : PostgreSQL interdit le renommage de paramètres via CREATE OR REPLACE
+DROP FUNCTION IF EXISTS public.ship_transfer(UUID, UUID, TEXT);
 
 CREATE OR REPLACE FUNCTION public.ship_transfer(
   p_transfer_id   UUID,
@@ -3433,6 +3467,8 @@ GRANT EXECUTE ON FUNCTION public.get_location_stats(UUID) TO authenticated;
 -- =====================================================
 -- L'ancienne migration utilisait from_location_id/to_location_id
 -- Recréer pour utiliser source_location_id/destination_location_id
+-- Supprimer l'ancienne version 6-param pour éviter l'ambiguïté de surcharge
+DROP FUNCTION IF EXISTS public.create_stock_transfer(UUID, UUID, UUID, JSONB, TEXT, UUID);
 
 CREATE OR REPLACE FUNCTION public.create_stock_transfer(
   p_vendor_id              UUID,
@@ -3519,36 +3555,50 @@ GRANT EXECUTE ON FUNCTION public.create_stock_transfer(UUID, UUID, UUID, JSONB, 
 -- =====================================================
 -- 8. RLS POUR warehouse_shop_product_links
 -- =====================================================
--- La migration de l'extension professionnelle crée la table mais pas la RLS
+-- Encapsulé dans DO pour ignorer si la table n'existe pas encore
 
-ALTER TABLE public.warehouse_shop_product_links ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  ALTER TABLE public.warehouse_shop_product_links ENABLE ROW LEVEL SECURITY;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
-DROP POLICY IF EXISTS "Vendors can manage their shop product links" ON public.warehouse_shop_product_links;
-CREATE POLICY "Vendors can manage their shop product links"
-  ON public.warehouse_shop_product_links
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.vendors v
-      WHERE v.id = warehouse_shop_product_links.vendor_id
-        AND v.user_id = auth.uid()
-    )
-  );
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Vendors can manage their shop product links" ON public.warehouse_shop_product_links;
+  CREATE POLICY "Vendors can manage their shop product links"
+    ON public.warehouse_shop_product_links
+    FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM public.vendors v
+        WHERE v.id = warehouse_shop_product_links.vendor_id
+          AND v.user_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
 -- RLS pour warehouse_audit_logs
-ALTER TABLE public.warehouse_audit_logs ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  ALTER TABLE public.warehouse_audit_logs ENABLE ROW LEVEL SECURITY;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
-DROP POLICY IF EXISTS "Vendors can view their audit logs" ON public.warehouse_audit_logs;
-CREATE POLICY "Vendors can view their audit logs"
-  ON public.warehouse_audit_logs
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.vendors v
-      WHERE v.id = warehouse_audit_logs.vendor_id
-        AND v.user_id = auth.uid()
-    )
-  );
-
-COMMIT;
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Vendors can view their audit logs" ON public.warehouse_audit_logs;
+  CREATE POLICY "Vendors can view their audit logs"
+    ON public.warehouse_audit_logs
+    FOR SELECT USING (
+      EXISTS (
+        SELECT 1 FROM public.vendors v
+        WHERE v.id = warehouse_audit_logs.vendor_id
+          AND v.user_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
 
 
 -- ============================================================
@@ -3563,8 +3613,6 @@ COMMIT;
 --   2. RLS de toutes les tables entrepôt étendue aux agents (vendor_agents.user_id)
 --   3. Set du lieu par défaut pour chaque vendeur sans lieu par défaut
 -- =====================================================
-
-BEGIN;
 
 -- =====================================================
 -- 1. MIGRATION DONNÉES : warehouses → vendor_locations
@@ -3800,6 +3848,3 @@ FOR ALL USING (
   )
   OR location_permissions.user_id = auth.uid()
 );
-
-COMMIT;
-
