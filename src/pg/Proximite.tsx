@@ -82,6 +82,7 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
     path: "/services-proximite?type=reparation",
     description: "Électro & mécanique",
     image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-reparation.png",
     accent: "#b45309"
   },
   {
@@ -104,7 +105,7 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
     path: "/services-proximite?type=sante",
     description: "Pharmacie & soins",
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
-    logoImage: "/service-icons/logo-sante-bien-etre.svg",
+    logoImage: "/service-icons/icon-sante.png",
     accent: "#dc2626"
   },
   {
@@ -126,7 +127,7 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
     path: "/services-proximite?type=media",
     description: "Événements & création",
     image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
-    logoImage: "/service-icons/logo-photo-video.svg",
+    logoImage: "/service-icons/icon-photo-video.png",
     accent: "#9333ea"
   },
   {
@@ -137,7 +138,7 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
     path: "/services-proximite?type=informatique",
     description: "Tech & dépannage",
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-    logoImage: "/service-icons/logo-informatique.svg",
+    logoImage: "/service-icons/icon-informatique.png",
     accent: "#7c3aed"
   }
 ];
@@ -151,6 +152,7 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
     path: "/taxi",
     description: "Déplacements à proximité",
     image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-taxi-moto.png",
     accent: "#1d4ed8"
   },
   {
@@ -162,6 +164,7 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
     description: "Courses & colis rapides",
     trending: stats.livraison > 5,
     image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-livreur.png",
     accent: "#ff4000"
   }
 ];
@@ -175,6 +178,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.beaute,
     path: "/services-proximite?type=beaute",
     image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-beaute.png",
     accent: "#d63384"
   },
   {
@@ -185,6 +189,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.nettoyage,
     path: "/services-proximite?type=menage",
     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-nettoyage.png",
     accent: "#0891b2"
   },
   {
@@ -205,6 +210,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.agriculture,
     path: "/services-proximite?type=agriculture",
     image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-agriculture.png",
     accent: "#15803d"
   },
   {
@@ -215,6 +221,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.freelance,
     path: "/services-proximite?type=freelance",
     image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-administratif.png",
     accent: "#1d4ed8"
   },
   {
@@ -225,6 +232,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.maison,
     path: "/services-proximite?type=maison",
     image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-maison.png",
     accent: "#c2410c"
   }
 ];
