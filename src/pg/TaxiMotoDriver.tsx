@@ -73,7 +73,7 @@ export default function TaxiMotoDriver() {
             // Track position if ride is active
             if (activeRideRef.current) {
                 const ride = activeRideRef.current;
-                if (ride.status === 'picked_up' || ride.status === 'in_progress') {
+                if (['accepted', 'arriving', 'picked_up', 'in_progress'].includes(ride.status)) {
                     TaxiMotoService.trackPosition(
                         ride.id,
                         driverIdRef.current!,
