@@ -151,7 +151,7 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
     count: stats.vtc,
     path: "/taxi",
     description: "Déplacements à proximité",
-    image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-taxi-moto.png",
     accent: "#1d4ed8"
   },
@@ -163,7 +163,7 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
     path: "/proximite/livraison",
     description: "Courses & colis rapides",
     trending: stats.livraison > 5,
-    image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-livreur.png",
     accent: "#ff4000"
   }
