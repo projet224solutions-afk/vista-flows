@@ -200,6 +200,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
     count: stats.sport,
     path: "/services-proximite?type=sport",
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/icon-sport-fitness.png",
     accent: "#16a34a"
   },
   {
