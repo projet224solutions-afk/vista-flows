@@ -12,7 +12,6 @@ import { metrics } from '../services/metrics.service.js';
 import { env } from '../config/env.js';
 
 const router = Router();
-const startTime = Date.now();
 
 /**
  * GET /health — Liveness probe (always returns 200 if process is alive)
@@ -70,7 +69,7 @@ router.get('/detailed', async (_req: Request, res: Response) => {
         latencyMs: supabaseStatus.latencyMs,
       },
       redis: {
-        status: redisStatus.available ? 'up' : 'down',
+        status: redisStatus.available ? 'up' : (process.env.REDIS_ENABLED === 'false' ? 'disabled' : 'down'),
         latencyMs: redisStatus.latencyMs,
         connected: isRedisConnected(),
       },
@@ -111,7 +110,7 @@ router.get('/ops', async (_req: Request, res: Response) => {
   const concerns: string[] = [];
 
   if (!supabaseStatus.success) concerns.push('Supabase connection failed');
-  if (!redisStatus.available) concerns.push('Redis unavailable (using fallback)');
+  if (!redisStatus.available && process.env.REDIS_ENABLED !== 'false') concerns.push('Redis unavailable (using fallback)');
   if (heapUsedMB > 512) concerns.push(`High memory usage: ${Math.round(heapUsedMB)}MB`);
   if (supabaseStatus.latencyMs && supabaseStatus.latencyMs > 1000) concerns.push(`Slow Supabase: ${supabaseStatus.latencyMs}ms`);
 
