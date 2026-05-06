@@ -1,8 +1,8 @@
 ﻿import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
@@ -18,6 +18,7 @@ const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchases
 const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
 const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
+const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -160,6 +161,29 @@ export default function ServiceDashboard() {
               />
             </Suspense>
           </div>
+
+          <div className="mt-6">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-primary" />
+                  Assistant IA — {service.business_name}
+                </CardTitle>
+                <CardDescription>
+                  Votre copilote intelligent pour gérer et développer votre activité
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <CopiloteChat
+                    userRole="prestataire"
+                    serviceId={service.id}
+                    height="calc(100vh - 260px)"
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </div>
         </div>
         <ServiceSettingsPanel
           open={settingsOpen}
@@ -292,6 +316,10 @@ export default function ServiceDashboard() {
                 <Key className="w-3.5 h-3.5" />
                 API
               </TabsTrigger>
+              <TabsTrigger value="copilote" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Bot className="w-3.5 h-3.5" />
+                Copilote IA
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -388,6 +416,29 @@ export default function ServiceDashboard() {
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <WalletApiPanel serviceId={service.id} businessName={service.business_name} />
             </Suspense>
+          </TabsContent>
+
+          <TabsContent value="copilote" className="animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-primary" />
+                  Assistant IA — {service.business_name}
+                </CardTitle>
+                <CardDescription>
+                  Votre copilote intelligent pour gérer et développer votre activité
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <CopiloteChat
+                    userRole="prestataire"
+                    serviceId={service.id}
+                    height="calc(100vh - 260px)"
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -26,7 +26,6 @@ const UserProfileCard = lazy(() => import("@/components/UserProfileCard"));
 const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
 const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
 const _WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
-const QuickTransferButton = lazy(() => import("@/components/wallet/QuickTransferButton").then(m => ({ default: m.QuickTransferButton })));
 const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
 const IdSystemIndicator = lazy(() => import("@/components/IdSystemIndicator").then(m => ({ default: m.IdSystemIndicator })));
 const ProductPaymentModal = lazy(() => import("@/components/ecommerce/ProductPaymentModal"));
@@ -224,7 +223,6 @@ export default function ClientDashboard() {
             <Suspense fallback={null}>
               <NotificationBellButton className={responsive.isMobile ? 'h-8 w-8' : 'h-9 w-9'} iconSize={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
             </Suspense>
-            <QuickTransferButton variant="ghost" size="icon" showText={false} />
             <Button
               variant="ghost"
               size="icon"
@@ -278,7 +276,7 @@ export default function ClientDashboard() {
       <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-7 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : `grid w-full ${isAffiliateEnabled ? 'grid-cols-7' : 'grid-cols-6'} lg:w-auto lg:inline-grid`} bg-muted/50 min-w-full md:min-w-0`}>
               <TabsTrigger value="overview" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Vue' : "Vue d'ensemble"}
@@ -299,10 +297,12 @@ export default function ClientDashboard() {
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'IA' : 'Assistant IA'}
               </TabsTrigger>
-              <TabsTrigger value="affiliate" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
-                <HandCoins className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                {responsive.isMobile ? t('client.tabAffiliateShort') : t('client.tabAffiliate')}
-              </TabsTrigger>
+              {isAffiliateEnabled && (
+                <TabsTrigger value="affiliate" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
+                  <HandCoins className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                  {responsive.isMobile ? t('client.tabAffiliateShort') : t('client.tabAffiliate')}
+                </TabsTrigger>
+              )}
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Réglages' : 'Paramètres'}
@@ -545,57 +545,30 @@ export default function ClientDashboard() {
 
           {/* Copilote */}
           <TabsContent value="copilot" className="animate-fade-in">
-            <Card className="shadow-elegant">
-              <CardHeader>
-                <CardTitle>Assistant IA</CardTitle>
-                <CardDescription>Votre copilote intelligent pour vos achats</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CopiloteChat />
-              </CardContent>
-            </Card>
+            <CopiloteChat height="calc(100vh - 160px)" />
           </TabsContent>
 
-          <TabsContent value="affiliate" className="animate-fade-in">
-            <Card className="shadow-elegant">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HandCoins className="w-5 h-5 text-client-primary" />
-                  {isAffiliateEnabled ? t('client.affiliateSpaceTitle') : 'Devenir Affilié'}
-                </CardTitle>
-                <CardDescription>
-                  {isAffiliateEnabled
-                    ? t('client.affiliateSpaceDesc')
-                    : 'Activez le module affiliation pour gagner des commissions en recommandant nos services.'
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {isAffiliateEnabled ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      ✓ Module affilié actif - accédez à votre espace pour gérer vos liens et suivre vos gains.
-                    </p>
-                    <Button onClick={() => navigate('/affiliate/dashboard')} className="bg-client-primary hover:bg-client-primary/90">
-                      {t('client.affiliateOpenSpace')}
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>🎯 Partagez vos liens de parrainage et gagnez des commissions sur chaque transaction.</p>
-                      <p>💰 Vos gains sont crédités directement sur votre wallet.</p>
-                      <p>🔒 Votre compte client reste intact - aucune modification de vos données.</p>
-                    </div>
-                    <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
-                      <HandCoins className="w-4 h-4 mr-2" />
-                      Activer l'affiliation gratuitement
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {isAffiliateEnabled && (
+            <TabsContent value="affiliate" className="animate-fade-in">
+              <Card className="shadow-elegant">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HandCoins className="w-5 h-5 text-client-primary" />
+                    {t('client.affiliateSpaceTitle')}
+                  </CardTitle>
+                  <CardDescription>{t('client.affiliateSpaceDesc')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    ✓ Module affilié actif — accédez à votre espace pour gérer vos liens et suivre vos gains.
+                  </p>
+                  <Button onClick={() => navigate('/affiliate/dashboard')} className="bg-client-primary hover:bg-client-primary/90">
+                    {t('client.affiliateOpenSpace')}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           {/* Paramètres */}
           <TabsContent value="settings" className="animate-fade-in">

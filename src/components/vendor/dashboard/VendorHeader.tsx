@@ -15,9 +15,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 // Lazy loaded header components (UI non-critique)
 const NetworkStatusIndicator = lazy(() => import('@/components/vendor/NetworkStatusIndicator'));
-const QuickTransferButton = lazy(() =>
-  import('@/components/wallet/QuickTransferButton').then(m => ({ default: m.QuickTransferButton }))
-);
 const VendorSubscriptionButton = lazy(() =>
   import('@/components/vendor/VendorSubscriptionButton').then(m => ({ default: m.VendorSubscriptionButton }))
 );
@@ -123,16 +120,6 @@ const HeaderActions = memo(function HeaderActions({
 
   return (
     <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-      {/* Quick Transfer */}
-      <Suspense fallback={null}>
-        <QuickTransferButton
-          variant="ghost"
-          size="icon"
-          showText={false}
-          className="h-8 w-8 md:h-10 md:w-10"
-        />
-      </Suspense>
-
       {/* Subscription Button */}
       <div className="hidden sm:flex items-center gap-1">
         <Suspense fallback={null}>

@@ -35,6 +35,7 @@ import { getServiceVisual } from '@/config/serviceVisuals';
 
 interface ServiceType {
   id: string;
+  code: string;
   name: string;
   description: string | null;
   icon: string | null;
@@ -74,7 +75,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       // Fetch service types with count of active services
       const { data, error } = await supabase
         .from('service_types')
-        .select('id, name, description, icon, category, is_active')
+        .select('id, code, name, description, icon, category, is_active')
         .eq('is_active', true)
         .order('name');
 
@@ -191,7 +192,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         {selectedServiceType && (
           (() => {
             const visual = getServiceVisual({
-              code: selectedServiceType.icon || selectedServiceType.name,
+              code: selectedServiceType.code,
               name: selectedServiceType.name,
               category: selectedServiceType.category,
             });
@@ -200,12 +201,15 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
             return (
               <div
                 className={cn(
-                  'w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4',
-                  'text-white'
+                  'w-14 h-14 rounded-full flex items-center justify-center overflow-hidden mx-auto mb-4',
                 )}
-                style={{ backgroundColor: visual.accent }}
+                style={{ backgroundColor: visual.logoImage ? undefined : visual.accent }}
               >
-                <Icon className="w-6 h-6" />
+                {visual.logoImage ? (
+                  <img src={visual.logoImage} alt={selectedServiceType.name} className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <Icon className="w-6 h-6 text-white" />
+                )}
               </div>
             );
           })()
@@ -304,7 +308,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
             {filteredServiceTypes.map((serviceType) => (
               (() => {
                 const visual = getServiceVisual({
-                  code: serviceType.icon || serviceType.name,
+                  code: serviceType.code,
                   name: serviceType.name,
                   category: serviceType.category,
                 });
@@ -329,10 +333,14 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
                   <div
-                    className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-lg"
-                    style={{ backgroundColor: visual.accent }}
+                    className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl shadow-lg"
+                    style={{ backgroundColor: visual.logoImage ? undefined : visual.accent }}
                   >
-                    <Icon className="w-5 h-5" />
+                    {visual.logoImage ? (
+                      <img src={visual.logoImage} alt={serviceType.name} className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <Icon className="w-5 h-5 text-white" />
+                    )}
                   </div>
                 </div>
                 <CardContent className="p-2.5 sm:p-4">

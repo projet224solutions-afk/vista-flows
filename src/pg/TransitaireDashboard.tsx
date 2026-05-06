@@ -12,7 +12,6 @@ import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary
 import { useTransitaireStats } from "@/hooks/useTransitaireStats";
 import ProfessionalMessaging from "@/components/messaging/ProfessionalMessaging";
 import { WalletBalanceWidget } from "@/components/wallet/WalletBalanceWidget";
-import { QuickTransferButton } from "@/components/wallet/QuickTransferButton";
 import CommunicationWidget from "@/components/communication/CommunicationWidget";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 
@@ -103,7 +102,6 @@ export default function TransitaireDashboard() {
               <div className="hidden lg:block">
                 <WalletBalanceWidget className="min-w-[260px]" />
               </div>
-              <QuickTransferButton variant="outline" size="sm" />
               <Button variant="outline" onClick={handleSignOut}>
                 {t('common.signOut')}
               </Button>

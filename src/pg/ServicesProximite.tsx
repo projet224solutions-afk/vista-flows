@@ -410,12 +410,14 @@ export default function ServicesProximite() {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                    <div
-                      className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-lg"
-                      style={{ backgroundColor: visual.accent }}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
+                    {!service.logo_url && (
+                      <div
+                        className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-lg"
+                        style={{ backgroundColor: visual.accent }}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    )}
                   </div>
                 </div>
 

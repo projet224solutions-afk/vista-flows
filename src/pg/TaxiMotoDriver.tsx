@@ -66,23 +66,30 @@ export default function TaxiMotoDriver() {
         enableHighAccuracy: true,
         watchPosition: false,
         onLocationChange: (loc) => {
-            // Update driver location when GPS updates (only if online)
+            const now = Date.now();
+            // Throttle updateDriverLocation : max 1 UPDATE toutes les 5 secondes
             if (driverIdRef.current && isOnlineRef.current) {
-                updateDriverLocation(loc.latitude, loc.longitude);
+                if (now - lastLocationUpdateRef.current >= 5000) {
+                    lastLocationUpdateRef.current = now;
+                    updateDriverLocation(loc.latitude, loc.longitude);
+                }
             }
-            // Track position if ride is active
+            // Throttle trackPosition : max 1 INSERT toutes les 10 secondes
             if (activeRideRef.current) {
                 const ride = activeRideRef.current;
                 if (['accepted', 'arriving', 'picked_up', 'in_progress'].includes(ride.status)) {
-                    TaxiMotoService.trackPosition(
-                        ride.id,
-                        driverIdRef.current!,
-                        loc.latitude,
-                        loc.longitude,
-                        undefined,
-                        undefined,
-                        loc.accuracy || undefined
-                    ).catch(err => console.error('✕ Erreur tracking course:', err));
+                    if (now - lastTrackingRef.current >= 10000) {
+                        lastTrackingRef.current = now;
+                        TaxiMotoService.trackPosition(
+                            ride.id,
+                            driverIdRef.current!,
+                            loc.latitude,
+                            loc.longitude,
+                            undefined,
+                            undefined,
+                            loc.accuracy || undefined
+                        ).catch(err => console.error('✕ Erreur tracking course:', err));
+                    }
                 }
             }
         },
@@ -134,6 +141,9 @@ export default function TaxiMotoDriver() {
     const driverIdRef = useRef(driverId);
     const isOnlineRef = useRef(isOnline);
     const activeRideRef = useRef<ActiveRide | null>(null);
+    // Throttle : éviter 1 UPDATE/INSERT par seconde (5s pour position, 10s pour tracé)
+    const lastLocationUpdateRef = useRef<number>(0);
+    const lastTrackingRef = useRef<number>(0);
 
     useEffect(() => { driverIdRef.current = driverId; }, [driverId]);
     useEffect(() => { isOnlineRef.current = isOnline; }, [isOnline]);

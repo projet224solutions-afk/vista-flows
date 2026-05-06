@@ -36,6 +36,7 @@ import translationMediaRoutes from "./translation-media.routes.js";
 import externalPaymentsRoutes from "./external-payments.routes.js";
 import aiIntelligenceRoutes from "./ai-intelligence.routes.js";
 import infrastructureRoutes from "./infrastructure.routes.js";
+import copiloteSearchRoutes from "./copilote-search.routes.js";
 
 const router = Router();
 
@@ -51,6 +52,7 @@ router.use("/users", usersRoutes);
 router.use("/users", usersExtendedRoutes);
 router.use("/ai", aiRoutes);
 router.use("/ai", aiIntelligenceRoutes);
+router.use("/copilote", copiloteSearchRoutes);
 router.use("/files", filesRoutes);
 router.use("/webhooks", webhooksRoutes);
 router.use("/products", productsRoutes);

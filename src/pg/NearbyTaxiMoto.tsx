@@ -35,7 +35,7 @@ import {
   processTaxiDriver,
   filterDriversByRadius,
   sortDrivers,
-  extractProfilesFromJoinedData,
+  createProfileMap,
 } from '@/lib/drivers';
 import { TaxiDriversList } from '@/components/drivers';
 
@@ -155,8 +155,7 @@ export default function NearbyTaxiMoto() {
           status,
           is_online,
           last_lat,
-          last_lng,
-          profiles:user_id (id, first_name, last_name, phone, avatar_url)
+          last_lng
         `)
         .eq('is_online', true)
         .limit(MAX_DRIVERS_LIMIT)
@@ -167,9 +166,21 @@ export default function NearbyTaxiMoto() {
 
       if (queryError) throw new Error(`Erreur: ${queryError.message}`);
 
-      // Traitement des données
       const rawData = (data || []) as Array<Record<string, unknown>>;
-      const profileMap = extractProfilesFromJoinedData(rawData);
+
+      // Récupération des profils séparément (pas de FK dans le schema cache)
+      const userIds = rawData.map(d => d.user_id).filter(Boolean) as string[];
+      let profileMap = new Map<string, any>();
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, phone, avatar_url')
+          .in('id', userIds)
+          .abortSignal(abortController.signal);
+        if (!abortController.signal.aborted && isMountedRef.current) {
+          profileMap = createProfileMap((profilesData || []) as Array<Record<string, unknown>>);
+        }
+      }
 
       const processedDrivers: TaxiDriver[] = [];
       for (const raw of rawData) {

@@ -282,30 +282,30 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const DISPLAY_SERVICES = {
     // Services de Proximité Populaires (6) - Identique à Auth.tsx
     proximity: [
-      { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
-      { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
-      { code: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
-      { code: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
-      { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
-      { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
+      { code: 'restaurant', name: 'Restaurant', logoImage: '/service-icons/logo-resto.jpeg', icon: '🍽️', desc: 'Cuisine & plats' },
+      { code: 'beaute', name: 'Beauté & Coiffure', logoImage: '/service-icons/icon-beaute.png', icon: '💇', desc: 'Soins & styling' },
+      { code: 'vtc', name: 'Transport VTC', logoImage: '/service-icons/icon-taxi-moto.png', icon: '🚗', desc: 'Véhicules privés' },
+      { code: 'reparation', name: 'Réparation', logoImage: '/service-icons/icon-reparation.png', icon: '🔧', desc: 'Électro & mécanique' },
+      { code: 'menage', name: 'Nettoyage', logoImage: '/service-icons/icon-nettoyage.png', icon: '✨', desc: 'Ménage & pressing' },
+      { code: 'informatique', name: 'Informatique', logoImage: '/service-icons/icon-informatique.png', icon: '💻', desc: 'Tech & dépannage' },
     ],
     // Services Professionnels (8) - Identique à Auth.tsx
     professional: [
-      { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
-      { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
-      { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
-      { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
-      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
-      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
-      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
-      { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
+      { code: 'sport', name: 'Sport & Fitness', logoImage: '/service-icons/icon-sport-fitness.png', icon: '🏋️', desc: 'Coaching' },
+      { code: 'location', name: 'Immobilier', logoImage: '/service-icons/logo-immobilier.jpeg', icon: '🏢', desc: 'Location & vente' },
+      { code: 'media', name: 'Photo & Vidéo', logoImage: '/service-icons/icon-photo-video.png', icon: '📸', desc: 'Événements' },
+      { code: 'construction', name: 'Construction & BTP', logoImage: '/service-icons/logo-construction-btp.jpeg', icon: '🏗️', desc: 'Bâtiment' },
+      { code: 'agriculture', name: 'Agriculture', logoImage: '/service-icons/icon-agriculture.png', icon: '🌾', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', logoImage: '/service-icons/icon-administratif.png', icon: '💼', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', logoImage: '/service-icons/icon-sante.png', icon: '💊', desc: 'Pharmacie & soins' },
+      { code: 'maison', name: 'Maison & Déco', logoImage: '/service-icons/icon-maison.png', icon: '🏠', desc: 'Intérieur' },
     ],
     // Autres Services (4) - Identique à Auth.tsx
     other: [
       { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours et coaching' },
-      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+      { code: 'livraison', name: 'Livraison', logoImage: '/service-icons/icon-livreur.png', icon: '🚚', desc: 'Coursier & colis' },
       { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme et voyages' },
-      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+      { code: 'ecommerce', name: 'Boutique', logoImage: '/service-icons/logo-boutique.jpeg', icon: '🏪', desc: 'E-commerce' },
     ]
   };
 
@@ -313,7 +313,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return serviceTypes.find(type => type.code === code);
   };
 
-  const renderDisplayServiceCard = (displayService: { code: string; name: string; icon: string; desc: string }, colorClass: string, borderClass: string) => {
+  const renderDisplayServiceCard = (displayService: { code: string; name: string; icon: string; logoImage?: string; desc: string }, colorClass: string, borderClass: string) => {
     const dbService = getServiceTypeByCode(displayService.code);
     if (!dbService) return null;
 
@@ -323,7 +323,13 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         onClick={() => handleSelectType(dbService)}
         className={`flex flex-col items-center p-3 bg-gradient-to-br ${colorClass} rounded-xl border-2 hover:shadow-lg hover:scale-[1.02] transition-all ${borderClass}`}
       >
-        <div className="text-3xl mb-1.5">{displayService.icon}</div>
+        {displayService.logoImage ? (
+          <div className="h-12 w-12 overflow-hidden rounded-xl mb-1.5 shadow-sm">
+            <img src={displayService.logoImage} alt={displayService.name} className="h-full w-full object-cover" loading="lazy" />
+          </div>
+        ) : (
+          <div className="text-3xl mb-1.5">{displayService.icon}</div>
+        )}
         <span className="text-sm font-semibold text-foreground">{displayService.name}</span>
         <span className="text-[10px] text-muted-foreground">{displayService.desc}</span>
       </button>

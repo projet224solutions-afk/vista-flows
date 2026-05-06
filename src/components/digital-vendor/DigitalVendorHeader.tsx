@@ -8,9 +8,6 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-const QuickTransferButton = lazy(() =>
-  import('@/components/wallet/QuickTransferButton').then(m => ({ default: m.QuickTransferButton }))
-);
 const WalletBalanceWidget = lazy(() =>
   import('@/components/wallet/WalletBalanceWidget').then(m => ({ default: m.WalletBalanceWidget }))
 );
@@ -66,10 +63,6 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[24px] border border-sky-200/80 bg-white/88 p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.05)] sm:gap-2">
-            <Suspense fallback={null}>
-              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-9 w-9 rounded-2xl border border-sky-200/80 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800 sm:h-10 sm:w-10 md:h-11 md:w-11" />
-            </Suspense>
-
             <Button
               variant="ghost"
               size="icon"

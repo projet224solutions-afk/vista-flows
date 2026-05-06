@@ -53,6 +53,7 @@ interface QuickRoleOption {
   desc: string;
   icon: any;
   image: string;
+  logoImage?: string;
 }
 
 interface ServiceSelectionOption {
@@ -61,34 +62,35 @@ interface ServiceSelectionOption {
   desc: string;
   icon: any;
   image: string;
+  logoImage?: string;
 }
 
 const QUICK_ROLE_OPTIONS: QuickRoleOption[] = [
-  { role: 'taxi', name: 'Taxi Moto', desc: 'Conducteur taxi-moto', icon: Bike, image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { role: 'livreur', name: 'Livreur', desc: 'Coursier & livraison', icon: Truck, image: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=80' },
+  { role: 'taxi', name: 'Taxi Moto', desc: 'Conducteur taxi-moto', icon: Bike, image: 'https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-taxi-moto.png' },
+  { role: 'livreur', name: 'Livreur', desc: 'Coursier & livraison', icon: Truck, image: 'https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-livreur.png' },
   { role: 'transitaire', name: 'Transitaire', desc: 'Import & export', icon: Briefcase, image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80' },
 ];
 
 const PROXIMITY_SERVICE_OPTIONS: ServiceSelectionOption[] = [
-  { id: 'restaurant', name: 'Restaurant', desc: 'Cuisine & plats', icon: Utensils, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80' },
-  { id: 'beaute', name: 'Beauté & Coiffure', desc: 'Soins & styling', icon: Scissors, image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80' },
-  { id: 'vtc', name: 'Transport VTC', desc: 'Véhicules privés', icon: Car, image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { id: 'reparation', name: 'Réparation', desc: 'Électro & mécanique', icon: Wrench, image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80' },
-  { id: 'menage', name: 'Nettoyage', desc: 'Ménage & pressing', icon: Sparkles, image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80' },
-  { id: 'informatique', name: 'Informatique', desc: 'Tech & dépannage', icon: Laptop, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80' },
-  { id: 'livraison', name: 'Livraison', desc: 'Coursier & colis', icon: Truck, image: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=80' },
-  { id: 'ecommerce', name: 'Boutique', desc: 'E-commerce', icon: Store, image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80' },
+  { id: 'restaurant', name: 'Restaurant', desc: 'Cuisine & plats', icon: Utensils, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-resto.jpeg' },
+  { id: 'beaute', name: 'Beauté & Coiffure', desc: 'Soins & styling', icon: Scissors, image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-beaute.png' },
+  { id: 'vtc', name: 'Transport VTC', desc: 'Véhicules privés', icon: Car, image: 'https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-taxi-moto.png' },
+  { id: 'reparation', name: 'Réparation', desc: 'Électro & mécanique', icon: Wrench, image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-reparation.png' },
+  { id: 'menage', name: 'Nettoyage', desc: 'Ménage & pressing', icon: Sparkles, image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-nettoyage.png' },
+  { id: 'informatique', name: 'Informatique', desc: 'Tech & dépannage', icon: Laptop, image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-informatique.png' },
+  { id: 'livraison', name: 'Livraison', desc: 'Coursier & colis', icon: Truck, image: 'https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-livreur.png' },
+  { id: 'ecommerce', name: 'Boutique', desc: 'E-commerce', icon: Store, image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-boutique.jpeg' },
 ];
 
 const PROFESSIONAL_SERVICE_OPTIONS: ServiceSelectionOption[] = [
-  { id: 'sport', name: 'Sport & Fitness', desc: 'Coaching', icon: Dumbbell, image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80' },
-  { id: 'location', name: 'Immobilier', desc: 'Location & vente', icon: Building2, image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80' },
-  { id: 'media', name: 'Photo & Vidéo', desc: 'Événements', icon: Camera, image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80' },
-  { id: 'construction', name: 'Construction & BTP', desc: 'Bâtiment', icon: Building2, image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80' },
-  { id: 'agriculture', name: 'Agriculture', desc: 'Produits locaux', icon: ShoppingBag, image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80' },
-  { id: 'freelance', name: 'Administratif', desc: 'Secrétariat', icon: Briefcase, image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80' },
-  { id: 'sante', name: 'Santé & Bien-être', desc: 'Pharmacie & soins', icon: Heart, image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80' },
-  { id: 'maison', name: 'Maison & Déco', desc: 'Intérieur', icon: Home, image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80' },
+  { id: 'sport', name: 'Sport & Fitness', desc: 'Coaching', icon: Dumbbell, image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sport-fitness.png' },
+  { id: 'location', name: 'Immobilier', desc: 'Location & vente', icon: Building2, image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80', logoImage: '/service-icons/logo-immobilier.jpeg' },
+  { id: 'media', name: 'Photo & Vidéo', desc: 'Événements', icon: Camera, image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-photo-video.png' },
+  { id: 'construction', name: 'Construction & BTP', desc: 'Bâtiment', icon: Building2, image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-construction-btp.jpeg' },
+  { id: 'agriculture', name: 'Agriculture', desc: 'Produits locaux', icon: ShoppingBag, image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-agriculture.png' },
+  { id: 'freelance', name: 'Administratif', desc: 'Secrétariat', icon: Briefcase, image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-administratif.png' },
+  { id: 'sante', name: 'Santé & Bien-être', desc: 'Pharmacie & soins', icon: Heart, image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sante.png' },
+  { id: 'maison', name: 'Maison & Déco', desc: 'Intérieur', icon: Home, image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-maison.png' },
 ];
 
 export default function Auth() {
@@ -1456,8 +1458,12 @@ export default function Auth() {
                         <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
                         <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-amber-700 shadow-sm backdrop-blur-sm">
-                            <Icon className="h-6 w-6" />
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-sm backdrop-blur-sm">
+                            {item.logoImage ? (
+                              <img src={item.logoImage} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className="h-6 w-6 text-amber-700" />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1491,8 +1497,12 @@ export default function Auth() {
                         <img src={service.image} alt={service.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
                         <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-primary shadow-sm backdrop-blur-sm">
-                            <Icon className="h-6 w-6" />
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-sm backdrop-blur-sm">
+                            {service.logoImage ? (
+                              <img src={service.logoImage} alt={service.name} className="h-full w-full object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className="h-6 w-6 text-primary" />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1526,8 +1536,12 @@ export default function Auth() {
                         <img src={service.image} alt={service.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
                         <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-violet-700 shadow-sm backdrop-blur-sm">
-                            <Icon className="h-6 w-6" />
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-sm backdrop-blur-sm">
+                            {service.logoImage ? (
+                              <img src={service.logoImage} alt={service.name} className="h-full w-full object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className="h-6 w-6 text-violet-700" />
+                            )}
                           </div>
                         </div>
                       </div>

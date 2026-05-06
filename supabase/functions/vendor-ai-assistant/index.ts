@@ -225,10 +225,200 @@ async function buildVendorRealitySnapshot(supabase: any, vendorId: string, userI
   }
 }
 
+// =====================================================
+// RECHERCHE WEB PROFONDE — Jina AI (Google + lecture pages)
+// =====================================================
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function extractUrlsFromMarkdown(text: string): Array<{ title: string; url: string; description: string }> {
+  const results: Array<{ title: string; url: string; description: string }> = [];
+  const lines = text.split("\n");
+  let currentTitle = "";
+  let currentDesc = "";
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // ## Titre
+    const headingMatch = trimmed.match(/^#{1,3}\s+(.+)/);
+    if (headingMatch) { currentTitle = headingMatch[1].trim(); currentDesc = ""; continue; }
+
+    // [texte](url)
+    const linkMatches = [...trimmed.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g)];
+    for (const m of linkMatches) {
+      const title = m[1].trim() || currentTitle || "Lien";
+      const url = m[2].trim();
+      if (url && !results.find(r => r.url === url)) {
+        results.push({ title, url, description: (currentDesc || trimmed).slice(0, 300) });
+      }
+    }
+
+    // URL nue
+    const bareUrls = [...trimmed.matchAll(/https?:\/\/[^\s)<>"]+/g)];
+    for (const m of bareUrls) {
+      const url = m[0].replace(/[.,;!?)]+$/, "");
+      if (!results.find(r => r.url === url)) {
+        results.push({ title: currentTitle || url, url, description: trimmed.slice(0, 300) });
+      }
+    }
+
+    if (!trimmed.startsWith("#") && trimmed.length > 30) currentDesc = trimmed;
+  }
+  return results;
+}
+
+async function fetchJinaSearch(query: string, lang: string): Promise<Array<{ title: string; url: string; description: string }>> {
+  // Essai 1 : JSON
+  try {
+    const r = await fetch(`https://s.jina.ai/?q=${encodeURIComponent(query)}`, {
+      headers: { "Accept": "application/json", "X-No-Cache": "true" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (r.ok) {
+      const text = await r.text();
+      try {
+        const data = JSON.parse(text);
+        const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data?.results) ? data.results : []);
+        if (items.length > 0) {
+          return items.slice(0, 8).map((item: any) => ({
+            title: String(item?.title || item?.name || "").trim(),
+            url: String(item?.url || item?.link || "").trim(),
+            description: String(item?.description || item?.snippet || item?.content || "").slice(0, 500),
+          })).filter((i: any) => i.url.startsWith("http"));
+        }
+      } catch {}
+      // JSON parse échoue → essayer extraction markdown
+      const extracted = extractUrlsFromMarkdown(text);
+      if (extracted.length > 0) return extracted.slice(0, 8);
+    }
+  } catch {}
+
+  // Essai 2 : Markdown direct (sans Accept JSON)
+  try {
+    const r2 = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
+      headers: { "X-No-Cache": "true", "Accept": "text/plain" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (r2.ok) {
+      const text2 = await r2.text();
+      const extracted = extractUrlsFromMarkdown(text2);
+      if (extracted.length > 0) return extracted.slice(0, 8);
+    }
+  } catch {}
+
+  return [];
+}
+
+async function fetchPageContent(url: string): Promise<string> {
+  try {
+    const resp = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { "Accept": "text/plain", "X-Timeout": "12", "X-No-Cache": "true" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resp.ok) return "";
+    const text = await resp.text();
+    return text.replace(/!\[.*?\]\(.*?\)/g, "").trim().slice(0, 2000);
+  } catch {
+    return "";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function searchWebDeep(params: any) {
+  const query = String(params?.query || "").trim();
+  const depth = String(params?.depth || "deep").trim();
+  const lang = String(params?.lang || "fr").trim();
+
+  if (!query || query.length < 3) {
+    return { success: false, error: "Paramètre query requis (au moins 3 caractères)." };
+  }
+
+  // ── ÉTAPE 1 : Recherche parallèle (Jina FR + Jina EN) ──
+  const queryEn = lang === "fr" ? `${query} english` : query;
+  const [resultsFr, resultsEn] = await Promise.allSettled([
+    fetchJinaSearch(query, "fr"),
+    fetchJinaSearch(queryEn, "en"),
+  ]);
+
+  let searchResults: Array<{ title: string; url: string; description: string; content?: string }> = [];
+
+  if (resultsFr.status === "fulfilled") searchResults.push(...resultsFr.value);
+  if (resultsEn.status === "fulfilled") {
+    for (const r of resultsEn.value) {
+      if (!searchResults.find(s => s.url === r.url)) searchResults.push(r);
+    }
+  }
+
+  // ── ÉTAPE 2 : Lecture approfondie des 4 premières pages ──
+  if (searchResults.length > 0) {
+    const topUrls = searchResults.slice(0, depth === "deep" ? 4 : 2).map(r => r.url).filter(u => u.startsWith("http"));
+    const pageReads = await Promise.allSettled(topUrls.map(url => fetchPageContent(url).then(content => ({ url, content }))));
+    for (const res of pageReads) {
+      if (res.status === "fulfilled" && res.value.content) {
+        const found = searchResults.find(r => r.url === res.value.url);
+        if (found) found.content = res.value.content;
+      }
+    }
+  }
+
+  const finalResults = searchResults.filter(r => r.url).slice(0, 8);
+
+  if (finalResults.length === 0) {
+    return {
+      success: false,
+      error: "Recherche web sans résultat. Utilise tes connaissances entraînées pour répondre avec les URLs que tu connais.",
+      data: { query, sources: [], fallbackInstruction: "Réponds avec les liens CONNUS de ta base de connaissances. Ne dis PAS 'je n'ai pas trouvé'." },
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      query,
+      depth,
+      totalFound: finalResults.length,
+      sources: finalResults.map(r => ({
+        title: r.title,
+        url: r.url,
+        summary: r.description,
+        fullContent: r.content || null,
+      })),
+      searchEngine: "Google (via Jina AI)",
+      instructions: "OBLIGATOIRE: Citer TOUTES les sources avec liens cliquables [🔗 Titre](url). Utiliser le contenu de fullContent pour répondre précisément. Ne pas résumer vaguement — donner les vrais détails trouvés.",
+    },
+  };
+}
+
+// ─── Lire une page web spécifique ────────────────────────────────────────────
+
+async function fetchWebPage(params: any) {
+  const url = String(params?.url || "").trim();
+  if (!url.startsWith("http")) {
+    return { success: false, error: "URL invalide. Doit commencer par http:// ou https://" };
+  }
+
+  const content = await fetchPageContent(url);
+  if (!content) {
+    return { success: false, error: `Impossible de lire la page: ${url}` };
+  }
+
+  return {
+    success: true,
+    data: {
+      url,
+      content,
+      instructions: "Utiliser le contenu réel de cette page pour répondre avec précision. Citer la source: [🔗 Voir la page](" + url + ")",
+    },
+  };
+}
+
 async function researchMarketInsights(params: any) {
   const topic = String(params?.topic || "").trim();
   const region = String(params?.region || "Afrique de l'Ouest").trim();
-  const limit = Math.min(Math.max(toNumber(params?.limit || 5), 1), 8);
+  const limit = Math.min(Math.max(toNumber(params?.limit || 6), 1), 10);
 
   if (!topic || topic.length < 3) {
     return {
@@ -240,70 +430,82 @@ async function researchMarketInsights(params: any) {
     };
   }
 
-  const query = encodeURIComponent(`${topic} ${region}`);
+  const queryFr = encodeURIComponent(`${topic} ${region}`);
+  const queryEn = encodeURIComponent(`${topic} West Africa`);
 
-  const [wikiRaw, ddgRaw] = await Promise.allSettled([
-    fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${query}&limit=${limit}&namespace=0&format=json`),
-    fetch(`https://api.duckduckgo.com/?q=${query}&format=json&no_html=1&skip_disambig=1`),
+  const [wikiRawFr, wikiRawEn, ddgRaw, ddgEnRaw] = await Promise.allSettled([
+    fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${queryFr}&limit=${limit}&namespace=0&format=json`),
+    fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${queryEn}&limit=3&namespace=0&format=json`),
+    fetch(`https://api.duckduckgo.com/?q=${queryFr}&format=json&no_html=1&skip_disambig=1&kl=fr-fr`),
+    fetch(`https://api.duckduckgo.com/?q=${queryEn}&format=json&no_html=1&skip_disambig=1&kl=us-en`),
   ]);
 
   const sources: Array<{ title: string; url: string; snippet: string; source: string }> = [];
 
-  if (wikiRaw.status === "fulfilled" && wikiRaw.value.ok) {
-    try {
-      const wiki = await wikiRaw.value.json();
-      const titles: string[] = Array.isArray(wiki?.[1]) ? wiki[1] : [];
-      const snippets: string[] = Array.isArray(wiki?.[2]) ? wiki[2] : [];
-      const urls: string[] = Array.isArray(wiki?.[3]) ? wiki[3] : [];
-      for (let i = 0; i < Math.min(titles.length, limit); i++) {
-        if (urls[i]) {
-          sources.push({
-            title: titles[i] || "Wikipedia",
-            url: urls[i],
-            snippet: snippets[i] || "",
-            source: "wikipedia",
-          });
-        }
+  // Parse Wikipedia + DDG via parallel async jobs
+  const wikiParseJobs = [
+    (async () => {
+      if (wikiRawFr.status === "fulfilled" && wikiRawFr.value.ok) {
+        try {
+          const wiki = await wikiRawFr.value.json();
+          const titles: string[] = Array.isArray(wiki?.[1]) ? wiki[1] : [];
+          const snippets: string[] = Array.isArray(wiki?.[2]) ? wiki[2] : [];
+          const urls: string[] = Array.isArray(wiki?.[3]) ? wiki[3] : [];
+          for (let i = 0; i < Math.min(titles.length, limit); i++) {
+            if (urls[i]) sources.push({ title: titles[i] || "Wikipedia FR", url: urls[i], snippet: snippets[i] || "", source: "wikipedia-fr" });
+          }
+        } catch {}
       }
-    } catch (error) {
-      console.error("[vendor-ai-assistant] wikipedia parse error:", error);
-    }
-  }
+    })(),
+    (async () => {
+      if (wikiRawEn.status === "fulfilled" && wikiRawEn.value.ok) {
+        try {
+          const wiki = await wikiRawEn.value.json();
+          const titles: string[] = Array.isArray(wiki?.[1]) ? wiki[1] : [];
+          const snippets: string[] = Array.isArray(wiki?.[2]) ? wiki[2] : [];
+          const urls: string[] = Array.isArray(wiki?.[3]) ? wiki[3] : [];
+          for (let i = 0; i < Math.min(titles.length, 3); i++) {
+            if (urls[i]) sources.push({ title: titles[i] || "Wikipedia EN", url: urls[i], snippet: snippets[i] || "", source: "wikipedia-en" });
+          }
+        } catch {}
+      }
+    })(),
+    (async () => {
+      if (ddgRaw.status === "fulfilled" && ddgRaw.value.ok) {
+        try {
+          const ddg = await ddgRaw.value.json();
+          if (ddg?.AbstractURL) {
+            sources.push({ title: ddg?.Heading || "DuckDuckGo FR", url: ddg.AbstractURL, snippet: ddg?.AbstractText || "", source: "duckduckgo" });
+          }
+          const related = Array.isArray(ddg?.RelatedTopics) ? ddg.RelatedTopics : [];
+          for (const item of related) {
+            const url = item?.FirstURL;
+            const text = item?.Text;
+            if (typeof url === "string" && url && typeof text === "string" && text) {
+              sources.push({ title: text.split(" - ")[0].slice(0, 80), url, snippet: text.slice(0, 200), source: "duckduckgo" });
+            }
+            if (sources.length >= limit + 4) break;
+          }
+        } catch {}
+      }
+    })(),
+    (async () => {
+      if (ddgEnRaw.status === "fulfilled" && ddgEnRaw.value.ok) {
+        try {
+          const ddg = await ddgEnRaw.value.json();
+          if (ddg?.AbstractURL && ddg?.AbstractText) {
+            sources.push({ title: `${ddg?.Heading || "DuckDuckGo"} (EN)`, url: ddg.AbstractURL, snippet: ddg?.AbstractText?.slice(0, 300) || "", source: "duckduckgo-en" });
+          }
+        } catch {}
+      }
+    })(),
+  ];
 
-  if (ddgRaw.status === "fulfilled" && ddgRaw.value.ok) {
-    try {
-      const ddg = await ddgRaw.value.json();
-      if (ddg?.AbstractURL) {
-        sources.push({
-          title: ddg?.Heading || "DuckDuckGo",
-          url: ddg.AbstractURL,
-          snippet: ddg?.AbstractText || "",
-          source: "duckduckgo",
-        });
-      }
-
-      const related = Array.isArray(ddg?.RelatedTopics) ? ddg.RelatedTopics : [];
-      for (const item of related) {
-        const url = item?.FirstURL || item?.Icon?.URL;
-        const text = item?.Text;
-        if (typeof url === "string" && url && typeof text === "string" && text) {
-          sources.push({
-            title: text.split(" - ")[0],
-            url,
-            snippet: text,
-            source: "duckduckgo",
-          });
-        }
-        if (sources.length >= limit + 3) break;
-      }
-    } catch (error) {
-      console.error("[vendor-ai-assistant] duckduckgo parse error:", error);
-    }
-  }
+  await Promise.allSettled(wikiParseJobs);
 
   const uniqueSources = sources.filter((entry, index, all) => {
     return all.findIndex((candidate) => candidate.url === entry.url) === index;
-  }).slice(0, limit);
+  }).slice(0, limit + 2);
 
   if (uniqueSources.length === 0) {
     return {
@@ -606,8 +808,52 @@ const enterpriseTools = [
   {
     type: "function",
     function: {
+      name: "fetch_webpage",
+      description: "Lit le contenu complet d'une page web dont tu connais l'URL. Utilise cet outil quand tu connais déjà l'URL d'un site (programme d'affiliation, prix, guide, documentation) pour lire son contenu réel. IDÉAL pour: pages d'affiliation (airlines, Amazon, Booking), sites officiels, pages de tarification.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "URL complète de la page à lire (ex: https://travelpayouts.com/programs, https://affiliate.booking.com)"
+          }
+        },
+        required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_web_deep",
+      description: "Recherche Google approfondie via Jina AI. Retourne les vraies pages web avec leur contenu complet. Utilise cet outil pour TOUTE recherche externe : prix, concurrence, tendances, actualités, tutoriels, informations sur des entreprises, des marchés, des produits hors plateforme. PRÉFÉRER cet outil à research_market_insights pour une recherche Google complète.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Requête de recherche Google (ex: 'prix huile de palme Guinée 2024', 'meilleures niches dropshipping Afrique', 'comment vendre en ligne Conakry')"
+          },
+          depth: {
+            type: "string",
+            enum: ["quick", "deep"],
+            description: "quick = résultats rapides (titres + descriptions). deep = lecture complète des 3 premières pages (recommandé pour analyses approfondies)"
+          },
+          lang: {
+            type: "string",
+            enum: ["fr", "en"],
+            description: "Langue de recherche (fr par défaut)"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "research_market_insights",
-      description: "Recherche externe controlee pour tendances et opportunites business. Toujours citer les URL obtenues.",
+      description: "Recherche externe via Wikipedia et DuckDuckGo pour tendances et opportunites business. Utiliser search_web_deep en priorité pour des résultats Google plus riches.",
       parameters: {
         type: "object",
         properties: {
@@ -616,6 +862,52 @@ const enterpriseTools = [
           limit: { type: "number", description: "Nombre max de sources (1-8)" }
         },
         required: ["topic"]
+      }
+    }
+  },
+
+  // PLATFORM SEARCH TOOLS — Connaissance complète de la plateforme
+  {
+    type: "function",
+    function: {
+      name: "search_proximity_services",
+      description: "Recherche des services de proximité disponibles sur 224SOLUTIONS (restaurants, beauté, taxi, livraison, réparation, nettoyage, informatique, etc.). Utilise cette fonction quand l'utilisateur cherche un service local ou pose une question sur les services de proximité.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Terme de recherche (ex: restaurant, salon, pharmacie)" },
+          service_type: { type: "string", description: "Code du type de service: restaurant, beaute, vtc, livraison, reparation, menage, informatique, sante, construction, agriculture, sport, maison, media, education, ecommerce, freelance" }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_available_taxi_drivers",
+      description: "Obtenir les chauffeurs taxi-moto et livreurs disponibles sur la plateforme 224SOLUTIONS en temps réel.",
+      parameters: {
+        type: "object",
+        properties: {
+          vehicle_type: { type: "string", enum: ["moto", "car", "tricycle"], description: "Type de véhicule souhaité" }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_platform_catalog",
+      description: "Recherche de produits et boutiques dans le catalogue de la plateforme 224SOLUTIONS (produits physiques et digitaux).",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Terme de recherche produit ou boutique" },
+          category: { type: "string", description: "Catégorie optionnelle pour filtrer" }
+        },
+        required: ["query"]
       }
     }
   }
@@ -2316,6 +2608,162 @@ async function runEnterpriseTool(
   return executeTool(supabase, vendorId, userId, toolName, args);
 }
 
+// =====================================================
+// PLATFORM SEARCH FUNCTIONS
+// =====================================================
+
+async function searchProximityServices(supabase: any, query?: string, serviceType?: string) {
+  try {
+    let q = supabase
+      .from('professional_services')
+      .select(`
+        id, business_name, description, logo_url, rating, total_reviews,
+        address, phone, email, latitude, longitude, verification_status,
+        service_type:service_types(id, name, code)
+      `)
+      .eq('status', 'active');
+
+    // Filtre par type de service (cherche par nom, plus flexible que code)
+    if (serviceType) {
+      const { data: sType } = await supabase
+        .from('service_types')
+        .select('id')
+        .or(`code.eq.${serviceType},name.ilike.%${serviceType}%`)
+        .limit(1)
+        .single();
+      if (sType?.id) q = q.eq('service_type_id', sType.id);
+    }
+
+    // Filtre par localisation/nom — cherche dans address ET business_name
+    if (query) {
+      q = q.or(`business_name.ilike.%${query}%,address.ilike.%${query}%`);
+    }
+
+    const { data, error } = await q.order('rating', { ascending: false }).limit(15);
+    if (error) throw error;
+
+    const services = data || [];
+    return {
+      success: true,
+      count: services.length,
+      services: services.map((s: any) => ({
+        id: s.id,
+        name: s.business_name,
+        serviceType: (s.service_type as any)?.name || 'Service',
+        rating: s.rating || 0,
+        totalReviews: s.total_reviews || 0,
+        address: s.address || 'Adresse non renseignée',
+        phone: s.phone || null,
+        email: s.email || null,
+        isVerified: s.verification_status === 'verified',
+      }))
+    };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function getAvailableTaxiDrivers(supabase: any, vehicleType?: string) {
+  try {
+    let q = supabase
+      .from('taxi_drivers')
+      .select('id, vehicle_type, rating, total_rides, is_online, last_lat, last_lng')
+      .eq('is_online', true);
+    if (vehicleType) q = q.eq('vehicle_type', vehicleType);
+    const { data, error } = await q.limit(20);
+    if (error) throw error;
+    return {
+      success: true,
+      count: (data || []).length,
+      drivers: (data || []).map((d: any) => ({
+        id: d.id,
+        vehicleType: d.vehicle_type,
+        rating: d.rating || 0,
+        totalRides: d.total_rides || 0,
+        hasLocation: !!(d.last_lat && d.last_lng),
+      }))
+    };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function searchPlatformCatalog(supabase: any, query: string, category?: string) {
+  try {
+    const results: any = { products: [], vendors: [], digitalProducts: [], services: [] };
+
+    // 1. Produits physiques (table principale du marketplace)
+    let pq = supabase
+      .from('products')
+      .select('id, name, description, price, images, rating, reviews_count, vendor:vendors(id, business_name)')
+      .eq('is_active', true)
+      .ilike('name', `%${query}%`)
+      .order('rating', { ascending: false })
+      .limit(8);
+    const { data: products } = await pq;
+    results.products = (products || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      rating: p.rating || 0,
+      image: Array.isArray(p.images) ? p.images[0] : null,
+      vendorId: (p.vendor as any)?.id,
+      vendorName: (p.vendor as any)?.business_name,
+    }));
+
+    // 2. Boutiques / Vendeurs
+    const { data: vendors } = await supabase
+      .from('vendors')
+      .select('id, business_name, logo_url, description, rating, city, is_verified')
+      .eq('is_active', true)
+      .or(`business_name.ilike.%${query}%,description.ilike.%${query}%`)
+      .order('rating', { ascending: false })
+      .limit(5);
+    results.vendors = (vendors || []).map((v: any) => ({
+      id: v.id,
+      name: v.business_name,
+      city: v.city,
+      rating: v.rating || 0,
+      isVerified: v.is_verified,
+    }));
+
+    // 3. Produits numériques (ebooks, logiciels, formations)
+    const { data: digital } = await supabase
+      .from('digital_products')
+      .select('id, title, price, vendor_id')
+      .eq('status', 'published')
+      .ilike('title', `%${query}%`)
+      .limit(5);
+    results.digitalProducts = (digital || []).map((d: any) => ({
+      id: d.id,
+      title: d.title,
+      price: d.price,
+      vendorId: d.vendor_id,
+    }));
+
+    // 4. Services de proximité correspondants
+    const { data: services } = await supabase
+      .from('professional_services')
+      .select('id, business_name, address, rating, service_type:service_types(name)')
+      .eq('status', 'active')
+      .ilike('business_name', `%${query}%`)
+      .order('rating', { ascending: false })
+      .limit(5);
+    results.services = (services || []).map((s: any) => ({
+      id: s.id,
+      name: s.business_name,
+      address: s.address,
+      rating: s.rating || 0,
+      type: (s.service_type as any)?.name,
+    }));
+
+    const total = results.products.length + results.vendors.length + results.digitalProducts.length + results.services.length;
+    return { success: true, query, totalResults: total, ...results };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
 async function executeTool(supabase: any, vendorId: string, userId: string, toolName: string, args: any) {
   switch (toolName) {
     case 'analyze_customer_reviews':
@@ -2346,8 +2794,18 @@ async function executeTool(supabase: any, vendorId: string, userId: string, tool
       return toggleAIFeatures(supabase, vendorId, userId, args);
     case 'get_ai_dashboard':
       return getAIDashboard(supabase, vendorId, args);
+    case 'fetch_webpage':
+      return fetchWebPage(args);
+    case 'search_web_deep':
+      return searchWebDeep(args);
     case 'research_market_insights':
       return researchMarketInsights(args);
+    case 'search_proximity_services':
+      return searchProximityServices(supabase, args.query, args.service_type);
+    case 'get_available_taxi_drivers':
+      return getAvailableTaxiDrivers(supabase, args.vehicle_type);
+    case 'search_platform_catalog':
+      return searchPlatformCatalog(supabase, args.query, args.category);
     default:
       return { success: false, error: `Outil inconnu: ${toolName}` };
   }
@@ -2446,46 +2904,53 @@ serve(async (req) => {
         }
 
         if (vendor) {
-          // Statistiques
-          const { data: products } = await supabaseClient
-            .from('products')
-            .select('id, name, price, stock_quantity, is_active')
-            .eq('vendor_id', vendor.id)
-            .limit(10);
-            
-          const { data: orders } = await supabaseClient
-            .from('orders')
-            .select('order_number, status, total_amount, created_at')
-            .eq('vendor_id', vendor.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-            
-          const { data: wallet } = await supabaseClient
-            .from('wallets')
-            .select('balance, currency')
-            .eq('user_id', userId)
-            .single();
-            
-          const { count: totalProducts } = await supabaseClient
-            .from('products')
-            .select('id', { count: 'exact', head: true })
-            .eq('vendor_id', vendor.id);
-            
-          const { count: lowStockProducts } = await supabaseClient
-            .from('products')
-            .select('id', { count: 'exact', head: true })
-            .eq('vendor_id', vendor.id)
-            .lt('stock_quantity', 5);
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-          // Récupérer le contrôle IA
-          let { data: aiControl } = await supabaseClient
-            .from('vendor_ai_control')
-            .select('*')
-            .eq('vendor_id', vendor.id)
-            .single();
+          // Phase 1 : données critiques en parallèle
+          const [
+            { data: wallet },
+            { data: products },
+            { count: totalProducts },
+            { count: lowStockProducts },
+            { data: ownerProfile },
+            { data: aiControlRaw },
+          ] = await Promise.all([
+            supabaseClient
+              .from('wallets')
+              .select('balance, currency')
+              .eq('user_id', userId)
+              .single(),
+            supabaseClient
+              .from('products')
+              .select('id, name, price, stock_quantity, is_active, category:categories(name), rating, reviews_count, is_hot, is_featured')
+              .eq('vendor_id', vendor.id)
+              .order('created_at', { ascending: false })
+              .limit(10),
+            supabaseClient
+              .from('products')
+              .select('id', { count: 'exact', head: true })
+              .eq('vendor_id', vendor.id),
+            supabaseClient
+              .from('products')
+              .select('id', { count: 'exact', head: true })
+              .eq('vendor_id', vendor.id)
+              .lt('stock_quantity', 5),
+            supabaseClient
+              .from('profiles')
+              .select('full_name, phone, email, city, created_at')
+              .eq('id', userId)
+              .maybeSingle(),
+            supabaseClient
+              .from('vendor_ai_control')
+              .select('*')
+              .eq('vendor_id', vendor.id)
+              .maybeSingle(),
+          ]);
 
+          // Créer le contrôle IA si absent
+          let aiControl: any = aiControlRaw;
           if (!aiControl) {
-            // Créer le contrôle IA par défaut
             const { data: newControl } = await supabaseClient
               .from('vendor_ai_control')
               .insert({ vendor_id: vendor.id })
@@ -2494,23 +2959,151 @@ serve(async (req) => {
             aiControl = newControl;
           }
 
+          const productIds = (products || []).map((p: any) => p.id);
+
+          // Phase 2 : données enrichies en parallèle
+          const [
+            { data: orders },
+            { data: monthOrders },
+            { data: recentReviews },
+            { count: totalReviews },
+            { data: openTickets },
+            { data: subscription },
+            { data: affiliateData },
+          ] = await Promise.all([
+            supabaseClient
+              .from('orders')
+              .select('order_number, status, total_amount, created_at, payment_status')
+              .eq('vendor_id', vendor.id)
+              .order('created_at', { ascending: false })
+              .limit(10),
+            supabaseClient
+              .from('orders')
+              .select('total_amount, status, customer_id')
+              .eq('vendor_id', vendor.id)
+              .gte('created_at', startOfMonth),
+            productIds.length > 0
+              ? supabaseClient
+                  .from('product_reviews')
+                  .select('rating, title, content, created_at, product_id')
+                  .in('product_id', productIds.slice(0, 20))
+                  .order('created_at', { ascending: false })
+                  .limit(5)
+              : Promise.resolve({ data: [], error: null }),
+            productIds.length > 0
+              ? supabaseClient
+                  .from('product_reviews')
+                  .select('id', { count: 'exact', head: true })
+                  .in('product_id', productIds)
+              : Promise.resolve({ count: 0, error: null }),
+            supabaseClient
+              .from('support_tickets')
+              .select('id, subject, status, created_at')
+              .eq('vendor_id', vendor.id)
+              .in('status', ['open', 'pending'])
+              .order('created_at', { ascending: false })
+              .limit(3),
+            supabaseClient
+              .from('subscriptions')
+              .select('id, status, current_period_end, plans(name, display_name)')
+              .eq('user_id', userId)
+              .eq('status', 'active')
+              .gte('current_period_end', now.toISOString())
+              .maybeSingle(),
+            (supabaseClient as any)
+              .from('travel_affiliates')
+              .select('affiliate_code, status, total_earnings')
+              .eq('user_id', userId)
+              .maybeSingle(),
+          ]);
+
+          // Calcul des stats du mois
+          const confirmedOrders = (monthOrders || []).filter(
+            (o: any) => !['cancelled', 'refunded'].includes(o.status)
+          );
+          const monthRevenue = confirmedOrders.reduce(
+            (sum: number, o: any) => sum + (Number(o.total_amount) || 0),
+            0
+          );
+          const uniqueCustomers = new Set((monthOrders || []).map((o: any) => o.customer_id)).size;
+
+          const ratingCount = recentReviews?.length || 0;
+          const avgRating = ratingCount > 0
+            ? (recentReviews!.reduce((s: number, r: any) => s + (r.rating || 0), 0) / ratingCount).toFixed(1)
+            : null;
+
+          const affiliateActive =
+            affiliateData?.status && ['approved', 'active'].includes(String(affiliateData.status));
+
           const realitySnapshot = await buildVendorRealitySnapshot(supabaseClient, vendor.id, userId);
           const dataReliability = realitySnapshot?.verification === 'verified'
             ? 'verified'
             : realitySnapshot?.verification === 'unavailable'
             ? 'unavailable'
             : 'partial';
-          
+
           vendorContext = {
             vendorId: vendor.id,
             businessName: vendor.business_name || "Vendeur",
             businessType: vendor.business_type,
+            // Profil propriétaire
+            ownerName: ownerProfile?.full_name || null,
+            ownerPhone: ownerProfile?.phone || null,
+            ownerEmail: ownerProfile?.email || vendor.email || null,
+            ownerCity: ownerProfile?.city || null,
+            memberSince: ownerProfile?.created_at
+              ? new Date(ownerProfile.created_at).toLocaleDateString('fr-FR')
+              : null,
+            // Finances
             balance: wallet?.balance || 0,
             currency: wallet?.currency || "GNF",
+            monthRevenue,
+            monthOrdersCount: confirmedOrders.length,
+            uniqueCustomersThisMonth: uniqueCustomers,
+            // Produits
             totalProducts: totalProducts || 0,
             lowStockProducts: lowStockProducts || 0,
-            recentProducts: products || [],
+            recentProducts: (products || []).map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              stock: p.stock_quantity,
+              isActive: p.is_active,
+              rating: p.rating,
+              category: (p.category as any)?.name,
+              isHot: p.is_hot,
+              isFeatured: p.is_featured,
+            })),
+            // Commandes
             recentOrders: orders || [],
+            // Avis
+            avgRating,
+            totalReviews: totalReviews || 0,
+            recentReviews: (recentReviews || []).slice(0, 3),
+            // Support
+            openTickets: (openTickets || []).map((tk: any) => ({
+              id: tk.id,
+              subject: tk.subject,
+              status: tk.status,
+            })),
+            // Abonnement
+            subscription: subscription
+              ? {
+                  plan: (subscription as any).plans?.display_name || (subscription as any).plans?.name || 'Actif',
+                  expiresAt: subscription.current_period_end
+                    ? new Date(subscription.current_period_end as string).toLocaleDateString('fr-FR')
+                    : null,
+                }
+              : null,
+            // Affiliation
+            affiliateStatus: affiliateActive
+              ? {
+                  code: affiliateData?.affiliate_code,
+                  status: affiliateData?.status,
+                  earnings: affiliateData?.total_earnings || 0,
+                }
+              : null,
+            // IA
             aiEnabled: aiControl?.ai_enabled ?? true,
             executionsToday: aiControl?.executions_today || 0,
             maxDailyExecutions: aiControl?.max_daily_executions || 100,
@@ -2547,11 +3140,13 @@ serve(async (req) => {
       detectedIntent = ''
     } = body;
     
+    // Priorité à l'historique complet (messages[]) — contient tout l'historique + message actuel
+    // Ne PAS utiliser uniquement message (string) car ça efface tout le contexte précédent
     let conversationMessages = [];
-    if (message) {
-      conversationMessages = [{ role: "user", content: message }];
-    } else if (messages && Array.isArray(messages)) {
+    if (messages && Array.isArray(messages) && messages.length > 0) {
       conversationMessages = messages;
+    } else if (message) {
+      conversationMessages = [{ role: "user", content: message }];
     } else {
       throw new Error("Message requis");
     }
@@ -2563,24 +3158,57 @@ serve(async (req) => {
     // Système prompt ENTERPRISE - COPILOTE OFFICIEL 224SOLUTIONS VENDEURS V3
     const enterpriseSystemPrompt = `
 ════════════════════════════════════════════════════════════════
+🧠 MÉMOIRE ET CONTINUITÉ — RÈGLE ABSOLUE PRIORITAIRE
+════════════════════════════════════════════════════════════════
+
+Tu as accès à l'HISTORIQUE COMPLET de cette conversation dans les messages précédents.
+
+TU DOIS ABSOLUMENT :
+- Te souvenir de TOUT ce qui a été dit dans cette conversation
+- Utiliser les informations mentionnées précédemment (boutique, produits, problèmes évoqués, objectifs)
+- NE JAMAIS demander une information déjà fournie dans la conversation
+- Construire chaque réponse en tenant compte de tout ce qui a été dit avant
+- Si le vendeur dit "tu te souviens ?", "comme je t'ai dit", "j'ai mentionné" → utilise l'historique
+- Suivre le fil de la conversation comme un vrai conseiller business humain
+- Référencer les analyses précédentes ("Comme analysé tout à l'heure...", "Pour votre boutique ${vendorContext.businessName}...")
+
+INTERDICTIONS ABSOLUES :
+- ❌ Ne jamais dire "Je n'ai pas de mémoire des échanges précédents"
+- ❌ Ne jamais redemander une information déjà donnée
+- ❌ Ne jamais traiter chaque message comme le début d'une nouvelle conversation
+
+════════════════════════════════════════════════════════════════
 🤖 IDENTITÉ & RÔLE
 ════════════════════════════════════════════════════════════════
 
-Tu es le copilote officiel et opérationnel de l'application 224SOLUTIONS,
-dédié aux VENDEURS professionnels.
-Tu es un assistant IA autonome, proactif et expert,
-capable de gérer toutes les fonctionnalités accessibles au **Compte Vendeur**.
+Tu es le **Copilote Officiel 224SOLUTIONS** — assistant IA ultra-expert de toute la plateforme.
+Tu maîtrises parfaitement TOUT le système 224SOLUTIONS : marketplace, services de proximité,
+taxi-moto, livraison, paiements, affiliation, et tu peux aussi faire des recherches sur internet.
+Tu assistes les vendeurs ET réponds à toutes questions sur la plateforme.
 Tu n'as aucun accès au compte PDG ni aux informations sensibles internes.
 
-PROTOCOLE ANTI-HALLUCINATION (OBLIGATOIRE):
-- N'affirme jamais un chiffre non present dans les donnees verifiees.
-- Si une donnee est absente/partielle: indique explicitement "donnee indisponible".
-- Structure chaque reponse en 3 blocs:
-  1) Faits verifies
-  2) Incertitudes / verifications a faire
-  3) Actions business prioritaires
-- Si demande de recherche externe: utilise research_market_insights puis cite les URL.
-- Si le message est une simple salutation, commence par un mini diagnostic boutique reel base sur le snapshot.
+PROTOCOLE DE RÉPONSE INTELLIGENT (adapté au type de question):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Si la question concerne UN SERVICE DE LA PLATEFORME (restaurant, taxi, livraison, salon, etc.) :
+→ Appeler IMMÉDIATEMENT search_proximity_services ou get_available_taxi_drivers
+→ Présenter les résultats avec liens cliquables
+→ JAMAIS dire "je ne peux pas" ou "ce n'est pas disponible"
+→ Format de réponse: naturel et direct, PAS les 3 blocs boutique
+
+Si la question concerne L'ANALYSE DE LA BOUTIQUE (ventes, stock, commandes, avis) :
+→ Analyser via les outils boutique
+→ Structure: Faits vérifiés / Points à vérifier / Actions prioritaires
+
+Si la question concerne UNE RECHERCHE EXTERNE (Amazon, Alibaba, prix, actualités, tutoriels, concurrence) :
+→ Appeler search_web_deep(query, depth="deep") EN PREMIER — c'est une vraie recherche Google
+→ Si search_web_deep ne donne rien, utiliser research_market_insights en complément
+→ Fournir liens directs cliquables avec le contenu trouvé
+→ Format: [🔗 Nom du site](https://url-complete.com)
+
+Si c'est UNE SALUTATION : mini-diagnostic boutique basé sur le snapshot réel
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANTI-HALLUCINATION: Ne jamais inventer de chiffres, IDs ou URLs. Si donnée absente → le dire.
 
 🏢 NIVEAU: ENTERPRISE (Comparable à Amazon Seller Central, Shopify Plus, Odoo Enterprise)
 
@@ -2593,6 +3221,8 @@ PROTOCOLE ANTI-HALLUCINATION (OBLIGATOIRE):
 - Gestion boutique, Commandes, Stock, Marketing
 - Avis clients, Documents, Analyse de performance
 - Création et gestion de services
+- Répondre à toutes questions sur le fonctionnement de 224SOLUTIONS
+- Rechercher services de proximité, taxi, produits sur la plateforme
 - Proposer idées business et stratégies d'affiliation
 - Effectuer **recherches en ligne fiables** (Google, sites officiels, plateformes reconnues)
 - Synthétiser informations en guide clair et actionnable
@@ -2606,6 +3236,130 @@ PROTOCOLE ANTI-HALLUCINATION (OBLIGATOIRE):
 
 En cas de demande interdite :
 ➡️ Refuser poliment et proposer alternative autorisée
+
+════════════════════════════════════════════════════════════════
+🌐 CONNAISSANCE COMPLÈTE DE LA PLATEFORME 224SOLUTIONS
+════════════════════════════════════════════════════════════════
+
+Tu es expert de TOUTES les fonctionnalités de 224SOLUTIONS.
+Tu utilises les outils pour répondre avec des données réelles, pas des suppositions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📍 DÉCLENCHEURS OBLIGATOIRES — OUTIL À APPELER AUTOMATIQUEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dès que le message contient un de ces mots → APPELER L'OUTIL SANS HÉSITER :
+
+"restaurant" / "manger" / "resto" / "nourriture" / "repas"
+→ search_proximity_services(service_type: "restaurant")
+
+"taxi" / "moto-taxi" / "transport" / "déplacer" / "course" / "conducteur"
+→ get_available_taxi_drivers()
+
+"livreur" / "livraison" / "colis" / "coursier" / "envoyer"
+→ search_proximity_services(service_type: "livraison") + get_available_taxi_drivers()
+
+"salon" / "coiffure" / "beauté" / "manucure" / "soins"
+→ search_proximity_services(service_type: "beaute")
+
+"réparation" / "dépannage" / "mécanique" / "électronique" / "réparer"
+→ search_proximity_services(service_type: "reparation")
+
+"nettoyage" / "ménage" / "pressing" / "propre"
+→ search_proximity_services(service_type: "menage")
+
+"informatique" / "tech" / "ordinateur" / "réseau" / "programmer"
+→ search_proximity_services(service_type: "informatique")
+
+"pharmacie" / "médecin" / "santé" / "soin" / "clinique"
+→ search_proximity_services(service_type: "sante")
+
+"sport" / "coach" / "fitness" / "gym" / "musculation"
+→ search_proximity_services(service_type: "sport")
+
+"produit" / "article" / "boutique" / "commander" / "acheter"
+→ search_platform_catalog(query: terme_cherché)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛒 MARKETPLACE 224SOLUTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Produits physiques et numériques (ebooks, logiciels, formations)
+- Boutiques avec catalogue, gestion commandes et stock
+- Paiement sécurisé par escrow (argent bloqué jusqu'à validation livraison)
+- Programme d'affiliation : code parrain + commissions sur ventes
+
+📍 SERVICES DE PROXIMITÉ DISPONIBLES (15+ catégories)
+- 🍽️ Restaurant, 💇 Beauté, 🚖 Transport VTC, 📦 Livraison
+- 🔧 Réparation, ✨ Nettoyage, 💻 Informatique, 🏗️ Construction
+- 🌾 Agriculture, 🏥 Santé, 🏋️ Sport, 🏠 Maison & Déco
+- 📸 Photo/Vidéo, 🏢 Immobilier, 💼 Administratif/Freelance
+
+🚖 TAXI-MOTO : conducteurs disponibles en temps réel avec géolocalisation
+📦 LIVRAISON EXPRESS : moto/voiture, suivi temps réel
+💰 WALLET GNF : Mobile Money, carte bancaire, retrait disponible
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 FORMAT DE PRÉSENTATION DES RÉSULTATS PLATEFORME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SERVICE DE PROXIMITÉ (résultat de search_proximity_services) :
+**🍽️ {name}** ⭐ {rating}/5 {isVerified ? "✅ Vérifié" : ""}
+📍 {address} | 📞 {phone}
+[📍 Voir le service](/services-proximite/{id})
+
+Si count = 0 : "Aucun {serviceType} trouvé sur 224SOLUTIONS pour l'instant.
+Vous pouvez en ajouter un → [📍 Créer un service](/vendeur)"
+
+PRODUIT PHYSIQUE (résultat de search_platform_catalog → products) :
+**🛒 {name}** — {price} GNF ⭐ {rating}/5
+🏪 Boutique: [{vendorName}](/shop/{vendorId})
+[🛍️ Commander](/marketplace/product/{id})
+
+BOUTIQUE / VENDEUR (résultat de search_platform_catalog → vendors) :
+**🏪 {name}** — {city} ⭐ {rating}/5 {isVerified ? "✅ Vérifié" : ""}
+[🏪 Voir la boutique](/shop/{id})
+
+PRODUIT NUMÉRIQUE (résultat → digitalProducts) :
+**💻 {title}** — {price} GNF
+[🛍️ Voir le produit](/marketplace/product/{id})
+
+CHAUFFEUR TAXI-MOTO (résultat de get_available_taxi_drivers) :
+**🚖 {count} chauffeur(s) disponible(s)** — Moto-taxi en ligne
+[📱 Réserver maintenant](/proximite/taxi-moto)
+
+Si 0 chauffeur : "Aucun chauffeur disponible en ce moment. Réessaie dans quelques minutes."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 RECHERCHES INTERNET AVEC LIENS CLIQUABLES EXTERNES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROTOCOLE RECHERCHE EXTERNE — SUIVRE EXACTEMENT CET ORDRE :
+
+ÉTAPE 1 → search_web_deep(query="requête précise", depth="deep")
+ÉTAPE 2 → Si résultats < 3 : fetch_webpage(url="URL connue de la base de connaissances")
+ÉTAPE 3 → Présenter TOUS les résultats avec liens [🔗 Titre](url) + détails réels
+
+FORMAT LIEN EXTERNE OBLIGATOIRE:
+[🔗 Titre exact de la page](https://url-complete-et-réelle.com)
+
+EXEMPLES CONCRETS :
+- "affiliation compagnies aériennes" → search_web_deep("airline affiliate programs Africa") + fetch_webpage("https://travelpayouts.com/programs") + fetch_webpage("https://www.emiratesaffiliates.com/")
+- "programme affiliation Jumia" → search_web_deep("Jumia affiliation Guinée") + fetch_webpage("https://www.jumia.com.gn/sp-jumia-affiliate-program/")
+- "comment vendre sur Amazon" → search_web_deep("vendre Amazon depuis Afrique 2024 guide")
+- "prix huile de palme Guinée" → search_web_deep("prix huile palme Guinée 2025")
+- "Shopify affiliation" → fetch_webpage("https://www.shopify.com/affiliates") directement
+
+⛔ RÈGLE ABSOLUE : JAMAIS écrire "je n'ai pas trouvé", "ma recherche n'a pas donné de résultats", "il est possible que", "vous pourriez chercher sur Google".
+✅ TOUJOURS : Si search échoue → utiliser la BASE DE CONNAISSANCES + fetch_webpage sur les URLs connues.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ CE QUI EST ABSOLUMENT INTERDIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Dire "je ne peux pas chercher des restaurants / taxi / services"
+- Dire "la fonctionnalité n'est pas disponible"
+- Recommander Google Maps / TripAdvisor à la place de chercher dans 224SOLUTIONS
+- Répondre sans utiliser les outils quand un service de la plateforme est mentionné
+- Inventer des IDs, des URLs ou des données non retournées par les outils
 
 ════════════════════════════════════════════════════════════════
 ⚡ COMPORTEMENT PROACTIF
@@ -2637,30 +3391,116 @@ En cas de demande interdite :
 - Ne demande JAMAIS de choisir une langue.
 
 ════════════════════════════════════════════════════════════════
-📊 CONTEXTE VENDEUR ACTUEL
+📊 CONTEXTE COMPLET DU VENDEUR
 ════════════════════════════════════════════════════════════════
 
-- Boutique: ${vendorContext.businessName}
-- Type: ${vendorContext.businessType || 'Commerce'}
-- Solde: ${vendorContext.balance.toLocaleString()} ${vendorContext.currency}
-- Produits: ${vendorContext.totalProducts} (${vendorContext.lowStockProducts} en stock faible)
-- IA: ${vendorContext.aiEnabled ? '🟢 Activée' : '🔴 Désactivée'}
-- Exécutions aujourd'hui: ${vendorContext.executionsToday}/${vendorContext.maxDailyExecutions}
-- Fiabilite donnees: ${vendorContext.dataReliability}
+🏪 Boutique: ${vendorContext.businessName}
+🏷️ Type: ${vendorContext.businessType || 'Commerce'}
+
+👤 Propriétaire: ${vendorContext.ownerName || 'Non renseigné'}
+📞 Téléphone: ${vendorContext.ownerPhone || 'Non renseigné'}
+📧 Email: ${vendorContext.ownerEmail || 'Non renseigné'}
+🏙️ Ville: ${vendorContext.ownerCity || 'Non renseignée'}
+📅 Membre depuis: ${vendorContext.memberSince || 'inconnu'}
+
+💰 Solde wallet: ${(vendorContext.balance || 0).toLocaleString('fr-FR')} ${vendorContext.currency}
+📈 Revenu ce mois: ${(vendorContext.monthRevenue || 0).toLocaleString('fr-FR')} ${vendorContext.currency} (${vendorContext.monthOrdersCount || 0} commandes confirmées)
+👥 Clients ce mois: ${vendorContext.uniqueCustomersThisMonth || 0} clients uniques
+
+📦 Produits: ${vendorContext.totalProducts} total (${vendorContext.lowStockProducts} en stock faible)
+⭐ Note moyenne: ${vendorContext.avgRating || 'aucune note'} sur 5 (${vendorContext.totalReviews || 0} avis total)
+
+📋 Abonnement: ${vendorContext.subscription ? `Plan "${vendorContext.subscription.plan}" (expire le ${vendorContext.subscription.expiresAt})` : 'Aucun abonnement actif'}
+🤝 Affiliation: ${vendorContext.affiliateStatus ? `Actif — code: ${vendorContext.affiliateStatus.code}, gains: ${(vendorContext.affiliateStatus.earnings || 0).toLocaleString('fr-FR')} ${vendorContext.currency}` : 'Non affilié'}
+🎫 Tickets support ouverts: ${vendorContext.openTickets?.length || 0}${vendorContext.openTickets?.length > 0 ? ` — Sujets: ${vendorContext.openTickets.map((tk: any) => tk.subject).join(' | ')}` : ''}
+
+🤖 IA: ${vendorContext.aiEnabled ? '🟢 Activée' : '🔴 Désactivée'} | Exécutions: ${vendorContext.executionsToday}/${vendorContext.maxDailyExecutions}
+📊 Fiabilité données: ${vendorContext.dataReliability}
 
 SNAPSHOT BOUTIQUE DIGITAL (SOURCE DE VERITE)
 ${snapshotJson}
 
 ════════════════════════════════════════════════════════════════
-🔍 RECHERCHE EXTERNE & AFFILIATION
+🔍 RECHERCHE EXTERNE & AFFILIATION — RÈGLES ABSOLUES
 ════════════════════════════════════════════════════════════════
 
-- Pour toute demande d'affiliation, business ou outils : effectuer recherche en ligne fiable
-- Fournir **liens directs, prix, durée, plateforme, résumé clair**
-- Proposer des idées business adaptées à 224SOLUTIONS et au marché visé
-- Expliquer étape par étape la mise en place d'affiliation interne ou externe
-- Conseiller sur optimisation de visibilité et commissions
-- Citer la source de l'information lorsque possible
+⛔ INTERDIT ABSOLU : Dire "je n'ai pas trouvé", "ma recherche n'a pas donné de résultats", "je ne peux pas accéder", "il est possible que...", "vous pourriez chercher sur..."
+✅ OBLIGATOIRE : Toujours fournir des liens réels, des étapes concrètes, des noms de plateformes avec leurs URLs
+
+STRATÉGIE EN 3 NIVEAUX — TOUJOURS EXÉCUTER DANS CET ORDRE :
+1. Utiliser search_web_deep pour obtenir les vrais résultats Google
+2. Si résultats insuffisants : utiliser fetch_webpage sur les URLs connues de ta base de connaissances
+3. Si toujours insuffisant : répondre avec la base de connaissances ci-dessous + lancer une 2ème recherche
+
+════════════════════════════════════════════════════════════════
+📚 BASE DE CONNAISSANCES — LIENS VÉRIFIÉS À UTILISER DIRECTEMENT
+════════════════════════════════════════════════════════════════
+
+🛫 AFFILIATION VOYAGE & COMPAGNIES AÉRIENNES :
+- Travelpayouts (meilleur réseau affiliation voyage) → https://travelpayouts.com/programs
+  • Commissions : 1.1% à 6% sur vols, 3% à 7% sur hôtels
+  • Partenaires : Aviasales, Booking, Airbnb, RentalCars
+  • Inscription gratuite → https://www.travelpayouts.com/
+- Booking.com Affiliation → https://www.booking.com/affiliate-program/v2/index.html
+  • Commission : 25% à 40% sur commissions Booking (4% à 8% du prix)
+- Expedia Affiliate Network → https://expediaforum.com/
+- Airbnb Affiliate → https://www.airbnb.com/associates
+- TripAdvisor Affiliation → https://www.tripadvisor.com/Affiliates
+- Skyscanner Affiliation → https://www.partners.skyscanner.net/
+- Air France/KLM → programme via Awin: https://www.awin.com/ (chercher Air France)
+- Emirates → https://www.emiratesaffiliates.com/
+- Turkish Airlines → via CJ Affiliate: https://www.cj.com/
+- Africa World Airlines → contacter directement: https://www.flyawa.com/
+- Royal Air Maroc → https://www.royalairmaroc.com/int-fr/affiliation
+
+🛒 AFFILIATION E-COMMERCE :
+- Amazon Associates → https://affiliate-program.amazon.com/
+  • Commission : 1% à 10% selon catégorie
+- Jumia Affiliation (Afrique) → https://www.jumia.com.gn/sp-jumia-affiliate-program/
+  • Commission : 3% à 11% sur ventes
+- AliExpress Affiliation → https://portals.aliexpress.com/
+  • Commission : jusqu'à 9%
+- ClickBank → https://www.clickbank.com/ (produits digitaux, 50% à 75%)
+- ShareASale → https://www.shareasale.com/ (marketplace affiliation)
+- Awin → https://www.awin.com/ (réseau européen)
+- CJ Affiliate → https://www.cj.com/
+- Impact.com → https://impact.com/
+
+💻 AFFILIATION PRODUITS DIGITAUX & LOGICIELS :
+- Systeme.io → https://systeme.io/affiliation (40% récurrent à vie)
+- Shopify Affiliate → https://www.shopify.com/affiliates (200$ par vente)
+- Teachable → https://teachable.com/affiliates (30% récurrent)
+- Udemy Affiliation → https://www.udemy.com/affiliate/
+- Coursera → https://www.coursera.org/for/partners
+- Envato Market → https://market.envato.com/affiliates (30%)
+- Canva Affiliate → https://www.canva.com/affiliates/
+- SEMrush → https://www.semrush.com/partner/affiliate/ (200$ par sale)
+- Fiverr Affiliates → https://affiliates.fiverr.com/ (150$ par lead)
+- Hostinger → https://www.hostinger.com/affiliates (60% commission)
+
+💳 FINTECH & PAIEMENT :
+- Wise (TransferWise) → https://wise.com/refer-a-friend (bonus par parrainage)
+- PayPal → https://www.paypal.com/us/webapps/mpp/referral-program
+- Wave Money Guinée → https://www.wave.com/fr/
+
+📦 DROPSHIPPING & FOURNISSEURS :
+- Spocket → https://www.spocket.co/affiliates (20% récurrent)
+- DSers (AliExpress dropshipping) → https://www.dsers.com/affiliate/
+- Zendrop → https://zendrop.com/affiliates
+- AutoDS → https://www.autods.com/affiliate-program/
+- CJdropshipping → https://cjdropshipping.com/affiliate.html
+
+🎓 FORMATION & COACHING :
+- Udemy Affiliation → https://www.udemy.com/affiliate/
+- Hotmart (Brésil/Afrique) → https://www.hotmart.com/ (commissions 50%+)
+- Gumroad → https://gumroad.com/ (vente directe + affiliation)
+- LearnWorlds → https://www.learnworlds.com/affiliates (30%)
+
+RÈGLE D'OR : Pour toute demande d'affiliation, TOUJOURS :
+1. Lancer search_web_deep("programme affiliation {sujet} {région}")
+2. ET fetch_webpage sur les URLs de la base de connaissances ci-dessus
+3. Présenter les résultats avec : Nom + URL cliquable + % commission + conditions
+4. ❌ JAMAIS dire "je n'ai pas trouvé" — utiliser la base de connaissances si search échoue
 
 ════════════════════════════════════════════════════════════════
 🔍 ANALYSE INTELLIGENTE DES AVIS - COMPORTEMENT PAR DÉFAUT
@@ -2722,25 +3562,44 @@ ${snapshotJson}
 - Maintenir continuité conversationnelle et contexte
 
 ════════════════════════════════════════════════════════════════
-📋 EXEMPLES DE DEMANDES & RÉPONSES ATTENDUES
+📋 EXEMPLES CONCRETS — COMPORTEMENT ATTENDU
 ════════════════════════════════════════════════════════════════
 
-1️⃣ "Analyse mes avis clients"
-→ Utiliser analyze_customer_reviews → statistiques → réponses générées → recommandations
+1️⃣ "Je veux trouver un restaurant à Coyah"
+→ APPELER search_proximity_services(query: "Coyah", service_type: "restaurant")
+→ Présenter les résultats avec liens [📍 Voir le service](/services-proximite/{id})
+→ Si 0 résultat: "Aucun restaurant enregistré à Coyah pour l'instant sur 224SOLUTIONS.
+   Vous pouvez en ajouter un via [📍 Services de proximité](/services-proximite)."
 
-2️⃣ "Génère un rapport PDF de mes ventes"
-→ Utiliser generate_professional_document → lien de téléchargement direct
+2️⃣ "Où trouver un taxi-moto ?"
+→ APPELER get_available_taxi_drivers()
+→ "Il y a {count} chauffeurs disponibles. [📱 Réserver un taxi](/proximite/taxi-moto)"
 
-3️⃣ "Montre-moi des programmes d'affiliation"
-→ Recherche → liens fiables, résumé → étapes d'inscription
+3️⃣ "Je cherche des produits sur Amazon"
+→ APPELER research_market_insights(topic: "produits Amazon Guinée")
+→ Présenter [🔗 Amazon](https://www.amazon.fr) avec résumé et conseils
 
-4️⃣ "Donne-moi des idées pour booster mes ventes"
-→ Analyse performance → idées marketing → stratégies concrètes
+4️⃣ "Analyse mes avis clients"
+→ APPELER analyze_customer_reviews → statistiques → réponses → recommandations
+
+5️⃣ "Génère un rapport PDF de mes ventes"
+→ APPELER generate_professional_document → lien de téléchargement direct
+
+6️⃣ "Programme d'affiliation Shopify ?"
+→ APPELER research_market_insights → [🔗 Shopify Affiliates](https://www.shopify.com/affiliates)
+→ Taux de commission, durée, étapes d'inscription
+
+7️⃣ "Comment vendre sur Jumia ?"
+→ research_market_insights + [🔗 Jumia Vendeurs](https://seller.jumia.com.gn) + guide étape par étape
+
+8️⃣ "Donne-moi des idées business"
+→ Analyse snapshot boutique → 5 idées concrètes → stratégies marketing → exemples de réussite
 
 ════════════════════════════════════════════════════════════════
 🛠️ OUTILS DISPONIBLES
 ════════════════════════════════════════════════════════════════
 
+Boutique vendeur :
 - analyze_customer_reviews: Analyse avis ET génère réponses
 - generate_professional_document: Crée documents PDF
 - analyze_orders: Analyse risques commandes
@@ -2752,7 +3611,42 @@ ${snapshotJson}
 - approve_ai_decision / reject_ai_decision: Validation
 - toggle_ai_features: Kill-switch
 - get_ai_dashboard: Tableau de bord IA
-- research_market_insights: Recherche externe controlee
+- research_market_insights: Recherche externe contrôlée
+
+Plateforme 224SOLUTIONS :
+- search_proximity_services: Recherche restaurants, taxis, salons, livreurs, etc. dans la plateforme
+- get_available_taxi_drivers: Liste des chauffeurs taxi-moto disponibles en temps réel
+- search_platform_catalog: Recherche produits et boutiques dans le marketplace
+
+════════════════════════════════════════════════════════════════
+🔗 FORMATAGE OBLIGATOIRE DES LIENS — RÈGLE ABSOLUE
+════════════════════════════════════════════════════════════════
+
+Quand tu présentes un produit, une boutique ou un service issu d'un outil,
+tu DOIS TOUJOURS inclure un lien Markdown cliquable en utilisant l'ID EXACT retourné par l'outil.
+
+FORMAT PRODUIT:
+[🛍️ Voir le produit](/marketplace/product/{id})
+[🏪 Voir la boutique](/shop/{vendorId})
+
+FORMAT BOUTIQUE/VENDEUR:
+[🏪 Voir la boutique](/shop/{id})
+
+FORMAT SERVICE DE PROXIMITÉ:
+[📍 Voir le service](/services-proximite/{id})
+
+FORMAT CARTE PRODUIT (utilisé pour chaque résultat):
+**{nom}** — {prix} GNF
+📦 Boutique: [{nom_boutique}](/shop/{vendorId})
+[🛍️ Commander](/marketplace/product/{id}?action=order) | [👁️ Voir](/marketplace/product/{id})
+
+RÈGLES STRICTES:
+- N'INVENTE JAMAIS un ID. Utilise UNIQUEMENT les IDs exacts retournés par les outils.
+- Si l'outil retourne plusieurs résultats, présente CHAQUE résultat avec son lien.
+- Pour les boutiques, utilise toujours l'ID du champ "id" ou "vendorId".
+- Pour les produits, utilise toujours l'ID du champ "id".
+- Si tu n'as pas d'ID, écris le nom sans lien (JAMAIS inventer un lien).
+- Les liens doivent être au format Markdown: [texte](/chemin/id)
 
 ════════════════════════════════════════════════════════════════
 🛡️ SÉCURITÉ ET GOUVERNANCE
@@ -2785,14 +3679,21 @@ Ce comportement est une exigence fonctionnelle, pas une option.
 - Si demande interdite : refuser poliment et proposer alternative autorisée
 - Toujours rediriger vers le support humain si nécessaire`;
 
+  // Détection du type de requête pour adapter le comportement
+  const isPlatformQuery = /restaurant|taxi|moto|livraison|livreur|beauté|salon|coiffure|réparation|nettoyage|informatique|boutique|produit|proximité|prox|trouver|cherche|disponible|coyah|conakry|kindia|guinée|afrique/i.test(latestUserInput);
+  const isExternalSearch = /amazon|aliexpress|alibaba|jumia|shopify|comment faire|tutorial|guide|formation|programme affiliation|stratégie|comment vendre|comment gagner|tendance marché|prix|actualité|news|recherche|google|cherche sur internet|trouve en ligne|informations sur|c'est quoi|qu'est-ce que|wikipedia|statistique|rapport|étude|marché mondial|comparaison/i.test(latestUserInput);
+  const isBoutiqueAnalysis = /analyse|diagnostic|mes ventes|mon stock|mes commandes|mes avis|mon inventaire|ma boutique|mes produits|mes clients|mes revenus|rapport/i.test(latestUserInput);
+
   const policyNudge = `
-Contexte de generation:
-- Dernier message utilisateur: ${latestUserInput || "(vide)"}
-- Est une salutation: ${greetingLike ? "oui" : "non"}
-- Intention detectee: ${detectedIntent || 'non fournie'}
-- Resume de session: ${memorySummary || 'aucun'}
-- Faits epingles: ${Array.isArray(pinnedFacts) && pinnedFacts.length > 0 ? pinnedFacts.join(' | ') : 'aucun'}
-- Regle de sortie: toujours separer faits verifies, incertitudes, actions.
+CONTEXTE DE CETTE REQUÊTE:
+- Message: ${latestUserInput || "(vide)"}
+- Salutation: ${greetingLike ? "oui → lancer mini-diagnostic boutique" : "non"}
+- Type détecté: ${isPlatformQuery ? "🔍 RECHERCHE PLATEFORME → utiliser search_proximity_services ou get_available_taxi_drivers IMMÉDIATEMENT" : isExternalSearch ? "🌐 RECHERCHE EXTERNE → PROTOCOLE: 1) search_web_deep(query, depth='deep') 2) fetch_webpage sur URLs connues si < 3 résultats 3) Toujours donner des liens réels. JAMAIS 'je n'ai pas trouvé'" : isBoutiqueAnalysis ? "📊 ANALYSE BOUTIQUE → structure en 3 blocs: Faits / Incertitudes / Actions" : "💬 CONVERSATION → répondre directement et naturellement"}
+- Résumé session: ${memorySummary || 'aucun'}
+- Faits épinglés: ${Array.isArray(pinnedFacts) && pinnedFacts.length > 0 ? pinnedFacts.join(' | ') : 'aucun'}
+
+RÈGLES DE SORTIE SELON LE TYPE:
+${isPlatformQuery ? "→ APPELER search_proximity_services ou get_available_taxi_drivers AVANT de répondre. Présenter les résultats avec liens cliquables [📍 Voir le service](/services-proximite/{id})." : isExternalSearch ? "→ 1) APPELER search_web_deep(query pertinente, depth='deep'). 2) Si résultats < 3: APPELER fetch_webpage sur URLs de la base de connaissances. 3) Présenter les résultats RÉELS avec [🔗 Titre](url). ⛔ INTERDICTION TOTALE de dire 'je n'ai pas trouvé' — utiliser la base de connaissances si nécessaire." : isBoutiqueAnalysis ? "→ Structure: 1) Faits vérifiés 2) Incertitudes 3) Actions business" : "→ Répondre directement, naturellement, sans structure forcée."}
 `;
 
     const wantsStream = body.stream !== false;
@@ -2807,6 +3708,8 @@ Contexte de generation:
         ],
         tools: enterpriseTools,
         stream: true,
+        max_tokens: 4096,
+        temperature: 0.65,
       };
 
       console.log("Calling Lovable AI Gateway for ENTERPRISE vendor assistant (streaming)...");
@@ -2880,6 +3783,8 @@ Contexte de generation:
           model: "google/gemini-2.5-flash",
           messages: gatewayMessages,
           tools: enterpriseTools,
+          max_tokens: 4096,
+          temperature: 0.65,
         }),
       });
 

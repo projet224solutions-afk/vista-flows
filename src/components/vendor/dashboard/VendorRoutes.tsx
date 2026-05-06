@@ -160,7 +160,7 @@ const CopilotePage = memo(function CopilotePage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CopiloteChat userRole="vendeur" height="500px" />
+        <CopiloteChat userRole="vendeur" height="calc(100vh - 180px)" />
       </CardContent>
     </Card>
   );

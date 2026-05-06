@@ -37,7 +37,7 @@ import {
   getDriverTotalTrips,
   getDriverDisplayName,
   getVehicleTypeDisplay,
-  extractProfilesFromJoinedData,
+  createProfileMap,
 } from '@/lib/drivers';
 
 const RADIUS_KM = 20;
@@ -167,9 +167,8 @@ export default function NearbyLivraison() {
     try {
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // ✓ Requêtes parallèles optimisées avec limites
+      // Requêtes parallèles sans join FK (pas dans le schema cache)
       const [deliveryRes, taxiRes] = await Promise.all([
-        // Delivery drivers - CORRIGÉ: ET logique au lieu de OU
         supabase
           .from('drivers')
           .select(`
@@ -180,14 +179,12 @@ export default function NearbyLivraison() {
             is_online,
             current_location,
             rating,
-            total_deliveries,
-            profiles:user_id (id, first_name, last_name, phone, avatar_url)
+            total_deliveries
           `)
           .eq('status', 'active')
           .eq('is_online', true)
           .limit(MAX_DRIVERS_LIMIT),
 
-        // Taxi drivers (peuvent aussi livrer)
         supabase
           .from('taxi_drivers')
           .select(`
@@ -199,8 +196,7 @@ export default function NearbyLivraison() {
             last_lat,
             last_lng,
             rating,
-            total_rides,
-            profiles:user_id (id, first_name, last_name, phone, avatar_url)
+            total_rides
           `)
           .eq('is_online', true)
           .limit(MAX_DRIVERS_LIMIT),
@@ -209,12 +205,27 @@ export default function NearbyLivraison() {
       if (deliveryRes.error) throw new Error(`Erreur drivers: ${deliveryRes.error.message}`);
       if (taxiRes.error) throw new Error(`Erreur taxi: ${taxiRes.error.message}`);
 
-      // ✓ OPTIMISATION: Créer une seule Map globale de profils
       const deliveryData = (deliveryRes.data || []) as Array<Record<string, unknown>>;
       const taxiData = (taxiRes.data || []) as Array<Record<string, unknown>>;
 
-      const deliveryProfileMap = extractProfilesFromJoinedData(deliveryData);
-      const taxiProfileMap = extractProfilesFromJoinedData(taxiData);
+      // Récupération des profils séparément pour tous les drivers
+      const allUserIds = [
+        ...deliveryData.map(d => d.user_id),
+        ...taxiData.map(d => d.user_id),
+      ].filter(Boolean) as string[];
+
+      let deliveryProfileMap = new Map<string, any>();
+      let taxiProfileMap = new Map<string, any>();
+
+      if (allUserIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, phone, avatar_url')
+          .in('id', allUserIds);
+        const globalProfileMap = createProfileMap((profilesData || []) as Array<Record<string, unknown>>);
+        deliveryProfileMap = globalProfileMap;
+        taxiProfileMap = globalProfileMap;
+      }
 
       // ✓ Traitement des drivers avec la Map globale
       const allDrivers: NearbyDriver[] = [];

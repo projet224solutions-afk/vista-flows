@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Loader2, _DollarSign, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, _Send, History } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { _WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
-import { QuickTransferButton } from '@/components/wallet/QuickTransferButton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -394,14 +393,6 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               {showTransactions ? 'Masquer' : 'Voir'} l'historique
             </Button>
 
-            {/* Transfert rapide */}
-            <div className="pt-2 border-t border-white/20">
-              <QuickTransferButton
-                variant="ghost"
-                className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20"
-                showText={true}
-              />
-            </div>
           </div>
         </CardContent>
       </Card>

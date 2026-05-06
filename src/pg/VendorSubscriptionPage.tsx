@@ -195,7 +195,7 @@ function sanitizeDigitalFeature(feature: string): string | null {
   if (normalized.includes('analytic')) return 'Analytics ventes, telechargements et abonnements';
   if (normalized.includes('support')) return 'Support prioritaire pour vos lancements';
   if (normalized.includes('avant') || normalized.includes('featured')) return 'Visibilite marketplace et mise en avant';
-  if (normalized.includes('api')) return 'API, automatisations et connecteurs';
+  if (normalized.includes('api')) return null;
   if (normalized.includes('branding') || normalized.includes('marque')) return 'Branding de vos pages de vente';
   if (normalized.includes('image')) return value.replace(/produit/gi, 'offre').replace(/images?/gi, 'visuels');
   if (normalized.includes('produit')) return value.replace(/produits?/gi, 'offres').replace(/boutique/gi, 'catalogue digital');
@@ -209,7 +209,7 @@ function getDigitalFeatureList(plan: Plan): string[] {
   if (plan.analytics_access) features.add('Analytics ventes, telechargements et abonnements');
   if (plan.priority_support) features.add('Support prioritaire pour vos lancements');
   if (plan.featured_products) features.add('Visibilite marketplace et mise en avant');
-  if (plan.api_access) features.add('API, automatisations et connecteurs');
+  if (plan.api_access) features.add('Automatisations et campagnes avancées');
   if (plan.custom_branding) features.add('Branding de vos pages de vente');
 
   if (Array.isArray(plan.features)) {
@@ -813,7 +813,7 @@ export default function VendorSubscriptionPage() {
                       <div className="flex items-center gap-1.5">
                         {plan.api_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.api_access ? 'text-muted-foreground/60' : ''}>
-                          {isDigitalSubscription ? 'API et automatisations' : 'Acces API'}
+                          {isDigitalSubscription ? 'Automatisations avancées' : 'Acces API'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">

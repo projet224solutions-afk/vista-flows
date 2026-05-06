@@ -93,13 +93,61 @@ serve(async (req) => {
     
     if (supabaseUrl && supabaseKey) {
       supabaseClient = createClient(supabaseUrl, supabaseKey);
-      
+
       // Récupérer l'utilisateur authentifié
       const authHeader = req.headers.get("authorization");
       if (authHeader) {
         const token = authHeader.replace("Bearer ", "");
         const { data: { user } } = await supabaseClient.auth.getUser(token);
         userId = user?.id || null;
+      }
+
+      // Charger le profil PDG + stats plateforme en parallèle
+      if (userId) {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const [
+          { data: pdgProfile },
+          { count: totalVendors },
+          { count: totalClients },
+          { data: monthOrders },
+          { data: openTickets },
+        ] = await Promise.all([
+          supabaseClient
+            .from('profiles')
+            .select('full_name, email, city')
+            .eq('id', userId)
+            .maybeSingle(),
+          supabaseClient
+            .from('vendors')
+            .select('id', { count: 'exact', head: true })
+            .eq('is_active', true),
+          supabaseClient
+            .from('profiles')
+            .select('id', { count: 'exact', head: true }),
+          supabaseClient
+            .from('orders')
+            .select('total_amount, status')
+            .gte('created_at', startOfMonth)
+            .not('status', 'in', '("cancelled","refunded")'),
+          supabaseClient
+            .from('support_tickets')
+            .select('id', { count: 'exact', head: true })
+            .in('status', ['open', 'pending']),
+        ]);
+        const monthRevenue = (monthOrders || []).reduce(
+          (s: number, o: any) => s + (Number(o.total_amount) || 0), 0
+        );
+        (supabaseClient as any)._pdgContext = {
+          name: pdgProfile?.full_name || 'PDG',
+          email: pdgProfile?.email || '',
+          city: pdgProfile?.city || '',
+          totalVendors: totalVendors || 0,
+          totalClients: totalClients || 0,
+          monthRevenue,
+          monthOrdersCount: (monthOrders || []).length,
+          openTickets: (openTickets as any)?.count || 0,
+        };
       }
     }
 
@@ -206,11 +254,23 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    const pdgCtx: any = (supabaseClient as any)?._pdgContext || {};
+    const pdgContextBlock = `
+════════════════════════════════════════════════════════════════
+📊 CONTEXTE PDG ACTUEL
+════════════════════════════════════════════════════════════════
+👤 PDG: ${pdgCtx.name || 'PDG'} | Email: ${pdgCtx.email || 'N/A'} | Ville: ${pdgCtx.city || 'N/A'}
+🏪 Boutiques actives: ${pdgCtx.totalVendors || 0}
+👥 Clients inscrits: ${pdgCtx.totalClients || 0}
+📈 Revenu ce mois: ${(pdgCtx.monthRevenue || 0).toLocaleString('fr-FR')} GNF (${pdgCtx.monthOrdersCount || 0} commandes)
+🎫 Tickets support ouverts: ${pdgCtx.openTickets || 0}
+════════════════════════════════════════════════════════════════`;
+
     let systemPrompt = "";
-    
+
     if (type === "analyze") {
-      systemPrompt = `Tu es un assistant IA avancé pour la plateforme 224Solutions. 
-      
+      systemPrompt = `Tu es un assistant IA avancé pour la plateforme 224Solutions.
+${pdgContextBlock}
 Ton rôle est d'analyser les données de la plateforme et de fournir des insights actionnables aux dirigeants.
 
 Concentre-toi sur:
@@ -223,6 +283,7 @@ Concentre-toi sur:
 Fournis des réponses concises, claires et actionnables. Utilise des données chiffrées quand c'est pertinent.`;
     } else {
       systemPrompt = `Tu es un assistant exécutif senior hautement qualifié pour la plateforme 224Solutions. Tu communiques avec le professionnalisme d'un consultant McKinsey ou BCG.
+${pdgContextBlock}
 
 🎯 TON STYLE DE COMMUNICATION:
 - Parle comme un humain intelligent et chaleureux, pas comme un robot

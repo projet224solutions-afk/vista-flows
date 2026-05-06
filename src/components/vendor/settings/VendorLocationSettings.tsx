@@ -86,7 +86,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   const isDigitalVendorWorkspace = location.pathname.startsWith('/vendeur-digital');
   const businessTypeOptions = BUSINESS_TYPES.map((option) =>
-    isDigitalVendorWorkspace && option.value === 'hybrid'
+    isDigitalVendorWorkspace && (option.value === 'hybrid' || option.value === 'physical')
       ? { ...option, label: `${option.label} (verrouillé)`, disabled: true }
       : option
   );
@@ -101,9 +101,8 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   }, [vendorId]);
 
   useEffect(() => {
-    if (isDigitalVendorWorkspace && businessType === 'hybrid') {
+    if (isDigitalVendorWorkspace && (businessType === 'hybrid' || businessType === 'physical')) {
       setBusinessType('digital');
-      toast.info('Le type "Physique + En ligne" est verrouillé pour le compte vendeur digital.');
     }
   }, [businessType, isDigitalVendorWorkspace]);
 
@@ -124,7 +123,8 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
         setAddress(data.address || '');
         setLatitude(data.latitude ? parseFloat(String(data.latitude)) : null);
         setLongitude(data.longitude ? parseFloat(String(data.longitude)) : null);
-        setBusinessType(data.business_type || 'physical');
+        const loadedType = data.business_type || 'physical';
+        setBusinessType(isDigitalVendorWorkspace && loadedType !== 'digital' ? 'digital' : loadedType);
         setServiceType(data.service_type || 'retail');
       }
     } catch (error) {
@@ -289,7 +289,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     setLoading(true);
 
     try {
-      const finalBusinessType = isDigitalVendorWorkspace && businessType === 'hybrid'
+      const finalBusinessType = isDigitalVendorWorkspace && businessType !== 'digital'
         ? 'digital'
         : businessType;
 
@@ -488,7 +488,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
               />
               {isDigitalVendorWorkspace && (
                 <p className="text-xs text-muted-foreground">
-                  L'option "Physique + En ligne" est verrouillée dans le compte vendeur digital.
+                  Le type "En ligne uniquement" est fixe pour le compte vendeur digital.
                 </p>
               )}
             </div>

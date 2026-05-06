@@ -1379,42 +1379,114 @@ serve(async (req) => {
       userId = user?.id || null;
       
       if (userId) {
-        // Récupérer le profil utilisateur
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('full_name, phone, email')
-          .eq('id', userId)
-          .single();
-          
-        // Récupérer le wallet
-        const { data: wallet } = await supabaseClient
-          .from('wallets')
-          .select('id, balance, currency')
-          .eq('user_id', userId)
-          .single();
-          
-        // Récupérer les dernières transactions
-        const { data: transactions } = await supabaseClient
-          .from('wallet_transactions')
-          .select('amount, transaction_type, status, created_at')
-          .eq('wallet_id', wallet?.id || '')
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
-        // Récupérer les dernières commandes
-        const { data: orders } = await supabaseClient
-          .from('orders')
-          .select('order_number, status, total_amount, created_at')
-          .eq('customer_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
+        // Phase 1 : profil + wallet en parallèle
+        const [{ data: profile }, { data: wallet }] = await Promise.all([
+          supabaseClient
+            .from('profiles')
+            .select('full_name, phone, email, avatar_url, city, created_at')
+            .eq('id', userId)
+            .single(),
+          supabaseClient
+            .from('wallets')
+            .select('id, balance, currency')
+            .eq('user_id', userId)
+            .single(),
+        ]);
+
+        const walletId = wallet?.id || '';
+
+        // Phase 2 : toutes les autres données en parallèle
+        const [
+          { data: transactions },
+          { data: orders },
+          { data: address },
+          { data: affiliate },
+          { data: subscription },
+          { count: favoritesCount },
+          { data: openTickets },
+        ] = await Promise.all([
+          supabaseClient
+            .from('wallet_transactions')
+            .select('amount, transaction_type, description, status, created_at')
+            .eq('wallet_id', walletId)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabaseClient
+            .from('orders')
+            .select('order_number, status, total_amount, created_at')
+            .eq('customer_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabaseClient
+            .from('user_addresses')
+            .select('street, city, country, is_default')
+            .eq('user_id', userId)
+            .eq('is_default', true)
+            .maybeSingle(),
+          (supabaseClient as any)
+            .from('travel_affiliates')
+            .select('affiliate_code, status, total_earnings')
+            .eq('user_id', userId)
+            .maybeSingle(),
+          supabaseClient
+            .from('subscriptions')
+            .select('id, status, current_period_end, plans(name, display_name)')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .gte('current_period_end', new Date().toISOString())
+            .maybeSingle(),
+          supabaseClient
+            .from('favorites')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId),
+          supabaseClient
+            .from('support_tickets')
+            .select('id, subject, status, created_at')
+            .eq('user_id', userId)
+            .in('status', ['open', 'pending'])
+            .order('created_at', { ascending: false })
+            .limit(3),
+        ]);
+
+        const affiliateActive =
+          affiliate?.status && ['approved', 'active'].includes(String(affiliate.status));
+
         userContext = {
           name: profile?.full_name || "Client",
+          phone: profile?.phone || null,
+          email: profile?.email || null,
+          city: profile?.city || null,
+          memberSince: profile?.created_at
+            ? new Date(profile.created_at).toLocaleDateString('fr-FR')
+            : null,
           balance: wallet?.balance || 0,
           currency: wallet?.currency || "GNF",
           recentTransactions: transactions || [],
-          recentOrders: orders || []
+          recentOrders: orders || [],
+          defaultAddress: address
+            ? [address.street, address.city, address.country].filter(Boolean).join(', ')
+            : null,
+          favoritesCount: favoritesCount || 0,
+          subscription: subscription
+            ? {
+                plan: (subscription as any).plans?.display_name || (subscription as any).plans?.name || 'Actif',
+                expiresAt: subscription.current_period_end
+                  ? new Date(subscription.current_period_end as string).toLocaleDateString('fr-FR')
+                  : null,
+              }
+            : null,
+          affiliateStatus: affiliateActive
+            ? {
+                code: affiliate?.affiliate_code,
+                status: affiliate?.status,
+                earnings: affiliate?.total_earnings || 0,
+              }
+            : null,
+          openTickets: (openTickets || []).map((tk: any) => ({
+            id: tk.id,
+            subject: tk.subject,
+            status: tk.status,
+          })),
         };
       }
     }
@@ -1435,11 +1507,13 @@ serve(async (req) => {
     const userLongitude = Number((userLocation as any)?.longitude);
     const hasUserLocation = Number.isFinite(userLatitude) && Number.isFinite(userLongitude);
     
+    // Priorité à l'historique complet (messages[]) — contient tout l'historique + message actuel
+    // Ne PAS utiliser uniquement message (string) car ça efface tout le contexte précédent
     let conversationMessages = [];
-    if (message) {
-      conversationMessages = [{ role: "user", content: message }];
-    } else if (messages && Array.isArray(messages)) {
+    if (messages && Array.isArray(messages) && messages.length > 0) {
       conversationMessages = messages;
+    } else if (message) {
+      conversationMessages = [{ role: "user", content: message }];
     } else {
       throw new Error("Message requis");
     }
@@ -1460,6 +1534,27 @@ serve(async (req) => {
 
     // Prompt système unifié - COPILOTE OFFICIEL 224SOLUTIONS V3
     const clientSystemPrompt = `
+════════════════════════════════════════════════════════════════
+🧠 MÉMOIRE ET CONTINUITÉ — RÈGLE ABSOLUE PRIORITAIRE
+════════════════════════════════════════════════════════════════
+
+Tu as accès à l'HISTORIQUE COMPLET de cette conversation dans les messages précédents.
+
+TU DOIS ABSOLUMENT :
+- Te souvenir de TOUT ce qui a été dit dans cette conversation
+- Utiliser les informations mentionnées précédemment (nom, ville, budget, produit cherché, problème évoqué)
+- NE JAMAIS demander une information déjà fournie dans la conversation
+- Construire chaque réponse en tenant compte de ce qui a été dit avant
+- Si l'utilisateur dit "tu te souviens ?", "comme je t'ai dit", "j'ai mentionné" → utilise l'historique
+- Suivre le fil de la conversation comme un vrai conseiller humain
+- Référencer les échanges précédents quand c'est pertinent ("Comme vous me l'avez dit...", "Pour votre recherche sur...")
+
+INTERDICTIONS ABSOLUES :
+- ❌ Ne jamais dire "Je n'ai pas de mémoire des conversations précédentes"
+- ❌ Ne jamais redemander une information déjà donnée
+- ❌ Ne jamais traiter chaque message comme le début d'une nouvelle conversation
+- ❌ Ne jamais ignorer le contexte des échanges précédents
+
 ════════════════════════════════════════════════════════════════
 🤖 IDENTITÉ & RÔLE
 ════════════════════════════════════════════════════════════════
@@ -1520,13 +1615,25 @@ En cas de demande interdite :
 - Ne demande JAMAIS de choisir une langue.
 
 ════════════════════════════════════════════════════════════════
-📊 CONTEXTE DU CLIENT ACTUEL
+📊 CONTEXTE COMPLET DU CLIENT
 ════════════════════════════════════════════════════════════════
 
 👤 Nom: ${userContext.name || "Client"}
-💰 Solde wallet: ${userContext.balance?.toLocaleString() || 0} ${userContext.currency || "GNF"}
-📜 Dernières transactions: ${JSON.stringify(userContext.recentTransactions || [])}
-📦 Dernières commandes: ${JSON.stringify(userContext.recentOrders || [])}
+📞 Téléphone: ${userContext.phone || "Non renseigné"}
+📧 Email: ${userContext.email || "Non renseigné"}
+🏙️ Ville: ${userContext.city || "Non renseignée"}
+📅 Membre depuis: ${userContext.memberSince || "inconnu"}
+
+💰 Solde wallet: ${(userContext.balance || 0).toLocaleString('fr-FR')} ${userContext.currency || "GNF"}
+🏠 Adresse principale: ${userContext.defaultAddress || "Non renseignée"}
+❤️ Produits favoris: ${userContext.favoritesCount || 0}
+
+📦 Abonnement: ${userContext.subscription ? `Plan "${userContext.subscription.plan}" (expire le ${userContext.subscription.expiresAt})` : "Aucun abonnement actif"}
+🤝 Affiliation: ${userContext.affiliateStatus ? `Actif — code: ${userContext.affiliateStatus.code}, gains: ${(userContext.affiliateStatus.earnings || 0).toLocaleString('fr-FR')} GNF` : "Non affilié"}
+🎫 Tickets d'assistance ouverts: ${userContext.openTickets?.length || 0}${userContext.openTickets?.length > 0 ? ` — Sujets: ${userContext.openTickets.map((tk: any) => tk.subject).join(' | ')}` : ''}
+
+📜 Dernières transactions (${userContext.recentTransactions?.length || 0}): ${JSON.stringify(userContext.recentTransactions || [])}
+📦 Dernières commandes (${userContext.recentOrders?.length || 0}): ${JSON.stringify(userContext.recentOrders || [])}
 
 🧠 MÉMOIRE DE SESSION
 - Résumé récent: ${memorySummary || 'Aucun résumé de session fourni'}
@@ -1535,6 +1642,37 @@ En cas de demande interdite :
 - Mode actif: ${activeMode}
 - Image jointe dans ce tour: ${hasImageAttachment ? 'oui' : 'non'}
 - Position utilisateur disponible: ${hasUserLocation ? `${userLatitude.toFixed(5)}, ${userLongitude.toFixed(5)}` : 'non'}
+
+════════════════════════════════════════════════════════════════
+🔗 FORMATAGE OBLIGATOIRE DES LIENS — RÈGLE ABSOLUE
+════════════════════════════════════════════════════════════════
+
+Quand tu présentes un produit, une boutique ou un service issu d'un outil,
+tu DOIS TOUJOURS inclure un lien Markdown cliquable en utilisant l'ID EXACT retourné par l'outil.
+
+FORMAT PRODUIT:
+[🛍️ Voir le produit](/marketplace/product/{id})
+[🏪 Voir la boutique](/shop/{vendorId})
+
+FORMAT BOUTIQUE/VENDEUR:
+[🏪 Voir la boutique](/shop/{id})
+
+FORMAT SERVICE DE PROXIMITÉ:
+[📍 Voir le service](/services-proximite/{id})
+
+FORMAT CARTE PRODUIT (utilisé pour chaque résultat):
+**{nom}** — {prix} GNF
+📦 Boutique: [{nom_boutique}](/shop/{vendorId})
+[🛍️ Commander](/marketplace/product/{id}?action=order) | [👁️ Voir](/marketplace/product/{id})
+📞 {telephone}
+
+RÈGLES STRICTES:
+- N'INVENTE JAMAIS un ID. Utilise UNIQUEMENT les IDs exacts retournés par les outils.
+- Si l'outil retourne plusieurs résultats, présente CHAQUE résultat avec son lien.
+- Pour les boutiques, utilise toujours l'ID du champ "id" ou "vendorId".
+- Pour les produits, utilise toujours l'ID du champ "id".
+- Pour les services, utilise toujours l'ID du champ "id".
+- Si tu n'as pas d'ID, écris le nom sans lien (JAMAIS inventer un lien).
 
 RÈGLES ABSOLUES:
 - Distinguer clairement Données internes vs Recherche web externe vs Suggestions.

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { QuickTransferButton } from "./QuickTransferButton";
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -106,14 +105,6 @@ export function WalletBalanceWidget({
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            {showTransferButton && (
-              <QuickTransferButton
-                variant="ghost"
-                size="icon"
-                className={isSurfaceVariant ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' : 'text-white hover:bg-white/20'}
-                showText={false}
-              />
-            )}
           </div>
         </div>
       </CardContent>

@@ -5,7 +5,7 @@
  * Fully translated + proximity location info
  */
 
-import { Store, Car, Truck, Zap, Utensils } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { HomeServiceCard } from './ServiceCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
@@ -33,42 +33,42 @@ export function NearbyServicesSection({
   const services = [
     {
       id: 'boutiques',
-      icon: <Store className="w-6 h-6 text-vendeur-primary" />,
+      icon: <img src="/service-icons/logo-boutique.jpeg" alt="Boutique" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.shops'),
       subtitle: t('home.localShops'),
       count: stats.boutiques,
       gradient: 'from-vendeur-primary/25 to-vendeur-secondary/15',
-      iconBg: 'bg-vendeur-primary/20',
+      iconBg: 'bg-white/80',
       trending: stats.boutiques > 5,
     },
     {
       id: 'restaurants',
-      icon: <Utensils className="w-6 h-6 text-orange-500" />,
+      icon: <img src="/service-icons/logo-resto.jpeg" alt="Restaurant" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.restaurant'),
       subtitle: t('home.orderFood'),
       count: stats.restaurants,
       gradient: 'from-orange-500/25 to-red-500/15',
-      iconBg: 'bg-orange-500/20',
+      iconBg: 'bg-white/80',
       trending: stats.restaurants > 0,
     },
     {
       id: 'taxi',
-      icon: <Car className="w-6 h-6 text-taxi-primary" />,
+      icon: <img src="/service-icons/icon-taxi-moto.png" alt="Taxi Moto" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.taxiMotos'),
       subtitle: t('home.fastTransport'),
       count: stats.taxi,
       gradient: 'from-taxi-primary/25 to-taxi-secondary/15',
-      iconBg: 'bg-taxi-primary/20',
+      iconBg: 'bg-white/80',
       trending: stats.taxi > 2,
     },
     {
       id: 'livraison',
-      icon: <Truck className="w-6 h-6 text-livreur-primary" />,
+      icon: <img src="/service-icons/icon-livreur.png" alt="Livreur" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.delivery'),
       subtitle: t('home.expressDelivery'),
       count: stats.livraison,
       gradient: 'from-livreur-primary/25 to-livreur-secondary/15',
-      iconBg: 'bg-livreur-primary/20',
+      iconBg: 'bg-white/80',
       trending: stats.livraison > 1,
     },
   ];

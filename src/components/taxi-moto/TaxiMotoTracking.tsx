@@ -92,12 +92,8 @@ export default function TaxiMotoTracking({
         driverIdForTracking
     );
 
-    // ETA calculé depuis la position du chauffeur, ou estimation de base
-    const displayEta = etaMinutes !== null
-        ? etaMinutes
-        : currentRide?.estimatedArrival
-            ? parseInt(currentRide.estimatedArrival)
-            : null;
+    // ETA calculé depuis la position du chauffeur (via useDriverTracking)
+    const displayEta = etaMinutes ?? null;
 
     // Distance entre chauffeur et client (en km)
     const distanceToDriver = driverPosition && userLocation

@@ -29,7 +29,7 @@ const DigitalVendorCopilot = memo(function DigitalVendorCopilot() {
         </div>
       </header>
 
-      <CopiloteChat userRole="vendeur" height="calc(100vh - 280px)" />
+      <CopiloteChat userRole="vendeur" height="calc(100vh - 120px)" />
     </section>
   );
 });

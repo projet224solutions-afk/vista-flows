@@ -21,7 +21,10 @@ import {
   ArrowRight,
   TrendingUp,
   RefreshCw,
-  Loader2
+  Loader2,
+  HardHat,
+  Tractor,
+  Briefcase,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { _Badge } from "@/components/ui/badge";
@@ -111,7 +114,7 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
   {
     id: "construction",
     title: "Construction & BTP",
-    icon: Building2,
+    icon: HardHat,
     count: stats.construction,
     path: "/services-proximite?type=construction",
     description: "Bâtiment & travaux",
@@ -149,7 +152,7 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
     title: "Taxi Moto",
     icon: Bike,
     count: stats.vtc,
-    path: "/taxi",
+    path: "/proximite/taxi-moto",
     description: "Déplacements à proximité",
     image: "https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-taxi-moto.png",
@@ -206,7 +209,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   {
     id: "agriculture",
     title: "Agriculture",
-    icon: ShoppingBag,
+    icon: Tractor,
     description: "Produits locaux",
     count: stats.agriculture,
     path: "/services-proximite?type=agriculture",
@@ -217,7 +220,7 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   {
     id: "freelance",
     title: "Administratif",
-    icon: ShoppingBag,
+    icon: Briefcase,
     description: "Secrétariat & conseil",
     count: stats.freelance,
     path: "/services-proximite?type=freelance",

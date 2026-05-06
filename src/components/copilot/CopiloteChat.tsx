@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,20 +24,26 @@ import {
   Sparkles,
   MessageSquare,
   Clock,
-  ImagePlus,
-  X
+  X,
+  Mic,
+  MicOff,
+  ScanSearch
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { useVendorCopilot } from '@/hooks/useVendorCopilot';
 import ReactMarkdown from 'react-markdown';
+import { copiloteSearch, type CopiloteSearchResponse } from '@/services/copilote/copiloteSearchService';
+import CopiloteSearchResults from '@/components/copilot/CopiloteSearchResults';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  searchResults?: CopiloteSearchResponse;
 }
 
 interface UserLocationPayload {
@@ -54,7 +61,8 @@ interface UserContext {
 interface CopiloteChatProps {
   className?: string;
   height?: string;
-  userRole?: 'client' | 'vendeur';
+  userRole?: 'client' | 'vendeur' | 'prestataire';
+  serviceId?: string;
 }
 
 // Générer un ID de session unique pour la conversation
@@ -62,7 +70,7 @@ const generateSessionId = () => {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
-export default function CopiloteChat({ className = '', height = 'calc(100vh - 140px)', userRole = 'client' }: CopiloteChatProps) {
+export default function CopiloteChat({ className = '', height = 'calc(100vh - 140px)', userRole = 'client', serviceId }: CopiloteChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -84,6 +92,14 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [useEnterpriseMode, setUseEnterpriseMode] = useState(false);
 
+  // Microphone
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const recognitionRef = useRef<any>(null);
+  const transcriptAccumRef = useRef<string>('');
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,30 +107,53 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   const detectIntent = (text: string): string => {
     const query = text.toLowerCase().trim();
     if (!query) return 'conversation_simple';
-    if (/bonjour|salut|hello|bonsoir|coucou|yo/.test(query)) return 'conversation_simple';
+
+    // Salutations simples (message court sans produit)
+    if (/^(bonjour|salut|hello|bonsoir|coucou|yo|hi|merci|ok|super|parfait|génial)\s*[!?.]?$/.test(query)) return 'conversation_simple';
     if (/photo|image|analyse|reconnai|visuel/.test(query)) return 'analyse_image';
-    if (/trouve|cherche|produit|ebook|telephone|robe|chaussure|pas cher|similaire/.test(query)) return 'recherche_interne';
-    if (/tendance|marche|prix mondial|internet|web|comparaison/.test(query)) return 'recherche_externe';
-    if (/comment|etape|utiliser|acheter|vendre|wallet|commande|livraison|publier/.test(query)) return 'assistant_application';
-    if (/business|revenu|opportunite|croissance|marketing/.test(query)) return 'assistant_business';
+
+    // Recherche interne — très large pour éviter que l'IA invente des liens
+    if (
+      // Intentions d'achat / recherche
+      /je cherche|trouve.?moi|j.ai besoin|je veux|je voudrais|vous avez|vous vendez|c.est combien|quel prix|prix de|disponible|en stock|acheter|commander|livrer|livraison/.test(query) ||
+      // Types de produits / commerce
+      /produit|boutique|magasin|shop|vendeur|article|vêtement|téléphone|électronique|électroménager|meuble|chaussure|sac|robe|pantalon|chemise|tissu|cosmétique|parfum|nourriture|épicerie|pharmacie|médicament/.test(query) ||
+      // Métiers / services
+      /coiffeur|barbier|salon|plombier|électricien|peintre|menuisier|mécanicien|restaurant|café|traiteur|livreur|chauffeur|taxi|moto|coursier|réparation|nettoyage|jardinage|sécurité|prestataire|artisan|technicien/.test(query) ||
+      // Marques
+      /iphone|samsung|tecno|infinix|itel|oppo|xiaomi|huawei|hp|dell|lenovo|lg|sony|nike|adidas|puma|toyota|honda/.test(query) ||
+      // Demandes de liens / adresses
+      /lien|url|adresse de|où se trouve|envoie.?moi|donne.?moi|partage|copie.?moi/.test(query) ||
+      // Lieux de Guinée
+      /matoto|ratoma|lambanyi|kaloum|dixinn|conakry|kindia|kankan|labé|mamou|nzérékoré|boké|faranah|coyah/.test(query)
+    ) return 'recherche_interne';
+
+    if (/tendance|marché mondial|prix international|amazon|alibaba|comparaison internationale/.test(query)) return 'recherche_externe';
+    if (/comment (utiliser|fonctionne|marche|créer|activer)|étape|tutoriel|wallet|inscription|connexion|mot de passe|solde|publier (un produit|une annonce)/.test(query)) return 'assistant_application';
+    if (/business|revenu|opportunité|croissance|marketing|stratégie/.test(query)) return 'assistant_business';
     return 'assistant_application';
   };
 
   const buildMemorySnapshot = (history: Message[], pendingUserText: string) => {
-    const recent = history.slice(-8);
+    // Résumé des 40 derniers échanges — mémoire longue durée
+    const recent = history.slice(-40);
     const summary = recent
-      .map((m) => `${m.role === 'user' ? 'U' : 'A'}: ${m.content}`)
-      .join(' | ')
-      .slice(0, 1500);
+      .map((m) => `${m.role === 'user' ? 'Utilisateur' : 'Copilote'}: ${m.content.slice(0, 500)}`)
+      .join('\n')
+      .slice(0, 10000);
 
+    // Tous les messages utilisateur pour extraire les faits importants
     const userUtterances = history
       .filter((m) => m.role === 'user')
       .map((m) => m.content)
-      .slice(-12);
+      .slice(-40);
 
+    // Faits épinglés — mots-clés élargis pour capturer plus d'infos
     const pinnedFacts = userUtterances
-      .filter((entry) => /je veux|mon objectif|je cherche|j'ai besoin|rappelle|important/i.test(entry))
-      .slice(-5);
+      .filter((entry) =>
+        /je veux|mon objectif|je cherche|j'ai besoin|rappelle|important|mon nom|je m'appelle|mon budget|ma ville|j'habite|mon numéro|mon adresse|je suis|je travaille|ma boutique|mon produit|mon problème|je préfère|j'aime/i.test(entry)
+      )
+      .slice(-20);
 
     const detectedIntent = detectIntent(pendingUserText);
     return { summary, pinnedFacts, detectedIntent };
@@ -139,31 +178,38 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     setAttachedImage({ name: file.name, dataUrl });
   };
 
-  const analyzeAttachedImage = async (dataUrl: string): Promise<string> => {
+  const analyzeAttachedImage = async (dataUrl: string): Promise<{ text: string; keywords: string[]; productName: string }> => {
     setIsAnalyzingImage(true);
     try {
-      const { data, error } = await supabase.functions.invoke('visual-search', {
-        body: { imageBase64: dataUrl }
+      const response = await backendFetch<{
+        success: boolean;
+        name: string;
+        description: string;
+        keywords: string[];
+        category: string;
+        confidence: number;
+      }>('/edge-functions/copilote/analyze-image', {
+        method: 'POST',
+        body: { imageBase64: dataUrl },
       });
 
-      if (error) throw error;
+      if (!response.success || !response.data) throw new Error('Analyse échouée');
 
-      const keywords = Array.isArray(data?.keywords) ? data.keywords : [];
-      const results = Array.isArray(data?.results) ? data.results.slice(0, 5) : [];
-      const description = data?.analysis?.description || 'Analyse visuelle disponible.';
+      const { name, description, keywords } = response.data;
+      const safeKeywords = keywords.length > 0 ? keywords : (name ? [name] : []);
 
-      if (results.length === 0) {
-        return `Image analysee: ${description}\nAucun produit exact trouve. Mots-cles detectes: ${keywords.join(', ') || 'aucun'}\nPropose des alternatives similaires.`;
-      }
-
-      const compactResults = results
-        .map((item: any) => `- ${item.name} (${Math.round((item.similarity || 0) * 100)}%)`)
-        .join('\n');
-
-      return `Image analysee: ${description}\nMots-cles detectes: ${keywords.join(', ') || 'aucun'}\nProduits similaires trouves:\n${compactResults}`;
+      return {
+        text: `Produit détecté : ${name}. ${description}. Recherche: ${safeKeywords.join(', ')}.`,
+        keywords: safeKeywords,
+        productName: name,
+      };
     } catch (error) {
       console.error('Erreur analyse image copilote:', error);
-      return 'Image jointe, mais analyse visuelle indisponible actuellement. Aide l\'utilisateur avec des alternatives textuelles.';
+      return {
+        text: 'Photo jointe. Aide l\'utilisateur à trouver un produit similaire.',
+        keywords: [],
+        productName: '',
+      };
     } finally {
       setIsAnalyzingImage(false);
     }
@@ -230,15 +276,64 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   }, [userRole, user?.id]);
 
   // Synchroniser les messages du vendorCopilot avec l'état local en mode Enterprise
+  // IMPORTANT: on utilise un merge ADDITIF (append) pour préserver l'historique chargé depuis localStorage
   useEffect(() => {
-    if (useEnterpriseMode && vendorCopilot.messages.length > 0) {
-      setMessages(vendorCopilot.messages.map(msg => ({
-        id: msg.id,
-        role: msg.role === 'system' ? 'assistant' : msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp.toISOString(),
-      })));
+    if (!useEnterpriseMode) return;
+    // Ignorer le message système initial — ne pas écraser l'historique chargé
+    const realMsgs = vendorCopilot.messages.filter(m => m.id !== 'welcome' && m.role !== 'system');
+    if (realMsgs.length === 0) return;
+
+    const newMapped: Message[] = realMsgs.map(msg => ({
+      id: msg.id,
+      role: (msg.role === 'system' ? 'assistant' : msg.role) as 'user' | 'assistant',
+      content: msg.content,
+      timestamp: msg.timestamp.toISOString(),
+    }));
+
+    // Dernier message assistant pour auto-search
+    const last = newMapped[newMapped.length - 1];
+    const shouldAutoSearch =
+      last?.role === 'assistant' &&
+      !/\]\(\/marketplace\/|\]\(\/shop\/|\]\(\/services-proximite\//.test(last.content) &&
+      /produit|boutique|service|trouv|cherch|disponible|vend|acheter|stock|prix/i.test(last.content);
+
+    // Merge additif : ajouter seulement les messages absents de l'état actuel
+    setMessages(prev => {
+      const existingIds = new Set(prev.map(m => m.id));
+      const toAdd = newMapped.filter(m => {
+        if (existingIds.has(m.id)) return false;
+        // Éviter les doublons de messages utilisateur (l'IA et l'affichage immédiat ont des IDs différents)
+        if (m.role === 'user' && prev.some(e => e.role === 'user' && e.content === m.content)) return false;
+        return true;
+      });
+      if (toAdd.length === 0) return prev;
+      const combined = [...prev, ...toAdd];
+      // Sauvegarder dans localStorage pour la prochaine actualisation
+      try { localStorage.setItem(historyKey, JSON.stringify(combined)); } catch {}
+      return combined;
+    });
+
+    // Auto-search sur le dernier message assistant
+    if (shouldAutoSearch && last) {
+      const lastUser = [...newMapped].reverse().find(m => m.role === 'user');
+      if (lastUser?.content) {
+        copiloteSearch(lastUser.content, null)
+          .then(autoSearch => {
+            if (autoSearch.total > 0) {
+              setMessages(prev => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (lastIdx >= 0 && updated[lastIdx].role === 'assistant' && updated[lastIdx].id === last.id) {
+                  updated[lastIdx] = { ...updated[lastIdx], searchResults: autoSearch };
+                }
+                return updated;
+              });
+            }
+          })
+          .catch(() => {});
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useEnterpriseMode, vendorCopilot.messages]);
 
   // Initialiser le message de bienvenue au chargement
@@ -325,10 +420,12 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     };
   }, [userRole, user?.id]);
 
+  // Clé unique par utilisateur — évite de mélanger les historiques
+  const historyKey = `copilote-history-${userRole}-${user?.id || 'anonymous'}`;
+
   const loadHistory = async () => {
     try {
-      const storageKey = `copilote-history-${userRole}`;
-      const savedHistory = localStorage.getItem(storageKey);
+      const savedHistory = localStorage.getItem(historyKey);
       if (savedHistory) {
         const history = JSON.parse(savedHistory);
         setMessages(history);
@@ -338,24 +435,266 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     }
   };
 
-  const sendMessage = async () => {
-    console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
-    if ((!input.trim() && !attachedImage) || isLoading || (userRole === 'vendeur' && vendorCopilot.loading)) return;
-
-    let messageToSend = input.trim();
-    if (attachedImage) {
-      const imageAnalysis = await analyzeAttachedImage(attachedImage.dataUrl);
-      messageToSend = `${messageToSend || 'Analyse cette image et aide-moi'}\n\n[CONTEXTE_IMAGE]\n${imageAnalysis}`;
+  // ── Microphone — MediaRecorder + transcription Gemini (fonctionne sans HTTPS strict) ──
+  const toggleMic = async () => {
+    // Arrêter si déjà en cours
+    if (isListening) {
+      mediaRecorderRef.current?.stop();
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      setInterimTranscript('');
+      return;
     }
 
-    // NOUVEAU: Mode Enterprise pour vendeur avec analyse complète
+    // 1. Essayer Web Speech API en premier (plus rapide, temps réel)
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (SpeechRecognition && window.isSecureContext) {
+      transcriptAccumRef.current = '';
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'fr-FR';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setInterimTranscript('');
+        toast.info('🎙️ Je vous écoute…', { duration: 2000 });
+      };
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) final += event.results[i][0].transcript;
+          else interim += event.results[i][0].transcript;
+        }
+        if (final) {
+          transcriptAccumRef.current = (transcriptAccumRef.current + ' ' + final).trim();
+          setInput(transcriptAccumRef.current);
+          setInterimTranscript('');
+        } else {
+          setInterimTranscript(interim);
+        }
+      };
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        setInterimTranscript('');
+        transcriptAccumRef.current = '';
+        if (event.error === 'not-allowed') {
+          toast.error('Accès au microphone refusé. Autorisez-le dans les paramètres.');
+        } else if (event.error === 'network') {
+          // Web Speech API échoue sur réseau → basculer vers MediaRecorder
+          toast.info('🎙️ Basculement vers enregistrement audio…', { duration: 1500 });
+          startMediaRecorder();
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          toast.error(`Microphone : ${event.error}`);
+        }
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+        setInterimTranscript('');
+        const captured = transcriptAccumRef.current.trim();
+        transcriptAccumRef.current = '';
+        if (captured) sendMessage(captured);
+      };
+      recognition.start();
+      recognitionRef.current = recognition;
+      return;
+    }
+
+    // 2. Fallback MediaRecorder → transcription Gemini backend
+    startMediaRecorder();
+  };
+
+  const startMediaRecorder = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        setIsListening(false);
+        setInterimTranscript('Transcription en cours…');
+
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: mimeType });
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(String(e.target?.result ?? ''));
+            reader.readAsDataURL(blob);
+          });
+
+          const resp = await backendFetch<{ success: boolean; text: string }>(
+            '/edge-functions/copilote/transcribe',
+            { method: 'POST', body: { audioBase64: base64, mimeType } }
+          );
+
+          setInterimTranscript('');
+          const text = resp.data?.text?.trim() ?? '';
+          if (text) {
+            setInput(text);
+            sendMessage(text);
+          } else {
+            toast.error('Transcription vide. Réessayez en parlant plus fort.');
+          }
+        } catch {
+          setInterimTranscript('');
+          toast.error('Transcription échouée. Tapez votre message.');
+        }
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsListening(true);
+      setInterimTranscript('');
+      toast.info('🎙️ Enregistrement… Cliquez à nouveau pour arrêter.', { duration: 3000 });
+    } catch (err: any) {
+      setIsListening(false);
+      if (err?.name === 'NotAllowedError') {
+        toast.error('Accès au microphone refusé. Autorisez-le dans les paramètres.');
+      } else {
+        toast.error('Microphone indisponible sur cet appareil.');
+      }
+    }
+  };
+
+  // Nettoyage à la fermeture du composant
+  React.useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      mediaRecorderRef.current?.stop();
+    };
+  }, []);
+
+  const sendMessage = async (voiceText?: string) => {
+    const effectiveInput = voiceText ?? input;
+    console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
+    if ((!effectiveInput.trim() && !attachedImage) || isLoading || (userRole === 'vendeur' && vendorCopilot.loading)) return;
+
+    // Copie brute de l'input utilisateur — utilisée pour l'auto-search après réponse IA
+    const userInputForSearch = effectiveInput.trim();
+
+    // ── Analyse image (une seule fois) + tentative de recherche produit ───────
+    let messageToSend = effectiveInput.trim();
+    if (attachedImage) {
+      const imageResult = await analyzeAttachedImage(attachedImage.dataUrl);
+      messageToSend = `${messageToSend || 'Analyse cette image et aide-moi'}\n\n[CONTEXTE_IMAGE]\n${imageResult.text}`;
+
+      if (imageResult.keywords.length > 0) {
+        setIsLoading(true);
+        setIsTyping(true);
+        try {
+          const userLocation = await getCurrentUserLocation();
+          const searchData = await copiloteSearch(imageResult.keywords.join(' '), userLocation);
+
+          if (searchData.total > 0) {
+            const userMsg: Message = {
+              id: Date.now().toString(),
+              role: 'user',
+              content: effectiveInput.trim() || `📷 ${imageResult.productName || 'Recherche par image'}`,
+              timestamp: new Date().toISOString(),
+            };
+            const label = imageResult.productName
+              ? `"${imageResult.productName}"`
+              : `"${imageResult.keywords.slice(0, 3).join(', ')}"`;
+            const assistantMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: `J'ai reconnu ${label} sur votre photo. Voici les produits similaires disponibles sur le marketplace :`,
+              timestamp: new Date().toISOString(),
+              searchResults: searchData,
+            };
+            setInput('');
+            setAttachedImage(null);
+            setMessages(prev => [...prev, userMsg, assistantMsg]);
+            setIsLoading(false);
+            setIsTyping(false);
+            const storageKey = historyKey;
+            setMessages(prev => { localStorage.setItem(storageKey, JSON.stringify(prev)); return prev; });
+            return;
+          }
+        } catch {
+          // Pas de résultats ou erreur → continuer vers l'IA
+        }
+        setIsLoading(false);
+        setIsTyping(false);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── Interception recherche interne (TOUS rôles, avant Enterprise) ─────────
+    const intentForSearch = detectIntent(messageToSend);
+    if (intentForSearch === 'recherche_interne') {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: messageToSend,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+      setAttachedImage(null);
+      setIsLoading(true);
+      setIsTyping(true);
+
+      try {
+        const userLocation = await getCurrentUserLocation();
+        const searchData = await copiloteSearch(messageToSend, userLocation);
+
+        const assistantMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: searchData.message,
+          timestamp: new Date().toISOString(),
+          searchResults: searchData,
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+
+        const storageKey = historyKey;
+        setMessages(prev => {
+          localStorage.setItem(storageKey, JSON.stringify(prev));
+          return prev;
+        });
+        return;
+      } catch (searchErr) {
+        // Échec silencieux → on continue vers l'IA classique
+        console.warn('[Copilote Search] Échec, fallback IA:', searchErr);
+        setMessages(prev => prev.slice(0, -1)); // Retirer le message utilisateur déjà ajouté
+        setIsLoading(false);
+        setIsTyping(false);
+        // On laisse la suite du code le ré-ajouter et appeler l'IA
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    // Mode Enterprise pour vendeur
     if (userRole === 'vendeur' && useEnterpriseMode && vendorId) {
-      const history = messages.filter(m => m.id !== 'welcome').slice(-15);
+      const history = messages.filter(m => m.id !== 'welcome').slice(-50);
       const memory = buildMemorySnapshot(history, messageToSend);
       setInput('');
       setAttachedImage(null);
       setIsLoading(true);
       setIsTyping(true);
+
+      // Afficher le message utilisateur immédiatement sans attendre l'IA
+      const immediateUserMsg: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: messageToSend,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => {
+        const updated = [...prev, immediateUserMsg];
+        try { localStorage.setItem(historyKey, JSON.stringify(updated)); } catch {}
+        return updated;
+      });
 
       try {
         await vendorCopilot.processQuery(messageToSend, vendorId, {
@@ -363,7 +702,6 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
           pinnedFacts: memory.pinnedFacts,
           detectedIntent: memory.detectedIntent
         });
-        // La synchronisation est gérée par le useEffect
       } catch (err: any) {
         console.error('❌ Erreur Copilote Enterprise:', err);
         toast.error(err.message || 'Erreur lors de l\'analyse');
@@ -403,7 +741,12 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       const userLocation = await getCurrentUserLocation();
 
       // Déterminer quelle edge function appeler selon le rôle
-      const functionName = userRole === 'vendeur' ? 'vendor-ai-assistant' : 'client-ai-assistant';
+      const functionName =
+        userRole === 'vendeur'
+          ? 'vendor-ai-assistant'
+          : userRole === 'prestataire'
+          ? 'service-ai-assistant'
+          : 'client-ai-assistant';
 
       console.log(`🤖 Calling ${functionName} for ${userRole}...`);
 
@@ -411,11 +754,11 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Préparer l'historique (15 derniers messages max pour le contexte)
+      // Préparer l'historique (50 derniers messages pour le contexte long)
       // Exclure le message de bienvenue initial (id='welcome')
       const historyMessages = messages
         .filter(m => m.id !== 'welcome')
-        .slice(-15)
+        .slice(-50)
         .map(m => ({ role: m.role, content: m.content }));
 
       // Ajouter le nouveau message utilisateur
@@ -439,8 +782,9 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
           body: JSON.stringify({
             message: userMessage.content,
             messages: conversationMessages,
-            sessionId: sessionId, // Pour la traçabilité côté serveur
+            sessionId: sessionId,
             userRole: userRole,
+            ...(userRole === 'prestataire' && serviceId ? { serviceId } : {}),
             memorySummary: memory.summary,
             pinnedFacts: memory.pinnedFacts,
             detectedIntent: memory.detectedIntent,
@@ -541,8 +885,30 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         }
       }
 
+      // ── Auto-search : si l'IA n'a inclus aucun lien interne mais parle de produits/boutiques ──
+      const hasInternalLinks = /\]\(\/marketplace\/|\]\(\/shop\/|\]\(\/services-proximite\//.test(assistantContent);
+      const looksSearchable = /produit|boutique|service|trouv|cherch|disponible|vend|acheter|stock|prix/i.test(assistantContent);
+
+      if (!hasInternalLinks && looksSearchable && userInputForSearch) {
+        try {
+          const userLoc = await getCurrentUserLocation();
+          const autoSearch = await copiloteSearch(userInputForSearch, userLoc);
+          if (autoSearch.total > 0) {
+            setMessages(prev => {
+              const updated = [...prev];
+              const lastIdx = updated.length - 1;
+              if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+                updated[lastIdx] = { ...updated[lastIdx], searchResults: autoSearch };
+              }
+              return updated;
+            });
+          }
+        } catch { /* silent */ }
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       // Sauvegarder l'historique
-      const storageKey = `copilote-history-${userRole}`;
+      const storageKey = historyKey;
       setMessages(prev => {
         localStorage.setItem(storageKey, JSON.stringify(prev));
         return prev;
@@ -590,7 +956,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         // Mode standard
         setMessages([]);
         setUserContext(null);
-        const storageKey = `copilote-history-${userRole}`;
+        const storageKey = historyKey;
         localStorage.removeItem(storageKey);
       }
 
@@ -616,13 +982,6 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     }
   };
 
-  const _formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     const today = new Date();
@@ -640,6 +999,62 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
 
   const roleLabel = userRole === 'vendeur' ? 'Vendeur' : 'Client';
   const roleColor = userRole === 'vendeur' ? 'from-primary to-brand-blue-deep' : 'from-vendeur-secondary to-brand-orange-dark';
+
+  // Regex UUID v4
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  // Renderer Markdown avec liens intelligents (interne React Router vs externe)
+  const markdownComponents = {
+    a: ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+      if (!href) return <span>{children}</span>;
+
+      // Normaliser une URL absolue vers notre app en chemin relatif
+      let path = href;
+      if (!href.startsWith('/')) {
+        try {
+          const parsed = new URL(href);
+          if (
+            parsed.hostname === window.location.hostname ||
+            /224solutions\.(com|app|fr|co|net)/i.test(parsed.hostname)
+          ) {
+            path = parsed.pathname + parsed.search + parsed.hash;
+          } else {
+            // Lien vraiment externe
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:opacity-80 break-all">
+                {children}
+              </a>
+            );
+          }
+        } catch {
+          return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:opacity-80 break-all">
+              {children}
+            </a>
+          );
+        }
+      }
+
+      // Valider les liens produits : l'IA invente parfois des UUIDs inexistants
+      const productId = path.match(/^\/marketplace\/product\/([^/?#]+)/)?.[1];
+      const shopId = path.match(/^\/shop\/([^/?#]+)/)?.[1];
+
+      if (productId && !UUID_RE.test(productId)) {
+        // UUID invalide généré par l'IA — ne pas naviguer
+        return <span className="text-muted-foreground line-through text-xs italic" title="Lien produit non valide">{children}</span>;
+      }
+      if (shopId && !UUID_RE.test(shopId)) {
+        // Slug/slug invalide — ne pas naviguer
+        return <span className="text-muted-foreground line-through text-xs italic" title="Boutique non trouvée">{children}</span>;
+      }
+
+      return (
+        <Link to={path} className="text-primary underline hover:opacity-80 break-words">
+          {children}
+        </Link>
+      );
+    },
+  };
 
   return (
     <Card className={`flex flex-col w-full ${className}`} style={{ height }}>
@@ -702,8 +1117,8 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       <Separator />
 
       <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
-        <ScrollArea className="h-full px-3 py-4 sm:px-10 sm:py-8">
-          <div className="space-y-6 sm:space-y-8">
+        <ScrollArea className="h-full px-4 py-5 sm:px-8 sm:py-6">
+          <div className="space-y-5 sm:space-y-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
                 <MessageSquare className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground mb-6" />
@@ -797,7 +1212,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                   )}
 
                   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 sm:mb-8`}>
-                    <div className={`flex items-start gap-3 sm:gap-4 max-w-[92%] sm:max-w-[88%] ${isUser ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-start gap-3 sm:gap-4 ${isUser ? 'flex-row-reverse max-w-[85%] sm:max-w-[80%]' : 'max-w-full w-full'}`}>
                       <Avatar className={`h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-primary to-secondary'}`}>
                         {isUser ? (
                           <AvatarFallback>
@@ -810,13 +1225,13 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                         )}
                       </Avatar>
 
-                      <div className={`rounded-xl px-3 py-3 sm:px-6 sm:py-5 min-w-0 overflow-hidden ${
+                      <div className={`rounded-xl px-4 py-4 sm:px-6 sm:py-5 min-w-0 ${
                         isUser
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       }`}>
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
-                        {!isUser && extractSourceLabel(message.content) && (
+                        {!isUser && extractSourceLabel(message.content) && !message.searchResults && (
                           <div className="mb-3">
                             <Badge variant="secondary" className="text-xs sm:text-sm">
                               {extractSourceLabel(message.content)}
@@ -824,12 +1239,22 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                           </div>
                         )}
 
-                        {!isUser && useEnterpriseMode ? (
-                          <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-[13px] sm:text-lg [&_p]:mb-2 [&_ul]:my-2 [&_li]:my-1 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
-                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                        {/* ── Résultats de recherche Copilote ── */}
+                        {!isUser && message.searchResults ? (
+                          <div className="space-y-2">
+                            {message.content && (
+                              <p className="text-[13px] sm:text-sm text-muted-foreground mb-2 whitespace-pre-wrap">
+                                {message.content.replace(/\*\*/g, '')}
+                              </p>
+                            )}
+                            <CopiloteSearchResults data={message.searchResults} />
+                          </div>
+                        ) : !isUser ? (
+                          <div className="prose prose-base dark:prose-invert max-w-none text-sm sm:text-base leading-relaxed [&_p]:mb-3 [&_ul]:my-2 [&_li]:my-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_a]:break-all [&_*]:max-w-full">
+                            <ReactMarkdown components={markdownComponents as any}>{message.content}</ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-[13px] sm:text-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
+                          <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
                         )}
                         <p className="text-xs sm:text-sm mt-2 opacity-70">
                           {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
@@ -891,16 +1316,37 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
             handleAttachImage(e.dataTransfer.files?.[0]);
           }}
         >
+          {/* Aperçu image jointe */}
           {attachedImage && (
-            <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs sm:text-sm truncate">Image jointe: {attachedImage.name}</span>
-                {isAnalyzingImage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2">
+              <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                <img
+                  src={attachedImage.dataUrl}
+                  alt="aperçu"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAttachedImage(null)}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <ScanSearch className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  <span className="text-xs font-medium truncate">
+                    {isAnalyzingImage ? 'Analyse en cours…' : 'Recherche par image active'}
+                  </span>
+                  {isAnalyzingImage && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+                </div>
+                <p className="text-[10px] text-muted-foreground truncate">{attachedImage.name}</p>
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => setAttachedImage(null)}>
                 <X className="h-3.5 w-3.5" />
               </Button>
+            </div>
+          )}
+
+          {/* Transcription intermédiaire microphone */}
+          {isListening && interimTranscript && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0" />
+              <span className="text-xs text-red-700 dark:text-red-300 italic truncate">{interimTranscript}</span>
             </div>
           )}
 
@@ -910,12 +1356,12 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Tapez votre message..."
+            placeholder={isListening ? '🎙️ Parlez maintenant…' : 'Tapez ou parlez à Copilote…'}
             disabled={
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className="flex-1 min-w-0 h-10 sm:h-14 text-sm sm:text-base px-3 sm:px-4"
+            className={`flex-1 min-w-0 h-10 sm:h-14 text-sm sm:text-base px-3 sm:px-4 transition-colors ${isListening ? 'border-red-400 ring-1 ring-red-300' : ''}`}
           />
           <input
             ref={fileInputRef}
@@ -924,6 +1370,26 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
             className="hidden"
             onChange={(e) => handleAttachImage(e.target.files?.[0])}
           />
+
+          {/* Bouton microphone */}
+          <Button
+            variant={isListening ? 'destructive' : 'outline'}
+            size="icon"
+            onClick={toggleMic}
+            disabled={
+              isLoading ||
+              (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
+            }
+            className={`h-9 w-9 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${isListening ? 'animate-pulse' : ''}`}
+            title={isListening ? 'Arrêter la reconnaissance vocale' : 'Parler à Copilote'}
+          >
+            {isListening
+              ? <MicOff className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+              : <Mic className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+            }
+          </Button>
+
+          {/* Bouton image */}
           <Button
             variant="outline"
             size="icon"
@@ -932,13 +1398,13 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className="h-9 w-9 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center"
-            title="Ajouter une image"
+            className={`h-9 w-9 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${attachedImage ? 'border-primary text-primary' : ''}`}
+            title="Recherche par image — Copilote analysera la photo pour trouver le produit"
           >
-            <ImagePlus className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+            <ScanSearch className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </Button>
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={
               (!input.trim() && !attachedImage) ||
               isLoading ||
