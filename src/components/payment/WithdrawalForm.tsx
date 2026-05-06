@@ -30,7 +30,7 @@ interface WithdrawalFormProps {
   onCancel?: () => void;
 }
 
-type WithdrawalMethod = 'BANK_TRANSFER' | 'MOBILE_MONEY' | 'STRIPE_PAYOUT';
+type WithdrawalMethod = 'BANK_TRANSFER' | 'MOBILE_MONEY';
 
 export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
   const { wallet, balance, currency, isBlocked, withdraw, processing, refresh } = useWallet();
@@ -230,12 +230,6 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
                   <div className="flex items-center space-x-2">
                     <Smartphone className="w-4 h-4" />
                     <span>Mobile Money</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="STRIPE_PAYOUT">
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="w-4 h-4" />
-                    <span>Stripe Payout (Carte/Compte)</span>
                   </div>
                 </SelectItem>
               </SelectContent>

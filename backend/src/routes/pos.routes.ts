@@ -634,7 +634,7 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
     });
 
     // ── 6. Créer le Payment Intent Stripe ────────────────────────────────────
-    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-03-25.dahlia' });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount), // Stripe reçoit le total (GNF = entier)
