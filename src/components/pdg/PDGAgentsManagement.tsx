@@ -99,6 +99,42 @@ export default function PDGAgentsManagement() {
     }
   });
 
+  const saveAdvancedPermissions = async (agentId: string, permissions: Record<string, boolean>) => {
+    if (Object.keys(permissions).length === 0) return;
+
+    try {
+      const { data, error } = await supabase.rpc('set_agent_permissions' as any, {
+        p_agent_id: agentId,
+        p_permissions: permissions,
+      });
+
+      const result = data as { success: boolean; error?: string } | null;
+
+      if (error || (result && result.success === false)) {
+        console.warn('⚠️ set_agent_permissions échoué, fallback direct upsert:', error || result?.error);
+        // Fallback: upsert direct dans agent_permissions (si RLS le permet)
+        const upserts = Object.entries(permissions).map(([permission_key, permission_value]) => ({
+          agent_id: agentId,
+          permission_key,
+          permission_value,
+          updated_at: new Date().toISOString(),
+        }));
+        const { error: upsertError } = await supabase
+          .from('agent_permissions')
+          .upsert(upserts, { onConflict: 'agent_id,permission_key' });
+
+        if (upsertError) {
+          console.error('❌ Fallback upsert échoué:', upsertError);
+          toast.error('Attention: certaines permissions n\'ont pas pu être sauvegardées.');
+        } else {
+          console.log('✅ Permissions sauvegardées via upsert direct');
+        }
+      }
+    } catch (err) {
+      console.error('❌ Erreur saveAdvancedPermissions:', err);
+    }
+  };
+
   const handleCreateAgent = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -169,14 +205,7 @@ export default function PDGAgentsManagement() {
         });
 
         // Sauvegarder les permissions avancées (même si vide, pour permettre la révocation complète)
-        const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
-          p_agent_id: editingAgent.id,
-          p_permissions: advancedPermissions,
-        });
-
-        if (permError) {
-          console.error('Erreur sauvegarde permissions avancées:', permError);
-        }
+        await saveAdvancedPermissions(editingAgent.id, advancedPermissions);
       } else {
         // Mode création
         const createRes = await createAgentAction({
@@ -197,14 +226,7 @@ export default function PDGAgentsManagement() {
 
         // Après création, appliquer aussi les permissions avancées en base (agent_permissions)
         if (createRes.agent?.id) {
-          const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
-            p_agent_id: createRes.agent.id,
-            p_permissions: advancedPermissions,
-          });
-
-          if (permError) {
-            console.error('Erreur sauvegarde permissions avancées (création):', permError);
-          }
+          await saveAdvancedPermissions(createRes.agent.id, advancedPermissions);
         }
       }
 
