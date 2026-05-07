@@ -14,9 +14,8 @@ import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
-import { _Table, _TableBody, _TableCell, _TableHead, _TableHeader, _TableRow } from '@/components/ui/table';
 import { AgentPermissionsSection } from './AgentPermissionsSection';
-import { _useAgentPermissions, _AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
+import { PERMISSION_CATEGORIES } from '@/constants/agentPermissionCategories';
 
 interface AgentUser {
   id: string;
@@ -286,14 +285,28 @@ export default function PDGAgentsManagement() {
     // Charger les permissions avancées
     setLoadingAdvancedPermissions(true);
     try {
+      // Initialiser TOUTES les permissions à false (garantit que les checkboxes s'affichent toutes)
+      const allPermsBase: Record<string, boolean> = {};
+      PERMISSION_CATEGORIES.forEach(cat =>
+        cat.permissions.forEach(key => { allPermsBase[key] = false; })
+      );
+
       const { data, error } = await supabase
         .rpc('get_agent_permissions' as any, { p_agent_id: agent.id });
 
       if (error) throw error;
-      setAdvancedPermissions((data as Record<string, boolean>) || {});
+
+      // Écraser avec les valeurs réelles de la DB
+      const fromDb = (data as Record<string, boolean>) || {};
+      setAdvancedPermissions({ ...allPermsBase, ...fromDb });
     } catch (error) {
       console.error('Erreur chargement permissions avancées:', error);
-      setAdvancedPermissions({});
+      // En cas d'erreur, toutes les permissions à false
+      const fallback: Record<string, boolean> = {};
+      PERMISSION_CATEGORIES.forEach(cat =>
+        cat.permissions.forEach(key => { fallback[key] = false; })
+      );
+      setAdvancedPermissions(fallback);
     } finally {
       setLoadingAdvancedPermissions(false);
     }
@@ -580,6 +593,12 @@ export default function PDGAgentsManagement() {
                   manage_products: false
                 }
               });
+              // Initialiser toutes les permissions à false pour la création
+              const allPerms: Record<string, boolean> = {};
+              PERMISSION_CATEGORIES.forEach(cat =>
+                cat.permissions.forEach(key => { allPerms[key] = false; })
+              );
+              setAdvancedPermissions(allPerms);
             }}>
               <Plus className="w-4 h-4 mr-2" />
               Nouvel Agent

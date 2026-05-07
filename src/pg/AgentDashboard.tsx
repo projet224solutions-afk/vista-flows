@@ -1,15 +1,13 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Key, Mail, Lock, AlertTriangle, _Shield, _Users, _DollarSign, Settings as _SettingsIcon, _Brain, _Zap } from 'lucide-react';
+import { Key, Mail, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from "@/hooks/useTranslation";
-import { _AVAILABLE_PERMISSIONS, _PermissionKey } from '@/hooks/useAgentPermissions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AgentLayoutProfessional } from '@/components/agent/AgentLayoutProfessional';
@@ -49,6 +47,19 @@ export default function AgentDashboard() {
 
   // Hook pour les permissions unifiées (table agent_permissions + legacy JSON)
   const { permissions: unifiedPermissions, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
+
+  // Résout si l'agent peut GÉRER un module (gère les alias: manage_finance → manage_banking, etc.)
+  const resolveCanManage = useCallback((permKey: string): boolean => {
+    if (unifiedPermissions[permKey] === true) return true;
+    const impliedBy: Record<string, string[]> = {
+      manage_banking: ['manage_finance'],
+      manage_wallet_transactions: ['manage_finance', 'manage_banking'],
+      manage_kyc: ['manage_vendor_kyc'],
+      manage_vendor_kyc: ['manage_kyc'],
+      manage_service_subscriptions: ['manage_service_plans'],
+    };
+    return (impliedBy[permKey] || []).some(k => unifiedPermissions[k] === true);
+  }, [unifiedPermissions]);
 
   // Password change state
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -313,28 +324,28 @@ export default function AgentDashboard() {
 
       // --- Modules opérationnels complets ---
       case 'finance':
-        return <AgentFullFinanceModule agentId={agent.id} canManage={unifiedPermissions.manage_finance === true} />;
+        return <AgentFullFinanceModule agentId={agent.id} canManage={resolveCanManage('manage_finance')} />;
 
       case 'banking':
-        return <AgentBankingModule agentId={agent.id} canManage={unifiedPermissions.manage_banking === true} />;
+        return <AgentBankingModule agentId={agent.id} canManage={resolveCanManage('manage_banking')} />;
 
       case 'kyc-management':
-        return <AgentKYCManagement agentId={agent.id} canManage={unifiedPermissions.manage_kyc === true} />;
+        return <AgentKYCManagement agentId={agent.id} canManage={resolveCanManage('manage_kyc')} />;
 
       case 'wallet-transactions':
         return <AgentWalletTransactionsManagement agentId={agent.id} />;
 
       case 'users-management':
-        return <AgentUsersModule agentId={agent.id} canManage={unifiedPermissions.manage_users === true} />;
+        return <AgentUsersModule agentId={agent.id} canManage={resolveCanManage('manage_users')} />;
 
       case 'vendors-management':
-        return <AgentVendorsModule agentId={agent.id} canManage={unifiedPermissions.manage_vendors === true} />;
+        return <AgentVendorsModule agentId={agent.id} canManage={resolveCanManage('manage_vendors')} />;
 
       case 'orders-management':
-        return <AgentOrdersModule agentId={agent.id} canManage={unifiedPermissions.manage_orders === true} />;
+        return <AgentOrdersModule agentId={agent.id} canManage={resolveCanManage('manage_orders')} />;
 
       case 'service-subscriptions':
-        return <AgentServiceSubscriptionsModule agentId={agent.id} canManage={unifiedPermissions.manage_service_subscriptions === true} />;
+        return <AgentServiceSubscriptionsModule agentId={agent.id} canManage={resolveCanManage('manage_service_subscriptions')} />;
       // --- Fin modules opérationnels ---
 
       case 'create-user':
