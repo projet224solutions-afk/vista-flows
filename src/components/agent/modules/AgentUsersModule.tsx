@@ -42,7 +42,7 @@ interface UserProfile {
   created_at: string;
 }
 
-export function AgentUsersModule({ _agentId, canManage = false }: AgentUsersModuleProps) {
+export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModuleProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ export function AgentUsersModule({ _agentId, canManage = false }: AgentUsersModu
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [agentId]);
 
   useEffect(() => {
     filterUsers();
@@ -61,19 +61,34 @@ export function AgentUsersModule({ _agentId, canManage = false }: AgentUsersModu
   const loadUsers = async () => {
     setLoading(true);
     try {
+      // Récupérer les utilisateurs créés par cet agent
+      const { data: createdUsers, error: cuErr } = await supabase
+        .from('agent_created_users')
+        .select('user_id')
+        .eq('agent_id', agentId);
+
+      if (cuErr) throw cuErr;
+      if (!createdUsers || createdUsers.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
+      const userIds = createdUsers.map((u: any) => u.user_id);
+
       const [profilesRes, userIdsRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, first_name, last_name, email, role, is_active, status, public_id, custom_id, created_at')
-          .order('created_at', { ascending: false })
-          .limit(500),
+          .in('id', userIds)
+          .order('created_at', { ascending: false }),
         supabase
           .from('user_ids')
-          .select('user_id, custom_id'),
+          .select('user_id, custom_id')
+          .in('user_id', userIds),
       ]);
 
       const { data: profiles, error } = profilesRes;
-
       if (error) throw error;
 
       const canonicalByUserId = new Map(

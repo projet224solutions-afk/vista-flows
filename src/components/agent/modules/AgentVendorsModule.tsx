@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Store, CheckCircle, XCircle, RefreshCw, Eye,
-  Search, Shield, _TrendingUp, _Users
+  Search, Shield
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,7 +46,7 @@ interface Vendor {
   };
 }
 
-export function AgentVendorsModule({ _agentId, canManage = false }: AgentVendorsModuleProps) {
+export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsModuleProps) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

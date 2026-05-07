@@ -40,8 +40,8 @@ interface AgentServiceSubscriptionsModuleProps {
 }
 
 export function AgentServiceSubscriptionsModule({
-  _agentId,
-  _canManage = false
+  agentId,
+  canManage = false
 }: AgentServiceSubscriptionsModuleProps) {
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [stats, setStats] = useState<ServiceSubscriptionStats | null>(null);

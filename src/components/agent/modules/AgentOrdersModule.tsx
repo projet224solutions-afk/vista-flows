@@ -50,7 +50,7 @@ interface Order {
   };
 }
 
-export function AgentOrdersModule({ _agentId, _canManage = false }: AgentOrdersModuleProps) {
+export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersModuleProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,15 +68,48 @@ export function AgentOrdersModule({ _agentId, _canManage = false }: AgentOrdersM
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [agentId]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
 
+      // 1. Utilisateurs créés par cet agent
+      const { data: createdUsers, error: usersErr } = await supabase
+        .from('agent_created_users')
+        .select('user_id')
+        .eq('agent_id', agentId);
+
+      if (usersErr) throw usersErr;
+      if (!createdUsers || createdUsers.length === 0) {
+        setOrders([]);
+        setStats({ total: 0, pending: 0, processing: 0, completed: 0, cancelled: 0, totalAmount: 0 });
+        setLoading(false);
+        return;
+      }
+
+      const userIds = createdUsers.map((u: any) => u.user_id);
+
+      // 2. Customers liés à ces users
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('id')
+        .in('user_id', userIds);
+
+      if (!customers || customers.length === 0) {
+        setOrders([]);
+        setStats({ total: 0, pending: 0, processing: 0, completed: 0, cancelled: 0, totalAmount: 0 });
+        setLoading(false);
+        return;
+      }
+
+      const customerIds = customers.map((c: any) => c.id);
+
+      // 3. Commandes de ces customers
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_number, status, total_amount, created_at, updated_at')
+        .select('id, order_number, status, total_amount, created_at, updated_at, buyer_id, vendor_id')
+        .in('buyer_id', customerIds)
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -84,8 +117,6 @@ export function AgentOrdersModule({ _agentId, _canManage = false }: AgentOrdersM
 
       const ordersList = (data || []).map((o: any) => ({
         ...o,
-        buyer_id: '',
-        vendor_id: '',
         profiles: null,
         vendors: null
       })) as Order[];
@@ -93,7 +124,6 @@ export function AgentOrdersModule({ _agentId, _canManage = false }: AgentOrdersM
       setOrders(ordersList);
 
       const totalAmount = ordersList.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-
       setStats({
         total: ordersList.length,
         pending: ordersList.filter(o => o.status === 'pending').length,
