@@ -5,7 +5,43 @@
  */
 
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
-import { _getCurrencyForCountry } from "@/data/countryMappings";
+import { _getCurrencyForCountry, getCurrencyForCountry } from "@/data/countryMappings";
+
+// Détecte la devise depuis le fuseau horaire du navigateur (fallback sans API)
+const TIMEZONE_COUNTRY: Record<string, string> = {
+  'Africa/Conakry': 'GN', 'Africa/Dakar': 'SN', 'Africa/Abidjan': 'CI',
+  'Africa/Bamako': 'ML', 'Africa/Ouagadougou': 'BF', 'Africa/Niamey': 'NE',
+  'Africa/Lome': 'TG', 'Africa/Porto-Novo': 'BJ', 'Africa/Douala': 'CM',
+  'Africa/Kinshasa': 'CD', 'Africa/Lagos': 'NG', 'Africa/Accra': 'GH',
+  'Africa/Nairobi': 'KE', 'Africa/Dar_es_Salaam': 'TZ', 'Africa/Johannesburg': 'ZA',
+  'Africa/Casablanca': 'MA', 'Africa/Algiers': 'DZ', 'Africa/Cairo': 'EG',
+  'Africa/Tunis': 'TN', 'Africa/Tripoli': 'LY', 'Africa/Addis_Ababa': 'ET',
+  'Europe/Paris': 'FR', 'Europe/London': 'GB', 'Europe/Berlin': 'DE',
+  'Europe/Madrid': 'ES', 'Europe/Rome': 'IT', 'Europe/Brussels': 'BE',
+  'Europe/Amsterdam': 'NL', 'Europe/Lisbon': 'PT',
+  'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
+  'America/Toronto': 'CA', 'America/Montreal': 'CA',
+  'Asia/Shanghai': 'CN', 'Asia/Tokyo': 'JP', 'Asia/Kolkata': 'IN',
+  'Asia/Dubai': 'AE', 'Asia/Riyadh': 'SA',
+  'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
+};
+
+function detectCurrencyFromBrowser(): string | null {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const country = TIMEZONE_COUNTRY[tz];
+    if (country) return getCurrencyForCountry(country) || null;
+
+    // Fallback: langue du navigateur (ex: 'fr-SN' → 'SN' → XOF)
+    const lang = (navigator.language || '').toUpperCase();
+    const parts = lang.split('-');
+    if (parts.length >= 2) {
+      const detected = getCurrencyForCountry(parts[parts.length - 1]);
+      if (detected && detected !== 'GNF') return detected;
+    }
+  } catch {}
+  return null;
+}
 
 interface CurrencyContextType {
   currency: string;
@@ -44,12 +80,12 @@ const CurrencyContext = createContext<CurrencyContextType>({
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(() => {
     try {
-      // Vérifier d'abord le choix manuel
+      // 1. Choix manuel de l'utilisateur (priorité absolue)
       const hasManualChoice = safeGetLocalStorageItem(CURRENCY_MANUAL_KEY) === 'true';
       const stored = safeGetLocalStorageItem(CURRENCY_STORAGE_KEY);
       if (hasManualChoice && stored) return stored;
 
-      // Sinon, essayer de récupérer depuis le cache géo (ignorer les fallback)
+      // 2. Cache géo (détection réseau, non-fallback)
       const geoCache = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCache) {
         const parsed = JSON.parse(geoCache);
@@ -57,9 +93,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           return parsed.data.currency;
         }
       }
+
+      // 3. Détection via fuseau horaire / langue du navigateur (sans API)
+      const browserCurrency = detectCurrencyFromBrowser();
+      if (browserCurrency) return browserCurrency;
     } catch {}
 
-    return "GNF"; // Défaut
+    return "GNF"; // Défaut absolu
   });
 
   const [userCountry, setUserCountry] = useState<string | null>(null);

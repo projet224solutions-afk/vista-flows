@@ -152,7 +152,7 @@ async function loadAllRates(): Promise<Map<string, number>> {
         }
 
         for (const [key, row] of selectedRates.entries()) {
-          map.set(key, Number(row.rate));
+          map.set(key, resolveDisplayedRate(row));
         }
       }
 

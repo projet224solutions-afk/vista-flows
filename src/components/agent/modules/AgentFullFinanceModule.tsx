@@ -51,7 +51,7 @@ const LoadingSpinner = () => (
   </div>
 );
 
-export function AgentFullFinanceModule({ agentId, _canManage = false }: AgentFullFinanceModuleProps) {
+export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFullFinanceModuleProps) {
   const [agentStats, setAgentStats] = useState<AgentFinancialStats>({
     totalCommissions: 0,
     pendingCommissions: 0,

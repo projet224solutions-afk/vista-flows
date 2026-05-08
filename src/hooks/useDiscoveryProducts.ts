@@ -8,11 +8,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { CACHE_TTL, DISCOVERY_MIN_PRODUCTS, filterByAllowedVendors } from '@/config/recommendationConfig';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 interface DiscoveryProduct {
   product_id: string;
   name: string;
   price: number;
+  currency?: string;
   images: string[];
   rating: number | null;
   reason?: string;
@@ -71,7 +73,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       // 2. Priorité aux produits récents et aux nouvelles catégories
       let query = supabase
         .from('products')
-        .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
+        .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
         .eq('is_active', true)
         .order('created_at', { ascending: false }) // Nouveautés en premier
         .limit(limit * 3);
@@ -94,7 +96,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
         const { data: fallback } = await withDiscoveryTimeout(
           supabase
             .from('products')
-            .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
+            .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
             .eq('is_active', true)
             .order('reviews_count', { ascending: false })
             .limit(limit * 2),
@@ -108,15 +110,20 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
         unseen.push(...fallbackFiltered);
       }
 
-      return unseen.map(p => ({
-        product_id: p.id,
-        name: p.name,
-        price: p.price,
-        images: Array.isArray(p.images) ? (p.images as string[]) : [],
-        rating: p.rating,
-        reason: `Découvrir: ${(p.categories as any)?.name || 'Nouveauté'}`,
-        category_name: (p.categories as any)?.name,
-      }));
+      return unseen.map(p => {
+        const vendor = (p as any).vendors;
+        const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+        return {
+          product_id: p.id,
+          name: p.name,
+          price: p.price,
+          currency,
+          images: Array.isArray(p.images) ? (p.images as string[]) : [],
+          rating: p.rating,
+          reason: `Découvrir: ${(p.categories as any)?.name || 'Nouveauté'}`,
+          category_name: (p.categories as any)?.name,
+        };
+      });
     } catch (error) {
       console.warn('[DiscoveryProducts] fallback empty', error);
       return [];

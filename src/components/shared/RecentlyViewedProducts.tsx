@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import {
   clearRecentProducts,
   getRecentProducts,
@@ -19,13 +20,14 @@ interface RecentlyViewedProductsProps {
 }
 
 export default function RecentlyViewedProducts({
-  title = 'Derniers produits visites',
-  subtitle = 'Retrouvez rapidement les produits que vous avez consultes',
+  title = 'Derniers produits visités',
+  subtitle = 'Retrouvez rapidement les produits que vous avez consultés',
   maxItems = 8,
   className = '',
 }: RecentlyViewedProductsProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { convert, loading: priceLoading } = usePriceConverter();
   const [items, setItems] = useState<RecentProductEntry[]>([]);
 
   const userKey = user?.id || null;
@@ -114,7 +116,9 @@ export default function RecentlyViewedProducts({
                 <p className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">{item.title}</p>
                 {typeof item.price === 'number' && (
                   <p className="text-xs font-semibold text-primary">
-                    {item.price.toLocaleString('fr-FR')} {item.currency || 'GNF'}
+                    {priceLoading
+                      ? `${item.price.toLocaleString('fr-FR')} ${item.currency || 'GNF'}`
+                      : convert(item.price, item.currency || 'GNF').formatted}
                   </p>
                 )}
               </div>

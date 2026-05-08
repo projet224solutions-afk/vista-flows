@@ -99,38 +99,41 @@ export default function PDGAgentsManagement() {
   });
 
   const saveAdvancedPermissions = async (agentId: string, permissions: Record<string, boolean>) => {
-    if (Object.keys(permissions).length === 0) return;
+    // N'enregistrer que les permissions actives (true)
+    const activePermissions = Object.entries(permissions)
+      .filter(([_, v]) => v === true)
+      .reduce((acc, [k]) => ({ ...acc, [k]: true }), {} as Record<string, boolean>);
 
+    // Toujours tenter le RPC set_agent_permissions (enregistre dans agent_permissions + sync legacy)
     try {
       const { data, error } = await supabase.rpc('set_agent_permissions' as any, {
         p_agent_id: agentId,
-        p_permissions: permissions,
+        p_permissions: activePermissions,
       });
 
       const result = data as { success: boolean; error?: string } | null;
+      if (!error && result?.success) return; // succès — sortie rapide
+      console.warn('⚠️ set_agent_permissions:', error || result?.error);
+    } catch (err) {
+      console.warn('⚠️ set_agent_permissions exception:', err);
+    }
 
-      if (error || (result && result.success === false)) {
-        console.warn('⚠️ set_agent_permissions échoué, fallback direct upsert:', error || result?.error);
-        // Fallback: upsert direct dans agent_permissions (si RLS le permet)
-        const upserts = Object.entries(permissions).map(([permission_key, permission_value]) => ({
+    // Fallback: upsert uniquement les permissions TRUE dans agent_permissions
+    // (ne jamais écrire false — évite d'écraser le legacy avec des données périmées)
+    if (Object.keys(activePermissions).length > 0) {
+      try {
+        const upserts = Object.keys(activePermissions).map(permission_key => ({
           agent_id: agentId,
           permission_key,
-          permission_value,
+          permission_value: true,
           updated_at: new Date().toISOString(),
         }));
-        const { error: upsertError } = await supabase
+        await supabase
           .from('agent_permissions')
           .upsert(upserts, { onConflict: 'agent_id,permission_key' });
-
-        if (upsertError) {
-          console.error('❌ Fallback upsert échoué:', upsertError);
-          toast.error('Attention: certaines permissions n\'ont pas pu être sauvegardées.');
-        } else {
-          console.log('✅ Permissions sauvegardées via upsert direct');
-        }
+      } catch (err) {
+        console.warn('⚠️ Fallback upsert agent_permissions:', err);
       }
-    } catch (err) {
-      console.error('❌ Erreur saveAdvancedPermissions:', err);
     }
   };
 
@@ -285,27 +288,43 @@ export default function PDGAgentsManagement() {
     // Charger les permissions avancées
     setLoadingAdvancedPermissions(true);
     try {
-      // Initialiser TOUTES les permissions à false (garantit que les checkboxes s'affichent toutes)
+      // Base: toutes les permissions à false
       const allPermsBase: Record<string, boolean> = {};
       PERMISSION_CATEGORIES.forEach(cat =>
         cat.permissions.forEach(key => { allPermsBase[key] = false; })
       );
 
-      const { data, error } = await supabase
-        .rpc('get_agent_permissions' as any, { p_agent_id: agent.id });
+      // Étape 1: lire la colonne legacy agents_management.permissions (source fiable)
+      // Cette colonne est mise à jour par update_agent RPC à chaque sauvegarde
+      const legacyFromAgent: Record<string, boolean> = {};
+      (agent.permissions || []).forEach(key => { legacyFromAgent[key] = true; });
 
-      if (error) throw error;
+      // Étape 2: lire depuis get_agent_permissions RPC (agent_permissions table)
+      let fromRpc: Record<string, boolean> = {};
+      try {
+        const { data, error } = await supabase
+          .rpc('get_agent_permissions' as any, { p_agent_id: agent.id });
+        if (!error && data) {
+          // OR logic: n'utiliser que les "true" du RPC, ne pas laisser "false" écraser le legacy
+          Object.entries(data as Record<string, boolean>).forEach(([k, v]) => {
+            if (v === true) fromRpc[k] = true;
+          });
+        }
+      } catch (_e) {
+        // RPC échoué — le legacy suffit
+      }
 
-      // Écraser avec les valeurs réelles de la DB
-      const fromDb = (data as Record<string, boolean>) || {};
-      setAdvancedPermissions({ ...allPermsBase, ...fromDb });
+      // Fusion: legacy en base, puis RPC pour les nouvelles permissions
+      // Un "true" dans l'une OU l'autre source = permission accordée
+      setAdvancedPermissions({ ...allPermsBase, ...legacyFromAgent, ...fromRpc });
     } catch (error) {
       console.error('Erreur chargement permissions avancées:', error);
-      // En cas d'erreur, toutes les permissions à false
+      // En cas d'erreur totale: utiliser au moins le legacy
       const fallback: Record<string, boolean> = {};
       PERMISSION_CATEGORIES.forEach(cat =>
         cat.permissions.forEach(key => { fallback[key] = false; })
       );
+      (agent.permissions || []).forEach(key => { fallback[key] = true; });
       setAdvancedPermissions(fallback);
     } finally {
       setLoadingAdvancedPermissions(false);

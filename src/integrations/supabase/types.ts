@@ -15933,6 +15933,7 @@ export type Database = {
           compare_price: number | null
           cost_price: number | null
           created_at: string | null
+          currency: string | null
           description: string | null
           dimensions: Json | null
           free_shipping: boolean | null
@@ -15976,6 +15977,7 @@ export type Database = {
           compare_price?: number | null
           cost_price?: number | null
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           dimensions?: Json | null
           free_shipping?: boolean | null
@@ -16019,6 +16021,7 @@ export type Database = {
           compare_price?: number | null
           cost_price?: number | null
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           dimensions?: Json | null
           free_shipping?: boolean | null

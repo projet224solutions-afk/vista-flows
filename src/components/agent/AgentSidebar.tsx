@@ -7,7 +7,8 @@ import { useState } from 'react';
 import {
   Wallet, Users, UserPlus, UserCog, BarChart3,
   DollarSign, Package, Home, ChevronLeft, ChevronRight,
-  Key, LogOut, Shield, Menu, Link2
+  Key, LogOut, Shield, Menu, Link2,
+  TrendingUp, CreditCard, Store, ShoppingCart, Sparkles, FileCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,24 +50,31 @@ export default function AgentSidebar({
 }: AgentSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Fonction pour vérifier les permissions (combine les deux sources)
   const hasPermission = (permission: string): boolean => {
-    // Vérifier d'abord les permissions unifiées (nouvelle table)
-    if (unifiedPermissions[permission] === true) {
-      console.log(`✅ Permission accordée (unifié): ${permission}`);
-      return true;
-    }
-    // Ensuite vérifier les permissions legacy (tableau)
-    if (agent.permissions.includes(permission)) {
-      console.log(`✅ Permission accordée (legacy): ${permission}`);
-      return true;
-    }
-    return false;
-  };
+    if (unifiedPermissions[permission] === true) return true;
+    if (agent.permissions.includes(permission)) return true;
 
-  // Log des permissions pour debug
-  console.log('🔐 Permissions unifiées:', unifiedPermissions);
-  console.log('🔐 Permissions legacy:', agent.permissions);
+    // manage_* implique view_*
+    if (permission.startsWith('view_')) {
+      const manageKey = permission.replace('view_', 'manage_');
+      if (unifiedPermissions[manageKey] === true || agent.permissions.includes(manageKey)) return true;
+    }
+
+    // Aliases spécifiques
+    const aliases: Record<string, string[]> = {
+      view_finance: ['manage_finance'],
+      view_banking: ['manage_banking', 'manage_finance', 'view_finance'],
+      view_kyc: ['manage_kyc', 'manage_vendor_kyc'],
+      manage_wallet_transactions: ['manage_finance', 'manage_banking', 'view_banking', 'view_finance'],
+      view_vendors: ['manage_vendors', 'manage_vendor_kyc'],
+      view_orders: ['manage_orders'],
+      view_service_subscriptions: ['manage_service_subscriptions', 'manage_service_plans'],
+    };
+
+    return (aliases[permission] || []).some(
+      k => unifiedPermissions[k] === true || agent.permissions.includes(k)
+    );
+  };
 
   const navItems: NavItem[] = [
     {
@@ -122,6 +130,55 @@ export default function AgentSidebar({
       icon: DollarSign,
       permission: 'manage_commissions',
       gradient: 'from-yellow-500 to-orange-500'
+    },
+    {
+      id: 'finance',
+      label: 'Finance',
+      icon: TrendingUp,
+      permission: 'view_finance',
+      gradient: 'from-emerald-500 to-green-600'
+    },
+    {
+      id: 'banking',
+      label: 'Système Bancaire',
+      icon: Shield,
+      permission: 'view_banking',
+      gradient: 'from-blue-600 to-indigo-700'
+    },
+    {
+      id: 'wallet-transactions',
+      label: 'Transactions Wallet',
+      icon: CreditCard,
+      permission: 'manage_wallet_transactions',
+      gradient: 'from-teal-500 to-cyan-600'
+    },
+    {
+      id: 'kyc-management',
+      label: 'Gestion KYC',
+      icon: FileCheck,
+      permission: 'view_kyc',
+      gradient: 'from-amber-500 to-orange-600'
+    },
+    {
+      id: 'vendors-management',
+      label: 'Vendeurs',
+      icon: Store,
+      permission: 'view_vendors',
+      gradient: 'from-rose-500 to-pink-600'
+    },
+    {
+      id: 'orders-management',
+      label: 'Commandes',
+      icon: ShoppingCart,
+      permission: 'view_orders',
+      gradient: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'service-subscriptions',
+      label: 'Abonnements Services',
+      icon: Sparkles,
+      permission: 'view_service_subscriptions',
+      gradient: 'from-yellow-500 to-amber-600'
     },
     {
       id: 'affiliate',

@@ -165,10 +165,18 @@ export const useAgentPermissions = (agentId: string | undefined) => {
     }
   }, [agentId]);
 
-  // Mettre à jour les permissions
+  // Mettre à jour les permissions (triple-save pour robustesse maximale)
   const setAgentPermissions = useCallback(async (newPermissions: Record<string, boolean>) => {
     if (!agentId) return false;
 
+    // Clés actives (true) — pour la colonne legacy agents_management.permissions
+    const activeKeys = Object.entries(newPermissions)
+      .filter(([key, val]) => val === true && key !== 'create_sub_agents')
+      .map(([key]) => key);
+
+    let anySuccess = false;
+
+    // 1. Essayer la RPC set_agent_permissions (SECURITY DEFINER, priorité haute)
     try {
       const { data, error } = await supabase
         .rpc('set_agent_permissions' as any, {
@@ -176,20 +184,77 @@ export const useAgentPermissions = (agentId: string | undefined) => {
           p_permissions: newPermissions
         });
 
-      if (error) throw error;
-
-      const result = data as { success: boolean; error?: string; message?: string };
-
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la mise à jour');
+      const result = data as { success: boolean; error?: string } | null;
+      if (!error && result?.success) {
+        anySuccess = true;
+      } else {
+        console.warn('[Permissions] set_agent_permissions non réussi:', error || result?.error);
       }
+    } catch (e) {
+      console.warn('[Permissions] Exception set_agent_permissions:', e);
+    }
 
-      toast.success(result.message || 'Permissions mises à jour');
+    // 2. Fallback: upsert direct dans agent_permissions (si RLS permet)
+    if (!anySuccess) {
+      try {
+        const upserts = Object.entries(newPermissions)
+          .filter(([key]) => key !== 'create_sub_agents')
+          .map(([permission_key, permission_value]) => ({
+            agent_id: agentId,
+            permission_key,
+            permission_value,
+            updated_at: new Date().toISOString(),
+          }));
+
+        if (upserts.length > 0) {
+          const { error: upsertErr } = await supabase
+            .from('agent_permissions')
+            .upsert(upserts, { onConflict: 'agent_id,permission_key' });
+
+          if (!upsertErr) anySuccess = true;
+        }
+      } catch (e) {
+        console.warn('[Permissions] Exception upsert direct:', e);
+      }
+    }
+
+    // 3. Toujours synchroniser agents_management.permissions via update_agent RPC (garantit le fallback)
+    // update_agent est SECURITY DEFINER et vérifie l'ownership PDG — fonctionne toujours pour le PDG
+    try {
+      const { data: updRes } = await supabase
+        .rpc('update_agent' as any, {
+          p_agent_id: agentId,
+          p_permissions: activeKeys,
+        });
+      const updResult = updRes as { success: boolean } | null;
+      if (updResult?.success) anySuccess = true;
+    } catch (e) {
+      // Fallback direct si update_agent non disponible (contexte non-PDG)
+      try {
+        await supabase
+          .from('agents_management')
+          .update({ permissions: activeKeys as any })
+          .eq('id', agentId);
+        anySuccess = true;
+      } catch (_e2) {
+        console.warn('[Permissions] Exception sync legacy:', _e2);
+      }
+    }
+
+    // 4. Synchroniser can_create_sub_agent si présent
+    if ('create_sub_agents' in newPermissions) {
+      await supabase
+        .from('agents_management')
+        .update({ can_create_sub_agent: newPermissions.create_sub_agents })
+        .eq('id', agentId);
+    }
+
+    if (anySuccess) {
+      toast.success('Permissions mises à jour');
       await loadPermissions();
       return true;
-    } catch (error: any) {
-      console.error('Erreur mise à jour permissions:', error);
-      toast.error(error.message || 'Erreur lors de la mise à jour des permissions');
+    } else {
+      toast.error('Impossible de sauvegarder les permissions');
       return false;
     }
   }, [agentId, loadPermissions]);

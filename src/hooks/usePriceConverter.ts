@@ -35,6 +35,27 @@ interface UsePriceConverterResult {
 // Toutes les devises connues du système
 const WORLD_CURRENCY_CODES = Array.from(new Set(WORLD_CURRENCIES.map((c) => c.code.toUpperCase())));
 
+// Taux GNF→X de secours (utilisés quand la table currency_exchange_rates est vide)
+// Source: taux approximatifs 2025. Mis à jour par le cron african-fx-collect en prod.
+const FALLBACK_RATES: Record<string, number> = {
+  GNF: 1,
+  USD: 0.0001163,   // 1 GNF ≈ 0.000116 USD
+  EUR: 0.0001075,   // 1 GNF ≈ 0.000108 EUR
+  GBP: 0.0000920,   // 1 GNF ≈ 0.000092 GBP
+  XOF: 0.0724,      // 1 GNF ≈ 0.0724 XOF
+  XAF: 0.0724,      // même zone CFA
+  NGN: 0.1800,      // 1 GNF ≈ 0.18 NGN
+  GHS: 0.00161,     // 1 GNF ≈ 0.0016 GHS
+  MAD: 0.00116,     // 1 GNF ≈ 0.0012 MAD
+  CDF: 0.3320,      // 1 GNF ≈ 0.33 CDF
+  KES: 0.01502,     // 1 GNF ≈ 0.015 KES
+  ZAR: 0.00213,     // 1 GNF ≈ 0.0021 ZAR
+  CNY: 0.000843,    // 1 GNF ≈ 0.00084 CNY
+  JPY: 0.01738,     // 1 GNF ≈ 0.017 JPY
+  CAD: 0.0001592,   // 1 GNF ≈ 0.00016 CAD
+  AUD: 0.0001803,   // 1 GNF ≈ 0.00018 AUD
+};
+
 export function usePriceConverter(): UsePriceConverterResult {
   const { geoInfo, loading: geoLoading } = useGeoDetection();
   const { currency: contextCurrency } = useCurrency();
@@ -53,9 +74,15 @@ export function usePriceConverter(): UsePriceConverterResult {
 
     getRatesForBase('GNF', WORLD_CURRENCY_CODES)
       .then((result) => {
-        if (!cancelled && Object.keys(result).length > 0) setRates(result);
+        if (!cancelled) {
+          // Si la DB retourne des taux, on les utilise ; sinon on garde les taux de secours
+          setRates(Object.keys(result).length > 0 ? result : FALLBACK_RATES);
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        // En cas d'erreur réseau, utiliser les taux hardcodés
+        if (!cancelled) setRates(FALLBACK_RATES);
+      })
       .finally(() => { if (!cancelled) setRatesLoading(false); });
 
     getLastUpdated().then((ts) => { if (!cancelled) setLastUpdated(ts); });

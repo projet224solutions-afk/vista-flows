@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  UserCheck, _Users, Mail, Phone, AlertCircle,
-  UserCog, Plus, Copy, Check, Wallet, Key, _Shield
+  UserCheck, Mail, Phone, AlertCircle,
+  UserCog, Plus, Copy, Check, Wallet, Key
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,9 +33,12 @@ import AgentWalletManagement from '@/components/agent/AgentWalletManagement';
 import { AgentAffiliateLinksSection } from '@/components/agent/AgentAffiliateLinksSection';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useAgentPermissionsUnified } from '@/hooks/useAgentPermissionsUnified';
-import { _AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
 import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
-import { _AgentPermissionsSelector } from '@/components/agent/AgentPermissionsSelector';
+import { AgentFullFinanceModule } from '@/components/agent/modules/AgentFullFinanceModule';
+import { AgentBankingModule } from '@/components/agent/modules/AgentBankingModule';
+import { AgentVendorsModule } from '@/components/agent/modules/AgentVendorsModule';
+import { AgentOrdersModule } from '@/components/agent/modules/AgentOrdersModule';
+import { AgentServiceSubscriptionsModule } from '@/components/agent/modules/AgentServiceSubscriptionsModule';
 
 // Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
@@ -77,6 +80,13 @@ const SECTION_TITLES: Record<string, string> = {
   'products': 'Gestion des Produits',
   'reports': 'Rapports & Statistiques',
   'commissions': 'Gestion des Commissions',
+  'finance': 'Gestion Financière',
+  'banking': 'Système Bancaire',
+  'wallet-transactions': 'Transactions Wallet',
+  'kyc-management': 'Gestion KYC',
+  'vendors-management': 'Gestion des Vendeurs',
+  'orders-management': 'Gestion des Commandes',
+  'service-subscriptions': 'Abonnements Services',
   'affiliate': 'Liens d\'Affiliation'
 };
 
@@ -151,7 +161,13 @@ export default function AgentDashboardPublic() {
           filter: `access_token=eq.${token}`
         },
         (payload) => {
-          setAgent(payload.new as Agent);
+          setAgent(prev => ({
+            ...(prev ?? {}),
+            ...payload.new,
+            permissions: Array.isArray(payload.new.permissions)
+              ? payload.new.permissions as string[]
+              : (prev?.permissions ?? []),
+          }) as Agent);
           toast.success('Données mises à jour');
         }
       )
@@ -182,7 +198,11 @@ export default function AgentDashboardPublic() {
         .select('*', { count: 'exact', head: true })
         .eq('agent_id', agentData.id);
 
-      setAgent({ ...agentData, total_users_created: usersCount || 0 } as Agent);
+      setAgent({
+        ...agentData,
+        permissions: Array.isArray(agentData.permissions) ? agentData.permissions as string[] : [],
+        total_users_created: usersCount || 0
+      } as Agent);
       setPdgUserId(agentData.pdg_id);
       toast.success(`Bienvenue ${agentData.name}!`);
     } catch (error) {
@@ -709,6 +729,62 @@ export default function AgentDashboardPublic() {
           />
         ) : (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
+        );
+
+      case 'finance':
+        return (
+          <AgentFullFinanceModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_finance')}
+          />
+        );
+
+      case 'banking':
+        return (
+          <AgentBankingModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_banking') || hasPermission('manage_finance')}
+          />
+        );
+
+      case 'wallet-transactions':
+        return (
+          <AgentBankingModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_wallet_transactions') || hasPermission('manage_banking') || hasPermission('manage_finance')}
+          />
+        );
+
+      case 'kyc-management':
+        return (
+          <AgentVendorsModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_kyc') || hasPermission('manage_vendor_kyc')}
+          />
+        );
+
+      case 'vendors-management':
+        return (
+          <AgentVendorsModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_vendors') || hasPermission('manage_vendor_kyc')}
+          />
+        );
+
+      case 'orders-management':
+        return (
+          <AgentOrdersModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_orders')}
+          />
+        );
+
+      case 'service-subscriptions':
+        return (
+          <AgentServiceSubscriptionsModule
+            agentId={agent.id}
+            canManage={hasPermission('manage_service_subscriptions') || hasPermission('manage_service_plans')}
+          />
         );
 
       case 'affiliate':

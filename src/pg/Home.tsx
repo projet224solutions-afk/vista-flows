@@ -158,12 +158,13 @@ export default function Home() {
           onAddToCart={handleAddToCart}
         />
 
-        <div className="px-4 mt-4">
-          <RecentlyViewedProducts maxItems={6} />
-        </div>
-
         {/* Bottom Navigation */}
         <BottomNavigation />
+
+        {/* Derniers produits visités — toujours en bas */}
+        <div className="px-4 pb-6">
+          <RecentlyViewedProducts maxItems={6} />
+        </div>
 
         {/* Modals */}
         <NearbyVendorsModal

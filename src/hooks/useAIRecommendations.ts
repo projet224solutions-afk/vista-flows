@@ -8,17 +8,49 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { CACHE_TTL, filterByAllowedVendors } from '@/config/recommendationConfig';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 interface AIProduct {
   product_id: string;
   name: string;
   price: number;
+  currency?: string;
   images: string[];
   rating: number | null;
   reviews_count?: number | null;
   category_id?: string;
   reason?: string;
   score?: number;
+}
+
+/**
+ * Enrichit les produits IA avec la devise du vendeur quand elle est absente.
+ * Nécessaire car l'edge function peut retourner des produits sans currency.
+ */
+async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
+  const missing = products.filter(p => !p.currency);
+  if (missing.length === 0) return products;
+
+  try {
+    const ids = missing.map(p => p.product_id);
+    const { data } = await supabase
+      .from('products')
+      .select('id, vendors(country)')
+      .in('id', ids);
+
+    const map: Record<string, string> = {};
+    (data || []).forEach((p: any) => {
+      const country = (p.vendors as any)?.country || '';
+      map[p.id] = getCurrencyForCountry(country) || 'GNF';
+    });
+
+    return products.map(p => ({
+      ...p,
+      currency: p.currency || map[p.product_id] || 'GNF',
+    }));
+  } catch {
+    return products.map(p => ({ ...p, currency: p.currency || 'GNF' }));
+  }
 }
 
 interface AIRecommendationResult {
@@ -76,28 +108,35 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       if (user) {
         try {
           const result = await fetchAIRecommendations('personalized');
-          if (result.products.length > 0) return result.products.slice(0, limit);
+          if (result.products.length > 0) {
+            return await enrichWithCurrency(result.products.slice(0, limit));
+          }
         } catch { /* fallback */ }
       }
       // Fallback: produits récents bien notés
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type)')
+        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type, country)')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(limit * 2);
 
       return filterByAllowedVendors(data || [])
         .slice(0, limit)
-        .map(p => ({
-          product_id: p.id,
-          name: p.name,
-          price: p.price,
-          images: Array.isArray(p.images) ? (p.images as string[]) : [],
-          rating: p.rating,
-          reviews_count: p.reviews_count,
-          reason: 'Nouveauté',
-        }));
+        .map(p => {
+          const vendor = (p as any).vendors;
+          const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+          return {
+            product_id: p.id,
+            name: p.name,
+            price: p.price,
+            currency,
+            images: Array.isArray(p.images) ? (p.images as string[]) : [],
+            rating: p.rating,
+            reviews_count: p.reviews_count,
+            reason: 'Nouveauté',
+          };
+        });
     },
     enabled: enabled && !authLoading,
     staleTime: CACHE_TTL.personalized.staleTime,
@@ -143,7 +182,9 @@ export function useAITrending(limit = 16, enabled = true) {
       if (user) {
         try {
           const result = await fetchAIRecommendations('trending');
-          if (result.products.length > 0) return result.products.slice(0, limit);
+          if (result.products.length > 0) {
+            return await enrichWithCurrency(result.products.slice(0, limit));
+          }
         } catch { /* fallback ci-dessous */ }
       }
 
@@ -162,7 +203,7 @@ export function useAITrending(limit = 16, enabled = true) {
 
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type)')
+        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type, country)')
         .eq('is_active', true)
         .order('reviews_count', { ascending: false })
         .limit(limit * 3);
@@ -179,14 +220,19 @@ export function useAITrending(limit = 16, enabled = true) {
 
       return scored
         .slice(0, limit)
-        .map(p => ({
-          product_id: p.id,
-          name: p.name,
-          price: p.price,
-          images: Array.isArray(p.images) ? (p.images as string[]) : [],
-          rating: p.rating,
-          reviews_count: p.reviews_count,
-        }));
+        .map(p => {
+          const vendor = (p as any).vendors;
+          const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+          return {
+            product_id: p.id,
+            name: p.name,
+            price: p.price,
+            currency,
+            images: Array.isArray(p.images) ? (p.images as string[]) : [],
+            rating: p.rating,
+            reviews_count: p.reviews_count,
+          };
+        });
     },
     enabled: enabled && !authLoading,
     staleTime: CACHE_TTL.trending.staleTime,

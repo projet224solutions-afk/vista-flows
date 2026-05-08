@@ -2,6 +2,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  GN: 'GNF', SN: 'XOF', CI: 'XOF', ML: 'XOF', BF: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF',
+  NG: 'NGN', GH: 'GHS', CM: 'XAF', CD: 'CDF', MG: 'MGA', MA: 'MAD', TN: 'TND', DZ: 'DZD',
+  EG: 'EGP', KE: 'KES', TZ: 'TZS', UG: 'UGX', RW: 'RWF', ZA: 'ZAR', ET: 'ETB', MU: 'MUR',
+  FR: 'EUR', DE: 'EUR', ES: 'EUR', IT: 'EUR', PT: 'EUR', BE: 'EUR', NL: 'EUR',
+  US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', CN: 'CNY', JP: 'JPY', IN: 'INR',
+};
+
+function getCountryCurrency(countryCode: string): string {
+  if (!countryCode) return 'GNF';
+  return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || 'GNF';
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -349,14 +362,14 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type)")
+    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type, country)")
     .in("id", productIds);
-  
+
   if (error) {
     console.error("fetchProductDetails error:", error);
     return [];
   }
-  
+
   // Filter: only vendors with online selling
   const allowedTypes = ["hybrid", "online"];
   const filtered = (data || []).filter((p: any) => {
@@ -364,22 +377,28 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
     return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
   });
   console.log("fetchProductDetails: found", filtered.length, "products (after vendor filter)");
-  
-  return filtered.map((p: any) => ({
-    product_id: p.id,
-    name: p.name,
-    price: p.price,
-    images: p.images || [],
-    rating: p.rating,
-    reviews_count: p.reviews_count,
-    category_id: p.category_id,
-  }));
+
+  return filtered.map((p: any) => {
+    const vendor = p.vendors;
+    const vendorCountry = vendor?.country || '';
+    const currency = p.currency || (vendorCountry ? getCountryCurrency(vendorCountry) : 'GNF') || 'GNF';
+    return {
+      product_id: p.id,
+      name: p.name,
+      price: p.price,
+      currency,
+      images: p.images || [],
+      rating: p.rating,
+      reviews_count: p.reviews_count,
+      category_id: p.category_id,
+    };
+  });
 }
 
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type)")
+    .select("id, name, price, images, rating, reviews_count, category_id, vendors(business_type, country)")
     .eq("is_active", true)
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(50);
@@ -391,17 +410,23 @@ async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
     return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
   }).slice(0, 20);
 
-  const products = filtered.map((p: any) => ({
-    product_id: p.id,
-    name: p.name,
-    price: p.price,
-    images: p.images || [],
-    rating: p.rating,
-    reviews_count: p.reviews_count,
-    category_id: p.category_id,
-    reason: "Populaire",
-    score: 50,
-  }));
+  const products = filtered.map((p: any) => {
+    const vendor = p.vendors;
+    const vendorCountry = vendor?.country || '';
+    const currency = p.currency || (vendorCountry ? getCountryCurrency(vendorCountry) : 'GNF') || 'GNF';
+    return {
+      product_id: p.id,
+      name: p.name,
+      price: p.price,
+      currency,
+      images: p.images || [],
+      rating: p.rating,
+      reviews_count: p.reviews_count,
+      category_id: p.category_id,
+      reason: "Populaire",
+      score: 50,
+    };
+  });
 
   return new Response(JSON.stringify({ products, source: "fallback", type }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" }

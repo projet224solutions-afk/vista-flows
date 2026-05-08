@@ -30,103 +30,74 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
 
     try {
       setLoading(true);
-      console.log('📋 [Permissions] Chargement pour agent:', agentId);
 
-      /**
-       * IMPORTANT:
-       * Dans l'interface Agent (publique via access_token), on n'a souvent PAS de session Supabase Auth.
-       * Si la table agent_permissions est protégée par RLS, un SELECT direct peut renvoyer un tableau vide
-       * (sans erreur). On privilégie donc la RPC get_agent_permissions (security definer côté DB).
-       */
+      // Étape 1: RPC get_agent_permissions (SECURITY DEFINER, accessible anon + authenticated)
+      // Depuis la migration 20260507200000, cette RPC fusionne déjà agent_permissions + legacy column
       let permissionsFromRpc: Record<string, boolean> | null = null;
       try {
         const { data: rpcData, error: rpcError } = await supabase.rpc('get_agent_permissions', {
           p_agent_id: agentId,
         });
 
-        if (rpcError) {
-          console.warn('⚠️ [Permissions] RPC get_agent_permissions en erreur, fallback SELECT:', rpcError);
-        } else if (rpcData && typeof rpcData === 'object') {
+        if (!rpcError && rpcData && typeof rpcData === 'object') {
           permissionsFromRpc = rpcData as Record<string, boolean>;
-          console.log('📋 [Permissions] Données RPC get_agent_permissions:', permissionsFromRpc);
+        } else if (rpcError) {
+          console.warn('[Permissions] RPC get_agent_permissions error, trying fallbacks:', rpcError.message);
         }
       } catch (e) {
-        console.warn('⚠️ [Permissions] Exception RPC get_agent_permissions, fallback SELECT:', e);
+        console.warn('[Permissions] RPC exception, trying fallbacks:', e);
       }
 
-      // Fallback: Charger les permissions depuis la table agent_permissions
-      // (utile si la RPC n'existe pas / est désactivée dans un environnement)
-      let permissionsData: Array<{ permission_key: string; permission_value: boolean | null }> = [];
+      // Étape 2: Fallback SELECT direct sur agent_permissions
+      // (fonctionne si la policy "anon_read_agent_permissions" est active)
+      let permissionsFromTable: Record<string, boolean> = {};
       if (!permissionsFromRpc) {
-        const { data, error: permError } = await supabase
+        const { data } = await supabase
           .from('agent_permissions')
           .select('permission_key, permission_value')
           .eq('agent_id', agentId);
 
-        if (permError) {
-          console.error('❌ Erreur chargement agent_permissions (fallback):', permError);
-        } else {
-          permissionsData = (data || []) as any;
-          console.log('📋 [Permissions] Données table agent_permissions (fallback):', permissionsData);
+        if (data && data.length > 0) {
+          (data as Array<{ permission_key: string; permission_value: boolean | null }>)
+            .forEach(p => {
+              permissionsFromTable[p.permission_key] = p.permission_value ?? false;
+            });
         }
       }
 
-      // Charger aussi les permissions legacy du JSON dans agents_management
-      const { data: agentData, error: agentError } = await supabase
+      // Étape 3: Colonne legacy agents_management.permissions (toujours lue comme filet de sécurité)
+      const { data: agentRow } = await supabase
         .from('agents_management')
         .select('permissions')
         .eq('id', agentId)
         .single();
 
-      if (agentError) {
-        console.error('❌ Erreur chargement agent permissions JSON:', agentError);
-      } else {
-        console.log('📋 [Permissions] Données legacy JSON:', agentData?.permissions);
-      }
-
-      // Fusionner les permissions
-      const mergedPermissions: Record<string, boolean> = {};
-
-      // D'abord, les permissions de la nouvelle table (prioritaires)
-      if (permissionsFromRpc) {
-        Object.entries(permissionsFromRpc).forEach(([key, value]) => {
-          mergedPermissions[key] = value === true;
-        });
-        console.log('📋 [Permissions] Après ajout RPC:', mergedPermissions);
-      } else if (permissionsData && permissionsData.length > 0) {
-        permissionsData.forEach(p => {
-          mergedPermissions[p.permission_key] = p.permission_value ?? false;
-        });
-        console.log('📋 [Permissions] Après ajout nouvelle table:', mergedPermissions);
-      }
-
-      // Ensuite, ajouter les permissions legacy si elles n'existent pas déjà
-      if (agentData?.permissions) {
-        const legacyPerms = agentData.permissions as any;
-
-        // Si c'est un tableau (ancien format)
-        if (Array.isArray(legacyPerms)) {
-          legacyPerms.forEach((perm: string) => {
-            if (!(perm in mergedPermissions)) {
-              mergedPermissions[perm] = true;
-            }
-          });
+      const legacyPerms: Record<string, boolean> = {};
+      if (agentRow?.permissions) {
+        const raw = agentRow.permissions as any;
+        if (Array.isArray(raw)) {
+          // Format tableau: ["view_finance", "manage_users"]
+          raw.forEach((perm: string) => { legacyPerms[perm] = true; });
+        } else if (typeof raw === 'object') {
+          // Format objet: {view_finance: true, manage_users: false}
+          Object.entries(raw).forEach(([k, v]) => { legacyPerms[k] = Boolean(v); });
         }
-        // Si c'est un objet (format key: boolean)
-        else if (typeof legacyPerms === 'object') {
-          Object.entries(legacyPerms).forEach(([key, value]) => {
-            if (!(key in mergedPermissions)) {
-              mergedPermissions[key] = Boolean(value);
-            }
-          });
-        }
-        console.log('📋 [Permissions] Après fusion legacy:', mergedPermissions);
       }
 
-      console.log('✅ [Permissions] Permissions finales:', mergedPermissions);
-      setPermissions(mergedPermissions);
+      // Fusion OR: une permission est vraie si N'IMPORTE QUELLE source dit true.
+      // Un false dans agent_permissions ne révoque PAS un true de la colonne legacy.
+      // Cela évite que des entrées false "périmées" dans agent_permissions masquent
+      // les permissions accordées via agents_management.permissions.
+      const allSources = [legacyPerms, permissionsFromTable, permissionsFromRpc ?? {}];
+      const allKeys = new Set(allSources.flatMap(s => Object.keys(s)));
+      const merged: Record<string, boolean> = {};
+      allKeys.forEach(key => {
+        merged[key] = allSources.some(s => s[key] === true);
+      });
+
+      setPermissions(merged);
     } catch (error) {
-      console.error('❌ Erreur chargement permissions unifiées:', error);
+      console.error('[Permissions] Erreur chargement:', error);
     } finally {
       setLoading(false);
     }
