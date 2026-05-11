@@ -1,5 +1,47 @@
 project_id = "uakkxaibujzxdiqzpnpr"
 
+[auth]
+site_url = "https://224solution.net"
+additional_redirect_urls = [
+  "https://224solution.net/**",
+  "https://www.224solution.net/**",
+  "http://localhost:5173/**",
+  "http://localhost:3000/**"
+]
+enable_signup = true
+enable_anonymous_sign_ins = true
+enable_manual_linking = true
+minimum_password_length = 6
+password_requirements = "lower_upper_letters_digits_symbols"
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = true
+max_frequency = "1m0s"
+
+[auth.email.template.confirmation]
+subject = "Confirmez votre adresse email – 224Solutions"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Réinitialiser votre mot de passe – 224Solutions"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.sms]
+template = "confirmer votre inscription "
+
+[auth.web3.solana]
+enabled = true
+
+[auth.web3.ethereum]
+enabled = true
+
 [functions.secure-payment-init]
 verify_jwt = true
 

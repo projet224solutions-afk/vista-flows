@@ -128,6 +128,7 @@ const Dashboard = lazyWithRetry(() => import("./pg/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pg/UniversalLoginPage"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pg/SetPasswordAfterOAuth"));
 const ResetPassword = lazyWithRetry(() => import("./pg/ResetPassword"));
+const AuthConfirm = lazyWithRetry(() => import("./pg/AuthConfirm"));
 const AgentCreation = lazyWithRetry(() => import("./pg/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pg/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pg/BadgeVerification"));
@@ -336,6 +337,7 @@ function App() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
                 <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
+                <Route path="/auth/confirm" element={<AuthConfirm />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/agent/create" element={<AgentCreation />} />
                 <Route path="/worker/settings" element={<WorkerSettings />} />
