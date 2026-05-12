@@ -216,16 +216,16 @@ export function InternationalTransferConfirmation({
               )}
 
               {preview.is_international && (
-                <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border text-xs text-muted-foreground space-y-1">
+                <div className={`p-3 rounded-lg border text-xs space-y-1 ${preview.rate_is_stale ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 text-amber-800 dark:text-amber-300' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 text-muted-foreground'}`}>
                   <div>
-                    Source taux : {preview.rate_is_official ? 'banque/source officielle' : 'source secondaire'}
-                    {preview.rate_source_url ? ` (${preview.rate_source_url})` : ''}
+                    Source taux : {preview.rate_is_official ? '✅ banque centrale officielle' : '📊 taux collecté (cron horaire)'}
+                    {preview.rate_source_url ? ` — ${preview.rate_source_url}` : ''}
                   </div>
                   {preview.rate_fetched_at && (
-                    <div>Mise à jour : {new Date(preview.rate_fetched_at).toLocaleString('fr-FR')}</div>
+                    <div>Collecté le : {new Date(preview.rate_fetched_at).toLocaleString('fr-FR')}</div>
                   )}
                   {preview.rate_is_stale && (
-                    <div className="text-red-600 dark:text-red-400">Taux marqué comme ancien par le backend.</div>
+                    <div className="font-medium">⚠️ Taux de plus de 4h — vérifiez que le cron de collecte fonctionne.</div>
                   )}
                 </div>
               )}

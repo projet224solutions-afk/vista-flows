@@ -13,6 +13,7 @@
 
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { countryToCurrency } from '../utils/countryToCurrency.js';
 
 const ZERO_DECIMAL_CURRENCIES = new Set([
   'GNF', 'XOF', 'XAF', 'VND', 'IDR', 'KRW', 'JPY', 'CLP', 'UGX', 'RWF',
@@ -49,9 +50,28 @@ async function ensureWalletForTransfer(userId: string, fallbackCurrency = 'GNF')
     logger.warn(`[Wallet] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
   }
 
+  // Déterminer la devise selon le pays du profil
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('detected_country, country, detected_currency')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const userCountry = (profile as any)?.detected_country || (profile as any)?.country || 'GN';
+  const resolvedCurrency = ((profile as any)?.detected_currency && (profile as any).detected_currency !== 'GNF')
+    ? (profile as any).detected_currency
+    : countryToCurrency(userCountry) || fallbackCurrency;
+
   const { data: createdWallet, error: createError } = await supabaseAdmin
     .from('wallets')
-    .insert({ user_id: userId, balance: 0, currency: fallbackCurrency })
+    .insert({
+      user_id: userId,
+      balance: 0,
+      currency: resolvedCurrency,
+      currency_locked: true,
+      currency_locked_at: new Date().toISOString(),
+      currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
+    })
     .select('id, balance, is_blocked, currency')
     .single();
 
@@ -119,26 +139,51 @@ async function persistTransferHistory(params: {
     fee_amount: feeAmount,
   };
 
-  const transferType = isInternational ? 'international_transfer' : 'transfer';
+  const outType = isInternational ? 'international_transfer' : 'transfer_out';
+  const ts = Date.now();
+  const rand = () => Math.random().toString(36).substr(2, 6).toUpperCase();
+  const txIdOut = `TRF-OUT-${ts}-${rand()}`;
+  const txIdIn  = `TRF-IN-${ts}-${rand()}`;
 
-  const walletTxPromise = supabaseAdmin
-    .from('wallet_transactions')
-    .insert({
+  const walletTxPromise = Promise.all([
+    supabaseAdmin.from('wallet_transactions').insert({
+      transaction_id: txIdOut,
       sender_wallet_id: senderWalletId,
       receiver_wallet_id: receiverWalletId,
-      transaction_type: transferType,
+      sender_user_id: senderId,
+      receiver_user_id: receiverId,
+      transaction_type: outType,
       amount: amountSent,
+      fee: feeAmount,
+      net_amount: amountSent - feeAmount,
+      currency: senderCurrency,
       status: 'completed',
       description,
       metadata,
-    });
+    }),
+    supabaseAdmin.from('wallet_transactions').insert({
+      transaction_id: txIdIn,
+      sender_wallet_id: senderWalletId,
+      receiver_wallet_id: receiverWalletId,
+      sender_user_id: senderId,
+      receiver_user_id: receiverId,
+      transaction_type: 'transfer_in',
+      amount: amountReceived,
+      fee: 0,
+      net_amount: amountReceived,
+      currency: receiverCurrency,
+      status: 'completed',
+      description,
+      metadata,
+    }),
+  ]);
 
   const persistEnhancedHistory = async () => {
     const enhancedPayload = {
       sender_id: senderId,
       receiver_id: receiverId,
       amount: amountSent,
-      method: transferType,
+      method: outType,
       status: 'completed',
       currency: senderCurrency,
       metadata,
@@ -178,13 +223,15 @@ async function persistTransferHistory(params: {
     return { error: insertError };
   };
 
-  const [walletTxResult, enhancedTxResult] = await Promise.all([
+  const [walletTxResults, enhancedTxResult] = await Promise.all([
     walletTxPromise,
     persistEnhancedHistory(),
   ]);
 
-  if (walletTxResult?.error) {
-    logger.warn(`[Wallet] wallet_transactions history insert failed: ${walletTxResult.error.message}`);
+  for (const walletTxResult of walletTxResults) {
+    if (walletTxResult?.error) {
+      logger.warn(`[Wallet] wallet_transactions history insert failed: ${walletTxResult.error.message}`);
+    }
   }
   if (enhancedTxResult?.error) {
     logger.warn(`[Wallet] enhanced_transactions history write failed: ${enhancedTxResult.error.message}`);
@@ -330,10 +377,27 @@ export async function creditWallet(
       .single();
 
     if (walletErr || !wallet) {
-      // Créer le wallet si inexistant
+      // Créer le wallet si inexistant — devise selon pays du profil
+      const { data: profileForCredit } = await supabaseAdmin
+        .from('profiles')
+        .select('detected_country, country, detected_currency')
+        .eq('id', userId)
+        .maybeSingle();
+      const creditCountry = (profileForCredit as any)?.detected_country || (profileForCredit as any)?.country || 'GN';
+      const creditCurrency = ((profileForCredit as any)?.detected_currency && (profileForCredit as any).detected_currency !== 'GNF')
+        ? (profileForCredit as any).detected_currency
+        : countryToCurrency(creditCountry);
+
       const { data: newWallet, error: createErr } = await supabaseAdmin
         .from('wallets')
-        .insert({ user_id: userId, balance: amount, currency: 'GNF' })
+        .insert({
+          user_id: userId,
+          balance: amount,
+          currency: creditCurrency,
+          currency_locked: true,
+          currency_locked_at: new Date().toISOString(),
+          currency_lock_reason: `Devise assignée selon pays de résidence: ${creditCountry}`,
+        })
         .select('id, balance')
         .single();
 

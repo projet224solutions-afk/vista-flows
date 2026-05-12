@@ -24,6 +24,8 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { AFRICAN_BANK_SOURCE_URLS, isAfricanBankSourceUrl } from '../constants/africanBankSources.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
+import { getInternalFxRate as getTableFxRate } from '../services/marketplacePricing.service.js';
+import { countryToCurrency } from '../utils/countryToCurrency.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
@@ -90,9 +92,28 @@ async function ensureTransferWallet(userId: string, fallbackCurrency = 'GNF'): P
     logger.warn(`[WalletV2] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
   }
 
+  // Déterminer la devise selon le pays du profil
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('detected_country, country, detected_currency')
+    .eq('id', userId)
+    .maybeSingle();
+
+  const userCountry = profile?.detected_country || profile?.country || 'GN';
+  const resolvedCurrency = (profile?.detected_currency && profile.detected_currency !== 'GNF')
+    ? profile.detected_currency
+    : countryToCurrency(userCountry) || fallbackCurrency;
+
   const { data: createdWallet, error: createError } = await supabaseAdmin
     .from('wallets')
-    .insert({ user_id: userId, balance: 0, currency: fallbackCurrency })
+    .insert({
+      user_id: userId,
+      balance: 0,
+      currency: resolvedCurrency,
+      currency_locked: true,
+      currency_locked_at: new Date().toISOString(),
+      currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
+    })
     .select('id, balance, currency, user_id, is_blocked')
     .single();
 
@@ -558,6 +579,32 @@ async function getFreshAfricanFxRateForTransaction(from: string, to: string, act
     liveVisitAttempted,
     refreshStartedAt,
   });
+
+  // Fallback final: taux depuis la table (direct/inverse/pivot USD/pont GNF)
+  // Permet aux transferts de continuer si le scraping BCRG échoue depuis Vercel
+  const tableFallback = await getTableFxRate(sourceCurrency, targetCurrency).catch(() => null);
+  if (tableFallback && Number.isFinite(tableFallback.rate) && tableFallback.rate > 0) {
+    const configuredMarginFallback = await getConfiguredFxMargin();
+    // Considérer le taux comme récent si collecté il y a moins de 4 heures
+    const fetchedMs = tableFallback.fetched_at ? new Date(tableFallback.fetched_at).getTime() : 0;
+    const ageHours = (Date.now() - fetchedMs) / 3_600_000;
+    const isTableRateStale = !Number.isFinite(ageHours) || ageHours > 4;
+    logger.info(`[FX] Fallback table pour ${sourceCurrency}->${targetCurrency}: rate=${tableFallback.rate} source=${tableFallback.source} ageH=${ageHours.toFixed(1)} stale=${isTableRateStale}`);
+    return {
+      rate: tableFallback.rate,
+      officialRate: tableFallback.rate / (1 + configuredMarginFallback),
+      margin: configuredMarginFallback,
+      source: tableFallback.source,
+      fetchedAt: tableFallback.fetched_at,
+      sourceType: 'table-collected',
+      sourceUrl: null,
+      official: false,
+      stale: isTableRateStale,
+      refreshAttempted: true,
+      refreshStatus,
+      refreshTimedOut,
+    };
+  }
 
   const freshnessText = refreshedRate
     ? `source=${refreshedRate.source}, official=${refreshedRate.official}, stale=${refreshedRate.stale}, fetchedAt=${refreshedRate.fetchedAt}`
@@ -1344,16 +1391,33 @@ router.post('/initialize', verifyJWT, async (req: AuthenticatedRequest, res: Res
       return;
     }
 
-    // Créer — la table utilise des defaults pour balance, currency, wallet_status, limits
+    // Récupérer le pays du profil pour déterminer la devise
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('detected_country, country, detected_currency')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const userCountry = profile?.detected_country || profile?.country || 'GN';
+    const walletCurrency = (profile?.detected_currency && profile.detected_currency !== 'GNF')
+      ? profile.detected_currency
+      : countryToCurrency(userCountry);
+
     const { data: newWallet, error: insertError } = await supabaseAdmin
       .from('wallets')
-      .insert({ user_id: userId })
+      .insert({
+        user_id: userId,
+        currency: walletCurrency,
+        currency_locked: true,
+        currency_locked_at: new Date().toISOString(),
+        currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
+      })
       .select()
       .single();
 
     if (insertError) throw insertError;
 
-    logger.info(`Wallet created for user: ${userId}`);
+    logger.info(`Wallet created for user: ${userId}, currency: ${walletCurrency} (country: ${userCountry})`);
     res.status(201).json({ success: true, wallet: newWallet, created: true });
   } catch (error: any) {
     logger.error(`Wallet init error: ${error.message}`);
