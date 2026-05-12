@@ -95,7 +95,7 @@ export async function getInternalFxRate(
         ? 1 / Number(tToGnf.rate)
         : null;
 
-    if (fromToGnfRate && gnfToToRate) {
+    if (fromToGnfRate !== null && gnfToToRate !== null) {
       return { rate: fromToGnfRate * gnfToToRate, source: "table-gnf-pivot", fetched_at: new Date().toISOString() };
     }
   }
