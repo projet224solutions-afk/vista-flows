@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
@@ -45,6 +45,35 @@ interface SubAgent {
   total_users_created?: number;
   created_at: string;
 }
+
+const COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', currency: 'GNF', flag: '🇬🇳' },
+  { code: 'SN', name: 'Sénégal', currency: 'XOF', flag: '🇸🇳' },
+  { code: 'CI', name: 'Côte d\'Ivoire', currency: 'XOF', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', currency: 'XOF', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', currency: 'XOF', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', currency: 'XOF', flag: '🇳🇪' },
+  { code: 'TG', name: 'Togo', currency: 'XOF', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Bénin', currency: 'XOF', flag: '🇧🇯' },
+  { code: 'CM', name: 'Cameroun', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'GA', name: 'Gabon', currency: 'XAF', flag: '🇬🇦' },
+  { code: 'CG', name: 'Congo', currency: 'XAF', flag: '🇨🇬' },
+  { code: 'TD', name: 'Tchad', currency: 'XAF', flag: '🇹🇩' },
+  { code: 'CF', name: 'Centrafrique', currency: 'XAF', flag: '🇨🇫' },
+  { code: 'GQ', name: 'Guinée Équatoriale', currency: 'XAF', flag: '🇬🇶' },
+  { code: 'SL', name: 'Sierra Leone', currency: 'SLL', flag: '🇸🇱' },
+  { code: 'NG', name: 'Nigéria', currency: 'NGN', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
+  { code: 'MA', name: 'Maroc', currency: 'MAD', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algérie', currency: 'DZD', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunisie', currency: 'TND', flag: '🇹🇳' },
+  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', flag: '🇧🇪' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', flag: '🇺🇸' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', flag: '🇬🇧' },
+  { code: 'KE', name: 'Kenya', currency: 'KES', flag: '🇰🇪' },
+  { code: 'ZA', name: 'Afrique du Sud', currency: 'ZAR', flag: '🇿🇦' },
+];
 
 export default function PDGAgentsManagement() {
   const { agents, pdgProfile, loading, stats, refetch } = usePDGAgentsData();
@@ -88,6 +117,8 @@ export default function PDGAgentsManagement() {
     password: '',
     type_agent: 'principal',
     commission_rate: 10,
+    country_code: 'GN',
+    currency: 'GNF',
     permissions: {
       create_users: true,
       create_sub_agents: false,
@@ -210,6 +241,7 @@ export default function PDGAgentsManagement() {
         await saveAdvancedPermissions(editingAgent.id, advancedPermissions);
       } else {
         // Mode création
+        const selectedCountry = COUNTRY_OPTIONS.find(c => c.code === formData.country_code);
         const createRes = await createAgentAction({
           name: formData.name,
           email: formData.email,
@@ -219,6 +251,9 @@ export default function PDGAgentsManagement() {
           permissions: combinedLegacyPermissions,
           commission_rate: formData.commission_rate,
           can_create_sub_agent: formData.permissions.create_sub_agents,
+          country_code: formData.country_code,
+          country_name: selectedCountry?.name || 'Guinée',
+          currency: formData.currency,
         }, pdgProfile.id);
 
         if (!createRes?.success) {
@@ -240,6 +275,8 @@ export default function PDGAgentsManagement() {
         password: '',
         type_agent: 'principal',
         commission_rate: 10,
+        country_code: 'GN',
+        currency: 'GNF',
         permissions: {
           create_users: true,
           create_sub_agents: false,
@@ -275,6 +312,8 @@ export default function PDGAgentsManagement() {
       password: '',
       type_agent: agent.type_agent || 'principal',
       commission_rate: agent.commission_rate,
+      country_code: agent.country_code || 'GN',
+      currency: agent.currency || 'GNF',
       permissions: {
         create_users: agent.permissions.includes('create_users'),
         create_sub_agents: canCreateSubAgents,
@@ -603,6 +642,8 @@ export default function PDGAgentsManagement() {
                 password: '',
                 type_agent: 'principal',
                 commission_rate: 10,
+                country_code: 'GN',
+                currency: 'GNF',
                 permissions: {
                   create_users: true,
                   create_sub_agents: false,
@@ -854,6 +895,36 @@ export default function PDGAgentsManagement() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         placeholder="••••••••"
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>
+                        <Globe className="inline w-3.5 h-3.5 mr-1" />
+                        Pays de l'agent *
+                      </Label>
+                      <Select
+                        value={formData.country_code}
+                        onValueChange={(code) => {
+                          const country = COUNTRY_OPTIONS.find(c => c.code === code);
+                          setFormData({ ...formData, country_code: code, currency: country?.currency || 'GNF' });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner un pays..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COUNTRY_OPTIONS.map((c) => (
+                            <SelectItem key={c.code} value={c.code}>
+                              {c.flag} {c.name} — {c.currency}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {formData.currency && (
+                        <p className="text-xs text-muted-foreground">
+                          Devise du wallet : <span className="font-semibold text-foreground">{formData.currency}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

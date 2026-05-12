@@ -11,6 +11,9 @@ interface CreateAgentData {
   permissions: string[];
   commission_rate?: number;
   can_create_sub_agent?: boolean;
+  country_code?: string;
+  country_name?: string;
+  currency?: string;
 }
 
 interface UpdateAgentData {
@@ -87,6 +90,9 @@ export function usePDGActions({
           permissions: agentData.permissions,
           commission_rate: agentData.commission_rate || 10,
           can_create_sub_agent: agentData.can_create_sub_agent || false,
+          country_code: agentData.country_code || 'GN',
+          country_name: agentData.country_name || 'Guinée',
+          currency: agentData.currency || 'GNF',
         }
       });
 

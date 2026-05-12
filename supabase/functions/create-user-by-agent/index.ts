@@ -19,6 +19,16 @@ const securityHeaders = {
   'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()'
 };
 
+const CURRENCY_BY_COUNTRY: Record<string, string> = {
+  GN: 'GNF', SN: 'XOF', CI: 'XOF', ML: 'XOF', BF: 'XOF',
+  NE: 'XOF', TG: 'XOF', BJ: 'XOF', CM: 'XAF', GA: 'XAF',
+  CG: 'XAF', TD: 'XAF', CF: 'XAF', GQ: 'XAF', SL: 'SLL',
+  NG: 'NGN', GH: 'GHS', MA: 'MAD', DZ: 'DZD', TN: 'TND',
+  FR: 'EUR', BE: 'EUR', US: 'USD', GB: 'GBP', KE: 'KES', ZA: 'ZAR',
+};
+const getCurrencyForCountry = (code: string): string =>
+  CURRENCY_BY_COUNTRY[code.toUpperCase()] ?? 'GNF';
+
 // Schéma de validation Zod avec règles de sécurité strictes
 const CreateUserSchema = z.object({
   email: z.string()
@@ -47,6 +57,10 @@ const CreateUserSchema = z.object({
   }),
   country: z.string()
     .max(100, { message: 'Nom pays trop long' })
+    .trim()
+    .optional(),
+  country_code: z.string()
+    .length(2, { message: 'Code pays doit être 2 caractères (ISO 3166-1 alpha-2)' })
     .trim()
     .optional(),
   city: z.string()
@@ -290,6 +304,10 @@ serve(async (req) => {
 
     // Créer l'utilisateur dans auth.users
     console.log('🔄 Tentative de création utilisateur:', body.email, 'rôle:', body.role);
+    const effectiveCountryCode = body.country_code?.toUpperCase() || 'GN';
+    const effectiveCountryName = body.country || 'Guinée';
+    const effectiveCurrency = getCurrencyForCountry(effectiveCountryCode);
+
     const { data: authUser, error: authError } = await supabaseClient.auth.admin.createUser({
       email: body.email,
       password: body.password,
@@ -299,7 +317,8 @@ serve(async (req) => {
         last_name: body.lastName || '',
         phone: body.phone,
         role: body.role,
-        country: body.country || 'Guinée',
+        country: effectiveCountryName,
+        detected_country: effectiveCountryCode,
         city: body.city || '',
         created_by_agent: body.agentCode,
         agent_id: body.agentId
@@ -376,7 +395,8 @@ serve(async (req) => {
         last_name: body.lastName || '',
         full_name: `${body.firstName} ${body.lastName || ''}`.trim(),
         phone: body.phone,
-        country: body.country || 'Guinée',
+        country: effectiveCountryName,
+        country_code: effectiveCountryCode,
         city: body.city || null
       })
       .eq('id', authUser.user.id);
@@ -393,7 +413,8 @@ serve(async (req) => {
         .from('wallets')
         .insert({
           user_id: authUser.user.id,
-          balance: 0
+          balance: 0,
+          currency: effectiveCurrency,
         });
 
       if (walletError) {
@@ -458,7 +479,8 @@ serve(async (req) => {
         .from('wallets')
         .insert({
           user_id: authUser.user.id,
-          balance: 0
+          balance: 0,
+          currency: effectiveCurrency,
         });
 
       if (vendorWalletError) {
@@ -509,7 +531,8 @@ serve(async (req) => {
         .from('wallets')
         .insert({
           user_id: authUser.user.id,
-          balance: 0
+          balance: 0,
+          currency: effectiveCurrency,
         });
 
       if (driverWalletError) {
@@ -547,7 +570,7 @@ serve(async (req) => {
       // Wallet pour prestataire
       const { error: prestWalletError } = await supabaseClient
         .from('wallets')
-        .insert({ user_id: authUser.user.id, balance: 0 });
+        .insert({ user_id: authUser.user.id, balance: 0, currency: effectiveCurrency });
       if (prestWalletError) console.warn('⚠️ Wallet prestataire error:', prestWalletError);
     }
 

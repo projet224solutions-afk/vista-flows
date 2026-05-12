@@ -14,6 +14,7 @@ export interface CreateUserData {
   password?: string; // Mot de passe optionnel, généré automatiquement si non fourni
   role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat' | 'prestataire';
   country: string;
+  country_code?: string;
   city: string;
   // Données spécifiques selon le rôle
   syndicatData?: {
@@ -118,6 +119,7 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         phone: userData.phone,
         role: userData.role,
         country: userData.country,
+        country_code: userData.country_code,
         city: userData.city,
         agentId: agentId,
         agentCode: agentCode,

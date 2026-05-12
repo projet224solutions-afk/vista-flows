@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   UserPlus,
   Users,
@@ -20,6 +21,35 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAgentActions, CreateUserData } from '@/hooks/useAgentActions';
+
+const COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', currency: 'GNF', flag: '🇬🇳' },
+  { code: 'SN', name: 'Sénégal', currency: 'XOF', flag: '🇸🇳' },
+  { code: 'CI', name: 'Côte d\'Ivoire', currency: 'XOF', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', currency: 'XOF', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', currency: 'XOF', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', currency: 'XOF', flag: '🇳🇪' },
+  { code: 'TG', name: 'Togo', currency: 'XOF', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Bénin', currency: 'XOF', flag: '🇧🇯' },
+  { code: 'CM', name: 'Cameroun', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'GA', name: 'Gabon', currency: 'XAF', flag: '🇬🇦' },
+  { code: 'CG', name: 'Congo', currency: 'XAF', flag: '🇨🇬' },
+  { code: 'TD', name: 'Tchad', currency: 'XAF', flag: '🇹🇩' },
+  { code: 'CF', name: 'Centrafrique', currency: 'XAF', flag: '🇨🇫' },
+  { code: 'GQ', name: 'Guinée Équatoriale', currency: 'XAF', flag: '🇬🇶' },
+  { code: 'SL', name: 'Sierra Leone', currency: 'SLL', flag: '🇸🇱' },
+  { code: 'NG', name: 'Nigéria', currency: 'NGN', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
+  { code: 'MA', name: 'Maroc', currency: 'MAD', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algérie', currency: 'DZD', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunisie', currency: 'TND', flag: '🇹🇳' },
+  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', flag: '🇧🇪' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', flag: '🇺🇸' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', flag: '🇬🇧' },
+  { code: 'KE', name: 'Kenya', currency: 'KES', flag: '🇰🇪' },
+  { code: 'ZA', name: 'Afrique du Sud', currency: 'ZAR', flag: '🇿🇦' },
+];
 
 const USER_ROLES = [
   { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-green-600' },
@@ -70,7 +100,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     phone: '',
     password: '',
     role: 'client' as CreateUserData['role'],
-    country: 'Guinée',
+    country_code: 'GN',
     city: '',
     // Données syndicat
     bureau_code: '',
@@ -103,6 +133,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     }
 
     try {
+      const selectedCountry = COUNTRY_OPTIONS.find(c => c.code === formData.country_code);
       // Préparer les données selon le rôle
       const userData: CreateUserData = {
         firstName: formData.firstName,
@@ -111,7 +142,8 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         phone: formData.phone,
         password: formData.password,
         role: formData.role,
-        country: formData.country,
+        country: selectedCountry?.name || 'Guinée',
+        country_code: formData.country_code,
         city: formData.city
       };
 
@@ -164,7 +196,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           phone: '',
           password: '',
           role: 'client',
-          country: 'Guinée',
+          country_code: 'GN',
           city: '',
           bureau_code: '',
           prefecture: '',
@@ -349,13 +381,21 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   <MapPin className="w-3 h-3" />
                   Pays
                 </Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  placeholder="Guinée"
-                  className="h-9"
-                />
+                <Select
+                  value={formData.country_code}
+                  onValueChange={(code) => setFormData({ ...formData, country_code: code })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Sélectionner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRY_OPTIONS.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="city" className="flex items-center gap-1 text-sm">

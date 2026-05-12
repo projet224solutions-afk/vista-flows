@@ -20,6 +20,9 @@ export interface Agent {
   updated_at?: string;
   total_users_created?: number;
   total_commissions_earned?: number;
+  country_code?: string;
+  country_name?: string;
+  currency?: string;
 }
 
 export interface PDGProfile {

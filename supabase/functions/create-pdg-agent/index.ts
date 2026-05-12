@@ -84,16 +84,23 @@ serve(async (req) => {
 
     console.log('✅ PDG verified:', pdgProfile.id);
 
-    const { 
-      name, 
-      email, 
-      phone, 
-      permissions, 
-      commission_rate, 
+    const {
+      name,
+      email,
+      phone,
+      permissions,
+      commission_rate,
       can_create_sub_agent,
       type_agent,
-      password 
+      password,
+      country_code = 'GN',
+      country_name = 'Guinée',
+      currency = 'GNF',
     } = await req.json();
+
+    const safeCountryCode: string = (typeof country_code === 'string' && country_code.length === 2) ? country_code.toUpperCase() : 'GN';
+    const safeCountryName: string = (typeof country_name === 'string' && country_name.length > 0) ? country_name : 'Guinée';
+    const safeCurrency: string = (typeof currency === 'string' && currency.length === 3) ? currency.toUpperCase() : 'GNF';
 
     // Valider type_agent - seules ces valeurs sont acceptées par la base de données
     const validTypeAgents = ['principal', 'agent_regional', 'agent_local'];
@@ -156,7 +163,8 @@ serve(async (req) => {
           last_name: name.split(' ').slice(1).join(' ') || '',
           phone: phone,
           role: 'agent',
-          country: 'Guinée'
+          country: safeCountryName,
+          detected_country: safeCountryCode,
         }
       });
 
@@ -213,6 +221,9 @@ serve(async (req) => {
         can_create_sub_agent: can_create_sub_agent || false,
         type_agent: sanitizedTypeAgent,
         is_active: true,
+        country_code: safeCountryCode,
+        country_name: safeCountryName,
+        currency: safeCurrency,
       })
       .select()
       .single();
@@ -264,7 +275,7 @@ serve(async (req) => {
       .insert({
         user_id: authUserId,
         balance: 0,
-        currency: 'GNF'
+        currency: safeCurrency,
       });
 
     if (walletError) {
