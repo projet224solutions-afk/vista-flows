@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +51,7 @@ export function AgentOverviewProfessional({
   onNavigate
 }: AgentOverviewProfessionalProps) {
   const [mounted, setMounted] = useState(false);
+  const { wallet } = useWallet();
 
   useEffect(() => {
     setMounted(true);
@@ -157,7 +159,7 @@ export function AgentOverviewProfessional({
                 <h3 className="text-2xl lg:text-3xl font-bold mt-1">
                   {formatCurrency(walletBalance)}
                 </h3>
-                <p className="text-emerald-200 text-sm mt-1">GNF</p>
+                <p className="text-emerald-200 text-sm mt-1">{wallet?.currency || 'GNF'}</p>
               </div>
               <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                 <CreditCard className="w-6 h-6" />

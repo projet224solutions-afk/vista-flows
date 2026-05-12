@@ -6,13 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  DollarSign, TrendingUp, _TrendingDown, Wallet,
+  DollarSign, TrendingUp, Wallet,
   ArrowUpRight, ArrowDownLeft, RefreshCw, Calendar,
   PiggyBank, CreditCard, BarChart3, Activity
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, _subDays, startOfMonth, _endOfMonth } from 'date-fns';
+import { format, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface AgentFinanceOverviewProps {
@@ -24,6 +24,7 @@ interface FinancialStats {
   pendingCommissions: number;
   paidCommissions: number;
   walletBalance: number;
+  walletCurrency: string;
   totalTransactions: number;
   transactionsThisMonth: number;
 }
@@ -43,6 +44,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
     pendingCommissions: 0,
     paidCommissions: 0,
     walletBalance: 0,
+    walletCurrency: 'GNF',
     totalTransactions: 0,
     transactionsThisMonth: 0
   });
@@ -115,6 +117,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         pendingCommissions,
         paidCommissions,
         walletBalance: walletData?.balance || 0,
+        walletCurrency: walletData?.currency || 'GNF',
         totalTransactions: commissionsList.length,
         transactionsThisMonth: commissionsThisMonth
       });
@@ -189,7 +192,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <span className="text-sm opacity-90">Solde Wallet</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(stats.walletBalance)}</p>
-              <p className="text-xs opacity-75">GNF</p>
+              <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white">
@@ -198,7 +201,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <span className="text-sm opacity-90">Total Commissions</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(stats.totalCommissions)}</p>
-              <p className="text-xs opacity-75">GNF</p>
+              <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white">
@@ -207,7 +210,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <span className="text-sm opacity-90">En Attente</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(stats.pendingCommissions)}</p>
-              <p className="text-xs opacity-75">GNF</p>
+              <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white">
@@ -216,7 +219,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                 <span className="text-sm opacity-90">Payées</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(stats.paidCommissions)}</p>
-              <p className="text-xs opacity-75">GNF</p>
+              <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
           </div>
 
@@ -291,7 +294,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                         </div>
                         <div className="text-right">
                           <p className={`font-bold ${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {tx.amount >= 0 ? '+' : ''}{formatAmount(tx.amount)} GNF
+                            {tx.amount >= 0 ? '+' : ''}{formatAmount(tx.amount)} {stats.walletCurrency}
                           </p>
                           <Badge variant="secondary" className="text-xs">{tx.type}</Badge>
                         </div>
@@ -326,7 +329,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                             Commission {comm.transaction_type}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Taux: {comm.commission_rate}% sur {formatAmount(comm.transaction_amount)} GNF
+                            Taux: {comm.commission_rate}% sur {formatAmount(comm.transaction_amount)} {stats.walletCurrency}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(comm.created_at), 'dd MMM yyyy', { locale: fr })}
@@ -334,7 +337,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-green-600">
-                            +{formatAmount(comm.commission_amount)} GNF
+                            +{formatAmount(comm.commission_amount)} {stats.walletCurrency}
                           </p>
                           {getStatusBadge(comm.status)}
                         </div>

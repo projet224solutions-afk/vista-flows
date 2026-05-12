@@ -12,6 +12,8 @@ export interface WalletBalance {
   id: string;
   balance: number;
   currency: string;
+  currency_locked?: boolean;
+  currency_lock_reason?: string | null;
   wallet_status: string;
   is_blocked: boolean;
   daily_limit: number;

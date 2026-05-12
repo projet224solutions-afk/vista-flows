@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
+import { useWallet } from '@/hooks/useWallet';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
@@ -37,6 +38,7 @@ export default function ServiceDashboard() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { userServices, loading } = useProfessionalServices();
+  const { wallet } = useWallet();
   const [service, setService] = useState<ProfessionalService | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -252,7 +254,7 @@ export default function ServiceDashboard() {
               <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} GNF</div>
+              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} {wallet?.currency || 'GNF'}</div>
             </CardContent>
           </Card>
 

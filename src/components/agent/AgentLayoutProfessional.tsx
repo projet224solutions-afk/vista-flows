@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useWallet } from '@/hooks/useWallet';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -81,6 +82,7 @@ export function AgentLayoutProfessional({
 }: AgentLayoutProfessionalProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { wallet } = useWallet();
 
   /**
    * Vérifie si l'agent a une permission donnée (unifié + legacy)
@@ -439,7 +441,7 @@ export function AgentLayoutProfessional({
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl font-bold text-white">{formatCurrency(walletBalance)}</span>
-            <span className="text-sm text-emerald-400 font-semibold">GNF</span>
+            <span className="text-sm text-emerald-400 font-semibold">{wallet?.currency || 'GNF'}</span>
           </div>
           {stats && stats.totalUsersCreated > 0 && (
             <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/10">

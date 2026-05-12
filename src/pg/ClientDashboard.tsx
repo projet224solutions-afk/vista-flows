@@ -9,6 +9,7 @@ import {
   LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History, HandCoins
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export default function ClientDashboard() {
   const responsive = useResponsive();
   const { t } = useTranslation();
   const { isAffiliateEnabled } = useAffiliateModule();
+  const { wallet } = useWallet();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -86,7 +88,7 @@ export default function ClientDashboard() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
+    return new Intl.NumberFormat('fr-FR').format(price) + ' ' + (wallet?.currency || 'GNF');
   };
 
   // Charger le customer_id + données client

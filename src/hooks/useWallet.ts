@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { _supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import {
@@ -25,6 +24,8 @@ export interface WalletData {
   user_id: string;
   balance: number;
   currency: string;
+  currency_locked?: boolean;
+  currency_lock_reason?: string | null;
   wallet_status: string;
   is_blocked: boolean;
   blocked_reason: string | null;
@@ -95,6 +96,8 @@ export const useWallet = () => {
           user_id: user.id,
           balance: Number(walletData.balance || 0),
           currency: walletData.currency || 'GNF',
+          currency_locked: Boolean(walletData.currency_locked ?? true),
+          currency_lock_reason: (walletData as any).currency_lock_reason ?? null,
           wallet_status: walletData.wallet_status || 'active',
           is_blocked: Boolean(walletData.is_blocked),
           blocked_reason: null,
@@ -186,7 +189,7 @@ export const useWallet = () => {
         return false;
       }
 
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Dépôt de ${amount.toLocaleString()} ${wallet?.currency || 'GNF'} réussi !`);
       await loadWallet();
       await loadTransactions();
 
@@ -228,7 +231,7 @@ export const useWallet = () => {
         return false;
       }
 
-      toast.success(`Retrait de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Retrait de ${amount.toLocaleString()} ${wallet?.currency || 'GNF'} réussi !`);
       await loadWallet();
       await loadTransactions();
 
@@ -281,7 +284,7 @@ export const useWallet = () => {
         return false;
       }
 
-      toast.success(`Transfert de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Transfert de ${amount.toLocaleString()} ${wallet?.currency || 'GNF'} réussi !`);
       await loadWallet();
       await loadTransactions();
 
