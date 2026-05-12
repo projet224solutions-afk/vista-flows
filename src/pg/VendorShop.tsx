@@ -21,6 +21,7 @@ import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
 import { AffiliateFlightPartnerCard } from "@/components/vendor/AffiliateFlightPartnerCard";
+import { LocalPrice } from "@/components/ui/LocalPrice";
 
 // Mini composant pour afficher le badge de certification d'un vendeur
 function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
@@ -51,6 +52,7 @@ interface Vendor {
   user_id: string;
   shop_slug?: string;
   public_id?: string;
+  shop_currency?: string | null;
 }
 
 interface Product {
@@ -756,7 +758,7 @@ export default function VendorShop() {
                           promotionalVideos={product.promotional_videos || []}
                           title={product.name}
                           price={product.price}
-                          currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
+                          currency={vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
                           vendor={vendor.business_name}
                           vendorId={vendor.id}
                           vendorPublicId={vendor.public_id}
@@ -901,18 +903,13 @@ export default function VendorShop() {
                             </p>
                             <div className="flex items-center justify-between">
                               {product.price > 0 ? (
-                                <span className="font-bold text-lg text-primary">
-                                  {(() => {
-                                    const currency = product.currency || 'GNF';
-                                    const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
-                                    const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
-                                    const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
-                                      minimumFractionDigits: decimals,
-                                      maximumFractionDigits: decimals,
-                                    });
-                                    return `${formattedAmount} ${currency}`;
-                                  })()}
-                                </span>
+                                <LocalPrice
+                                  amount={product.price}
+                                  currency={product.currency || vendor.shop_currency || 'GNF'}
+                                  size="lg"
+                                  className="font-bold text-primary"
+                                  showOriginal
+                                />
                               ) : (
                                 <span className="font-bold text-lg text-green-600">Gratuit</span>
                               )}
@@ -954,7 +951,7 @@ export default function VendorShop() {
                         promotionalVideos={product.promotional_videos || []}
                         title={product.name}
                         price={product.price}
-                        currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
+                        currency={vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
                         vendor={vendor.business_name}
                         vendorId={vendor.id}
                         vendorPublicId={vendor.public_id}

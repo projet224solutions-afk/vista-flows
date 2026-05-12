@@ -26,6 +26,10 @@ import { orderCreateRateLimit, orderManageRateLimit } from '../middlewares/route
 import { cache } from '../config/redis.js';
 import { z } from 'zod';
 import Stripe from 'stripe';
+import {
+  buildOrderFinancialSummary,
+  type OrderFinancialSummary,
+} from '../services/marketplacePricing.service.js';
 
 const router = Router();
 
@@ -96,17 +100,18 @@ async function getCachedVendor(vendorId: string): Promise<{
   business_name: string;
   user_id: string;
   country: string | null;
+  shop_currency: string | null;
 } | null> {
   const cacheKey = `vendor:${vendorId}`;
 
   // Try cache first
-  const cached = await cache.get<{ id: string; business_name: string; user_id: string; country: string | null }>(cacheKey);
+  const cached = await cache.get<{ id: string; business_name: string; user_id: string; country: string | null; shop_currency: string | null }>(cacheKey);
   if (cached) return cached;
 
   // Fallback to DB
   const { data: vendor } = await supabaseAdmin
     .from('vendors')
-    .select('id, business_name, user_id, country')
+    .select('id, business_name, user_id, country, shop_currency')
     .eq('id', vendorId)
     .eq('is_active', true)
     .single();
@@ -571,8 +576,22 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
-    // 3. Resolve currency (no DB call)
-    const currency = resolveVendorCurrency(vendor.country);
+    // 3. Resolve currency — priorité : shop_currency verrouillé, puis country
+    const currency = vendor.shop_currency || resolveVendorCurrency(vendor.country);
+
+    // 3.5. Résumé financier multi-devises (prix depuis DB, FX interne, commission)
+    //      Non bloquant : si le calcul échoue, on garde charged_amount du frontend.
+    let financialSummary: OrderFinancialSummary | null = null;
+    try {
+      financialSummary = await buildOrderFinancialSummary({
+        buyerUserId: userId,
+        vendorId:    vendor_id,
+        items:       items.map(i => ({ productId: i.product_id, quantity: i.quantity })),
+        productType: 'physical',
+      });
+    } catch (fsErr: any) {
+      logger.warn(`financial-summary: ${fsErr.message} — fallback to charged_amount`);
+    }
 
     // 4. Generate order number (no DB call)
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -615,8 +634,10 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     // p_buyer_user_id   → remplit payer_id dans escrow (nécessaire pour remboursement wallet à l'annulation)
     // p_wallet_debit_amount → débit atomique du wallet si payment_method = 'wallet'
     //                         Le montant inclut la commission (charged_amount du frontend)
-    const walletDebitAmount = (payment_method === 'wallet' && typeof charged_amount === 'number' && charged_amount > 0)
-      ? charged_amount
+    // Montant débité du wallet = totalPaidAmount backend (devise acheteur).
+    // Priorité : résumé financier calculé depuis la DB ; fallback : charged_amount frontend.
+    const walletDebitAmount = payment_method === 'wallet'
+      ? (financialSummary?.totalPaidAmount ?? (typeof charged_amount === 'number' && charged_amount > 0 ? charged_amount : 0))
       : 0;
 
     const { data: result, error: rpcError } = await supabaseAdmin.rpc('create_order_core', {
@@ -690,6 +711,23 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         payment_status: finalPaymentStatus,
         metadata: mergedOrderMetadata,
         ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
+        // Champs financiers multi-devises — remplis uniquement si le résumé est disponible
+        ...(financialSummary ? {
+          buyer_currency:        financialSummary.buyerCurrency,
+          seller_currency:       financialSummary.sellerCurrency,
+          original_currency:     financialSummary.sellerCurrency,
+          total_original_amount: financialSummary.totalOriginalAmount,
+          total_paid_amount:     financialSummary.totalPaidAmount,
+          paid_currency:         financialSummary.buyerCurrency,
+          exchange_rate_used:    financialSummary.isCrossCurrency ? financialSummary.exchangeRate : null,
+          exchange_rate_source:  financialSummary.exchangeRateSource,
+          is_cross_currency:     financialSummary.isCrossCurrency,
+          platform_fee_percent:  financialSummary.platformFeePercent,
+          platform_fee_amount:   financialSummary.platformFeeAmount,
+          platform_fee_currency: financialSummary.sellerCurrency,
+          seller_net_amount:     financialSummary.sellerNetAmount,
+          seller_net_currency:   financialSummary.sellerCurrency,
+        } : {}),
       })
       .eq('id', result.order_id);
 

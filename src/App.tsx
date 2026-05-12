@@ -11,6 +11,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CognitoAuthProvider } from "@/contexts/CognitoAuthContext";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
+import CountrySelectionGate from "@/components/auth/CountrySelectionGate";
 import { ThemeProvider } from "next-themes";
 // OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
 import { CartProvider } from "@/contexts/CartContext";
@@ -127,6 +128,7 @@ const ServiceRedirect = lazyWithRetry(() => import("./pg/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pg/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pg/UniversalLoginPage"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pg/SetPasswordAfterOAuth"));
+const SelectCountryPage = lazyWithRetry(() => import("./pg/SelectCountryPage"));
 const ResetPassword = lazyWithRetry(() => import("./pg/ResetPassword"));
 const AuthConfirm = lazyWithRetry(() => import("./pg/AuthConfirm"));
 const AgentCreation = lazyWithRetry(() => import("./pg/AgentCreation"));
@@ -302,6 +304,7 @@ function App() {
                 <GpsAutoFill />
                 <CognitoAuthProvider>
                   <OAuthPasswordGate />
+                  <CountrySelectionGate />
                   <CartProvider>
                   <TooltipProvider>
                   <Toaster />
@@ -337,6 +340,7 @@ function App() {
                 <Route path="/login" element={<Navigate to="/auth" replace />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
                 <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
+                <Route path="/auth/select-country" element={<SelectCountryPage />} />
                 <Route path="/auth/confirm" element={<AuthConfirm />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/agent/create" element={<AgentCreation />} />

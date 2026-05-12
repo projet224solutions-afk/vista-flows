@@ -14,6 +14,9 @@ export interface Profile {
   phone?: string;
   city?: string;
   country?: string;
+  detected_country?: string;
+  detected_currency?: string;
+  profile_completed?: boolean;
   is_active: boolean;
   kyc_status?: string;
   has_password?: boolean;
