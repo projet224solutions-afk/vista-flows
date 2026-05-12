@@ -7,9 +7,41 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Store, CheckCircle, XCircle, RefreshCw, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Store, CheckCircle, XCircle, RefreshCw, Eye, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Mapping pays → devise (cohérent avec le reste du système)
+const COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', currency: 'GNF', flag: '🇬🇳' },
+  { code: 'SN', name: 'Sénégal', currency: 'XOF', flag: '🇸🇳' },
+  { code: 'CI', name: 'Côte d\'Ivoire', currency: 'XOF', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', currency: 'XOF', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', currency: 'XOF', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', currency: 'XOF', flag: '🇳🇪' },
+  { code: 'TG', name: 'Togo', currency: 'XOF', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Bénin', currency: 'XOF', flag: '🇧🇯' },
+  { code: 'CM', name: 'Cameroun', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'GA', name: 'Gabon', currency: 'XAF', flag: '🇬🇦' },
+  { code: 'CG', name: 'Congo', currency: 'XAF', flag: '🇨🇬' },
+  { code: 'TD', name: 'Tchad', currency: 'XAF', flag: '🇹🇩' },
+  { code: 'CF', name: 'Centrafrique', currency: 'XAF', flag: '🇨🇫' },
+  { code: 'GQ', name: 'Guinée Équatoriale', currency: 'XAF', flag: '🇬🇶' },
+  { code: 'SL', name: 'Sierra Leone', currency: 'SLL', flag: '🇸🇱' },
+  { code: 'NG', name: 'Nigéria', currency: 'NGN', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
+  { code: 'MA', name: 'Maroc', currency: 'MAD', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algérie', currency: 'DZD', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunisie', currency: 'TND', flag: '🇹🇳' },
+  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', flag: '🇧🇪' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', flag: '🇺🇸' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', flag: '🇬🇧' },
+  { code: 'KE', name: 'Kenya', currency: 'KES', flag: '🇰🇪' },
+  { code: 'ZA', name: 'Afrique du Sud', currency: 'ZAR', flag: '🇿🇦' },
+];
 
 interface Vendor {
   id: string;
@@ -19,6 +51,8 @@ interface Vendor {
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
+  shop_currency?: string | null;
+  seller_country_code?: string | null;
   profiles?: {
     email: string;
     first_name: string;
@@ -26,7 +60,7 @@ interface Vendor {
     phone: string;
     custom_id: string;
   };
-  agent_info?: string; // Nom de l'agent créateur
+  agent_info?: string;
   subscription?: {
     plan_name: string;
     status: string;
@@ -38,11 +72,71 @@ interface Vendor {
 export default function PDGVendors() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    active: 0,
-    inactive: 0,
-    total: 0
-  });
+  const [stats, setStats] = useState({ active: 0, inactive: 0, total: 0 });
+
+  // Dialog changement de devise
+  const [currencyDialog, setCurrencyDialog] = useState<{
+    open: boolean;
+    vendor: Vendor | null;
+    selectedCountry: string;
+    saving: boolean;
+  }>({ open: false, vendor: null, selectedCountry: '', saving: false });
+
+  const openCurrencyDialog = (vendor: Vendor) => {
+    const currentCountry = COUNTRY_OPTIONS.find(c => c.code === vendor.seller_country_code);
+    setCurrencyDialog({
+      open: true,
+      vendor,
+      selectedCountry: currentCountry?.code || '',
+      saving: false,
+    });
+  };
+
+  const handleCurrencyChange = async () => {
+    const { vendor, selectedCountry } = currencyDialog;
+    if (!vendor || !selectedCountry) return;
+
+    const country = COUNTRY_OPTIONS.find(c => c.code === selectedCountry);
+    if (!country) return;
+
+    setCurrencyDialog(d => ({ ...d, saving: true }));
+
+    const { data, error } = await supabase.rpc('admin_change_vendor_currency', {
+      p_vendor_id:        vendor.id,
+      p_new_currency:     country.currency,
+      p_new_country_code: country.code,
+      p_reason:           'Changement manuel PDG',
+    });
+
+    setCurrencyDialog(d => ({ ...d, saving: false }));
+
+    if (error) {
+      toast.error(`Erreur: ${error.message}`);
+      return;
+    }
+
+    if (!data.success) {
+      toast.error(data.error || 'Erreur inconnue');
+      return;
+    }
+
+    if (!data.changed) {
+      toast.info(data.message);
+      setCurrencyDialog(d => ({ ...d, open: false }));
+      return;
+    }
+
+    if (data.warning) {
+      toast.warning(data.warning);
+    }
+
+    toast.success(
+      `Devise changée : ${data.old_currency} → ${data.new_currency} — ${data.products_flagged} produit(s) marqué(s) à réviser`
+    );
+
+    setCurrencyDialog(d => ({ ...d, open: false }));
+    loadVendors();
+  };
 
   const loadVendors = async () => {
     try {
@@ -233,6 +327,15 @@ export default function PDGVendors() {
                           <p>👤 {vendor.profiles?.first_name} {vendor.profiles?.last_name}</p>
                           {vendor.profiles?.phone && <p>📱 {vendor.profiles.phone}</p>}
                           <p>🆔 Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
+                          <p>
+                            💱 Devise boutique:{' '}
+                            <span className="font-semibold text-primary">
+                              {vendor.shop_currency || '—'}
+                            </span>
+                            {vendor.seller_country_code && (
+                              <span className="text-muted-foreground"> ({vendor.seller_country_code})</span>
+                            )}
+                          </p>
                           {vendor.agent_info && (
                             <p>👥 Créé par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
                           )}
@@ -268,9 +371,20 @@ export default function PDGVendors() {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openCurrencyDialog(vendor)}
+                        title="Changer la devise de la boutique"
+                      >
+                        <Globe className="w-4 h-4 mr-1" />
+                        Devise
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -278,6 +392,76 @@ export default function PDGVendors() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog changement de devise */}
+      <Dialog
+        open={currencyDialog.open}
+        onOpenChange={(open) => setCurrencyDialog(d => ({ ...d, open }))}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Changer la devise — {currencyDialog.vendor?.business_name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="text-sm text-muted-foreground">
+              Devise actuelle :{' '}
+              <span className="font-semibold text-foreground">
+                {currencyDialog.vendor?.shop_currency || '—'}{' '}
+                ({currencyDialog.vendor?.seller_country_code || '—'})
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Nouveau pays / devise</label>
+              <Select
+                value={currencyDialog.selectedCountry}
+                onValueChange={(val) => setCurrencyDialog(d => ({ ...d, selectedCountry: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un pays..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.flag} {c.name} — {c.currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {currencyDialog.selectedCountry && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800 space-y-1">
+                <p className="font-semibold">Effets du changement :</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>La devise de la boutique devient <strong>{COUNTRY_OPTIONS.find(c => c.code === currencyDialog.selectedCountry)?.currency}</strong></li>
+                  <li>Tous les produits actifs sont marqués <strong>à réviser</strong> — le vendeur doit corriger ses prix</li>
+                  <li>Les commandes en cours restent dans l'ancienne devise (normal)</li>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}
+              disabled={currencyDialog.saving}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCurrencyChange}
+              disabled={!currencyDialog.selectedCountry || currencyDialog.saving}
+            >
+              {currencyDialog.saving ? 'Enregistrement...' : 'Confirmer le changement'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
