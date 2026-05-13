@@ -1,6 +1,6 @@
 ﻿import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, _CheckCircle2, Volume2 } from "lucide-react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import { trackProductView } from "@/services/analyticsTrackingService";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
-import { _usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
@@ -529,7 +528,7 @@ export default function ProductDetail() {
                   if (Array.isArray(v)) return v[0]?.country;
                   return v?.country;
                 })();
-                const productCurrency = product.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF');
+                const productCurrency = (vendorCountry ? getCurrencyForCountry(vendorCountry) : null) || product.currency || 'GNF';
                 return (
                   <LocalPrice
                     amount={product.price}
@@ -653,7 +652,7 @@ export default function ProductDetail() {
       {/* Modal de paiement */}
       {product && customerId && userId && (() => {
         const vc = (() => { const v = product.vendors; if (Array.isArray(v)) return v[0]?.country; return v?.country; })();
-        const pCur = product.currency || (vc ? getCurrencyForCountry(vc) : 'GNF');
+        const pCur = (vc ? getCurrencyForCountry(vc) : null) || product.currency || 'GNF';
         return (
           <ProductPaymentModal
             open={showPaymentModal}

@@ -7,6 +7,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 // =====================================================
 // TYPES ET INTERFACES
@@ -20,6 +21,7 @@ export interface Wallet {
   user_id: string;
   balance: number;
   currency: string;
+  currency_locked?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +57,25 @@ export interface WalletStats {
 // =====================================================
 
 class WalletService {
+  // Résoudre la devise selon le pays du profil utilisateur
+  private async resolveCurrencyForUser(userId: string): Promise<string> {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('detected_country, country, detected_currency')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile?.detected_currency && profile.detected_currency !== 'GNF') {
+        return profile.detected_currency;
+      }
+      const country = profile?.detected_country || profile?.country || 'GN';
+      return getCurrencyForCountry(country) || 'GNF';
+    } catch {
+      return 'GNF';
+    }
+  }
+
   // Récupérer le wallet d'un utilisateur
   /**
    * Récupère le wallet d'un utilisateur, le crée si inexistant ou inactif
@@ -74,11 +95,20 @@ class WalletService {
 
       if (error) throw error;
 
-      // Si le wallet n'existe pas, le créer
+      // Si le wallet n'existe pas, le créer avec la devise du pays
       if (!wallet) {
+        const currency = await this.resolveCurrencyForUser(userId);
         const { data: created, error: createError } = await supabase
           .from('wallets')
-          .insert({ user_id: userId, balance: 0, currency: 'GNF', wallet_status: 'active' })
+          .insert({
+            user_id: userId,
+            balance: 0,
+            currency,
+            wallet_status: 'active',
+            currency_locked: true,
+            currency_locked_at: new Date().toISOString(),
+            currency_lock_reason: 'Devise assignée automatiquement selon le pays de résidence',
+          })
           .select('*')
           .maybeSingle();
         if (createError) throw createError;
@@ -101,12 +131,17 @@ class WalletService {
   // Créer un wallet pour un utilisateur
   async createUserWallet(userId: string, initialBalance: number = 10000): Promise<Wallet | null> {
     try {
+      const currency = await this.resolveCurrencyForUser(userId);
+
       const { data, error } = await supabase
         .from('wallets')
         .insert({
           user_id: userId,
           balance: initialBalance,
-          currency: 'GNF'
+          currency,
+          currency_locked: true,
+          currency_locked_at: new Date().toISOString(),
+          currency_lock_reason: 'Devise assignée automatiquement selon le pays de résidence',
         })
         .select()
         .single();
@@ -121,7 +156,7 @@ class WalletService {
           amount: initialBalance,
           net_amount: initialBalance,
           fee: 0,
-          currency: 'GNF',
+          currency,
           description: 'Bonus de bienvenue 224Solutions',
           status: 'completed',
           receiver_wallet_id: data.id

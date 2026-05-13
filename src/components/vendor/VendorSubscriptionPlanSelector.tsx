@@ -15,6 +15,7 @@ import { SubscriptionService, Plan } from "@/services/subscriptionService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import walletService from "@/services/walletService";
+import { useVendorCurrency } from "@/hooks/useVendorCurrency";
 
 interface VendorSubscriptionPlanSelectorProps {
   open: boolean;
@@ -109,12 +110,14 @@ export function VendorSubscriptionPlanSelector({
   onSuccess
 }: VendorSubscriptionPlanSelectorProps) {
   const { user } = useAuth();
+  const { currency: vendorCurrency, convert } = useVendorCurrency();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [loading, setLoading] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCurrency, setWalletCurrency] = useState('GNF');
 
   useEffect(() => {
     if (open) {
@@ -142,6 +145,7 @@ export function VendorSubscriptionPlanSelector({
     try {
       const wallet = await walletService.getUserWallet(user.id);
       setWalletBalance(wallet?.balance || 0);
+      if (wallet?.currency) setWalletCurrency(wallet.currency);
     } catch (error) {
       console.error("Erreur chargement wallet:", error);
     }
@@ -168,11 +172,12 @@ export function VendorSubscriptionPlanSelector({
   const handleSubscribe = async () => {
     if (!selectedPlan || !user?.id) return;
 
-    const price = calculatePrice(selectedPlan);
+    const priceGNF = calculatePrice(selectedPlan);
+    const priceConverted = Math.round(convert(priceGNF));
 
-    if (walletBalance < price) {
+    if (walletBalance < priceConverted) {
       toast.error("Solde insuffisant", {
-        description: `Votre solde : ${walletBalance.toLocaleString()} GNF. Prix : ${price.toLocaleString()} GNF`
+        description: `Votre solde : ${walletBalance.toLocaleString()} ${vendorCurrency}. Prix : ${priceConverted.toLocaleString()} ${vendorCurrency}`
       });
       return;
     }
@@ -183,7 +188,7 @@ export function VendorSubscriptionPlanSelector({
       const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
         userId: user.id,
         planId: selectedPlan.id,
-        pricePaid: price,
+        pricePaid: priceGNF,
         paymentMethod: 'wallet',
         billingCycle: billingCycle
       });
@@ -299,7 +304,7 @@ export function VendorSubscriptionPlanSelector({
 
                         <div className="space-y-1">
                           <span className="text-2xl font-extrabold tracking-tight text-primary">
-                            {price.toLocaleString()} GNF
+                            {Math.round(convert(price)).toLocaleString('fr-FR')} {vendorCurrency}
                           </span>
                           <p className="text-sm text-muted-foreground/90">
                             pour {BILLING_CYCLE_DURATION[billingCycle]} mois
@@ -319,7 +324,7 @@ export function VendorSubscriptionPlanSelector({
             <Wallet className="w-4 h-4" />
             <span className="text-sm font-medium">Solde wallet</span>
           </div>
-          <span className="font-bold">{walletBalance.toLocaleString()} GNF</span>
+          <span className="font-bold">{walletBalance.toLocaleString('fr-FR')} {vendorCurrency}</span>
         </div>
 
         <DialogFooter>

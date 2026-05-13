@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface WalletBalanceWidgetProps {
@@ -19,7 +19,7 @@ export function WalletBalanceWidget({
   variant = 'default',
 }: WalletBalanceWidgetProps) {
   const { user } = useAuth();
-  const { convert } = usePriceConverter();
+  const { currency: vendorCurrency, convert: convertVendor, isReady: currencyReady } = useVendorCurrency();
   const { t } = useTranslation();
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,8 @@ export function WalletBalanceWidget({
 
   const formatBalance = () => {
     if (hidden) return '••••••';
-    return convert(balance, 'GNF').formatted;
+    if (!currencyReady) return '—';
+    return `${Math.round(convertVendor(balance)).toLocaleString('fr-FR')} ${vendorCurrency}`;
   };
 
   const isSurfaceVariant = variant === 'surface';

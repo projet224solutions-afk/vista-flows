@@ -48,7 +48,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
-import { useFxRates } from '@/hooks/useFxRates';
+
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { getCurrencyByCode, formatCurrency } from '@/data/currencies';
 import { useAuth } from '@/hooks/useAuth';
@@ -98,7 +99,8 @@ interface Customer {
 }
 
 export function POSSystem() {
-  const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
+  const { currency: vendorCurrency, convert: vendorConvert, isReady: currencyReady, lastUpdated: ratesLastUpdatedFromCtx } = useVendorCurrency();
+  const { settings, loading: settingsLoading, updateSettings } = usePOSSettings(vendorCurrency);
   const { user: authUser, _session } = useAuth();
   const { vendorId: currentVendorId, userId: vendorOwnerUserId, loading: currentVendorLoading } = useCurrentVendor();
   const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
@@ -164,31 +166,24 @@ export function POSSystem() {
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-  // Devise sélectionnée
-  const selectedCurrency = settings?.currency || 'GNF';
+  // Devise sélectionnée: si pos_settings a une devise explicite non-GNF → l'utiliser,
+  // sinon utiliser la devise du wallet du vendeur.
+  // Raison: usePOSSettings crée toujours un enregistrement avec 'GNF' par défaut,
+  // donc settings?.currency est toujours truthy et le fallback || ne fonctionne pas.
+  const selectedCurrency = (settings?.currency && settings.currency !== 'GNF')
+    ? settings.currency
+    : vendorCurrency;
 
-  // Taux de change (taux exact du jour) via Edge Function
-  const { rates: fxRates, lastUpdated: ratesLastUpdated } = useFxRates({
-    base: 'GNF',
-    symbols: [selectedCurrency].filter(c => c !== 'GNF'),
-    refreshMinutes: 12 * 60,
-  });
+  // Utilise lastUpdated depuis le contexte partagé (plus de useFxRates local)
+  const ratesLastUpdated = ratesLastUpdatedFromCtx;
 
-  // Fonction pour convertir un prix de GNF vers la devise sélectionnée
-  const convertPrice = (priceInGNF: number): number => {
-    if (selectedCurrency === 'GNF') return priceInGNF;
-    const rate = fxRates?.[selectedCurrency];
-    if (typeof rate === 'number' && rate > 0) {
-      return priceInGNF * rate;
-    }
-    return priceInGNF;
-  };
-
-  // Formater le prix avec la devise
+  // Formater le prix avec la devise — retourne '—' tant que auth+wallet+taux ne sont pas prêts.
+  // Utilise convert() du contexte (taux déjà chargé, sans re-fetch) pour éliminer le clignotement.
   const formatPriceWithCurrency = (priceInGNF: number): string => {
-    const convertedPrice = convertPrice(priceInGNF);
+    if (!currencyReady) return '—';
+    const convertedPrice = vendorConvert(priceInGNF);
     const currencyInfo = getCurrencyByCode(selectedCurrency);
-    if (!currencyInfo) return `${convertedPrice.toLocaleString()} ${selectedCurrency}`;
+    if (!currencyInfo) return `${Math.round(convertedPrice).toLocaleString()} ${selectedCurrency}`;
     return formatCurrency(convertedPrice, selectedCurrency);
   };
 
@@ -1391,10 +1386,10 @@ export function POSSystem() {
             order_number: mobileOrderNumber,
             vendor_id: vendorId,
             customer_id: customerId,
-            total_amount: convertPrice(total),
-            subtotal: convertPrice(subtotal),
-            tax_amount: convertPrice(tax),
-            discount_amount: convertPrice(discountValue),
+            total_amount: vendorConvert(total),
+            subtotal: vendorConvert(subtotal),
+            tax_amount: vendorConvert(tax),
+            discount_amount: vendorConvert(discountValue),
             payment_status: 'pending',
             status: 'processing',
             payment_method: paymentMethod,
@@ -1521,10 +1516,10 @@ export function POSSystem() {
               order_number: cardOrderNumber,
               vendor_id: vendorId,
               customer_id: customerId,
-              total_amount: convertPrice(total),
-              subtotal: convertPrice(subtotal),
-              tax_amount: convertPrice(tax),
-              discount_amount: convertPrice(discountValue),
+              total_amount: vendorConvert(total),
+              subtotal: vendorConvert(subtotal),
+              tax_amount: vendorConvert(tax),
+              discount_amount: vendorConvert(discountValue),
               payment_status: 'pending',
               status: 'processing',
               payment_method: 'card',

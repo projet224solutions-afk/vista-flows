@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
+import { useVendorCurrency } from "@/hooks/useVendorCurrency";
 import { supabase } from "@/integrations/supabase/client";
 import { updateOrderStatus as updateOrderStatusBackend } from "@/services/orderBackendService";
 import { useToast } from "@/hooks/use-toast";
@@ -166,7 +167,12 @@ const getPaymentMethodLabel = (order: Order): string => {
 
 export default function OrderManagement() {
   const { vendorId, user, loading: vendorLoading, canAccessPOS, _businessType } = useCurrentVendor();
+  const { currency, convert } = useVendorCurrency();
   const { toast } = useToast();
+
+  // Formate un montant GNF converti dans la devise du wallet
+  const fmtAmount = (amount: number) =>
+    `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}`;
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -674,7 +680,7 @@ export default function OrderManagement() {
 
               toast({
                 title: "✅ Remboursement effectué",
-                description: `La commande ${order.order_number} a été remboursée (${order.total_amount.toLocaleString()} GNF)`
+                description: `La commande ${order.order_number} a été remboursée (${fmtAmount(order.total_amount)})`
               });
 
               // Rafraîchir les commandes
@@ -822,10 +828,9 @@ export default function OrderManagement() {
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Chiffre d'affaires</p>
                 <p className={`text-sm md:text-xl font-bold truncate ${canAccessPOS ? 'text-vendeur-secondary' : 'text-gray-400'}`}>
-                  {orders
+                  {fmtAmount(orders
                     .filter(o => o.source === 'pos' && o.payment_status === 'paid')
-                    .reduce((sum, o) => sum + o.total_amount, 0)
-                    .toLocaleString()} <span className="text-xs">GNF</span>
+                    .reduce((sum, o) => sum + o.total_amount, 0))}
                 </p>
               </div>
             </div>
@@ -1018,7 +1023,7 @@ export default function OrderManagement() {
                           </div>
                           <div>
                             <p className="text-[10px] md:text-xs text-muted-foreground">CA {periodLabel}</p>
-                            <p className="text-sm md:text-lg font-bold truncate">{ca.toLocaleString()} <span className="text-[10px] text-muted-foreground">GNF</span></p>
+                            <p className="text-sm md:text-lg font-bold truncate">{fmtAmount(ca)}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -1031,7 +1036,7 @@ export default function OrderManagement() {
                           </div>
                           <div>
                             <p className="text-[10px] md:text-xs text-muted-foreground">Panier moyen</p>
-                            <p className="text-sm md:text-lg font-bold truncate">{avg.toLocaleString()} <span className="text-[10px] text-muted-foreground">GNF</span></p>
+                            <p className="text-sm md:text-lg font-bold truncate">{fmtAmount(avg)}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -1148,7 +1153,7 @@ export default function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold">x{item.quantity}</p>
-                              <p className="text-xs text-muted-foreground">{item.unit_price.toLocaleString()} GNF</p>
+                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price)}</p>
                             </div>
                           </div>
                         ))}
@@ -1157,11 +1162,11 @@ export default function OrderManagement() {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                       <p className="text-xl font-bold text-[hsl(15,100%,50%)]">
-                        {order.total_amount.toLocaleString()} GNF
+                        {fmtAmount(order.total_amount)}
                       </p>
                       {order.discount_amount > 0 && (
                         <p className="text-sm text-green-600">
-                          Remise: -{order.discount_amount.toLocaleString()} GNF
+                          Remise: -{fmtAmount(order.discount_amount)}
                         </p>
                       )}
                     </div>
@@ -1426,7 +1431,7 @@ export default function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold">x{item.quantity}</p>
-                              <p className="text-xs text-muted-foreground">{item.unit_price.toLocaleString()} GNF</p>
+                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price)}</p>
                             </div>
                           </div>
                         ))}
@@ -1435,11 +1440,11 @@ export default function OrderManagement() {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                       <p className="text-xl font-bold text-blue-700">
-                        {order.total_amount.toLocaleString()} GNF
+                        {fmtAmount(order.total_amount)}
                       </p>
                       {order.discount_amount > 0 && (
                         <p className="text-sm text-green-600">
-                          Remise: -{order.discount_amount.toLocaleString()} GNF
+                          Remise: -{fmtAmount(order.discount_amount)}
                         </p>
                       )}
                     </div>
@@ -1478,10 +1483,10 @@ export default function OrderManagement() {
                               : 'text-gray-800'
                           }`}>
                             {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
-                              <>🔒 Fonds sécurisés - {order.escrow.amount.toLocaleString()} GNF</>
+                              <>🔒 Fonds sécurisés - {fmtAmount(order.escrow.amount)}</>
                             )}
                             {order.escrow.status === 'released' && (
-                              <>✅ Paiement libéré ! Vous avez reçu {order.escrow.amount.toLocaleString()} GNF</>
+                              <>✅ Paiement libéré ! Vous avez reçu {fmtAmount(order.escrow.amount)}</>
                             )}
                             {order.escrow.status === 'refunded' && '↩️ Commande remboursée au client'}
                           </p>
@@ -1601,29 +1606,29 @@ export default function OrderManagement() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Sous-total:</span>
-                      <span>{selectedOrder.subtotal.toLocaleString()} GNF</span>
+                      <span>{fmtAmount(selectedOrder.subtotal)}</span>
                     </div>
                     {selectedOrder.tax_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Taxes:</span>
-                        <span>{selectedOrder.tax_amount.toLocaleString()} GNF</span>
+                        <span>{fmtAmount(selectedOrder.tax_amount)}</span>
                       </div>
                     )}
                     {selectedOrder.shipping_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Livraison:</span>
-                        <span>{selectedOrder.shipping_amount.toLocaleString()} GNF</span>
+                        <span>{fmtAmount(selectedOrder.shipping_amount)}</span>
                       </div>
                     )}
                     {selectedOrder.discount_amount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Remise:</span>
-                        <span>-{selectedOrder.discount_amount.toLocaleString()} GNF</span>
+                        <span>-{fmtAmount(selectedOrder.discount_amount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
-                      <span>{selectedOrder.total_amount.toLocaleString()} GNF</span>
+                      <span>{fmtAmount(selectedOrder.total_amount)}</span>
                     </div>
                   </div>
                 </div>
@@ -1639,8 +1644,8 @@ export default function OrderManagement() {
                         <span className="font-medium">{item.products.name}</span>
                       </div>
                       <div className="text-right">
-                        <div>{item.quantity} x {item.unit_price.toLocaleString()} GNF</div>
-                        <div className="font-semibold">{item.total_price.toLocaleString()} GNF</div>
+                        <div>{item.quantity} x {fmtAmount(item.unit_price)}</div>
+                        <div className="font-semibold">{fmtAmount(item.total_price)}</div>
                       </div>
                     </div>
                   ))}
@@ -1764,7 +1769,7 @@ export default function OrderManagement() {
       <span class="value">${codPhone}</span>
     </div>` : ''}
     <div class="field" style="font-size:12pt;font-weight:800;color:#dc2626;justify-content:center;border:none;margin-top:2mm;">
-      Montant à collecter: ${selectedOrder.total_amount.toLocaleString()} GNF
+      Montant à collecter: ${fmtAmount(selectedOrder.total_amount)}
     </div>
   </div>` : ''}
 

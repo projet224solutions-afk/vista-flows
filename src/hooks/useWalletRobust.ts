@@ -157,7 +157,7 @@ export const useWalletRobust = () => {
             .from('wallets')
             .select('*')
             .eq('user_id', user.id)
-            .eq('currency', 'GNF')
+            .order('updated_at', { ascending: false })
             .maybeSingle();
 
           if (walletError) throw walletError;
@@ -175,7 +175,7 @@ export const useWalletRobust = () => {
               .from('wallets')
               .select('*')
               .eq('user_id', user.id)
-              .eq('currency', 'GNF')
+              .order('updated_at', { ascending: false })
               .maybeSingle();
 
             if (reloadError) throw reloadError;

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useExpenseManagement } from '@/hooks/useExpenseManagement';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import WalletDashboard from '@/components/vendor/WalletDashboard';
 import { PurchaseExpensesSection } from './PurchaseExpensesSection';
 import { MonthlyProfitAnalysis } from './MonthlyProfitAnalysis';
@@ -44,6 +45,8 @@ interface ExpenseManagementDashboardProps {
 
 export default function ExpenseManagementDashboard({ className }: ExpenseManagementDashboardProps) {
   const { toast } = useToast();
+  const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
+  const fmtAmt = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${vendorCurrency}` : '—';
   const [activeTab, setActiveTab] = useState('profit');
   const [_selectedPeriod, _setSelectedPeriod] = useState('30d');
 
@@ -335,7 +338,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                     />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
+                      formatter={(value: number) => [fmtAmt(value), 'Montant']}
                       labelStyle={{ color: '#374151' }}
                     />
                     <Bar
@@ -376,7 +379,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
+                      formatter={(value: number) => [fmtAmt(value), 'Montant']}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -399,7 +402,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   <XAxis dataKey="month" />
                   <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
                   <Tooltip
-                    formatter={(value: number) => [`${value.toLocaleString()} GNF`, 'Montant']}
+                    formatter={(value: number) => [fmtAmt(value), 'Montant']}
                     labelStyle={{ color: '#374151' }}
                   />
                   <Area
@@ -541,7 +544,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                         <tr key={e?.id} className="border-b last:border-0">
                           <td className="py-2 pr-4">{e?.label || e?.name || '—'}</td>
                           <td className="py-2 pr-4">{categories?.find((c: any) => c?.id === (e?.category_id || e?.category))?.name || '—'}</td>
-                          <td className="py-2 pr-4">{Number(e?.amount || 0).toLocaleString()} GNF</td>
+                          <td className="py-2 pr-4">{fmtAmt(Number(e?.amount || 0))}</td>
                           <td className="py-2 pr-4">{e?.created_at ? new Date(e.created_at).toLocaleString('fr-FR') : '—'}</td>
                           <td className="py-2 pr-0 text-right">
                             <Button variant="ghost" size="sm" onClick={async () => {
@@ -624,7 +627,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       {categories.map((c: any) => (
                         <tr key={c?.id} className="border-b last:border-0">
                           <td className="py-2 pr-4">{c?.name || '—'}</td>
-                          <td className="py-2 pr-4">{Number(c?.monthly_budget || 0).toLocaleString()} GNF</td>
+                          <td className="py-2 pr-4">{fmtAmt(Number(c?.monthly_budget || 0))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -665,7 +668,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-3">
                     <div className="text-sm text-gray-700">
-                      <strong>Total du mois:</strong> {total.toLocaleString()} GNF
+                      <strong>Total du mois:</strong> {fmtAmt(total)}
                     </div>
                     <div>
                       <div className="font-medium mb-2">Top catégories du mois</div>
@@ -677,7 +680,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                           return (
                             <div key={r.id} className="flex items-center justify-between p-2 rounded border">
                               <span>{cat?.name || `Catégorie #${r.id}`}</span>
-                              <span className="font-semibold">{r.sum.toLocaleString()} GNF</span>
+                              <span className="font-semibold">{fmtAmt(r.sum)}</span>
                             </div>
                           );
                         })}
@@ -724,7 +727,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                         <div key={o.id} className="p-2 rounded border border-red-200 bg-red-50">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-red-800">{o.name}</span>
-                            <span className="text-red-700">{o.spent.toLocaleString()} / {o.budget.toLocaleString()} GNF</span>
+                            <span className="text-red-700">{fmtAmt(o.spent)} / {fmtAmt(o.budget)}</span>
                           </div>
                         </div>
                       ))

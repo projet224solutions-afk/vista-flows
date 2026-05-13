@@ -84,12 +84,15 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   const [initialLoading, setInitialLoading] = useState(true);
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  const isDigitalVendorWorkspace = location.pathname.startsWith('/vendeur-digital');
-  const businessTypeOptions = BUSINESS_TYPES.map((option) =>
-    isDigitalVendorWorkspace && (option.value === 'hybrid' || option.value === 'physical')
-      ? { ...option, label: `${option.label} (verrouillé)`, disabled: true }
-      : option
-  );
+  const isPhysicalWorkspace = location.pathname.startsWith('/vendeur') && !location.pathname.startsWith('/vendeur-digital');
+  const isDigitalWorkspace = location.pathname.startsWith('/vendeur-digital');
+  const businessTypeOptions = BUSINESS_TYPES.map((option) => {
+    if (isPhysicalWorkspace && option.value === 'digital')
+      return { ...option, label: `${option.label} (non disponible)`, disabled: true };
+    if (isDigitalWorkspace && (option.value === 'physical' || option.value === 'hybrid'))
+      return { ...option, label: `${option.label} (non disponible)`, disabled: true };
+    return option;
+  });
 
   const normalizedCity = city.trim().toLowerCase();
   const selectedCity = GUINEA_CITIES.find((c) => c.name.toLowerCase() === normalizedCity);
@@ -100,11 +103,6 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
-  useEffect(() => {
-    if (isDigitalVendorWorkspace && (businessType === 'hybrid' || businessType === 'physical')) {
-      setBusinessType('digital');
-    }
-  }, [businessType, isDigitalVendorWorkspace]);
 
   const loadVendorLocation = async () => {
     try {
@@ -124,7 +122,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
         setLatitude(data.latitude ? parseFloat(String(data.latitude)) : null);
         setLongitude(data.longitude ? parseFloat(String(data.longitude)) : null);
         const loadedType = data.business_type || 'physical';
-        setBusinessType(isDigitalVendorWorkspace && loadedType !== 'digital' ? 'digital' : loadedType);
+        setBusinessType(loadedType);
         setServiceType(data.service_type || 'retail');
       }
     } catch (error) {
@@ -289,10 +287,6 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     setLoading(true);
 
     try {
-      const finalBusinessType = isDigitalVendorWorkspace && businessType !== 'digital'
-        ? 'digital'
-        : businessType;
-
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -301,7 +295,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           address,
           latitude,
           longitude,
-          business_type: finalBusinessType,
+          business_type: businessType,
           service_type: serviceType
         })
         .eq('id', vendorId);
@@ -486,11 +480,6 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
                 options={businessTypeOptions}
                 placeholder="Sélectionnez un type"
               />
-              {isDigitalVendorWorkspace && (
-                <p className="text-xs text-muted-foreground">
-                  Le type "En ligne uniquement" est fixe pour le compte vendeur digital.
-                </p>
-              )}
             </div>
 
             <div className="space-y-2">

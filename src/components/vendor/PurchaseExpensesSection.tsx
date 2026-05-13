@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,7 +140,8 @@ export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionPro
     enabled: !!vendorId,
   });
 
-  const formatCurrency = useFormatCurrency();
+  const { currency, convert, isReady: currencyReady } = useVendorCurrency();
+  const formatCurrency = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}` : '—';
 
   const periodConfig = {
     today: { label: "Aujourd'hui", icon: Clock },

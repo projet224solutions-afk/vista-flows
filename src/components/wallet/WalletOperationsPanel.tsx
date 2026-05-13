@@ -22,8 +22,9 @@ import {
   Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { changeWalletPin, getWalletPinStatus, resetWalletPin, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
+import { changeWalletPin, getWalletPinStatus, previewWalletTransfer, resetWalletPin, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
 import { WalletPinPromptDialog, WalletPinSetupDialog } from '@/components/wallet/WalletPinDialogs';
+import { InternationalTransferConfirmation, type InternationalPreviewData } from '@/components/wallet/InternationalTransferConfirmation';
 
 // ChapChapPay - Mobile Money
 const PAYMENT_METHODS = [
@@ -41,6 +42,9 @@ export function WalletOperationsPanel() {
   const [pinSetupOpen, setPinSetupOpen] = useState(false);
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
   const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change' | 'reset'>('setup');
+  const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
+  const [showIntlConfirm, setShowIntlConfirm] = useState(false);
+  const [intlConfirmLoading, setIntlConfirmLoading] = useState(false);
 
   // États formulaires
   const [depositAmount, setDepositAmount] = useState('');
@@ -146,9 +150,17 @@ export function WalletOperationsPanel() {
     }
 
     setRecipientId(resolvedId);
-
     setPinAction('transfer');
 
+    // Vérifier si le transfert est international avant le PIN
+    const preview = await previewWalletTransfer(resolvedId, amount);
+    if (preview.success && preview.data?.is_international) {
+      setIntlPreview(preview.data as InternationalPreviewData);
+      setShowIntlConfirm(true);
+      return; // Afficher la confirmation internationale d'abord
+    }
+
+    // Transfert local : passer directement au PIN
     if (!pinStatus?.pin_enabled) {
       setPinSetupMode('setup');
       setPinSetupOpen(true);
@@ -186,15 +198,21 @@ export function WalletOperationsPanel() {
         }
       }
 
-      if (success) {
+      // Le toast de useWallet.ts gère déjà le message d'erreur
+      setPinPromptOpen(false);
+      setPinAction(null);
+      setPinError(null);
+    } catch (error: any) {
+      const msg = error?.message || 'Erreur lors de l\'opération';
+      const isPinError = /code pin|pin invalide|pin bloqué|tentative|configurer.*pin/i.test(msg);
+      if (isPinError) {
+        setPinError(msg);
+      } else {
         setPinPromptOpen(false);
         setPinAction(null);
         setPinError(null);
-      } else {
-        setPinError('Opération non validée. Vérifiez le code PIN et réessayez.');
+        toast.error(msg);
       }
-    } catch (error: any) {
-      setPinError(error?.message || 'Erreur de validation du code PIN');
     } finally {
       setPinLoading(false);
       await loadPinStatus();
@@ -528,6 +546,29 @@ export function WalletOperationsPanel() {
         onForgotPin={() => {
           setPinError(null);
           setPinSetupMode('reset');
+        }}
+      />
+
+      {/* Confirmation transfert international */}
+      <InternationalTransferConfirmation
+        open={showIntlConfirm}
+        onOpenChange={(val) => {
+          setShowIntlConfirm(val);
+          if (!val) {
+            setIntlPreview(null);
+            if (!pinPromptOpen) setPinAction(null);
+          }
+        }}
+        preview={intlPreview}
+        loading={intlConfirmLoading}
+        onConfirm={() => {
+          setShowIntlConfirm(false);
+          if (!pinStatus?.pin_enabled) {
+            setPinSetupMode('setup');
+            setPinSetupOpen(true);
+          } else {
+            setPinPromptOpen(true);
+          }
         }}
       />
     </>

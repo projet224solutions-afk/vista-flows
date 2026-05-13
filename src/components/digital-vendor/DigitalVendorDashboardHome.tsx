@@ -14,6 +14,7 @@ import {
   Users, Download, BarChart3, _Wallet
 } from 'lucide-react';
 import { useMerchantDigitalProducts } from '@/hooks/useDigitalProducts';
+import { useWallet } from '@/hooks/useWallet';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -44,6 +45,8 @@ interface MerchantStats {
 const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { wallet } = useWallet();
+  const walletCurrency = wallet?.currency || 'GNF';
   const { products, loading } = useMerchantDigitalProducts();
   const [stats, setStats] = useState<MerchantStats>({
     totalSales: 0, grossRevenue: 0, totalCommissions: 0,
@@ -115,7 +118,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: "Chiffre d'affaires brut",
-      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} GNF`,
+      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} ${walletCurrency}`,
       note: 'avant commissions',
       icon: DollarSign,
       cardBg: 'bg-[linear-gradient(135deg,#ff4000_0%,#e53900_100%)]',
@@ -127,8 +130,8 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: 'Revenu net',
-      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} GNF`,
-      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} GNF de commissions` : 'aucune commission déduite',
+      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} ${walletCurrency}`,
+      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} ${walletCurrency} de commissions` : 'aucune commission déduite',
       icon: TrendingUp,
       cardBg: 'bg-[linear-gradient(135deg,#04439e_0%,#041f87_100%)]',
       valueTone: 'text-white',
@@ -140,7 +143,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     {
       label: 'Abonnés actifs',
       value: statsLoading ? '...' : fmtNum(stats.activeSubscribers),
-      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} GNF par période` : 'aucun abonnement actif',
+      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} ${walletCurrency} par période` : 'aucun abonnement actif',
       icon: Users,
       cardBg: 'bg-[linear-gradient(135deg,#ff4000_0%,#cc3300_100%)]',
       valueTone: 'text-white',

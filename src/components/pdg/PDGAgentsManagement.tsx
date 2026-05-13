@@ -9,13 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield, Globe } from 'lucide-react';
+import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { AgentPermissionsSection } from './AgentPermissionsSection';
 import { PERMISSION_CATEGORIES } from '@/constants/agentPermissionCategories';
+import { DialogFooter } from '@/components/ui/dialog';
 
 interface AgentUser {
   id: string;
@@ -104,6 +106,29 @@ export default function PDGAgentsManagement() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [advancedPermissions, setAdvancedPermissions] = useState<Record<string, boolean>>({});
   const [loadingAdvancedPermissions, setLoadingAdvancedPermissions] = useState(false);
+  // Currency change state
+  const [currencyDialog, setCurrencyDialog] = useState<{
+    open: boolean; agent: Agent | null; selectedCountry: string; saving: boolean; error: string | null;
+  }>({ open: false, agent: null, selectedCountry: '', saving: false, error: null });
+
+  const handleAgentCurrencyChange = async () => {
+    const { agent, selectedCountry } = currencyDialog;
+    if (!agent || !selectedCountry) return;
+    const country = COUNTRY_OPTIONS.find(c => c.code === selectedCountry);
+    if (!country) return;
+    setCurrencyDialog(d => ({ ...d, saving: true, error: null }));
+    const result = await backendFetch<any>('/api/vendors/admin/change-currency', {
+      method: 'POST',
+      body: { vendor_id: agent.id, new_currency: country.currency, new_country_code: country.code, reason: 'Changement manuel PDG', entity_type: 'agent' },
+    });
+    setCurrencyDialog(d => ({ ...d, saving: false }));
+    if (!result.success) { setCurrencyDialog(d => ({ ...d, error: result.error || 'Erreur inconnue' })); return; }
+    if (!result.changed) { toast.info(result.message); setCurrencyDialog(d => ({ ...d, open: false })); return; }
+    toast.success(`Devise agent changée : ${result.old_currency} → ${result.new_currency}`, { duration: 6000 });
+    setCurrencyDialog(d => ({ ...d, open: false }));
+    refetch();
+  };
+
   // Email change state
   const [changeEmailAgent, setChangeEmailAgent] = useState<Agent | null>(null);
   const [isChangeEmailDialogOpen, setIsChangeEmailDialogOpen] = useState(false);
@@ -1401,6 +1426,15 @@ export default function PDGAgentsManagement() {
                     <Mail className="w-4 h-4 mr-1" />
                     Email
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrencyDialog({ open: true, agent, selectedCountry: '', saving: false, error: null })}
+                    className="flex-1"
+                  >
+                    <Globe className="w-4 h-4 mr-1" />
+                    Devise
+                  </Button>
                   {agent.is_active ? (
                     <Button
                       size="sm"
@@ -1447,6 +1481,41 @@ export default function PDGAgentsManagement() {
         </Card>
       )}
 
+
+      {/* Dialog changement de devise agent */}
+      <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Changer la devise — Agent
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">Agent : <strong>{currencyDialog.agent?.name}</strong></p>
+            <div className="space-y-2">
+              <Label>Pays de résidence</Label>
+              <Select value={currencyDialog.selectedCountry} onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un pays..." /></SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_OPTIONS.map(c => (
+                    <SelectItem key={c.code} value={c.code}>{c.flag} {c.name} — {c.currency}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {currencyDialog.error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded p-2">{currencyDialog.error}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>Annuler</Button>
+            <Button onClick={handleAgentCurrencyChange} disabled={!currencyDialog.selectedCountry || currencyDialog.saving}>
+              {currencyDialog.saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />En cours...</> : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialogue de réinitialisation du mot de passe */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>

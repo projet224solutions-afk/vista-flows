@@ -585,15 +585,16 @@ Deno.serve(async (req) => {
 
     if (deleteError) {
       console.error('❌ Erreur suppression auth:', deleteError.message);
-      
+
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
       if (authUser?.user) {
+        // Retourner 200 avec success:false pour que le client puisse lire le message d'erreur
         return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `L'utilisateur auth n'a pas pu être supprimé: ${deleteError.message}. Des données liées existent peut-être encore.`
+          JSON.stringify({
+            success: false,
+            error: `Impossible de supprimer le compte auth: ${deleteError.message}. Des données liées existent peut-être encore (essayez de supprimer ses commandes / transactions en cours d'abord).`
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       }
     }
@@ -608,9 +609,10 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('❌ Erreur:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    // Toujours 200 pour que le client puisse lire le message d'erreur dans data.error
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   }
 });

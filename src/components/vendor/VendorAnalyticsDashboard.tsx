@@ -1,10 +1,19 @@
+import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { TrendingUp, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
   const { analytics, loading } = useVendorAnalytics();
+  const { currency, convert } = useVendorCurrency();
+
+  // Données du graphique converties dans la devise du wallet (pour un axe Y cohérent)
+  const weekChartData = useMemo(
+    () => (analytics?.week ?? []).map(d => ({ ...d, total_sales: convert(d.total_sales) })),
+    [analytics?.week, convert]
+  );
 
   if (loading) {
     return (
@@ -19,7 +28,7 @@ export function VendorAnalyticsDashboard() {
   const stats = [
     {
       title: "Ventes Aujourd'hui",
-      value: `${analytics.today.totalSales.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} GNF`,
+      value: `${Math.round(convert(analytics.today.totalSales)).toLocaleString('fr-FR')} ${currency}`,
       subtitle: `POS: ${analytics.today.posOrders} • En ligne: ${analytics.today.onlineOrders}`,
       icon: TrendingUp,
       color: 'text-green-600'
@@ -64,7 +73,7 @@ export function VendorAnalyticsDashboard() {
         <Card className="p-4 sm:p-6">
           <h3 className="text-lg font-semibold mb-4">Ventes - 7 derniers jours</h3>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={analytics.week}>
+            <AreaChart data={weekChartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
@@ -73,7 +82,7 @@ export function VendorAnalyticsDashboard() {
               />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => `${value.toFixed(2)} GNF`}
+                formatter={(value: number) => `${Math.round(value).toLocaleString('fr-FR')} ${currency}`}
                 labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR')}
               />
               <Area

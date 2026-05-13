@@ -6,8 +6,9 @@
  * Utilise backendFetch → /api/v2/wallet/* au lieu de supabase.functions.invoke('wallet-operations')
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   depositToWallet,
@@ -60,6 +61,8 @@ export interface WalletStats {
 
 export const useWallet = () => {
   const { user } = useAuth();
+  // ID unique par instance pour éviter les conflits de canaux Supabase entre composants
+  const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -311,7 +314,7 @@ export const useWallet = () => {
     loadTransactions();
   }, [loadWallet, loadTransactions]);
 
-  // Écouter les mises à jour
+  // Écouter les mises à jour (même session)
   useEffect(() => {
     const handleUpdate = () => {
       loadWallet();
@@ -321,6 +324,25 @@ export const useWallet = () => {
     window.addEventListener('wallet-updated', handleUpdate);
     return () => window.removeEventListener('wallet-updated', handleUpdate);
   }, [loadWallet, loadTransactions]);
+
+  // Souscription temps réel : réagit si le PDG change la devise depuis une autre session
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`wallet-hook-${user.id}-${instanceId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'wallets',
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        void loadWallet();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, loadWallet]);
 
   return {
     wallet,

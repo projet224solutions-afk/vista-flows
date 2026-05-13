@@ -42,6 +42,7 @@ async function ensureWalletForTransfer(userId: string, fallbackCurrency = 'GNF')
     .from('wallets')
     .select('id, balance, is_blocked, currency')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
     .maybeSingle();
 
   if (existingWallet) return existingWallet as TransferWallet;

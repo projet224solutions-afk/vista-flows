@@ -112,7 +112,9 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
 
       return unseen.map(p => {
         const vendor = (p as any).vendors;
-        const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+        const vendorCountry = vendor?.country || '';
+        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
+        const currency = countryDerived || (p as any).currency || 'GNF';
         return {
           product_id: p.id,
           name: p.name,

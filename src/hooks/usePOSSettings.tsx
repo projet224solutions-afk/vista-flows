@@ -25,7 +25,7 @@ export interface POSSettings {
   updated_at?: string;
 }
 
-export const usePOSSettings = () => {
+export const usePOSSettings = (defaultCurrency = 'GNF') => {
   const { user } = useAuth();
   const { vendorId, userId: vendorOwnerUserId, loading: vendorLoading } = useCurrentVendor();
   const [settings, setSettings] = useState<POSSettings | null>(null);
@@ -61,13 +61,13 @@ export const usePOSSettings = () => {
       if (data) {
         setSettings(data);
       } else {
-        // Créer des paramètres par défaut
+        // Créer des paramètres par défaut avec la devise du vendeur
         const defaultSettings: Omit<POSSettings, 'id' | 'created_at' | 'updated_at'> = {
           vendor_id: settingsVendorId,
           company_name: 'Mon Commerce',
           tax_enabled: true,
           tax_rate: 0.18,
-          currency: 'GNF',
+          currency: defaultCurrency,
           receipt_footer: 'Merci de votre visite !',
           auto_print_receipt: false
         };
@@ -94,7 +94,7 @@ export const usePOSSettings = () => {
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
-        currency: 'GNF',
+        currency: defaultCurrency,
         receipt_footer: 'Merci de votre visite !',
         auto_print_receipt: false
       });
@@ -160,7 +160,7 @@ export const usePOSSettings = () => {
         company_name: 'Mon Commerce',
         tax_enabled: true,
         tax_rate: 0.18,
-        currency: 'GNF',
+        currency: defaultCurrency,
         receipt_footer: 'Merci de votre visite !',
         auto_print_receipt: false
       };

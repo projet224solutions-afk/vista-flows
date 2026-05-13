@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Store, CheckCircle, XCircle, RefreshCw, Eye, Globe } from 'lucide-react';
+import { Store, CheckCircle, XCircle, RefreshCw, Eye, Globe, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 
 // Mapping pays → devise (cohérent avec le reste du système)
@@ -80,7 +81,8 @@ export default function PDGVendors() {
     vendor: Vendor | null;
     selectedCountry: string;
     saving: boolean;
-  }>({ open: false, vendor: null, selectedCountry: '', saving: false });
+    bcrgError: string | null;
+  }>({ open: false, vendor: null, selectedCountry: '', saving: false, bcrgError: null });
 
   const openCurrencyDialog = (vendor: Vendor) => {
     const currentCountry = COUNTRY_OPTIONS.find(c => c.code === vendor.seller_country_code);
@@ -89,6 +91,7 @@ export default function PDGVendors() {
       vendor,
       selectedCountry: currentCountry?.code || '',
       saving: false,
+      bcrgError: null,
     });
   };
 
@@ -99,39 +102,61 @@ export default function PDGVendors() {
     const country = COUNTRY_OPTIONS.find(c => c.code === selectedCountry);
     if (!country) return;
 
-    setCurrencyDialog(d => ({ ...d, saving: true }));
+    setCurrencyDialog(d => ({ ...d, saving: true, bcrgError: null }));
 
-    const { data, error } = await supabase.rpc('admin_change_vendor_currency', {
-      p_vendor_id:        vendor.id,
-      p_new_currency:     country.currency,
-      p_new_country_code: country.code,
-      p_reason:           'Changement manuel PDG',
+    const result = await backendFetch<any>('/api/vendors/admin/change-currency', {
+      method: 'POST',
+      body: {
+        vendor_id:        vendor.id,
+        new_currency:     country.currency,
+        new_country_code: country.code,
+        reason:           'Changement manuel PDG',
+        entity_type:      'vendor',
+      },
     });
 
     setCurrencyDialog(d => ({ ...d, saving: false }));
 
-    if (error) {
-      toast.error(`Erreur: ${error.message}`);
+    if (!result.success) {
+      if (result.bcrg_unavailable) {
+        setCurrencyDialog(d => ({ ...d, bcrgError: result.error || 'BCRG indisponible' }));
+      } else {
+        toast.error(result.error || 'Erreur inconnue');
+      }
       return;
     }
 
-    if (!data.success) {
-      toast.error(data.error || 'Erreur inconnue');
-      return;
-    }
-
-    if (!data.changed) {
-      toast.info(data.message);
+    if (!result.changed) {
+      toast.info(result.message);
       setCurrencyDialog(d => ({ ...d, open: false }));
       return;
     }
 
-    if (data.warning) {
-      toast.warning(data.warning);
+    if (result.warning) {
+      toast.warning(result.warning);
     }
 
+    const rateSource = result.bcrg_is_live
+      ? 'BCRG direct'
+      : result.bcrg_retrieved_at
+        ? `BCRG cache ${new Date(result.bcrg_retrieved_at).toLocaleDateString('fr-FR')}`
+        : 'BCRG';
+    const rateLabel = result.bcrg_eur_gnf
+      ? `1 EUR = ${result.bcrg_eur_gnf.toLocaleString()} GNF (${rateSource})`
+      : result.bcrg_usd_gnf
+      ? `1 USD = ${result.bcrg_usd_gnf.toLocaleString()} GNF (${rateSource})`
+      : '';
+
     toast.success(
-      `Devise changée : ${data.old_currency} → ${data.new_currency} — ${data.products_flagged} produit(s) marqué(s) à réviser`
+      [
+        `Devise changée : ${result.old_currency} → ${result.new_currency}`,
+        result.wallet_converted
+          ? `Solde converti : ${result.old_balance.toLocaleString()} ${result.old_currency} → ${result.new_balance.toLocaleString()} ${result.new_currency}`
+          : '',
+        rateLabel ? `Taux : ${rateLabel}` : '',
+        `${result.products_flagged} produit(s) marqué(s) à réviser`,
+      ].filter(Boolean).join('\n'),
+      { duration: 8000 }
     );
 
     setCurrencyDialog(d => ({ ...d, open: false }));
@@ -418,7 +443,7 @@ export default function PDGVendors() {
               <label className="text-sm font-medium">Nouveau pays / devise</label>
               <Select
                 value={currencyDialog.selectedCountry}
-                onValueChange={(val) => setCurrencyDialog(d => ({ ...d, selectedCountry: val }))}
+                onValueChange={(v) => setCurrencyDialog(d => ({ ...d, selectedCountry: v, bcrgError: null }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un pays..." />
@@ -438,9 +463,21 @@ export default function PDGVendors() {
                 <p className="font-semibold">Effets du changement :</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
                   <li>La devise de la boutique devient <strong>{COUNTRY_OPTIONS.find(c => c.code === currencyDialog.selectedCountry)?.currency}</strong></li>
+                  <li>Le solde du wallet sera <strong>converti au taux BCRG live</strong> au moment de la confirmation</li>
                   <li>Tous les produits actifs sont marqués <strong>à réviser</strong> — le vendeur doit corriger ses prix</li>
                   <li>Les commandes en cours restent dans l'ancienne devise (normal)</li>
                 </ul>
+              </div>
+            )}
+
+            {currencyDialog.bcrgError && (
+              <div className="p-3 bg-red-50 border border-red-300 rounded-md text-sm text-red-800 flex gap-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold">Taux BCRG indisponible</p>
+                  <p className="text-xs mt-1">{currencyDialog.bcrgError}</p>
+                  <p className="text-xs mt-1 text-red-600">Le changement de devise est bloqué tant que la BCRG n'est pas accessible. Réessayez dans quelques minutes.</p>
+                </div>
               </div>
             )}
           </div>

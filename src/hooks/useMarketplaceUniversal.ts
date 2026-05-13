@@ -135,6 +135,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           id,
           name,
           price,
+          currency,
           description,
           images,
           promotional_videos,
@@ -222,7 +223,10 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendor = product.vendors as any;
         const vendorUserId = vendor?.user_id;
         const vendorCountry = vendor?.country || '';
-        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
+        // Pays du vendeur = source de vérité (gère codes ISO et noms complets)
+        // product.currency sert de fallback si le pays vendeur est absent
+        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
+        const derivedCurrency = countryDerived || (product as any).currency || 'GNF';
 
         return {
           id: product.id,

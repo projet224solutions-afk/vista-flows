@@ -14,11 +14,14 @@ import { Send, ArrowDownUp, Clock, CheckCircle, XCircle, Search, Filter, CreditC
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedTransactions } from "@/hooks/useEnhancedTransactions";
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 
 export const TransactionSystem = () => {
   const [receiverEmail, setReceiverEmail] = useState('');
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('GNF');
+  const { wallet } = useWallet();
+  // La devise est verrouillée selon le pays de résidence — non modifiable par l'utilisateur
+  const currency = wallet?.currency || 'GNF';
   const [method, setMethod] = useState('wallet');
   const [description, setDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,17 +184,10 @@ export const TransactionSystem = () => {
                   </div>
                   <div>
                     <Label htmlFor="currency">Devise</Label>
-                    <Select value={currency} onValueChange={setCurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="GNF">GNF (Franc Guinéen)</SelectItem>
-                        <SelectItem value="USD">USD (Dollar)</SelectItem>
-                        <SelectItem value="EUR">EUR (Euro)</SelectItem>
-                        <SelectItem value="XOF">XOF (Franc CFA)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
+                      <span className="font-semibold text-sm">{currency}</span>
+                      <span className="text-xs text-muted-foreground">(verrouillée selon votre pays)</span>
+                    </div>
                   </div>
                 </div>
 

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v26';
+const CACHE_VERSION = '__SW_VERSION__';
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `224solutions-runtime-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -130,6 +130,7 @@ function isBypassRequest(url) {
     url.pathname === '/manifest.webmanifest' ||
     url.pathname === '/manifest.json' ||
     url.pathname === '/healthz.json' ||
+    url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/~oauth') ||
     url.pathname.startsWith('/rest/') ||
     url.pathname.startsWith('/auth/') ||
@@ -277,11 +278,20 @@ async function handleStaticAssetRequest(event) {
           await clear224Caches();
           await notifyClients({
             type: 'SW_ASSET_404',
-            message: 'Un nouveau déploiement a été détecté. Rechargement conseillé.',
+            message: 'Un nouveau déploiement a été détecté. Rechargement en cours...',
             url: event.request.url,
           });
+          // Force reload all open tabs to pick up the new deploy
+          const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+          for (const client of allClients) {
+            if ('navigate' in client) client.navigate(client.url);
+          }
         })()
       );
+      // Return empty JS to avoid script error while reload is triggered
+      return new Response('/* deploy update — reloading */', {
+        headers: { 'Content-Type': 'application/javascript' },
+      });
     }
 
     return response;
@@ -294,13 +304,21 @@ async function handleStaticAssetRequest(event) {
         await clear224Caches();
         await notifyClients({
           type: 'SW_HARD_REFRESH_REQUIRED',
-          message: 'Les fichiers de build ont changé. Un rechargement complet est nécessaire.',
+          message: 'Les fichiers de build ont changé. Rechargement en cours...',
           url: event.request.url,
         });
+        // Force reload all open tabs
+        const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const client of allClients) {
+          if ('navigate' in client) client.navigate(client.url);
+        }
       })()
     );
 
-    return Response.error();
+    // Return empty JS to avoid script error during forced reload
+    return new Response('/* deploy update — reloading */', {
+      headers: { 'Content-Type': 'application/javascript' },
+    });
   }
 }
 

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useVendorCurrency } from "@/hooks/useVendorCurrency";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,7 @@ interface WalletInfo {
 export default function WalletDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,9 +75,9 @@ export default function WalletDashboard() {
 
   const _walletId = useMemo(() => wallet?.id, [wallet]);
   const balanceDisplay = useMemo(() => {
-    if (!wallet) return "—";
-    return `${wallet.balance.toLocaleString()} ${wallet.currency}`;
-  }, [wallet]);
+    if (!wallet || !currencyReady) return "—";
+    return `${Math.round(convert(wallet.balance)).toLocaleString('fr-FR')} ${vendorCurrency}`;
+  }, [wallet, convert, vendorCurrency, currencyReady]);
 
   const _handleDeposit = useCallback(async () => {
     if (!user?.id || !wallet) return;

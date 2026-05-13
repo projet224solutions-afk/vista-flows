@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ interface Category {
 
 export default function ProductManagement() {
   const fc = useFormatCurrency();
+  const { currency: vendorCurrency, convert } = useVendorCurrency();
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -995,7 +997,7 @@ export default function ProductManagement() {
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-sm md:text-2xl font-bold truncate">
-              {fc(stats.totalValue)}
+              {fc(convert(stats.totalValue), vendorCurrency)}
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
               Valeur inventaire
@@ -1139,11 +1141,11 @@ export default function ProductManagement() {
               {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <span className="text-sm md:text-xl font-bold text-primary truncate">
-                  {fc(product.price)}
+                  {fc(convert(product.price), vendorCurrency)}
                 </span>
                 {product.compare_price && product.compare_price > product.price && (
                   <span className="text-[10px] md:text-sm line-through text-muted-foreground">
-                    {fc(product.compare_price)}
+                    {fc(convert(product.compare_price), vendorCurrency)}
                   </span>
                 )}
               </div>
@@ -1571,10 +1573,10 @@ export default function ProductManagement() {
                         />
                         {formData.units_per_carton && formData.price && (
                           <p className="text-xs text-green-600">
-                            Économie: {(
+                            Économie: {fc(convert(
                               (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) -
                               parseFloat(formData.price_carton || '0')
-                            ).toLocaleString()} GNF vs unités
+                            ), vendorCurrency)} vs unités
                           </p>
                         )}
                       </div>

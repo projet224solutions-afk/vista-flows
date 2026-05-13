@@ -8,19 +8,53 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { supabase } from '@/lib/supabaseClient';
+import { backendFetch } from '@/services/backendApi';
 import {
   Search, Users, MapPin, Star, Phone, Mail, _Eye,
   CheckCircle, Clock, XCircle, AlertTriangle, RefreshCw,
-  TrendingUp, ShoppingBag, Store
+  TrendingUp, ShoppingBag, Store, Globe, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/formatters';
+import { toast } from 'sonner';
+
+const COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', currency: 'GNF', flag: '🇬🇳' },
+  { code: 'SN', name: 'Sénégal', currency: 'XOF', flag: '🇸🇳' },
+  { code: 'CI', name: 'Côte d\'Ivoire', currency: 'XOF', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', currency: 'XOF', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', currency: 'XOF', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', currency: 'XOF', flag: '🇳🇪' },
+  { code: 'TG', name: 'Togo', currency: 'XOF', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Bénin', currency: 'XOF', flag: '🇧🇯' },
+  { code: 'CM', name: 'Cameroun', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'GA', name: 'Gabon', currency: 'XAF', flag: '🇬🇦' },
+  { code: 'CG', name: 'Congo', currency: 'XAF', flag: '🇨🇬' },
+  { code: 'TD', name: 'Tchad', currency: 'XAF', flag: '🇹🇩' },
+  { code: 'CF', name: 'Centrafrique', currency: 'XAF', flag: '🇨🇫' },
+  { code: 'GQ', name: 'Guinée Équatoriale', currency: 'XAF', flag: '🇬🇶' },
+  { code: 'SL', name: 'Sierra Leone', currency: 'SLL', flag: '🇸🇱' },
+  { code: 'NG', name: 'Nigéria', currency: 'NGN', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
+  { code: 'MA', name: 'Maroc', currency: 'MAD', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algérie', currency: 'DZD', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunisie', currency: 'TND', flag: '🇹🇳' },
+  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', flag: '🇧🇪' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', flag: '🇺🇸' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', flag: '🇬🇧' },
+  { code: 'KE', name: 'Kenya', currency: 'KES', flag: '🇰🇪' },
+  { code: 'ZA', name: 'Afrique du Sud', currency: 'ZAR', flag: '🇿🇦' },
+];
 
 interface PDGServiceProvidersListProps {
   activeServiceTab: string;
@@ -57,6 +91,26 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currencyDialog, setCurrencyDialog] = useState<{
+    open: boolean; provider: Provider | null; selectedCountry: string; saving: boolean; error: string | null;
+  }>({ open: false, provider: null, selectedCountry: '', saving: false, error: null });
+
+  const handleServiceCurrencyChange = async () => {
+    const { provider, selectedCountry } = currencyDialog;
+    if (!provider || !selectedCountry) return;
+    const country = COUNTRY_OPTIONS.find(c => c.code === selectedCountry);
+    if (!country) return;
+    setCurrencyDialog(d => ({ ...d, saving: true, error: null }));
+    const result = await backendFetch<any>('/api/vendors/admin/change-currency', {
+      method: 'POST',
+      body: { vendor_id: provider.user_id, new_currency: country.currency, new_country_code: country.code, reason: 'Changement manuel PDG', entity_type: 'user' },
+    });
+    setCurrencyDialog(d => ({ ...d, saving: false }));
+    if (!result.success) { setCurrencyDialog(d => ({ ...d, error: result.error || 'Erreur inconnue' })); return; }
+    if (!result.changed) { toast.info(result.message); setCurrencyDialog(d => ({ ...d, open: false })); return; }
+    toast.success(`Devise changée : ${result.old_currency} → ${result.new_currency}`, { duration: 6000 });
+    setCurrencyDialog(d => ({ ...d, open: false }));
+  };
 
   useEffect(() => {
     fetchProviders();
@@ -212,12 +266,13 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                   <TableHead>Commandes</TableHead>
                   <TableHead>CA</TableHead>
                   <TableHead>Inscription</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={activeServiceTab === 'all' ? 8 : 7} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={activeServiceTab === 'all' ? 9 : 8} className="text-center py-12 text-muted-foreground">
                       <Store className="w-8 h-8 opacity-30 mx-auto mb-2" />
                       Aucun prestataire trouvé
                     </TableCell>
@@ -259,6 +314,17 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                       <TableCell className="text-xs text-muted-foreground">
                         {format(new Date(p.created_at), 'dd MMM yyyy', { locale: fr })}
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCurrencyDialog({ open: true, provider: p, selectedCountry: '', saving: false, error: null })}
+                          className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-500"
+                        >
+                          <Globe className="w-3.5 h-3.5 mr-1" />
+                          Devise
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -268,6 +334,41 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Dialog changement de devise service de proximité */}
+      <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Changer la devise — Service
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">Service : <strong>{currencyDialog.provider?.business_name}</strong></p>
+            <div className="space-y-2">
+              <Label>Pays de résidence</Label>
+              <Select value={currencyDialog.selectedCountry} onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner un pays..." /></SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_OPTIONS.map(c => (
+                    <SelectItem key={c.code} value={c.code}>{c.flag} {c.name} — {c.currency}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {currencyDialog.error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded p-2">{currencyDialog.error}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>Annuler</Button>
+            <Button onClick={handleServiceCurrencyChange} disabled={!currencyDialog.selectedCountry || currencyDialog.saving}>
+              {currencyDialog.saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />En cours...</> : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

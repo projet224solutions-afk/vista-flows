@@ -1,8 +1,12 @@
 /**
  * HOOK DE CONVERSION DE PRIX – VERSION INTERNE
- * Convertit les prix dans la devise locale de l'utilisateur
- * Utilise exclusivement les taux internes (currency_exchange_rates)
- * alimentés par le cron horaire african-fx-collect + marge 3%
+ * Convertit les prix dans la devise locale de l'utilisateur.
+ * Source unique : table currency_exchange_rates (cron horaire african-fx-collect).
+ *
+ * Règle affichage :
+ *  - Taux exact disponible en base → montant converti dans la devise du visiteur
+ *  - Aucun taux en base pour la paire → montant ORIGINAL dans la devise du produit
+ *    (jamais de taux hardcodés approximatifs pour l'affichage public)
  */
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
@@ -20,6 +24,7 @@ export interface ConvertedPrice {
   rate: number;
   formatted: string;
   originalFormatted: string;
+  /** true = taux backend trouvé → affiché en devise visiteur ; false = affiché en devise originale */
   wasConverted: boolean;
 }
 
@@ -28,33 +33,13 @@ interface UsePriceConverterResult {
   userCurrency: string;
   userCountry: string;
   loading: boolean;
+  hasBackendRates: boolean;
   lastUpdated: Date | null;
   refreshRates: () => Promise<void>;
 }
 
-// Toutes les devises connues du système
 const WORLD_CURRENCY_CODES = Array.from(new Set(WORLD_CURRENCIES.map((c) => c.code.toUpperCase())));
 
-// Taux GNF→X de secours (utilisés quand la table currency_exchange_rates est vide)
-// Source: taux approximatifs 2025. Mis à jour par le cron african-fx-collect en prod.
-const FALLBACK_RATES: Record<string, number> = {
-  GNF: 1,
-  USD: 0.0001163,   // 1 GNF ≈ 0.000116 USD
-  EUR: 0.0001075,   // 1 GNF ≈ 0.000108 EUR
-  GBP: 0.0000920,   // 1 GNF ≈ 0.000092 GBP
-  XOF: 0.0724,      // 1 GNF ≈ 0.0724 XOF
-  XAF: 0.0724,      // même zone CFA
-  NGN: 0.1800,      // 1 GNF ≈ 0.18 NGN
-  GHS: 0.00161,     // 1 GNF ≈ 0.0016 GHS
-  MAD: 0.00116,     // 1 GNF ≈ 0.0012 MAD
-  CDF: 0.3320,      // 1 GNF ≈ 0.33 CDF
-  KES: 0.01502,     // 1 GNF ≈ 0.015 KES
-  ZAR: 0.00213,     // 1 GNF ≈ 0.0021 ZAR
-  CNY: 0.000843,    // 1 GNF ≈ 0.00084 CNY
-  JPY: 0.01738,     // 1 GNF ≈ 0.017 JPY
-  CAD: 0.0001592,   // 1 GNF ≈ 0.00016 CAD
-  AUD: 0.0001803,   // 1 GNF ≈ 0.00018 AUD
-};
 
 export function usePriceConverter(): UsePriceConverterResult {
   const { geoInfo, loading: geoLoading } = useGeoDetection();
@@ -63,25 +48,34 @@ export function usePriceConverter(): UsePriceConverterResult {
   const userCurrency = contextCurrency || geoInfo?.currency || 'GNF';
   const userCountry = geoInfo?.country || 'GN';
 
-  const [rates, setRates] = useState<Record<string, number>>({});
+  // dbRates : taux RÉELS chargés depuis currency_exchange_rates (vide si base vide)
+  const [dbRates, setDbRates] = useState<Record<string, number>>({});
+  const [hasBackendRates, setHasBackendRates] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
 
-  // Charger les taux depuis la DB (une seule fois, cache 5 min côté service)
   useEffect(() => {
     let cancelled = false;
     setRatesLoading(true);
 
     getRatesForBase('GNF', WORLD_CURRENCY_CODES)
       .then((result) => {
-        if (!cancelled) {
-          // Si la DB retourne des taux, on les utilise ; sinon on garde les taux de secours
-          setRates(Object.keys(result).length > 0 ? result : FALLBACK_RATES);
+        if (cancelled) return;
+        if (Object.keys(result).length > 0) {
+          setDbRates(result);
+          setHasBackendRates(true);
+        } else {
+          // Base vide : on ne convertit pas (affichage original)
+          setDbRates({});
+          setHasBackendRates(false);
+          console.warn('[usePriceConverter] Aucun taux en base — affichage en devise originale.');
         }
       })
       .catch(() => {
-        // En cas d'erreur réseau, utiliser les taux hardcodés
-        if (!cancelled) setRates(FALLBACK_RATES);
+        if (cancelled) return;
+        setDbRates({});
+        setHasBackendRates(false);
+        console.error('[usePriceConverter] Erreur chargement taux — affichage en devise originale.');
       })
       .finally(() => { if (!cancelled) setRatesLoading(false); });
 
@@ -95,7 +89,13 @@ export function usePriceConverter(): UsePriceConverterResult {
     setRatesLoading(true);
     try {
       const result = await getRatesForBase('GNF', WORLD_CURRENCY_CODES);
-      if (Object.keys(result).length > 0) setRates(result);
+      if (Object.keys(result).length > 0) {
+        setDbRates(result);
+        setHasBackendRates(true);
+      } else {
+        setDbRates({});
+        setHasBackendRates(false);
+      }
       const ts = await getLastUpdated();
       setLastUpdated(ts);
     } catch {
@@ -109,49 +109,66 @@ export function usePriceConverter(): UsePriceConverterResult {
     const from = fromCurrency.toUpperCase();
     const to = userCurrency.toUpperCase();
 
-    // Même devise → pas de conversion
+    const originalFormatted = formatCurrency(amount, from);
+
+    // Même devise → retour immédiat sans conversion
     if (from === to) {
-      const formatted = formatCurrency(amount, to);
       return {
-        originalAmount: amount,
-        originalCurrency: from,
-        convertedAmount: amount,
-        userCurrency: to,
-        rate: 1,
-        formatted,
-        originalFormatted: formatted,
+        originalAmount: amount, originalCurrency: from,
+        convertedAmount: amount, userCurrency: to,
+        rate: 1, formatted: originalFormatted, originalFormatted,
         wasConverted: false,
       };
     }
 
-    // Calculer le taux (les rates sont basés sur GNF: rates[X] = combien de X pour 1 GNF)
-    let rate = 1;
-    let convertedAmount = amount;
+    // Aucun taux backend → afficher le prix original
+    if (!hasBackendRates || Object.keys(dbRates).length === 0) {
+      return {
+        originalAmount: amount, originalCurrency: from,
+        convertedAmount: amount, userCurrency: from,
+        rate: 1, formatted: originalFormatted, originalFormatted,
+        wasConverted: false,
+      };
+    }
+
+    // Chercher le taux dans les données RÉELLES du backend
+    let rate = 0;
+    let convertedAmount = 0;
 
     if (from === 'GNF') {
-      const toRate = rates[to];
+      const toRate = dbRates[to];
       if (toRate && toRate > 0) {
         rate = toRate;
         convertedAmount = amount * rate;
       }
     } else if (to === 'GNF') {
-      const fromRate = rates[from];
+      const fromRate = dbRates[from];
       if (fromRate && fromRate > 0) {
         rate = 1 / fromRate;
         convertedAmount = amount * rate;
       }
     } else {
-      // Conversion croisée via GNF
-      const fromRate = rates[from];
-      const toRate = rates[to];
+      // Croisement via GNF : from → GNF → to
+      const fromRate = dbRates[from];
+      const toRate = dbRates[to];
       if (fromRate && toRate && fromRate > 0) {
         rate = toRate / fromRate;
         convertedAmount = amount * rate;
       }
     }
 
+    // Aucun taux en base pour cette paire → afficher le prix original
+    if (rate === 0) {
+      return {
+        originalAmount: amount, originalCurrency: from,
+        convertedAmount: amount, userCurrency: from,
+        rate: 1, formatted: originalFormatted, originalFormatted,
+        wasConverted: false,
+      };
+    }
+
     // Arrondi selon la devise
-    const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY', 'KRW', 'VND'];
+    const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY', 'KRW', 'VND', 'NGN', 'UGX', 'RWF', 'BIF', 'CDF'];
     if (noDecimalCurrencies.includes(to)) {
       convertedAmount = Math.round(convertedAmount);
     } else {
@@ -165,23 +182,25 @@ export function usePriceConverter(): UsePriceConverterResult {
       userCurrency: to,
       rate,
       formatted: formatCurrency(convertedAmount, to),
-      originalFormatted: formatCurrency(amount, from),
+      originalFormatted,
       wasConverted: true,
     };
-  }, [userCurrency, rates]);
+  }, [userCurrency, dbRates, hasBackendRates]);
 
   return {
     convert,
     userCurrency,
     userCountry,
     loading: geoLoading || ratesLoading,
+    hasBackendRates,
     lastUpdated,
     refreshRates: refresh,
   };
 }
 
 /**
- * Hook simplifié pour convertir un prix unique
+ * Hook simplifié pour convertir un prix unique.
+ * Retourne null pendant le chargement.
  */
 export function useConvertedPrice(amount: number, fromCurrency: string): ConvertedPrice | null {
   const { convert, loading } = usePriceConverter();

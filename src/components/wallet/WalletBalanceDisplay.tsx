@@ -4,7 +4,7 @@ import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface WalletBalanceDisplayProps {
@@ -15,9 +15,8 @@ interface WalletBalanceDisplayProps {
 
 export function WalletBalanceDisplay({ userId, className = '', compact = false }: WalletBalanceDisplayProps) {
   const { t } = useTranslation();
-  const { convert } = usePriceConverter();
+  const { currency: vendorCurrency, convert: convertVendor, isReady: currencyReady } = useVendorCurrency();
   const [balance, setBalance] = useState<number>(0);
-  const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
   const [walletId, setWalletId] = useState<string | null>(null);
 
@@ -64,7 +63,6 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
 
           setWalletId(String(reloadedWallet.id));
           setBalance(reloadedWallet.balance || 0);
-          setCurrency(reloadedWallet.currency || 'GNF');
         } catch (initError) {
           console.error('Wallet init failed:', initError);
         }
@@ -74,7 +72,6 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
 
       setWalletId(String(data.id));
       setBalance(data.balance || 0);
-      setCurrency(data.currency || 'GNF');
       setLoading(false);
     } catch (error: any) {
       console.error('Wallet load error:', error);
@@ -95,7 +92,8 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
   }, [userId]);
 
   const formatAmount = (amount: number) => {
-    return convert(amount, currency).formatted;
+    if (!currencyReady) return '—';
+    return `${Math.round(convertVendor(amount)).toLocaleString('fr-FR')} ${vendorCurrency}`;
   };
 
   if (loading) {

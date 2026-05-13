@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -45,6 +46,7 @@ const accountTypeConfig = {
 export default function CollectionAccountsManager() {
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
+  const { currency, convert } = useVendorCurrency();
   const [accounts, setAccounts] = useState<CollectionAccount[]>([]);
   const [transactions, setTransactions] = useState<AccountTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -264,7 +266,7 @@ export default function CollectionAccountsManager() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Solde total</p>
-              <p className="text-3xl font-bold">{totalBalance.toLocaleString('fr-FR')} GNF</p>
+              <p className="text-3xl font-bold">{Math.round(convert(totalBalance)).toLocaleString('fr-FR')} {currency}</p>
             </div>
             <Wallet className="w-12 h-12 text-primary/50" />
           </div>
@@ -298,7 +300,7 @@ export default function CollectionAccountsManager() {
                 </div>
 
                 <p className="text-2xl font-bold mb-4">
-                  {account.balance.toLocaleString('fr-FR')} GNF
+                  {Math.round(convert(account.balance)).toLocaleString('fr-FR')} {currency}
                 </p>
 
                 <div className="flex gap-2">
@@ -363,7 +365,7 @@ export default function CollectionAccountsManager() {
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-sm text-muted-foreground">Compte</p>
                 <p className="font-semibold">{selectedAccount.account_name}</p>
-                <p className="text-sm">Solde actuel: {selectedAccount.balance.toLocaleString('fr-FR')} GNF</p>
+                <p className="text-sm">Solde actuel: {Math.round(convert(selectedAccount.balance)).toLocaleString('fr-FR')} {currency}</p>
               </div>
 
               <div className="flex gap-2">
@@ -386,7 +388,7 @@ export default function CollectionAccountsManager() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Montant (GNF)</label>
+                <label className="text-sm font-medium">Montant ({currency})</label>
                 <Input
                   type="number"
                   placeholder="0"

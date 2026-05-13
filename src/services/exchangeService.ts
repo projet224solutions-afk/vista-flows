@@ -130,10 +130,18 @@ async function loadAllRates(): Promise<Map<string, number>> {
         .eq('is_active', true)
         .order('retrieved_at', { ascending: false });
 
+      if (error) {
+        console.error('[exchangeService] Erreur lecture currency_exchange_rates:', error);
+      }
+
       const selectedRates = new Map<string, RateRow>();
       const map = new Map<string, number>();
 
       if (!error && Array.isArray(data)) {
+        if (data.length === 0) {
+          console.warn('[exchangeService] Aucun taux actif en base (currency_exchange_rates vide ou tous is_active=false).');
+        }
+
         for (const row of data as RateRow[]) {
           const from = String(row.from_currency || '').toUpperCase();
           const to = String(row.to_currency || '').toUpperCase();

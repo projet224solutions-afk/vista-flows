@@ -38,7 +38,7 @@ import { Building2 } from 'lucide-react';
 import _StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
-import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 import {
   changeWalletPin,
@@ -83,7 +83,7 @@ interface Transaction {
 export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   // Utiliser le contexte Auth comme tous les autres composants de l'application
   const { user, profile } = useAuth();
-  const { convert } = usePriceConverter();
+  const { currency: vendorCurrency, convert: convertVendor, isReady: currencyReady } = useVendorCurrency();
   // Utiliser propUserId si fourni, sinon utiliser user?.id
   const effectiveUserId = propUserId || user?.id;
 
@@ -146,6 +146,51 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserId]);
+
+  // Souscription temps réel : met à jour le wallet si le PDG (autre session) change la devise/solde
+  useEffect(() => {
+    if (!effectiveUserId) return;
+
+    const channel = supabase
+      .channel(`wallet-realtime-${effectiveUserId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'wallets',
+        filter: `user_id=eq.${effectiveUserId}`,
+      }, (payload) => {
+        const updated = payload.new as { balance?: number; currency?: string } | null;
+        if (updated) {
+          setWallet(prev => prev ? {
+            ...prev,
+            balance: updated.balance ?? prev.balance,
+            currency: updated.currency ?? prev.currency,
+          } : null);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserId]);
+
+  // Listener wallet-updated (même session — dépôt, retrait, transfert)
+  useEffect(() => {
+    if (!effectiveUserId) return;
+
+    const handleWalletUpdate = async () => {
+      const { data } = await supabase
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
+      if (data) setWallet(data as { id: string | number; balance: number; currency: string });
+    };
+
+    window.addEventListener('wallet-updated', handleWalletUpdate);
+    return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveUserId]);
 
@@ -542,7 +587,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     }
 
     if (amount < 1000) {
-      toast.error('INVALID_AMOUNT: Montant minimum 1000 GNF');
+      toast.error(`INVALID_AMOUNT: Montant minimum 1000 ${wallet?.currency || 'GNF'}`);
       return;
     }
 
@@ -609,7 +654,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
       console.log('✅ Dépôt effectué avec succès');
 
-      toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
+      toast.success(`Dépôt de ${formatWalletBalance(amount)} effectué avec succès !`);
       setDepositAmount('');
       setDepositOpen(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
@@ -645,7 +690,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           currency: 'GNF',
           paymentMethod: paymentMethod,
           customerPhone: `224${cleanPhone}`,
-          description: `Recharge wallet - ${amount.toLocaleString()} GNF`,
+          description: `Recharge wallet - ${amount.toLocaleString()} ${wallet?.currency || 'GNF'}`,
           orderId: `WLT-${Date.now()}`,
         }
       });
@@ -693,7 +738,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         if (walletData && wallet && walletData.balance > wallet.balance) {
           clearInterval(checkStatus);
           toast.success('✅ Paiement confirmé!', {
-            description: `${formatPrice(amount)} ajoutés à votre wallet`
+            description: `${formatWalletBalance(amount)} ajoutés à votre wallet`
           });
           setDepositAmount('');
           setMobileMoneyPhone('');
@@ -730,12 +775,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
     const minAmount = withdrawMethod === 'bank' ? 50000 : 5000;
     if (amount < minAmount) {
-      toast.error(`INVALID_AMOUNT: Montant minimum ${formatPrice(minAmount)}`);
+      toast.error(`INVALID_AMOUNT: Montant minimum ${formatWalletBalance(minAmount)}`);
       return;
     }
 
     if (!wallet || wallet.balance < amount) {
-      toast.error(`INSUFFICIENT_FUNDS: Solde insuffisant (${formatPrice(wallet?.balance || 0)} disponible)`);
+      toast.error(`INSUFFICIENT_FUNDS: Solde insuffisant (${formatWalletBalance(wallet?.balance || 0)} disponible)`);
       return;
     }
 
@@ -772,11 +817,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         const providerLabel = withdrawProvider === 'orange' ? 'Orange Money' : 'MTN MoMo';
         if (data.status === 'completed') {
           toast.success(`Retrait ${providerLabel} effectué !`, {
-            description: `${formatPrice(data.netAmount)} envoyés vers +224${cleanPhone}`
+            description: `${formatWalletBalance(data.netAmount)} envoyés vers +224${cleanPhone}`
           });
         } else {
           toast.success(`Demande de retrait ${providerLabel} enregistrée !`, {
-            description: `${formatPrice(data.netAmount)} seront envoyés sous 24-48h`
+            description: `${formatWalletBalance(data.netAmount)} seront envoyés sous 24-48h`
           });
         }
 
@@ -811,7 +856,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         console.log('✅ Demande de retrait bancaire enregistrée:', data);
 
         toast.success('Demande de retrait enregistrée !', {
-          description: `${formatPrice(data.netAmount || amount)} net (frais: ${formatPrice(data.withdrawalFee || 0)}). Votre demande sera examinée par notre équipe.`
+          description: `${formatWalletBalance(data.netAmount || amount)} net (frais: ${formatWalletBalance(data.withdrawalFee || 0)}). Votre demande sera examinée par notre équipe.`
         });
       }
 
@@ -830,7 +875,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       try {
         const fallback = await withdrawFromWallet(amount, `Retrait wallet (${withdrawMethod})`, pin);
         if (fallback.success) {
-          toast.success(`Retrait ${formatPrice(amount)} effectué via fallback backend`);
+          toast.success(`Retrait ${formatWalletBalance(amount)} effectué via fallback backend`);
           setWithdrawAmount('');
           setWithdrawPhone('');
           setBankName('');
@@ -873,7 +918,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     }
 
     if (amount < 100) {
-      toast.error('Le montant minimum est de 100 GNF');
+      toast.error(`Le montant minimum est de 100 ${wallet?.currency || 'GNF'}`);
       return;
     }
 
@@ -1219,7 +1264,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
               amount: transferPreview.total_debit,
               net_amount: transferPreview.amount,
               fee: transferPreview.fee_amount,
-              currency: 'GNF',
+              currency: wallet?.currency || 'GNF',
               status: 'completed',
               description: `${transferDescription} (vers Bureau ${recipientId})`,
               sender_wallet_id: senderWallet.id,
@@ -1425,15 +1470,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     }
   };
 
-  const formatPrice = (amount: number, fromCurrency?: string) => {
-    const sourceCurrency = fromCurrency || wallet?.currency || 'GNF';
-    return convert(amount, sourceCurrency).formatted;
-  };
-
-  // Affichage du solde en devise native du wallet (sans conversion)
   const formatWalletBalance = (amount: number) => {
-    const cur = wallet?.currency || 'GNF';
-    return `${amount.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} ${cur}`;
+    if (!currencyReady) return '—';
+    return `${Math.round(convertVendor(amount)).toLocaleString('fr-FR')} ${vendorCurrency}`;
   };
 
   const getTransactionType = (tx: Transaction) => {
@@ -1650,7 +1689,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   </div>
 
                   <div>
-                    <Label htmlFor="mobile-amount">Montant (GNF)</Label>
+                    <Label htmlFor="mobile-amount">Montant ({wallet?.currency || 'GNF'})</Label>
                     <Input
                       id="mobile-amount"
                       type="number"
@@ -1659,7 +1698,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 1 000 GNF</p>
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 1 000 {wallet?.currency || 'GNF'}</p>
                   </div>
 
                   <Button
@@ -1667,7 +1706,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
-                    {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
+                    {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
                   </Button>
                 </TabsContent>
 
@@ -1788,7 +1827,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   </div>
 
                   <div>
-                    <Label htmlFor="withdraw-amount-mm">Montant personnalisé (GNF)</Label>
+                    <Label htmlFor="withdraw-amount-mm">Montant personnalisé ({wallet?.currency || 'GNF'})</Label>
                     <Input
                       id="withdraw-amount-mm"
                       type="number"
@@ -1798,7 +1837,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 GNF</p>
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 5,000 {wallet?.currency || 'GNF'}</p>
                   </div>
 
                   <Button
@@ -1806,7 +1845,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     disabled={processing || !withdrawAmount || !withdrawPhone || withdrawPhone.length !== 9 || parseFloat(withdrawAmount) < 5000}
                     className="w-full bg-orange-600 hover:bg-orange-700"
                   >
-                    {processing ? 'Traitement...' : `Retirer ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
+                    {processing ? 'Traitement...' : `Retirer ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
                   </Button>
 
                   <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
@@ -1879,7 +1918,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   </div>
 
                   <div>
-                    <Label htmlFor="withdraw-amount-bank">Montant à retirer (GNF)</Label>
+                    <Label htmlFor="withdraw-amount-bank">Montant à retirer ({wallet?.currency || 'GNF'})</Label>
                     <Input
                       id="withdraw-amount-bank"
                       type="number"
@@ -1889,7 +1928,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF · Frais dynamiques (configurable par l'administration)</p>
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 {wallet?.currency || 'GNF'} · Frais dynamiques (configurable par l'administration)</p>
                   </div>
 
                   <Button
@@ -1897,7 +1936,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) < 50000 || !bankName || !bankIban || !bankAccountHolder}
                     className="w-full"
                   >
-                    {processing ? 'Traitement...' : `Demander le retrait de ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} GNF`}
+                    {processing ? 'Traitement...' : `Demander le retrait de ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
                   </Button>
 
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
@@ -2234,11 +2273,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   <div className="text-right shrink-0">
                     <p className={`font-bold text-xs sm:text-sm ${getTransactionColor(tx)}`}>
                       {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
-                      {formatPrice(tx.amount)}
+                      {formatWalletBalance(tx.amount)}
                     </p>
                     {tx.sender_id === effectiveUserId && tx.metadata?.fee_amount && (
                       <p className="text-[10px] sm:text-xs text-orange-600">
-                        +{formatPrice(tx.metadata.fee_amount)} frais
+                        +{formatWalletBalance(tx.metadata.fee_amount)} frais
                       </p>
                     )}
                     <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs px-1 sm:px-2 py-0 mt-0.5">

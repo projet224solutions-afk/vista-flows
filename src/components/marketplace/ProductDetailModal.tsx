@@ -223,6 +223,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           id,
           name,
           price,
+          currency,
           description,
           images,
           promotional_videos,
@@ -248,7 +249,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           : (physicalProduct as any).vendors;
 
         const vendorCountry = vendor?.country || '';
-        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
+        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
+        const derivedCurrency = countryDerived || (physicalProduct as any).currency || 'GNF';
 
         setProduct({ ...physicalProduct, vendors: vendor, currency: derivedCurrency });
         return;

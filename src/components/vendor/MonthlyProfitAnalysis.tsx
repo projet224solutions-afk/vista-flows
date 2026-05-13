@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +93,8 @@ const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; c
 // formatCurrency is now imported from lib - used inside component with useFormatCurrency
 
 export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysisProps) {
-  const formatCurrency = useFormatCurrency();
+  const { currency, convert, isReady: currencyReady } = useVendorCurrency();
+  const formatCurrency = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}` : '—';
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

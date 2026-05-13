@@ -282,8 +282,15 @@ export const ImprovedTransferDialog = ({
               setPendingTransferKind(null);
             }
           } catch (err) {
-            const message = err instanceof Error ? err.message : 'Code PIN invalide';
-            setPinError(message);
+            const message = err instanceof Error ? err.message : 'Erreur lors du transfert';
+            const isPinError = /code pin|pin invalide|pin bloqué|tentative|configurer.*pin/i.test(message);
+            if (isPinError) {
+              setPinError(message);
+            } else {
+              setPinPromptOpen(false);
+              setPendingTransferKind(null);
+              toast(message, { style: { background: '#ef4444', color: 'white' } });
+            }
           } finally {
             setPinLoading(false);
           }

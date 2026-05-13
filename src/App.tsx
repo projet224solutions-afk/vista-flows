@@ -16,6 +16,7 @@ import { ThemeProvider } from "next-themes";
 // OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { VendorCurrencyProvider } from "@/contexts/VendorCurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
@@ -301,6 +302,7 @@ function App() {
             <LanguageProvider>
               <CurrencyProvider>
                 <AuthProvider>
+                <VendorCurrencyProvider>
                 <GpsAutoFill />
                 <CognitoAuthProvider>
                   <OAuthPasswordGate />
@@ -669,6 +671,7 @@ function App() {
           </TooltipProvider>
         </CartProvider>
       </CognitoAuthProvider>
+      </VendorCurrencyProvider>
       </AuthProvider>
       </CurrencyProvider>
       </LanguageProvider>

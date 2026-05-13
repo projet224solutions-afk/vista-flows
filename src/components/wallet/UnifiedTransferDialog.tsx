@@ -302,6 +302,9 @@ export function UnifiedTransferDialog({
     }
   };
 
+  const isPinSpecificError = (msg: string) =>
+    /code pin|pin invalide|pin bloqué|tentative|configurer.*pin/i.test(msg);
+
   const handlePinConfirm = async (pin: string) => {
     if (!pendingTransferKind) return;
 
@@ -318,7 +321,15 @@ export function UnifiedTransferDialog({
         setPendingTransferKind(null);
       }
     } catch (error: any) {
-      setPinError(error.message || 'Code PIN invalide');
+      const msg = error.message || 'Erreur lors du transfert';
+      if (isPinSpecificError(msg)) {
+        setPinError(msg);
+      } else {
+        // Erreur hors PIN (solde, réseau, etc.) — ferme le dialog et affiche un toast clair
+        setPinPromptOpen(false);
+        setPendingTransferKind(null);
+        toast.error(msg);
+      }
     } finally {
       setPinLoading(false);
     }

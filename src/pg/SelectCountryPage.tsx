@@ -308,8 +308,7 @@ export default function SelectCountryPage() {
           </Button>
 
           <p className="text-xs text-center text-gray-400">
-            La devise de votre wallet est déterminée par votre pays de résidence
-            et ne peut pas être modifiée directement.
+            La devise de votre wallet est attribuée selon votre pays de résidence.
           </p>
         </div>
       </div>

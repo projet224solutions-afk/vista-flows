@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -89,6 +90,8 @@ interface Promotion {
 export default function AdvancedSalesManager() {
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
+  const { currency, convert, isReady: currencyReady } = useVendorCurrency();
+  const fc = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}` : '—';
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('credit');
 
@@ -431,7 +434,7 @@ export default function AdvancedSalesManager() {
 
       toast({
         title: newStatus === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
-        description: `${amount.toLocaleString()} GNF encaissés`
+        description: `${fc(amount)} encaissés`
       });
       setIsCollectPaymentOpen(false);
       setSelectedCreditForPayment(null);
@@ -517,7 +520,7 @@ export default function AdvancedSalesManager() {
               <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Créances</p>
-                <p className="text-sm sm:text-lg font-bold text-orange-600 truncate">{totalCredit.toLocaleString()}</p>
+                <p className="text-sm sm:text-lg font-bold text-orange-600 truncate">{fc(totalCredit)}</p>
               </div>
             </div>
           </CardContent>
@@ -528,7 +531,7 @@ export default function AdvancedSalesManager() {
               <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-destructive flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Retours</p>
-                <p className="text-sm sm:text-lg font-bold text-destructive truncate">{totalReturns.toLocaleString()}</p>
+                <p className="text-sm sm:text-lg font-bold text-destructive truncate">{fc(totalReturns)}</p>
               </div>
             </div>
           </CardContent>
@@ -710,7 +713,7 @@ export default function AdvancedSalesManager() {
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="text-xs font-medium truncate">{sp.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{sp.price.toLocaleString()} GNF</p>
+                                    <p className="text-[10px] text-muted-foreground">{fc(sp.price)}</p>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button
@@ -753,7 +756,7 @@ export default function AdvancedSalesManager() {
                               ))}
                               <div className="pt-2 border-t">
                                 <p className="text-sm font-bold text-primary">
-                                  Total: {creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0).toLocaleString()} GNF
+                                  Total: {fc(creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0))}
                                 </p>
                               </div>
                             </div>
@@ -822,7 +825,7 @@ export default function AdvancedSalesManager() {
 
                                       {/* Product info */}
                                       <p className="text-xs font-medium truncate">{product.name}</p>
-                                      <p className="text-[10px] text-primary font-bold">{product.price.toLocaleString()} GNF</p>
+                                      <p className="text-[10px] text-primary font-bold">{fc(product.price)}</p>
                                     </div>
                                   );
                                 })}
@@ -876,9 +879,9 @@ export default function AdvancedSalesManager() {
                       {/* Montants + Actions */}
                       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
                         <div className="text-left sm:text-right">
-                          <p className="font-bold text-sm sm:text-base text-orange-600">{sale.remaining_amount.toLocaleString()} GNF</p>
+                          <p className="font-bold text-sm sm:text-base text-orange-600">{fc(sale.remaining_amount)}</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            sur {sale.total.toLocaleString()}
+                            sur {fc(sale.total)}
                           </p>
                           <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                             {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
@@ -940,7 +943,7 @@ export default function AdvancedSalesManager() {
                               <div className="min-w-0">
                                 <p className="text-xs font-medium truncate max-w-[120px]">{item.name}</p>
                                 <p className="text-[10px] text-muted-foreground">
-                                  {item.quantity}x {item.price.toLocaleString()} GNF
+                                  {item.quantity}x {fc(item.price)}
                                 </p>
                               </div>
                             </div>
@@ -979,15 +982,15 @@ export default function AdvancedSalesManager() {
                     <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                       <div>
                         <span className="text-muted-foreground">Total crédit:</span>
-                        <p className="font-medium">{selectedCreditForPayment.total.toLocaleString()} GNF</p>
+                        <p className="font-medium">{fc(selectedCreditForPayment.total)}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Déjà payé:</span>
-                        <p className="font-medium text-green-600">{selectedCreditForPayment.paid_amount.toLocaleString()} GNF</p>
+                        <p className="font-medium text-green-600">{fc(selectedCreditForPayment.paid_amount)}</p>
                       </div>
                       <div className="col-span-2">
                         <span className="text-muted-foreground">Reste à payer:</span>
-                        <p className="font-bold text-orange-600 text-lg">{selectedCreditForPayment.remaining_amount.toLocaleString()} GNF</p>
+                        <p className="font-bold text-orange-600 text-lg">{fc(selectedCreditForPayment.remaining_amount)}</p>
                       </div>
                     </div>
                   </div>
@@ -1067,15 +1070,15 @@ export default function AdvancedSalesManager() {
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm">
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Total</span>
-                        <p className="font-bold text-xs sm:text-sm">{selectedCreditForDetails.total.toLocaleString()}</p>
+                        <p className="font-bold text-xs sm:text-sm">{fc(selectedCreditForDetails.total)}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Payé</span>
-                        <p className="font-medium text-green-600 text-xs sm:text-sm">{selectedCreditForDetails.paid_amount.toLocaleString()}</p>
+                        <p className="font-medium text-green-600 text-xs sm:text-sm">{fc(selectedCreditForDetails.paid_amount)}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Reste</span>
-                        <p className="font-bold text-orange-600 text-xs sm:text-sm">{selectedCreditForDetails.remaining_amount.toLocaleString()}</p>
+                        <p className="font-bold text-orange-600 text-xs sm:text-sm">{fc(selectedCreditForDetails.remaining_amount)}</p>
                       </div>
                     </div>
 
@@ -1113,7 +1116,7 @@ export default function AdvancedSalesManager() {
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">{item.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  Prix unitaire: {item.price.toLocaleString()} GNF
+                                  Prix unitaire: {fc(item.price)}
                                 </p>
                                 <p className="text-sm">
                                   Quantité: <span className="font-semibold">{item.quantity}</span>
@@ -1121,7 +1124,7 @@ export default function AdvancedSalesManager() {
                               </div>
                               <div className="text-right flex-shrink-0">
                                 <p className="font-bold text-primary">
-                                  {(item.price * item.quantity).toLocaleString()} GNF
+                                  {fc(item.price * item.quantity)}
                                 </p>
                               </div>
                             </div>
@@ -1329,7 +1332,7 @@ export default function AdvancedSalesManager() {
                                     )}
                                     <div className="flex-1 min-w-0">
                                       <span className="text-sm block truncate">{product.name}</span>
-                                      <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} GNF</span>
+                                      <span className="text-xs text-muted-foreground">{fc(product.price)}</span>
                                     </div>
                                   </div>
                                 ))}
@@ -1371,7 +1374,7 @@ export default function AdvancedSalesManager() {
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-sm sm:text-base text-destructive">-{ret.refund_amount.toLocaleString()}</p>
+                      <p className="font-bold text-sm sm:text-base text-destructive">-{fc(ret.refund_amount)}</p>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
                         {new Date(ret.created_at).toLocaleDateString('fr-FR')}
                       </p>
@@ -1414,7 +1417,7 @@ export default function AdvancedSalesManager() {
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-sm sm:text-base">{gs.total.toLocaleString()}</p>
+                      <p className="font-bold text-sm sm:text-base">{fc(gs.total)}</p>
                       {gs.discount_value > 0 && (
                         <p className="text-[10px] sm:text-xs text-green-600">-{gs.discount_value}%</p>
                       )}
@@ -1650,7 +1653,7 @@ export default function AdvancedSalesManager() {
                                       <p className="text-sm font-medium truncate">{product.name}</p>
                                       <div className="flex items-center gap-2">
                                         <p className="text-xs text-muted-foreground">
-                                          {product.price.toLocaleString()} GNF
+                                          {fc(product.price)}
                                         </p>
                                         {categoryName && (
                                           <Badge variant="secondary" className="text-xs">
@@ -1782,7 +1785,7 @@ export default function AdvancedSalesManager() {
                       </div>
                       <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-1">
                         <p className="font-bold text-sm sm:text-base text-green-600">
-                          -{promo.discount_value}{promo.discount_type === 'percentage' ? '%' : ' GNF'}
+                          -{promo.discount_type === 'percentage' ? `${promo.discount_value}%` : fc(promo.discount_value)}
                         </p>
                         <Badge variant={promo.is_active ? 'default' : 'secondary'} className="hidden sm:inline-flex">
                           {promo.is_active ? 'Active' : 'Inactive'}

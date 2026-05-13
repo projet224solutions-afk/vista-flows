@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2, Store, Package, Eye, _ChevronDown, ChevronUp } from 'lucide-react';
+import { backendFetch } from '@/services/backendApi';
+import { Search, UserCheck, UserX, Lock, Unlock, Shield, Trash2, Store, Package, Eye, _ChevronDown, ChevronUp, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { _Collapsible, _CollapsibleContent, _CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -27,6 +29,35 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+const COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', currency: 'GNF', flag: '🇬🇳' },
+  { code: 'SN', name: 'Sénégal', currency: 'XOF', flag: '🇸🇳' },
+  { code: 'CI', name: 'Côte d\'Ivoire', currency: 'XOF', flag: '🇨🇮' },
+  { code: 'ML', name: 'Mali', currency: 'XOF', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', currency: 'XOF', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', currency: 'XOF', flag: '🇳🇪' },
+  { code: 'TG', name: 'Togo', currency: 'XOF', flag: '🇹🇬' },
+  { code: 'BJ', name: 'Bénin', currency: 'XOF', flag: '🇧🇯' },
+  { code: 'CM', name: 'Cameroun', currency: 'XAF', flag: '🇨🇲' },
+  { code: 'GA', name: 'Gabon', currency: 'XAF', flag: '🇬🇦' },
+  { code: 'CG', name: 'Congo', currency: 'XAF', flag: '🇨🇬' },
+  { code: 'TD', name: 'Tchad', currency: 'XAF', flag: '🇹🇩' },
+  { code: 'CF', name: 'Centrafrique', currency: 'XAF', flag: '🇨🇫' },
+  { code: 'GQ', name: 'Guinée Équatoriale', currency: 'XAF', flag: '🇬🇶' },
+  { code: 'SL', name: 'Sierra Leone', currency: 'SLL', flag: '🇸🇱' },
+  { code: 'NG', name: 'Nigéria', currency: 'NGN', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', currency: 'GHS', flag: '🇬🇭' },
+  { code: 'MA', name: 'Maroc', currency: 'MAD', flag: '🇲🇦' },
+  { code: 'DZ', name: 'Algérie', currency: 'DZD', flag: '🇩🇿' },
+  { code: 'TN', name: 'Tunisie', currency: 'TND', flag: '🇹🇳' },
+  { code: 'FR', name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', flag: '🇧🇪' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', flag: '🇺🇸' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', flag: '🇬🇧' },
+  { code: 'KE', name: 'Kenya', currency: 'KES', flag: '🇰🇪' },
+  { code: 'ZA', name: 'Afrique du Sud', currency: 'ZAR', flag: '🇿🇦' },
+];
+
 export default function PDGUsers() {
   const [users, setUsers] = useState<unknown[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<unknown[]>([]);
@@ -36,6 +67,63 @@ export default function PDGUsers() {
   const [userServices, setUserServices] = useState<Record<string, any[]>>({});
   const [vendorCodes, setVendorCodes] = useState<Record<string, string>>({});
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
+  const [currencyDialog, setCurrencyDialog] = useState<{
+    open: boolean;
+    user: any;
+    selectedCountry: string;
+    saving: boolean;
+    error: string | null;
+  }>({ open: false, user: null, selectedCountry: '', saving: false, error: null });
+
+  const openCurrencyDialog = (user: any) => {
+    setCurrencyDialog({ open: true, user, selectedCountry: '', saving: false, error: null });
+  };
+
+  const handleCurrencyChange = async () => {
+    const { user, selectedCountry } = currencyDialog;
+    if (!user || !selectedCountry) return;
+    const country = COUNTRY_OPTIONS.find(c => c.code === selectedCountry);
+    if (!country) return;
+
+    setCurrencyDialog(d => ({ ...d, saving: true, error: null }));
+
+    const result = await backendFetch<any>('/api/vendors/admin/change-currency', {
+      method: 'POST',
+      body: {
+        vendor_id:        user.id,
+        new_currency:     country.currency,
+        new_country_code: country.code,
+        reason:           'Changement manuel PDG',
+        entity_type:      'user',
+      },
+    });
+
+    setCurrencyDialog(d => ({ ...d, saving: false }));
+
+    if (!result.success) {
+      setCurrencyDialog(d => ({ ...d, error: result.error || 'Erreur inconnue' }));
+      return;
+    }
+
+    if (!result.changed) {
+      toast.info(result.message);
+      setCurrencyDialog(d => ({ ...d, open: false }));
+      return;
+    }
+
+    toast.success(
+      [
+        `Devise changée : ${result.old_currency} → ${result.new_currency}`,
+        result.wallet_converted
+          ? `Solde converti : ${result.old_balance?.toLocaleString()} ${result.old_currency} → ${result.new_balance?.toLocaleString()} ${result.new_currency}`
+          : '',
+      ].filter(Boolean).join('\n'),
+      { duration: 6000 }
+    );
+    setCurrencyDialog(d => ({ ...d, open: false }));
+    loadUsers();
+  };
 
   useEffect(() => {
     loadUsers();
@@ -398,6 +486,15 @@ export default function PDGUsers() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => openCurrencyDialog(user)}
+                    className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-500"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Devise
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
                     className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
                   >
@@ -539,6 +636,55 @@ export default function PDGUsers() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog changement de devise */}
+      <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Changer la devise
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Utilisateur : <strong>{currencyDialog.user?.email}</strong>
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Pays de résidence</label>
+              <Select
+                value={currencyDialog.selectedCountry}
+                onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un pays..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_OPTIONS.map(c => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.flag} {c.name} — {c.currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {currencyDialog.error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded p-2">{currencyDialog.error}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCurrencyChange}
+              disabled={!currencyDialog.selectedCountry || currencyDialog.saving}
+            >
+              {currencyDialog.saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />En cours...</> : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

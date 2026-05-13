@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useVendorSubscription } from '@/hooks/useVendorSubscription';
 import { Plan, SubscriptionService } from '@/services/subscriptionService';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { format, addMonths, addYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
@@ -330,6 +331,13 @@ export default function VendorSubscriptionPage() {
     refresh,
   } = useVendorSubscription();
 
+  const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
+  // fmt: convertit GNF → devise du vendeur et formate. '—' pendant le chargement.
+  const fmt = (amount: number) =>
+    currencyReady
+      ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${vendorCurrency}`
+      : '—';
+
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -446,7 +454,7 @@ export default function VendorSubscriptionPage() {
 
       const price = calculatePrice(selectedPlan, billingCycle);
       if (!walletData || walletData.balance < price) {
-        toast.error(`Solde insuffisant. Vous avez besoin de ${SubscriptionService.formatAmount(price)}`);
+        toast.error(`Solde insuffisant. Vous avez besoin de ${fmt(price)}`);
         return;
       }
 
@@ -540,7 +548,7 @@ export default function VendorSubscriptionPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Plan actuel</p>
                     <p className="text-lg font-bold text-primary">{subscription.plan_display_name}</p>
-                    <p className="text-2xl font-bold text-primary">{priceFormatted} GNF</p>
+                    <p className="text-2xl font-bold text-primary">{fmt(subscription?.price_paid || 0)}</p>
                   </div>
                   <Calendar className="h-12 w-12 text-primary/30" />
                 </div>
@@ -783,7 +791,7 @@ export default function VendorSubscriptionPage() {
                       <p className="text-sm font-semibold">
                         {plan.name === 'free'
                           ? 'Gratuit - aucun paiement requis'
-                          : `${SubscriptionService.formatAmount(plan.monthly_price_gnf)} GNF/mois`}
+                          : `${fmt(plan.monthly_price_gnf)}/mois`}
                       </p>
                       {savingsPercent > 0 && (
                         <p className="text-xs text-green-600 font-medium">
@@ -867,7 +875,7 @@ export default function VendorSubscriptionPage() {
                     <span className="font-medium text-sm">Mensuel</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {selectedPlan && SubscriptionService.formatAmount(selectedPlan.monthly_price_gnf)}/mois
+                    {selectedPlan && fmt(selectedPlan.monthly_price_gnf)}/mois
                   </p>
                 </button>
                 <button
@@ -886,13 +894,13 @@ export default function VendorSubscriptionPage() {
                     <span className="font-medium text-sm">Annuel</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {selectedPlan && SubscriptionService.formatAmount(calculatePrice(selectedPlan, 'yearly'))}/an
+                    {selectedPlan && fmt(calculatePrice(selectedPlan, 'yearly'))}/an
                   </p>
                 </button>
               </div>
               {billingCycle === 'yearly' && selectedPlan && (
                 <p className="text-xs text-green-600 font-medium">
-                  Économisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
+                  Économisez {fmt(calculateYearlySavings(selectedPlan))} par an !
                 </p>
               )}
             </div>
@@ -900,7 +908,7 @@ export default function VendorSubscriptionPage() {
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Montant</span>
-                <span className="font-bold text-lg">{SubscriptionService.formatAmount(currentPrice)} GNF</span>
+                <span className="font-bold text-lg">{fmt(currentPrice)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Valable jusqu'au</span>

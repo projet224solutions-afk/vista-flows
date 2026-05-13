@@ -29,8 +29,7 @@ import { fr, enUS } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
 import { NewPurchaseDialog, PurchaseProduct } from './NewPurchaseDialog';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { formatCurrency as formatCurrencyUtil } from '@/lib/formatters';
+import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,7 +84,7 @@ const STATUS_CONFIG_BASE = {
 
 export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }: PurchasesListProps) {
   const { t, language } = useTranslation();
-  const { currency } = useCurrency();
+  const { currency, convert, isReady: currencyReady } = useVendorCurrency();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
@@ -96,7 +95,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
   const dateLocale = language === 'fr' ? fr : enUS;
 
   const getStatusLabel = (status: string) => t(`purchases.status.${status}`);
-  const formatAmount = (amount: number) => formatCurrencyUtil(amount, currency);
+  const formatAmount = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}` : '—';
 
   // Fetch only validated purchases for main list
   const { data: purchases = [], isLoading } = useQuery({

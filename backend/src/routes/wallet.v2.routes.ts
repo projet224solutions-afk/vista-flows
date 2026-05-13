@@ -84,6 +84,7 @@ async function ensureTransferWallet(userId: string, fallbackCurrency = 'GNF'): P
     .from('wallets')
     .select('id, balance, currency, user_id, is_blocked')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
     .maybeSingle();
 
   if (existingWallet) return existingWallet as WalletForTransfer;
@@ -1358,6 +1359,7 @@ router.get('/balance', verifyJWT, async (req: AuthenticatedRequest, res: Respons
       .from('wallets')
       .select('id, balance, currency, wallet_status, is_blocked, daily_limit, monthly_limit, created_at')
       .eq('user_id', req.user!.id)
+      .order('updated_at', { ascending: false })
       .maybeSingle();
 
     if (error) throw error;

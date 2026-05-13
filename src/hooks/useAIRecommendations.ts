@@ -28,11 +28,10 @@ interface AIProduct {
  * Nécessaire car l'edge function peut retourner des produits sans currency.
  */
 async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
-  const missing = products.filter(p => !p.currency);
-  if (missing.length === 0) return products;
+  if (products.length === 0) return products;
 
   try {
-    const ids = missing.map(p => p.product_id);
+    const ids = products.map(p => p.product_id);
     const { data } = await supabase
       .from('products')
       .select('id, vendors(country)')
@@ -41,12 +40,12 @@ async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
     const map: Record<string, string> = {};
     (data || []).forEach((p: any) => {
       const country = (p.vendors as any)?.country || '';
-      map[p.id] = getCurrencyForCountry(country) || 'GNF';
+      if (country) map[p.id] = getCurrencyForCountry(country);
     });
 
     return products.map(p => ({
       ...p,
-      currency: p.currency || map[p.product_id] || 'GNF',
+      currency: map[p.product_id] || p.currency || 'GNF',
     }));
   } catch {
     return products.map(p => ({ ...p, currency: p.currency || 'GNF' }));
@@ -125,7 +124,9 @@ export function useAIPersonalized(limit = 20, enabled = true) {
         .slice(0, limit)
         .map(p => {
           const vendor = (p as any).vendors;
-          const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+          const vendorCountry = vendor?.country || '';
+          const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
+          const currency = countryDerived || (p as any).currency || 'GNF';
           return {
             product_id: p.id,
             name: p.name,
@@ -222,7 +223,9 @@ export function useAITrending(limit = 16, enabled = true) {
         .slice(0, limit)
         .map(p => {
           const vendor = (p as any).vendors;
-          const currency = (p as any).currency || getCurrencyForCountry(vendor?.country || '') || 'GNF';
+          const vendorCountry = vendor?.country || '';
+          const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
+          const currency = countryDerived || (p as any).currency || 'GNF';
           return {
             product_id: p.id,
             name: p.name,

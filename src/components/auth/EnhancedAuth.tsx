@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 // Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
 const motion = {
@@ -109,6 +110,7 @@ export default function EnhancedAuth() {
     isAuthenticated: isCognitoAuthenticated,
     cognitoProfile,
   } = useCognitoAuth();
+  const { userCountry, currency: geoCurrency } = useCurrency();
 
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
@@ -192,6 +194,25 @@ export default function EnhancedAuth() {
         localStorage.removeItem('oauth_is_new_signup');
         navigate('/auth/set-password', { replace: true });
         return;
+      }
+
+      // Nouveau signup OAuth : géo-détecter et corriger la devise du wallet
+      // si le profil n'a pas encore de pays (cas courant Google/Facebook)
+      if (isNewSignup && isOAuthUser && !profile.detected_country) {
+        const { detectedCountry, detectedCurrency } = getGeoInfo();
+        if (detectedCountry) {
+          // Appel fire-and-forget : met à jour profiles.detected_country
+          // → trigger_sync_wallet_on_country corrige automatiquement le wallet
+          supabase.functions.invoke('geo-detect', {
+            body: {
+              user_id: user.id,
+              update_profile: true,
+              ...(detectedCountry  && { google_country: detectedCountry  }),
+            },
+          }).catch(() => {
+            // Erreur non bloquante : geo-detect en arrière-plan
+          });
+        }
       }
 
       const roleRoutes: Record<string, string> = {
@@ -370,6 +391,35 @@ export default function EnhancedAuth() {
     }
   };
 
+  // Lit le pays détecté depuis le cache géo (peuplé par useGeoDetection)
+  // Priorité: cache géo réseau > userCountry du contexte > null
+  const getGeoInfo = (): { detectedCountry: string | null; detectedCurrency: string | null } => {
+    try {
+      const raw = localStorage.getItem('geo_detection_cache');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (
+          parsed?.data?.country &&
+          parsed?.data?.detectionMethod !== 'fallback' &&
+          parsed.data.country.length === 2
+        ) {
+          return {
+            detectedCountry: parsed.data.country.toUpperCase(),
+            detectedCurrency: parsed.data.currency || null,
+          };
+        }
+      }
+    } catch {}
+    // Fallback: userCountry depuis CurrencyContext (timezone detection)
+    if (userCountry && userCountry.length === 2) {
+      return {
+        detectedCountry: userCountry.toUpperCase(),
+        detectedCurrency: geoCurrency !== 'GNF' ? geoCurrency : null,
+      };
+    }
+    return { detectedCountry: null, detectedCurrency: null };
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -409,9 +459,14 @@ export default function EnhancedAuth() {
             toast.info(t('auth.checkEmail') || 'Vérifiez votre email pour le code de confirmation');
           } else {
             // Aussi créer la session Supabase
+            const { detectedCountry: dc, detectedCurrency: dcu } = getGeoInfo();
             await supabase.auth.signUp({ email, password, options: {
               emailRedirectTo: `${window.location.origin}/`,
-              data: { full_name: fullName, role: roleToUse, has_password: true }
+              data: {
+                full_name: fullName, role: roleToUse, has_password: true,
+                ...(dc  && { detected_country:  dc  }),
+                ...(dcu && { detected_currency: dcu }),
+              }
             }});
             toast.success(t('auth.signupSuccess') || 'Inscription réussie !');
           }
@@ -455,6 +510,8 @@ export default function EnhancedAuth() {
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
 
+        const { detectedCountry, detectedCurrency } = getGeoInfo();
+
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
@@ -466,7 +523,9 @@ export default function EnhancedAuth() {
               last_name: lastName,
               account_type: accountType,
               role: roleToUse,
-              has_password: true
+              has_password: true,
+              ...(detectedCountry  && { detected_country:  detectedCountry  }),
+              ...(detectedCurrency && { detected_currency: detectedCurrency }),
             }
           }
         });
@@ -546,12 +605,15 @@ export default function EnhancedAuth() {
       const formatted = phone.startsWith('+') ? phone : `+224${phone}`;
       setFormattedPhoneNumber(formatted);
 
+      const { detectedCountry: otpCountry, detectedCurrency: otpCurrency } = getGeoInfo();
       const { error } = await supabase.auth.signInWithOtp({
         phone: formatted,
         options: {
           data: {
             account_type: accountType,
             role: mapAccountTypeToRole(accountType),
+            ...(otpCountry  && { detected_country:  otpCountry  }),
+            ...(otpCurrency && { detected_currency: otpCurrency }),
           }
         }
       });

@@ -21,7 +21,7 @@ import { logger } from '../config/logger.js';
 
 export interface FxResult {
   rate: number;
-  source: 'identity' | 'table-direct' | 'table-inverse' | 'table-usd-pivot' | 'table-gnf-pivot';
+  source: 'identity' | 'table-direct' | 'table-inverse' | 'table-usd-pivot' | 'table-gnf-pivot' | 'table-eur-via-usd-gnf' | 'table-eur-via-usd-gnf-inverse';
   fetched_at: string;
 }
 
@@ -158,9 +158,11 @@ export async function getInternalFxRate(
   // 3. Pivot USD: (USD→to) / (USD→from)
   const [{ data: fromUsd }, { data: toUsd }] = await Promise.all([
     supabaseAdmin.from('currency_exchange_rates')
-      .select('rate').eq('from_currency', 'USD').eq('to_currency', f).eq('is_active', true).maybeSingle(),
+      .select('rate, final_rate_eur').eq('from_currency', 'USD').eq('to_currency', f).eq('is_active', true)
+      .order('retrieved_at', { ascending: false }).maybeSingle(),
     supabaseAdmin.from('currency_exchange_rates')
-      .select('rate').eq('from_currency', 'USD').eq('to_currency', t).eq('is_active', true).maybeSingle(),
+      .select('rate, final_rate_eur').eq('from_currency', 'USD').eq('to_currency', t).eq('is_active', true)
+      .order('retrieved_at', { ascending: false }).maybeSingle(),
   ]);
 
   if (fromUsd?.rate && Number(fromUsd.rate) > 0 && toUsd?.rate && Number(toUsd.rate) > 0) {
@@ -169,6 +171,35 @@ export async function getInternalFxRate(
       source: 'table-usd-pivot',
       fetched_at: new Date().toISOString(),
     };
+  }
+
+  // 3.5. Pivot EUR via final_rate_eur stocké dans le row USD→GNF (collecté par BCRG)
+  // Utilisé quand EUR→GNF direct manque mais que BCRG a stocké final_rate_eur dans le row USD/GNF
+  if (t === 'GNF' && f === 'EUR') {
+    const { data: usdToGnfRow } = await supabaseAdmin.from('currency_exchange_rates')
+      .select('final_rate_eur, retrieved_at')
+      .eq('from_currency', 'USD').eq('to_currency', 'GNF').eq('is_active', true)
+      .order('retrieved_at', { ascending: false }).maybeSingle();
+    if (usdToGnfRow?.final_rate_eur && Number(usdToGnfRow.final_rate_eur) > 0) {
+      return {
+        rate: Number(usdToGnfRow.final_rate_eur),
+        source: 'table-eur-via-usd-gnf',
+        fetched_at: usdToGnfRow.retrieved_at || new Date().toISOString(),
+      };
+    }
+  }
+  if (f === 'GNF' && t === 'EUR') {
+    const { data: usdToGnfRow } = await supabaseAdmin.from('currency_exchange_rates')
+      .select('final_rate_eur, retrieved_at')
+      .eq('from_currency', 'USD').eq('to_currency', 'GNF').eq('is_active', true)
+      .order('retrieved_at', { ascending: false }).maybeSingle();
+    if (usdToGnfRow?.final_rate_eur && Number(usdToGnfRow.final_rate_eur) > 0) {
+      return {
+        rate: 1 / Number(usdToGnfRow.final_rate_eur),
+        source: 'table-eur-via-usd-gnf-inverse',
+        fetched_at: usdToGnfRow.retrieved_at || new Date().toISOString(),
+      };
+    }
   }
 
   // 4. GNF bridge: f→GNF→t (fallback pour les devises sans taux USD, ex: SLL)

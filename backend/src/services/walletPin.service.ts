@@ -65,6 +65,7 @@ async function fetchWalletPinFallback(userId: string) {
     .from('wallets')
     .select('id, pin_hash, updated_at')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
     .maybeSingle();
 
   if (!fallbackError) {
@@ -79,6 +80,7 @@ async function fetchWalletPinFallback(userId: string) {
     .from('wallets')
     .select('id, updated_at')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
     .maybeSingle();
 
   if (minimalError) {
@@ -227,6 +229,7 @@ export async function getWalletPinState(userId: string) {
     .from('wallets')
     .select('id, pin_hash, pin_enabled, pin_failed_attempts, pin_locked_until, pin_updated_at')
     .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
     .maybeSingle();
 
   if (!error) {

@@ -206,9 +206,12 @@ export const useVendorAnalytics = () => {
   };
 
   useEffect(() => {
-    if (vendorId && !vendorLoading) {
-      loadAnalytics();
+    if (vendorLoading) return; // attendre la résolution du profil vendeur
+    if (!vendorId) {
+      setLoading(false); // profil introuvable, arrêter le spinner
+      return;
     }
+    loadAnalytics();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 

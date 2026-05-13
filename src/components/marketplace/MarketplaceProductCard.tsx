@@ -107,15 +107,17 @@ export function MarketplaceProductCard({
   const primaryActionLabel = isAffiliateAirTicket
     ? 'Réserver'
     : isPartnerProduct
-      ? 'Voir l’offre'
+      ? "Voir l'offre"
       : t('common.view') || 'Voir';
 
-  const formatPrice = (value: number) => {
-    if (priceLoading) {
-      return formatCurrencyLib(value, currency);
-    }
+  // Calcule le prix une seule fois (évite double appel convert)
+  const priceResult = !priceLoading ? convert(price, currency) : null;
+  const originalPriceResult = !priceLoading && originalPrice ? convert(originalPrice, currency) : null;
 
-    // Convertir depuis la devise du produit vers la devise de l'utilisateur
+  const formatPrice = (value: number) => {
+    if (priceLoading) return '—';
+    if (value === price && priceResult) return priceResult.formatted;
+    if (value === originalPrice && originalPriceResult) return originalPriceResult.formatted;
     return convert(value, currency).formatted;
   };
 
@@ -252,22 +254,47 @@ export function MarketplaceProductCard({
                 <TooltipTrigger asChild>
                   <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                     <span className="marketplace-card-price">
-                      {formatPrice(price)}
+                      {priceLoading ? (
+                        <span className="inline-block w-16 h-4 bg-muted animate-pulse rounded" />
+                      ) : (
+                        formatPrice(price)
+                      )}
                     </span>
                     {originalPrice && originalPrice > price && (
                       <span className="text-[11px] text-muted-foreground line-through">
-                        {formatPrice(originalPrice)}
+                        {priceLoading ? '' : formatPrice(originalPrice)}
+                      </span>
+                    )}
+                    {/* Indicateur devise source quand pas de taux backend */}
+                    {!priceLoading && priceResult && !priceResult.wasConverted && priceResult.originalCurrency !== 'GNF' && (
+                      <span className="text-[9px] text-muted-foreground/70 truncate">
+                        {priceResult.originalCurrency}
                       </span>
                     )}
                   </div>
                 </TooltipTrigger>
-                {!priceLoading && (
+                {!priceLoading && priceResult && (
                   <TooltipContent>
-                    <div className="text-xs">
-                      <p className="font-semibold">{t('marketplace.card.originalPrice') || 'Prix original'}:</p>
-                      <p>{getOriginalPrice(price)}</p>
-                      {originalPrice && originalPrice > price && (
-                        <p className="text-muted-foreground line-through">{getOriginalPrice(originalPrice)}</p>
+                    <div className="text-xs space-y-1">
+                      {priceResult.wasConverted ? (
+                        <>
+                          <p className="font-semibold">{t('marketplace.card.originalPrice') || 'Prix original'}:</p>
+                          <p>{priceResult.originalFormatted}</p>
+                          {originalPriceResult?.wasConverted && originalPrice && originalPrice > price && (
+                            <p className="text-muted-foreground line-through">{originalPriceResult.originalFormatted}</p>
+                          )}
+                          <p className="text-muted-foreground/70 text-[10px]">
+                            Taux: 1 {priceResult.originalCurrency} = {priceResult.rate.toFixed(4)} {priceResult.userCurrency}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-semibold">{t('marketplace.card.originalPrice') || 'Prix original'}:</p>
+                          <p>{getOriginalPrice(price)}</p>
+                          <p className="text-muted-foreground/70 text-[10px]">
+                            Taux non disponible — prix affiché en {priceResult.originalCurrency}
+                          </p>
+                        </>
                       )}
                     </div>
                   </TooltipContent>
