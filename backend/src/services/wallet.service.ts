@@ -162,7 +162,9 @@ async function persistTransferHistory(params: {
     receiver_name: receiverName,
   };
 
-  const outType = isInternational ? 'international_transfer' : 'transfer_out';
+  // 'international_transfer' n'existe pas dans l'enum PostgreSQL — on utilise toujours
+  // 'transfer_out' et on stocke is_international dans metadata
+  const outType = 'transfer_out' as const;
   const ts = Date.now();
   const rand = () => Math.random().toString(36).slice(2, 8).toUpperCase();
   const txIdOut = `TRF-OUT-${ts}-${rand()}`;

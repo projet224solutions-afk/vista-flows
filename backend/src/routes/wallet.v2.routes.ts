@@ -2305,21 +2305,57 @@ router.get(
       const windowHours = (isNaN(hoursRaw) || hoursRaw <= 0) ? 168 : Math.min(720, hoursRaw);
       const since = new Date(Date.now() - windowHours * 3600 * 1000).toISOString();
 
-      // Only transfer_out = one record per transfer (sender side) — no double-counting
-      // These are the only valid enum values for outgoing transfers
-      const { data: txRows, error: txError } = await supabaseAdmin
-        .from('wallet_transactions')
-        .select('id, sender_user_id, receiver_user_id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
-        .in('transaction_type', ['transfer_out', 'transfer_in'] as any)
-        .eq('status', 'completed')
-        .gte('created_at', since)
-        .order('created_at', { ascending: false })
-        .limit(2000);
+      // Requête 1 : wallet_transactions — transfer_out (enum valide)
+      // Requête 2 : enhanced_transactions — international_transfer et transfer (legacy + anciens)
+      const [wtResult, enhResult] = await Promise.all([
+        supabaseAdmin
+          .from('wallet_transactions')
+          .select('id, sender_user_id, receiver_user_id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
+          .eq('transaction_type', 'transfer_out' as any)
+          .eq('status', 'completed')
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(2000),
+        supabaseAdmin
+          .from('enhanced_transactions')
+          .select('id, sender_id, receiver_id, amount, currency, method, metadata, created_at')
+          .in('method', ['international_transfer', 'transfer', 'transfer_out'])
+          .eq('status', 'completed')
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(2000),
+      ]);
 
-      if (txError) logger.warn(`[FX stats] tx query error: ${txError.message}`);
+      if (wtResult.error) logger.warn(`[FX stats] wallet_transactions error: ${wtResult.error.message}`);
+      if (enhResult.error) logger.warn(`[FX stats] enhanced_transactions error: ${enhResult.error.message}`);
 
-      // Filter only transfer_out to count each transfer once
-      const outRows = (txRows || []).filter((tx: any) => tx.transaction_type === 'transfer_out');
+      // Normaliser enhanced_transactions vers un format commun
+      const enhRows = (enhResult.data || []).map((tx: any) => ({
+        sender_user_id: tx.sender_id,
+        receiver_user_id: tx.receiver_id,
+        sender_wallet_id: null,
+        receiver_wallet_id: null,
+        amount: tx.amount,
+        currency: tx.currency,
+        transaction_type: tx.method,
+        metadata: tx.metadata,
+        created_at: tx.created_at,
+        _source: 'enhanced',
+      }));
+
+      // Dédupliquer par (sender_id, receiver_id, bucket_1min) : éviter doublon enhanced+wallet
+      const walletTxKeys = new Set<string>();
+      for (const tx of wtResult.data || []) {
+        const bucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
+        walletTxKeys.add(`${tx.sender_user_id}:${tx.receiver_user_id}:${bucket}`);
+      }
+      const dedupedEnh = enhRows.filter((tx) => {
+        const bucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
+        return !walletTxKeys.has(`${tx.sender_user_id}:${tx.receiver_user_id}:${bucket}`);
+      });
+
+      // Fusionner : wallet_transactions (source principale) + enhanced (complément)
+      const outRows = [...(wtResult.data || []), ...dedupedEnh];
 
       if (outRows.length === 0) {
         return res.json({
