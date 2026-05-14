@@ -74,8 +74,10 @@ export default function ProductPaymentModal({
   const navigate = useNavigate();
   const location = useLocation();
   const fc = useFormatCurrency();
-  const { convert, _userCurrency } = usePriceConverter();
+  const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
+  // Devise du wallet utilisateur (peut différer de la devise du produit)
+  const wCur = (userCurrency || 'GNF').toUpperCase();
 
   /** Affiche le montant converti en devise locale, avec l'original en dessous si conversion */
   const renderPrice = (amount: number, className?: string) => {
@@ -228,7 +230,7 @@ export default function ProductPaymentModal({
       loadCommissionConfig();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userId]);
+  }, [open, userId, wCur]);
 
   useEffect(() => {
     if (commissionConfig && totalAmount > 0) {
@@ -306,7 +308,7 @@ export default function ProductPaymentModal({
   const loadWalletBalance = async () => {
     setLoadingBalance(true);
     try {
-      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', cur).single();
+      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', wCur).single();
       if (error) throw error;
       setWalletBalance(data?.balance || 0);
     } catch { setWalletBalance(0); } finally { setLoadingBalance(false); }
@@ -595,8 +597,12 @@ export default function ProductPaymentModal({
       const vendorChargedAmount = vendorProductTotal + commissionPerVendor;
 
       if (paymentMethod === 'wallet') {
-        if (walletBalance !== null && walletBalance < effectiveGrandTotal) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(effectiveGrandTotal, cur)}` });
+        const convResult = convert(effectiveGrandTotal, cur);
+        const neededInWalletCur = convResult.wasConverted
+          ? convResult.convertedAmount
+          : (wCur === cur ? effectiveGrandTotal : null);
+        if (walletBalance !== null && neededInWalletCur !== null && walletBalance < neededInWalletCur) {
+          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(neededInWalletCur, wCur)}` });
           setProcessing(false);
           return;
         }
@@ -664,7 +670,12 @@ export default function ProductPaymentModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, effectiveGrandTotal, walletBalance, commissionConfig, codPhone, codCity, fc, finalizeSuccessfulCheckout]);
 
-  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < effectiveGrandTotal;
+  // Convertir le total (devise produit) vers la devise du wallet utilisateur
+  const grandTotalConverted = convert(effectiveGrandTotal, cur);
+  const totalInWalletCurrency = grandTotalConverted.wasConverted
+    ? grandTotalConverted.convertedAmount
+    : (wCur === cur ? effectiveGrandTotal : null); // null = taux absent, impossible de comparer
+  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && totalInWalletCurrency !== null && walletBalance < totalInWalletCurrency;
 
   const stripeExtraParams = useMemo(() => ({
     cartItems: cartItems.map(i => {
@@ -836,7 +847,7 @@ export default function ProductPaymentModal({
                   </div>
                   <div className="text-sm">
                     Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
-                      {fc(walletBalance || 0, cur)}
+                      {fc(walletBalance || 0, wCur)}
                     </span>
                   </div>
                   {walletBalance === 0 && (
@@ -862,7 +873,7 @@ export default function ProductPaymentModal({
         {insufficientBalance && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Solde insuffisant. Il vous manque {fc(effectiveGrandTotal - (walletBalance || 0), cur)}.</AlertDescription>
+            <AlertDescription>Solde insuffisant. Il vous manque {fc((totalInWalletCurrency || 0) - (walletBalance || 0), wCur)}.</AlertDescription>
           </Alert>
         )}
 
