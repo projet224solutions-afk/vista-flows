@@ -2300,30 +2300,56 @@ router.get(
   }),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const windowHours = Math.min(720, Math.max(1, parseInt((req.query as any).hours as string || '168', 10)));
-      const sinceIso = new Date(Date.now() - windowHours * 3600000).toISOString();
+      // Parse window hours safely — avoid NaN → Invalid Date throw
+      const hoursRaw = parseInt(String((req.query as any).hours || '168'), 10);
+      const windowHours = (isNaN(hoursRaw) || hoursRaw <= 0) ? 168 : Math.min(720, hoursRaw);
+      const since = new Date(Date.now() - windowHours * 3600 * 1000).toISOString();
 
-      const TRANSFER_TYPES = ['transfer_out', 'international_transfer', 'transfer', 'p2p_transfer'];
+      // Only transfer_out = one record per transfer (sender side) — no double-counting
+      // These are the only valid enum values for outgoing transfers
+      const { data: txRows, error: txError } = await supabaseAdmin
+        .from('wallet_transactions')
+        .select('id, sender_user_id, receiver_user_id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
+        .in('transaction_type', ['transfer_out', 'transfer_in'] as any)
+        .eq('status', 'completed')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(2000);
 
-      const [{ data: txRows }, { data: wallets }, { data: profiles }] = await Promise.all([
-        supabaseAdmin
-          .from('wallet_transactions')
-          .select('id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
-          .in('transaction_type', TRANSFER_TYPES)
-          .eq('status', 'completed')
-          .gte('created_at', sinceIso)
-          .order('created_at', { ascending: false })
-          .limit(5000),
-        supabaseAdmin
-          .from('wallets')
-          .select('id, user_id, currency'),
+      if (txError) logger.warn(`[FX stats] tx query error: ${txError.message}`);
+
+      // Filter only transfer_out to count each transfer once
+      const outRows = (txRows || []).filter((tx: any) => tx.transaction_type === 'transfer_out');
+
+      if (outRows.length === 0) {
+        return res.json({
+          success: true,
+          data: { window_hours: windowHours, total_conversions: 0, international_conversions: 0, by_user: [], by_country: [], country_corridors: [] },
+        });
+      }
+
+      // Collect unique user IDs and wallet IDs for targeted lookups
+      const userIds = new Set<string>();
+      const walletIds = new Set<number>();
+      for (const tx of outRows) {
+        if (tx.sender_user_id) userIds.add(String(tx.sender_user_id));
+        if (tx.receiver_user_id) userIds.add(String(tx.receiver_user_id));
+        if (tx.sender_wallet_id != null) walletIds.add(Number(tx.sender_wallet_id));
+        if (tx.receiver_wallet_id != null) walletIds.add(Number(tx.receiver_wallet_id));
+      }
+
+      const [profilesResult, walletsResult] = await Promise.all([
         supabaseAdmin
           .from('profiles')
-          .select('id, country, email, first_name, last_name, full_name'),
+          .select('id, country, email, first_name, last_name, full_name')
+          .in('id', Array.from(userIds)),
+        walletIds.size > 0
+          ? supabaseAdmin.from('wallets').select('id, currency').in('id', Array.from(walletIds))
+          : Promise.resolve({ data: [] }),
       ]);
 
-      const walletMap = new Map((wallets || []).map((w: any) => [w.id, w]));
-      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const profileMap = new Map((profilesResult.data || []).map((p: any) => [String(p.id), p]));
+      const walletCurrencyMap = new Map((walletsResult.data || []).map((w: any) => [Number(w.id), w.currency as string]));
 
       const byUser = new Map<string, { user_id: string; user_label: string; country: string; conversions_count: number; total_amount: number }>();
       const byCountry = new Map<string, { country: string; conversions_count: number; total_amount: number }>();
@@ -2332,66 +2358,46 @@ router.get(
       let totalConversions = 0;
       let internationalConversions = 0;
 
-      for (const tx of txRows || []) {
+      for (const tx of outRows) {
+        const senderUserId = tx.sender_user_id ? String(tx.sender_user_id) : null;
+        const receiverUserId = tx.receiver_user_id ? String(tx.receiver_user_id) : null;
+        if (!senderUserId) continue;
 
-        const senderWallet = walletMap.get(tx.sender_wallet_id);
-        const receiverWallet = tx.receiver_wallet_id ? walletMap.get(tx.receiver_wallet_id) : null;
-        if (!senderWallet) continue;
-
-        const senderProfile = profileMap.get(senderWallet.user_id);
-        const receiverProfile = receiverWallet ? profileMap.get(receiverWallet.user_id) : null;
+        const senderProfile = profileMap.get(senderUserId);
+        const receiverProfile = receiverUserId ? profileMap.get(receiverUserId) : null;
 
         const meta = (tx.metadata || {}) as any;
-        // Résoudre devise : priorité metadata → wallet → tx.currency
-        const senderCurrency = senderWallet.currency || meta?.sender_currency || tx.currency || null;
-        const receiverCurrency = receiverWallet?.currency || meta?.receiver_currency || meta?.to_currency || tx.currency || null;
+        const senderCurrency = walletCurrencyMap.get(Number(tx.sender_wallet_id)) || meta?.sender_currency || tx.currency || null;
+        const receiverCurrency = walletCurrencyMap.get(Number(tx.receiver_wallet_id)) || meta?.receiver_currency || meta?.to_currency || tx.currency || null;
 
         const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderCurrency));
-        const receiverCountry = receiverProfile?.country
-          ? String(receiverProfile.country)
-          : mapCurrencyToCountry(receiverCurrency);
+        const receiverCountry = receiverProfile?.country ? String(receiverProfile.country) : mapCurrencyToCountry(receiverCurrency);
         const amount = Number(tx.amount || 0);
 
         totalConversions += 1;
         if (senderCountry !== receiverCountry) internationalConversions += 1;
 
-        const firstLast = `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim();
-        const senderName = senderProfile?.full_name || firstLast || '';
-        const senderLabel = senderName || String(senderProfile?.email || meta?.sender_name || senderWallet.user_id);
+        const firstLast = [String(senderProfile?.first_name || '').trim(), String(senderProfile?.last_name || '').trim()].filter(Boolean).join(' ');
+        const senderLabel = senderProfile?.full_name || firstLast || senderProfile?.email || meta?.sender_name || senderUserId;
 
-        const currentUser = byUser.get(senderWallet.user_id) || {
-          user_id: senderWallet.user_id,
-          user_label: senderLabel,
-          country: senderCountry,
-          conversions_count: 0,
-          total_amount: 0,
-        };
+        const currentUser = byUser.get(senderUserId) || { user_id: senderUserId, user_label: senderLabel, country: senderCountry, conversions_count: 0, total_amount: 0 };
         currentUser.conversions_count += 1;
         currentUser.total_amount += amount;
-        byUser.set(senderWallet.user_id, currentUser);
+        byUser.set(senderUserId, currentUser);
 
-        const senderCountryStats = byCountry.get(senderCountry) || {
-          country: senderCountry,
-          conversions_count: 0,
-          total_amount: 0,
-        };
-        senderCountryStats.conversions_count += 1;
-        senderCountryStats.total_amount += amount;
-        byCountry.set(senderCountry, senderCountryStats);
+        const countryStats = byCountry.get(senderCountry) || { country: senderCountry, conversions_count: 0, total_amount: 0 };
+        countryStats.conversions_count += 1;
+        countryStats.total_amount += amount;
+        byCountry.set(senderCountry, countryStats);
 
         const corridorKey = `${senderCountry}=>${receiverCountry}`;
-        const corridorStats = countryCorridors.get(corridorKey) || {
-          from_country: senderCountry,
-          to_country: receiverCountry,
-          conversions_count: 0,
-          total_amount: 0,
-        };
-        corridorStats.conversions_count += 1;
-        corridorStats.total_amount += amount;
-        countryCorridors.set(corridorKey, corridorStats);
+        const corridor = countryCorridors.get(corridorKey) || { from_country: senderCountry, to_country: receiverCountry, conversions_count: 0, total_amount: 0 };
+        corridor.conversions_count += 1;
+        corridor.total_amount += amount;
+        countryCorridors.set(corridorKey, corridor);
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           window_hours: windowHours,
@@ -2403,8 +2409,8 @@ router.get(
         },
       });
     } catch (error: any) {
-      logger.error(`FX conversion stats error: ${error.message}`);
-      res.status(500).json({ success: false, error: 'Erreur lors du chargement des stats de conversion' });
+      logger.error(`FX conversion stats error: ${error.message} — stack: ${error.stack}`);
+      res.status(500).json({ success: false, error: `Erreur stats: ${error.message}` });
     }
   }
 );
