@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,11 +131,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
   const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
   const [showIntlConfirm, setShowIntlConfirm] = useState(false);
   const [intlExecuting, setIntlExecuting] = useState(false);
+  // Ref pour conserver intlPreview quand AlertDialogAction ferme le dialog avant la saisie du PIN
+  const intlPreviewRef = useRef<InternationalPreviewData | null>(null);
   const [pinStatus, setPinStatus] = useState<{ pin_enabled: boolean; pin_locked_until: string | null } | null>(null);
   const [pinAction, setPinAction] = useState<'withdraw' | 'transfer' | 'intl-transfer' | null>(null);
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
   const [pinSetupOpen, setPinSetupOpen] = useState(false);
-  const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change'>('setup');
+  const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change' | 'reset'>('setup');
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
 
@@ -343,7 +345,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         .select('*')
         .or(`sender_id.eq.${effectiveUserId},receiver_id.eq.${effectiveUserId}`)
         .order('created_at', { ascending: false })
-        .limit(10) as any);
+        .limit(20) as any);
 
       if (enhancedError) console.error('Erreur enhanced_transactions:', enhancedError);
 
@@ -357,6 +359,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       const userWalletId = userWallet?.id ?? null;
 
       // Charger les wallet_transactions seulement si on a un wallet_id
+      // Limite 30 car le filtre de déduplication (transfer_out/transfer_in) peut retirer jusqu'à la moitié des records
       let walletTxData: any[] = [];
       if (userWalletId) {
         const wtResult: any = await (supabase as any)
@@ -364,7 +367,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           .select('*')
           .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(30);
         const wtData = wtResult.data || [];
         const walletError = wtResult.error;
 
@@ -409,7 +412,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         if (w.user_id) userIdsToResolve.add(w.user_id);
       }
 
-      // 3) Charger en batch: profiles avec public_id, full_name, first_name, last_name, email
+      // 3) Charger en batch: profiles (company_name n'est PAS dans la table profiles)
       const idsArray = Array.from(userIdsToResolve);
       let profilesRows: Array<{ id: string; public_id: string | null; full_name: string | null; first_name: string | null; last_name: string | null; email: string | null }> = [];
 
@@ -430,9 +433,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           return { name: 'Système', customId: 'SYS' };
         }
         const p = userIdToProfile.get(uid);
-        let name = 'Utilisateur';
+        let name = '';
         if (p) {
-          // Priorité: full_name (si pas "Utilisateur") > first_name + last_name > email
+          // Priorité: full_name > first_name + last_name > email
           if (p.full_name && p.full_name !== 'Utilisateur') {
             name = p.full_name;
           } else if (p.first_name || p.last_name) {
@@ -442,7 +445,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           }
         }
         return {
-          name,
+          name: name || 'Utilisateur',
           customId: userIdToPublicId.get(uid) || uid.slice(0, 8),
         };
       };
@@ -473,9 +476,25 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           const metadata = (tx.metadata ?? {}) as any;
           const isBureauTransfer = metadata?.recipient_type === 'bureau' || !!metadata?.bureau_id;
 
+          // Filtrer les doublons : chaque transfert génère 2 records (transfer_out + transfer_in).
+          // N'afficher transfer_out que si l'utilisateur est l'expéditeur, transfer_in que s'il est le destinataire.
+          const txType = (tx.transaction_type as string) || '';
+          const isOutgoingType = ['transfer_out', 'international_transfer', 'withdrawal', 'mobile_money_out'].includes(txType);
+          const isIncomingType = ['transfer_in', 'deposit', 'mobile_money_in', 'admin_credit'].includes(txType);
+          const isUserSender = userWalletId ? tx.sender_wallet_id === userWalletId : false;
+          const isUserReceiver = userWalletId ? tx.receiver_wallet_id === userWalletId : false;
+          if (isOutgoingType && !isUserSender) continue;
+          if (isIncomingType && !isUserReceiver) continue;
+
           const isOutgoing = userWalletId ? tx.sender_wallet_id === userWalletId : false;
           const otherWalletId = isOutgoing ? tx.receiver_wallet_id : tx.sender_wallet_id;
           const otherUserId = otherWalletId ? walletIdToUserId.get(otherWalletId) : null;
+
+          // Résoudre la contrepartie : local profile map → metadata names → fallback
+          const resolvedDisplay = getUserDisplay(otherUserId);
+          const metaSenderName = metadata?.sender_name;
+          const metaReceiverName = metadata?.receiver_name;
+          const counterpartyNameFromMeta = isOutgoing ? metaReceiverName : metaSenderName;
 
           const counterparty = isBureauTransfer
             ? {
@@ -485,7 +504,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
               }
             : {
                 id: otherUserId,
-                ...getUserDisplay(otherUserId),
+                name: (() => {
+                  const isGenericName = !resolvedDisplay.name || resolvedDisplay.name === 'Utilisateur' || resolvedDisplay.name === 'Système';
+                  return !isGenericName ? resolvedDisplay.name : (counterpartyNameFromMeta || resolvedDisplay.name);
+                })(),
+                customId: resolvedDisplay.customId,
               };
 
           const sender_id = isOutgoing ? effectiveUserId : counterparty.id || 'system';
@@ -508,18 +531,47 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             },
             sender_custom_id: isOutgoing ? 'Vous' : (counterparty.customId || 'SYS'),
             receiver_custom_id: isOutgoing ? (counterparty.customId || 'SYS') : 'Vous',
-            sender_name: isOutgoing ? 'Vous' : (counterparty.name || 'Système'),
-            receiver_name: isOutgoing ? (counterparty.name || 'Système') : 'Vous',
+            sender_name: isOutgoing ? 'Vous' : (counterparty.name || metaSenderName || 'Système'),
+            receiver_name: isOutgoing ? (counterparty.name || metaReceiverName || 'Système') : 'Vous',
             source: 'wallet',
             is_bureau_transfer: isBureauTransfer,
           });
         }
       }
 
-      // Trier par date décroissante et limiter
-      allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Dédupliquer : chaque transfert persistTransferHistory crée un record enhanced_transactions
+      // ET un wallet_transaction. On garde uniquement le wallet_transaction.
+      // Critère 1 : même idempotency_key (nouveaux records)
+      // Critère 2 : même (sender_id, receiver_id) dans la même minute (anciens records sans idempotency_key)
+      const walletTxDedup = new Set<string>();
+      allTransactions
+        .filter((tx) => tx.source === 'wallet')
+        .forEach((tx) => {
+          if (tx.metadata?.idempotency_key) {
+            walletTxDedup.add(`key:${tx.metadata.idempotency_key}`);
+          }
+          const timeBucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
+          const sid = tx.sender_id || '';
+          const rid = tx.receiver_id || '';
+          if (sid && rid && sid !== 'system' && rid !== 'system') {
+            walletTxDedup.add(`pair:${sid}:${rid}:${timeBucket}`);
+          }
+        });
 
-      const visible = allTransactions.slice(0, 15);
+      const deduped = allTransactions.filter((tx) => {
+        if (tx.source !== 'enhanced') return true;
+        if (tx.metadata?.idempotency_key && walletTxDedup.has(`key:${tx.metadata.idempotency_key}`)) return false;
+        const timeBucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
+        const sid = tx.sender_id || '';
+        const rid = tx.receiver_id || '';
+        if (sid && rid && sid !== 'system' && rid !== 'system' && walletTxDedup.has(`pair:${sid}:${rid}:${timeBucket}`)) return false;
+        return true;
+      });
+
+      // Trier par date décroissante et limiter
+      deduped.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const visible = deduped.slice(0, 25);
       setTransactions(visible);
 
       const unresolved = visible
@@ -1345,13 +1397,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
   };
 
   const executeIntlConfirmTransfer = async (pin: string) => {
-    if (!effectiveUserId || !intlPreview) return;
+    // AlertDialogAction ferme le dialog et vide intlPreview avant la saisie du PIN ;
+    // on utilise la ref sauvegardée dans handleIntlConfirmTransfer comme source de vérité.
+    const preview = intlPreviewRef.current ?? intlPreview;
+    if (!effectiveUserId || !preview) return;
     setIntlExecuting(true);
     try {
-      const receiverId = intlPreview.receiver_code || recipientId.trim();
+      const receiverId = preview.receiver_code || recipientId.trim();
       const result = await transferToWallet(
         receiverId,
-        intlPreview.amount_sent,
+        preview.amount_sent,
         transferDescription || 'Transfert international wallet',
         pin
       );
@@ -1366,6 +1421,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       setRecipientId('');
       setTransferDescription('');
       setIntlPreview(null);
+      intlPreviewRef.current = null;
       setShowIntlConfirm(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
       window.dispatchEvent(new CustomEvent('wallet-updated'));
@@ -1379,6 +1435,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
   };
 
   const handleIntlConfirmTransfer = async () => {
+    // Sauvegarder le preview avant que AlertDialogAction ferme le dialog et vide intlPreview
+    intlPreviewRef.current = intlPreview;
     requestTransactionPin('intl-transfer');
   };
 
@@ -1470,8 +1528,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     }
   };
 
-  const formatWalletBalance = (amount: number) => {
+  const formatWalletBalance = (amount: number, currency?: string) => {
     if (!currencyReady) return '—';
+    // Si la devise de la transaction est fournie, l'afficher directement sans re-conversion
+    if (currency && currency.toUpperCase() !== 'GNF' && currency.toUpperCase() !== vendorCurrency.toUpperCase()) {
+      return `${Math.round(amount).toLocaleString('fr-FR')} ${currency.toUpperCase()}`;
+    }
+    if (currency && currency.toUpperCase() === vendorCurrency.toUpperCase()) {
+      return `${Math.round(amount).toLocaleString('fr-FR')} ${vendorCurrency}`;
+    }
     return `${Math.round(convertVendor(amount)).toLocaleString('fr-FR')} ${vendorCurrency}`;
   };
 
@@ -2183,6 +2248,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           onOpenChange={(value) => {
             setPinPromptOpen(value);
             if (!value) {
+              intlPreviewRef.current = null;
               setPinError(null);
               setPinAction(null);
             }
@@ -2273,11 +2339,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   <div className="text-right shrink-0">
                     <p className={`font-bold text-xs sm:text-sm ${getTransactionColor(tx)}`}>
                       {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
-                      {formatWalletBalance(tx.amount)}
+                      {formatWalletBalance(tx.amount, tx.currency)}
                     </p>
                     {tx.sender_id === effectiveUserId && tx.metadata?.fee_amount && (
                       <p className="text-[10px] sm:text-xs text-orange-600">
-                        +{formatWalletBalance(tx.metadata.fee_amount)} frais
+                        +{formatWalletBalance(tx.metadata.fee_amount, tx.currency)} frais
                       </p>
                     )}
                     <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs px-1 sm:px-2 py-0 mt-0.5">

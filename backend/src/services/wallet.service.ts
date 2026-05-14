@@ -126,6 +126,26 @@ async function persistTransferHistory(params: {
     feeAmount,
   } = params;
 
+  // Résoudre les noms des profils sender/receiver pour l'historique
+  let senderName = 'Expéditeur';
+  let receiverName = 'Destinataire';
+  try {
+    const [senderProfile, receiverProfile] = await Promise.all([
+      supabaseAdmin.from('profiles').select('full_name, first_name, last_name, custom_id').eq('id', senderId).maybeSingle(),
+      supabaseAdmin.from('profiles').select('full_name, first_name, last_name, custom_id').eq('id', receiverId).maybeSingle(),
+    ]);
+    if (senderProfile.data) {
+      const p = senderProfile.data as any;
+      senderName = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.custom_id || senderName;
+    }
+    if (receiverProfile.data) {
+      const p = receiverProfile.data as any;
+      receiverName = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.custom_id || receiverName;
+    }
+  } catch {
+    // profils non critiques — on continue sans noms
+  }
+
   const metadata = {
     idempotency_key: idempotencyKey,
     source: 'backend-node',
@@ -138,11 +158,13 @@ async function persistTransferHistory(params: {
     rate_used: rateUsed,
     rate_source: rateSource,
     fee_amount: feeAmount,
+    sender_name: senderName,
+    receiver_name: receiverName,
   };
 
   const outType = isInternational ? 'international_transfer' : 'transfer_out';
   const ts = Date.now();
-  const rand = () => Math.random().toString(36).substr(2, 6).toUpperCase();
+  const rand = () => Math.random().toString(36).slice(2, 8).toUpperCase();
   const txIdOut = `TRF-OUT-${ts}-${rand()}`;
   const txIdIn  = `TRF-IN-${ts}-${rand()}`;
 

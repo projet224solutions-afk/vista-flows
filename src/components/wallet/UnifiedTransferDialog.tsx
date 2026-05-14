@@ -272,6 +272,7 @@ export function UnifiedTransferDialog({
       if (!pin && isPinRequiredError(errorMessage)) {
         setPendingTransferKind('international');
         setPinError(null);
+        setShowIntlConfirm(false);
         setPinPromptOpen(true);
         return false;
       }
@@ -497,7 +498,7 @@ export function UnifiedTransferDialog({
         open={showIntlConfirm}
         onOpenChange={(val) => {
           setShowIntlConfirm(val);
-          if (!val) setIntlPreview(null);
+          if (!val && !pinPromptOpen) setIntlPreview(null);
         }}
         preview={intlPreview}
         onConfirm={handleIntlConfirm}

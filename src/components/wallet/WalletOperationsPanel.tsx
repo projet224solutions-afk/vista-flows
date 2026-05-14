@@ -198,10 +198,12 @@ export function WalletOperationsPanel() {
         }
       }
 
-      // Le toast de useWallet.ts gère déjà le message d'erreur
-      setPinPromptOpen(false);
-      setPinAction(null);
-      setPinError(null);
+      if (success) {
+        setPinPromptOpen(false);
+        setPinAction(null);
+        setPinError(null);
+      }
+      // Échec : dialog reste ouvert pour retry — le toast de useWallet affiche déjà l'erreur
     } catch (error: any) {
       const msg = error?.message || 'Erreur lors de l\'opération';
       const isPinError = /code pin|pin invalide|pin bloqué|tentative|configurer.*pin/i.test(msg);

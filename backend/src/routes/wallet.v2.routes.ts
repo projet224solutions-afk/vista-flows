@@ -29,6 +29,7 @@ import { countryToCurrency } from '../utils/countryToCurrency.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
+import { sendTransactionEmails } from '../services/transactionEmail.service.js';
 
 const router = Router();
 
@@ -886,6 +887,16 @@ async function triggerAfricanFxCollection(source: string, actorId: string | null
   }
 }
 
+function buildProfileDisplayName(profile: Record<string, any> | null): string | null {
+  if (!profile) return null;
+  if (profile.company_name) return String(profile.company_name).trim() || null;
+  if (profile.full_name && profile.full_name !== 'Utilisateur') return String(profile.full_name).trim() || null;
+  const firstLast = [profile.first_name, profile.last_name].filter(Boolean).map(String).join(' ').trim();
+  if (firstLast) return firstLast;
+  if (profile.email) return String(profile.email).split('@')[0] || null;
+  return null;
+}
+
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -893,19 +904,15 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (UUID_REGEX.test(candidate)) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
       .eq('id', candidate)
       .maybeSingle();
-
-    const displayName = profile
-      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
-      : null;
 
     return {
       userId: candidate,
       query: candidate,
       matchedBy: 'uuid',
-      displayName,
+      displayName: buildProfileDisplayName(profile as any),
       email: profile ? String((profile as any).email || '') || null : null,
       phone: profile ? String((profile as any).phone || '') || null : null,
       publicId: profile ? String((profile as any).public_id || '') || null : null,
@@ -924,19 +931,15 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (fromUserIds?.user_id) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
       .eq('id', fromUserIds.user_id)
       .maybeSingle();
-
-    const displayName = profile
-      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
-      : null;
 
     return {
       userId: fromUserIds.user_id,
       query: candidate,
       matchedBy: 'user_ids.custom_id',
-      displayName,
+      displayName: buildProfileDisplayName(profile as any),
       email: profile ? String((profile as any).email || '') || null : null,
       phone: profile ? String((profile as any).phone || '') || null : null,
       publicId: profile ? String((profile as any).public_id || '') || null : null,
@@ -946,7 +949,7 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
 
   const { data: fromProfileIds } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, phone, first_name, last_name, public_id, custom_id')
+    .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
     .or(`public_id.eq.${normalizedId},custom_id.eq.${normalizedId}`)
     .maybeSingle();
 
@@ -954,12 +957,11 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     const matchedBy = String((fromProfileIds as any).public_id || '').toUpperCase() === normalizedId
       ? 'profiles.public_id'
       : 'profiles.custom_id';
-    const displayName = `${String((fromProfileIds as any).first_name || '').trim()} ${String((fromProfileIds as any).last_name || '').trim()}`.trim() || null;
     return {
       userId: fromProfileIds.id,
       query: candidate,
       matchedBy,
-      displayName,
+      displayName: buildProfileDisplayName(fromProfileIds as any),
       email: String((fromProfileIds as any).email || '') || null,
       phone: String((fromProfileIds as any).phone || '') || null,
       publicId: String((fromProfileIds as any).public_id || '') || null,
@@ -971,17 +973,16 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (normalizedEmail.includes('@')) {
     const { data: fromEmail } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
       .eq('email', normalizedEmail)
       .maybeSingle();
 
     if (fromEmail?.id) {
-      const displayName = `${String((fromEmail as any).first_name || '').trim()} ${String((fromEmail as any).last_name || '').trim()}`.trim() || null;
       return {
         userId: fromEmail.id,
         query: candidate,
         matchedBy: 'profiles.email',
-        displayName,
+        displayName: buildProfileDisplayName(fromEmail as any),
         email: String((fromEmail as any).email || '') || null,
         phone: String((fromEmail as any).phone || '') || null,
         publicId: String((fromEmail as any).public_id || '') || null,
@@ -1015,18 +1016,17 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     const phoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
     const { data: fromPhone } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
       .or(phoneFilter)
       .limit(1)
       .maybeSingle();
 
     if (fromPhone?.id) {
-      const displayName = `${String((fromPhone as any).first_name || '').trim()} ${String((fromPhone as any).last_name || '').trim()}`.trim() || null;
       return {
         userId: fromPhone.id,
         query: candidate,
         matchedBy: 'profiles.phone',
-        displayName,
+        displayName: buildProfileDisplayName(fromPhone as any),
         email: String((fromPhone as any).email || '') || null,
         phone: String((fromPhone as any).phone || '') || null,
         publicId: String((fromPhone as any).public_id || '') || null,
@@ -1233,9 +1233,17 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
+    // Charger le nom de l'expéditeur pour la réponse preview
+    const { data: senderProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name, first_name, last_name, email, custom_id, public_id')
+      .eq('id', senderId)
+      .maybeSingle();
+    const senderDisplayName = buildProfileDisplayName(senderProfile as any);
+
     const senderWallet = await ensureTransferWallet(senderId);
     const recipientWallet = senderWallet
-      ? await ensureTransferWallet(resolved.userId, String((senderWallet as any).currency || 'GNF'))
+      ? await ensureTransferWallet(resolved.userId, 'GNF')
       : null;
 
     if (!senderWallet) {
@@ -1297,10 +1305,10 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       is_international: isInternational,
       sender: {
         id: senderId,
-        name: null,
+        name: senderDisplayName,
         email: req.user?.email || null,
-        phone: null,
-        custom_id: null,
+        phone: senderProfile ? String((senderProfile as any).phone || '') || null : null,
+        custom_id: senderProfile ? (String((senderProfile as any).custom_id || '') || String((senderProfile as any).public_id || '') || null) : null,
       },
       receiver: {
         id: resolved.userId,
@@ -1847,7 +1855,9 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    const recipientWallet = await ensureTransferWallet(resolvedRecipientId, String((senderWallet as any).currency || 'GNF'));
+    // Toujours utiliser GNF comme fallback pour le wallet destinataire —
+    // la devise réelle est déterminée par le profil du destinataire dans ensureTransferWallet.
+    const recipientWallet = await ensureTransferWallet(resolvedRecipientId, 'GNF');
     if (!recipientWallet) {
       res.status(500).json({ success: false, error: 'Wallet destinataire indisponible' });
       return;
@@ -1917,6 +1927,21 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
 
     logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}, credited=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
+
+    // Envoi des emails de confirmation (non-bloquant — en parallèle avec la réponse)
+    sendTransactionEmails({
+      senderId,
+      receiverId: resolvedRecipientId,
+      amountSent: amount,
+      amountReceived: amountToCredit,
+      senderCurrency,
+      receiverCurrency,
+      description: description || 'Transfert',
+      isInternational,
+      rateUsed,
+      transactionId: result.transactionId,
+    }).catch((err) => logger.warn(`[WalletV2] Email send error: ${err?.message}`));
+
     await emitCoreFeatureEvent({
       featureKey: 'wallet.transfer',
       coreEngine: 'payment',
