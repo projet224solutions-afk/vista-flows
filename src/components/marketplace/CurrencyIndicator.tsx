@@ -221,7 +221,8 @@ export function CurrencyIndicator({
 
         {/* Devises populaires */}
         {[
-          { code: 'XOF', flag: '🇸🇳', name: 'Franc CFA (XOF)' },
+          { code: 'XOF', flag: '🇸🇳', name: 'Franc CFA BCEAO (XOF)' },
+          { code: 'XAF', flag: '🇬🇦', name: 'Franc CFA BEAC (XAF)' },
           { code: 'USD', flag: '🇺🇸', name: 'Dollar US (USD)' },
           { code: 'EUR', flag: '🇪🇺', name: 'Euro (EUR)' },
         ]

@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { COUNTRY_TO_CURRENCY } from "@/data/countryMappings";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { resolvePostAuthRouteSync } from "@/utils/postAuthRoute";
 import { toast } from "sonner";
 import { Search, Globe, ChevronRight, Loader2, AlertCircle } from "lucide-react";
@@ -118,6 +119,8 @@ export default function SelectCountryPage() {
   const location  = useLocation();
   const { user, profile, refreshProfile } = useAuth();
 
+  const { setCurrency: setGlobalCurrency } = useCurrency();
+
   const [search,   setSearch]   = useState("");
   const [selected, setSelected] = useState<typeof COUNTRIES[0] | null>(null);
   const [loading,  setLoading]  = useState(false);
@@ -163,6 +166,15 @@ export default function SelectCountryPage() {
       if (!result?.success) {
         throw new Error(result?.error || "Erreur lors de la configuration du pays");
       }
+
+      // Mettre à jour le contexte de devise global immédiatement
+      setGlobalCurrency(currency);
+
+      // Synchroniser le cache géo pour éviter que syncFromGeoCache revienne à GNF
+      try {
+        const geoCache = { data: { country: selected.code, currency, detectionMethod: 'manual' }, timestamp: Date.now() };
+        localStorage.setItem('geo_detection_cache', JSON.stringify(geoCache));
+      } catch {}
 
       if (result.needs_admin_review) {
         setNeedsAdmin(true);

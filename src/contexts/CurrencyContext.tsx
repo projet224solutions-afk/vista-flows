@@ -5,7 +5,7 @@
  */
 
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
-import { _getCurrencyForCountry, getCurrencyForCountry } from "@/data/countryMappings";
+import { getCurrencyForCountry } from "@/data/countryMappings";
 
 // Détecte la devise depuis le fuseau horaire du navigateur (fallback sans API)
 const TIMEZONE_COUNTRY: Record<string, string> = {
