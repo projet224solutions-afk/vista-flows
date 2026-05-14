@@ -154,10 +154,10 @@ export default function PDGFinance() {
     return () => clearInterval(timer);
   }, []);
 
-  const loadConversionStats = async () => {
+  const loadConversionStats = async (hours = 168) => {
     try {
       setConversionStatsLoading(true);
-      const response = await backendFetch('/api/v2/wallet/admin/fx-conversion-stats', { method: 'GET' });
+      const response = await backendFetch(`/api/v2/wallet/admin/fx-conversion-stats?hours=${hours}`, { method: 'GET' });
       if (!response.success) {
         throw new Error(response.error || 'Impossible de charger les stats de conversion');
       }
@@ -1016,7 +1016,7 @@ export default function PDGFinance() {
               Conversions utilisateurs par pays
             </DialogTitle>
             <DialogDescription>
-              Volume de conversions (fenetre glissante {conversionStats?.window_hours || 24}h), pays origine/destination
+              Volume de conversions (fenêtre {conversionStats?.window_hours || 168}h), pays origine/destination
             </DialogDescription>
           </DialogHeader>
 
@@ -1024,6 +1024,17 @@ export default function PDGFinance() {
             <p className="text-sm text-muted-foreground">Aucune statistique disponible.</p>
           ) : (
             <div className="space-y-4 mt-2">
+              <div className="flex gap-2 flex-wrap">
+                {[24, 72, 168, 720].map((h) => (
+                  <button
+                    key={h}
+                    onClick={() => loadConversionStats(h)}
+                    className={`px-3 py-1 rounded text-xs border transition-colors ${(conversionStats?.window_hours || 168) === h ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted hover:bg-muted/80 border-border'}`}
+                  >
+                    {h === 24 ? '24h' : h === 72 ? '3 jours' : h === 168 ? '7 jours' : '30 jours'}
+                  </button>
+                ))}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Card>
                   <CardContent className="pt-4">
@@ -1057,7 +1068,10 @@ export default function PDGFinance() {
                       {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
                         <div key={`${row.from_country}-${row.to_country}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
                           <span className="font-medium">{row.from_country} → {row.to_country}</span>
-                          <span>{row.conversions_count} conversions</span>
+                          <span className="text-right">
+                            <span className="font-semibold">{row.conversions_count}</span> conv.
+                            {row.total_amount > 0 && <span className="ml-2 text-muted-foreground">{Math.round(row.total_amount).toLocaleString('fr-FR')}</span>}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1076,8 +1090,14 @@ export default function PDGFinance() {
                     <div className="max-h-56 overflow-auto space-y-1">
                       {conversionStats.by_user.slice(0, 30).map((row: any, idx: number) => (
                         <div key={`${row.user_id}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
-                          <span className="truncate">{row.user_label} ({row.country || 'Inconnu'})</span>
-                          <span>{row.conversions_count}</span>
+                          <div className="truncate">
+                            <span className="font-medium">{row.user_label}</span>
+                            <span className="ml-1 text-muted-foreground">({row.country || 'Inconnu'})</span>
+                          </div>
+                          <span className="shrink-0">
+                            <span className="font-semibold">{row.conversions_count}</span>
+                            {row.total_amount > 0 && <span className="ml-2 text-muted-foreground">{Math.round(row.total_amount).toLocaleString('fr-FR')}</span>}
+                          </span>
                         </div>
                       ))}
                     </div>

@@ -2298,15 +2298,18 @@ router.get(
     permissionKey: 'manage_wallet_transactions',
     allowedRoles: ['admin', 'pdg', 'ceo'],
   }),
-  async (_req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const windowHours = 24;
+      const windowHours = Math.min(720, Math.max(1, parseInt((req.query as any).hours as string || '168', 10)));
       const sinceIso = new Date(Date.now() - windowHours * 3600000).toISOString();
+
+      const TRANSFER_TYPES = ['transfer_out', 'international_transfer', 'transfer', 'p2p_transfer'];
 
       const [{ data: txRows }, { data: wallets }, { data: profiles }] = await Promise.all([
         supabaseAdmin
           .from('wallet_transactions')
-          .select('id, sender_wallet_id, receiver_wallet_id, amount, transaction_type, created_at')
+          .select('id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
+          .in('transaction_type', TRANSFER_TYPES)
           .eq('status', 'completed')
           .gte('created_at', sinceIso)
           .order('created_at', { ascending: false })
@@ -2316,7 +2319,7 @@ router.get(
           .select('id, user_id, currency'),
         supabaseAdmin
           .from('profiles')
-          .select('id, country, email, first_name, last_name'),
+          .select('id, country, email, first_name, last_name, full_name'),
       ]);
 
       const walletMap = new Map((wallets || []).map((w: any) => [w.id, w]));
@@ -2330,24 +2333,31 @@ router.get(
       let internationalConversions = 0;
 
       for (const tx of txRows || []) {
-        if (tx.transaction_type !== 'transfer') continue;
 
         const senderWallet = walletMap.get(tx.sender_wallet_id);
-        const receiverWallet = walletMap.get(tx.receiver_wallet_id);
-        if (!senderWallet || !receiverWallet) continue;
+        const receiverWallet = tx.receiver_wallet_id ? walletMap.get(tx.receiver_wallet_id) : null;
+        if (!senderWallet) continue;
 
         const senderProfile = profileMap.get(senderWallet.user_id);
-        const receiverProfile = profileMap.get(receiverWallet.user_id);
+        const receiverProfile = receiverWallet ? profileMap.get(receiverWallet.user_id) : null;
 
-        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderWallet.currency || null));
-        const receiverCountry = String(receiverProfile?.country || mapCurrencyToCountry(receiverWallet.currency || null));
+        const meta = (tx.metadata || {}) as any;
+        // Résoudre devise : priorité metadata → wallet → tx.currency
+        const senderCurrency = senderWallet.currency || meta?.sender_currency || tx.currency || null;
+        const receiverCurrency = receiverWallet?.currency || meta?.receiver_currency || meta?.to_currency || tx.currency || null;
+
+        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderCurrency));
+        const receiverCountry = receiverProfile?.country
+          ? String(receiverProfile.country)
+          : mapCurrencyToCountry(receiverCurrency);
         const amount = Number(tx.amount || 0);
 
         totalConversions += 1;
         if (senderCountry !== receiverCountry) internationalConversions += 1;
 
-        const senderName = `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim();
-        const senderLabel = senderName || String(senderProfile?.email || senderWallet.user_id);
+        const firstLast = `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim();
+        const senderName = senderProfile?.full_name || firstLast || '';
+        const senderLabel = senderName || String(senderProfile?.email || meta?.sender_name || senderWallet.user_id);
 
         const currentUser = byUser.get(senderWallet.user_id) || {
           user_id: senderWallet.user_id,
