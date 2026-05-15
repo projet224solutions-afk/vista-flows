@@ -162,11 +162,11 @@ async function getPopularProducts(limit = 12): Promise<(RecommendedProduct & { r
       console.warn('[Recommendations] Popular products error:', error);
       throw error;
     }
-    // Filtrer: uniquement les vendeurs avec vente en ligne
-    const allowedTypes = ['hybrid', 'online'];
+    // Exclure uniquement les boutiques physiques sans vente en ligne (physical)
+    // hybrid (physique+enligne), digital, null → inclus
     const filtered = (data || []).filter(p => {
       const vendor = (p as any).vendors;
-      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+      return vendor?.business_type !== 'physical';
     }).slice(0, limit);
     console.log('[Recommendations] Popular products loaded:', filtered.length);
     return filtered.map(p => ({
@@ -186,11 +186,10 @@ async function getFallbackProducts(limit: number, excludeId?: string): Promise<R
       .limit(limit * 2);
     if (excludeId) query = query.neq('id', excludeId);
     const { data } = await query;
-    // Filtrer: uniquement les vendeurs avec vente en ligne
-    const allowedTypes = ['hybrid', 'online'];
+    // Exclure uniquement les boutiques physiques sans vente en ligne (physical)
     const filtered = (data || []).filter(p => {
       const vendor = (p as any).vendors;
-      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+      return vendor?.business_type !== 'physical';
     }).slice(0, limit);
     return filtered.map(p => ({
       product_id: p.id, name: p.name, price: p.price,
