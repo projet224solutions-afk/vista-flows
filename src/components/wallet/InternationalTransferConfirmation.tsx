@@ -42,6 +42,7 @@ export interface InternationalPreviewData {
   commission_conversion: number;
   frais_international: number;
   rate_lock_seconds?: number;
+  balance_after?: number;
   // For RPC-based flows
   receiver_name?: string;
   receiver_code?: string;
@@ -105,7 +106,6 @@ export function InternationalTransferConfirmation({
   if (!preview) return null;
 
   const progressPercent = (secondsLeft / lockDuration) * 100;
-  const marginPercent = typeof preview.fx_margin === 'number' ? preview.fx_margin * 100 : null;
 
   const countryFlag = (code: string) => {
     const flags: Record<string, string> = {
@@ -158,43 +158,26 @@ export function InternationalTransferConfirmation({
                   <span className="font-bold">{preview.amount_sent.toLocaleString()} {preview.currency_sent}</span>
                 </div>
 
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>📊 Taux incluant les frais (3%)</span>
-                  <span className="font-medium">Intégré au taux de change</span>
-                </div>
-
-                <div className="border-t pt-2 flex justify-between text-sm">
-                  <span>Montant débité</span>
-                  <span className="font-bold">{preview.amount_sent.toLocaleString()} {preview.currency_sent}</span>
-                </div>
-
                 {preview.currency_sent !== preview.currency_received && (
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between text-blue-600 dark:text-blue-400">
-                      <span>💱 Taux appliqué</span>
-                      <span className="font-medium">1 {preview.currency_sent} = {preview.rate_displayed.toFixed(4)} {preview.currency_received}</span>
-                    </div>
-                    {typeof preview.official_rate === 'number' && preview.official_rate > 0 && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Taux officiel banque</span>
-                        <span>1 {preview.currency_sent} = {preview.official_rate.toFixed(4)} {preview.currency_received}</span>
-                      </div>
-                    )}
-                    {marginPercent !== null && marginPercent > 0 && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Marge conversion</span>
-                        <span>{marginPercent.toFixed(2)}%</span>
-                      </div>
-                    )}
+                  <div className="flex justify-between text-blue-600 dark:text-blue-400 text-sm">
+                    <span>💱 Taux de change</span>
+                    <span className="font-medium">1 {preview.currency_sent} = {preview.rate_displayed.toLocaleString(undefined, { maximumFractionDigits: 4 })} {preview.currency_received}</span>
                   </div>
                 )}
 
                 <div className="border-t pt-2 flex justify-between">
-                  <span className="text-sm font-medium">✅ Montant reçu par le destinataire</span>
+                  <span className="text-sm font-medium">✅ Montant reçu</span>
                   <span className="text-lg font-bold text-green-600 dark:text-green-400">
                     {preview.amount_received.toLocaleString()} {preview.currency_received}
                   </span>
                 </div>
+
+                {typeof preview.balance_after === 'number' && (
+                  <div className="flex justify-between text-sm text-muted-foreground border-t pt-2">
+                    <span>Solde après transfert</span>
+                    <span className="font-semibold">{preview.balance_after.toLocaleString()} {preview.currency_sent}</span>
+                  </div>
+                )}
               </div>
 
               {/* Rate lock timer */}
@@ -215,18 +198,9 @@ export function InternationalTransferConfirmation({
                 </div>
               )}
 
-              {preview.is_international && (
-                <div className={`p-3 rounded-lg border text-xs space-y-1 ${preview.rate_is_stale ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 text-amber-800 dark:text-amber-300' : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 text-muted-foreground'}`}>
-                  <div>
-                    Source taux : {preview.rate_is_official ? '✅ banque centrale officielle' : '📊 taux collecté (cron horaire)'}
-                    {preview.rate_source_url ? ` — ${preview.rate_source_url}` : ''}
-                  </div>
-                  {preview.rate_fetched_at && (
-                    <div>Collecté le : {new Date(preview.rate_fetched_at).toLocaleString('fr-FR')}</div>
-                  )}
-                  {preview.rate_is_stale && (
-                    <div className="font-medium">⚠️ Taux de plus de 4h — vérifiez que le cron de collecte fonctionne.</div>
-                  )}
+              {preview.is_international && preview.rate_is_stale && (
+                <div className="p-3 rounded-lg border text-xs bg-amber-50 dark:bg-amber-950/30 border-amber-200 text-amber-800 dark:text-amber-300">
+                  ⚠️ Le taux de change n'a pas été mis à jour récemment. Le montant reçu peut légèrement varier.
                 </div>
               )}
 

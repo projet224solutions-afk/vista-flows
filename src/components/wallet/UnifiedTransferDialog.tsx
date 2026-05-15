@@ -181,6 +181,7 @@ export function UnifiedTransferDialog({
           commission_conversion: previewData.commission_conversion || 0,
           frais_international: previewData.frais_international || 0,
           rate_lock_seconds: previewData.rate_lock_seconds || 60,
+          balance_after: previewData.balance_after,
           receiver_name: previewData.receiver_name,
           receiver_code: previewData.receiver_code,
         });
