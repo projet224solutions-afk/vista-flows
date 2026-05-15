@@ -27,7 +27,7 @@ interface TranslatedProductCardProps {
   isPremium?: boolean;
   stock?: number;
   category?: string;
-  itemType?: 'product' | 'digital_product' | 'professional_service';
+  itemType?: 'product' | 'digital_product' | 'professional_service' | 'menu_item' | 'service_product';
   productMode?: 'direct' | 'affiliate';
   affiliateUrl?: string;
   deliveryTime?: string;

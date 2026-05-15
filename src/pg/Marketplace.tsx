@@ -394,10 +394,17 @@ export default function Marketplace() {
   }, [selectedCountry]);
 
   const handleProductClick = (itemId: string) => {
-    // Si c'est un service professionnel → naviguer vers la fiche service
     const item = marketplaceItems.find(p => p.id === itemId);
     if (item?.item_type === 'professional_service') {
       navigate(`/services-proximite/${itemId}`);
+      return;
+    }
+    if (item?.item_type === 'menu_item') {
+      navigate(`/restaurant/${item.service_id}/menu`);
+      return;
+    }
+    if (item?.item_type === 'service_product') {
+      navigate(`/services-proximite/${item.service_id}`);
       return;
     }
     setSelectedProductId(itemId);
@@ -867,6 +874,14 @@ export default function Marketplace() {
                     onAddToCart={() => {
                       if (item.item_type === 'professional_service') {
                         navigate(`/services-proximite/${item.id}`);
+                        return;
+                      }
+                      if (item.item_type === 'menu_item') {
+                        navigate(`/restaurant/${item.service_id}/menu`);
+                        return;
+                      }
+                      if (item.item_type === 'service_product') {
+                        navigate(`/services-proximite/${item.service_id}`);
                         return;
                       }
                       if (item.item_type === 'digital_product' || item.product_mode === 'affiliate') {

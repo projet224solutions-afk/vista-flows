@@ -38,11 +38,14 @@ export interface MarketplaceItem {
   service_type?: string;
   rating: number;
   reviews_count: number;
-  item_type: 'product' | 'digital_product' | 'professional_service';
+  item_type: 'product' | 'digital_product' | 'professional_service' | 'menu_item' | 'service_product';
   free_shipping?: boolean;
   created_at: string;
-  marketplace_position?: number; // Position dans le marketplace (rotation automatique)
-  is_sponsored?: boolean; // Produit sponsorisé (toujours en tête)
+  marketplace_position?: number;
+  is_sponsored?: boolean;
+  is_featured?: boolean;
+  // ID du service parent (pour menu_item et service_product)
+  service_id?: string;
   // Champs spécifiques aux services professionnels
   business_name?: string;
   address?: string;
@@ -348,6 +351,161 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   };
 
   /**
+   * Charge les plats des restaurants (restaurant_menu_items)
+   */
+  const loadRestaurantMenuItems = async (): Promise<MarketplaceItem[]> => {
+    if (itemType !== 'all' && itemType !== 'professional_service') return [];
+
+    try {
+      let query = (supabase as any)
+        .from('restaurant_menu_items')
+        .select(`
+          id, name, description, price, image_url, images, video_url,
+          is_featured, is_new, created_at, professional_service_id,
+          professional_services(id, business_name, city, logo_url, cover_image_url, rating, total_reviews, user_id, status),
+          restaurant_menu_categories(name)
+        `)
+        .eq('is_available', true);
+
+      if (searchQuery?.trim()) {
+        query = query.or(`name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
+      }
+      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
+      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
+      if (vendorId) query = query.eq('professional_service_id', vendorId);
+
+      const { data, error } = await query
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(sourceRowLimit);
+
+      if (error) throw error;
+
+      const filtered = (data || []).filter((item: any) => {
+        const service = item.professional_services;
+        if (!service || service.status !== 'active') return false;
+        if (city && city !== 'all') {
+          const sc = (service.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const nc = city.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (!sc.startsWith(nc) && !nc.startsWith(sc)) return false;
+        }
+        return true;
+      });
+
+      return filtered.map((item: any) => {
+        const service = item.professional_services;
+        const itemImages: string[] = [];
+        if (item.image_url) itemImages.push(item.image_url);
+        if (Array.isArray(item.images)) {
+          for (const img of item.images) {
+            if (img && !itemImages.includes(img)) itemImages.push(img);
+          }
+        }
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price || 0,
+          currency: 'GNF',
+          description: item.description || '',
+          images: itemImages,
+          promotional_videos: item.video_url ? [item.video_url] : [],
+          vendor_id: item.professional_service_id,
+          vendor_name: service?.business_name || 'Restaurant',
+          vendor_user_id: service?.user_id,
+          category_name: item.restaurant_menu_categories?.name || 'Plat',
+          rating: Number(service?.rating) || 0,
+          reviews_count: service?.total_reviews || 0,
+          item_type: 'menu_item' as const,
+          is_featured: item.is_featured || false,
+          created_at: item.created_at,
+          service_id: item.professional_service_id,
+        };
+      });
+    } catch (error) {
+      console.error('Erreur chargement plats restaurant:', error);
+      return [];
+    }
+  };
+
+  /**
+   * Charge les produits des services de proximité (service_products)
+   */
+  const loadServiceProducts = async (): Promise<MarketplaceItem[]> => {
+    if (itemType !== 'all' && itemType !== 'professional_service') return [];
+
+    try {
+      let query = (supabase as any)
+        .from('service_products')
+        .select(`
+          id, name, description, price, compare_at_price, images, category,
+          created_at, professional_service_id,
+          professional_services(id, business_name, city, logo_url, cover_image_url, rating, total_reviews, user_id, status)
+        `)
+        .eq('is_available', true);
+
+      if (searchQuery?.trim()) {
+        query = query.or(`name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
+      }
+      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
+      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
+      if (vendorId) query = query.eq('professional_service_id', vendorId);
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(sourceRowLimit);
+
+      if (error) throw error;
+
+      const filtered = (data || []).filter((item: any) => {
+        const service = item.professional_services;
+        if (!service || service.status !== 'active') return false;
+        if (city && city !== 'all') {
+          const sc = (service.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          const nc = city.trim().replace(/\s+/g, ' ').toLowerCase();
+          if (!sc.startsWith(nc) && !nc.startsWith(sc)) return false;
+        }
+        return true;
+      });
+
+      return filtered.map((item: any) => {
+        const service = item.professional_services;
+        let itemImages: string[] = [];
+        if (Array.isArray(item.images)) {
+          itemImages = item.images
+            .map((img: any) => (typeof img === 'string' ? img : img?.url || img?.src || ''))
+            .filter(Boolean);
+        }
+        // Fallback sur l'image du service parent si le produit n'en a pas
+        if (itemImages.length === 0 && service?.cover_image_url) itemImages.push(service.cover_image_url);
+        if (itemImages.length === 0 && service?.logo_url) itemImages.push(service.logo_url);
+
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price || 0,
+          originalPrice: item.compare_at_price || undefined,
+          currency: 'GNF',
+          description: item.description || '',
+          images: itemImages,
+          promotional_videos: [],
+          vendor_id: item.professional_service_id,
+          vendor_name: service?.business_name || 'Service',
+          vendor_user_id: service?.user_id,
+          category_name: item.category || 'Service',
+          rating: Number(service?.rating) || 0,
+          reviews_count: service?.total_reviews || 0,
+          item_type: 'service_product' as const,
+          created_at: item.created_at,
+          service_id: item.professional_service_id,
+        };
+      });
+    } catch (error) {
+      console.error('Erreur chargement produits services:', error);
+      return [];
+    }
+  };
+
+  /**
    * Charge les produits numériques depuis la table digital_products
    */
   const loadDigitalProducts = async (): Promise<MarketplaceItem[]> => {
@@ -547,23 +705,29 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (itemType === 'product') {
         allItems = await withTimeout(loadProducts(), [], 'products');
       } else if (itemType === 'digital_product') {
-        // Si une catégorie e-commerce est sélectionnée, ne pas charger les produits numériques
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
-        // Si une catégorie e-commerce est sélectionnée, ne pas charger les services pro
-        allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadProfessionalServices(), [], 'professional_services');
+        if (!isEcommerceCategorySelected) {
+          const [services, menuItems, serviceProds] = await Promise.all([
+            withTimeout(loadProfessionalServices(), [], 'professional_services'),
+            withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
+            withTimeout(loadServiceProducts(), [], 'service_products'),
+          ]);
+          allItems = [...services, ...menuItems, ...serviceProds];
+        }
       } else {
-        // 'all' = produits + numériques + services professionnels
-        // Si une catégorie e-commerce est sélectionnée, ne charger que les produits
+        // 'all' = tout : produits + numériques + services pro + plats + produits services
         if (isEcommerceCategorySelected) {
           allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
-          const [products, digitalProducts, professionalServices] = await Promise.all([
+          const [products, digitalProducts, professionalServices, menuItems, serviceProds] = await Promise.all([
             withTimeout(loadProducts(), [], 'products'),
             withTimeout(loadDigitalProducts(), [], 'digital_products'),
-            withTimeout(loadProfessionalServices(), [], 'professional_services')
+            withTimeout(loadProfessionalServices(), [], 'professional_services'),
+            withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
+            withTimeout(loadServiceProducts(), [], 'service_products'),
           ]);
-          allItems = [...products, ...digitalProducts, ...professionalServices];
+          allItems = [...products, ...digitalProducts, ...professionalServices, ...menuItems, ...serviceProds];
         }
       }
 
