@@ -28,6 +28,8 @@ type TransferExecutionOptions = {
   rateUsed?: number;
   rateSource?: string;
   feeAmount?: number;
+  senderWalletId?: string;
+  receiverWalletId?: string;
 };
 
 type TransferWallet = {
@@ -568,13 +570,39 @@ export async function transferBetweenWallets(
       return { success: false, error: 'Transfert bloqué pour activité suspecte' };
     }
 
-    const senderWallet = await ensureWalletForTransfer(senderId, options.senderCurrency || 'GNF');
-    if (!senderWallet) return { success: false, error: 'Wallet expéditeur indisponible' };
+    // Utiliser les IDs wallet fournis par la route (déjà validés) pour éviter un double-fetch
+    // qui pourrait retourner un wallet différent si l'utilisateur en a plusieurs
+    let senderWallet: TransferWallet;
+    if (options.senderWalletId) {
+      const { data: sw } = await supabaseAdmin
+        .from('wallets')
+        .select('id, balance, is_blocked, currency')
+        .eq('id', options.senderWalletId)
+        .single();
+      if (!sw) return { success: false, error: 'Wallet expéditeur introuvable' };
+      senderWallet = sw as TransferWallet;
+    } else {
+      const sw = await ensureWalletForTransfer(senderId, options.senderCurrency || 'GNF');
+      if (!sw) return { success: false, error: 'Wallet expéditeur indisponible' };
+      senderWallet = sw;
+    }
     if (senderWallet.is_blocked) return { success: false, error: 'Wallet expéditeur bloqué' };
     if (Number(senderWallet.balance) < amount) return { success: false, error: 'Solde insuffisant' };
 
-    const receiverWallet = await ensureWalletForTransfer(receiverId, options.receiverCurrency || senderWallet.currency || 'GNF');
-    if (!receiverWallet) return { success: false, error: 'Wallet destinataire indisponible' };
+    let receiverWallet: TransferWallet;
+    if (options.receiverWalletId) {
+      const { data: rw } = await supabaseAdmin
+        .from('wallets')
+        .select('id, balance, is_blocked, currency')
+        .eq('id', options.receiverWalletId)
+        .single();
+      if (!rw) return { success: false, error: 'Wallet destinataire introuvable' };
+      receiverWallet = rw as TransferWallet;
+    } else {
+      const rw = await ensureWalletForTransfer(receiverId, options.receiverCurrency || senderWallet.currency || 'GNF');
+      if (!rw) return { success: false, error: 'Wallet destinataire indisponible' };
+      receiverWallet = rw;
+    }
 
     const senderCurrency = String(options.senderCurrency || senderWallet.currency || 'GNF').toUpperCase();
     const receiverCurrency = String(options.receiverCurrency || receiverWallet.currency || senderCurrency).toUpperCase();
@@ -635,32 +663,49 @@ export async function transferBetweenWallets(
     }
 
     const newSenderBalance = Number(senderWallet.balance) - amount;
-    const newReceiverBalance = Number(receiverWallet.balance) + amountToCredit;
 
+    // Débit expéditeur — verrou optimiste sur balance ET ciblage par wallet ID (pas user_id)
     const { data: debitResult, error: debitErr } = await supabaseAdmin
       .from('wallets')
       .update({ balance: newSenderBalance, updated_at: new Date().toISOString() })
-      .eq('user_id', senderId)
+      .eq('id', senderWallet.id)
       .eq('balance', senderWallet.balance)
       .select('balance')
       .single();
 
     if (debitErr || !debitResult) {
+      logger.warn(`[Wallet] Debit failed for wallet ${senderWallet.id} (user=${senderId}): ${debitErr?.message || 'no row matched — concurrent modification'}`);
       return { success: false, error: 'Solde modifié pendant la transaction. Réessayez.' };
     }
 
-    const { error: creditErr } = await supabaseAdmin
+    // Récupérer le solde courant du destinataire pour éviter une valeur périmée
+    const { data: freshReceiverWallet } = await supabaseAdmin
+      .from('wallets')
+      .select('balance')
+      .eq('id', receiverWallet.id)
+      .single();
+
+    const currentReceiverBalance = Number(freshReceiverWallet?.balance ?? receiverWallet.balance);
+    const newReceiverBalance = currentReceiverBalance + amountToCredit;
+
+    // Crédit destinataire — ciblage par wallet ID uniquement
+    const { data: creditResult, error: creditErr } = await supabaseAdmin
       .from('wallets')
       .update({ balance: newReceiverBalance, updated_at: new Date().toISOString() })
-      .eq('user_id', receiverId);
+      .eq('id', receiverWallet.id)
+      .select('balance')
+      .single();
 
-    if (creditErr) {
+    if (creditErr || !creditResult) {
+      logger.error(`[Wallet] Credit failed for wallet ${receiverWallet.id} (user=${receiverId}), rolling back debit on wallet ${senderWallet.id}: ${creditErr?.message || 'no row matched'}`);
       await supabaseAdmin
         .from('wallets')
         .update({ balance: senderWallet.balance, updated_at: new Date().toISOString() })
-        .eq('user_id', senderId);
+        .eq('id', senderWallet.id);
       return { success: false, error: 'Échec du crédit destinataire — transaction annulée' };
     }
+
+    logger.info(`[Wallet] Balances updated: sender wallet ${senderWallet.id} ${senderWallet.balance}→${newSenderBalance} ${senderCurrency}, receiver wallet ${receiverWallet.id} ${currentReceiverBalance}→${newReceiverBalance} ${receiverCurrency}`);
 
     await persistTransferHistory({
       senderId,

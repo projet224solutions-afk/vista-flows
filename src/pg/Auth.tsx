@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { _User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag, Bike, Truck, Utensils, Scissors, Car, Wrench, Sparkles, Dumbbell, Building2, Camera, Heart, Home } from "lucide-react";
+import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag, Bike, Truck, Utensils, Scissors, Car, Wrench, Sparkles, Dumbbell, Building2, Camera, Heart, Home, Phone, Lock, Mail } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -112,6 +112,25 @@ export default function Auth() {
   const [checkingResetLink, setCheckingResetLink] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [_resetCode, setResetCode] = useState('');
+  const [resetOtpSent, setResetOtpSent] = useState(false);
+  const [resetFormattedPhone, setResetFormattedPhone] = useState('');
+  const [resetOtpCode, setResetOtpCode] = useState('');
+  const [phoneNotFoundReset, setPhoneNotFoundReset] = useState(false);
+
+  // Login par numéro de téléphone
+  const [loginPhoneOtpSent, setLoginPhoneOtpSent] = useState(false);
+  const [loginFormattedPhone, setLoginFormattedPhone] = useState('');
+  const [loginPhoneOtp, setLoginPhoneOtp] = useState('');
+  const [loginPhoneNotFound, setLoginPhoneNotFound] = useState(false);
+  const [loginResendCooldown, setLoginResendCooldown] = useState(0);
+  const [resetResendCooldown, setResetResendCooldown] = useState(0);
+
+  // Inscription par numéro de téléphone
+  const [signupMethod, setSignupMethod] = useState<'email' | 'phone'>('email');
+  const [phoneSignupOtpSent, setPhoneSignupOtpSent] = useState(false);
+  const [phoneSignupPhone, setPhoneSignupPhone] = useState('');
+  const [phoneSignupOtp, setPhoneSignupOtp] = useState('');
+  const [phoneSignupResendCooldown, setPhoneSignupResendCooldown] = useState(0);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   // Cognito désactivé comme auth principal - Supabase est le système principal
@@ -779,6 +798,25 @@ export default function Auth() {
 
   const [bureaus, setBureaus] = useState<Array<{ id: string; commune: string; prefecture: string }>>([]);
 
+  // Countdown pour le bouton "Renvoyer le code"
+  useEffect(() => {
+    if (loginResendCooldown <= 0) return;
+    const t = setTimeout(() => setLoginResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [loginResendCooldown]);
+
+  useEffect(() => {
+    if (resetResendCooldown <= 0) return;
+    const t = setTimeout(() => setResetResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resetResendCooldown]);
+
+  useEffect(() => {
+    if (phoneSignupResendCooldown <= 0) return;
+    const t = setTimeout(() => setPhoneSignupResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phoneSignupResendCooldown]);
+
   // Charger les bureaux syndicaux disponibles
   useEffect(() => {
     const loadBureaus = async () => {
@@ -824,6 +862,38 @@ export default function Auth() {
           const hint = getPhoneLengthHint(phoneCode);
           throw new Error(`Numéro de téléphone invalide pour ${phoneCode}. Format attendu: ${hint}`);
         }
+
+        // ── Inscription par téléphone ──
+        if (signupMethod === 'phone') {
+          passwordSchema.parse(formData.password);
+          if (formData.password !== formData.confirmPassword) {
+            throw new Error('Les mots de passe ne correspondent pas');
+          }
+          const rawPhone = (phoneCode + formData.phone).trim().replace(/[\s\-().]/g, '');
+          const phoneDigits = rawPhone.replace(/[^\d]/g, '');
+          let normalizedSignupPhone: string;
+          if (rawPhone.startsWith('+')) normalizedSignupPhone = rawPhone;
+          else if (phoneDigits.startsWith('00224') && phoneDigits.length >= 14) normalizedSignupPhone = '+' + phoneDigits.slice(2);
+          else if (phoneDigits.startsWith('224') && phoneDigits.length >= 12) normalizedSignupPhone = '+' + phoneDigits;
+          else if (phoneDigits.length === 9) normalizedSignupPhone = '+224' + phoneDigits;
+          else normalizedSignupPhone = '+' + phoneDigits;
+
+          const { data: sendData, error: sendError } = await supabase.functions.invoke('phone-signup-send', {
+            body: { phone: normalizedSignupPhone },
+          });
+
+          if (sendError || !sendData?.success) {
+            if (sendData?.alreadyExists) throw new Error('Ce numéro est déjà associé à un compte. Connectez-vous.');
+            throw new Error(sendData?.error || 'Impossible d\'envoyer le code SMS. Vérifiez le numéro.');
+          }
+
+          setPhoneSignupPhone(sendData.phone || normalizedSignupPhone);
+          setPhoneSignupOtpSent(true);
+          setPhoneSignupResendCooldown(60);
+          toast({ title: 'Code envoyé', description: `SMS envoyé au ${sendData.phone || normalizedSignupPhone}` });
+          return;
+        }
+
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
 
         // Générer un ID utilisateur avec le bon préfixe selon le rôle
@@ -1107,6 +1177,45 @@ export default function Auth() {
       } else {
         // Connexion - Supabase Auth est le système principal
         console.log('🔐 [Auth] Tentative de connexion Supabase...');
+
+        // ── Détection automatique téléphone ──
+        if (isPhoneIdentifier(formData.email)) {
+          const raw = formData.email.trim();
+          const clean = raw.replace(/[\s\-().]/g, '');
+          const digits = clean.replace(/[^\d]/g, '');
+
+          // Normalisation intelligente E.164 (évite le double-préfixe 224)
+          let primaryFormatted: string;
+          if (clean.startsWith('+')) {
+            primaryFormatted = clean;
+          } else if (digits.startsWith('00224') && digits.length >= 14) {
+            primaryFormatted = '+' + digits.slice(2);
+          } else if (digits.startsWith('224') && digits.length >= 12) {
+            primaryFormatted = '+' + digits;
+          } else {
+            primaryFormatted = '+224' + digits;
+          }
+
+          setLoginFormattedPhone(primaryFormatted);
+          setLoginPhoneNotFound(false);
+
+          // phone-send-otp : trouve le profil + envoie SMS via Twilio directement
+          const { data: sendData, error: sendError } = await supabase.functions.invoke('phone-send-otp', {
+            body: { phone: primaryFormatted },
+          });
+
+          if (sendError || !sendData?.success || !sendData?.found) {
+            setLoginPhoneNotFound(true);
+            return;
+          }
+
+          setLoginFormattedPhone(sendData.phone);
+          setLoginPhoneOtpSent(true);
+          setLoginResendCooldown(60);
+          toast({ title: 'Code envoyé', description: `SMS envoyé au ${sendData.phone}` });
+          return;
+        }
+
         const validatedData = loginSchema.parse(formData);
 
         // 🔑 Login Supabase (système principal)
@@ -1290,19 +1399,55 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      const emailSchema = z.string().email("Adresse email invalide");
-      emailSchema.parse(resetEmail);
+      const identifier = resetEmail.trim();
+      const isPhone = !identifier.includes('@') && /^\+?[\d\s\-().]{6,}$/.test(identifier);
 
-      // ✓ Supabase Auth - système principal
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      if (isPhone) {
+        const clean = identifier.replace(/[\s\-().]/g, '');
+        const digits = clean.replace(/[^\d]/g, '');
 
-      if (error) throw error;
+        // Normalisation intelligente E.164
+        let formatted: string;
+        if (clean.startsWith('+')) {
+          formatted = clean;
+        } else if (digits.startsWith('00224') && digits.length >= 14) {
+          formatted = '+' + digits.slice(2);
+        } else if (digits.startsWith('224') && digits.length >= 12) {
+          formatted = '+' + digits;
+        } else {
+          formatted = '+224' + digits;
+        }
 
-      setSuccess("Lien de réinitialisation envoyé. Vérifiez votre email.");
-      setShowResetPassword(false);
-      setIsLogin(true);
+        setResetFormattedPhone(formatted);
+        setPhoneNotFoundReset(false);
+
+        // phone-send-otp : trouve le profil + envoie SMS via Twilio directement
+        const { data: sendData, error: sendError } = await supabase.functions.invoke('phone-send-otp', {
+          body: { phone: formatted },
+        });
+
+        if (sendError || !sendData?.success || !sendData?.found) {
+          setPhoneNotFoundReset(true);
+          setLoading(false);
+          return;
+        }
+
+        const storedPhone: string = sendData.phone;
+        setResetFormattedPhone(storedPhone);
+        setResetOtpSent(true);
+        setResetResendCooldown(60);
+        toast({ title: "Code envoyé", description: `Code SMS envoyé au ${storedPhone}` });
+      } else {
+        const emailSchema = z.string().email("Adresse email invalide");
+        emailSchema.parse(identifier);
+        const { error } = await supabase.auth.resetPasswordForEmail(identifier, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setSuccess("Lien de réinitialisation envoyé. Vérifiez votre email.");
+        setShowResetPassword(false);
+        setIsLogin(true);
+      }
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
       if (err instanceof Error) errorMessage = err.message;
@@ -1311,6 +1456,297 @@ export default function Auth() {
       }
       setError(errorMessage);
       console.error('Erreur réinitialisation mot de passe:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('phone-verify-otp', {
+        body: { phone: resetFormattedPhone, otp: resetOtpCode },
+      });
+
+      if (verifyError) throw new Error(verifyError.message);
+      if (!verifyData?.success) throw new Error(verifyData?.error || 'Code invalide');
+
+      // Créer la session via le token magic link retourné par l'edge function
+      const { error: sessionError } = await supabase.auth.verifyOtp({
+        token_hash: verifyData.tokenHash,
+        type: 'magiclink',
+      });
+      if (sessionError) throw sessionError;
+
+      setResetOtpSent(false);
+      setShowNewPasswordForm(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Code invalide');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendLoginOtp = async () => {
+    if (loginResendCooldown > 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('phone-send-otp', {
+        body: { phone: loginFormattedPhone },
+      });
+      if (error || !data?.success) throw new Error('Impossible de renvoyer le code');
+      setLoginResendCooldown(60);
+      toast({ title: 'Code renvoyé', description: `Nouveau SMS envoyé au ${loginFormattedPhone}` });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du renvoi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendResetOtp = async () => {
+    if (resetResendCooldown > 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('phone-send-otp', {
+        body: { phone: resetFormattedPhone },
+      });
+      if (error || !data?.success) throw new Error('Impossible de renvoyer le code');
+      setResetResendCooldown(60);
+      toast({ title: 'Code renvoyé', description: `Nouveau SMS envoyé au ${resetFormattedPhone}` });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du renvoi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendPhoneSignupOtp = async () => {
+    if (phoneSignupResendCooldown > 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('phone-signup-send', {
+        body: { phone: phoneSignupPhone },
+      });
+      if (error || !data?.success) throw new Error('Impossible de renvoyer le code');
+      setPhoneSignupResendCooldown(60);
+      toast({ title: 'Code renvoyé', description: `Nouveau SMS envoyé au ${phoneSignupPhone}` });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du renvoi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhoneSignupVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setIsAuthenticating(true);
+    isFormSubmittingRef.current = true;
+    setError(null);
+
+    try {
+      const { data: userCustomId } = await supabase.rpc('generate_custom_id_with_role', { p_role: selectedRole! });
+
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('phone-signup-verify', {
+        body: {
+          phone: phoneSignupPhone,
+          otp: phoneSignupOtp,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: selectedRole,
+          city: formData.city,
+          country: formData.country,
+          businessName: formData.businessName || null,
+          serviceType: selectedServiceType || null,
+          customId: userCustomId || null,
+        },
+      });
+
+      if (verifyError) throw new Error(verifyError.message);
+      if (!verifyData?.success) throw new Error(verifyData?.error || 'Code invalide');
+
+      const userId: string = verifyData.userId;
+      const proxyEmail: string = verifyData.email;
+
+      // Connexion immédiate avec l'email proxy
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: proxyEmail,
+        password: formData.password,
+      });
+      if (signInError) throw signInError;
+
+      const authUser = signInData.user;
+      if (!authUser) throw new Error('Erreur de connexion après inscription');
+
+      // Inserts spécifiques au rôle (identique au parcours email)
+      if (selectedRole === 'taxi') {
+        try {
+          const bureau = bureaus.find(b => b.commune === formData.city);
+          await supabase.from('taxi_drivers').insert({
+            user_id: authUser.id,
+            is_online: false,
+            status: 'pending_verification',
+            vehicle: {
+              commune: formData.city,
+              bureau_id: bureau?.id || null,
+              prefecture: bureau?.prefecture || null,
+              registration_date: new Date().toISOString(),
+            },
+          });
+          if (bureau?.id) {
+            await supabase.from('members').insert({
+              bureau_id: bureau.id,
+              name: `${formData.firstName} ${formData.lastName}`,
+              email: proxyEmail,
+              phone: phoneSignupPhone,
+              status: 'pending',
+              cotisation_status: 'pending',
+              join_date: new Date().toISOString().split('T')[0],
+              custom_id: userCustomId,
+            });
+          }
+        } catch (e) { console.error('Erreur sync taxi:', e); }
+      }
+
+      if (selectedRole === 'vendeur') {
+        try {
+          const businessName = formData.businessName?.trim() || `${formData.firstName} ${formData.lastName}`;
+          await supabase.from('vendors').insert({
+            user_id: authUser.id,
+            business_name: businessName,
+            email: proxyEmail,
+            phone: phoneSignupPhone,
+            address: formData.city,
+            city: formData.city,
+            is_verified: false,
+            is_active: true,
+            service_type: 'general',
+            business_type: vendorShopType || 'physical',
+          });
+        } catch (e) { console.error('Erreur sync vendeur:', e); }
+      }
+
+      if (selectedRole === 'prestataire' && selectedServiceType) {
+        try {
+          const { data: serviceType } = await supabase
+            .from('service_types').select('id').eq('code', selectedServiceType).maybeSingle();
+          if (serviceType) {
+            await supabase.from('professional_services').insert({
+              user_id: authUser.id,
+              service_type_id: serviceType.id,
+              business_name: formData.businessName?.trim() || `${formData.firstName} ${formData.lastName}`,
+              address: formData.city,
+              phone: phoneSignupPhone,
+              email: proxyEmail,
+              status: 'active',
+              verification_status: 'unverified',
+            });
+          }
+        } catch (e) { console.error('Erreur sync prestataire:', e); }
+      }
+
+      // Affiliation
+      if (affiliateData.token) {
+        try {
+          await supabase.functions.invoke('register-with-affiliate', {
+            body: {
+              user_id: authUser.id,
+              email: proxyEmail,
+              phone: phoneSignupPhone,
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              role: selectedRole,
+              affiliate_token: affiliateData.token,
+            },
+          });
+          cleanupAffiliateFlags();
+        } catch (e) { console.error('Erreur affiliation:', e); }
+      }
+
+      // Attendre la création du profil
+      let profileData = null;
+      let attempts = 0;
+      while (!profileData && attempts < 10) {
+        await new Promise(r => setTimeout(r, 500));
+        const { data } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle();
+        if (data?.role) { profileData = data; break; }
+        attempts++;
+      }
+
+      const targetRoute = profileData?.role
+        ? await resolvePostAuthRoute({ userId, role: profileData.role, vendorShopType })
+        : '/home';
+
+      setSuccessRedirectRoute(targetRoute);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate(targetRoute, { replace: true });
+      }, 2500);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Code invalide ou erreur serveur');
+    } finally {
+      setLoading(false);
+      setIsAuthenticating(false);
+      isFormSubmittingRef.current = false;
+    }
+  };
+
+  const isPhoneIdentifier = (val: string): boolean => {
+    const v = val.trim();
+    if (v.length < 6 || v.includes('@')) return false;
+    // Accepte : +224XXXXXXX, 224XXXXXXX, 00224XXXXXXX, XXXXXXXXX (chiffres + séparateurs courants)
+    return /^\+?[\d\s\-().]{6,}$/.test(v);
+  };
+
+  const handleLoginVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      // Vérifier via notre edge function (OTP stocké dans auth_otp_codes)
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('phone-verify-otp', {
+        body: { phone: loginFormattedPhone, otp: loginPhoneOtp },
+      });
+
+      if (verifyError) throw new Error(verifyError.message);
+      if (!verifyData?.success) throw new Error(verifyData?.error || 'Code invalide');
+
+      // Créer la session Supabase via le token magic link
+      const { data, error: sessionError } = await supabase.auth.verifyOtp({
+        token_hash: verifyData.tokenHash,
+        type: 'magiclink',
+      });
+      if (sessionError) throw sessionError;
+
+      toast({ title: 'Connexion réussie', description: 'Bienvenue !' });
+
+      if (data.user) {
+        let profileData = null;
+        let attempts = 0;
+        while (!profileData && attempts < 10) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+          if (profile?.role) { profileData = profile; break; }
+          if (attempts < 9) await new Promise(r => setTimeout(r, 300));
+          attempts++;
+        }
+        const roleRoutes: Record<string, string> = {
+          admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
+          taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+          client: '/client', agent: '/agent',
+        };
+        navigate(profileData?.role ? (roleRoutes[profileData.role] || '/home') : '/home', { replace: true });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Code invalide');
     } finally {
       setLoading(false);
     }
@@ -1941,24 +2377,104 @@ export default function Auth() {
                   </Alert>
                 )}
 
+                {resetOtpSent ? (
+                  <form onSubmit={handleResetVerifyOtp} className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Code SMS envoyé au <strong>{resetFormattedPhone}</strong>. Entrez le code reçu pour continuer.
+                    </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-otp">Code de vérification</Label>
+                      <Input
+                        id="reset-otp"
+                        type="text"
+                        placeholder="123456"
+                        value={resetOtpCode}
+                        onChange={(e) => setResetOtpCode(e.target.value)}
+                        className="text-center tracking-widest font-mono"
+                        maxLength={6}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    {error && (
+                      <Alert className="bg-red-50 border-red-200">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">{error}</AlertDescription>
+                      </Alert>
+                    )}
+                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || resetOtpCode.length < 4}>
+                      {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Vérification...</> : 'Vérifier le code'}
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={handleResendResetOtp}
+                      disabled={loading || resetResendCooldown > 0}
+                      className="w-full text-sm text-blue-600 hover:underline disabled:text-muted-foreground disabled:no-underline py-1"
+                    >
+                      {resetResendCooldown > 0 ? `Renvoyer le code (${resetResendCooldown}s)` : 'Renvoyer le code'}
+                    </button>
+                    <Button type="button" variant="ghost" className="w-full" onClick={() => setResetOtpSent(false)}>
+                      Changer de numéro
+                    </Button>
+                  </form>
+                ) : (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Entrez votre adresse e-mail pour recevoir un lien de réinitialisation de mot de passe.
+                    Entrez votre email ou numéro de téléphone pour réinitialiser votre mot de passe.
                   </p>
-                  <Label htmlFor="reset-email">Adresse email</Label>
+                  <Label htmlFor="reset-email">Email ou numéro de téléphone</Label>
                   <Input
                     id="reset-email"
-                    type="email"
-                    placeholder="votre@email.com"
+                    type="text"
+                    placeholder="Email ou numéro de téléphone"
                     value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
+                    onChange={(e) => { setResetEmail(e.target.value); setPhoneNotFoundReset(false); }}
                     required
                   />
                 </div>
+                )}
 
+                {phoneNotFoundReset && !resetOtpSent && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">Numéro non reconnu</p>
+                        <p className="text-xs text-amber-700">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+                      onClick={() => {
+                        setShowResetPassword(false);
+                        setPhoneNotFoundReset(false);
+                        // Pré-remplir le numéro depuis le champ de réinitialisation
+                        const rawPh = resetEmail.trim().replace(/[\s\-().]/g, '');
+                        const ph = rawPh.replace(/[^\d]/g, '');
+                        if (ph.startsWith('224') && ph.length === 12) {
+                          setPhoneCode('+224');
+                          handleInputChange('phone', ph.slice(3));
+                        } else if (ph.length === 9) {
+                          setPhoneCode('+224');
+                          handleInputChange('phone', ph);
+                        } else {
+                          handleInputChange('phone', ph);
+                        }
+                        // Ouvrir la modal de création de compte client
+                        setShowRoleSelectionModal(true);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Créer un compte avec ce numéro
+                    </Button>
+                  </div>
+                )}
+
+                {!resetOtpSent && !phoneNotFoundReset && (
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={loading}
                 >
                   {loading ? (
@@ -1967,10 +2483,12 @@ export default function Auth() {
                       Envoi en cours...
                     </>
                   ) : (
-                    'Envoyer le lien de réinitialisation'
+                    resetEmail.includes('@') ? 'Envoyer le lien par email' : 'Envoyer le code SMS'
                   )}
                 </Button>
+                )}
 
+                {!resetOtpSent && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -1980,10 +2498,13 @@ export default function Auth() {
                     setError(null);
                     setSuccess(null);
                     setResetCode('');
+                    setPhoneNotFoundReset(false);
+                    setResetOtpSent(false);
                   }}
                 >
                   Retour à la connexion
                 </Button>
+                )}
               </form>
             ) : showNewPasswordForm ? (
               <form onSubmit={handleNewPasswordSubmit} className="space-y-4">
@@ -2368,19 +2889,187 @@ export default function Auth() {
               )}
 
               {(!showSignup || selectedRole) && (<>
+
+              {/* Formulaire OTP téléphone — connexion */}
+              {loginPhoneOtpSent ? (
+                <form onSubmit={handleLoginVerifyPhoneOtp} className="space-y-4">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <Phone className="h-4 w-4 text-blue-600 shrink-0" />
+                    <p className="text-sm text-blue-800">Code SMS envoyé au <strong>{loginFormattedPhone}</strong></p>
+                  </div>
+                  <div>
+                    <Label htmlFor="login-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Code de vérification</Label>
+                    <Input
+                      id="login-otp"
+                      type="text"
+                      placeholder="123456"
+                      value={loginPhoneOtp}
+                      onChange={(e) => setLoginPhoneOtp(e.target.value)}
+                      className="mt-1 text-center tracking-widest font-mono text-lg"
+                      maxLength={6}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  {error && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                      <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || loginPhoneOtp.length < 4}>
+                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Vérification...</> : 'Se connecter'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={handleResendLoginOtp}
+                    disabled={loading || loginResendCooldown > 0}
+                    className="w-full text-sm text-blue-600 hover:underline disabled:text-muted-foreground disabled:no-underline py-1"
+                  >
+                    {loginResendCooldown > 0 ? `Renvoyer le code (${loginResendCooldown}s)` : 'Renvoyer le code'}
+                  </button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => { setLoginPhoneOtpSent(false); setLoginPhoneOtp(''); setError(null); }}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Changer de numéro
+                  </Button>
+                </form>
+
+              /* Formulaire OTP téléphone — inscription */
+              ) : phoneSignupOtpSent ? (
+                <form onSubmit={handlePhoneSignupVerify} className="space-y-4">
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <p className="text-sm text-emerald-800">Code SMS envoyé au <strong>{phoneSignupPhone}</strong></p>
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Code de vérification</Label>
+                    <Input
+                      id="signup-otp"
+                      type="text"
+                      placeholder="123456"
+                      value={phoneSignupOtp}
+                      onChange={(e) => setPhoneSignupOtp(e.target.value)}
+                      className="mt-1 text-center tracking-widest font-mono text-lg"
+                      maxLength={6}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  {error && (
+                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                      <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading || phoneSignupOtp.length < 4}>
+                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Création du compte...</> : 'Créer mon compte'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={handleResendPhoneSignupOtp}
+                    disabled={loading || phoneSignupResendCooldown > 0}
+                    className="w-full text-sm text-emerald-600 hover:underline disabled:text-muted-foreground disabled:no-underline py-1"
+                  >
+                    {phoneSignupResendCooldown > 0 ? `Renvoyer le code (${phoneSignupResendCooldown}s)` : 'Renvoyer le code'}
+                  </button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => { setPhoneSignupOtpSent(false); setPhoneSignupOtp(''); setError(null); }}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Changer de numéro
+                  </Button>
+                </form>
+
+              ) : (
+              <>
+              {/* Toggle méthode d'inscription — visible uniquement en mode inscription */}
+              {showSignup && selectedRole && (
+                <div className="flex gap-1 p-1 bg-muted rounded-xl mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setSignupMethod('email')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                      signupMethod === 'email'
+                        ? 'bg-white shadow-sm text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Mail className="h-3.5 w-3.5" /> Email
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSignupMethod('phone')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                      signupMethod === 'phone'
+                        ? 'bg-white shadow-sm text-emerald-600'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Phone className="h-3.5 w-3.5" /> Téléphone
+                  </button>
+                </div>
+              )}
+
+              {/* Champ email — masqué si inscription par téléphone */}
+              {(!showSignup || signupMethod === 'email') && (
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="flex items-center gap-1.5">
+                  {!showSignup && isPhoneIdentifier(formData.email) ? <Phone className="h-3.5 w-3.5" /> : <Mail className="h-3.5 w-3.5" />}
+                  {!showSignup && isPhoneIdentifier(formData.email) ? 'Numéro de téléphone' : 'Email'}
+                </Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="votre@email.com"
+                  onChange={(e) => { handleInputChange('email', e.target.value); setLoginPhoneNotFound(false); }}
+                  placeholder={showSignup ? 'Adresse email' : 'Email ou numéro de téléphone'}
                   required
                   className="mt-1"
                 />
               </div>
+              )}
 
+              {/* Numéro utilisé pour l'inscription par téléphone */}
+              {showSignup && signupMethod === 'phone' && (
+                <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                  <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-emerald-800">
+                    Votre numéro <strong>{phoneCode} {formData.phone || '...'}</strong> sera utilisé pour vous connecter par SMS.
+                  </p>
+                </div>
+              )}
+
+              {loginPhoneNotFound && !showSignup && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-amber-800">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+                    onClick={() => {
+                      setLoginPhoneNotFound(false);
+                      // Pré-remplir le numéro depuis le champ de connexion
+                      const rawPh = formData.email.trim().replace(/[\s\-().]/g, '');
+                      const ph = rawPh.replace(/[^\d]/g, '');
+                      if (ph.startsWith('224') && ph.length === 12) {
+                        setPhoneCode('+224');
+                        handleInputChange('phone', ph.slice(3));
+                      } else if (ph.length === 9) {
+                        setPhoneCode('+224');
+                        handleInputChange('phone', ph);
+                      } else {
+                        handleInputChange('phone', ph);
+                      }
+                      // Ouvrir la modal de création de compte client
+                      setShowRoleSelectionModal(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Créer un compte avec ce numéro
+                  </Button>
+                </div>
+              )}
+
+              {/* Mot de passe — masqué uniquement en connexion par téléphone */}
+              {(!showSignup ? !isPhoneIdentifier(formData.email) : true) && (
               <div>
                 <Label htmlFor="password">{t('auth.password')}</Label>
                 <div className="relative mt-1">
@@ -2402,6 +3091,7 @@ export default function Auth() {
                   </button>
                 </div>
               </div>
+              )}
 
               {showSignup && (
                 <div>
@@ -2454,9 +3144,12 @@ export default function Auth() {
                     {showSignup ? t('auth.registering') : t('auth.loggingIn')}
                   </>
                 ) : (
-                  showSignup ? t('auth.register') : t('auth.login')
+                  showSignup
+                    ? (signupMethod === 'phone' ? 'Envoyer le code SMS' : t('auth.register'))
+                    : t('auth.login')
                 )}
               </Button>
+              </>)}
               </>)}
 
               {/* ===== OAUTH BUTTONS ===== */}

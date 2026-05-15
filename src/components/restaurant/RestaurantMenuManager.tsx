@@ -1,35 +1,33 @@
 /**
  * Composant de gestion du menu restaurant
- * Catégories et plats avec CRUD complet
+ * Catégories et plats avec CRUD complet + multi-images + vidéo Elite
  */
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus, Edit2, Trash2, UtensilsCrossed, Tag,
-  Clock, _Flame, _Leaf, Star, Eye, EyeOff,
-  _GripVertical, Search, _Filter, Upload, X, Loader2, Image as ImageIcon
+  Clock, Star, Eye, EyeOff,
+  Search, Upload, X, Loader2, Image as ImageIcon, Video, Lock
 } from 'lucide-react';
 import { useRestaurantMenu, MenuCategory, MenuItem } from '@/hooks/useRestaurantMenu';
+import { useUnifiedSubscription } from '@/hooks/useUnifiedSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface RestaurantMenuManagerProps {
   serviceId: string;
 }
-
-// formatCurrency is now handled via useFormatCurrency hook inside the component
 
 const DIETARY_TAGS = [
   { value: 'vegetarien', label: 'Végétarien', icon: '🥬' },
@@ -40,30 +38,27 @@ const DIETARY_TAGS = [
   { value: 'bio', label: 'Bio', icon: '🌿' },
 ];
 
-const _ALLERGENS = [
-  'Gluten', 'Lactose', 'Œufs', 'Poisson', 'Crustacés',
-  'Arachides', 'Soja', 'Fruits à coque', 'Céleri', 'Moutarde',
-  'Sésame', 'Sulfites', 'Lupin', 'Mollusques'
-];
+const MAX_IMAGES = 5;
+const MAX_VIDEO_SIZE_MB = 50;
+const MAX_VIDEO_DURATION_S = 45;
 
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
   const formatCurrency = useFormatCurrency();
+  const { subscription } = useUnifiedSubscription();
+  const isElite = subscription?.plan_name?.toLowerCase() === 'elite';
+
   const {
     categories,
     menuItems,
     loading,
-    _error,
     createCategory,
     updateCategory,
-    deleteCategory,
     createMenuItem,
     updateMenuItem,
     deleteMenuItem,
     toggleItemAvailability,
-    _refresh
   } = useRestaurantMenu(serviceId);
 
-  const [_activeTab, _setActiveTab] = useState('items');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showItemDialog, setShowItemDialog] = useState(false);
@@ -71,6 +66,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   // États du formulaire plat
   const [itemForm, setItemForm] = useState({
@@ -83,6 +79,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     is_featured: false,
     dietary_tags: [] as string[],
     image_url: '',
+    images: [] as string[],
+    video_url: '',
   });
 
   // États du formulaire catégorie
@@ -103,16 +101,14 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       is_featured: false,
       dietary_tags: [],
       image_url: '',
+      images: [],
+      video_url: '',
     });
     setEditingItem(null);
   };
 
   const resetCategoryForm = () => {
-    setCategoryForm({
-      name: '',
-      description: '',
-      icon: '🍽️',
-    });
+    setCategoryForm({ name: '', description: '', icon: '🍽️' });
     setEditingCategory(null);
   };
 
@@ -121,6 +117,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       toast.error('Nom et prix requis');
       return;
     }
+
+    const allImages = itemForm.images.length > 0
+      ? itemForm.images
+      : itemForm.image_url
+        ? [itemForm.image_url]
+        : [];
 
     try {
       if (editingItem) {
@@ -133,7 +135,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           spicy_level: parseInt(itemForm.spicy_level),
           is_featured: itemForm.is_featured,
           dietary_tags: itemForm.dietary_tags,
-          image_url: itemForm.image_url || null,
+          image_url: allImages[0] || null,
+          images: allImages,
+          video_url: itemForm.video_url || null,
         });
         toast.success('Plat mis à jour');
       } else {
@@ -146,7 +150,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           spicy_level: parseInt(itemForm.spicy_level),
           is_featured: itemForm.is_featured,
           dietary_tags: itemForm.dietary_tags,
-          image_url: itemForm.image_url || undefined,
+          image_url: allImages[0] || undefined,
+          images: allImages,
+          video_url: itemForm.video_url || undefined,
         });
         toast.success('Plat ajouté');
       }
@@ -158,11 +164,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   };
 
   const handleSaveCategory = async () => {
-    if (!categoryForm.name) {
-      toast.error('Nom requis');
-      return;
-    }
-
+    if (!categoryForm.name) { toast.error('Nom requis'); return; }
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, categoryForm);
@@ -190,59 +192,90 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       is_featured: item.is_featured,
       dietary_tags: item.dietary_tags || [],
       image_url: item.image_url || '',
+      images: item.images || (item.image_url ? [item.image_url] : []),
+      video_url: item.video_url || '',
     });
     setShowItemDialog(true);
   };
 
   const handleImageUpload = async (file: File) => {
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image ne doit pas dépasser 5MB");
+    if (itemForm.images.length >= MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images par plat`);
       return;
     }
-
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 5 MB");
+      return;
+    }
     try {
       setUploadingImage(true);
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `dish_${serviceId}_${Date.now()}.${fileExt}`;
-      const filePath = `restaurant-dishes/${fileName}`;
-
-      const { error: _uploadError } = await supabase
-        .from('professional_services')
-        .select('id')
-        .eq('id', serviceId)
-        .single();
-
-      // Upload to storage
+      const ext = file.name.split('.').pop();
+      const path = `restaurant-dishes/${serviceId}_${Date.now()}.${ext}`;
       const { error: storageError } = await supabase.storage
         .from('public-images')
-        .upload(filePath, file, { upsert: true });
-
+        .upload(path, file, { upsert: true });
       if (storageError) throw storageError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('public-images')
-        .getPublicUrl(filePath);
-
-      setItemForm(prev => ({ ...prev, image_url: publicUrl }));
-      toast.success('Image uploadée !');
+      const { data: { publicUrl } } = supabase.storage.from('public-images').getPublicUrl(path);
+      setItemForm(prev => ({
+        ...prev,
+        images: [...prev.images, publicUrl],
+        image_url: prev.images.length === 0 ? publicUrl : prev.image_url,
+      }));
+      toast.success('Image ajoutée !');
     } catch (err: any) {
-      console.error('Upload error:', err);
-      toast.error("Erreur lors de l'upload");
+      toast.error("Erreur upload image");
     } finally {
       setUploadingImage(false);
     }
   };
 
+  const handleRemoveImage = (index: number) => {
+    setItemForm(prev => {
+      const newImages = prev.images.filter((_, i) => i !== index);
+      return { ...prev, images: newImages, image_url: newImages[0] || '' };
+    });
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    if (!file) return;
+    if (!isElite) {
+      toast.error('Upload vidéo réservé au plan Elite');
+      return;
+    }
+    if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
+      toast.error(`La vidéo ne doit pas dépasser ${MAX_VIDEO_SIZE_MB} MB`);
+      return;
+    }
+
+    // Vérification durée via élément video HTML
+    const duration = await getVideoDuration(file);
+    if (duration > MAX_VIDEO_DURATION_S) {
+      toast.error(`La vidéo ne doit pas dépasser ${MAX_VIDEO_DURATION_S} secondes (durée : ${Math.round(duration)}s)`);
+      return;
+    }
+
+    try {
+      setUploadingVideo(true);
+      const ext = file.name.split('.').pop();
+      const path = `restaurant-dishes/video_${serviceId}_${Date.now()}.${ext}`;
+      const { error: storageError } = await supabase.storage
+        .from('product-videos')
+        .upload(path, file, { upsert: true });
+      if (storageError) throw storageError;
+      const { data: { publicUrl } } = supabase.storage.from('product-videos').getPublicUrl(path);
+      setItemForm(prev => ({ ...prev, video_url: publicUrl }));
+      toast.success('Vidéo uploadée !');
+    } catch (err: any) {
+      toast.error("Erreur upload vidéo");
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleEditCategory = (cat: MenuCategory) => {
     setEditingCategory(cat);
-    setCategoryForm({
-      name: cat.name,
-      description: cat.description || '',
-      icon: cat.icon || '🍽️',
-    });
+    setCategoryForm({ name: cat.name, description: cat.description || '', icon: cat.icon || '🍽️' });
     setShowCategoryDialog(true);
   };
 
@@ -256,17 +289,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     }
   };
 
-  const _handleDeleteCategory = async (id: string) => {
-    if (!confirm('Supprimer cette catégorie ?')) return;
-    try {
-      await deleteCategory(id);
-      toast.success('Catégorie supprimée');
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
 
-  // Filtrage des plats
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || item.category_id === selectedCategory;
@@ -278,9 +301,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-40" />
-          ))}
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40" />)}
         </div>
       </div>
     );
@@ -288,7 +309,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
   return (
     <div className="space-y-4">
-      {/* Header avec actions */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex-1 w-full md:w-auto">
           <div className="relative">
@@ -311,9 +332,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>
-                  {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
-                </DialogTitle>
+                <DialogTitle>{editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -341,12 +360,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>
-                  Annuler
-                </Button>
-                <Button onClick={handleSaveCategory}>
-                  {editingCategory ? 'Mettre à jour' : 'Créer'}
-                </Button>
+                <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>Annuler</Button>
+                <Button onClick={handleSaveCategory}>{editingCategory ? 'Mettre à jour' : 'Créer'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -360,9 +375,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? 'Modifier le plat' : 'Nouveau plat'}
-                </DialogTitle>
+                <DialogTitle>{editingItem ? 'Modifier le plat' : 'Nouveau plat'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -389,14 +402,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                       value={itemForm.category_id}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, category_id: v }))}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir..." />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
                       <SelectContent>
                         {categories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.icon} {cat.name}
-                          </SelectItem>
+                          <SelectItem key={cat.id} value={cat.id}>{cat.icon} {cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -413,49 +422,124 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   />
                 </div>
 
-                {/* Image du plat */}
+                {/* Multi-images du plat */}
                 <div className="space-y-2">
-                  <Label>Image du plat</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {itemForm.image_url ? (
-                      <div className="relative inline-block">
-                        <img
-                          src={itemForm.image_url}
-                          alt="Plat"
-                          className="w-32 h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))}
-                          className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="py-2">
-                        <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
-                        <p className="text-xs text-muted-foreground">Aucune image</p>
+                  <Label>
+                    Photos du plat
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({itemForm.images.length}/{MAX_IMAGES})
+                    </span>
+                  </Label>
+                  <div className="border-2 border-dashed rounded-lg p-3 space-y-3">
+                    {/* Grille d'images */}
+                    {itemForm.images.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {itemForm.images.map((url, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={url}
+                              alt={`Photo ${idx + 1}`}
+                              className="w-full h-20 object-cover rounded-md"
+                            />
+                            {idx === 0 && (
+                              <span className="absolute top-1 left-1 text-[10px] bg-primary text-primary-foreground px-1 rounded">
+                                Principale
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleRemoveImage(idx)}
+                              className="absolute -top-1.5 -right-1.5 p-0.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
-                    <label className="mt-2 inline-block">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-                        disabled={uploadingImage}
-                      />
-                      <Button variant="outline" size="sm" asChild disabled={uploadingImage}>
-                        <span className="cursor-pointer">
-                          {uploadingImage ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4 mr-2" />
-                          )}
-                          {uploadingImage ? 'Upload...' : 'Ajouter une image'}
-                        </span>
-                      </Button>
-                    </label>
+                    {itemForm.images.length === 0 && (
+                      <div className="text-center py-2">
+                        <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                        <p className="text-xs text-muted-foreground">Aucune photo</p>
+                      </div>
+                    )}
+                    {itemForm.images.length < MAX_IMAGES && (
+                      <label className="block text-center">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                          disabled={uploadingImage}
+                        />
+                        <Button variant="outline" size="sm" asChild disabled={uploadingImage}>
+                          <span className="cursor-pointer">
+                            {uploadingImage
+                              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              : <Upload className="w-4 h-4 mr-2" />
+                            }
+                            {uploadingImage ? 'Upload...' : 'Ajouter une photo'}
+                          </span>
+                        </Button>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Vidéo du plat — Elite uniquement */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    Vidéo du plat (max 45 s)
+                    {!isElite && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Lock className="w-3 h-3" /> Elite
+                      </Badge>
+                    )}
+                  </Label>
+                  <div className={`border-2 border-dashed rounded-lg p-3 ${!isElite ? 'opacity-60' : ''}`}>
+                    {itemForm.video_url ? (
+                      <div className="space-y-2">
+                        <video
+                          src={itemForm.video_url}
+                          controls
+                          className="w-full rounded-md max-h-32 object-contain bg-black"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setItemForm(prev => ({ ...prev, video_url: '' }))}
+                          className="w-full"
+                        >
+                          <X className="w-4 h-4 mr-2" /> Supprimer la vidéo
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2">
+                        <Video className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {isElite ? 'MP4 / MOV · max 45 s · max 50 MB' : 'Disponible avec le plan Elite'}
+                        </p>
+                        {isElite && (
+                          <label className="block">
+                            <input
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              onChange={(e) => e.target.files?.[0] && handleVideoUpload(e.target.files[0])}
+                              disabled={uploadingVideo}
+                            />
+                            <Button variant="outline" size="sm" asChild disabled={uploadingVideo}>
+                              <span className="cursor-pointer">
+                                {uploadingVideo
+                                  ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  : <Upload className="w-4 h-4 mr-2" />
+                                }
+                                {uploadingVideo ? 'Upload...' : 'Ajouter une vidéo'}
+                              </span>
+                            </Button>
+                          </label>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -474,9 +558,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                       value={itemForm.spicy_level}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, spicy_level: v }))}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="0">Non épicé</SelectItem>
                         <SelectItem value="1">🌶️ Léger</SelectItem>
@@ -522,12 +604,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowItemDialog(false)}>
-                  Annuler
-                </Button>
-                <Button onClick={handleSaveItem}>
-                  {editingItem ? 'Mettre à jour' : 'Créer'}
-                </Button>
+                <Button variant="outline" onClick={() => setShowItemDialog(false)}>Annuler</Button>
+                <Button onClick={handleSaveItem}>{editingItem ? 'Mettre à jour' : 'Créer'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -556,10 +634,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 {cat.icon} {cat.name} ({count})
                 <button
                   className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditCategory(cat);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); handleEditCategory(cat); }}
                 >
                   <Edit2 className="w-3 h-3" />
                 </button>
@@ -591,10 +666,15 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map(item => {
             const category = categories.find(c => c.id === item.category_id);
+            const displayImages = item.images && item.images.length > 0
+              ? item.images
+              : item.image_url
+                ? [item.image_url]
+                : [];
             return (
               <Card key={item.id} className={`relative ${!item.is_available ? 'opacity-60' : ''}`}>
                 {item.is_featured && (
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-10">
                     <Badge className="bg-yellow-500">
                       <Star className="w-3 h-3 mr-1" />
                       Signature
@@ -602,10 +682,32 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   </div>
                 )}
                 {item.is_new && (
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-2 left-2 z-10">
                     <Badge variant="secondary">Nouveau</Badge>
                   </div>
                 )}
+
+                {/* Aperçu image principale */}
+                {displayImages.length > 0 && (
+                  <div className="relative h-32 overflow-hidden rounded-t-lg">
+                    <img
+                      src={displayImages[0]}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {displayImages.length > 1 && (
+                      <span className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 rounded">
+                        +{displayImages.length - 1}
+                      </span>
+                    )}
+                    {item.video_url && (
+                      <span className="absolute bottom-1 left-1 bg-black/60 text-white rounded p-0.5">
+                        <Video className="w-3 h-3" />
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
@@ -616,61 +718,38 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                         </span>
                       )}
                     </div>
-                    <span className="font-bold text-primary">
-                      {formatCurrency(item.price)}
-                    </span>
+                    <span className="font-bold text-primary">{formatCurrency(item.price)}</span>
                   </div>
 
                   {item.description && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                      {item.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
                   )}
 
                   <div className="flex flex-wrap gap-1 mb-3">
                     {item.spicy_level > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {'🌶️'.repeat(item.spicy_level)}
-                      </Badge>
+                      <Badge variant="outline" className="text-xs">{'🌶️'.repeat(item.spicy_level)}</Badge>
                     )}
                     <Badge variant="outline" className="text-xs">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {item.preparation_time} min
+                      <Clock className="w-3 h-3 mr-1" />{item.preparation_time} min
                     </Badge>
                     {item.dietary_tags?.map(tag => {
                       const tagInfo = DIETARY_TAGS.find(t => t.value === tag);
                       return tagInfo ? (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tagInfo.icon}
-                        </Badge>
+                        <Badge key={tag} variant="outline" className="text-xs">{tagInfo.icon}</Badge>
                       ) : null;
                     })}
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleItemAvailability(item.id)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => toggleItemAvailability(item.id)}>
                       {item.is_available ? (
-                        <>
-                          <Eye className="w-4 h-4 mr-1 text-green-600" />
-                          <span className="text-green-600">Disponible</span>
-                        </>
+                        <><Eye className="w-4 h-4 mr-1 text-green-600" /><span className="text-green-600">Disponible</span></>
                       ) : (
-                        <>
-                          <EyeOff className="w-4 h-4 mr-1" />
-                          Indisponible
-                        </>
+                        <><EyeOff className="w-4 h-4 mr-1" />Indisponible</>
                       )}
                     </Button>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditItem(item)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleEditItem(item)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button
@@ -694,3 +773,15 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 }
 
 export default RestaurantMenuManager;
+
+/** Lit la durée d'un fichier vidéo via l'API HTML5 */
+function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(video.duration); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Impossible de lire la vidéo')); };
+    video.src = url;
+  });
+}

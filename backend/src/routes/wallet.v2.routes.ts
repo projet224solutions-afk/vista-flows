@@ -590,7 +590,7 @@ async function getFreshAfricanFxRateForTransaction(from: string, to: string, act
     // Considérer le taux comme récent si collecté il y a moins de 4 heures
     const fetchedMs = tableFallback.fetched_at ? new Date(tableFallback.fetched_at).getTime() : 0;
     const ageHours = (Date.now() - fetchedMs) / 3_600_000;
-    const isTableRateStale = !Number.isFinite(ageHours) || ageHours > 4;
+    const isTableRateStale = !Number.isFinite(ageHours) || ageHours > 2;
     logger.info(`[FX] Fallback table pour ${sourceCurrency}->${targetCurrency}: rate=${tableFallback.rate} source=${tableFallback.source} ageH=${ageHours.toFixed(1)} stale=${isTableRateStale}`);
     return {
       rate: tableFallback.rate,
@@ -811,6 +811,18 @@ function buildLiveBcrgFxRate(
 
   if (sourceCurrency === 'GNF' && targetCurrency === 'EUR' && Number.isFinite(liveRate.eurGnf) && Number(liveRate.eurGnf) > 0) {
     return { rate: 1 / (Number(liveRate.eurGnf) * (1 + margin)), ...shared, officialRate: 1 / Number(liveRate.eurGnf) };
+  }
+
+  // XOF/XAF → GNF : parité fixe officielle (1 EUR = 655.957 XOF = 655.957 XAF), croisé avec eurGnf live
+  const eurGnf = liveRate.eurGnf ? Number(liveRate.eurGnf) : null;
+  if (eurGnf && eurGnf > 0) {
+    const xofGnf = eurGnf / 655.957;
+    if ((sourceCurrency === 'XOF' || sourceCurrency === 'XAF') && targetCurrency === 'GNF') {
+      return { rate: xofGnf * (1 + margin), ...shared, officialRate: xofGnf };
+    }
+    if (sourceCurrency === 'GNF' && (targetCurrency === 'XOF' || targetCurrency === 'XAF')) {
+      return { rate: 1 / (xofGnf * (1 + margin)), ...shared, officialRate: 1 / xofGnf };
+    }
   }
 
   return null;
@@ -1881,6 +1893,19 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         senderId,
         'wallet_transfer_execute',
       );
+
+      if (fxResult.stale) {
+        logger.warn(`[WalletV2] Transfert international refusé: taux périmé pour ${senderCurrency}->${receiverCurrency}, source=${fxResult.source}, fetchedAt=${fxResult.fetchedAt}`);
+        res.status(503).json({
+          success: false,
+          error: `Le taux de change ${senderCurrency}→${receiverCurrency} n'est pas disponible en temps réel. Veuillez réessayer dans quelques minutes.`,
+          fx_stale: true,
+          fx_source: fxResult.source,
+          fx_fetched_at: fxResult.fetchedAt,
+        });
+        return;
+      }
+
       rateUsed = fxResult.rate;
       officialRate = fxResult.officialRate;
       fxMargin = fxResult.margin;
@@ -1906,6 +1931,9 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         rateUsed,
         rateSource,
         feeAmount: 0,
+        // Passer les IDs wallet validés pour éviter un double-fetch dans le service
+        senderWalletId: String(senderWallet.id),
+        receiverWalletId: String(recipientWallet.id),
       },
     );
 
@@ -2067,7 +2095,7 @@ router.get(
       startOfDay.setUTCHours(0, 0, 0, 0);
       const startOfDayIso = startOfDay.toISOString();
 
-      const [latestAnyRate, latestUsdGnfRate, recentRuns, unresolvedAlerts, todayRates, marginConfig] = await Promise.all([
+      const [latestAnyRate, latestUsdGnfRate, recentRuns, unresolvedAlerts, todayRates, marginConfig, keyRatesRaw] = await Promise.all([
         readSupabaseData(supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
@@ -2108,6 +2136,16 @@ router.get(
           .select('config_value')
           .eq('config_key', 'default_margin')
           .maybeSingle(), 'fx-health.marginConfig', null),
+        // EUR→GNF existe (stocké par BCRG). GBP→USD et CAD→USD existent (stockés par BCEAO).
+        // XOF/XAF→GNF calculés depuis EUR/GNF via parité fixe (655.957).
+        readSupabaseData(supabaseAdmin
+          .from('currency_exchange_rates')
+          .select('from_currency, to_currency, rate, margin, retrieved_at, source, source_type')
+          .eq('is_active', true)
+          .in('from_currency', ['EUR', 'GBP', 'CAD'])
+          .in('to_currency', ['GNF', 'USD'])
+          .order('retrieved_at', { ascending: false })
+          .limit(10), 'fx-health.keyRates', [] as any[]),
       ]);
 
       const liveBcrgRate = await fetchLiveBcrgUsdGnf();
@@ -2260,6 +2298,82 @@ router.get(
 
       const gnfTodayHistory = todaysHistory.filter((rate: any) => rate.from_currency === 'GNF' || rate.to_currency === 'GNF');
 
+      // Taux de base USD/GNF (depuis le taux courant, toujours disponible)
+      const usdGnfBase = currentRate?.rate ? Number(currentRate.rate) : null;
+      // EUR/GNF : d'abord depuis le scraping live BCRG, sinon depuis la DB (EUR→GNF stocké par BCRG)
+      const eurGnfRowFromDb = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'EUR' && r.to_currency === 'GNF');
+      const eurGnfBase: number | null = liveBcrgRate?.eurGnf
+        ? Number(liveBcrgRate.eurGnf)
+        : (eurGnfRowFromDb?.rate ? Number(eurGnfRowFromDb.rate) : null);
+      // GBP→USD et CAD→USD (stockés via BCEAO cross)
+      const gbpUsdRow = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'GBP' && r.to_currency === 'USD');
+      const cadUsdRow = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'CAD' && r.to_currency === 'USD');
+
+      const keyRatesMap: Record<string, any> = {};
+
+      // EUR → GNF (direct BCRG)
+      if (eurGnfBase && eurGnfBase > 0) {
+        keyRatesMap['EUR_GNF'] = {
+          from_currency: 'EUR', to_currency: 'GNF',
+          rate: eurGnfBase,
+          margin: currentMargin,
+          final_rate: eurGnfBase * (1 + currentMargin),
+          retrieved_at: eurGnfRowFromDb?.retrieved_at || currentRate?.retrieved_at || null,
+          source: eurGnfRowFromDb?.source || 'bcrg-live',
+          source_type: eurGnfRowFromDb?.source_type || 'official_html',
+        };
+        // XOF → GNF : parité fixe 1 EUR = 655.957 XOF
+        const xofGnfBase = eurGnfBase / 655.957;
+        keyRatesMap['XOF_GNF'] = {
+          from_currency: 'XOF', to_currency: 'GNF',
+          rate: xofGnfBase,
+          margin: currentMargin,
+          final_rate: xofGnfBase * (1 + currentMargin),
+          retrieved_at: currentRate?.retrieved_at || null,
+          source: 'bceao-parity',
+          source_type: 'official_fixed_parity',
+        };
+        // XAF → GNF : même parité fixe que XOF
+        keyRatesMap['XAF_GNF'] = {
+          from_currency: 'XAF', to_currency: 'GNF',
+          rate: xofGnfBase,
+          margin: currentMargin,
+          final_rate: xofGnfBase * (1 + currentMargin),
+          retrieved_at: currentRate?.retrieved_at || null,
+          source: 'beac-parity',
+          source_type: 'official_fixed_parity',
+        };
+      }
+
+      // GBP → GNF : GBP→USD × USD→GNF (cross BCEAO × BCRG)
+      // retrieved_at = timestamp USD/GNF (composante live BCRG) car c'est elle qui varie en temps réel
+      if (gbpUsdRow && usdGnfBase && usdGnfBase > 0) {
+        const gbpGnfBase = Number(gbpUsdRow.rate) * usdGnfBase;
+        keyRatesMap['GBP_GNF'] = {
+          from_currency: 'GBP', to_currency: 'GNF',
+          rate: gbpGnfBase,
+          margin: currentMargin,
+          final_rate: gbpGnfBase * (1 + currentMargin),
+          retrieved_at: currentRate?.retrieved_at || gbpUsdRow.retrieved_at || null,
+          source: gbpUsdRow.source || 'bceao-cross',
+          source_type: 'official_cross',
+        };
+      }
+
+      // CAD → GNF : CAD→USD × USD→GNF (cross BCEAO × BCRG)
+      if (cadUsdRow && usdGnfBase && usdGnfBase > 0) {
+        const cadGnfBase = Number(cadUsdRow.rate) * usdGnfBase;
+        keyRatesMap['CAD_GNF'] = {
+          from_currency: 'CAD', to_currency: 'GNF',
+          rate: cadGnfBase,
+          margin: currentMargin,
+          final_rate: cadGnfBase * (1 + currentMargin),
+          retrieved_at: currentRate?.retrieved_at || cadUsdRow.retrieved_at || null,
+          source: cadUsdRow.source || 'bceao-cross',
+          source_type: 'official_cross',
+        };
+      }
+
       res.json({
         success: true,
         data: {
@@ -2272,6 +2386,7 @@ router.get(
           configured_margin: currentMargin,
           two_consecutive_failures: twoConsecutiveFailures,
           current_rate: currentRate || null,
+          key_rates: keyRatesMap,
           refresh: refreshMeta,
           recent_runs: runRows.slice(0, 10),
           today_history: todaysHistory,
@@ -2433,6 +2548,70 @@ router.get(
         countryCorridors.set(corridorKey, corridor);
       }
 
+      // ---- Transactions individuelles détaillées ----
+      const transactionsList = outRows.map((tx: any) => {
+        const senderUserId = tx.sender_user_id ? String(tx.sender_user_id) : null;
+        const receiverUserId = tx.receiver_user_id ? String(tx.receiver_user_id) : null;
+        const senderProfile = senderUserId ? profileMap.get(senderUserId) : null;
+        const receiverProfile = receiverUserId ? profileMap.get(receiverUserId) : null;
+        const meta = (tx.metadata || {}) as any;
+
+        const senderCurrency: string = walletCurrencyMap.get(Number(tx.sender_wallet_id)) || meta?.sender_currency || tx.currency || 'GNF';
+        const receiverCurrency: string = walletCurrencyMap.get(Number(tx.receiver_wallet_id)) || meta?.receiver_currency || meta?.to_currency || tx.currency || 'GNF';
+        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderCurrency));
+        const receiverCountry = receiverProfile?.country ? String(receiverProfile.country) : mapCurrencyToCountry(receiverCurrency);
+
+        const resolveName = (profile: any, metaKey: string) => {
+          if (!profile) return meta?.[metaKey] || 'Inconnu';
+          const fl = [String(profile.first_name || '').trim(), String(profile.last_name || '').trim()].filter(Boolean).join(' ');
+          return profile.full_name || fl || profile.email || meta?.[metaKey] || 'Inconnu';
+        };
+
+        const amountSent = Number(meta?.amount_sent ?? tx.amount ?? 0);
+        const amountReceived = Number(meta?.amount_received ?? tx.amount ?? 0);
+        const rateUsed = Number(meta?.rate_used ?? 1);
+        const isInternational = Boolean(meta?.is_international || senderCurrency !== receiverCurrency);
+
+        return {
+          id: String(tx.transaction_id || tx.id || ''),
+          created_at: tx.created_at,
+          sender_name: resolveName(senderProfile, 'sender_name'),
+          receiver_name: resolveName(receiverProfile, 'receiver_name'),
+          sender_country: senderCountry,
+          receiver_country: receiverCountry,
+          amount_sent: amountSent,
+          sender_currency: senderCurrency,
+          amount_received: amountReceived,
+          receiver_currency: receiverCurrency,
+          rate_used: rateUsed,
+          rate_source: meta?.rate_source || null,
+          fee_amount: Number(tx.fee ?? meta?.fee_amount ?? 0),
+          is_international: isInternational,
+          source: (tx as any)._source || 'wallet',
+        };
+      }).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 200);
+
+      // ---- Historique des taux pour les paires actives dans cette fenêtre ----
+      const activePairs = new Set<string>();
+      transactionsList.filter((t: any) => t.is_international).forEach((t: any) => {
+        activePairs.add(`${t.sender_currency}:${t.receiver_currency}`);
+      });
+
+      let rateHistory: any[] = [];
+      if (activePairs.size > 0) {
+        const sinceDate = since.split('T')[0];
+        const { data: rates } = await supabaseAdmin
+          .from('currency_exchange_rates')
+          .select('from_currency, to_currency, rate, effective_date, retrieved_at, source, status, margin, final_rate_usd')
+          .gte('effective_date', sinceDate)
+          .order('retrieved_at', { ascending: false })
+          .limit(500);
+
+        rateHistory = (rates || []).filter((r: any) =>
+          activePairs.has(`${r.from_currency}:${r.to_currency}`)
+        ).slice(0, 200);
+      }
+
       return res.json({
         success: true,
         data: {
@@ -2442,6 +2621,8 @@ router.get(
           by_user: Array.from(byUser.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 50),
           by_country: Array.from(byCountry.values()).sort((a, b) => b.conversions_count - a.conversions_count),
           country_corridors: Array.from(countryCorridors.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 100),
+          transactions: transactionsList,
+          rate_history: rateHistory,
         },
       });
     } catch (error: any) {
@@ -2464,34 +2645,38 @@ router.post(
   }),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { data: rateRows } = await supabaseAdmin
-        .from('currency_exchange_rates')
-        .select('from_currency, to_currency, rate, source_url, retrieved_at')
-        .eq('is_active', true)
-        .order('retrieved_at', { ascending: false })
-        .limit(100);
+      // Utilise fx_collection_log (historique réel) au lieu de currency_exchange_rates
+      // (qui a une contrainte UNIQUE par paire — 1 seule ligne par paire, impossible de comparer)
+      const { data: gnfLogs, error: logsError } = await supabaseAdmin
+        .from('fx_collection_log')
+        .select('currency_code, rate_usd, rate_eur, collected_at, source, source_url, source_type')
+        .eq('currency_code', 'GNF')
+        .eq('status', 'OK')
+        .order('collected_at', { ascending: false })
+        .limit(20);
 
-      const validRates = (rateRows || []).filter((r: any) => isAfricanBankSourceUrl(r?.source_url));
-      if (validRates.length < 2) {
-        res.json({ success: true, data: { alert_created: false, reason: 'not_enough_data' } });
+      if (logsError) logger.warn(`[FX alert] fx_collection_log error: ${logsError.message}`);
+
+      const validLogs = (gnfLogs || []).filter((r: any) => Number(r.rate_usd) > 0);
+      if (validLogs.length < 2) {
+        res.json({ success: true, data: { alert_created: false, reason: 'not_enough_data', logs_count: validLogs.length } });
         return;
       }
 
-      const latest = validRates[0] as any;
-      const previous = validRates.find((r: any) => r.from_currency === latest.from_currency && r.to_currency === latest.to_currency && r.retrieved_at !== latest.retrieved_at) as any;
-      if (!previous) {
-        res.json({ success: true, data: { alert_created: false, reason: 'no_previous_same_pair' } });
-        return;
-      }
+      const latest = validLogs[0] as any;
+      const previous = validLogs[1] as any;
 
-      const latestTs = latest.retrieved_at ? new Date(latest.retrieved_at).getTime() : 0;
-      const previousTs = previous.retrieved_at ? new Date(previous.retrieved_at).getTime() : 0;
+      const latestTs = latest.collected_at ? new Date(latest.collected_at).getTime() : 0;
+      const previousTs = previous.collected_at ? new Date(previous.collected_at).getTime() : 0;
       const minutesBetween = Math.abs(latestTs - previousTs) / 60000;
 
-      const latestRate = Number(latest.rate || 0);
-      const previousRate = Number(previous.rate || 0);
+      const latestRate = Number(latest.rate_usd || 0);
+      const previousRate = Number(previous.rate_usd || 0);
       const changed = latestRate > 0 && previousRate > 0 && latestRate !== previousRate;
       const changedUnderOneHour = changed && minutesBetween <= 60;
+
+      const latestFormatted = { ...latest, rate: latestRate, from_currency: 'GNF', to_currency: 'USD' };
+      const previousFormatted = { ...previous, rate: previousRate, from_currency: 'GNF', to_currency: 'USD' };
 
       let alertCreated = false;
       if (changedUnderOneHour) {
@@ -2511,11 +2696,11 @@ router.post(
             alert_type: 'fx_rate_change_under_1h',
             severity: 'high',
             title: 'Changement de taux detecte en moins d\'1 heure',
-            description: `${latest.from_currency}/${latest.to_currency} a change de ${previousRate} a ${latestRate} en ${Math.round(minutesBetween)} minutes.`,
+            description: `GNF/USD a change de ${previousRate.toFixed(2)} a ${latestRate.toFixed(2)} en ${Math.round(minutesBetween)} minutes. Sources: ${previous.source || 'N/A'} -> ${latest.source || 'N/A'}`,
             metadata: {
               actor_id: req.user!.id,
-              latest,
-              previous,
+              latest: latestFormatted,
+              previous: previousFormatted,
               minutes_between: Math.round(minutesBetween),
             },
           }));
@@ -2529,8 +2714,9 @@ router.post(
           alert_created: alertCreated,
           changed_under_one_hour: changedUnderOneHour,
           minutes_between: Math.round(minutesBetween),
-          latest,
-          previous,
+          latest: latestFormatted,
+          previous: previousFormatted,
+          logs_checked: validLogs.length,
         },
       });
     } catch (error: any) {

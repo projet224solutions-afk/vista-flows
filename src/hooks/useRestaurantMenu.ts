@@ -29,6 +29,8 @@ export interface MenuItem {
   price: number;
   cost_price: number | null;
   image_url: string | null;
+  images: string[] | null;
+  video_url: string | null;
   preparation_time: number;
   calories: number | null;
   allergens: string[] | null;
@@ -144,6 +146,8 @@ export function useRestaurantMenu(serviceId: string) {
         description: data.description,
         category_id: data.category_id,
         image_url: data.image_url,
+        images: data.images ?? [],
+        video_url: data.video_url ?? null,
         preparation_time: data.preparation_time ?? 15,
         is_available: data.is_available ?? true,
         is_featured: data.is_featured ?? false,

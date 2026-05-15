@@ -207,35 +207,21 @@ export class MFAService {
   }
 
   /**
-   * Enrôler un facteur SMS
+   * Enrôler un facteur SMS via Supabase Auth natif (Twilio)
    */
   async enrollSMS(phoneNumber: string): Promise<MFAEnrollmentResult> {
-    if (!this.userId) throw new Error('MFA Service not initialized');
-
     try {
-      // Valider le numéro de téléphone
-      const cleanPhone = phoneNumber.replace(/\s/g, '');
-      if (!/^\+?[0-9]{8,15}$/.test(cleanPhone)) {
+      const cleanPhone = phoneNumber.startsWith('+') ? phoneNumber.replace(/\s/g, '') : `+224${phoneNumber.replace(/\s/g, '')}`;
+      if (!/^\+[0-9]{8,15}$/.test(cleanPhone)) {
         throw new Error('Numéro de téléphone invalide');
       }
 
-      // Créer le facteur
-      const { data, error } = await mfaDb
-        .from('mfa_factors')
-        .insert({
-          user_id: this.userId,
-          method: 'sms',
-          friendly_name: 'SMS',
-          phone_number: cleanPhone,
-          verified: false
-        })
-        .select()
-        .single();
+      const { data, error } = await (supabase.auth.mfa as any).enroll({
+        factorType: 'phone',
+        phone: cleanPhone,
+      });
 
       if (error) throw error;
-
-      // Envoyer un code de vérification
-      await this.sendSMSCode(data.id, cleanPhone);
 
       return {
         success: true,
@@ -325,12 +311,24 @@ export class MFAService {
   }
 
   /**
-   * Vérifier un facteur SMS ou Email
+   * Vérifier un facteur SMS (Supabase natif) ou Email (table custom)
    */
   async verifyCode(factorId: string, code: string): Promise<MFAVerifyResult> {
     try {
-      // Vérifier le code dans la base de données
-      const { data: challenge, error: fetchError } = await mfaDb
+      // Tenter via Supabase Auth natif (phone MFA)
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      if (!challengeError && challenge) {
+        const { error: verifyError } = await supabase.auth.mfa.verify({
+          factorId,
+          challengeId: challenge.id,
+          code,
+        });
+        if (verifyError) throw verifyError;
+        return { success: true, session_verified: true };
+      }
+
+      // Fallback: table custom (email MFA)
+      const { data: challengeRow, error: fetchError } = await mfaDb
         .from('mfa_challenges')
         .select('*')
         .eq('factor_id', factorId)
@@ -338,33 +336,14 @@ export class MFAService {
         .gt('expires_at', new Date().toISOString())
         .single();
 
-      if (fetchError || !challenge) {
-        throw new Error('Code invalide ou expiré');
-      }
+      if (fetchError || !challengeRow) throw new Error('Code invalide ou expiré');
 
-      // Marquer le facteur comme vérifié
-      const { error: updateError } = await mfaDb
-        .from('mfa_factors')
-        .update({ verified: true, last_used_at: new Date().toISOString() })
-        .eq('id', factorId);
+      await mfaDb.from('mfa_factors').update({ verified: true, last_used_at: new Date().toISOString() }).eq('id', factorId);
+      await mfaDb.from('mfa_challenges').delete().eq('id', (challengeRow as any).id);
 
-      if (updateError) throw updateError;
-
-      // Supprimer le challenge utilisé
-      await mfaDb
-        .from('mfa_challenges')
-        .delete()
-        .eq('id', challenge.id);
-
-      return {
-        success: true,
-        session_verified: true
-      };
+      return { success: true, session_verified: true };
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     }
   }
 

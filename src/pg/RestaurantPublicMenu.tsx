@@ -58,6 +58,8 @@ interface MenuItem {
   description: string | null;
   price: number;
   image_url: string | null;
+  images: string[] | null;
+  video_url: string | null;
   preparation_time: number;
   is_available: boolean;
   is_featured: boolean;
@@ -599,15 +601,19 @@ export default function RestaurantPublicMenu() {
                 onClick={() => addToCart(item)}
               >
                 <div className="relative h-24 bg-muted">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ChefHat className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
+                  {(() => {
+                    const img = (item.images && item.images.length > 0 ? item.images[0] : item.image_url) || null;
+                    return img
+                      ? <img src={img} alt={item.name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><ChefHat className="w-8 h-8 text-muted-foreground" /></div>;
+                  })()}
                   {item.is_new && (
                     <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                  )}
+                  {item.video_url && (
+                    <span className="absolute bottom-1 right-1 bg-black/60 text-white rounded p-0.5">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </span>
                   )}
                 </div>
                 <CardContent className="p-2">
@@ -643,25 +649,43 @@ export default function RestaurantPublicMenu() {
                   <CardContent className="p-0">
                     <div className="flex gap-3 p-3">
                       {/* Image */}
-                      <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ChefHat className="w-8 h-8 text-muted-foreground" />
+                      {(() => {
+                        const allImages = item.images && item.images.length > 0
+                          ? item.images
+                          : item.image_url ? [item.image_url] : [];
+                        const mainImg = allImages[0] || null;
+                        return (
+                          <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                            {mainImg ? (
+                              <img src={mainImg} alt={item.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ChefHat className="w-8 h-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            {item.is_new && item.is_available && (
+                              <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                            )}
+                            {allImages.length > 1 && (
+                              <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 rounded">
+                                +{allImages.length - 1}
+                              </span>
+                            )}
+                            {item.video_url && (
+                              <span className="absolute bottom-1 left-1 bg-black/60 text-white rounded p-0.5">
+                                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                              </span>
+                            )}
+                            {!item.is_available && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
+                                  Indisponible
+                                </Badge>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {item.is_new && item.is_available && (
-                          <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
-                        )}
-                        {!item.is_available && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
-                              Indisponible
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
+                        );
+                      })()}
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
@@ -1006,16 +1030,42 @@ export default function RestaurantPublicMenu() {
               {quickOrderItem && (
                 <Card>
                   <CardContent className="p-4">
+                    {/* Galerie images + vidéo */}
+                    {(() => {
+                      const allImages = quickOrderItem.images && quickOrderItem.images.length > 0
+                        ? quickOrderItem.images
+                        : quickOrderItem.image_url ? [quickOrderItem.image_url] : [];
+                      return (
+                        <div className="mb-3 space-y-2">
+                          {allImages.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                              {allImages.map((img, idx) => (
+                                <img
+                                  key={idx}
+                                  src={img}
+                                  alt={`Photo ${idx + 1}`}
+                                  className={`flex-shrink-0 rounded-lg object-cover ${allImages.length === 1 ? 'w-full h-40' : 'w-32 h-24'}`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {quickOrderItem.video_url && (
+                            <video
+                              src={quickOrderItem.video_url}
+                              controls
+                              className="w-full rounded-lg max-h-40 bg-black object-contain"
+                              preload="metadata"
+                            />
+                          )}
+                        </div>
+                      );
+                    })()}
                     <div className="flex gap-3">
-                      <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                        {quickOrderItem.image_url ? (
-                          <img src={quickOrderItem.image_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ChefHat className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
+                      {!quickOrderItem.images?.length && !quickOrderItem.image_url && (
+                        <div className="w-20 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
+                          <ChefHat className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
                       <div className="flex-1">
                         <h3 className="font-semibold">{quickOrderItem.name}</h3>
                         {quickOrderItem.description && (

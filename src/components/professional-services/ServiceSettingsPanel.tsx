@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useUnifiedSubscription } from '@/hooks/useUnifiedSubscription';
 import { toast } from 'sonner';
-import { Loader2, Save, Navigation, CheckCircle2, MapPin } from 'lucide-react';
+import { Loader2, Save, Navigation, CheckCircle2, MapPin, Upload, X, Image as ImageIcon, Video, Lock } from 'lucide-react';
 import { mapService } from '@/services/mapService';
 
 interface ServiceSettingsPanelProps {
@@ -24,11 +26,20 @@ interface ServiceSettingsPanelProps {
   onUpdated?: () => void;
 }
 
+const MAX_PORTFOLIO_IMAGES = 10;
+const MAX_VIDEO_SIZE_MB = 50;
+const MAX_VIDEO_DURATION_S = 45;
+
 export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }: ServiceSettingsPanelProps) {
+  const { subscription } = useUnifiedSubscription(false);
+  const isElite = subscription?.plan_name?.toLowerCase() === 'elite';
+
   const [saving, setSaving] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsSuccess, setGpsSuccess] = useState(false);
   const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const [form, setForm] = useState({
     business_name: '',
@@ -38,20 +49,34 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
     email: '',
     website: '',
   });
+  const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+  const [promoVideoUrl, setPromoVideoUrl] = useState('');
 
   useEffect(() => {
-    if (service) {
-      setForm({
-        business_name: service.business_name || '',
-        description: service.description || '',
-        address: service.address || '',
-        phone: service.phone || '',
-        email: service.email || '',
-        website: service.website || '',
+    if (!service) return;
+    setForm({
+      business_name: service.business_name || '',
+      description: service.description || '',
+      address: service.address || '',
+      phone: service.phone || '',
+      email: service.email || '',
+      website: service.website || '',
+    });
+    setGpsSuccess(false);
+    setDetectedCoords(null);
+
+    // Charger portfolio_images et promo_video_url depuis la DB
+    supabase
+      .from('professional_services')
+      .select('portfolio_images, promo_video_url')
+      .eq('id', service.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setPortfolioImages(Array.isArray(data.portfolio_images) ? data.portfolio_images : []);
+          setPromoVideoUrl((data as any).promo_video_url || '');
+        }
       });
-      setGpsSuccess(false);
-      setDetectedCoords(null);
-    }
   }, [service]);
 
   const handleDetectPosition = useCallback(async () => {
@@ -60,21 +85,16 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
     try {
       const position = await mapService.getCurrentPosition();
       const fullAddress = await mapService.reverseGeocode(position.latitude, position.longitude);
-
       if (fullAddress && fullAddress !== 'Adresse inconnue') {
         setForm(prev => ({ ...prev, address: fullAddress }));
       }
-
       setDetectedCoords({ lat: position.latitude, lng: position.longitude });
       setGpsSuccess(true);
       toast.success('Position détectée avec succès !');
-
-      // Save coordinates to DB
       await supabase
         .from('professional_services')
         .update({ latitude: position.latitude, longitude: position.longitude })
         .eq('id', service.id);
-
       setTimeout(() => setGpsSuccess(false), 3000);
     } catch (err: any) {
       console.error('Erreur GPS:', err);
@@ -84,12 +104,70 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
     }
   }, [service.id]);
 
+  const handlePortfolioImageUpload = async (file: File) => {
+    if (portfolioImages.length >= MAX_PORTFOLIO_IMAGES) {
+      toast.error(`Maximum ${MAX_PORTFOLIO_IMAGES} photos dans le portfolio`);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 5 MB");
+      return;
+    }
+    try {
+      setUploadingImage(true);
+      const ext = file.name.split('.').pop();
+      const path = `services-portfolio/${service.id}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('public-images').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('public-images').getPublicUrl(path);
+      setPortfolioImages(prev => [...prev, publicUrl]);
+      toast.success('Photo ajoutée au portfolio !');
+    } catch (err: any) {
+      toast.error("Erreur upload image");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemovePortfolioImage = (index: number) => {
+    setPortfolioImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    if (!isElite) {
+      toast.error('Upload vidéo réservé au plan Elite');
+      return;
+    }
+    if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
+      toast.error(`La vidéo ne doit pas dépasser ${MAX_VIDEO_SIZE_MB} MB`);
+      return;
+    }
+    const duration = await getVideoDuration(file);
+    if (duration > MAX_VIDEO_DURATION_S) {
+      toast.error(`La vidéo ne doit pas dépasser ${MAX_VIDEO_DURATION_S} secondes (durée : ${Math.round(duration)}s)`);
+      return;
+    }
+    try {
+      setUploadingVideo(true);
+      const ext = file.name.split('.').pop();
+      const path = `services-promo/video_${service.id}_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('product-videos').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('product-videos').getPublicUrl(path);
+      setPromoVideoUrl(publicUrl);
+      toast.success('Vidéo de présentation uploadée !');
+    } catch (err: any) {
+      toast.error("Erreur upload vidéo");
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.business_name.trim()) {
       toast.error('Le nom du service est requis');
       return;
     }
-
     setSaving(true);
     try {
       const { error } = await supabase
@@ -101,11 +179,12 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
           website: form.website.trim() || null,
-        })
+          portfolio_images: portfolioImages,
+          promo_video_url: promoVideoUrl || null,
+        } as any)
         .eq('id', service.id);
 
       if (error) throw error;
-
       toast.success('Paramètres mis à jour');
       onOpenChange(false);
       onUpdated?.();
@@ -175,20 +254,11 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
                 }`}
               >
                 {gpsLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="hidden sm:inline">Détection...</span>
-                  </>
+                  <><Loader2 className="w-4 h-4 animate-spin" /><span className="hidden sm:inline">Détection...</span></>
                 ) : gpsSuccess ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Localisé !
-                  </>
+                  <><CheckCircle2 className="w-4 h-4" />Localisé !</>
                 ) : (
-                  <>
-                    <Navigation className="w-4 h-4" />
-                    Position
-                  </>
+                  <><Navigation className="w-4 h-4" />Position</>
                 )}
               </Button>
             </div>
@@ -235,6 +305,117 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
             />
           </div>
 
+          {/* Portfolio photos */}
+          <div className="space-y-2">
+            <Label>
+              Photos du portfolio
+              <span className="text-xs text-muted-foreground ml-2">
+                ({portfolioImages.length}/{MAX_PORTFOLIO_IMAGES})
+              </span>
+            </Label>
+            <div className="border-2 border-dashed rounded-lg p-3 space-y-3">
+              {portfolioImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {portfolioImages.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img src={url} alt={`Portfolio ${idx + 1}`} className="w-full h-20 object-cover rounded-md" />
+                      <button
+                        onClick={() => handleRemovePortfolioImage(idx)}
+                        className="absolute -top-1.5 -right-1.5 p-0.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {portfolioImages.length === 0 && (
+                <div className="text-center py-2">
+                  <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                  <p className="text-xs text-muted-foreground">Aucune photo dans le portfolio</p>
+                </div>
+              )}
+              {portfolioImages.length < MAX_PORTFOLIO_IMAGES && (
+                <label className="block text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handlePortfolioImageUpload(e.target.files[0])}
+                    disabled={uploadingImage}
+                  />
+                  <Button variant="outline" size="sm" asChild disabled={uploadingImage}>
+                    <span className="cursor-pointer">
+                      {uploadingImage
+                        ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        : <Upload className="w-4 h-4 mr-2" />
+                      }
+                      {uploadingImage ? 'Upload...' : 'Ajouter une photo'}
+                    </span>
+                  </Button>
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Vidéo de présentation — Elite uniquement */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              Vidéo de présentation (max 45 s)
+              {!isElite && (
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Lock className="w-3 h-3" /> Elite
+                </Badge>
+              )}
+            </Label>
+            <div className={`border-2 border-dashed rounded-lg p-3 ${!isElite ? 'opacity-60' : ''}`}>
+              {promoVideoUrl ? (
+                <div className="space-y-2">
+                  <video
+                    src={promoVideoUrl}
+                    controls
+                    className="w-full rounded-md max-h-40 object-contain bg-black"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPromoVideoUrl('')}
+                    className="w-full"
+                  >
+                    <X className="w-4 h-4 mr-2" /> Supprimer la vidéo
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-2">
+                  <Video className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {isElite ? 'MP4 / MOV · max 45 s · max 50 MB' : 'Disponible avec le plan Elite'}
+                  </p>
+                  {isElite && (
+                    <label className="block">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && handleVideoUpload(e.target.files[0])}
+                        disabled={uploadingVideo}
+                      />
+                      <Button variant="outline" size="sm" asChild disabled={uploadingVideo}>
+                        <span className="cursor-pointer">
+                          {uploadingVideo
+                            ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            : <Upload className="w-4 h-4 mr-2" />
+                          }
+                          {uploadingVideo ? 'Upload...' : 'Ajouter une vidéo'}
+                        </span>
+                      </Button>
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           <Button onClick={handleSave} disabled={saving} className="w-full gap-2 mt-4">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? 'Sauvegarde...' : 'Enregistrer'}
@@ -243,4 +424,15 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       </SheetContent>
     </Sheet>
   );
+}
+
+function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => { URL.revokeObjectURL(url); resolve(video.duration); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Impossible de lire la vidéo')); };
+    video.src = url;
+  });
 }

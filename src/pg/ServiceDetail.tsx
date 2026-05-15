@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, _useCallback } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -154,6 +154,8 @@ export default function ServiceDetailPage() {
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; caption?: string }[]>([]);
+  const [portfolioImages, setPortfolioImages] = useState<string[]>([]);
+  const [promoVideoUrl, setPromoVideoUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   // Review form
@@ -224,6 +226,13 @@ export default function ServiceDetailPage() {
         .eq('id', id)
         .single();
 
+      // Colonnes médias non encore dans les types générés — cast any
+      const { data: mediaData } = await (supabase as any)
+        .from('professional_services')
+        .select('portfolio_images, promo_video_url')
+        .eq('id', id)
+        .single();
+
       if (!proError && proService) {
         const openingHours = proService.opening_hours as OpeningHours | undefined;
 
@@ -255,6 +264,8 @@ export default function ServiceDetailPage() {
         };
 
         setService(serviceData);
+        setPortfolioImages(Array.isArray(mediaData?.portfolio_images) ? mediaData.portfolio_images : []);
+        setPromoVideoUrl(mediaData?.promo_video_url || null);
 
         // Only compute distance if we have real coordinates
         if (hasRealCoords) {
@@ -1054,6 +1065,39 @@ export default function ServiceDetailPage() {
                 </CardContent>
               </Card>
             ) : null}
+          </div>
+        )}
+
+        {/* === Portfolio + Vidéo de présentation === */}
+        {(portfolioImages.length > 0 || promoVideoUrl) && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <ImagePlus className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Portfolio</h2>
+              {portfolioImages.length > 0 && (
+                <Badge variant="secondary" className="rounded-full">{portfolioImages.length}</Badge>
+              )}
+            </div>
+            {portfolioImages.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                {portfolioImages.map((url, idx) => (
+                  <div key={idx} className="rounded-2xl overflow-hidden aspect-square bg-muted shadow-sm">
+                    <img src={url} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {promoVideoUrl && (
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground mb-2">Vidéo de présentation</p>
+                <video
+                  src={promoVideoUrl}
+                  controls
+                  className="w-full rounded-2xl max-h-64 bg-black object-contain shadow-md"
+                  preload="metadata"
+                />
+              </div>
+            )}
           </div>
         )}
 

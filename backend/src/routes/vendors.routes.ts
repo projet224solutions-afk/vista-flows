@@ -70,18 +70,28 @@ interface BcrgRates {
 }
 
 // Charge tous les taux X→GNF depuis currency_exchange_rates
+// Inclut cross-rates via USD/EUR pour GBP, CHF, CAD, JPY, etc. (pas de ligne directe X→GNF)
 async function fetchAllGnfRatesFromTable(): Promise<{
   gnfRates: Record<string, number>;
   retrievedAt: string | null;
   sourceUrl: string | null;
 }> {
-  const { data: rows } = await supabaseAdmin
-    .from('currency_exchange_rates')
-    .select('from_currency, rate, final_rate_eur, retrieved_at, source_url')
-    .eq('to_currency', 'GNF')
-    .eq('is_active', true)
-    .gt('rate', 0)
-    .order('retrieved_at', { ascending: false });
+  const [{ data: rows }, { data: crossRows }] = await Promise.all([
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('from_currency, rate, final_rate_eur, retrieved_at, source_url')
+      .eq('to_currency', 'GNF')
+      .eq('is_active', true)
+      .gt('rate', 0)
+      .order('retrieved_at', { ascending: false }),
+    // Devises BCEAO stockées comme CURR→USD ou CURR→EUR (GBP, CHF, CAD, JPY, CNY, AED…)
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('from_currency, to_currency, rate')
+      .in('to_currency', ['USD', 'EUR'])
+      .eq('is_active', true)
+      .gt('rate', 0),
+  ]);
 
   const gnfRates: Record<string, number> = {};
   let retrievedAt: string | null = null;
@@ -96,6 +106,26 @@ async function fetchAllGnfRatesFromTable(): Promise<{
     // final_rate_eur = EUR/GNF stocké dans la ligne USD→GNF
     if (curr === 'USD' && !gnfRates['EUR'] && row.final_rate_eur && Number(row.final_rate_eur) > 0) {
       gnfRates['EUR'] = Number(row.final_rate_eur);
+    }
+  }
+
+  // Cross-rates: GBP→GNF = (GBP→USD) * (USD→GNF) etc.
+  // Priorité à USD comme pivot (taux BCRG live), EUR en fallback
+  const crossByPivot: Record<string, { usd?: number; eur?: number }> = {};
+  for (const row of crossRows ?? []) {
+    const curr = String(row.from_currency).toUpperCase();
+    const pivot = String(row.to_currency).toUpperCase();
+    if (gnfRates[curr] || curr === 'GNF' || curr === 'USD' || curr === 'EUR') continue;
+    if (!crossByPivot[curr]) crossByPivot[curr] = {};
+    if (pivot === 'USD') crossByPivot[curr].usd = Number(row.rate);
+    else if (pivot === 'EUR') crossByPivot[curr].eur = Number(row.rate);
+  }
+  for (const [curr, pivots] of Object.entries(crossByPivot)) {
+    if (gnfRates[curr]) continue;
+    if (pivots.usd && gnfRates['USD']) {
+      gnfRates[curr] = pivots.usd * gnfRates['USD'];
+    } else if (pivots.eur && gnfRates['EUR']) {
+      gnfRates[curr] = pivots.eur * gnfRates['EUR'];
     }
   }
 

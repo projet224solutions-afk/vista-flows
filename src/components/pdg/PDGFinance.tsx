@@ -42,6 +42,7 @@ export default function PDGFinance() {
   const [showConversionStatsDialog, setShowConversionStatsDialog] = useState(false);
   const [conversionStats, setConversionStats] = useState<any>(null);
   const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
+  const [conversionTab, setConversionTab] = useState<'overview' | 'transactions' | 'rates'>('overview');
   const [alertCheckLoading, setAlertCheckLoading] = useState(false);
   const [marginUpdateLoading, setMarginUpdateLoading] = useState(false);
   const [showMarginDialog, setShowMarginDialog] = useState(false);
@@ -572,20 +573,65 @@ export default function PDGFinance() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              {/* Grille des taux du jour — toutes devises visibles simultanément */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {/* USD/GNF — taux BCRG temps réel */}
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Taux officiel BCRG</p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-xs font-medium text-muted-foreground">USD → GNF</p>
+                  <p className="text-sm font-bold mt-0.5">
                     {typeof fxHealth.current_rate?.rate === 'number'
-                      ? fxHealth.current_rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                      ? fxHealth.current_rate.rate.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
                       : 'N/A'}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {fxHealth.current_rate
-                      ? `${fxHealth.current_rate.from_currency}/${fxHealth.current_rate.to_currency}`
-                      : 'Paire indisponible'}
+                  <p className="text-xs text-muted-foreground">
+                    Final: {typeof fxHealth.current_rate?.final_rate_usd === 'number'
+                      ? fxHealth.current_rate.final_rate_usd.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+                      : 'N/A'}
                   </p>
+                  <Badge variant={fxHealth.is_stale ? 'destructive' : 'secondary'} className="mt-1 text-xs px-1">
+                    {fxHealth.is_stale ? 'Stale' : 'Fresh'}
+                  </Badge>
                 </div>
+
+                {/* EUR/GBP/XOF/XAF/CAD → GNF */}
+                {[
+                  { key: 'EUR_GNF', label: 'EUR → GNF', name: 'Euro' },
+                  { key: 'GBP_GNF', label: 'GBP → GNF', name: 'Livre sterling' },
+                  { key: 'XOF_GNF', label: 'XOF → GNF', name: 'CFA UEMOA' },
+                  { key: 'XAF_GNF', label: 'XAF → GNF', name: 'CFA CEMAC' },
+                  { key: 'CAD_GNF', label: 'CAD → GNF', name: 'Dollar canadien' },
+                ].map(({ key, label }) => {
+                  const kr = fxHealth.key_rates?.[key];
+                  const rateAgeMin = kr?.retrieved_at
+                    ? Math.floor((Date.now() - new Date(kr.retrieved_at).getTime()) / 60000)
+                    : null;
+                  const isStaleKr = rateAgeMin === null || rateAgeMin > 90;
+                  return (
+                    <div key={key} className="rounded-lg border p-3">
+                      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+                      <p className="text-sm font-bold mt-0.5">
+                        {typeof kr?.rate === 'number'
+                          ? kr.rate.toLocaleString('fr-FR', { maximumFractionDigits: 4 })
+                          : 'N/A'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Final: {typeof kr?.final_rate === 'number'
+                          ? kr.final_rate.toLocaleString('fr-FR', { maximumFractionDigits: 4 })
+                          : 'N/A'}
+                      </p>
+                      <Badge
+                        variant={!kr ? 'outline' : isStaleKr ? 'destructive' : 'secondary'}
+                        className="mt-1 text-xs px-1"
+                      >
+                        {!kr ? 'N/A' : isStaleKr ? 'Stale' : 'Fresh'}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Ligne d'infos : Commission, Âge USD/GNF, Sources */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Commission appliquée</p>
                   <p className="text-lg font-semibold">
@@ -595,12 +641,12 @@ export default function PDGFinance() {
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {typeof fxHealth.current_rate?.final_rate_usd === 'number' && typeof fxHealth.current_rate?.rate === 'number'
-                      ? `Taux final: ${fxHealth.current_rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })}`
+                      ? `Taux USD final: ${fxHealth.current_rate.final_rate_usd.toLocaleString('fr-FR', { maximumFractionDigits: 2 })}`
                       : 'N/A'}
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Âge du taux</p>
+                  <p className="text-xs text-muted-foreground">Âge du taux USD/GNF</p>
                   <p className="text-lg font-semibold">
                     {formatRateAgeCountdown(liveRateAgeSeconds)}
                   </p>
@@ -1007,16 +1053,16 @@ export default function PDGFinance() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal des Wallets */}
-      <Dialog open={showConversionStatsDialog} onOpenChange={setShowConversionStatsDialog}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      {/* Modal Conversions */}
+      <Dialog open={showConversionStatsDialog} onOpenChange={(v) => { setShowConversionStatsDialog(v); if (!v) setConversionTab('overview'); }}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Globe2 className="w-6 h-6 text-primary" />
               Conversions utilisateurs par pays
             </DialogTitle>
             <DialogDescription>
-              Volume de conversions (fenêtre {conversionStats?.window_hours || 168}h), pays origine/destination
+              Fenêtre {conversionStats?.window_hours || 168}h — {conversionStats?.total_conversions || 0} transfert(s) détecté(s)
             </DialogDescription>
           </DialogHeader>
 
@@ -1024,86 +1070,188 @@ export default function PDGFinance() {
             <p className="text-sm text-muted-foreground">Aucune statistique disponible.</p>
           ) : (
             <div className="space-y-4 mt-2">
+              {/* Sélecteur fenêtre */}
               <div className="flex gap-2 flex-wrap">
                 {[24, 72, 168, 720].map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => loadConversionStats(h)}
-                    className={`px-3 py-1 rounded text-xs border transition-colors ${(conversionStats?.window_hours || 168) === h ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted hover:bg-muted/80 border-border'}`}
-                  >
+                  <button key={h} onClick={() => loadConversionStats(h)}
+                    className={`px-3 py-1 rounded text-xs border transition-colors ${(conversionStats?.window_hours || 168) === h ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted hover:bg-muted/80 border-border'}`}>
                     {h === 24 ? '24h' : h === 72 ? '3 jours' : h === 168 ? '7 jours' : '30 jours'}
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-xs text-muted-foreground">Conversions totales</p>
-                    <p className="text-2xl font-bold">{conversionStats.total_conversions || 0}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-xs text-muted-foreground">Conversions internationales</p>
-                    <p className="text-2xl font-bold">{conversionStats.international_conversions || 0}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-xs text-muted-foreground">Pays actifs</p>
-                    <p className="text-2xl font-bold">{Array.isArray(conversionStats.by_country) ? conversionStats.by_country.length : 0}</p>
-                  </CardContent>
-                </Card>
+
+              {/* Onglets */}
+              <div className="flex gap-1 border-b">
+                {(['overview', 'transactions', 'rates'] as const).map((tab) => (
+                  <button key={tab} onClick={() => setConversionTab(tab)}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${conversionTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                    {tab === 'overview' ? 'Vue d\'ensemble' : tab === 'transactions' ? `Transactions (${(conversionStats.transactions || []).length})` : `Taux (${(conversionStats.rate_history || []).length})`}
+                  </button>
+                ))}
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Corridors pays vers pays</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!Array.isArray(conversionStats.country_corridors) || conversionStats.country_corridors.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Aucun corridor détecté.</p>
-                  ) : (
-                    <div className="max-h-56 overflow-auto space-y-1">
-                      {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
-                        <div key={`${row.from_country}-${row.to_country}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
-                          <span className="font-medium">{row.from_country} → {row.to_country}</span>
-                          <span className="text-right">
-                            <span className="font-semibold">{row.conversions_count}</span> conv.
-                            {row.total_amount > 0 && <span className="ml-2 text-muted-foreground">{Math.round(row.total_amount).toLocaleString('fr-FR')}</span>}
-                          </span>
+              {/* ---- ONG VUE D'ENSEMBLE ---- */}
+              {conversionTab === 'overview' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Card><CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground">Conversions totales</p>
+                      <p className="text-2xl font-bold">{conversionStats.total_conversions || 0}</p>
+                    </CardContent></Card>
+                    <Card><CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground">Internationales</p>
+                      <p className="text-2xl font-bold text-blue-600">{conversionStats.international_conversions || 0}</p>
+                    </CardContent></Card>
+                    <Card><CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground">Pays actifs</p>
+                      <p className="text-2xl font-bold">{Array.isArray(conversionStats.by_country) ? conversionStats.by_country.length : 0}</p>
+                    </CardContent></Card>
+                  </div>
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Corridors pays vers pays</CardTitle></CardHeader>
+                    <CardContent>
+                      {!Array.isArray(conversionStats.country_corridors) || conversionStats.country_corridors.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Aucun corridor détecté.</p>
+                      ) : (
+                        <div className="max-h-48 overflow-auto space-y-1">
+                          {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
+                            <div key={idx} className="text-xs rounded border p-2 flex justify-between gap-2">
+                              <span className="font-medium">{row.from_country} → {row.to_country}</span>
+                              <span><span className="font-semibold">{row.conversions_count}</span> conv. {row.total_amount > 0 && <span className="text-muted-foreground ml-1">{Math.round(row.total_amount).toLocaleString('fr-FR')}</span>}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Top utilisateurs</CardTitle></CardHeader>
+                    <CardContent>
+                      {!Array.isArray(conversionStats.by_user) || conversionStats.by_user.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Aucun utilisateur.</p>
+                      ) : (
+                        <div className="max-h-48 overflow-auto space-y-1">
+                          {conversionStats.by_user.slice(0, 30).map((row: any, idx: number) => (
+                            <div key={idx} className="text-xs rounded border p-2 flex justify-between gap-2">
+                              <span className="truncate font-medium">{row.user_label} <span className="text-muted-foreground">({row.country || 'Inconnu'})</span></span>
+                              <span className="shrink-0 font-semibold">{row.conversions_count} <span className="text-muted-foreground font-normal">{row.total_amount > 0 ? Math.round(row.total_amount).toLocaleString('fr-FR') : ''}</span></span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Top utilisateurs (conversions)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!Array.isArray(conversionStats.by_user) || conversionStats.by_user.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Aucun utilisateur détecté.</p>
+              {/* ---- ONGLET TRANSACTIONS DÉTAILLÉES ---- */}
+              {conversionTab === 'transactions' && (
+                <div className="space-y-2">
+                  {!Array.isArray(conversionStats.transactions) || conversionStats.transactions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">Aucune transaction dans cette fenêtre.</p>
                   ) : (
-                    <div className="max-h-56 overflow-auto space-y-1">
-                      {conversionStats.by_user.slice(0, 30).map((row: any, idx: number) => (
-                        <div key={`${row.user_id}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
-                          <div className="truncate">
-                            <span className="font-medium">{row.user_label}</span>
-                            <span className="ml-1 text-muted-foreground">({row.country || 'Inconnu'})</span>
+                    <div className="space-y-2 max-h-[60vh] overflow-auto">
+                      {conversionStats.transactions.map((tx: any, idx: number) => {
+                        const dateStr = new Date(tx.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                        const timeStr = new Date(tx.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        const isIntl = tx.is_international;
+                        const sameAmount = Math.abs(tx.amount_sent - tx.amount_received) < 0.01 && tx.sender_currency === tx.receiver_currency;
+                        return (
+                          <div key={idx} className={`rounded-lg border p-3 text-xs space-y-2 ${isIntl ? 'border-blue-200 bg-blue-50/40' : 'bg-muted/30'}`}>
+                            {/* Ligne 1 : date + ID + badge */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-muted-foreground">{dateStr} {timeStr}</span>
+                                {tx.id && <span className="font-mono text-[10px] text-muted-foreground/70 hidden sm:inline">{String(tx.id).slice(0, 16)}</span>}
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isIntl ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                                {isIntl ? 'International' : 'Domestique'}
+                              </span>
+                            </div>
+                            {/* Ligne 2 : expéditeur → destinataire + pays */}
+                            <div className="flex items-center gap-1 font-medium">
+                              <span className="text-red-700">{tx.sender_name}</span>
+                              <span className="text-muted-foreground">({tx.sender_country})</span>
+                              <span className="text-muted-foreground mx-1">→</span>
+                              <span className="text-green-700">{tx.receiver_name}</span>
+                              <span className="text-muted-foreground">({tx.receiver_country})</span>
+                            </div>
+                            {/* Ligne 3 : montants */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="rounded bg-red-50 border border-red-100 p-2">
+                                <p className="text-[10px] text-muted-foreground">Montant envoyé</p>
+                                <p className="font-bold text-red-700">{Math.round(tx.amount_sent).toLocaleString('fr-FR')} <span className="font-normal">{tx.sender_currency}</span></p>
+                              </div>
+                              <div className="rounded bg-green-50 border border-green-100 p-2">
+                                <p className="text-[10px] text-muted-foreground">Montant reçu</p>
+                                <p className="font-bold text-green-700">{Math.round(tx.amount_received).toLocaleString('fr-FR')} <span className="font-normal">{tx.receiver_currency}</span></p>
+                              </div>
+                              {tx.fee_amount > 0 && (
+                                <div className="rounded bg-orange-50 border border-orange-100 p-2">
+                                  <p className="text-[10px] text-muted-foreground">Frais</p>
+                                  <p className="font-semibold text-orange-700">{Math.round(tx.fee_amount).toLocaleString('fr-FR')} <span className="font-normal">{tx.sender_currency}</span></p>
+                                </div>
+                              )}
+                              {isIntl && !sameAmount && (
+                                <div className="rounded bg-blue-50 border border-blue-100 p-2">
+                                  <p className="text-[10px] text-muted-foreground">Taux appliqué</p>
+                                  <p className="font-semibold text-blue-700">
+                                    1 {tx.sender_currency} = {tx.rate_used >= 1 ? tx.rate_used.toLocaleString('fr-FR', { maximumFractionDigits: 4 }) : (1 / tx.rate_used).toLocaleString('fr-FR', { maximumFractionDigits: 4 })} {tx.receiver_currency}
+                                  </p>
+                                  {tx.rate_source && <p className="text-[10px] text-muted-foreground truncate">{tx.rate_source}</p>}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <span className="shrink-0">
-                            <span className="font-semibold">{row.conversions_count}</span>
-                            {row.total_amount > 0 && <span className="ml-2 text-muted-foreground">{Math.round(row.total_amount).toLocaleString('fr-FR')}</span>}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              )}
+
+              {/* ---- ONGLET HISTORIQUE DES TAUX ---- */}
+              {conversionTab === 'rates' && (
+                <div className="space-y-2">
+                  {!Array.isArray(conversionStats.rate_history) || conversionStats.rate_history.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">Aucun historique de taux disponible pour cette fenêtre.<br/><span className="text-xs">Les taux sont enregistrés uniquement pour les transferts internationaux.</span></p>
+                  ) : (
+                    <div className="max-h-[60vh] overflow-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead className="sticky top-0 bg-background border-b">
+                          <tr>
+                            <th className="text-left p-2 font-medium">Date</th>
+                            <th className="text-left p-2 font-medium">Paire</th>
+                            <th className="text-right p-2 font-medium">Taux</th>
+                            <th className="text-right p-2 font-medium hidden sm:table-cell">Marge</th>
+                            <th className="text-left p-2 font-medium hidden sm:table-cell">Source</th>
+                            <th className="text-center p-2 font-medium">Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {conversionStats.rate_history.map((r: any, idx: number) => {
+                            const dateR = r.retrieved_at || r.effective_date;
+                            const dateStr = dateR ? new Date(dateR).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : r.effective_date || '—';
+                            const timeStr = r.retrieved_at ? new Date(r.retrieved_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+                            return (
+                              <tr key={idx} className={`border-b hover:bg-muted/30 ${idx % 2 === 0 ? '' : 'bg-muted/10'}`}>
+                                <td className="p-2 font-mono">{dateStr} {timeStr}</td>
+                                <td className="p-2 font-semibold">{r.from_currency} → {r.to_currency}</td>
+                                <td className="p-2 text-right font-mono">{Number(r.rate).toLocaleString('fr-FR', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}</td>
+                                <td className="p-2 text-right hidden sm:table-cell text-muted-foreground">{r.margin != null ? `${(Number(r.margin) * 100).toFixed(1)}%` : '—'}</td>
+                                <td className="p-2 text-muted-foreground truncate max-w-[120px] hidden sm:table-cell">{r.source || '—'}</td>
+                                <td className="p-2 text-center">
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${r.status === 'OK' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status || '—'}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

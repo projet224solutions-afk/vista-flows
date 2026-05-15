@@ -33,8 +33,23 @@ content_path = "./supabase/templates/recovery.html"
 enroll_enabled = true
 verify_enabled = true
 
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "224Solutions - Code 2FA : {{ .Code }}"
+max_frequency = "5s"
+
 [auth.sms]
-template = "confirmer votre inscription "
+enable_signup = true
+enable_confirmations = true
+template = "224Solutions - Votre code de vérification : {{ .Code }}"
+
+[auth.sms.twilio]
+enabled = true
+account_sid = "env(TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(TWILIO_MESSAGE_SERVICE_SID)"
+auth_token = "env(TWILIO_AUTH_TOKEN)"
 
 [auth.web3.solana]
 enabled = true
@@ -392,4 +407,19 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.process-payment-link]
+verify_jwt = false
+
+[functions.phone-auth-setup]
+verify_jwt = false
+
+[functions.phone-send-otp]
+verify_jwt = false
+
+[functions.phone-verify-otp]
+verify_jwt = false
+
+[functions.phone-signup-send]
+verify_jwt = false
+
+[functions.phone-signup-verify]
 verify_jwt = false
