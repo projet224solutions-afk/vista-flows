@@ -43,6 +43,8 @@ interface ProfessionalService {
   phone?: string | null;
   email?: string | null;
   logo_url?: string | null;
+  cover_image_url?: string | null;
+  portfolio_images?: string[] | null;
   rating?: number | null;
   total_reviews?: number | null;
   city?: string | null;
@@ -130,7 +132,7 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('professional_services')
         .select(`
           id,
@@ -140,6 +142,8 @@ export default function ServicesProximite() {
           phone,
           email,
           logo_url,
+          cover_image_url,
+          portfolio_images,
           rating,
           total_reviews,
           city,
@@ -401,16 +405,32 @@ export default function ServicesProximite() {
                   {formatDistance(service.distance!)}
                 </div>
 
+                {(() => {
+                  const mainImage =
+                    service.cover_image_url ||
+                    service.logo_url ||
+                    (Array.isArray(service.portfolio_images) && service.portfolio_images[0]) ||
+                    null;
+                  const extraCount = Array.isArray(service.portfolio_images)
+                    ? service.portfolio_images.filter(img => img && img !== mainImage).length
+                    : 0;
+                  return (
                 <div className="mb-3 overflow-hidden rounded-2xl border border-border/50 bg-muted/40">
                   <div className="relative h-36 w-full overflow-hidden">
-                    <img
-                      src={service.logo_url || visual.image}
-                      alt={service.business_name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    {mainImage ? (
+                      <img
+                        src={mainImage}
+                        alt={service.business_name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${visual.accent}33, ${visual.accent}88)` }}>
+                        <Icon className="h-12 w-12 text-white/80" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                    {!service.logo_url && (
+                    {!mainImage && (
                       <div
                         className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-lg"
                         style={{ backgroundColor: visual.accent }}
@@ -418,8 +438,15 @@ export default function ServicesProximite() {
                         <Icon className="h-5 w-5" />
                       </div>
                     )}
+                    {extraCount > 0 && (
+                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 text-white">
+                        +{extraCount} photo{extraCount > 1 ? 's' : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
+                  );
+                })()}
 
                 <div className="flex-1 space-y-2">
                   <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">

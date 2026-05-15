@@ -394,6 +394,12 @@ export default function Marketplace() {
   }, [selectedCountry]);
 
   const handleProductClick = (itemId: string) => {
+    // Si c'est un service professionnel → naviguer vers la fiche service
+    const item = marketplaceItems.find(p => p.id === itemId);
+    if (item?.item_type === 'professional_service') {
+      navigate(`/services-proximite/${itemId}`);
+      return;
+    }
     setSelectedProductId(itemId);
     setShowProductModal(true);
   };
@@ -832,7 +838,7 @@ export default function Marketplace() {
               </div>
             ) : (
               <MarketplaceGrid>
-                {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
+                {marketplaceItems.map((item) => (
                   <TranslatedProductCard
                     key={item.id}
                     id={item.id}
@@ -859,8 +865,12 @@ export default function Marketplace() {
                     affiliateUrl={item.affiliate_url}
                     onBuy={() => handleProductClick(item.id)}
                     onAddToCart={() => {
-                      if (item.item_type === 'digital_product' || item.product_mode === 'affiliate') {
-                        toast.info('Ce produit s’achète directement via le bouton Acheter.');
+                      if (item.item_type === ‘professional_service’) {
+                        navigate(`/services-proximite/${item.id}`);
+                        return;
+                      }
+                      if (item.item_type === ‘digital_product’ || item.product_mode === ‘affiliate’) {
+                        toast.info(‘Ce produit s’achète directement via le bouton Acheter.’);
                         return;
                       }
 
@@ -871,12 +881,12 @@ export default function Marketplace() {
                         image: item.images?.[0],
                         vendor_id: item.vendor_id,
                         vendor_name: item.vendor_name,
-                        currency: item.currency || 'GNF',
+                        currency: item.currency || ‘GNF’,
                         item_type: item.item_type,
                         product_mode: item.product_mode,
                         affiliate_url: item.affiliate_url
                       });
-                      toast.success(t('marketplace.addToCart'));
+                      toast.success(t(‘marketplace.addToCart’));
                     }}
                     onContact={() => handleContactVendor(item.id)}
                   />
