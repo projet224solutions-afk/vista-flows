@@ -132,7 +132,7 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('professional_services')
         .select(`
           id,
@@ -143,7 +143,6 @@ export default function ServicesProximite() {
           email,
           logo_url,
           cover_image_url,
-          portfolio_images,
           rating,
           total_reviews,
           city,
@@ -406,14 +405,7 @@ export default function ServicesProximite() {
                 </div>
 
                 {(() => {
-                  const mainImage =
-                    service.cover_image_url ||
-                    service.logo_url ||
-                    (Array.isArray(service.portfolio_images) && service.portfolio_images[0]) ||
-                    null;
-                  const extraCount = Array.isArray(service.portfolio_images)
-                    ? service.portfolio_images.filter(img => img && img !== mainImage).length
-                    : 0;
+                  const mainImage = service.cover_image_url || service.logo_url || null;
                   return (
                 <div className="mb-3 overflow-hidden rounded-2xl border border-border/50 bg-muted/40">
                   <div className="relative h-36 w-full overflow-hidden">
@@ -436,11 +428,6 @@ export default function ServicesProximite() {
                         style={{ backgroundColor: visual.accent }}
                       >
                         <Icon className="h-5 w-5" />
-                      </div>
-                    )}
-                    {extraCount > 0 && (
-                      <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/60 text-white">
-                        +{extraCount} photo{extraCount > 1 ? 's' : ''}
                       </div>
                     )}
                   </div>

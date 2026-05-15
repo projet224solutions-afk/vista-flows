@@ -265,7 +265,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     if (itemType !== 'all' && itemType !== 'professional_service') return [];
 
     try {
-      let query = (supabase as any)
+      let query = supabase
         .from('professional_services')
         .select(`
           id,
@@ -276,8 +276,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           phone,
           logo_url,
           cover_image_url,
-          portfolio_images,
-          promo_video_url,
           rating,
           total_reviews,
           opening_hours,
@@ -309,17 +307,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // donc le filtrage par pays n'est pas applicable pour ce type
 
       return (data || []).map(service => {
-        // Construire le tableau d'images : cover, logo, puis portfolio
         const images: string[] = [];
         if (service.cover_image_url) images.push(service.cover_image_url);
         if (service.logo_url && service.logo_url !== service.cover_image_url) images.push(service.logo_url);
-        if (Array.isArray(service.portfolio_images)) {
-          for (const img of service.portfolio_images) {
-            if (img && !images.includes(img)) images.push(img);
-          }
-        }
-
-        const promoVideo = service.promo_video_url || null;
 
         return {
           id: service.id,
@@ -327,7 +317,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           price: 0,
           description: service.description || '',
           images,
-          promotional_videos: promoVideo ? [promoVideo] : [],
+          promotional_videos: [],
           vendor_id: service.id,
           vendor_name: service.business_name,
           vendor_user_id: service.user_id,
