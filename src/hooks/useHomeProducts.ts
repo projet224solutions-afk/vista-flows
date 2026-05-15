@@ -21,37 +21,21 @@ export const useHomeProducts = (limit: number = 4) => {
       try {
         setLoading(true);
 
-        // 🚀 Filter server-side with IN instead of fetching 2x + client filter
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, images, promotional_videos, category_id, rating, reviews_count, vendors!inner(business_type)')
+          .select('id, name, price, images, promotional_videos, category_id, rating, reviews_count, vendors(business_type)')
           .eq('is_active', true)
-          .in('vendors.business_type', ['hybrid', 'online'])
           .order('created_at', { ascending: false })
-          .limit(limit);
+          .limit(limit * 2);
 
-        if (error) {
-          // Fallback: if the IN filter on joined table fails, use the old approach
-          console.warn('Optimized query failed, using fallback:', error.message);
-          const { data: fallbackData } = await supabase
-            .from('products')
-            .select('id, name, price, images, promotional_videos, category_id, rating, reviews_count, vendors(business_type, business_name)')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(limit * 2);
+        if (error) throw error;
 
-          const filtered = (fallbackData || [])
-            .filter(product => {
-              const vendor = product.vendors as any;
-              return vendor && ['hybrid', 'online'].includes(vendor.business_type);
-            })
-            .slice(0, limit);
+        // Exclure uniquement les vendeurs explicitement "physical"
+        const filtered = (data || [])
+          .filter(product => (product.vendors as any)?.business_type !== 'physical')
+          .slice(0, limit);
 
-          setProducts(filtered);
-          return;
-        }
-
-        setProducts(data || []);
+        setProducts(filtered);
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
         setProducts([]);

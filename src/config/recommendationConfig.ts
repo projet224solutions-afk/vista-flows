@@ -3,8 +3,8 @@
  * Tous les paramètres de cache, filtrage et scoring en un seul endroit
  */
 
-/** Types de vendeurs autorisés dans les sections de recommandation */
-export const ALLOWED_BUSINESS_TYPES = ['hybrid', 'online'] as const;
+/** Type de vendeur exclu du marketplace en ligne (boutique physique seulement) */
+export const EXCLUDED_BUSINESS_TYPE = 'physical';
 
 /** Durées de cache React Query (en millisecondes) */
 export const CACHE_TTL = {
@@ -48,12 +48,12 @@ export const TRENDING_WEIGHTS = {
 /** Seuil minimum de produits pour la section Découvrir avant fallback */
 export const DISCOVERY_MIN_PRODUCTS = 4;
 
-/** Filtre les produits par type de vendeur autorisé */
+/** Exclut uniquement les vendeurs explicitement "physical" (boutique physique sans vente en ligne) */
 export function filterByAllowedVendors<T extends { vendors?: { business_type?: string | null } | null }>(
   products: T[]
 ): T[] {
   return products.filter(p => {
-    const vendor = p.vendors;
-    return vendor?.business_type && (ALLOWED_BUSINESS_TYPES as readonly string[]).includes(vendor.business_type);
+    const bt = p.vendors?.business_type;
+    return bt !== EXCLUDED_BUSINESS_TYPE;
   });
 }

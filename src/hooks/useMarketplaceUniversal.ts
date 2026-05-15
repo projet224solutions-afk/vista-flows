@@ -175,16 +175,15 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .limit(sourceRowLimit);
       if (error) throw error;
 
-      // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
+      // Règle marketplace: exclure uniquement les vendeurs "physical" (boutique physique sans vente en ligne)
+      // Inclure null/undefined (non renseigné), hybrid, online, digital, etc.
       // + Filtrage par pays et ville
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
-        if (!vendor) return false; // Pas de vendeur = pas affiché
+        if (!vendor) return false;
 
-        // Exclure les vendeurs qui n'ont pas activé la vente en ligne
-        // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
-        const allowedTypes = ['hybrid', 'online'];
-        if (!vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
+        // Exclure seulement les vendeurs explicitement "physical"
+        if (vendor.business_type === 'physical') return false;
 
         // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
