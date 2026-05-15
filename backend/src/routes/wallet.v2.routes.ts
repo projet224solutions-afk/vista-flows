@@ -825,6 +825,20 @@ function buildLiveBcrgFxRate(
     }
   }
 
+  // SLL (Sierra Leone Leone) ↔ GNF : pivot via USD (BSL instable, taux de référence BSL 2025)
+  // 1 USD ≈ 22 500 SLL (code ISO 4217 SLL — Leones anciens, taux post-redenomination 2022 exprimé en SLL)
+  const SLL_PER_USD = 22_500;
+  if (liveRate.usdGnf > 0) {
+    if (sourceCurrency === 'SLL' && targetCurrency === 'GNF') {
+      const sllToGnf = liveRate.usdGnf / SLL_PER_USD;
+      return { rate: sllToGnf * (1 + margin), ...shared, officialRate: sllToGnf };
+    }
+    if (sourceCurrency === 'GNF' && targetCurrency === 'SLL') {
+      const gnfToSll = SLL_PER_USD / liveRate.usdGnf;
+      return { rate: gnfToSll / (1 + margin), ...shared, officialRate: gnfToSll };
+    }
+  }
+
   return null;
 }
 
