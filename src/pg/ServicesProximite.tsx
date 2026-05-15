@@ -104,7 +104,6 @@ export default function ServicesProximite() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Sync selectedCategory with URL ?type= param
   const selectedCategory = searchParams.get("type") || "all";
 
   const setSelectedCategory = useCallback((cat: string) => {
@@ -116,7 +115,6 @@ export default function ServicesProximite() {
     setSearchParams(searchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Stabiliser la position pour éviter les re-renders infinis
   const positionRef = useRef({ lat: userPosition.latitude, lng: userPosition.longitude });
   const loadingRef = useRef(false);
   const hasLoadedRef = useRef(false);
@@ -154,8 +152,7 @@ export default function ServicesProximite() {
           user_id,
           service_types (id, name, code, category)
         `)
-        .eq('status', 'active')
-        .order('rating', { ascending: false, nullsFirst: false });
+        .eq('status', 'active');
 
       if (error) throw error;
 
@@ -164,10 +161,10 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Pour les services sans GPS, essayer de récupérer depuis la table vendors (même user_id)
-      const servicesWithoutGps = list.filter(s => s.latitude == null || s.longitude == null);
-      if (servicesWithoutGps.length > 0) {
-        const userIds = [...new Set(servicesWithoutGps.map(s => (s as any).user_id).filter(Boolean))];
+      // Récupérer les coordonnées GPS depuis la table vendors pour les services qui n'en ont pas
+      const withoutGpsList = list.filter(s => s.latitude == null || s.longitude == null);
+      if (withoutGpsList.length > 0) {
+        const userIds = [...new Set(withoutGpsList.map(s => (s as any).user_id).filter(Boolean))];
         if (userIds.length > 0) {
           const { data: vendorsData } = await supabase
             .from('vendors')
@@ -188,56 +185,59 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB
-            for (const s of servicesWithoutGps) {
+            // Mettre à jour les coordonnées manquantes en arrière-plan
+            for (const s of withoutGpsList) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
                 supabase
                   .from('professional_services')
                   .update({ latitude: vendorGps.lat, longitude: vendorGps.lng })
                   .eq('id', s.id)
-                  .then(() => console.log('GPS synced for:', s.business_name));
+                  .then(() => {});
               }
             }
           }
         }
       }
 
-      // Calculer les distances - exclure les services sans GPS valide
-      const beforeFilterCount = list.length;
-      list = list
-        .map((s) => {
-          const lat_val = Number(s.latitude);
-          const lng_val = Number(s.longitude);
-          const hasValidCoords =
-            s.latitude != null && s.longitude != null &&
-            Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
-            !(lat_val === 0 && lng_val === 0);
+      // Calculer la distance pour chaque service
+      const withDistances = list.map((s) => {
+        const lat_val = Number(s.latitude);
+        const lng_val = Number(s.longitude);
+        const hasValidCoords =
+          s.latitude != null && s.longitude != null &&
+          Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
+          !(lat_val === 0 && lng_val === 0);
 
-          const distance = hasValidCoords
-            ? calculateDistance(lat, lng, lat_val, lng_val)
-            : null;
-          return { ...s, distance };
-        })
-        .filter((s) => {
-          if (s.distance === null) return false;
-          return s.distance <= RADIUS_KM;
-        });
-
-      console.log(`Proximité: ${beforeFilterCount} services trouvés, ${list.length} dans le rayon de ${RADIUS_KM} km`);
-
-      // Tri: plus proches en premier
-      list.sort((a, b) => {
-        if (a.distance !== null && b.distance !== null) {
-          if (a.distance === b.distance) return (b.rating || 0) - (a.rating || 0);
-          return a.distance - b.distance;
-        }
-        if (a.distance !== null && b.distance === null) return -1;
-        if (a.distance === null && b.distance !== null) return 1;
-        return (b.rating || 0) - (a.rating || 0);
+        const distance = hasValidCoords
+          ? calculateDistance(lat, lng, lat_val, lng_val)
+          : null;
+        return { ...s, distance };
       });
 
-      setServices(list);
+      // Groupe 1 : services avec GPS dans le rayon — triés du plus proche au plus loin
+      const nearbyWithGps = withDistances
+        .filter(s => s.distance !== null && s.distance <= RADIUS_KM)
+        .sort((a, b) => {
+          const distDiff = (a.distance ?? 999) - (b.distance ?? 999);
+          return distDiff !== 0 ? distDiff : (b.rating ?? 0) - (a.rating ?? 0);
+        });
+
+      // Groupe 2 : services sans coordonnées GPS (position inconnue, pourraient être proches)
+      // Triés par note décroissante
+      const noGpsServices = withDistances
+        .filter(s => s.distance === null)
+        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+      const finalList = [...nearbyWithGps, ...noGpsServices];
+
+      console.log(
+        `Proximité: ${list.length} services actifs — ` +
+        `${nearbyWithGps.length} dans les ${RADIUS_KM} km, ` +
+        `${noGpsServices.length} sans GPS`
+      );
+
+      setServices(finalList);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
@@ -247,23 +247,31 @@ export default function ServicesProximite() {
     }
   }, []);
 
-  // Charger une seule fois quand positionReady, puis re-charger si la position change de +100m
+  // Charger immédiatement au montage avec la position disponible (cache ou défaut Conakry)
+  // Ne pas bloquer sur positionReady — la position initiale est déjà valide
   useEffect(() => {
-    if (!positionReady) return;
+    if (hasLoadedRef.current) return;
+    const lat = userPosition.latitude;
+    const lng = userPosition.longitude;
+    positionRef.current = { lat, lng };
+    hasLoadedRef.current = true;
+    loadServices(lat, lng);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Recharger si le GPS réel arrive et que la position a bougé de plus de 100m
+  useEffect(() => {
+    if (!positionReady || !hasLoadedRef.current) return;
 
     const newLat = userPosition.latitude;
     const newLng = userPosition.longitude;
     const prevLat = positionRef.current.lat;
     const prevLng = positionRef.current.lng;
 
-    const moved = hasLoadedRef.current
-      ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1
-      : true;
-
-    if (!moved) return;
+    const movedKm = calculateDistance(prevLat, prevLng, newLat, newLng);
+    if (movedKm <= 0.1) return;
 
     positionRef.current = { lat: newLat, lng: newLng };
-    hasLoadedRef.current = true;
     loadServices(newLat, newLng);
   }, [positionReady, userPosition.latitude, userPosition.longitude, loadServices]);
 
@@ -325,7 +333,12 @@ export default function ServicesProximite() {
               {usingRealLocation ? "Position GPS active" : "GPS désactivé"}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {filteredServices.length} service{filteredServices.length > 1 ? "s" : ""}
+              {filteredServices.filter(s => s.distance !== null).length} dans {RADIUS_KM} km
+              {filteredServices.filter(s => s.distance === null).length > 0 && (
+                <span className="ml-1 text-muted-foreground">
+                  + {filteredServices.filter(s => s.distance === null).length} sans GPS
+                </span>
+              )}
             </Badge>
           </div>
 
@@ -399,10 +412,17 @@ export default function ServicesProximite() {
                 style={{ animationDelay: `${index * 30}ms` }}
               >
                 {/* Badge de distance */}
-                <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
-                  <MapPin className="w-3 h-3" />
-                  {formatDistance(service.distance!)}
-                </div>
+                {service.distance !== null ? (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
+                    <MapPin className="w-3 h-3" />
+                    {formatDistance(service.distance)}
+                  </div>
+                ) : (
+                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-muted text-muted-foreground border border-border">
+                    <MapPin className="w-3 h-3" />
+                    Sans GPS
+                  </div>
+                )}
 
                 {(() => {
                   const mainImage = service.cover_image_url || service.logo_url || null;
