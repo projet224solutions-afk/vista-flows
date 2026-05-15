@@ -130,7 +130,11 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const now = new Date().toISOString();
+
+      // Seuls les services avec un abonnement actif non expiré sont chargés
+      // !inner = inner join → exclut les services sans abonnement actif
+      const { data, error } = await (supabase as any)
         .from('professional_services')
         .select(`
           id,
@@ -150,9 +154,12 @@ export default function ServicesProximite() {
           status,
           service_type_id,
           user_id,
-          service_types (id, name, code, category)
+          service_types (id, name, code, category),
+          service_subscriptions!inner(id, status, current_period_end, plan_id)
         `)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('service_subscriptions.status', 'active')
+        .gte('service_subscriptions.current_period_end', now);
 
       if (error) throw error;
 
@@ -161,7 +168,7 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Récupérer les coordonnées GPS depuis la table vendors pour les services qui n'en ont pas
+      // Tenter de récupérer les coordonnées GPS depuis vendors pour les services sans GPS
       const withoutGpsList = list.filter(s => s.latitude == null || s.longitude == null);
       if (withoutGpsList.length > 0) {
         const userIds = [...new Set(withoutGpsList.map(s => (s as any).user_id).filter(Boolean))];
@@ -185,7 +192,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour les coordonnées manquantes en arrière-plan
+            // Synchroniser les coordonnées manquantes en arrière-plan
             for (const s of withoutGpsList) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -200,44 +207,35 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer la distance pour chaque service
-      const withDistances = list.map((s) => {
-        const lat_val = Number(s.latitude);
-        const lng_val = Number(s.longitude);
-        const hasValidCoords =
-          s.latitude != null && s.longitude != null &&
-          Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
-          !(lat_val === 0 && lng_val === 0);
+      // Calculer la distance et filtrer : uniquement les services avec GPS valide dans les 20 km
+      // Un service sans GPS ou hors rayon n'est pas affiché
+      const nearby = list
+        .map((s) => {
+          const lat_val = Number(s.latitude);
+          const lng_val = Number(s.longitude);
+          const hasValidCoords =
+            s.latitude != null && s.longitude != null &&
+            Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
+            !(lat_val === 0 && lng_val === 0);
 
-        const distance = hasValidCoords
-          ? calculateDistance(lat, lng, lat_val, lng_val)
-          : null;
-        return { ...s, distance };
-      });
-
-      // Groupe 1 : services avec GPS dans le rayon — triés du plus proche au plus loin
-      const nearbyWithGps = withDistances
+          const distance = hasValidCoords
+            ? calculateDistance(lat, lng, lat_val, lng_val)
+            : null;
+          return { ...s, distance };
+        })
         .filter(s => s.distance !== null && s.distance <= RADIUS_KM)
         .sort((a, b) => {
+          // Plus proche = premier ; à égalité, meilleure note = premier
           const distDiff = (a.distance ?? 999) - (b.distance ?? 999);
           return distDiff !== 0 ? distDiff : (b.rating ?? 0) - (a.rating ?? 0);
         });
 
-      // Groupe 2 : services sans coordonnées GPS (position inconnue, pourraient être proches)
-      // Triés par note décroissante
-      const noGpsServices = withDistances
-        .filter(s => s.distance === null)
-        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-
-      const finalList = [...nearbyWithGps, ...noGpsServices];
-
       console.log(
-        `Proximité: ${list.length} services actifs — ` +
-        `${nearbyWithGps.length} dans les ${RADIUS_KM} km, ` +
-        `${noGpsServices.length} sans GPS`
+        `Proximité: ${list.length} services avec abonnement actif, ` +
+        `${nearby.length} dans les ${RADIUS_KM} km`
       );
 
-      setServices(finalList);
+      setServices(nearby);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
@@ -333,12 +331,7 @@ export default function ServicesProximite() {
               {usingRealLocation ? "Position GPS active" : "GPS désactivé"}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {filteredServices.filter(s => s.distance !== null).length} dans {RADIUS_KM} km
-              {filteredServices.filter(s => s.distance === null).length > 0 && (
-                <span className="ml-1 text-muted-foreground">
-                  + {filteredServices.filter(s => s.distance === null).length} sans GPS
-                </span>
-              )}
+              {filteredServices.length} service{filteredServices.length > 1 ? "s" : ""} — rayon {RADIUS_KM} km
             </Badge>
           </div>
 
@@ -411,18 +404,11 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {/* Badge de distance */}
-                {service.distance !== null ? (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
-                    <MapPin className="w-3 h-3" />
-                    {formatDistance(service.distance)}
-                  </div>
-                ) : (
-                  <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-muted text-muted-foreground border border-border">
-                    <MapPin className="w-3 h-3" />
-                    Sans GPS
-                  </div>
-                )}
+                {/* Badge de distance — tous les services affichés ont des coords GPS valides */}
+                <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
+                  <MapPin className="w-3 h-3" />
+                  {formatDistance(service.distance)}
+                </div>
 
                 {(() => {
                   const mainImage = service.cover_image_url || service.logo_url || null;
