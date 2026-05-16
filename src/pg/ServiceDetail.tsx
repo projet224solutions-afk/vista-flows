@@ -164,16 +164,24 @@ export default function ServiceDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  // Charger le détail dès que l'id est disponible — pas besoin d'attendre le GPS
   useEffect(() => {
-    if (id && positionReady) {
-      loadServiceDetails();
-      loadReviews();
-      loadRestaurantMenu();
-      loadGalleryImages();
-      loadFavoriteStatus();
-    }
+    if (!id) return;
+    loadServiceDetails();
+    loadReviews();
+    loadRestaurantMenu();
+    loadGalleryImages();
+    loadFavoriteStatus();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, positionReady]);
+  }, [id]);
+
+  // Recalculer la distance quand le GPS réel arrive (sans recharger toutes les données)
+  useEffect(() => {
+    if (!positionReady || !service?.latitude || !service?.longitude) return;
+    const dist = getDistanceTo(service.latitude, service.longitude);
+    setDistance(dist);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [positionReady, service?.latitude, service?.longitude]);
 
   // Check ownership
   useEffect(() => {
@@ -226,13 +234,6 @@ export default function ServiceDetailPage() {
         .eq('id', id)
         .single();
 
-      // Colonnes médias non encore dans les types générés — cast any
-      const { data: mediaData } = await (supabase as any)
-        .from('professional_services')
-        .select('portfolio_images, promo_video_url')
-        .eq('id', id)
-        .single();
-
       if (!proError && proService) {
         const openingHours = proService.opening_hours as OpeningHours | undefined;
 
@@ -264,10 +265,10 @@ export default function ServiceDetailPage() {
         };
 
         setService(serviceData);
-        setPortfolioImages(Array.isArray(mediaData?.portfolio_images) ? mediaData.portfolio_images : []);
-        setPromoVideoUrl(mediaData?.promo_video_url || null);
+        setPortfolioImages([]);
+        setPromoVideoUrl(null);
 
-        // Only compute distance if we have real coordinates
+        // Calculer la distance si les coordonnées sont disponibles
         if (hasRealCoords) {
           const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
           setDistance(dist);
