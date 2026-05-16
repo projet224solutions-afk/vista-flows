@@ -77,6 +77,9 @@ export const env = {
   LOG_LEVEL: optionalEnv('LOG_LEVEL', 'info'),
   LOG_FILE: optionalEnv('LOG_FILE', './logs/backend.log'),
 
+  // Email (Resend)
+  RESEND_API_KEY: optionalEnv('RESEND_API_KEY', ''),
+
   // Cron
   ENABLE_CRON_JOBS: optionalEnv('ENABLE_CRON_JOBS', 'true') === 'true',
 

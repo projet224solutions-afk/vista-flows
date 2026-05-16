@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { env } from '../config/env.js';
 
 interface TransactionEmailParams {
   senderId: string;
@@ -28,13 +29,29 @@ interface UserProfile {
 }
 
 async function getProfile(userId: string): Promise<UserProfile | null> {
-  const { data, error } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from('profiles')
     .select('email, full_name, first_name, last_name, custom_id')
     .eq('id', userId)
     .maybeSingle();
-  if (error || !data) return null;
-  return data as UserProfile;
+
+  let email = data?.email ?? null;
+
+  // profiles.email est souvent null — fallback sur auth.users
+  if (!email) {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    email = authUser?.user?.email ?? null;
+  }
+
+  if (!data && !email) return null;
+
+  return {
+    email,
+    full_name: data?.full_name ?? null,
+    first_name: data?.first_name ?? null,
+    last_name: data?.last_name ?? null,
+    custom_id: data?.custom_id ?? null,
+  };
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -48,12 +65,28 @@ function getDisplayName(profile: UserProfile | null, fallback = 'Utilisateur'): 
 }
 
 async function sendEmail(email: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) {
+    logger.warn('[TransactionEmail] RESEND_API_KEY non configurée — email non envoyé');
+    return false;
+  }
   try {
-    const { error } = await supabaseAdmin.functions.invoke('send-otp-email', {
-      body: { email, subject, html, type: 'transaction' },
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: '224Solutions <no-reply@224solution.net>',
+        to: [email],
+        subject,
+        html,
+      }),
     });
-    if (error) {
-      logger.warn(`[TransactionEmail] Edge function error for ${email}: ${error.message}`);
+    if (!res.ok) {
+      const body = await res.text();
+      logger.warn(`[TransactionEmail] Resend error for ${email}: ${res.status} ${body}`);
       return false;
     }
     return true;
