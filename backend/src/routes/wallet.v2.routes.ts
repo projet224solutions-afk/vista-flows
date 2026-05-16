@@ -64,7 +64,7 @@ const BCRG_SCRAPE_URLS = [
 interface ResolvedRecipient {
   userId: string;
   query: string;
-  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone' | 'pdg_management.email' | 'pdg_management.phone' | 'agents_management.agent_code' | 'agents_management.email' | 'agents_management.phone';
+  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone' | 'pdg_management.email' | 'pdg_management.phone' | 'agents_management.agent_code' | 'agents_management.email' | 'agents_management.phone' | 'vendors.vendor_code';
   displayName: string | null;
   email: string | null;
   phone: string | null;
