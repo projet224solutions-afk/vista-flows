@@ -1195,6 +1195,34 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     }
   }
 
+  // Recherche dans vendors par vendor_code ou public_id (ex: VND0004)
+  {
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors')
+      .select('user_id, business_name, vendor_code, public_id')
+      .or(`vendor_code.eq.${normalizedId},public_id.eq.${normalizedId}`)
+      .maybeSingle();
+
+    if ((vendor as any)?.user_id) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+        .eq('id', (vendor as any).user_id)
+        .maybeSingle();
+
+      return {
+        userId: String((vendor as any).user_id),
+        query: candidate,
+        matchedBy: 'vendors.vendor_code',
+        displayName: buildProfileDisplayName(profile as any) || String((vendor as any).business_name || ''),
+        email: profile ? String((profile as any).email || '') || null : null,
+        phone: profile ? String((profile as any).phone || '') || null : null,
+        publicId: String((vendor as any).vendor_code || (vendor as any).public_id || '') || null,
+        customId: null,
+      };
+    }
+  }
+
   return null;
 }
 

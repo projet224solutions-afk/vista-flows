@@ -336,7 +336,12 @@ export function JomyPaymentSelector({
   const isWalletPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
 
   const executeWalletTransfer = async (pin?: string) => {
-    if (!recipientId) {
+    // Pour les paiements marketplace : préférer le sellerId (UUID réel du vendeur)
+    // sinon fallback sur recipientId (code vendeur VND0001, email, etc.)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const transferTarget = (sellerId && uuidRegex.test(sellerId)) ? sellerId : recipientId;
+
+    if (!transferTarget) {
       toast.error('ID du destinataire requis');
       return false;
     }
@@ -351,7 +356,7 @@ export function JomyPaymentSelector({
 
     try {
       const result = await transferToWallet(
-        recipientId,
+        transferTarget,
         amount,
         description || 'Transfert',
         pin

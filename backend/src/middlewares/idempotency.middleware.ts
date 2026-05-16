@@ -152,12 +152,30 @@ export async function idempotencyGuard(req: AuthenticatedRequest, res: Response,
     next();
   } catch (error: any) {
     logger.error(`Idempotency middleware error: ${error.message}`);
+
+    // Si la table idempotency_keys n'existe pas en production (code PostgreSQL 42P01),
+    // laisser passer la requête plutôt que de bloquer toutes les commandes.
+    const msg = String(error?.message || '');
+    const isTableMissing =
+      error?.code === '42P01' ||
+      msg.includes('relation') ||
+      msg.includes('does not exist') ||
+      msg.includes('idempotency_keys');
+
+    if (isTableMissing) {
+      logger.warn('[Idempotency] Table absente — bypass (fail-open). Appliquer la migration SQL idempotency_keys.');
+      next();
+      return;
+    }
+
+    // Pour les autres erreurs, tenter de marquer la clé en échec
     await supabaseAdmin
       .from('idempotency_keys')
       .update({ status: 'failed', updated_at: new Date().toISOString() })
       .eq('key', idempotencyKey)
       .eq('user_id', userId);
-    // Fail-closed : en cas d'erreur, bloquer plutôt que de risquer un double débit
+
+    // Fail-closed pour les erreurs inattendues
     res.status(503).json({
       success: false,
       error: 'Service temporairement indisponible, veuillez réessayer avec la même Idempotency-Key',
