@@ -96,6 +96,32 @@ async function withTimeout<T>(promise: Promise<T>, fallbackValue: T, label: stri
   }
 }
 
+/**
+ * Filtre les items de services (menu_item, service_product) selon l'abonnement actif
+ * et la limite max_products du plan.
+ * Map: professional_service_id → max_products (null = illimité)
+ */
+function applySubscriptionLimit(
+  items: MarketplaceItem[],
+  subscriptionMap: Map<string, number | null>
+): MarketplaceItem[] {
+  const byService = new Map<string, MarketplaceItem[]>();
+  for (const item of items) {
+    const sid = item.service_id || item.vendor_id;
+    if (!subscriptionMap.has(sid)) continue; // Pas d'abonnement actif → exclu
+    if (!byService.has(sid)) byService.set(sid, []);
+    byService.get(sid)!.push(item);
+  }
+  const result: MarketplaceItem[] = [];
+  for (const [, sItems] of byService) {
+    const sid = (sItems[0].service_id || sItems[0].vendor_id)!;
+    const maxP = subscriptionMap.get(sid) ?? null;
+    // Prendre les maxP premiers (déjà triés par created_at DESC par le loader)
+    result.push(...(maxP !== null ? sItems.slice(0, maxP) : sItems));
+  }
+  return result;
+}
+
 export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions = {}) => {
   const {
     limit = 24,
@@ -337,6 +363,33 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       console.error('Erreur chargement services professionnels:', error);
       return [];
     }
+  };
+
+  /**
+   * Charge la map des abonnements actifs : professional_service_id → max_products (null = illimité)
+   * Utilise une fonction SECURITY DEFINER pour contourner la RLS sur service_subscriptions
+   * (la RLS bloque les visiteurs/utilisateurs non-admin qui ne voient que leurs propres abonnements)
+   */
+  const loadActiveSubscriptionMap = async (): Promise<Map<string, number | null>> => {
+    const { data, error } = await supabase
+      .rpc('get_active_service_subscription_limits');
+
+    if (error) {
+      console.warn('[Marketplace] Subscription map error:', error);
+      return new Map();
+    }
+
+    const map = new Map<string, number | null>();
+    for (const row of data || []) {
+      const sid: string = row.professional_service_id;
+      const maxP: number | null = row.max_products ?? null;
+      const existing = map.get(sid);
+      // Si plusieurs abonnements actifs pour le même service, garder le max le plus élevé
+      if (existing === undefined || maxP === null || (existing !== null && maxP > existing)) {
+        map.set(sid, maxP);
+      }
+    }
+    return map;
   };
 
   /**
@@ -697,26 +750,42 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
         if (!isEcommerceCategorySelected) {
-          const [services, menuItems, serviceProds] = await Promise.all([
+          const [services, menuItems, serviceProds, subscriptionMap] = await Promise.all([
             withTimeout(loadProfessionalServices(), [], 'professional_services'),
             withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
             withTimeout(loadServiceProducts(), [], 'service_products'),
+            withTimeout(loadActiveSubscriptionMap(), new Map<string, number | null>(), 'subscription_map'),
           ]);
-          allItems = [...services, ...menuItems, ...serviceProds];
+          // Filtrer les services sans abonnement actif
+          const filteredServices = services.filter(s => subscriptionMap.has(s.id));
+          allItems = [
+            ...filteredServices,
+            ...applySubscriptionLimit(menuItems, subscriptionMap),
+            ...applySubscriptionLimit(serviceProds, subscriptionMap),
+          ];
         }
       } else {
         // 'all' = tout : produits + numériques + services pro + plats + produits services
         if (isEcommerceCategorySelected) {
           allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
-          const [products, digitalProducts, professionalServices, menuItems, serviceProds] = await Promise.all([
+          const [products, digitalProducts, professionalServices, menuItems, serviceProds, subscriptionMap] = await Promise.all([
             withTimeout(loadProducts(), [], 'products'),
             withTimeout(loadDigitalProducts(), [], 'digital_products'),
             withTimeout(loadProfessionalServices(), [], 'professional_services'),
             withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
             withTimeout(loadServiceProducts(), [], 'service_products'),
+            withTimeout(loadActiveSubscriptionMap(), new Map<string, number | null>(), 'subscription_map'),
           ]);
-          allItems = [...products, ...digitalProducts, ...professionalServices, ...menuItems, ...serviceProds];
+          // Filtrer les services sans abonnement actif + limiter les produits selon max_products du plan
+          const filteredServices = professionalServices.filter(s => subscriptionMap.has(s.id));
+          allItems = [
+            ...products,
+            ...digitalProducts,
+            ...filteredServices,
+            ...applySubscriptionLimit(menuItems, subscriptionMap),
+            ...applySubscriptionLimit(serviceProds, subscriptionMap),
+          ];
         }
       }
 
@@ -960,6 +1029,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'digital_products' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'professional_services' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_subscriptions' }, scheduleRefresh)
       .subscribe();
 
     return () => {
