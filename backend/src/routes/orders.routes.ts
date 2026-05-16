@@ -636,7 +636,9 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     //                         Le montant inclut la commission (charged_amount du frontend)
     // Montant débité du wallet = totalPaidAmount backend (devise acheteur).
     // Priorité : résumé financier calculé depuis la DB ; fallback : charged_amount frontend.
-    const walletDebitAmount = payment_method === 'wallet'
+    // Si payment_confirmed=true, le wallet a déjà été débité en dehors (ex: JomyPaymentSelector
+    // executeWalletTransfer) — ne pas redébiter via create_order_core pour éviter double débit.
+    const walletDebitAmount = payment_method === 'wallet' && !payment_confirmed
       ? (financialSummary?.totalPaidAmount ?? (typeof charged_amount === 'number' && charged_amount > 0 ? charged_amount : 0))
       : 0;
 
