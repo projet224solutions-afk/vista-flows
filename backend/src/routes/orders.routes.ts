@@ -663,14 +663,35 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
 
     if (rpcError) {
       logger.error(`create_order_core RPC error: ${rpcError.message}`);
-      res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
+      // Si wallet déjà débité avant cet appel (payment_confirmed=true), on log pour remboursement manuel
+      if (payment_method === 'wallet' && payment_confirmed && payment_intent_id) {
+        logger.error(`[WALLET-LOSS] RPC crash après transfert wallet — réf: ${payment_intent_id}, user: ${userId}, montant: ${charged_amount}`);
+      }
+      res.status(500).json({
+        success: false,
+        error: 'Erreur lors de la création de la commande',
+        ...(payment_method === 'wallet' && payment_confirmed && payment_intent_id
+          ? { wallet_ref: payment_intent_id, note: 'Votre paiement a été reçu. Contactez le support avec cette référence.' }
+          : {}),
+      });
       return;
     }
 
     // Check RPC result
     if (!result || !result.success) {
       const errorMsg = result?.error || 'Erreur inconnue';
-      logger.warn(`Order creation rejected: ${errorMsg}`);
+      logger.warn(`Order creation rejected: ${errorMsg}, payment_method=${payment_method}, user=${userId}`);
+      // Si wallet déjà débité, indiquer la référence pour remboursement
+      if (payment_method === 'wallet' && payment_confirmed && payment_intent_id) {
+        logger.error(`[WALLET-LOSS] RPC échec après transfert wallet — réf: ${payment_intent_id}, user: ${userId}, erreur: ${errorMsg}`);
+        res.status(409).json({
+          success: false,
+          error: errorMsg,
+          wallet_ref: payment_intent_id,
+          note: 'Votre paiement a été reçu. Contactez le support avec cette référence pour un remboursement.',
+        });
+        return;
+      }
       res.status(409).json({ success: false, error: errorMsg });
       return;
     }

@@ -1541,11 +1541,14 @@ export default function Payment() {
                             } catch (err: any) {
                               console.error('[Payment] Error creating physical order after payment:', err);
                               orderErrors.push(err?.message || 'Commande produit non créée');
+                              const isWallet = normalizedMethod === 'wallet';
                               toast({
-                                title: 'Paiement reçu mais commande incomplète',
-                                description: err?.message || 'Contactez le support avec votre référence de paiement',
+                                title: isWallet ? 'Paiement reçu — commande incomplète' : 'Paiement reçu mais commande incomplète',
+                                description: isWallet && transactionId
+                                  ? `Votre paiement a été reçu (réf: ${transactionId}). Votre commande sera créée manuellement. Conservez cette référence.`
+                                  : (err?.message || 'Contactez le support avec votre référence de paiement'),
                                 variant: 'destructive',
-                                duration: 10000,
+                                duration: 15000,
                               });
                             }
                           }
