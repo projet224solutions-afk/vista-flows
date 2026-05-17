@@ -336,18 +336,34 @@ export function JomyPaymentSelector({
   const isWalletPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
 
   const executeWalletTransfer = async (pin?: string) => {
-    // Pour les paiements marketplace : préférer le sellerId (UUID réel du vendeur)
-    // sinon fallback sur recipientId (code vendeur VND0001, email, etc.)
+    if (walletBalance !== null && walletBalance < amount) {
+      toast.error('Solde wallet insuffisant');
+      return false;
+    }
+
+    // ─── Mode Escrow Marketplace ─────────────────────────────────────────────
+    // Quand enableEscrow=true (achat marketplace), on NE fait PAS de transfert P2P.
+    // C'est create_order_core qui débite le wallet de l'acheteur de façon atomique
+    // et place les fonds en escrow. Cela évite le problème "Destinataire introuvable"
+    // lorsque le vendeur n'a pas de user_id configuré.
+    if (enableEscrow && transactionType !== 'transfer') {
+      setProcessing(true);
+      setPaymentStatus('processing');
+      try {
+        setPaymentStatus('success');
+        onPaymentSuccess('', 'SUCCESS_WALLET_ESCROW');
+        return true;
+      } finally {
+        setProcessing(false);
+      }
+    }
+
+    // ─── Mode Transfert P2P standard ─────────────────────────────────────────
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const transferTarget = (sellerId && uuidRegex.test(sellerId)) ? sellerId : recipientId;
 
     if (!transferTarget) {
       toast.error('ID du destinataire requis');
-      return false;
-    }
-
-    if (walletBalance !== null && walletBalance < amount) {
-      toast.error('Solde insuffisant');
       return false;
     }
 

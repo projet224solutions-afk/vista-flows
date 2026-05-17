@@ -168,17 +168,18 @@ export async function idempotencyGuard(req: AuthenticatedRequest, res: Response,
       return;
     }
 
-    // Pour les autres erreurs, tenter de marquer la clé en échec
-    await supabaseAdmin
-      .from('idempotency_keys')
-      .update({ status: 'failed', updated_at: new Date().toISOString() })
-      .eq('key', idempotencyKey)
-      .eq('user_id', userId);
-
-    // Fail-closed pour les erreurs inattendues
-    res.status(503).json({
-      success: false,
-      error: 'Service temporairement indisponible, veuillez réessayer avec la même Idempotency-Key',
-    });
+    // Pour toutes les autres erreurs inattendues → fail-open (ne pas bloquer la commande)
+    // La protection réelle est dans create_order_core (vérification stock atomique)
+    logger.warn(`[Idempotency] Erreur inattendue — bypass fail-open: ${msg}`);
+    try {
+      await supabaseAdmin
+        .from('idempotency_keys')
+        .update({ status: 'failed', updated_at: new Date().toISOString() })
+        .eq('key', idempotencyKey)
+        .eq('user_id', userId);
+    } catch {
+      // ignore — on ne bloque pas la requête pour ça
+    }
+    next();
   }
 }

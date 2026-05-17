@@ -372,9 +372,11 @@ export default function Payment() {
   const createOrdersForCartAfterPayment = async ({
     paymentMethod,
     externalPaymentId,
+    markAsPaid = true,
   }: {
     paymentMethod: 'card' | 'mobile_money' | 'wallet';
     externalPaymentId?: string;
+    markAsPaid?: boolean;
   }) => {
     if (!cartPaymentInfo || !cartPaymentInfo.items.length) return [];
 
@@ -393,7 +395,7 @@ export default function Payment() {
         items: items as any[],
         paymentMethod,
         externalPaymentId,
-        markAsPaid: true,
+        markAsPaid,
       });
       results.push(result);
     }
@@ -1496,8 +1498,12 @@ export default function Payment() {
                               })) || []
                         }
                         onPaymentSuccess={async (transactionId, status) => {
-                          console.log('[Payment] Success:', transactionId);
+                          console.log('[Payment] Success:', transactionId, status);
                           const normalizedMethod = inferPaymentMethod(status, transactionId);
+                          // SUCCESS_WALLET_ESCROW = wallet débité par create_order_core (mode escrow)
+                          // → ne pas marquer comme payé, laisser le backend débiter le wallet
+                          const isEscrowWallet = status === 'SUCCESS_WALLET_ESCROW';
+                          const markAsPaid = !isEscrowWallet;
                           const orderErrors: string[] = [];
 
                           if (cartPaymentInfo && user?.id) {
@@ -1505,6 +1511,7 @@ export default function Payment() {
                               const orders = await createOrdersForCartAfterPayment({
                                 paymentMethod: normalizedMethod,
                                 externalPaymentId: transactionId || undefined,
+                                markAsPaid,
                               });
 
                               if (orders.length === 0) {
@@ -1535,7 +1542,7 @@ export default function Payment() {
                                 }],
                                 paymentMethod: normalizedMethod,
                                 externalPaymentId: transactionId || undefined,
-                                markAsPaid: true,
+                                markAsPaid,
                               });
                               console.log('[Payment] Physical order created after provider success:', order);
                             } catch (err: any) {
