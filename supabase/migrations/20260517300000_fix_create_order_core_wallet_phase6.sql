@@ -1,51 +1,19 @@
 -- ================================================================
--- FIX COMPLET create_order_core — analyse profonde 2026-05-17
+-- FIX PHASE 6 create_order_core — 2026-05-17
 --
--- Bugs identifiés qui bloquent TOUS les paiements :
---   B1. orders.currency       n'existe pas → INSERT Phase 2 échoue
---   B2. order_items.product_name n'existe pas → INSERT Phase 3 échoue
---   B3. v_buyer_wallet_id bigint mais wallets.id est UUID → crash wallet
---   B4. wallet_transactions exige transaction_id + net_amount (NOT NULL)
---   B5. Colonnes escrow manquantes (auto_release_at, payment_method, ...)
---   B6. Mauvais casts enum (payment_status, order_status, payment_method)
+-- Bugs dans la version précédente (20260517100000) :
+--   Bug A : v_buyer_wallet_id déclaré UUID mais wallets.id est BIGSERIAL (BIGINT)
+--           → SELECT id INTO uuid_var depuis wallets échoue → crash
+--   Bug B : transaction_type = 'marketplace_purchase' n'est pas dans l'enum
+--           → valeurs valides : 'payment', 'transfer', 'deposit', etc.
+--
+-- Solution :
+--   - Supprimer v_buyer_wallet_id (plus utilisé)
+--   - Utiliser sender_user_id / receiver_user_id (UUID) au lieu des wallet IDs BIGINT
+--   - Changer 'marketplace_purchase' → 'payment'
 -- ================================================================
 
--- ────────────────────────────────────────────────────────────────
--- 1. Colonnes manquantes dans orders
--- ────────────────────────────────────────────────────────────────
-
-ALTER TABLE public.orders
-  ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'GNF';
-
--- ────────────────────────────────────────────────────────────────
--- 2. Colonnes manquantes dans order_items
--- ────────────────────────────────────────────────────────────────
-
-ALTER TABLE public.order_items
-  ADD COLUMN IF NOT EXISTS product_name TEXT;
-
--- ────────────────────────────────────────────────────────────────
--- 3. Colonnes manquantes dans escrow_transactions
--- ────────────────────────────────────────────────────────────────
-
-ALTER TABLE public.escrow_transactions
-  ADD COLUMN IF NOT EXISTS buyer_id         UUID,
-  ADD COLUMN IF NOT EXISTS seller_id        UUID,
-  ADD COLUMN IF NOT EXISTS payer_id         UUID,
-  ADD COLUMN IF NOT EXISTS receiver_id      UUID,
-  ADD COLUMN IF NOT EXISTS payment_method   TEXT,
-  ADD COLUMN IF NOT EXISTS commission_amount NUMERIC DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS auto_release_at  TIMESTAMPTZ;
-
-UPDATE public.escrow_transactions
-SET auto_release_at = auto_release_date
-WHERE auto_release_at IS NULL
-  AND auto_release_date IS NOT NULL;
-
--- ────────────────────────────────────────────────────────────────
--- 4. Supprimer TOUTES les surcharges de create_order_core
--- ────────────────────────────────────────────────────────────────
-
+-- Supprimer toutes les surcharges existantes
 DO $$
 DECLARE
   r RECORD;
@@ -53,17 +21,13 @@ BEGIN
   FOR r IN
     SELECT oid::regprocedure AS func_sig
     FROM   pg_proc
-    WHERE  proname        = 'create_order_core'
-      AND  pronamespace   = 'public'::regnamespace
+    WHERE  proname      = 'create_order_core'
+      AND  pronamespace = 'public'::regnamespace
   LOOP
     EXECUTE 'DROP FUNCTION IF EXISTS ' || r.func_sig || ' CASCADE';
   END LOOP;
 END;
 $$;
-
--- ────────────────────────────────────────────────────────────────
--- 5. Recréer create_order_core — version finale corrigée
--- ────────────────────────────────────────────────────────────────
 
 CREATE FUNCTION public.create_order_core(
   p_order_number        text,
@@ -158,8 +122,6 @@ BEGIN
   END LOOP;
 
   -- ── PHASE 2 : Créer la commande ──────────────────────────────
-  -- B1 fix : orders.currency ajouté en section 1 ci-dessus
-  -- B6 fix : casts enum explicites
   INSERT INTO orders (
     order_number, customer_id, vendor_id, status,
     payment_status, payment_method, payment_intent_id,
@@ -175,7 +137,6 @@ BEGIN
   RETURNING id INTO v_order_id;
 
   -- ── PHASE 3 : Lignes de commande ─────────────────────────────
-  -- B2 fix : order_items.product_name ajouté en section 2 ci-dessus
   INSERT INTO order_items (
     order_id, product_id, product_name,
     quantity, unit_price, total_price, variant_id
@@ -216,8 +177,9 @@ BEGIN
   );
 
   -- ── PHASE 6 : Débit wallet atomique ──────────────────────────
-  -- Utilise sender_user_id/receiver_user_id (UUID) au lieu des wallet IDs (BIGINT)
-  -- transaction_type = 'payment' (valeur enum valide)
+  -- Fix A : utilise sender_user_id/receiver_user_id (UUID) au lieu de
+  --         sender_wallet_id/receiver_wallet_id (BIGINT) → évite le cast UUID↔BIGINT
+  -- Fix B : 'payment' est une valeur enum transaction_type valide
   IF p_payment_method = 'wallet'
      AND p_buyer_user_id IS NOT NULL
      AND p_wallet_debit_amount > 0
@@ -276,5 +238,4 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Vérification
-SELECT 'create_order_core OK — 6 bugs corrigés (currency, product_name, wallet UUID, transaction_id, net_amount, enums).' AS status;
+SELECT 'create_order_core Phase 6 corrigé — wallet UUID→user_id + payment_method enum valide.' AS status;
