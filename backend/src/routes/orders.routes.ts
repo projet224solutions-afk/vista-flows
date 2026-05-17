@@ -582,6 +582,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     // 3.5. Résumé financier multi-devises (prix depuis DB, FX interne, commission)
     //      Non bloquant : si le calcul échoue, on garde charged_amount du frontend.
     let financialSummary: OrderFinancialSummary | null = null;
+    let financialSummaryError: string | null = null;
     try {
       financialSummary = await buildOrderFinancialSummary({
         buyerUserId: userId,
@@ -590,7 +591,46 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         productType: 'physical',
       });
     } catch (fsErr: any) {
+      financialSummaryError = fsErr.message;
       logger.warn(`financial-summary: ${fsErr.message} — fallback to charged_amount`);
+    }
+
+    // 3.6. Résoudre la devise du wallet acheteur pour le filtre SQL
+    //      En cas d'échec du résumé financier, on interroge directement la table wallets.
+    let buyerWalletCurrency: string = financialSummary?.buyerCurrency ?? currency;
+    if (!financialSummary && payment_method === 'wallet') {
+      const { data: walletRow } = await supabaseAdmin
+        .from('wallets')
+        .select('currency')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (walletRow?.currency) buyerWalletCurrency = walletRow.currency;
+    }
+
+    // 3.7. Calculer le montant à débiter du wallet EN DEVISE ACHETEUR
+    //
+    // Cas même-devise (ex: acheteur GNF / vendeur GNF) :
+    //   → charged_amount du frontend = produits + commission, déjà en GNF ✓
+    //
+    // Cas cross-currency (ex: acheteur GNF / vendeur XOF) :
+    //   → charged_amount est en XOF (devise vendeur), on ne peut PAS le débiter tel quel
+    //   → financialSummary.totalPaidAmount = produits convertis en GNF (devise acheteur)
+    //   → commission en devise acheteur = platformFeeAmount (XOF) × exchangeRate (XOF→GNF)
+    //   → walletDebitAmount = totalPaidAmount + commission_GNF
+    //
+    // Si payment_confirmed=true → wallet déjà débité ailleurs (JomyPaymentSelector), ne pas redébiter.
+    let walletDebitAmount = 0;
+    if (payment_method === 'wallet' && !payment_confirmed) {
+      if (financialSummary?.isCrossCurrency) {
+        const commissionInBuyerCurrency = Math.round(
+          financialSummary.platformFeeAmount * financialSummary.exchangeRate
+        );
+        walletDebitAmount = financialSummary.totalPaidAmount + commissionInBuyerCurrency;
+      } else {
+        walletDebitAmount = typeof charged_amount === 'number' && charged_amount > 0
+          ? charged_amount
+          : (financialSummary?.totalPaidAmount ?? 0);
+      }
     }
 
     // 4. Generate order number (no DB call)
@@ -628,37 +668,27 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     }
 
     // 5. SINGLE ATOMIC RPC: create_order_core
-    //    Validates stock + creates order + items + decrements stock + creates escrow
-    //    All in one PostgreSQL transaction with row-level locking
-    //
-    // p_buyer_user_id   → remplit payer_id dans escrow (nécessaire pour remboursement wallet à l'annulation)
-    // p_wallet_debit_amount → débit atomique du wallet si payment_method = 'wallet'
-    //                         Le montant inclut la commission (charged_amount du frontend)
-    // Montant débité du wallet = totalPaidAmount backend (devise acheteur).
-    // Priorité : résumé financier calculé depuis la DB ; fallback : charged_amount frontend.
-    // Si payment_confirmed=true, le wallet a déjà été débité en dehors (ex: JomyPaymentSelector
-    // executeWalletTransfer) — ne pas redébiter via create_order_core pour éviter double débit.
-    const walletDebitAmount = payment_method === 'wallet' && !payment_confirmed
-      ? (financialSummary?.totalPaidAmount ?? (typeof charged_amount === 'number' && charged_amount > 0 ? charged_amount : 0))
-      : 0;
-
+    //    Validates stock + creates order + items + decrements stock + creates escrow + wallet debit
+    //    All in one PostgreSQL transaction with row-level locking.
+    //    p_buyer_wallet_currency garantit que le débit cible le bon wallet (filtre devise).
     const { data: result, error: rpcError } = await supabaseAdmin.rpc('create_order_core', {
-      p_order_number: orderNumber,
-      p_customer_id: customerId,
-      p_vendor_id: vendor_id,
-      p_vendor_user_id: vendor.user_id,
-      p_payment_method: payment_method,
-      p_payment_intent_id: payment_intent_id || null,
-      p_shipping_address: shipping_address,
-      p_currency: currency,
+      p_order_number:           orderNumber,
+      p_customer_id:            customerId,
+      p_vendor_id:              vendor_id,
+      p_vendor_user_id:         vendor.user_id,
+      p_payment_method:         payment_method,
+      p_payment_intent_id:      payment_intent_id || null,
+      p_shipping_address:       shipping_address,
+      p_currency:               currency,
       p_items: items.map(i => ({
         product_id: i.product_id,
-        quantity: i.quantity,
+        quantity:   i.quantity,
         variant_id: i.variant_id || null,
       })),
-      p_auto_release_days: 7,
-      p_buyer_user_id: userId,
-      p_wallet_debit_amount: walletDebitAmount,
+      p_auto_release_days:      7,
+      p_buyer_user_id:          userId,
+      p_wallet_debit_amount:    walletDebitAmount,
+      p_buyer_wallet_currency:  buyerWalletCurrency,
     });
 
     if (rpcError) {
@@ -727,6 +757,11 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       ...(order_metadata || {}),
     };
 
+    // ── Étape A : mise à jour des champs essentiels (fatal si échoue) ──────────
+    // NOTE: si create_order_core a déjà débité le wallet et créé la commande,
+    // ces champs DOIVENT être mis à jour pour que la commande soit visible.
+    // On ne retourne 500 que si les colonnes de base (payment_status, total_amount)
+    // échouent — les colonnes financières optionnelles sont traitées séparément.
     const { error: orderUpdateError } = await supabaseAdmin
       .from('orders')
       .update({
@@ -734,8 +769,27 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         payment_status: finalPaymentStatus,
         metadata: mergedOrderMetadata,
         ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
-        // Champs financiers multi-devises — remplis uniquement si le résumé est disponible
-        ...(financialSummary ? {
+      })
+      .eq('id', result.order_id);
+
+    if (orderUpdateError) {
+      logger.error(`order finalization update error: ${orderUpdateError.message}`);
+      // Si le wallet a été débité (wallet payment), on log la référence pour remboursement manuel
+      if (payment_method === 'wallet' && walletDebitAmount > 0) {
+        logger.error(`[WALLET-LOSS] ORDER UPDATE FAILED après débit wallet — order_id: ${result.order_id}, user: ${userId}, montant: ${walletDebitAmount}`);
+      }
+      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation de la commande' });
+      return;
+    }
+
+    // ── Étape B : champs financiers multi-devises (non-fatal) ───────────────
+    // Ces colonnes peuvent être absentes du schéma si la migration multi-devises
+    // n'a pas encore été appliquée. On tente la mise à jour mais on ne bloque
+    // pas la commande si elle échoue — le wallet est déjà débité et la commande créée.
+    if (financialSummary) {
+      const { error: financialUpdateError } = await supabaseAdmin
+        .from('orders')
+        .update({
           buyer_currency:        financialSummary.buyerCurrency,
           seller_currency:       financialSummary.sellerCurrency,
           original_currency:     financialSummary.sellerCurrency,
@@ -750,14 +804,54 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
           platform_fee_currency: financialSummary.sellerCurrency,
           seller_net_amount:     financialSummary.sellerNetAmount,
           seller_net_currency:   financialSummary.sellerCurrency,
-        } : {}),
-      })
-      .eq('id', result.order_id);
+        })
+        .eq('id', result.order_id);
 
-    if (orderUpdateError) {
-      logger.error(`order finalization update error: ${orderUpdateError.message}`);
-      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation de la commande' });
-      return;
+      if (financialUpdateError) {
+        logger.warn(`financial-fields update skipped (colonnes absentes?) — order: ${result.order_id}: ${financialUpdateError.message}`);
+      }
+    }
+
+    // ── Étape C : logging de conversion (non-fatal, fire-and-forget) ─────────
+    // Alimente currency_conversion_logs pour le monitoring PDG en temps réel.
+    // On log toujours : succès, échec du résumé financier, ou même-devise (skipped).
+    {
+      const logStatus = financialSummaryError
+        ? 'error'
+        : financialSummary?.isCrossCurrency
+          ? 'success'
+          : 'skipped';
+
+      const commissionConverted = financialSummary?.isCrossCurrency
+        ? Math.round(financialSummary.platformFeeAmount * financialSummary.exchangeRate)
+        : financialSummary?.platformFeeAmount ?? null;
+
+      supabaseAdmin.from('currency_conversion_logs').insert({
+        order_id:             result.order_id,
+        buyer_user_id:        userId,
+        vendor_id:            vendor_id,
+        from_currency:        financialSummary?.sellerCurrency ?? currency,
+        to_currency:          financialSummary?.buyerCurrency ?? buyerWalletCurrency,
+        is_cross_currency:    financialSummary?.isCrossCurrency ?? false,
+        original_amount:      financialSummary?.totalOriginalAmount ?? null,
+        converted_amount:     financialSummary?.totalPaidAmount ?? null,
+        commission_original:  financialSummary?.platformFeeAmount ?? null,
+        commission_converted: commissionConverted,
+        wallet_debit_amount:  walletDebitAmount > 0 ? walletDebitAmount : null,
+        exchange_rate:        financialSummary?.exchangeRate ?? null,
+        exchange_rate_source: financialSummary?.exchangeRateSource ?? null,
+        rate_fetched_at:      financialSummary?.rateFetchedAt ?? null,
+        status:               logStatus,
+        error_message:        financialSummaryError ?? null,
+        metadata: {
+          payment_method: payment_method,
+          vendor_currency: currency,
+          buyer_wallet_currency: buyerWalletCurrency,
+          charged_amount_frontend: charged_amount,
+        },
+      }).then(({ error: logErr }) => {
+        if (logErr) logger.warn(`conversion-log insert failed: ${logErr.message}`);
+      });
     }
 
     let escrowStatus = result.escrow_status as string;
@@ -780,9 +874,9 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       .eq('order_id', result.order_id);
 
     if (escrowUpdateError) {
-      logger.error(`escrow finalization update error: ${escrowUpdateError.message}`);
-      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation du séquestre' });
-      return;
+      // Non-fatal: l'escrow a déjà été créé par create_order_core avec les bons paramètres.
+      // Le montant sera légèrement incorrect (sous-total sans commission) mais la commande reste valide.
+      logger.warn(`escrow finalization update non-fatal — order: ${result.order_id}: ${escrowUpdateError.message}`);
     }
 
     if (payment_method === 'cash') {

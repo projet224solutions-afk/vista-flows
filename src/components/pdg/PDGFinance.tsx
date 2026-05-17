@@ -23,6 +23,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { useFinanceData } from '@/hooks/useFinanceData';
 import { backendFetch } from '@/services/backendApi';
 import PlatformRevenueOverview from './PlatformRevenueOverview';
+import CurrencyConversionMonitor from './CurrencyConversionMonitor';
 
 const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
 const SubscriptionManagement = lazy(() => import('./SubscriptionManagement'));
@@ -317,7 +318,7 @@ export default function PDGFinance() {
     <Tabs value={activeFinanceTab} onValueChange={setActiveFinanceTab} className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-8 gap-1 bg-muted/50 p-1 rounded-xl">
+        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-9 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Revenus</span>
@@ -349,6 +350,10 @@ export default function PDGFinance() {
           <TabsTrigger value="driver-subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Bike className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Drivers</span>
+          </TabsTrigger>
+          <TabsTrigger value="devises" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Devises</span>
           </TabsTrigger>
         </TabsList>
       </div>
@@ -515,6 +520,26 @@ export default function PDGFinance() {
         }>
           <DriverSubscriptionManagement />
         </Suspense>
+      </TabsContent>
+
+      <TabsContent value="devises" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Globe2 className="w-5 h-5 text-primary" />
+              <div>
+                <CardTitle>Conversions de devises</CardTitle>
+                <CardDescription>
+                  Monitoring en temps réel de chaque conversion lors des achats marketplace.
+                  Toute erreur apparaît ici immédiatement.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CurrencyConversionMonitor />
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="transactions" className="space-y-8">

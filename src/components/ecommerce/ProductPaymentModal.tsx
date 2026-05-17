@@ -585,10 +585,8 @@ export default function ProductPaymentModal({
     }
 
     const itemsByVendor = groupCartItemsByVendor(cartItems);
-
     const vendorCount = Object.keys(itemsByVendor).length;
     const commissionPerVendor = isCODMethod ? 0 : vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
-
     const createdOrders: string[] = [];
     const errors: string[] = [];
 
@@ -596,6 +594,9 @@ export default function ProductPaymentModal({
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
       const vendorChargedAmount = vendorProductTotal + commissionPerVendor;
 
+      // Correction : markAsPaid toujours false, walletDebitAmount correct
+      let markAsPaid = false;
+      let chargedAmount = 0;
       if (paymentMethod === 'wallet') {
         const convResult = convert(effectiveGrandTotal, cur);
         const neededInWalletCur = convResult.wasConverted
@@ -606,6 +607,11 @@ export default function ProductPaymentModal({
           setProcessing(false);
           return;
         }
+        chargedAmount = vendorChargedAmount;
+      } else if (isCODMethod) {
+        chargedAmount = 0;
+      } else {
+        chargedAmount = vendorChargedAmount;
       }
 
       const normalizedPaymentMethod = isCODMethod ? 'cash' : paymentMethod;
@@ -633,8 +639,8 @@ export default function ProductPaymentModal({
           vendorId,
           items,
           paymentMethod: normalizedPaymentMethod as 'wallet' | 'card' | 'mobile_money' | 'cash',
-          chargedAmount: vendorChargedAmount,
-          markAsPaid: paymentMethod === 'wallet',
+          chargedAmount,
+          markAsPaid,
           shippingAddress,
           metadata: {
             commission_fee: commissionPerVendor,
