@@ -164,11 +164,8 @@ BEGIN
   ) VALUES (
     p_order_number, p_customer_id, p_vendor_id,
     'pending'::order_status,
-    CASE WHEN p_payment_method IN ('cash', 'cod')
-         THEN 'pending'::payment_status
-         ELSE 'processing'::payment_status
-    END,
-    p_payment_method, p_payment_intent_id,
+    'pending'::payment_status,
+    p_payment_method::payment_method, p_payment_intent_id,
     subtotal, subtotal, p_shipping_address, p_currency
   )
   RETURNING id INTO order_id;
