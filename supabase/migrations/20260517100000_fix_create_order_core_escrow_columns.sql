@@ -162,8 +162,12 @@ BEGIN
     payment_status, payment_method, payment_intent_id,
     subtotal, total_amount, shipping_address, currency
   ) VALUES (
-    p_order_number, p_customer_id, p_vendor_id, 'pending',
-    CASE WHEN p_payment_method IN ('cash', 'cod') THEN 'pending' ELSE 'processing' END,
+    p_order_number, p_customer_id, p_vendor_id,
+    'pending'::order_status,
+    CASE WHEN p_payment_method IN ('cash', 'cod')
+         THEN 'pending'::payment_status
+         ELSE 'processing'::payment_status
+    END,
     p_payment_method, p_payment_intent_id,
     subtotal, subtotal, p_shipping_address, p_currency
   )
