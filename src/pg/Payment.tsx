@@ -23,7 +23,7 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
-import { createDigitalOrder, createOrder } from "@/services/orderBackendService";
+import { createDigitalOrder } from "@/services/orderBackendService";
 import { resolvePostPaymentRoute } from '@/lib/payment/postPaymentRoute';
 import { previewWalletTransfer, resolveWalletRecipient, transferToWallet } from "@/services/walletBackendService";
 import { getCartItemVendorId, groupCartItemsByVendor } from "@/lib/marketplace/checkout";
@@ -271,7 +271,6 @@ export default function Payment() {
       if (!productId) {
         throw new Error(`Article sans identifiant produit: ${item.name || 'article inconnu'}`);
       }
-
       return {
         product_id: productId,
         quantity: Number(item.quantity || 1),
@@ -279,43 +278,46 @@ export default function Payment() {
       };
     });
 
-    const response = await createOrder({
-      vendor_id: vendorId,
-      items: normalizedItems,
-      payment_method: paymentMethod,
-      payment_intent_id: externalPaymentId || null,
-      payment_confirmed: !!markAsPaid,
-      charged_amount: items.reduce((sum: number, item: any) => sum + (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)), 0),
-      order_metadata: {
-        external_payment_id: externalPaymentId || null,
-        source: 'payment_page_post_provider_success',
-        ...(orderMetadata || {}),
-      },
-      shipping_address: shippingAddress || {
-        full_name: user?.user_metadata?.full_name || user?.email || 'Client 224Solutions',
-        phone: user?.phone || 'Non fourni',
-        address_line: 'Adresse de livraison',
-        city: 'Conakry',
-        country: 'Guinée',
-        notes: null,
-        postal_code: null,
-      },
-    });
+    const totalAmount = items.reduce(
+      (sum: number, item: any) => sum + (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)),
+      0
+    );
 
-    if (!response.success || !response.data?.order) {
-      const details = Array.isArray(response.details)
-        ? response.details
-            .map((detail: any) => [detail.field, detail.message].filter(Boolean).join(': '))
-            .filter(Boolean)
-            .join(', ')
-        : '';
-      throw new Error(details || response.error || 'Impossible de créer la commande');
+    // Wallet non marqué payé → create_marketplace_order_secure débite le wallet atomiquement
+    // Autres méthodes (markAsPaid=true) → paiement déjà fait, pas de débit wallet
+    const walletDebitAmount = paymentMethod === 'wallet' && !markAsPaid ? totalAmount : 0;
+
+    const resolvedAddress = shippingAddress || {
+      full_name: user?.user_metadata?.full_name || user?.email || 'Client 224Solutions',
+      phone: user?.phone || 'Non fourni',
+      address_line: 'Adresse de livraison',
+      city: 'Conakry',
+      country: 'Guinée',
+    };
+
+    // Appel RPC direct Supabase (bypass backend + middleware idempotency)
+    // create_marketplace_order_secure utilise auth.uid() → sécurisé côté serveur
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'create_marketplace_order_secure',
+      {
+        p_vendor_id:           vendorId,
+        p_payment_method:      paymentMethod,
+        p_items:               normalizedItems,
+        p_shipping_address:    resolvedAddress,
+        p_currency:            productCurrency || 'GNF',
+        p_wallet_debit_amount: walletDebitAmount,
+      }
+    );
+
+    if (rpcError) {
+      throw new Error(rpcError.message || 'Erreur lors de la création de la commande');
     }
 
-    const orderId = response.data.order.id;
-    const orderNumber = response.data.order.order_number;
+    if (!result || !result.success) {
+      throw new Error(result?.error || 'Impossible de créer la commande');
+    }
 
-    return { orderId, orderNumber };
+    return { orderId: result.order_id as string, orderNumber: result.order_number as string };
   };
 
   const createDigitalOrderForVendor = async ({
