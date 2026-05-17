@@ -98,7 +98,7 @@ export function JomyPaymentSelector({
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'CARD');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>((recipientId || enableEscrow) ? 'WALLET' : 'CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
@@ -148,8 +148,8 @@ export function JomyPaymentSelector({
 
   // Méthodes de paiement disponibles
   const paymentMethods: PaymentMethodOption[] = [
-    // Option Wallet en premier si recipientId est fourni
-    ...(recipientId ? [{
+    // Option Wallet : toujours visible en mode marketplace (enableEscrow=true) ou transfert P2P (recipientId fourni)
+    ...((recipientId || enableEscrow) ? [{
       id: 'WALLET' as const,
       name: 'Wallet 224Solutions',
       description: `Solde: ${walletBalance !== null ? formatCurrency(walletBalance, walletCurrency) : '...'}`,
