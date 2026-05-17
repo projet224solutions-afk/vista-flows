@@ -41,7 +41,27 @@ WHERE auto_release_at IS NULL
   AND auto_release_date IS NOT NULL;
 
 -- ────────────────────────────────────────────────────────────────
--- 2. Recréer create_order_core avec les vrais noms de colonnes
+-- 2. Supprimer TOUTES les surcharges de create_order_core
+--    (plusieurs signatures coexistaient → CREATE OR REPLACE ambiguë)
+-- ────────────────────────────────────────────────────────────────
+
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid::regprocedure AS func_sig
+    FROM   pg_proc
+    WHERE  proname        = 'create_order_core'
+      AND  pronamespace   = 'public'::regnamespace
+  LOOP
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || r.func_sig || ' CASCADE';
+  END LOOP;
+END;
+$$;
+
+-- ────────────────────────────────────────────────────────────────
+-- 3. Recréer create_order_core avec les vrais noms de colonnes
 -- ────────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.create_order_core(
@@ -258,7 +278,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_order_core IS
+COMMENT ON FUNCTION public.create_order_core(text,uuid,uuid,uuid,text,text,jsonb,text,jsonb,int,uuid,numeric) IS
   'Création atomique commande + items + décrément stock + escrow + débit wallet optionnel. Corrigé : colonnes escrow (auto_release_at, auto_release_date, payment_method, buyer_id, seller_id, payer_id, receiver_id).';
 
 -- Vérification
