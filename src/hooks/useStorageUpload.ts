@@ -89,8 +89,8 @@ const MAX_SIZES: Record<StorageFolder, number> = {
   'digital-products': 5 * 1024 * 1024 * 1024, // 5 GB
   travel: 10 * 1024 * 1024, // 10 MB
   misc: 10 * 1024 * 1024, // 10 MB
-  kyc: 10 * 1024 * 1024, // 10 MB
-  sos: 100 * 1024 * 1024, // 100 MB
+  kyc: 5 * 1024 * 1024, // 5 MB — aligné avec le bucket Supabase kyc-documents
+  sos: 50 * 1024 * 1024, // 50 MB — aligné avec le bucket Supabase sos-recordings
 };
 
 function formatMaxSizeLabel(sizeInBytes: number): string {
