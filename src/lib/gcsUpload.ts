@@ -40,6 +40,8 @@ export async function uploadToGCSDirect(
   contentType: string,
   subfolder?: string
 ): Promise<GCSUploadResult> {
+  // Normaliser le type MIME — supprimer les paramètres codec (ex: video/webm;codecs=vp9,opus → video/webm)
+  const normalizedType = contentType.split(';')[0].trim().toLowerCase() || 'application/octet-stream';
   const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
 
   try {
@@ -50,7 +52,7 @@ export async function uploadToGCSDirect(
         body: {
           action: 'upload',
           fileName,
-          contentType,
+          contentType: normalizedType,
           folder: folderPath,
           expiresInMinutes: 15,
         },
@@ -66,7 +68,7 @@ export async function uploadToGCSDirect(
       // Étape 2 : Upload direct vers GCS
       const uploadResponse = await fetch(signedUrlData.signedUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': contentType },
+        headers: { 'Content-Type': normalizedType },
         body: file,
       });
 
@@ -76,7 +78,7 @@ export async function uploadToGCSDirect(
           body: {
             objectPath: signedUrlData.objectPath,
             fileType: folder,
-            metadata: { originalName: fileName, size: (file as File).size ?? 0, mimeType: contentType },
+            metadata: { originalName: fileName, size: (file as File).size ?? 0, mimeType: normalizedType },
           },
         }).catch(() => {});
 
@@ -98,7 +100,7 @@ export async function uploadToGCSDirect(
 
   const { error: uploadError } = await supabase.storage
     .from(bucket)
-    .upload(filePath, file, { contentType, upsert: true });
+    .upload(filePath, file, { contentType: normalizedType, upsert: true });
 
   if (uploadError) {
     return { success: false, error: uploadError.message };
