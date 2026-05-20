@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Package, Store, ShieldCheck, LayoutGrid, Star, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { _cn } from "@/lib/utils";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 
 interface BrowseModalProps {

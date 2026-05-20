@@ -683,22 +683,21 @@ export default function Marketplace() {
             </SelectContent>
           </Select>
 
-          {!isMobile && (
-            <div className="flex items-start gap-1 rounded-lg shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowBrowseModal(true)}
-                className="h-11 w-11 p-0 hover:text-white"
-                style={{ color: BRAND_BLUE }}
-                title="Explorer"
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <List className="w-6 h-6" />
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-1 rounded-lg shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowBrowseModal(true)}
+              className="h-8 px-2 gap-1.5 text-[10px] sm:text-xs hover:text-white whitespace-nowrap"
+              style={{ color: BRAND_BLUE }}
+              title="Explorer le Marketplace"
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <List className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden xs:inline">Explorer</span>
+            </Button>
+          </div>
         </div>
 
         {/* Panneau de filtres avances */}
