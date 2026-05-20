@@ -245,8 +245,8 @@ async function searchProducts(
   let query = supabaseAdmin
     .from("products")
     .select(
-      `id, name, price, description, images, rating, is_active, is_featured, stock_quantity,
-       vendors!products_vendor_id_fkey(id, business_name, address, city, latitude, longitude, is_verified, is_active, phone, logo_url, delivery_enabled, rating)`
+      `id, name, price, currency, description, images, rating, is_active, is_featured, stock_quantity,
+       vendors!products_vendor_id_fkey(id, business_name, address, city, latitude, longitude, is_verified, is_active, phone, logo_url, delivery_enabled, rating, shop_currency)`
     )
     .eq("is_active", true)
     .or(orFilter)
@@ -273,7 +273,7 @@ async function searchProducts(
         name: p.name,
         description: p.description ?? null,
         price: p.price ?? null,
-        currency: "GNF",
+        currency: p.currency ?? v?.shop_currency ?? "GNF",
         image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
         rating: p.rating ?? null,
         isVerified: v?.is_verified ?? false,
@@ -790,7 +790,7 @@ router.post("/transcribe", async (req: Request, res: Response) => {
     }
 
     const text = (await response.text()).trim();
-    return res.status(200).json({ success: true, text });
+    return res.status(200).json({ success: true, data: { text } });
   } catch (error) {
     console.error("[Copilote Transcribe]", error);
     return res.status(500).json({ success: false, error: "Transcription échouée" });

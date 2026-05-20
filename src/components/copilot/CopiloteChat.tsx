@@ -537,7 +537,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
           );
 
           setInterimTranscript('');
-          const text = resp.data?.text?.trim() ?? '';
+          const text = ((resp.data?.text ?? (resp as any).text) ?? '').trim();
           if (text) {
             setInput(text);
             sendMessage(text);

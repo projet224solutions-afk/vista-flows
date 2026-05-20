@@ -801,6 +801,22 @@ class UniversalCommunicationService {
         if (items?.length) profiles = profiles.concat(items);
       };
 
+      // Recherche via la fonction RPC sécurisée (accès auth.users pour emails manquants)
+      try {
+        const { data: rpcData } = await supabase.rpc('search_profiles_for_messaging', {
+          search_term: search,
+          max_results: 10
+        });
+        if (rpcData && rpcData.length > 0) {
+          addProfiles(rpcData as UserProfile[]);
+          // Dédupliquer et retourner directement si on a des résultats
+          const unique = profiles.filter((p, i, self) => i === self.findIndex((x) => x.id === p.id));
+          if (unique.length > 0) return unique;
+        }
+      } catch {
+        // Fallback sur les requêtes directes si la fonction RPC n'existe pas encore
+      }
+
       // Recherche par ID interne (UUID)
       if (parsed.kind === 'uuid') {
         const { data } = await supabase

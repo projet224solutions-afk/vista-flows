@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, _Send, User, Search, MessageCircle, Phone, Video, _MoreVertical, Shield, _Check, _CheckCheck, _Clock, _XCircle, UserPlus, Loader2, Reply, X } from "lucide-react";
+import { ArrowLeft, User, Search, MessageCircle, Phone, Video, Shield, UserPlus, Loader2, Reply, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

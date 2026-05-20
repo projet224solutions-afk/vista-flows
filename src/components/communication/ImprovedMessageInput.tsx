@@ -7,7 +7,6 @@ import {
   Paperclip,
   Image as ImageIcon,
   Mic,
-  _Smile,
   X,
   Loader2
 } from 'lucide-react';

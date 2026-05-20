@@ -134,10 +134,27 @@ export default function EnhancedAuth() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Phone OTP state
+  // Phone OTP state (connexion)
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [formattedPhoneNumber, setFormattedPhoneNumber] = useState('');
+
+  // Inscription par téléphone
+  const [_signupMethod, _setSignupMethod] = useState<'email' | 'phone'>('email');
+  const [signupPhone, _setSignupPhone] = useState('');
+  const [signupPhoneOtpSent, setSignupPhoneOtpSent] = useState(false);
+  const [signupPhoneOtp, setSignupPhoneOtp] = useState('');
+  const [signupFormattedPhone, setSignupFormattedPhone] = useState('');
+
+  // Réinitialisation mot de passe par téléphone
+  const [forgotMode, setForgotMode] = useState<'none' | 'enter' | 'otp' | 'password'>('none');
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotFormattedPhone, setForgotFormattedPhone] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotIsEmail, setForgotIsEmail] = useState(false);
+  const [phoneNotFound, setPhoneNotFound] = useState(false);
 
   // Cognito confirmation state
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -199,7 +216,7 @@ export default function EnhancedAuth() {
       // Nouveau signup OAuth : géo-détecter et corriger la devise du wallet
       // si le profil n'a pas encore de pays (cas courant Google/Facebook)
       if (isNewSignup && isOAuthUser && !profile.detected_country) {
-        const { detectedCountry, detectedCurrency } = getGeoInfo();
+        const { detectedCountry } = getGeoInfo();
         if (detectedCountry) {
           // Appel fire-and-forget : met à jour profiles.detected_country
           // → trigger_sync_wallet_on_country corrige automatiquement le wallet
@@ -234,6 +251,7 @@ export default function EnhancedAuth() {
       localStorage.removeItem('oauth_is_new_signup');
       navigate(targetRoute, { replace: true });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, profileLoading, user, profile, navigate, t]);
 
   // Fonction pour continuer après le modal "compte existant"
@@ -366,6 +384,9 @@ export default function EnhancedAuth() {
     }
   };
 
+  const isPhoneInput = (val: string): boolean =>
+    val.trim().length >= 6 && !val.includes('@') && /^\+?[\d\s\-().]{6,}$/.test(val.trim());
+
   // Cognito: gérer la confirmation du code d'inscription
   const handleCognitoConfirmation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -426,6 +447,49 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
+      // Auto-détection email vs téléphone
+      const isPhone = isPhoneInput(email);
+      if (isPhone) {
+        const clean = email.replace(/[\s\-().]/g, '');
+        const formatted = clean.startsWith('+') ? clean : `+224${clean}`;
+        if (mode === 'signup') {
+          if (!fullName.trim()) throw new Error('Veuillez entrer votre nom complet');
+          setSignupFormattedPhone(formatted);
+          const roleToUse = mapAccountTypeToRole(accountType);
+          const nameParts = fullName.trim().split(' ');
+          const { error: otpErr } = await supabase.auth.signInWithOtp({
+            phone: formatted,
+            options: { data: { full_name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', account_type: accountType, role: roleToUse, has_password: false } }
+          });
+          if (otpErr) throw otpErr;
+          setSignupPhoneOtpSent(true);
+          toast.success('Code envoyé par SMS !');
+        } else {
+          setFormattedPhoneNumber(formatted);
+          setPhoneNotFound(false);
+          const { error: otpErr } = await supabase.auth.signInWithOtp({
+            phone: formatted,
+            options: { shouldCreateUser: false },
+          });
+          if (otpErr) {
+            const notFound =
+              (otpErr as any).status === 404 ||
+              (otpErr as any).code === 'user_not_found' ||
+              (otpErr.message || '').toLowerCase().includes('user not found');
+            if (notFound) {
+              setPhoneNotFound(true);
+              setLoading(false);
+              return;
+            }
+            throw otpErr;
+          }
+          setOtpSent(true);
+          toast.success('Code envoyé par SMS !');
+        }
+        setLoading(false);
+        return;
+      }
+
       // ===== COGNITO AUTH (prioritaire si configuré) =====
       if (isCognitoEnabled) {
         if (mode === 'signup') {
@@ -602,23 +666,27 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
-      const formatted = phone.startsWith('+') ? phone : `+224${phone}`;
+      const cleanPhone = phone.replace(/[\s\-().]/g, '');
+      const formatted = cleanPhone.startsWith('+') ? cleanPhone : `+224${cleanPhone}`;
       setFormattedPhoneNumber(formatted);
 
-      const { detectedCountry: otpCountry, detectedCurrency: otpCurrency } = getGeoInfo();
+      setPhoneNotFound(false);
       const { error } = await supabase.auth.signInWithOtp({
         phone: formatted,
-        options: {
-          data: {
-            account_type: accountType,
-            role: mapAccountTypeToRole(accountType),
-            ...(otpCountry  && { detected_country:  otpCountry  }),
-            ...(otpCurrency && { detected_currency: otpCurrency }),
-          }
-        }
+        options: { shouldCreateUser: false },
       });
 
-      if (error) throw error;
+      if (error) {
+        const notFound =
+          (error as any).status === 404 ||
+          (error as any).code === 'user_not_found' ||
+          (error.message || '').toLowerCase().includes('user not found');
+        if (notFound) {
+          setPhoneNotFound(true);
+          return;
+        }
+        throw error;
+      }
       toast.success(t('auth.otpSent'));
       setOtpSent(true);
     } catch (err) {
@@ -697,6 +765,156 @@ export default function EnhancedAuth() {
     setOtpSent(false);
     setOtpCode('');
     setError(null);
+  };
+
+  // ===== INSCRIPTION PAR TÉLÉPHONE =====
+  const _handlePhoneSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      if (!fullName.trim()) throw new Error('Veuillez entrer votre nom complet');
+      const clean = signupPhone.replace(/[\s\-().]/g, '');
+      const formatted = clean.startsWith('+') ? clean : `+224${clean}`;
+      setSignupFormattedPhone(formatted);
+      const roleToUse = mapAccountTypeToRole(accountType);
+      const nameParts = fullName.trim().split(' ');
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formatted,
+        options: {
+          data: {
+            full_name: fullName,
+            first_name: nameParts[0] || '',
+            last_name: nameParts.slice(1).join(' ') || '',
+            account_type: accountType,
+            role: roleToUse,
+            has_password: false,
+          }
+        }
+      });
+      if (error) throw error;
+      setSignupPhoneOtpSent(true);
+      toast.success('Code envoyé par SMS !');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de l\'envoi';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifySignupPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: signupFormattedPhone,
+        token: signupPhoneOtp,
+        type: 'sms',
+      });
+      if (error) throw error;
+      toast.success('Compte créé avec succès !');
+      if (data.user) {
+        let profileData = null;
+        let attempts = 0;
+        while (!profileData && attempts < 10) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+          if (profile?.role) { profileData = profile; break; }
+          if (attempts < 9) await new Promise(r => setTimeout(r, 300));
+          attempts++;
+        }
+        const roleRoutes: Record<string, string> = {
+          admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
+          vendeur: '/vendeur', livreur: '/livreur',
+          taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+          syndicat: '/syndicat', transitaire: '/transitaire',
+          client: '/client', agent: '/agent',
+        };
+        navigate(profileData?.role ? (roleRoutes[profileData.role] || '/home') : '/home', { replace: true });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Code invalide';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===== RÉINITIALISATION MOT DE PASSE PAR TÉLÉPHONE =====
+  const handleForgotSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setError(null);
+    try {
+      if (forgotPhone.includes('@')) {
+        setForgotIsEmail(true);
+        const { error } = await supabase.auth.resetPasswordForEmail(forgotPhone, {
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        });
+        if (error) throw error;
+        setForgotMode('otp');
+        toast.success('Email de réinitialisation envoyé !');
+      } else {
+        setForgotIsEmail(false);
+        const cleanForgot = forgotPhone.replace(/[\s\-().]/g, '');
+        const formatted = cleanForgot.startsWith('+') ? cleanForgot : `+224${cleanForgot}`;
+        setForgotFormattedPhone(formatted);
+        const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
+        if (error) throw error;
+        setForgotMode('otp');
+        toast.success('Code envoyé par SMS !');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur');
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: forgotFormattedPhone,
+        token: forgotOtp,
+        type: 'sms',
+      });
+      if (error) throw error;
+      setForgotMode('password');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Code invalide');
+      toast.error(err instanceof Error ? err.message : 'Code invalide');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setError(null);
+    try {
+      if (forgotNewPassword.length < 8) throw new Error('Minimum 8 caractères requis');
+      const { error } = await supabase.auth.updateUser({ password: forgotNewPassword });
+      if (error) throw error;
+      await supabase.auth.signOut();
+      toast.success('Mot de passe mis à jour ! Reconnectez-vous.');
+      setForgotMode('none');
+      setForgotPhone('');
+      setForgotOtp('');
+      setForgotNewPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur');
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   const _goBack = () => {
@@ -874,21 +1092,22 @@ export default function EnhancedAuth() {
                   <form onSubmit={handleEmailAuth} className="space-y-2">
                     <div className="space-y-0.5">
                       <Label htmlFor="login-email" className="text-[11px] font-medium flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        {t('auth.email')}
+                        {isPhoneInput(email) ? <Phone className="h-3 w-3 text-muted-foreground" /> : <Mail className="h-3 w-3 text-muted-foreground" />}
+                        {isPhoneInput(email) ? 'Numéro de téléphone' : t('auth.email')}
                       </Label>
                       <Input
                         id="login-email"
-                        type="email"
-                        placeholder={t('auth.emailPlaceholder')}
+                        type="text"
+                        placeholder="Email ou numéro de téléphone"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); setPhoneNotFound(false); }}
                         disabled={loading}
                         className="h-8 text-xs rounded-md"
                         required
                       />
                     </div>
 
+                    {!isPhoneInput(email) && (
                     <div className="space-y-0.5">
                       <Label htmlFor="login-password" className="text-[11px] font-medium flex items-center gap-1">
                         <Lock className="h-3 w-3 text-muted-foreground" />
@@ -915,6 +1134,7 @@ export default function EnhancedAuth() {
                         </button>
                       </div>
                     </div>
+                    )}
 
                     {error && mode === 'login' && (
                       <Alert variant="destructive" className="rounded-md py-1.5 px-2">
@@ -932,16 +1152,132 @@ export default function EnhancedAuth() {
                       {loading && mode === 'login' ? (
                         <>
                           <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          {t('auth.connecting')}
+                          {isPhoneInput(email) ? 'Envoi...' : t('auth.connecting')}
                         </>
                       ) : (
                         <>
-                          <LogIn className="mr-1 h-3 w-3" />
-                          {t('auth.login')}
+                          {isPhoneInput(email) ? <Phone className="mr-1 h-3 w-3" /> : <LogIn className="mr-1 h-3 w-3" />}
+                          {isPhoneInput(email) ? 'Recevoir le code SMS' : t('auth.login')}
                         </>
                       )}
                     </Button>
                   </form>
+
+                  {/* Numéro de téléphone inconnu */}
+                  {phoneNotFound && (
+                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-md p-2.5 space-y-1.5">
+                      <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        Ce numéro n'est lié à aucun compte 224Solutions.
+                      </p>
+                      <Button
+                        type="button"
+                        className="w-full h-7 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white rounded-md"
+                        onClick={() => { setShowSignupPanel(true); setPhoneNotFound(false); setMode('signup'); }}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Créer un compte avec ce numéro
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Mot de passe oublié */}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      className="text-[10px] text-primary hover:underline"
+                      onClick={() => { setForgotMode(forgotMode === 'none' ? 'enter' : 'none'); setError(null); }}
+                    >
+                      {forgotMode !== 'none' ? '← Retour à la connexion' : 'Mot de passe oublié ?'}
+                    </button>
+                  </div>
+
+                  {/* Section réinitialisation mot de passe par téléphone */}
+                  {forgotMode !== 'none' && (
+                    <div className="border border-border/30 rounded-md p-2.5 space-y-2 bg-muted/20">
+                      <p className="text-[10px] font-medium text-foreground flex items-center gap-1">
+                        {forgotIsEmail ? <Mail className="h-3 w-3 text-primary" /> : <Phone className="h-3 w-3 text-primary" />}
+                        Réinitialiser le mot de passe
+                      </p>
+
+                      {forgotMode === 'enter' && (
+                        <form onSubmit={handleForgotSendOtp} className="space-y-1.5">
+                          <Input
+                            type="text"
+                            placeholder="Email ou numéro de téléphone"
+                            value={forgotPhone}
+                            onChange={(e) => setForgotPhone(e.target.value)}
+                            disabled={forgotLoading}
+                            className="h-8 text-xs rounded-md"
+                            required
+                          />
+                          {error && <p className="text-[10px] text-destructive">{error}</p>}
+                          <Button type="submit" className="w-full h-8 text-xs rounded-md" disabled={forgotLoading || !forgotPhone}>
+                            {forgotLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : forgotPhone.includes('@') ? 'Envoyer le lien par email' : 'Envoyer le code SMS'}
+                          </Button>
+                        </form>
+                      )}
+
+                      {forgotMode === 'otp' && forgotIsEmail && (
+                        <div className="space-y-1.5">
+                          <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <p className="text-[10px] text-muted-foreground">Email envoyé à <strong>{forgotPhone}</strong>. Cliquez sur le lien dans l'email pour réinitialiser votre mot de passe.</p>
+                          </div>
+                          <Button type="button" variant="ghost" className="w-full h-7 text-[10px]" onClick={() => { setForgotMode('none'); setForgotPhone(''); }}>
+                            <ArrowLeft className="h-3 w-3 mr-1" /> Retour à la connexion
+                          </Button>
+                        </div>
+                      )}
+
+                      {forgotMode === 'otp' && !forgotIsEmail && (
+                        <form onSubmit={handleForgotVerifyOtp} className="space-y-1.5">
+                          <p className="text-[10px] text-muted-foreground">Code envoyé au <strong>{forgotFormattedPhone}</strong></p>
+                          <Input
+                            type="text"
+                            placeholder="123456"
+                            value={forgotOtp}
+                            onChange={(e) => setForgotOtp(e.target.value)}
+                            disabled={forgotLoading}
+                            className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                            maxLength={6}
+                            required
+                            autoFocus
+                          />
+                          {error && <p className="text-[10px] text-destructive">{error}</p>}
+                          <div className="flex gap-2">
+                            <Button type="button" variant="ghost" className="flex-1 h-7 text-[10px]" onClick={() => setForgotMode('enter')}>
+                              <ArrowLeft className="h-3 w-3 mr-1" /> Retour
+                            </Button>
+                            <Button type="submit" className="flex-1 h-7 text-[10px] rounded-md" disabled={forgotLoading || forgotOtp.length < 4}>
+                              {forgotLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Vérifier'}
+                            </Button>
+                          </div>
+                        </form>
+                      )}
+
+                      {forgotMode === 'password' && (
+                        <form onSubmit={handleForgotSetPassword} className="space-y-1.5">
+                          <p className="text-[10px] text-green-600 font-medium">✓ Identité vérifiée — choisissez un nouveau mot de passe</p>
+                          <Input
+                            type="password"
+                            placeholder="Nouveau mot de passe (8 car. min)"
+                            value={forgotNewPassword}
+                            onChange={(e) => setForgotNewPassword(e.target.value)}
+                            disabled={forgotLoading}
+                            className="h-8 text-xs rounded-md"
+                            minLength={8}
+                            required
+                            autoFocus
+                          />
+                          {error && <p className="text-[10px] text-destructive">{error}</p>}
+                          <Button type="submit" className="w-full h-8 text-xs rounded-md bg-green-600 hover:bg-green-700" disabled={forgotLoading || forgotNewPassword.length < 8}>
+                            {forgotLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Enregistrer le nouveau mot de passe'}
+                          </Button>
+                        </form>
+                      )}
+                    </div>
+                  )}
 
                   {/* Séparateur compact */}
                   <div className="relative py-1.5">
@@ -1010,7 +1346,7 @@ export default function EnhancedAuth() {
                           type="tel"
                           placeholder="+224 6XX XX XX XX"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => { setPhone(e.target.value); setPhoneNotFound(false); }}
                           disabled={loading}
                           className="h-8 text-xs rounded-md"
                           required
@@ -1126,6 +1462,35 @@ export default function EnhancedAuth() {
                       animate={{ opacity: 1, y: 0 }}
                       className="space-y-2 pt-2 border-t border-border/20"
                     >
+                      {/* Vérification OTP téléphone */}
+                      {signupPhoneOtpSent && (
+                        <form onSubmit={handleVerifySignupPhoneOtp} className="space-y-1.5">
+                          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-md p-2 flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400">Code envoyé au <strong>{signupFormattedPhone}</strong></p>
+                          </div>
+                          <Input
+                            type="text"
+                            placeholder="123456"
+                            value={signupPhoneOtp}
+                            onChange={(e) => setSignupPhoneOtp(e.target.value)}
+                            disabled={loading}
+                            className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                            maxLength={6}
+                            required
+                            autoFocus
+                          />
+                          {error && <p className="text-[10px] text-destructive">{error}</p>}
+                          <Button type="submit" className="w-full h-8 text-xs font-medium rounded-md bg-emerald-500 hover:bg-emerald-600" disabled={loading || signupPhoneOtp.length < 4}>
+                            {loading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</> : 'Créer mon compte'}
+                          </Button>
+                          <Button type="button" variant="ghost" className="w-full h-7 text-[10px]" onClick={() => setSignupPhoneOtpSent(false)}>
+                            <ArrowLeft className="h-3 w-3 mr-1" /> Changer de numéro
+                          </Button>
+                        </form>
+                      )}
+
+                      {!signupPhoneOtpSent && (
                       <form onSubmit={handleEmailAuth} className="space-y-1.5">
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-name" className="text-[11px] font-medium flex items-center gap-1">
@@ -1146,13 +1511,13 @@ export default function EnhancedAuth() {
 
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-email" className="text-[11px] font-medium flex items-center gap-1">
-                            <Mail className="h-3 w-3 text-muted-foreground" />
-                            {t('auth.email')}
+                            {isPhoneInput(email) ? <Phone className="h-3 w-3 text-muted-foreground" /> : <Mail className="h-3 w-3 text-muted-foreground" />}
+                            {isPhoneInput(email) ? 'Numéro de téléphone' : t('auth.email')}
                           </Label>
                           <Input
                             id="signup-email"
-                            type="email"
-                            placeholder={t('auth.emailPlaceholder')}
+                            type="text"
+                            placeholder="Email ou numéro de téléphone"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
@@ -1161,6 +1526,7 @@ export default function EnhancedAuth() {
                           />
                         </div>
 
+                        {!isPhoneInput(email) && (
                         <div className="space-y-0.5">
                           <Label htmlFor="signup-password" className="text-[11px] font-medium flex items-center gap-1">
                             <Lock className="h-3 w-3 text-muted-foreground" />
@@ -1187,6 +1553,7 @@ export default function EnhancedAuth() {
                             </button>
                           </div>
                         </div>
+                        )}
 
                         {error && mode === 'signup' && (
                           <Alert variant="destructive" className="rounded-md py-1.5 px-2">
@@ -1203,25 +1570,29 @@ export default function EnhancedAuth() {
                           {loading && mode === 'signup' ? (
                             <>
                               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                              {t('auth.signing')}
+                              {isPhoneInput(email) ? 'Envoi...' : t('auth.signing')}
                             </>
                           ) : (
                             <>
-                              <UserPlus className="mr-1 h-3 w-3" />
-                              {t('auth.createAccount') || 'Créer mon compte'}
+                              {isPhoneInput(email) ? <Phone className="mr-1 h-3 w-3" /> : <UserPlus className="mr-1 h-3 w-3" />}
+                              {isPhoneInput(email) ? 'Recevoir le code SMS' : (t('auth.createAccount') || 'Créer mon compte')}
                             </>
                           )}
                         </Button>
                       </form>
+                      )}
 
-                      {/* Séparateur compact */}
+                      {/* Séparateur compact (email seulement) */}
+                      {!isPhoneInput(email) && !signupPhoneOtpSent && (
                       <div className="relative py-1.5">
                         <Separator className="bg-border/30" />
                         <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
                           {t('auth.or')}
                         </span>
                       </div>
+                      )}
 
+                      {!isPhoneInput(email) && !signupPhoneOtpSent && (
                       <div className="grid grid-cols-2 gap-1.5">
                         <Button
                           variant="outline"
@@ -1258,6 +1629,7 @@ export default function EnhancedAuth() {
                           Facebook
                         </Button>
                       </div>
+                      )}
                     </motion.div>
                   )}
 

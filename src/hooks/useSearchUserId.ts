@@ -61,14 +61,26 @@ export function useSearchUserId() {
         if (searchError && searchError.code !== 'PGRST116') throw searchError;
         profile = data;
       } else if (parsed.kind === 'email') {
-        // Recherche par email
-        const { data, error: searchError } = await supabase
+        // Recherche par email exact d'abord, puis partiel
+        const { data: exactData, error: exactError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
-          .ilike('email', `%${trimmedId}%`)
+          .ilike('email', trimmedId)
+          .limit(1)
           .maybeSingle();
-        if (searchError && searchError.code !== 'PGRST116') throw searchError;
-        profile = data;
+        if (!exactError) {
+          profile = exactData;
+        }
+        if (!profile) {
+          const { data: partialData, error: partialError } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email, avatar_url, public_id, role, phone')
+            .ilike('email', `%${trimmedId}%`)
+            .limit(1)
+            .maybeSingle();
+          if (partialError && partialError.code !== 'PGRST116') throw partialError;
+          profile = partialData;
+        }
       } else if (parsed.kind === 'phone') {
         // Recherche par téléphone
         const phoneFilters = buildPhoneSearchTerms(trimmedId)

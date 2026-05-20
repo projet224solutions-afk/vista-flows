@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, _User, _Smartphone, ArrowRight } from "lucide-react";
+import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock, Send, ArrowRight } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -23,7 +23,7 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
-import { createDigitalOrder } from "@/services/orderBackendService";
+import { createDigitalOrder, createOrder } from "@/services/orderBackendService";
 import { resolvePostPaymentRoute } from '@/lib/payment/postPaymentRoute';
 import { previewWalletTransfer, resolveWalletRecipient, transferToWallet } from "@/services/walletBackendService";
 import { getCartItemVendorId, groupCartItemsByVendor } from "@/lib/marketplace/checkout";
@@ -130,11 +130,14 @@ export default function Payment() {
   const { convert: convertPrice, loading: converterLoading } = usePriceConverter();
 
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
 
   // Devise du produit/vendeur (dérivée du pays du vendeur)
   const [productCurrency, setProductCurrency] = useState<string>('GNF');
+  // Délai de livraison estimé du vendeur (en jours)
+  const [vendorDeliveryDays, setVendorDeliveryDays] = useState<number | null>(null);
 
   // États pour le paiement
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -283,10 +286,6 @@ export default function Payment() {
       0
     );
 
-    // Wallet non marqué payé → create_marketplace_order_secure débite le wallet atomiquement
-    // Autres méthodes (markAsPaid=true) → paiement déjà fait, pas de débit wallet
-    const walletDebitAmount = paymentMethod === 'wallet' && !markAsPaid ? totalAmount : 0;
-
     const resolvedAddress = shippingAddress || {
       full_name: user?.user_metadata?.full_name || user?.email || 'Client 224Solutions',
       phone: user?.phone || 'Non fourni',
@@ -295,29 +294,32 @@ export default function Payment() {
       country: 'Guinée',
     };
 
-    // Appel RPC direct Supabase (bypass backend + middleware idempotency)
-    // create_marketplace_order_secure utilise auth.uid() → sécurisé côté serveur
-    const { data: result, error: rpcError } = await supabase.rpc(
-      'create_marketplace_order_secure',
-      {
-        p_vendor_id:           vendorId,
-        p_payment_method:      paymentMethod,
-        p_items:               normalizedItems,
-        p_shipping_address:    resolvedAddress,
-        p_currency:            productCurrency || 'GNF',
-        p_wallet_debit_amount: walletDebitAmount,
-      }
-    );
+    // Passe par le backend Node.js /api/orders — même flux que les produits digitaux.
+    // Le backend résout lui-même la devise wallet (p_buyer_wallet_currency),
+    // la conversion FX cross-currency (buildOrderFinancialSummary) et
+    // met payment_status='paid' pour les paiements wallet.
+    //
+    // markAsPaid=false → payment_confirmed:false → le backend débite le wallet atomiquement
+    // markAsPaid=true  → payment_confirmed:true  → paiement déjà confirmé (carte, mobile)
+    const response = await createOrder({
+      vendor_id:         vendorId,
+      items:             normalizedItems,
+      payment_method:    paymentMethod,
+      shipping_address:  resolvedAddress,
+      payment_intent_id: externalPaymentId || null,
+      payment_confirmed: markAsPaid,
+      charged_amount:    totalAmount,
+      order_metadata:    orderMetadata || null,
+    });
 
-    if (rpcError) {
-      throw new Error(rpcError.message || 'Erreur lors de la création de la commande');
+    if (!response.success || !response.data?.order) {
+      throw new Error(response.error || 'Impossible de créer la commande');
     }
 
-    if (!result || !result.success) {
-      throw new Error(result?.error || 'Impossible de créer la commande');
-    }
-
-    return { orderId: result.order_id as string, orderNumber: result.order_number as string };
+    return {
+      orderId:     response.data.order.id,
+      orderNumber: response.data.order.order_number,
+    };
   };
 
   const createDigitalOrderForVendor = async ({
@@ -452,6 +454,7 @@ export default function Payment() {
         // Dériver la devise du vendeur depuis son pays
         const vendorCurr = getVendorCurrency((vendorInfo as any).country);
         setProductCurrency(vendorCurr);
+        setVendorDeliveryDays((vendorInfo as any).average_delivery_days ?? null);
 
         // Stocker les infos du panier (produits physiques par défaut)
         setCartPaymentInfo({
@@ -612,6 +615,7 @@ export default function Payment() {
               id,
               name,
               price,
+              currency,
               vendor_id,
               vendors!inner(user_id, country, vendor_code, public_id)
             `)
@@ -626,9 +630,10 @@ export default function Payment() {
             const vendorUserId = (product.vendors as any)?.user_id as string;
             const vendorCountry = (product.vendors as any)?.country as string | null;
 
-            // Dériver la devise du vendeur depuis son pays
-            const vendorCurr = getVendorCurrency(vendorCountry);
+            // Priorité : currency du produit > currency du state navigation > dérivation depuis pays
+            const vendorCurr = (product as any).currency || stateData?.currency || getVendorCurrency(vendorCountry);
             setProductCurrency(vendorCurr);
+            setVendorDeliveryDays((product.vendors as any)?.average_delivery_days ?? null);
 
             // Stocker les infos produit pour créer la commande plus tard
             setProductPaymentInfo({
@@ -666,12 +671,13 @@ export default function Payment() {
     try {
       const { data, error } = await supabase
         .from('wallets')
-        .select('balance')
+        .select('balance, currency')
         .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
       setWalletBalance(data?.balance || 0);
+      setWalletCurrency(data?.currency || 'GNF');
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
     } finally {
@@ -1457,6 +1463,20 @@ export default function Payment() {
                               className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed' : ''}
                             />
                           </div>
+                          {/* Délai de livraison estimé */}
+                          {vendorDeliveryDays != null && (productPaymentInfo || cartPaymentInfo) && (
+                            <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                  Livraison estimée : {vendorDeliveryDays} jour{vendorDeliveryDays > 1 ? 's' : ''} ouvrable{vendorDeliveryDays > 1 ? 's' : ''}
+                                </p>
+                                <p className="text-xs text-blue-600 dark:text-blue-400">
+                                  Délai indicatif communiqué par le vendeur
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <DialogFooter>
                           <Button
