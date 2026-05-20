@@ -14,6 +14,7 @@ import { Shield, ShieldCheck, ShieldAlert, ShieldX, Upload, X, Loader2, CheckCir
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface VendorKYCSettingsProps {
   vendorId: string;
@@ -33,6 +34,7 @@ interface KYCData {
 
 export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) {
   const { user } = useAuth();
+  const { uploadFile } = useStorageUpload();
   const [kycEnabled, setKycEnabled] = useState<boolean>(false);
   const [kycData, setKycData] = useState<KYCData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,24 +133,18 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     try {
       let documentUrl = kycData?.id_document_url || '';
 
-      // Upload du nouveau document si présent
+      // Upload du nouveau document KYC via GCS (fallback Supabase)
       if (documentFile) {
-        const fileExt = documentFile.name.split('.').pop();
-        const fileName = `${vendorId}/${Date.now()}.${fileExt}`;
+        const uploadResult = await uploadFile(documentFile, {
+          folder: 'kyc',
+          subfolder: vendorId,
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from('kyc-documents')
-          .upload(fileName, documentFile);
-
-        if (uploadError) {
-          throw uploadError;
+        if (!uploadResult.success || !uploadResult.publicUrl) {
+          throw new Error(uploadResult.error || 'Échec upload document');
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('kyc-documents')
-          .getPublicUrl(fileName);
-
-        documentUrl = publicUrl;
+        documentUrl = uploadResult.publicUrl;
       }
 
       // Créer ou mettre à jour le KYC

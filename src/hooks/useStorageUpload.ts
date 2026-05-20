@@ -17,7 +17,9 @@ export type StorageFolder =
   | 'restaurant'
   | 'digital-products'
   | 'travel'
-  | 'misc';
+  | 'misc'
+  | 'kyc'
+  | 'sos';
 
 // Mapping des folders vers les buckets Supabase pour le fallback
 const SUPABASE_BUCKET_MAP: Record<StorageFolder, string> = {
@@ -31,6 +33,8 @@ const SUPABASE_BUCKET_MAP: Record<StorageFolder, string> = {
   'digital-products': 'digital-products',
   travel: 'communication-files',
   misc: 'communication-files',
+  kyc: 'kyc-documents',
+  sos: 'sos-recordings',
 };
 
 interface UploadOptions {
@@ -69,6 +73,8 @@ const ALLOWED_TYPES: Record<StorageFolder, string[]> = {
   'digital-products': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/zip'],
   travel: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   misc: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
+  kyc: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+  sos: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/aac', 'audio/x-m4a', 'video/mp4', 'video/webm'],
 };
 
 // Taille max par catégorie (en bytes)
@@ -83,6 +89,8 @@ const MAX_SIZES: Record<StorageFolder, number> = {
   'digital-products': 5 * 1024 * 1024 * 1024, // 5 GB
   travel: 10 * 1024 * 1024, // 10 MB
   misc: 10 * 1024 * 1024, // 10 MB
+  kyc: 10 * 1024 * 1024, // 10 MB
+  sos: 100 * 1024 * 1024, // 100 MB
 };
 
 function formatMaxSizeLabel(sizeInBytes: number): string {

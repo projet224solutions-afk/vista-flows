@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { uploadToGCSDirect } from '@/lib/gcsUpload';
 
 interface RecordingConfig {
   audio: boolean;
@@ -191,59 +192,21 @@ export class SOSMediaRecorder {
 
       console.log(`📁 Fichier: ${fileName}, Taille: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
 
-      // 2. Upload vers Supabase Storage - bucket sos-recordings
-      const { data, error } = await supabase.storage
-        .from('sos-recordings')
-        .upload(`recordings/${fileName}`, blob, {
-          contentType: mimeType,
-          cacheControl: '3600',
-          upsert: false
-        });
+      // 2. Upload via GCS (fallback sos-recordings)
+      const sosFile = new File([blob], fileName, { type: mimeType });
+      const uploadResult = await uploadToGCSDirect(sosFile, 'sos', fileName, mimeType, `recordings/${sosId}`);
 
-      if (error) {
-        console.error('❌ Erreur upload storage:', error);
-        // Fallback vers le bucket documents si sos-recordings échoue
-        const fallbackResult = await supabase.storage
-          .from('documents')
-          .upload(`sos-media/${sosId}/${fileName}`, blob, {
-            contentType: mimeType,
-            cacheControl: '3600',
-            upsert: true
-          });
-
-        if (fallbackResult.error) {
-          throw fallbackResult.error;
-        }
-        console.log('✅ Upload réussi (fallback documents):', fallbackResult.data?.path);
-
-        const { data: fallbackUrl } = supabase.storage
-          .from('documents')
-          .getPublicUrl(`sos-media/${sosId}/${fileName}`);
-
-        // Mettre à jour sos_alerts avec l'URL
-        await supabase
-          .from('sos_alerts')
-          .update({
-            recording_url: fallbackUrl.publicUrl,
-            recording_stopped_at: new Date().toISOString()
-          })
-          .eq('id', sosId);
-
-        return;
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Échec upload enregistrement SOS');
       }
 
-      console.log('✅ Upload réussi:', data.path);
+      console.log('✅ Upload réussi:', uploadResult.objectPath, `(${uploadResult.provider})`);
 
-      // 3. Obtenir URL publique
-      const { data: urlData } = supabase.storage
-        .from('sos-recordings')
-        .getPublicUrl(data.path);
-
-      // 4. Sauvegarder l'URL dans sos_alerts
+      // 3. Sauvegarder l'URL dans sos_alerts
       const { error: updateError } = await supabase
         .from('sos_alerts')
         .update({
-          recording_url: urlData.publicUrl,
+          recording_url: uploadResult.publicUrl,
           recording_stopped_at: new Date().toISOString()
         })
         .eq('id', sosId);
@@ -251,18 +214,18 @@ export class SOSMediaRecorder {
       if (updateError) {
         console.error('❌ Erreur mise à jour SOS avec URL:', updateError);
       } else {
-        console.log('✅ SOS mis à jour avec URL enregistrement:', urlData.publicUrl);
+        console.log('✅ SOS mis à jour avec URL enregistrement:', uploadResult.publicUrl);
       }
 
-      // 5. Enregistrer aussi dans sos_media pour l'historique
+      // 4. Enregistrer aussi dans sos_media pour l'historique
       try {
         await (supabase as any)
           .from('sos_media')
           .insert({
             sos_alert_id: sosId,
             media_type: config.video ? 'video' : 'audio',
-            file_path: data.path,
-            file_url: urlData.publicUrl,
+            file_path: uploadResult.objectPath,
+            file_url: uploadResult.publicUrl,
             file_size_bytes: blob.size,
             duration_seconds: Math.round((Date.now() - (this.activeRecordings.get(sosId)?.startTime || Date.now())) / 1000),
             created_at: new Date().toISOString()

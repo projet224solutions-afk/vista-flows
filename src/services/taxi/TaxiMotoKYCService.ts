@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { uploadToGCSDirect } from "@/lib/gcsUpload";
 
 export interface KYCDocument {
   type: 'permis' | 'carte_identite' | 'assurance' | 'carte_grise';
@@ -33,19 +34,17 @@ export class TaxiMotoKYCService {
   ): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${driverId}/${documentType}_${Date.now()}.${fileExt}`;
+      const fileName = `${documentType}_${Date.now()}.${fileExt}`;
+      const contentType = file.type || 'application/octet-stream';
 
-      // Upload vers Supabase Storage
-      const { _data, error } = await supabase.storage
-        .from('taxi-kyc-documents')
-        .upload(fileName, file);
+      // Upload via GCS (fallback Supabase kyc-documents)
+      const uploadResult = await uploadToGCSDirect(file, 'kyc', fileName, contentType, driverId);
 
-      if (error) throw error;
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Échec upload document');
+      }
 
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('taxi-kyc-documents')
-        .getPublicUrl(fileName);
+      const urlData = { publicUrl: uploadResult.publicUrl };
 
       // Enregistrer dans la base
       await supabase

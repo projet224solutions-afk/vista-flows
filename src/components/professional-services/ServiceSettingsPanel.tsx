@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useUnifiedSubscription } from '@/hooks/useUnifiedSubscription';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 import { toast } from 'sonner';
 import { Loader2, Save, Navigation, CheckCircle2, MapPin, Upload, X, Image as ImageIcon, Video, Lock } from 'lucide-react';
 import { mapService } from '@/services/mapService';
@@ -33,6 +34,7 @@ const MAX_VIDEO_DURATION_S = 45;
 export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }: ServiceSettingsPanelProps) {
   const { subscription } = useUnifiedSubscription(false);
   const isElite = subscription?.plan_name?.toLowerCase() === 'elite';
+  const { uploadFile } = useStorageUpload();
 
   const [saving, setSaving] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -115,12 +117,9 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
     }
     try {
       setUploadingImage(true);
-      const ext = file.name.split('.').pop();
-      const path = `services-portfolio/${service.id}_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('public-images').upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('public-images').getPublicUrl(path);
-      setPortfolioImages(prev => [...prev, publicUrl]);
+      const result = await uploadFile(file, { folder: 'products', subfolder: `services-portfolio/${service.id}` });
+      if (!result.success || !result.publicUrl) throw new Error(result.error);
+      setPortfolioImages(prev => [...prev, result.publicUrl!]);
       toast.success('Photo ajoutée au portfolio !');
     } catch (err: any) {
       toast.error("Erreur upload image");
@@ -149,12 +148,9 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
     }
     try {
       setUploadingVideo(true);
-      const ext = file.name.split('.').pop();
-      const path = `services-promo/video_${service.id}_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('product-videos').upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('product-videos').getPublicUrl(path);
-      setPromoVideoUrl(publicUrl);
+      const result = await uploadFile(file, { folder: 'videos', subfolder: `services-promo/${service.id}` });
+      if (!result.success || !result.publicUrl) throw new Error(result.error);
+      setPromoVideoUrl(result.publicUrl);
       toast.success('Vidéo de présentation uploadée !');
     } catch (err: any) {
       toast.error("Erreur upload vidéo");

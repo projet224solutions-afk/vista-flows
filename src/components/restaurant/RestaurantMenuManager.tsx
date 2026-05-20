@@ -1,6 +1,6 @@
 /**
  * Composant de gestion du menu restaurant
- * Catégories et plats avec CRUD complet + multi-images + vidéo Elite
+ * Catégories et plats avec CRUD complet + multi-images + vidéo Premium
  */
 
 import { useState } from 'react';
@@ -21,9 +21,10 @@ import {
   Search, Upload, X, Loader2, Image as ImageIcon, Video, Lock
 } from 'lucide-react';
 import { useRestaurantMenu, MenuCategory, MenuItem } from '@/hooks/useRestaurantMenu';
-import { useUnifiedSubscription } from '@/hooks/useUnifiedSubscription';
+import { useServiceSubscription } from '@/hooks/useServiceSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface RestaurantMenuManagerProps {
   serviceId: string;
@@ -44,8 +45,9 @@ const MAX_VIDEO_DURATION_S = 45;
 
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
   const formatCurrency = useFormatCurrency();
-  const { subscription } = useUnifiedSubscription();
-  const isElite = subscription?.plan_name?.toLowerCase() === 'elite';
+  const { subscription } = useServiceSubscription({ serviceId });
+  const { uploadFile } = useStorageUpload();
+  const canUploadVideo = subscription?.can_upload_video ?? false;
 
   const {
     categories,
@@ -210,17 +212,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     }
     try {
       setUploadingImage(true);
-      const ext = file.name.split('.').pop();
-      const path = `restaurant-dishes/${serviceId}_${Date.now()}.${ext}`;
-      const { error: storageError } = await supabase.storage
-        .from('public-images')
-        .upload(path, file, { upsert: true });
-      if (storageError) throw storageError;
-      const { data: { publicUrl } } = supabase.storage.from('public-images').getPublicUrl(path);
+      const result = await uploadFile(file, { folder: 'restaurant', subfolder: `dishes/${serviceId}` });
+      if (!result.success || !result.publicUrl) throw new Error(result.error);
       setItemForm(prev => ({
         ...prev,
-        images: [...prev.images, publicUrl],
-        image_url: prev.images.length === 0 ? publicUrl : prev.image_url,
+        images: [...prev.images, result.publicUrl!],
+        image_url: prev.images.length === 0 ? result.publicUrl! : prev.image_url,
       }));
       toast.success('Image ajoutée !');
     } catch (err: any) {
@@ -239,8 +236,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
   const handleVideoUpload = async (file: File) => {
     if (!file) return;
-    if (!isElite) {
-      toast.error('Upload vidéo réservé au plan Elite');
+    if (!canUploadVideo) {
+      toast.error('Upload vidéo réservé au plan Premium');
       return;
     }
     if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
@@ -257,14 +254,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
     try {
       setUploadingVideo(true);
-      const ext = file.name.split('.').pop();
-      const path = `restaurant-dishes/video_${serviceId}_${Date.now()}.${ext}`;
-      const { error: storageError } = await supabase.storage
-        .from('product-videos')
-        .upload(path, file, { upsert: true });
-      if (storageError) throw storageError;
-      const { data: { publicUrl } } = supabase.storage.from('product-videos').getPublicUrl(path);
-      setItemForm(prev => ({ ...prev, video_url: publicUrl }));
+      const result = await uploadFile(file, { folder: 'videos', subfolder: `restaurant-dishes/${serviceId}` });
+      if (!result.success || !result.publicUrl) throw new Error(result.error);
+      setItemForm(prev => ({ ...prev, video_url: result.publicUrl! }));
       toast.success('Vidéo uploadée !');
     } catch (err: any) {
       toast.error("Erreur upload vidéo");
@@ -485,17 +477,17 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   </div>
                 </div>
 
-                {/* Vidéo du plat — Elite uniquement */}
+                {/* Vidéo du plat — Premium/Pro uniquement */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     Vidéo du plat (max 45 s)
-                    {!isElite && (
+                    {!canUploadVideo && (
                       <Badge variant="secondary" className="text-xs gap-1">
-                        <Lock className="w-3 h-3" /> Elite
+                        <Lock className="w-3 h-3" /> Premium
                       </Badge>
                     )}
                   </Label>
-                  <div className={`border-2 border-dashed rounded-lg p-3 ${!isElite ? 'opacity-60' : ''}`}>
+                  <div className={`border-2 border-dashed rounded-lg p-3 ${!canUploadVideo ? 'opacity-60' : ''}`}>
                     {itemForm.video_url ? (
                       <div className="space-y-2">
                         <video
@@ -516,9 +508,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                       <div className="text-center py-2">
                         <Video className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
                         <p className="text-xs text-muted-foreground mb-2">
-                          {isElite ? 'MP4 / MOV · max 45 s · max 50 MB' : 'Disponible avec le plan Elite'}
+                          {canUploadVideo ? 'MP4 / MOV · max 45 s · max 50 MB' : 'Disponible avec le plan Premium'}
                         </p>
-                        {isElite && (
+                        {canUploadVideo && (
                           <label className="block">
                             <input
                               type="file"

@@ -8,6 +8,7 @@ import { Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useStorageUpload } from '@/hooks/useStorageUpload';
 
 interface VendorKYCFormProps {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ interface VendorKYCFormProps {
 
 export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
   const { user } = useAuth();
+  const { uploadFile } = useStorageUpload();
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [documentType, setDocumentType] = useState('');
@@ -65,22 +67,17 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
     setLoading(true);
 
     try {
-      // Upload du document
-      const fileExt = documentFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // Upload du document KYC via GCS (fallback Supabase)
+      const uploadResult = await uploadFile(documentFile, {
+        folder: 'kyc',
+        subfolder: user.id,
+      });
 
-      const { error: uploadError, data: _uploadData } = await supabase.storage
-        .from('kyc-documents')
-        .upload(fileName, documentFile);
-
-      if (uploadError) {
-        throw uploadError;
+      if (!uploadResult.success || !uploadResult.publicUrl) {
+        throw new Error(uploadResult.error || 'Échec upload document');
       }
 
-      // Récupérer l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('kyc-documents')
-        .getPublicUrl(fileName);
+      const publicUrl = uploadResult.publicUrl;
 
       // Créer ou mettre à jour le KYC
       const { error: kycError } = await supabase
