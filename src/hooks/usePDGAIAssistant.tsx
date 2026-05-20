@@ -145,7 +145,7 @@ Fournis 3-5 insights avec leur type (warning/info/success) et priorité (high/me
       const { data: session } = await supabase.auth.getSession();
       const accessToken = session?.session?.access_token;
 
-      const response = await fetch(`https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/pdg-ai-assistant`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdg-ai-assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

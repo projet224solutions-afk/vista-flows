@@ -113,7 +113,7 @@ export default function SystemConfiguration() {
 
   const testAllServices = async () => {
     setTesting(true);
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
     const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
     try {

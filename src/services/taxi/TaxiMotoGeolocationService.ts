@@ -15,7 +15,7 @@ export interface RouteInfo {
 }
 
 export class TaxiMotoGeolocationService {
-  private static SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+  private static SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
   private static SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
   /**

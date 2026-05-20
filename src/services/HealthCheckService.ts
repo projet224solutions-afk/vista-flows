@@ -328,7 +328,7 @@ class HealthCheckService {
       const timeout = setTimeout(() => controller.abort(), 2000);
 
       await fetch(
-        `https://uakkxaibujzxdiqzpnpr.supabase.co/realtime/v1/`,
+        `${import.meta.env.VITE_SUPABASE_URL}/realtime/v1/`,
         { method: 'HEAD', mode: 'no-cors', signal: controller.signal, keepalive: true }
       ).catch(() => null);
 

@@ -146,7 +146,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       });
 
       // Reverse geocoding pour obtenir l'adresse
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
@@ -188,7 +188,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       // Position fictive du livreur (sera calculée au moment de l'assignation)
       const driverLocation = { lat: vendorInfo.latitude, lng: vendorInfo.longitude };
 
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-delivery-distances`, {

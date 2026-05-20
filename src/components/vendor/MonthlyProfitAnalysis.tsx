@@ -322,7 +322,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold">Analyse de Profit Mensuel</h3>
           <p className="text-sm text-muted-foreground">{currentMonth}</p>
@@ -403,17 +403,17 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
       </div>
 
       {/* Résumé principal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Chiffre d'affaires */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ventes du mois</p>
-                <p className="text-xl font-bold text-green-600">{formatCurrency(monthlySales)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Ventes du mois</p>
+                <p className="text-sm sm:text-xl font-bold text-green-600 truncate">{formatCurrency(monthlySales)}</p>
               </div>
-              <div className="p-2 bg-green-100 rounded-full">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+              <div className="p-1.5 sm:p-2 bg-green-100 rounded-full shrink-0 ml-1">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -421,14 +421,14 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
 
         {/* Coût des achats */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Achats du mois</p>
-                <p className="text-xl font-bold text-red-600">{formatCurrency(monthlyPurchases)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Achats du mois</p>
+                <p className="text-sm sm:text-xl font-bold text-red-600 truncate">{formatCurrency(monthlyPurchases)}</p>
               </div>
-              <div className="p-2 bg-red-100 rounded-full">
-                <DollarSign className="w-5 h-5 text-red-600" />
+              <div className="p-1.5 sm:p-2 bg-red-100 rounded-full shrink-0 ml-1">
+                <DollarSign className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-600" />
               </div>
             </div>
           </CardContent>
@@ -436,14 +436,14 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
 
         {/* Coûts fixes */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Coûts fixes</p>
-                <p className="text-xl font-bold text-orange-600">{formatCurrency(totalFixedCosts)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Coûts fixes</p>
+                <p className="text-sm sm:text-xl font-bold text-orange-600 truncate">{formatCurrency(totalFixedCosts)}</p>
               </div>
-              <div className="p-2 bg-orange-100 rounded-full">
-                <Home className="w-5 h-5 text-orange-600" />
+              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
+                <Home className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -451,22 +451,22 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
 
         {/* Profit net */}
         <Card className={netProfit >= 0 ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Profit net</p>
-                <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Profit net</p>
+                <p className={`text-sm sm:text-xl font-bold truncate ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(netProfit)}
                 </p>
-                <p className={`text-xs ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`text-[10px] sm:text-xs ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   Marge: {profitMargin.toFixed(1)}%
                 </p>
               </div>
-              <div className={`p-2 rounded-full ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              <div className={`p-1.5 sm:p-2 rounded-full shrink-0 ml-1 ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                 {netProfit >= 0 ? (
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <CheckCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-600" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <AlertTriangle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-600" />
                 )}
               </div>
             </div>

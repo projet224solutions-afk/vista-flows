@@ -100,7 +100,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       formData.append('bureauId', bureauId);
 
       const response = await fetch(
-        'https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/upload-bureau-stamp',
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-bureau-stamp`,
         {
           method: 'POST',
           body: formData,

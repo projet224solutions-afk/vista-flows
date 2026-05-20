@@ -67,7 +67,7 @@ class MapService {
     try {
       console.log('[MapService] Calculating route from', start, 'to', end);
 
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-route`, {
@@ -116,7 +116,7 @@ class MapService {
     try {
       console.log('[MapService] Geocoding address:', address);
 
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {
@@ -171,7 +171,7 @@ class MapService {
   // Reverse geocoding: coordonnées → adresse
   async reverseGeocode(latitude: number, longitude: number): Promise<string> {
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
       const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/geocode-address`, {

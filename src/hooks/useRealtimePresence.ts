@@ -502,7 +502,7 @@ export function useRealtimePresence(options: UseRealtimePresenceOptions = {}): U
       // Essayer sendBeacon d'abord (plus fiable)
       // Note: On utilise l'URL configurée dans l'environnement
       if (navigator.sendBeacon) {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
         const url = `${supabaseUrl}/rest/v1/${PRESENCE_TABLE}?user_id=eq.${user.id}`;
         const blob = new Blob([data], { type: 'application/json' });
         navigator.sendBeacon(url, blob);
