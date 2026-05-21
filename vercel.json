@@ -19,43 +19,43 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/api/:path*"
+      "destination": "https://backend.224solution.net/api/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://backend-kappa-green-63.vercel.app/health"
+      "destination": "https://backend.224solution.net/health"
     },
     {
       "source": "/healthz",
-      "destination": "https://backend-kappa-green-63.vercel.app/healthz"
+      "destination": "https://backend.224solution.net/healthz"
     },
     {
       "source": "/healthz.json",
-      "destination": "https://backend-kappa-green-63.vercel.app/healthz.json"
+      "destination": "https://backend.224solution.net/healthz.json"
     },
     {
       "source": "/auth/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/auth/:path*"
+      "destination": "https://backend.224solution.net/auth/:path*"
     },
     {
       "source": "/jobs/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/jobs/:path*"
+      "destination": "https://backend.224solution.net/jobs/:path*"
     },
     {
       "source": "/media/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/media/:path*"
+      "destination": "https://backend.224solution.net/media/:path*"
     },
     {
       "source": "/internal/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/internal/:path*"
+      "destination": "https://backend.224solution.net/internal/:path*"
     },
     {
       "source": "/edge-functions/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/edge-functions/:path*"
+      "destination": "https://backend.224solution.net/edge-functions/:path*"
     },
     {
       "source": "/webhooks/:path*",
-      "destination": "https://backend-kappa-green-63.vercel.app/webhooks/:path*"
+      "destination": "https://backend.224solution.net/webhooks/:path*"
     },
     {
       "source": "/:path*",
