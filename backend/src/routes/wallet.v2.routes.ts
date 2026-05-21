@@ -30,6 +30,7 @@ import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 import { sendTransactionEmails } from '../services/transactionEmail.service.js';
+import { bcrgLastSnapshot, bcrgSseClients } from '../services/fxRates.service.js';
 
 const router = Router();
 
@@ -54,6 +55,25 @@ async function readSupabaseData<T>(queryPromise: PromiseLike<{ data?: T; error?:
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Plages de valeurs GNF valides pour chaque devise (widget BCRG)
+const BCRG_GNF_RANGES: Record<string, { min: number; max: number }> = {
+  DTS: { min: 8_000, max: 20_000 },
+  USD: { min: 6_500, max: 14_000 },
+  EUR: { min: 7_500, max: 16_000 },
+  CNY: { min: 800,   max: 2_500 },
+  CAD: { min: 4_500, max: 12_000 },
+  GBP: { min: 8_000, max: 18_000 },
+  CHF: { min: 8_000, max: 18_000 },
+  JPY: { min: 30,    max: 200 },
+  DKK: { min: 900,   max: 2_500 },
+  NOK: { min: 500,   max: 2_000 },
+  SEK: { min: 500,   max: 2_000 },
+  SAR: { min: 1_500, max: 5_000 },
+  UCA: { min: 8_000, max: 18_000 },
+  XOF: { min: 8,     max: 30 },
+};
+
 const BCRG_SCRAPE_URLS = [
   'https://www.bcrg-guinee.org',
   'https://www.bcrg-guinee.org/cours-de-change',
@@ -676,20 +696,62 @@ function extractBcrgFixingUrls(html: string): string[] {
   return urls.sort((left, right) => right.localeCompare(left));
 }
 
-function extractBcrgWidgetRate(html: string, currency: 'USD' | 'EUR'): number | null {
-  const labelPattern = currency === 'USD' ? '(?:USD|Dollar)' : '(?:EUR|Euro)';
+/**
+ * Extrait le taux USD/GNF ou EUR/GNF depuis le HTML de la page BCRG.
+ *
+ * Couvre tous les formats observés sur bcrg-guinee.org :
+ *   1. Titres h1-h6 : "USD =</h2>…<h2>8 732,48</h2>"
+ *   2. Tableau HTML : <td>USD</td><td>8 732,48</td>
+ *   3. Texte inline : "1 USD = 8732.48" ou "USD/GNF : 8732"
+ *   4. Widgets span/div avec classe : <span class="rate">8 732,48</span>
+ *   5. JSON/script embarqué : "USD":8732.48 ou "usd_gnf":8732
+ *   6. Format avec unité : "8 732 GNF" après "USD"
+ *   7. Format avec balise strong/b : <strong>8 732,48</strong>
+ */
+function extractBcrgWidgetRate(html: string, currency: string): number | null {
+  const code = currency.toUpperCase();
+  const label = code === 'USD' ? '(?:USD|Dollar\\s*(?:US|américain)?)' :
+                code === 'EUR' ? '(?:EUR|Euro)' :
+                code;
+  const numCapture = '([\\d\\s\\u00a0.,]+)';
+  const range = BCRG_GNF_RANGES[code] ?? { min: 0, max: 1_000_000 };
+
   const patterns = [
-    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,1800}?<h\\d[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/h\\d>`, 'gi'),
-    new RegExp(`<td[^>]*>\\s*${labelPattern}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/td>`, 'gi'),
-    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)([\\d\\s.,]+)`, 'gi'),
+    // Format 1 : titre split — "USD =</h2>…<h2>8 732</h2>" — fenêtre 8000 car Elementor injecte du HTML entre le label et la valeur
+    new RegExp(`${label}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,8000}?<h\\d[^>]*>\\s*${numCapture}\\s*<\\/h\\d>`, 'gi'),
+    // Format 2 : tableau standard — <td>USD</td><td>8 732</td>
+    new RegExp(`<td[^>]*>\\s*${label}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*${numCapture}\\s*<\\/td>`, 'gi'),
+    // Format 3 : texte inline — "1 USD = 8732" ou "USD/GNF : 8732"
+    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*/\\s*GNF\\s*[:=]\\s*)${numCapture}`, 'gi'),
+    // Format 4a : label suivi d'un span de valeur (même ligne ou jusqu'à 300 chars)
+    new RegExp(`${label}[\\s\\S]{0,300}?<span[^>]*>\\s*${numCapture}\\s*<\\/span>`, 'gi'),
+    // Format 4b : div avec classe contenant le taux
+    new RegExp(`${label}[\\s\\S]{0,300}?<div[^>]*class="[^"]*(?:rate|taux|cours|value|prix)[^"]*"[^>]*>\\s*${numCapture}\\s*<\\/div>`, 'gi'),
+    // Format 5 : JSON embarqué dans <script> — "USD":8732 ou "usd_gnf":8732
+    new RegExp(`"(?:${currency}|${currency.toLowerCase()}_gnf|gnf_${currency.toLowerCase()})"\s*:\s*${numCapture}`, 'gi'),
+    // Format 6 : valeur suivie de "GNF" après le label
+    new RegExp(`${label}[\\s\\S]{0,200}?${numCapture}\\s*GNF`, 'gi'),
+    // Format 7 : strong/b — <strong>8 732</strong> précédé de USD
+    new RegExp(`${label}[\\s\\S]{0,300}?<(?:strong|b)[^>]*>\\s*${numCapture}\\s*<\\/(?:strong|b)>`, 'gi'),
+    // Format 8 : data-attribute — data-rate="8732" data-currency="USD"
+    new RegExp(`data-currency=["']${code}["'][^>]*data-rate=["']${numCapture}["']`, 'gi'),
+    new RegExp(`data-rate=["']${numCapture}["'][^>]*data-currency=["']${code}["']`, 'gi'),
+    // Format 9 : tableau inversé — <tr><th>Devise</th><th>Taux</th></tr><tr><td>USD</td><td>8732</td>
+    new RegExp(`<tr[^>]*>[\\s\\S]{0,200}?${label}[\\s\\S]{0,500}?<td[^>]*>\\s*${numCapture}\\s*<\\/td>`, 'gi'),
   ];
 
   for (const pattern of patterns) {
     const matches = Array.from(html.matchAll(pattern));
+    // Lire de la fin vers le début pour prendre le dernier taux publié (le plus récent)
     for (let index = matches.length - 1; index >= 0; index -= 1) {
-      const parsed = parseFxRateNumber(matches[index]?.[1] || '');
-      if (Number.isFinite(parsed) && parsed > 1000 && parsed < 25000) {
-        return parsed;
+      // Chercher dans tous les groupes capturés (certains patterns ont plusieurs groupes)
+      for (let g = 1; g < (matches[index]?.length ?? 0); g++) {
+        const raw = matches[index]?.[g];
+        if (!raw) continue;
+        const parsed = parseFxRateNumber(raw);
+        if (Number.isFinite(parsed) && parsed >= range.min && parsed <= range.max) {
+          return parsed;
+        }
       }
     }
   }
@@ -706,6 +768,8 @@ async function fetchBcrgHtml(url: string): Promise<string | null> {
       headers: {
         'User-Agent': '224Solutions-FX-Monitor/2.0',
         Accept: 'text/html',
+        'Cache-Control': 'no-cache, no-store',
+        Pragma: 'no-cache',
       },
       signal: controller.signal,
     });
@@ -725,7 +789,24 @@ async function fetchBcrgHtml(url: string): Promise<string | null> {
   }
 }
 
-async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number | null; retrievedAt: string; sourceUrl: string | null } | null> {
+interface BcrgLiveRates {
+  usdGnf: number;
+  eurGnf: number | null;
+  cadGnf: number | null;
+  gbpGnf: number | null;
+  chfGnf: number | null;
+  jpyGnf: number | null;
+  cnyGnf: number | null;
+  dkkGnf: number | null;
+  nokGnf: number | null;
+  sekGnf: number | null;
+  sarGnf: number | null;
+  xofGnf: number | null;
+  retrievedAt: string;
+  sourceUrl: string | null;
+}
+
+async function fetchLiveBcrgUsdGnf(): Promise<BcrgLiveRates | null> {
   let homepageHtml: string | null = null;
 
   try {
@@ -736,6 +817,7 @@ async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number |
 
   const fixingUrls = homepageHtml ? extractBcrgFixingUrls(homepageHtml) : [];
   const urlsToTry = Array.from(new Set([
+    BCRG_OFFICIAL_URL, // ← homepage en premier — widget Elementor toujours à jour
     ...fixingUrls,
     ...BCRG_SCRAPE_URLS,
   ]));
@@ -754,12 +836,26 @@ async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number |
       continue;
     }
 
-    return {
+    const extracted: BcrgLiveRates = {
       usdGnf,
       eurGnf: extractBcrgWidgetRate(html, 'EUR'),
+      cadGnf: extractBcrgWidgetRate(html, 'CAD'),
+      gbpGnf: extractBcrgWidgetRate(html, 'GBP'),
+      chfGnf: extractBcrgWidgetRate(html, 'CHF'),
+      jpyGnf: extractBcrgWidgetRate(html, 'JPY'),
+      cnyGnf: extractBcrgWidgetRate(html, 'CNY'),
+      dkkGnf: extractBcrgWidgetRate(html, 'DKK'),
+      nokGnf: extractBcrgWidgetRate(html, 'NOK'),
+      sekGnf: extractBcrgWidgetRate(html, 'SEK'),
+      sarGnf: extractBcrgWidgetRate(html, 'SAR'),
+      xofGnf: extractBcrgWidgetRate(html, 'XOF'),
       retrievedAt: new Date().toISOString(),
       sourceUrl: url,
     };
+    const missing = (['EUR','GBP','CAD','CHF','JPY','CNY','DKK','NOK','SEK','SAR','XOF'] as const)
+      .filter(c => extracted[`${c.toLowerCase()}Gnf` as keyof BcrgLiveRates] === null);
+    logger.info(`[walletV2] BCRG extrait USD=${usdGnf} EUR=${extracted.eurGnf} GBP=${extracted.gbpGnf} CAD=${extracted.cadGnf} XOF=${extracted.xofGnf} (source: ${url})${missing.length ? ` | manquants: ${missing.join(',')}` : ''}`);
+    return extracted;
   }
 
   return null;
@@ -779,7 +875,7 @@ async function getConfiguredFxMargin(): Promise<number> {
 function buildLiveBcrgFxRate(
   from: string,
   to: string,
-  liveRate: { usdGnf: number; eurGnf: number | null; retrievedAt: string; sourceUrl: string | null } | null,
+  liveRate: BcrgLiveRates | null,
   margin = 0,
 ): InternalFxRateResult | null {
   if (!liveRate) return null;
@@ -797,41 +893,63 @@ function buildLiveBcrgFxRate(
     stale: false,
   };
 
+  // Paires directes USD/EUR ↔ GNF
+  // La marge réduit toujours le montant reçu : foreign→GNF divise par (1+margin),
+  // GNF→foreign divise le taux inverse par (1+margin). La plateforme garde la différence.
   if (sourceCurrency === 'USD' && targetCurrency === 'GNF' && liveRate.usdGnf > 0) {
-    return { rate: liveRate.usdGnf * (1 + margin), ...shared, officialRate: liveRate.usdGnf };
+    return { rate: liveRate.usdGnf / (1 + margin), ...shared, officialRate: liveRate.usdGnf };
   }
-
   if (sourceCurrency === 'GNF' && targetCurrency === 'USD' && liveRate.usdGnf > 0) {
     return { rate: 1 / (liveRate.usdGnf * (1 + margin)), ...shared, officialRate: 1 / liveRate.usdGnf };
   }
-
-  if (sourceCurrency === 'EUR' && targetCurrency === 'GNF' && Number.isFinite(liveRate.eurGnf) && Number(liveRate.eurGnf) > 0) {
-    return { rate: Number(liveRate.eurGnf) * (1 + margin), ...shared, officialRate: Number(liveRate.eurGnf) };
+  if (sourceCurrency === 'EUR' && targetCurrency === 'GNF' && liveRate.eurGnf && liveRate.eurGnf > 0) {
+    return { rate: liveRate.eurGnf / (1 + margin), ...shared, officialRate: liveRate.eurGnf };
+  }
+  if (sourceCurrency === 'GNF' && targetCurrency === 'EUR' && liveRate.eurGnf && liveRate.eurGnf > 0) {
+    return { rate: 1 / (liveRate.eurGnf * (1 + margin)), ...shared, officialRate: 1 / liveRate.eurGnf };
   }
 
-  if (sourceCurrency === 'GNF' && targetCurrency === 'EUR' && Number.isFinite(liveRate.eurGnf) && Number(liveRate.eurGnf) > 0) {
-    return { rate: 1 / (Number(liveRate.eurGnf) * (1 + margin)), ...shared, officialRate: 1 / Number(liveRate.eurGnf) };
-  }
-
-  // XOF/XAF → GNF : parité fixe officielle (1 EUR = 655.957 XOF = 655.957 XAF), croisé avec eurGnf live
-  const eurGnf = liveRate.eurGnf ? Number(liveRate.eurGnf) : null;
-  if (eurGnf && eurGnf > 0) {
-    const xofGnf = eurGnf / 655.957;
-    if ((sourceCurrency === 'XOF' || sourceCurrency === 'XAF') && targetCurrency === 'GNF') {
-      return { rate: xofGnf * (1 + margin), ...shared, officialRate: xofGnf };
+  // Devises BCRG directes ↔ GNF (CAD, GBP, CHF, JPY, CNY, DKK, NOK, SEK, SAR, XOF)
+  const directPairs: Array<[string, number | null]> = [
+    ['CAD', liveRate.cadGnf],
+    ['GBP', liveRate.gbpGnf],
+    ['CHF', liveRate.chfGnf],
+    ['JPY', liveRate.jpyGnf],
+    ['CNY', liveRate.cnyGnf],
+    ['DKK', liveRate.dkkGnf],
+    ['NOK', liveRate.nokGnf],
+    ['SEK', liveRate.sekGnf],
+    ['SAR', liveRate.sarGnf],
+    ['XOF', liveRate.xofGnf],
+  ];
+  for (const [curr, crossGnf] of directPairs) {
+    if (!crossGnf || crossGnf <= 0) continue;
+    if (sourceCurrency === curr && targetCurrency === 'GNF') {
+      return { rate: crossGnf / (1 + margin), ...shared, officialRate: crossGnf };
     }
-    if (sourceCurrency === 'GNF' && (targetCurrency === 'XOF' || targetCurrency === 'XAF')) {
+    if (sourceCurrency === 'GNF' && targetCurrency === curr) {
+      return { rate: 1 / (crossGnf * (1 + margin)), ...shared, officialRate: 1 / crossGnf };
+    }
+  }
+
+  // XAF ↔ GNF : parité fixe officielle (1 EUR = 655.957 XAF), croisé avec eurGnf live
+  const eurGnf = liveRate.eurGnf ?? null;
+  if (eurGnf && eurGnf > 0) {
+    const xofGnf = liveRate.xofGnf ?? (eurGnf / 655.957);
+    if (sourceCurrency === 'XAF' && targetCurrency === 'GNF') {
+      return { rate: xofGnf / (1 + margin), ...shared, officialRate: xofGnf };
+    }
+    if (sourceCurrency === 'GNF' && targetCurrency === 'XAF') {
       return { rate: 1 / (xofGnf * (1 + margin)), ...shared, officialRate: 1 / xofGnf };
     }
   }
 
   // SLL (Sierra Leone Leone) ↔ GNF : pivot via USD (BSL instable, taux de référence BSL 2025)
-  // 1 USD ≈ 22 500 SLL (code ISO 4217 SLL — Leones anciens, taux post-redenomination 2022 exprimé en SLL)
   const SLL_PER_USD = 22_500;
   if (liveRate.usdGnf > 0) {
     if (sourceCurrency === 'SLL' && targetCurrency === 'GNF') {
       const sllToGnf = liveRate.usdGnf / SLL_PER_USD;
-      return { rate: sllToGnf * (1 + margin), ...shared, officialRate: sllToGnf };
+      return { rate: sllToGnf / (1 + margin), ...shared, officialRate: sllToGnf };
     }
     if (sourceCurrency === 'GNF' && targetCurrency === 'SLL') {
       const gnfToSll = SLL_PER_USD / liveRate.usdGnf;
@@ -2364,55 +2482,64 @@ router.get(
           source: eurGnfRowFromDb?.source || 'bcrg-live',
           source_type: eurGnfRowFromDb?.source_type || 'official_html',
         };
-        // XOF → GNF : parité fixe 1 EUR = 655.957 XOF
-        const xofGnfBase = eurGnfBase / 655.957;
+        // XOF → GNF : taux direct BCRG si disponible, sinon parité fixe 1 EUR = 655.957 XOF
+        const xofGnfDirect = (liveBcrgRate?.xofGnf && liveBcrgRate.xofGnf > 0) ? Number(liveBcrgRate.xofGnf) : null;
+        const xofGnfBase = xofGnfDirect ?? (eurGnfBase / 655.957);
         keyRatesMap['XOF_GNF'] = {
           from_currency: 'XOF', to_currency: 'GNF',
           rate: xofGnfBase,
           margin: currentMargin,
           final_rate: xofGnfBase * (1 + currentMargin),
-          retrieved_at: currentRate?.retrieved_at || null,
-          source: 'bceao-parity',
-          source_type: 'official_fixed_parity',
+          retrieved_at: xofGnfDirect ? (liveBcrgRate?.retrievedAt || null) : (currentRate?.retrieved_at || null),
+          source: xofGnfDirect ? 'bcrg-live-widget' : 'bceao-parity',
+          source_type: xofGnfDirect ? 'official_html' : 'official_fixed_parity',
         };
-        // XAF → GNF : même parité fixe que XOF
+        // XAF → GNF : parité fixe EUR/655.957 (XAF non coté par BCRG directement)
+        const xafGnfBase = eurGnfBase / 655.957;
         keyRatesMap['XAF_GNF'] = {
           from_currency: 'XAF', to_currency: 'GNF',
-          rate: xofGnfBase,
+          rate: xafGnfBase,
           margin: currentMargin,
-          final_rate: xofGnfBase * (1 + currentMargin),
+          final_rate: xafGnfBase * (1 + currentMargin),
           retrieved_at: currentRate?.retrieved_at || null,
           source: 'beac-parity',
           source_type: 'official_fixed_parity',
         };
       }
 
-      // GBP → GNF : GBP→USD × USD→GNF (cross BCEAO × BCRG)
-      // retrieved_at = timestamp USD/GNF (composante live BCRG) car c'est elle qui varie en temps réel
-      if (gbpUsdRow && usdGnfBase && usdGnfBase > 0) {
-        const gbpGnfBase = Number(gbpUsdRow.rate) * usdGnfBase;
+      // GBP → GNF : priorité au taux direct BCRG live, sinon cross BCEAO × BCRG
+      const gbpGnfDirect = liveBcrgRate?.gbpGnf ? Number(liveBcrgRate.gbpGnf) : null;
+      const gbpGnfFromCross = (gbpUsdRow && usdGnfBase && usdGnfBase > 0)
+        ? Number(gbpUsdRow.rate) * usdGnfBase
+        : null;
+      const gbpGnfBase = gbpGnfDirect ?? gbpGnfFromCross;
+      if (gbpGnfBase && gbpGnfBase > 0) {
         keyRatesMap['GBP_GNF'] = {
           from_currency: 'GBP', to_currency: 'GNF',
           rate: gbpGnfBase,
           margin: currentMargin,
           final_rate: gbpGnfBase * (1 + currentMargin),
-          retrieved_at: currentRate?.retrieved_at || gbpUsdRow.retrieved_at || null,
-          source: gbpUsdRow.source || 'bceao-cross',
-          source_type: 'official_cross',
+          retrieved_at: liveBcrgRate?.retrievedAt || currentRate?.retrieved_at || null,
+          source: gbpGnfDirect ? 'bcrg-live-widget' : (gbpUsdRow?.source || 'bceao-cross'),
+          source_type: gbpGnfDirect ? 'official_html' : 'official_cross',
         };
       }
 
-      // CAD → GNF : CAD→USD × USD→GNF (cross BCEAO × BCRG)
-      if (cadUsdRow && usdGnfBase && usdGnfBase > 0) {
-        const cadGnfBase = Number(cadUsdRow.rate) * usdGnfBase;
+      // CAD → GNF : priorité au taux direct BCRG live, sinon cross BCEAO × BCRG
+      const cadGnfDirect = liveBcrgRate?.cadGnf ? Number(liveBcrgRate.cadGnf) : null;
+      const cadGnfFromCross = (cadUsdRow && usdGnfBase && usdGnfBase > 0)
+        ? Number(cadUsdRow.rate) * usdGnfBase
+        : null;
+      const cadGnfBase = cadGnfDirect ?? cadGnfFromCross;
+      if (cadGnfBase && cadGnfBase > 0) {
         keyRatesMap['CAD_GNF'] = {
           from_currency: 'CAD', to_currency: 'GNF',
           rate: cadGnfBase,
           margin: currentMargin,
           final_rate: cadGnfBase * (1 + currentMargin),
-          retrieved_at: currentRate?.retrieved_at || cadUsdRow.retrieved_at || null,
-          source: cadUsdRow.source || 'bceao-cross',
-          source_type: 'official_cross',
+          retrieved_at: liveBcrgRate?.retrievedAt || currentRate?.retrieved_at || null,
+          source: cadGnfDirect ? 'bcrg-live-widget' : (cadUsdRow?.source || 'bceao-cross'),
+          source_type: cadGnfDirect ? 'official_html' : 'official_cross',
         };
       }
 
@@ -2441,6 +2568,89 @@ router.get(
       logger.error(`FX health error: ${error.message}`);
       res.status(500).json({ success: false, error: 'Erreur lors du chargement du monitoring FX' });
     }
+  }
+);
+
+/**
+ * GET /api/v2/wallet/admin/fx-rates-check
+ * Endpoint léger (Node.js pur, sans scraping) pour détecter les changements de taux.
+ * Le frontend poll ce endpoint toutes les 60 s. Si changedAt > lastKnown → loadFxHealth().
+ * Alimenté par refreshBcrgOnly() en mémoire — réponse instantanée.
+ */
+router.get(
+  '/admin/fx-rates-check',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  (_req: AuthenticatedRequest, res: Response) => {
+    res.json({
+      success: true,
+      data: bcrgLastSnapshot
+        ? {
+            changedAt: bcrgLastSnapshot.changedAt,
+            checkedAt: bcrgLastSnapshot.checkedAt,
+            usdGnf: bcrgLastSnapshot.usdGnf,
+            eurGnf: bcrgLastSnapshot.eurGnf,
+            cadGnf: bcrgLastSnapshot.cadGnf,
+            gbpGnf: bcrgLastSnapshot.gbpGnf,
+            chfGnf: bcrgLastSnapshot.chfGnf,
+            changedPairs: bcrgLastSnapshot.changedPairs,
+            sourceUrl: bcrgLastSnapshot.sourceUrl,
+          }
+        : null,
+    });
+  }
+);
+
+/**
+ * GET /api/v2/wallet/admin/fx-rates-stream
+ * SSE — flux temps réel des taux BCRG. Le backend pousse un événement dès qu'un taux change.
+ * Le frontend n'a pas besoin de poller — il reçoit la notification à l'instant même.
+ */
+router.get(
+  '/admin/fx-rates-stream',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  (req: AuthenticatedRequest, res: Response) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Désactiver le buffering Nginx
+    res.flushHeaders();
+
+    // Envoyer le snapshot actuel immédiatement à la connexion
+    if (bcrgLastSnapshot) {
+      res.write(`data: ${JSON.stringify({
+        changedAt: bcrgLastSnapshot.changedAt,
+        checkedAt: bcrgLastSnapshot.checkedAt,
+        usdGnf: bcrgLastSnapshot.usdGnf,
+        eurGnf: bcrgLastSnapshot.eurGnf,
+        cadGnf: bcrgLastSnapshot.cadGnf,
+        gbpGnf: bcrgLastSnapshot.gbpGnf,
+        chfGnf: bcrgLastSnapshot.chfGnf,
+        changedPairs: bcrgLastSnapshot.changedPairs,
+        sourceUrl: bcrgLastSnapshot.sourceUrl,
+      })}\n\n`);
+    }
+
+    // Heartbeat toutes les 25s pour maintenir la connexion active
+    const heartbeat = setInterval(() => {
+      if (!res.writableEnded) res.write(': heartbeat\n\n');
+    }, 25_000);
+
+    bcrgSseClients.add(res);
+    logger.info(`[SSE] Client connecté (total: ${bcrgSseClients.size}) — userId: ${req.user?.id ?? 'unknown'}`);
+
+    req.on('close', () => {
+      bcrgSseClients.delete(res);
+      clearInterval(heartbeat);
+      logger.info(`[SSE] Client déconnecté (total: ${bcrgSseClients.size})`);
+    });
   }
 );
 
