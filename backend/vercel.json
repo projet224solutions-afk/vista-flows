@@ -5,5 +5,13 @@
       "source": "/(.*)",
       "destination": "/api/index"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
   ]
 }
