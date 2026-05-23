@@ -277,6 +277,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+    // ✅ Fonction pour créer taxi_driver pour les chauffeurs OAuth
+    const createTaxiDriverForOAuth = async (authUser: User) => {
+      try {
+        const pendingCategory = localStorage.getItem('oauth_taxi_category');
+        const pendingCountry = localStorage.getItem('oauth_taxi_country');
+        const categoryToSave: 'car' | 'motorcycle' =
+          pendingCategory === 'car' ? 'car' : 'motorcycle';
+
+        // Vérifier si un taxi_driver existe déjà
+        const { data: existingDriver } = await supabase
+          .from('taxi_drivers')
+          .select('id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (existingDriver) {
+          console.log('ℹ️ Taxi driver existe déjà, skip création');
+          localStorage.removeItem('oauth_taxi_category');
+          localStorage.removeItem('oauth_taxi_country');
+          return;
+        }
+
+        const { error: dErr } = await supabase
+          .from('taxi_drivers')
+          .insert({
+            user_id: authUser.id,
+            is_online: false,
+            status: 'pending_verification',
+            taxi_category: categoryToSave,
+            ...(pendingCountry ? { vehicle: { country: pendingCountry } } : {}),
+          });
+
+        if (dErr) {
+          console.error('❌ Erreur création taxi_driver OAuth:', dErr);
+        } else {
+          console.log('✅ Taxi driver créé via OAuth, catégorie:', categoryToSave);
+        }
+
+        localStorage.removeItem('oauth_taxi_category');
+        localStorage.removeItem('oauth_taxi_country');
+      } catch (err) {
+        console.error('❌ Exception création taxi_driver OAuth:', err);
+      }
+    };
+
     // ✅ NOUVEAU: Fonction pour créer professional_service pour prestataires OAuth
     const createServiceForOAuthPrestataire = async (authUser: User) => {
       try {
@@ -421,14 +466,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (!updateError) {
             const updatedProfile = { ...current, role: intendedRole } as Profile;
-            setProfile(updatedProfile);
             localStorage.setItem(profileCacheKey, JSON.stringify(updatedProfile));
 
-            // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
+            // Créer les entités métier selon le rôle
+            // Pour taxi: await pour que la ligne existe avant le redirect
             if (intendedRole === 'vendeur') {
               void createVendorForOAuth(user);
             } else if (intendedRole === 'prestataire') {
               void createServiceForOAuthPrestataire(user);
+            } else if (intendedRole === 'taxi') {
+              await createTaxiDriverForOAuth(user);
             }
 
             const roleLabels: Record<string, string> = {
@@ -436,7 +483,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               vendeur: 'Marchand',
               prestataire: 'Prestataire de Service',
               livreur: 'Livreur',
-              taxi: 'Taxi Moto',
+              taxi: 'Chauffeur Taxi',
               transitaire: 'Transitaire',
             };
             toast.success(
@@ -446,6 +493,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: `Vous êtes inscrit en tant que ${roleLabels[intendedRole] || intendedRole}.`,
               }
             );
+
+            // ✅ Supprimer les flags AVANT setProfile : quand React flush setProfile,
+            // EnhancedAuth verra isNewSignup=false → pas de double insert taxi_drivers
+            localStorage.removeItem('oauth_intent_role');
+            localStorage.removeItem('oauth_is_new_signup');
+            setProfile(updatedProfile);
+            return;
           } else {
             console.error('❌ Erreur mise à jour rôle OAuth:', updateError);
             setProfile(current);
@@ -576,11 +630,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
 
-        // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
+        // Créer les entités métier selon le rôle
         if (createdProfile.role === 'vendeur') {
           void createVendorForOAuth(user);
         } else if ((createdProfile.role as string) === 'prestataire') {
           void createServiceForOAuthPrestataire(user);
+        } else if ((createdProfile.role as string) === 'taxi') {
+          await createTaxiDriverForOAuth(user);
         }
 
         const roleLabels: Record<string, string> = {
@@ -588,7 +644,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           vendeur: 'Marchand',
           prestataire: 'Prestataire de Service',
           livreur: 'Livreur',
-          taxi: 'Taxi Moto',
+          taxi: 'Chauffeur Taxi',
           transitaire: 'Transitaire',
         };
 
@@ -600,21 +656,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         );
 
-        // Marquer que le profil doit être complété
         localStorage.setItem('needs_profile_completion', 'true');
+        localStorage.setItem(profileCacheKey, JSON.stringify(createdProfile));
 
+        // ✅ Supprimer les flags AVANT setProfile : quand React flush setProfile,
+        // EnhancedAuth verra isNewSignup=false → pas de double insert taxi_drivers
+        localStorage.removeItem('oauth_intent_role');
+        localStorage.removeItem('oauth_is_new_signup');
         setProfile(createdProfile as Profile);
         console.log('[PROFILE LOADED]', { source: 'created_profile', role: createdProfile.role, userId: createdProfile.id });
-        // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
-        localStorage.setItem(profileCacheKey, JSON.stringify(createdProfile));
+        return;
       } else {
         setProfile(profileToCreate as any);
         console.log('[PROFILE LOADED]', { source: 'profile_fallback_object', role: profileToCreate.role, userId: profileToCreate.id });
-        // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(profileToCreate));
       }
 
-      // Nettoyer les flags
+      // Nettoyer les flags (chemin fallback uniquement — le chemin principal retourne plus haut)
       localStorage.removeItem('oauth_intent_role');
       localStorage.removeItem('oauth_is_new_signup');
     } catch (error) {

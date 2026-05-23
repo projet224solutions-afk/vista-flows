@@ -197,7 +197,7 @@ export default function EnhancedAuth() {
     if (isCognitoEnabled && isCognitoAuthenticated && cognitoProfile) {
       const roleRoutes: Record<string, string> = {
         admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
-        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        taxi: '/taxi', syndicat: '/syndicat', transitaire: '/transitaire',
         client: '/client', agent: '/agent',
       };
       const targetRoute = roleRoutes[cognitoProfile.role || 'client'] || '/client';
@@ -250,7 +250,7 @@ export default function EnhancedAuth() {
 
       const roleRoutes: Record<string, string> = {
         admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
-        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        taxi: '/taxi', syndicat: '/syndicat', transitaire: '/transitaire',
         client: '/client', agent: '/agent',
       };
 
@@ -263,26 +263,7 @@ export default function EnhancedAuth() {
           localStorage.setItem('needs_profile_completion', 'true');
         }
 
-        // Taxi OAuth : créer le profil conducteur avec taxi_category sauvegardé
-        if (profile.role === 'taxi') {
-          const pendingCategory = localStorage.getItem('oauth_taxi_category');
-          const pendingCountry = localStorage.getItem('oauth_taxi_country');
-          const categoryToSave = (pendingCategory === 'car' || pendingCategory === 'motorcycle')
-            ? pendingCategory
-            : 'motorcycle';
-          supabase.from('taxi_drivers').insert({
-            user_id: user.id,
-            is_online: false,
-            status: 'pending_verification',
-            taxi_category: categoryToSave,
-            ...(pendingCountry ? { vehicle: { country: pendingCountry } } : {}),
-          }).then(({ error: dErr }) => {
-            if (dErr) console.error('Erreur création taxi driver OAuth:', dErr);
-            else console.log('✓ Profil taxi créé via OAuth, catégorie:', categoryToSave);
-          });
-          localStorage.removeItem('oauth_taxi_category');
-          localStorage.removeItem('oauth_taxi_country');
-        }
+        // taxi_drivers creation is handled in useAuth.tsx (createTaxiDriverForOAuth, awaited before setProfile)
       }
 
       localStorage.removeItem('oauth_is_new_signup');
@@ -301,7 +282,7 @@ export default function EnhancedAuth() {
       ceo: '/pdg',
       vendeur: '/vendeur',
       livreur: '/livreur',
-      taxi: '/taxi-moto/driver',
+      taxi: '/taxi',
       syndicat: '/syndicat',
       transitaire: '/transitaire',
       client: '/client',
@@ -698,7 +679,7 @@ export default function EnhancedAuth() {
             const roleRoutes: Record<string, string> = {
               admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
               vendeur: '/vendeur', livreur: '/livreur',
-              taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+              taxi: '/taxi', driver: '/taxi',
               syndicat: '/syndicat', transitaire: '/transitaire',
               client: '/client', agent: '/agent',
             };
@@ -803,7 +784,7 @@ export default function EnhancedAuth() {
           const roleRoutes: Record<string, string> = {
             admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
             vendeur: '/vendeur', livreur: '/livreur',
-            taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+            taxi: '/taxi', driver: '/taxi',
             syndicat: '/syndicat', transitaire: '/transitaire',
             client: '/client', agent: '/agent',
           };
@@ -889,7 +870,7 @@ export default function EnhancedAuth() {
         const roleRoutes: Record<string, string> = {
           admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
           vendeur: '/vendeur', livreur: '/livreur',
-          taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+          taxi: '/taxi', driver: '/taxi',
           syndicat: '/syndicat', transitaire: '/transitaire',
           client: '/client', agent: '/agent',
         };
