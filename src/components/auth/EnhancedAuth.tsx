@@ -582,7 +582,7 @@ export default function EnhancedAuth() {
             // Aussi créer la session Supabase
             const { detectedCountry: dc, detectedCurrency: dcu } = getGeoInfo();
             await supabase.auth.signUp({ email, password, options: {
-              emailRedirectTo: `${window.location.origin}/`,
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 full_name: fullName, role: roleToUse, has_password: true,
                 ...(dc  && { detected_country:  dc  }),
@@ -637,7 +637,7 @@ export default function EnhancedAuth() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
             data: {
               full_name: fullName,
               first_name: firstName,
