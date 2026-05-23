@@ -34,6 +34,18 @@
       "destination": "https://backend.224solution.net/healthz.json"
     },
     {
+      "source": "/auth/confirm",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/set-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/select-country",
+      "destination": "/index.html"
+    },
+    {
       "source": "/auth/:path*",
       "destination": "https://backend.224solution.net/auth/:path*"
     },
