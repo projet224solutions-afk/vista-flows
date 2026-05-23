@@ -278,7 +278,7 @@ export default function TaxiMotoClient() {
       pickupAddress: rideData.pickup_address,
       destinationAddress: rideData.dropoff_address,
       estimatedPrice: rideData.price_total,
-      createdAt: rideData.created_at
+      createdAt: rideData.requested_at
     };
 
     setCurrentRide(newRide);

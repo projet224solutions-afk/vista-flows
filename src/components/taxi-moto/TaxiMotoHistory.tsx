@@ -88,7 +88,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                 .select('*')
                 .eq('customer_id', userId)
                 .in('status', ['completed', 'cancelled'])
-                .order('created_at', { ascending: false })
+                .order('requested_at', { ascending: false })
                 .limit(50);
 
             if (tripsError) {

@@ -32,7 +32,7 @@ export function useDriverStats(driverId: string | null): UseDriverStatsReturn {
         .from('taxi_trips')
         .select('*')
         .eq('driver_id', driverId)
-        .gte('created_at', today.toISOString());
+        .gte('requested_at', today.toISOString());
 
       if (error) throw error;
 
