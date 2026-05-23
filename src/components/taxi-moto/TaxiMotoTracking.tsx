@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ export default function TaxiMotoTracking({
     currentRide,
     userLocation
 }: TaxiMotoTrackingProps) {
+    const navigate = useNavigate();
     const [rideProgress, setRideProgress] = useState(0);
     const [_rideDetails, setRideDetails] = useState<any>(null);
     const [driverInfo, setDriverInfo] = useState<any>(null);
@@ -180,6 +182,7 @@ export default function TaxiMotoTracking({
                 const profile = (driverData as any).profiles;
                 setDriverInfo({
                     id: driverData.id,
+                    user_id: driverData.user_id,
                     name: profile ? `${profile.first_name} ${profile.last_name}` : 'Conducteur',
                     rating: driverData.rating || 4.5,
                     phone: profile?.phone || '',
@@ -512,7 +515,10 @@ export default function TaxiMotoTracking({
                                 Appeler
                             </Button>
                             <Button
-                                onClick={() => toast.info('Fonctionnalité de chat bientôt disponible')}
+                                onClick={() => {
+                                    const driverUserId = currentRide?.driver?.user_id || driverInfo?.user_id;
+                                    if (driverUserId) navigate(`/messages?recipientId=${driverUserId}`);
+                                }}
                                 variant="outline"
                                 className="flex-1"
                             >
