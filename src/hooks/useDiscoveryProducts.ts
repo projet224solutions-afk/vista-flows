@@ -16,6 +16,7 @@ interface DiscoveryProduct {
   price: number;
   currency?: string;
   images: string[];
+  promotional_videos?: string[];
   rating: number | null;
   reason?: string;
   category_name?: string;
@@ -73,7 +74,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       // 2. Priorité aux produits récents et aux nouvelles catégories
       let query = supabase
         .from('products')
-        .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
         .eq('is_active', true)
         .order('created_at', { ascending: false }) // Nouveautés en premier
         .limit(limit * 3);
@@ -96,7 +97,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
         const { data: fallback } = await withDiscoveryTimeout(
           supabase
             .from('products')
-            .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
+            .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
             .eq('is_active', true)
             .order('reviews_count', { ascending: false })
             .limit(limit * 2),
@@ -121,6 +122,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
           price: p.price,
           currency,
           images: Array.isArray(p.images) ? (p.images as string[]) : [],
+          promotional_videos: Array.isArray((p as any).promotional_videos) ? (p as any).promotional_videos as string[] : [],
           rating: p.rating,
           reason: `Découvrir: ${(p.categories as any)?.name || 'Nouveauté'}`,
           category_name: (p.categories as any)?.name,

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from "sonner";
-import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, TrendingUp, Car, MessageSquare } from "lucide-react";
+import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, TrendingUp, Car, MessageSquare, Headphones } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { _supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,7 @@ const DeliveryChat = lazy(() => import('@/components/delivery/DeliveryChat'));
 const DeliveryGPSNavigation = lazy(() => import('@/components/delivery/DeliveryGPSNavigation').then(m => ({ default: m.DeliveryGPSNavigation })));
 const _DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
+const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTicketsUniversal').then(m => ({ default: m.SupportTicketsUniversal })));
 
 export default function LivreurDashboard() {
   const { user, profile } = useAuth();
@@ -418,7 +419,7 @@ export default function LivreurDashboard() {
 
         {/* Onglets de navigation - Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-4' : 'grid-cols-5'} border border-orange-500/20`}>
+          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-5' : 'grid-cols-6'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
@@ -442,6 +443,10 @@ export default function LivreurDashboard() {
             )}
             <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">
               💰 {isMobile ? 'Wallet' : 'Portefeuille'}
+            </TabsTrigger>
+            <TabsTrigger value="support" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
+              <Headphones className="w-3.5 h-3.5 mr-1" />
+              {isMobile ? 'Support' : 'Support'}
             </TabsTrigger>
           </TabsList>
 
@@ -869,6 +874,13 @@ export default function LivreurDashboard() {
           {/* 🛒 Mes Achats */}
           <TabsContent value="my-purchases">
             <MyPurchasesOrdersList title="Mes Achats Personnels" />
+          </TabsContent>
+
+          {/* 🎧 Support */}
+          <TabsContent value="support">
+            <Suspense fallback={<div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+              <SupportTicketsUniversal />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </ResponsiveContainer>

@@ -53,7 +53,7 @@ export function NearbyServicesSection({
     },
     {
       id: 'taxi',
-      icon: <img src="/service-icons/icon-taxi-moto.png" alt="Taxi Moto" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
+      icon: <img src="/service-icons/icon-taxi-moto.png" alt="Taxi" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.taxiMotos'),
       subtitle: t('home.fastTransport'),
       count: stats.taxi,

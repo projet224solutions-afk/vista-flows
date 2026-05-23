@@ -176,7 +176,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at,
           marketplace_position,
           is_sponsored,
-          vendors(business_name, user_id, business_type, country, city),
+          vendors(business_name, user_id, business_type, country, city, shop_currency),
           categories(name)
         `)
         .eq('is_active', true);
@@ -253,8 +253,11 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendorCountry = vendor?.country || '';
         // Pays du vendeur = source de vérité (gère codes ISO et noms complets)
         // product.currency sert de fallback si le pays vendeur est absent
+        const shopCurrency = vendor?.shop_currency || null;
         const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-        const derivedCurrency = countryDerived || (product as any).currency || 'GNF';
+        // product.currency est la devise réelle du prix (priorité absolue)
+        // shop_currency / countryDerived servent de fallback si le produit n'en a pas
+        const derivedCurrency = (product as any).currency || shopCurrency || countryDerived || 'GNF';
 
         return {
           id: product.id,
@@ -749,43 +752,37 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       } else if (itemType === 'digital_product') {
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
-        if (!isEcommerceCategorySelected) {
-          const [services, menuItems, serviceProds, subscriptionMap] = await Promise.all([
-            withTimeout(loadProfessionalServices(), [], 'professional_services'),
-            withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
-            withTimeout(loadServiceProducts(), [], 'service_products'),
-            withTimeout(loadActiveSubscriptionMap(), new Map<string, number | null>(), 'subscription_map'),
-          ]);
-          // Filtrer les services sans abonnement actif
-          const filteredServices = services.filter(s => subscriptionMap.has(s.id));
-          allItems = [
-            ...filteredServices,
-            ...applySubscriptionLimit(menuItems, subscriptionMap),
-            ...applySubscriptionLimit(serviceProds, subscriptionMap),
-          ];
-        }
+        // Ce cas est géré par ServiceTypesGrid dans Marketplace.tsx — le hook ne charge rien
+        // pour éviter de passer des profils bruts dans la grille produit.
+        allItems = [];
       } else {
-        // 'all' = tout : produits + numériques + services pro + plats + produits services
+        // 'all' = tout : produits + numériques + plats restaurants + produits services
+        // NOTE : les PROFILS de services pro (professional_service) n'apparaissent PAS ici —
+        // seuls leurs articles (menu_item, service_product) sont visibles dans le marketplace.
+        // Les profils sont accessibles via l'onglet "Services Pro" → ServiceTypesGrid.
         if (isEcommerceCategorySelected) {
           allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
-          const [products, digitalProducts, professionalServices, menuItems, serviceProds, subscriptionMap] = await Promise.all([
+          const [products, digitalProducts, menuItems, serviceProds, subscriptionMap] = await Promise.all([
             withTimeout(loadProducts(), [], 'products'),
             withTimeout(loadDigitalProducts(), [], 'digital_products'),
-            withTimeout(loadProfessionalServices(), [], 'professional_services'),
             withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
             withTimeout(loadServiceProducts(), [], 'service_products'),
             withTimeout(loadActiveSubscriptionMap(), new Map<string, number | null>(), 'subscription_map'),
           ]);
-          // Filtrer les services sans abonnement actif + limiter les produits selon max_products du plan
-          const filteredServices = professionalServices.filter(s => subscriptionMap.has(s.id));
           allItems = [
             ...products,
             ...digitalProducts,
-            ...filteredServices,
             ...applySubscriptionLimit(menuItems, subscriptionMap),
             ...applySubscriptionLimit(serviceProds, subscriptionMap),
           ];
+          // Dédupliquer par ID (évite les doublons si un même item apparaît dans plusieurs sources)
+          const seen = new Set<string>();
+          allItems = allItems.filter(item => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+          });
         }
       }
 

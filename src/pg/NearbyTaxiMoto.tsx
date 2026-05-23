@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Bike,
+  Car,
   Navigation,
   RefreshCw,
   Loader2,
@@ -150,6 +151,7 @@ export default function NearbyTaxiMoto() {
           user_id,
           vehicle_type,
           vehicle_plate,
+          taxi_category,
           rating,
           total_rides,
           status,
@@ -412,12 +414,12 @@ export default function NearbyTaxiMoto() {
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <Bike className="w-5 h-5 text-emerald-500" />
-                Taxi-Moto à Proximité
+                <Car className="w-5 h-5 text-taxi-primary" />
+                Taxis à Proximité
               </h1>
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-xs text-muted-foreground">
-                  {drivers.length} conducteur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
+                  {drivers.length} chauffeur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km
                 </p>
                 {hasLastUpdated && (
                   <span className="text-xs text-muted-foreground/70">
@@ -446,16 +448,16 @@ export default function NearbyTaxiMoto() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
         {/* Quick Book Button */}
-        <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-lg">
+        <Card className="bg-gradient-to-r from-blue-600 to-blue-700 border-0 shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">
-                <h3 className="font-semibold">Réserver maintenant</h3>
-                <p className="text-sm opacity-90">Laissez-nous trouver le plus proche</p>
+                <h3 className="font-semibold">Réserver un Taxi</h3>
+                <p className="text-sm opacity-90">Voiture ou Moto — le plus proche vous répond</p>
               </div>
               <Button
                 onClick={handleBookNow}
-                className="bg-white text-emerald-600 hover:bg-white/90"
+                className="bg-white text-blue-600 hover:bg-white/90"
               >
                 <Navigation className="w-4 h-4 mr-2" />
                 Réserver

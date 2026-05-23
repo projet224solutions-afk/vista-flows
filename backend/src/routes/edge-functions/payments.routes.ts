@@ -1176,4 +1176,104 @@ router.get("/african-fx-query", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /edge-functions/payments/african-fx-query/history?currency=GNF&limit=100
+ * Historique de collecte FX depuis fx_collection_log
+ */
+router.get("/african-fx-query/history", async (req: Request, res: Response) => {
+  try {
+    const currency = String((req.query as any)?.currency || "").toUpperCase() || null;
+    const limit = Math.min(parseInt(String((req.query as any)?.limit || "100"), 10) || 100, 500);
+
+    let query = supabase
+      .from("fx_collection_log")
+      .select("*")
+      .order("collected_at", { ascending: false })
+      .limit(limit);
+
+    if (currency) {
+      query = query.eq("currency_code", currency);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return res.json({ success: true, currency: currency || "ALL", count: data?.length || 0, history: data });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : "FX history query failed" });
+  }
+});
+
+/**
+ * POST /edge-functions/payments/african-fx-query
+ * { action: "update_margin", margin: 0.03 }
+ *
+ * Met à jour la marge par défaut dans margin_config.
+ * Requiert un JWT valide d'un utilisateur PDG actif (pdg_management).
+ */
+router.post("/african-fx-query", async (req: Request, res: Response) => {
+  try {
+    const body = req.body as { action?: string; margin?: number };
+
+    if (body.action !== "update_margin") {
+      return res.status(400).json({ success: false, error: "Action inconnue. Seule 'update_margin' est supportée." });
+    }
+
+    const newMargin = Number(body.margin);
+    if (!Number.isFinite(newMargin) || newMargin < 0 || newMargin > 0.5) {
+      return res.status(400).json({ success: false, error: "Marge invalide : doit être entre 0 et 0.5 (50%)" });
+    }
+
+    // Vérification JWT : seul un PDG actif peut modifier la marge
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ success: false, error: "Token d'authentification requis" });
+    }
+
+    // Vérifier que l'utilisateur est dans pdg_management
+    const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
+    const supabaseAnon = createSupabaseClient(
+      process.env.SUPABASE_URL || "",
+      process.env.SUPABASE_ANON_KEY || ""
+    );
+
+    const { data: userData, error: authError } = await supabaseAnon.auth.getUser(token);
+    if (authError || !userData?.user) {
+      return res.status(401).json({ success: false, error: "Token invalide ou expiré" });
+    }
+
+    const { data: pdg } = await supabase
+      .from("pdg_management")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!pdg) {
+      return res.status(403).json({ success: false, error: "Accès refusé : rôle PDG actif requis pour modifier la marge" });
+    }
+
+    // Mettre à jour la marge
+    const { error: updateError } = await supabase
+      .from("margin_config")
+      .update({ config_value: newMargin, updated_at: new Date().toISOString() })
+      .eq("config_key", "default_margin");
+
+    if (updateError) throw updateError;
+
+    return res.json({
+      success: true,
+      message: `Marge mise à jour à ${(newMargin * 100).toFixed(2)}%`,
+      margin: newMargin,
+      updated_by: userData.user.id,
+      updated_at: new Date().toISOString(),
+    });
+
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : "Échec mise à jour marge" });
+  }
+});
+
 export default router;

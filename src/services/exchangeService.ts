@@ -3,13 +3,15 @@
  * Lit les taux depuis la table currency_exchange_rates (alimentée par le cron horaire)
  * Remplace toute dépendance aux API externes (fx-rates edge function, open.er-api.com)
  *
- * Les taux incluent déjà la marge de 3% configurée dans margin_config.
+ * Source prioritaire pour GNF : BCRG (bcrg-guinee.org) — fixings quotidiens officiels.
+ * Les taux incluent déjà la marge configurée dans margin_config (valeur DB actuelle : 2%).
  * Le backend (african-fx-collect) actualise les taux toutes les heures via pg_cron.
+ * En cas d'inaccessibilité du site BCRG, le dernier taux officiel est conservé (heartbeat).
  */
 
 import { supabase } from '@/integrations/supabase/client';
 
-/** Cache mémoire côté client – TTL 5 min (les taux changent au max toutes les heures) */
+/** Cache mémoire côté client – TTL 5 min (les taux changent au max toutes les heures, BCRG = fixing quotidien) */
 const CACHE_TTL_MS = 5 * 60_000;
 const OFFICIAL_BANK_HINTS = /bcrg|bceao|beac|cbn|banque|bank|afric/i;
 

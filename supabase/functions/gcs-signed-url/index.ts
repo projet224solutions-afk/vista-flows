@@ -141,6 +141,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check public (GET) — sans auth
+  if (req.method === 'GET') {
+    const hasServiceAccount = !!Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+    const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
+    return new Response(
+      JSON.stringify({ status: hasServiceAccount ? 'ok' : 'not_configured', bucket: bucketName, ts: new Date().toISOString() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     // Vérifier l'authentification
     const authHeader = req.headers.get('Authorization');

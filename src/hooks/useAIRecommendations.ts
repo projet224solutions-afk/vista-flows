@@ -16,6 +16,7 @@ interface AIProduct {
   price: number;
   currency?: string;
   images: string[];
+  promotional_videos?: string[];
   rating: number | null;
   reviews_count?: number | null;
   category_id?: string;
@@ -34,18 +35,23 @@ async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
     const ids = products.map(p => p.product_id);
     const { data } = await supabase
       .from('products')
-      .select('id, vendors(country)')
+      .select('id, promotional_videos, vendors(country)')
       .in('id', ids);
 
-    const map: Record<string, string> = {};
+    const currencyMap: Record<string, string> = {};
+    const videoMap: Record<string, string[]> = {};
     (data || []).forEach((p: any) => {
       const country = (p.vendors as any)?.country || '';
-      if (country) map[p.id] = getCurrencyForCountry(country);
+      if (country) currencyMap[p.id] = getCurrencyForCountry(country);
+      if (Array.isArray(p.promotional_videos) && p.promotional_videos.length > 0) {
+        videoMap[p.id] = p.promotional_videos as string[];
+      }
     });
 
     return products.map(p => ({
       ...p,
-      currency: map[p.product_id] || p.currency || 'GNF',
+      currency: currencyMap[p.product_id] || p.currency || 'GNF',
+      promotional_videos: videoMap[p.product_id] || p.promotional_videos || [],
     }));
   } catch {
     return products.map(p => ({ ...p, currency: p.currency || 'GNF' }));
@@ -115,7 +121,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       // Fallback: produits récents bien notés
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, vendors(business_type, country)')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(limit * 2);
@@ -133,6 +139,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
             price: p.price,
             currency,
             images: Array.isArray(p.images) ? (p.images as string[]) : [],
+            promotional_videos: Array.isArray((p as any).promotional_videos) ? (p as any).promotional_videos as string[] : [],
             rating: p.rating,
             reviews_count: p.reviews_count,
             reason: 'Nouveauté',
@@ -204,7 +211,7 @@ export function useAITrending(limit = 16, enabled = true) {
 
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, vendors(business_type, country)')
         .eq('is_active', true)
         .order('reviews_count', { ascending: false })
         .limit(limit * 3);
@@ -232,6 +239,7 @@ export function useAITrending(limit = 16, enabled = true) {
             price: p.price,
             currency,
             images: Array.isArray(p.images) ? (p.images as string[]) : [],
+            promotional_videos: Array.isArray((p as any).promotional_videos) ? (p as any).promotional_videos as string[] : [],
             rating: p.rating,
             reviews_count: p.reviews_count,
           };

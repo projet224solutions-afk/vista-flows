@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Search, Eye, CheckCircle, Plus, Users, Bike, AlertCircle, _Send, Settings, Mail, Copy, Edit, Trash2, UserCircle, _Download, RefreshCw } from 'lucide-react';
+import { Building2, Search, Eye, EyeOff, CheckCircle, Plus, Users, Bike, AlertCircle, Settings, Mail, Copy, Edit, Trash2, UserCircle, RefreshCw, KeyRound } from 'lucide-react';
 import { usePDGSyndicatData, Bureau } from '@/hooks/usePDGSyndicatData';
 import { usePDGActions } from '@/hooks/usePDGActions';
-import { _supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import GenerateBureauInstallLink from '@/components/admin/GenerateBureauInstallLink';
 import DualSyncDashboard from '@/components/admin/DualSyncDashboard';
 
@@ -22,6 +22,7 @@ export default function PDGSyndicatManagement() {
     members,
     loading,
     stats,
+    createBureau: createBureauAction,
     copyBureauLink,
     resendBureauLink,
     updateWorker,
@@ -32,7 +33,6 @@ export default function PDGSyndicatManagement() {
   } = usePDGSyndicatData();
 
   const {
-    createBureau: createBureauAction,
     updateBureau: updateBureauAction,
     deleteBureau: deleteBureauAction,
     validateBureau: validateBureauAction,
@@ -64,6 +64,13 @@ export default function PDGSyndicatManagement() {
     full_location: ''
   });
 
+  // Reset mot de passe bureau
+  const [resetPasswordBureau, setResetPasswordBureau] = useState<Bureau | null>(null);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
   const handleValidate = async (bureauId: string) => {
     await validateBureauAction(bureauId);
   };
@@ -73,7 +80,7 @@ export default function PDGSyndicatManagement() {
 
     const result = await createBureauAction(formData);
 
-    if (result.success) {
+    if (result !== null) {
       setIsDialogOpen(false);
       setFormData({
         bureau_code: '',
@@ -94,6 +101,8 @@ export default function PDGSyndicatManagement() {
 
   const handleEditBureau = (bureau: Bureau) => {
     setEditingBureau(bureau);
+    setNewPassword('');
+    setShowNewPassword(false);
     setIsEditDialogOpen(true);
   };
 
@@ -126,6 +135,34 @@ export default function PDGSyndicatManagement() {
     setSendingEmail(bureau.id);
     await resendBureauLink(bureau);
     setSendingEmail(null);
+  };
+
+  const handleResetBureauPassword = async (bureauOverride?: Bureau) => {
+    const bureau = bureauOverride || resetPasswordBureau;
+    if (!bureau) return;
+    if (newPassword.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+    setIsResettingPassword(true);
+    try {
+      const result = await backendFetch<{ success: boolean; action?: string; error?: string }>(
+        '/edge-functions/auth/reset-bureau-password',
+        { method: 'POST', body: { bureau_id: bureau.id, new_password: newPassword } }
+      );
+      if (!result.success) throw new Error(result.error || 'Erreur lors de la réinitialisation');
+      const actionMsg = (result as any).action === 'account_created_with_password'
+        ? 'Compte créé et mot de passe défini'
+        : 'Mot de passe réinitialisé avec succès';
+      toast.success(`${actionMsg} — ${bureau.bureau_code}`);
+      setIsResetPasswordDialogOpen(false);
+      setResetPasswordBureau(null);
+      setNewPassword('');
+    } catch (error: any) {
+      toast.error(error.message || 'Erreur lors de la réinitialisation');
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const handleEditWorker = (worker: any) => {
@@ -528,6 +565,22 @@ export default function PDGSyndicatManagement() {
                           {sendingEmail === bureau.id ? 'Envoi...' : 'Renvoyer'}
                         </Button>
                       )}
+                      {bureau.president_email && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setResetPasswordBureau(bureau);
+                            setNewPassword('');
+                            setShowNewPassword(false);
+                            setIsResetPasswordDialogOpen(true);
+                          }}
+                          className="gap-2"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                          Mot de passe
+                        </Button>
+                      )}
                       {bureau.status !== 'active' && (
                         <Button
                           variant="ghost"
@@ -852,6 +905,85 @@ export default function PDGSyndicatManagement() {
         </TabsContent>
       </Tabs>
 
+      {/* Dialog réinitialisation mot de passe bureau */}
+      <Dialog
+        open={isResetPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setIsResetPasswordDialogOpen(open);
+          if (!open) { setResetPasswordBureau(null); setNewPassword(''); }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Réinitialiser le mot de passe
+            </DialogTitle>
+          </DialogHeader>
+          {resetPasswordBureau && (
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+                <p className="font-medium">{resetPasswordBureau.bureau_code}</p>
+                {resetPasswordBureau.president_name && (
+                  <p className="text-muted-foreground">{resetPasswordBureau.president_name}</p>
+                )}
+                <p className="text-xs text-muted-foreground font-mono">{resetPasswordBureau.president_email}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nouveau mot de passe</Label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimum 8 caractères"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {newPassword.length > 0 && newPassword.length < 8 && (
+                  <p className="text-xs text-destructive">Au moins 8 caractères requis</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsResetPasswordDialogOpen(false)}
+                  disabled={isResettingPassword}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleResetBureauPassword}
+                  disabled={isResettingPassword || newPassword.length < 8}
+                  className="gap-2"
+                >
+                  {isResettingPassword ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Réinitialisation...
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound className="w-4 h-4" />
+                      Réinitialiser
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog d'édition */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -919,6 +1051,52 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
               </div>
+              {/* Section réinitialisation mot de passe */}
+              {editingBureau.president_email && (
+                <div className="space-y-3 p-4 rounded-lg border border-dashed bg-muted/30">
+                  <p className="text-sm font-semibold flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-primary" />
+                    Réinitialiser le mot de passe du bureau
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Compte lié à : <span className="font-mono">{editingBureau.president_email}</span>
+                  </p>
+                  <div className="relative">
+                    <Input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nouveau mot de passe (min. 8 caractères)"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {newPassword.length > 0 && newPassword.length < 8 && (
+                    <p className="text-xs text-destructive">Au moins 8 caractères requis</p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleResetBureauPassword(editingBureau)}
+                    disabled={isResettingPassword || newPassword.length < 8}
+                    className="gap-2 w-full"
+                  >
+                    {isResettingPassword ? (
+                      <><RefreshCw className="w-4 h-4 animate-spin" />Réinitialisation en cours...</>
+                    ) : (
+                      <><KeyRound className="w-4 h-4" />Réinitialiser le mot de passe</>
+                    )}
+                  </Button>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Annuler

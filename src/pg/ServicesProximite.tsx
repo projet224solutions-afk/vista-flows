@@ -60,6 +60,7 @@ interface ProfessionalService {
     category?: string;
   } | null;
   distance?: number | null;
+  media_count?: number;
 }
 
 const RADIUS_KM = 20;
@@ -130,11 +131,29 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
 
-      const now = new Date().toISOString();
+      // Étape 1 : Récupérer les IDs des services avec abonnement actif via RPC SECURITY DEFINER
+      // (la RLS sur service_subscriptions bloque les visiteurs anonymes — le RPC contourne ça)
+      const { data: activeSubData, error: subError } = await supabase
+        .rpc('get_active_service_subscription_limits');
 
-      // Seuls les services avec un abonnement actif non expiré sont chargés
-      // !inner = inner join → exclut les services sans abonnement actif
-      const { data, error } = await (supabase as any)
+      if (subError) {
+        console.warn('Erreur RPC abonnements:', subError);
+      }
+
+      const activeServiceIds: string[] = [
+        ...new Set(
+          (activeSubData || []).map((r: any) => r.professional_service_id as string).filter(Boolean)
+        ),
+      ];
+
+      if (activeServiceIds.length === 0) {
+        setServices([]);
+        console.log('Proximité: aucun service avec abonnement actif');
+        return;
+      }
+
+      // Étape 2 : Charger les services actifs (sans join subscription — évite la RLS)
+      const { data, error } = await supabase
         .from('professional_services')
         .select(`
           id,
@@ -154,18 +173,42 @@ export default function ServicesProximite() {
           status,
           service_type_id,
           user_id,
-          service_types (id, name, code, category),
-          service_subscriptions!inner(id, status, current_period_end, plan_id)
+          service_types (id, name, code, category)
         `)
         .eq('status', 'active')
-        .eq('service_subscriptions.status', 'active')
-        .gte('service_subscriptions.current_period_end', now);
+        .in('id', activeServiceIds);
 
       if (error) throw error;
+
+      // Étape 3 : Charger les images de galerie séparément (requête directe, plus fiable)
+      const { data: galleryData } = await supabase
+        .from('service_gallery_images')
+        .select('professional_service_id, image_url, media_type, is_cover, display_order')
+        .in('professional_service_id', activeServiceIds)
+        .eq('media_type', 'image')
+        .not('image_url', 'is', null)
+        .order('display_order', { ascending: true });
+
+      // Construire un map service_id → photos de galerie
+      const galleryByService = new Map<string, any[]>();
+      for (const row of (galleryData || [])) {
+        const sid = row.professional_service_id;
+        if (!galleryByService.has(sid)) galleryByService.set(sid, []);
+        galleryByService.get(sid)!.push(row);
+      }
+
+      // Pour chaque service : priorité à is_cover, sinon première photo par display_order
+      const galleryCoverMap = new Map<string, string>();
+      for (const [sid, photos] of galleryByService) {
+        const cover = photos.find((p: any) => p.is_cover) || photos[0];
+        if (cover?.image_url) galleryCoverMap.set(sid, cover.image_url);
+      }
 
       let list: ProfessionalService[] = (data || []).map((item: any) => ({
         ...item,
         service_type: item.service_types,
+        cover_image_url: item.cover_image_url || galleryCoverMap.get(item.id) || null,
+        media_count: galleryByService.get(item.id)?.length || 0,
       }));
 
       // Tenter de récupérer les coordonnées GPS depuis vendors pour les services sans GPS
@@ -404,11 +447,19 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {/* Badge de distance — tous les services affichés ont des coords GPS valides */}
+                {/* Badge de distance */}
                 <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
                   <MapPin className="w-3 h-3" />
                   {formatDistance(service.distance)}
                 </div>
+
+                {/* Badge galerie médias */}
+                {(service.media_count ?? 0) > 0 && (
+                  <div className="absolute -top-2 left-2 px-2 py-1 rounded-full text-[10px] font-semibold shadow-md flex items-center gap-1 bg-black/70 text-white backdrop-blur-sm">
+                    <Camera className="w-2.5 h-2.5" />
+                    {service.media_count}
+                  </div>
+                )}
 
                 {(() => {
                   const mainImage = service.cover_image_url || service.logo_url || null;

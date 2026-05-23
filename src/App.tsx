@@ -71,6 +71,8 @@ const DriverProfile = lazyWithRetry(() => import("./pg/driver/DriverProfile"));
 const DriverSettings = lazyWithRetry(() => import("./pg/driver/DriverSettings"));
 const DriverHelp = lazyWithRetry(() => import("./pg/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pg/TaxiMotoDriver"));
+const TaxiCarDriver = lazyWithRetry(() => import("./pg/TaxiCarDriver"));
+const TaxiTrackingPage = lazyWithRetry(() => import("./pg/TaxiTrackingPage"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pg/DriverSubscriptionPage"));
 const _VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pg/TaxiMotoClient"));
@@ -399,6 +401,8 @@ function App() {
                 <Route path="/taxi" element={<TaxiMotoRouter />} />
                 <Route path="/taxi-moto" element={<TaxiMotoClient />} />
                 <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+                <Route path="/taxi/car/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiCarDriver /></ProtectedRoute>} />
+                <Route path="/taxi/tracking/:rideId" element={<TaxiTrackingPage />} />
                 {/* Redirection 301 depuis l'alias vers la route normalisée */}
                 <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
                 {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}

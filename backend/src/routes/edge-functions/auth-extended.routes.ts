@@ -14,8 +14,8 @@ const supabase = createClient(
 async function requireRole(userId: string, allowedRoles: string[]): Promise<{ ok: boolean; profile?: any }> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, vendor_id, agent_id, bureau_id")
-    .eq("user_id", userId)
+    .select("id, role")
+    .eq("id", userId)
     .maybeSingle();
   if (!profile || !allowedRoles.includes(profile.role)) return { ok: false };
   return { ok: true, profile };
@@ -308,6 +308,51 @@ router.post("/update-vendor-agent-email", ...manageAgents, async (req: Request, 
     await supabase.auth.admin.updateUserById(agent_id, { email: new_email });
     await supabase.from("profiles").update({ email: new_email }).eq("user_id", agent_id);
     return res.json({ success: true, agent_id, new_email });
+  } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
+});
+
+router.post("/reset-bureau-password", ...manageBureaus, async (req: Request, res: Response) => {
+  try {
+    const { bureau_id, new_password } = req.body || {};
+    if (!bureau_id || !new_password) return res.status(400).json({ success: false, error: "bureau_id et new_password requis" });
+    if (new_password.length < 8) return res.status(400).json({ success: false, error: "Mot de passe trop court (minimum 8 caractères)" });
+
+    const { data: bureau, error: bureauError } = await supabase
+      .from("bureaus").select("president_email, bureau_code").eq("id", bureau_id).single();
+    if (bureauError || !bureau?.president_email)
+      return res.status(404).json({ success: false, error: "Bureau ou email du président introuvable" });
+
+    const email = bureau.president_email as string;
+
+    // Étape 1 : chercher dans profiles via email (profiles.id = auth.users.id)
+    const { data: profile } = await supabase
+      .from("profiles").select("id").eq("email", email).maybeSingle();
+
+    if (profile?.id) {
+      const { error: resetError } = await supabase.auth.admin.updateUserById(profile.id, { password: new_password });
+      if (resetError) throw resetError;
+      return res.json({ success: true, email, action: "password_updated" });
+    }
+
+    // Étape 2 : pas dans profiles → chercher dans auth.users (magic link sans profil)
+    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (!listError) {
+      const authUser = (usersData?.users || []).find((u: any) => u.email === email);
+      if (authUser) {
+        const { error: resetError } = await supabase.auth.admin.updateUserById(authUser.id, { password: new_password });
+        if (resetError) throw resetError;
+        return res.json({ success: true, email, action: "password_updated" });
+      }
+    }
+
+    // Étape 3 : aucun compte existant → créer (le trigger DB crée le profil automatiquement)
+    const { data: authData, error: createError } = await supabase.auth.admin.createUser({
+      email, password: new_password, email_confirm: true,
+      user_metadata: { role: "bureau" }
+    });
+    if (createError) throw createError;
+    return res.json({ success: true, email, action: "account_created_with_password" });
+
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 

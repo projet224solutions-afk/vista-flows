@@ -33,6 +33,7 @@ import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
 import { transferToWallet } from '@/services/walletBackendService';
 import { WalletPinPromptDialog } from '@/components/wallet/WalletPinDialogs';
+import { getFinalRate } from '@/services/exchangeService';
 
 interface JomyPaymentSelectorProps {
   amount: number;
@@ -41,7 +42,7 @@ interface JomyPaymentSelectorProps {
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
   productType?: 'physical' | 'digital';
-  onPaymentSuccess: (transactionId: string, status: string) => void;
+  onPaymentSuccess: (transactionId: string, status: string) => void | Promise<void>;
   onPaymentPending?: (transactionId: string) => void;
   onPaymentFailed?: (error: string) => void;
   onCashOnDelivery?: (addressData?: any) => void;
@@ -104,6 +105,7 @@ export function JomyPaymentSelector({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
+  const [amountInWalletCurrency, setAmountInWalletCurrency] = useState<number | null>(null);
   const [showStripeInline, setShowStripeInline] = useState(false);
   const [walletPinPromptOpen, setWalletPinPromptOpen] = useState(false);
   const [walletPinLoading, setWalletPinLoading] = useState(false);
@@ -125,7 +127,7 @@ export function JomyPaymentSelector({
     instructions: ''
   });
 
-  // Charger le solde wallet si disponible
+  // Charger le solde wallet et calculer la conversion si devise produit ≠ devise wallet
   useEffect(() => {
     const loadWalletBalance = async () => {
       if (!user?.id) return;
@@ -137,14 +139,22 @@ export function JomyPaymentSelector({
           .single();
         if (data) {
           setWalletBalance(data.balance);
-          setWalletCurrency(data.currency || 'GNF');
+          const wCur = data.currency || 'GNF';
+          setWalletCurrency(wCur);
+
+          if (displayCurrency === wCur) {
+            setAmountInWalletCurrency(amount);
+          } else {
+            const rate = await getFinalRate(displayCurrency, wCur);
+            setAmountInWalletCurrency(rate ? Math.round(amount * rate) : null);
+          }
         }
       } catch (err) {
         console.error('Error loading wallet balance:', err);
       }
     };
     loadWalletBalance();
-  }, [user?.id]);
+  }, [user?.id, amount, displayCurrency]);
 
   // Méthodes de paiement disponibles
   const paymentMethods: PaymentMethodOption[] = [
@@ -336,8 +346,12 @@ export function JomyPaymentSelector({
   const isWalletPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
 
   const executeWalletTransfer = async (pin?: string) => {
-    if (walletBalance !== null && walletBalance < amount) {
-      toast.error('Solde wallet insuffisant');
+    // Comparer les montants dans la même devise (celle du wallet acheteur)
+    const neededInWalletCur = amountInWalletCurrency ?? amount;
+    if (walletBalance !== null && walletBalance < neededInWalletCur) {
+      const neededStr = formatCurrency(neededInWalletCur, walletCurrency);
+      const availableStr = formatCurrency(walletBalance, walletCurrency);
+      toast.error(`Solde insuffisant — ${neededStr} requis, ${availableStr} disponible`);
       return false;
     }
 
@@ -350,9 +364,14 @@ export function JomyPaymentSelector({
       setProcessing(true);
       setPaymentStatus('processing');
       try {
+        await onPaymentSuccess('', 'SUCCESS_WALLET_ESCROW');
         setPaymentStatus('success');
-        onPaymentSuccess('', 'SUCCESS_WALLET_ESCROW');
         return true;
+      } catch (err) {
+        setPaymentStatus('failed');
+        const message = err instanceof Error ? err.message : 'Erreur lors de la création de la commande';
+        toast.error(message);
+        return false;
       } finally {
         setProcessing(false);
       }

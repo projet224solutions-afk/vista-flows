@@ -133,6 +133,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
   const [intlExecuting, setIntlExecuting] = useState(false);
   // Ref pour conserver intlPreview quand AlertDialogAction ferme le dialog avant la saisie du PIN
   const intlPreviewRef = useRef<InternationalPreviewData | null>(null);
+  // Ref pour tracker le wallet ID précis et éviter les mélanges multi-wallets
+  const walletIdRef = useRef<string | number | null>(null);
   const [pinStatus, setPinStatus] = useState<{ pin_enabled: boolean; pin_locked_until: string | null } | null>(null);
   const [pinAction, setPinAction] = useState<'withdraw' | 'transfer' | 'intl-transfer' | null>(null);
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
@@ -163,14 +165,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         table: 'wallets',
         filter: `user_id=eq.${effectiveUserId}`,
       }, (payload) => {
-        const updated = payload.new as { balance?: number; currency?: string } | null;
-        if (updated) {
-          setWallet(prev => prev ? {
-            ...prev,
-            balance: updated.balance ?? prev.balance,
-            currency: updated.currency ?? prev.currency,
-          } : null);
-        }
+        const updated = payload.new as { id?: string | number; balance?: number; currency?: string } | null;
+        if (!updated) return;
+        // Ignorer les mises à jour pour un wallet différent du wallet principal suivi
+        const trackedId = walletIdRef.current;
+        if (trackedId && String(updated.id) !== String(trackedId)) return;
+        setWallet(prev => prev ? {
+          ...prev,
+          balance: updated.balance ?? prev.balance,
+          currency: updated.currency ?? prev.currency,
+        } : null);
       })
       .subscribe();
 
@@ -183,12 +187,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     if (!effectiveUserId) return;
 
     const handleWalletUpdate = async () => {
-      const { data } = await supabase
-        .from('wallets')
-        .select('id, balance, currency')
-        .eq('user_id', effectiveUserId)
-        .maybeSingle();
-      if (data) setWallet(data as { id: string | number; balance: number; currency: string });
+      const trackedId = walletIdRef.current;
+      let query = supabase.from('wallets').select('id, balance, currency');
+      if (trackedId) {
+        // Requêter directement le wallet connu par son ID
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        query = (query as any).eq('id', trackedId) as typeof query;
+      } else {
+        // Fallback : wallet le plus récemment mis à jour pour cet utilisateur
+        query = query.eq('user_id', effectiveUserId).order('updated_at', { ascending: false }) as typeof query;
+      }
+      const { data } = await query.maybeSingle();
+      if (data) {
+        walletIdRef.current = (data as any).id;
+        setWallet(data as { id: string | number; balance: number; currency: string });
+      }
     };
 
     window.addEventListener('wallet-updated', handleWalletUpdate);
@@ -270,10 +283,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     try {
       // IMPORTANT: Tous les utilisateurs (y compris les agents) utilisent la table 'wallets'
       // car c'est là que les transferts sont crédités via process_wallet_transaction
+      // ORDER BY updated_at DESC garantit de toujours retourner le wallet principal (le plus récemment actif)
+      // même si l'utilisateur possède plusieurs wallets (GNF + XAF)
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('id, balance, currency')
         .eq('user_id', effectiveUserId)
+        .order('updated_at', { ascending: false })
         .maybeSingle();
 
       if (walletError && walletError.code !== 'PGRST116') {
@@ -281,6 +297,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       }
 
       if (walletData) {
+        walletIdRef.current = (walletData as any).id;
         setWallet(walletData);
       } else {
         // Détecter la devise native de l'utilisateur depuis le profil
@@ -349,30 +366,33 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
       if (enhancedError) console.error('Erreur enhanced_transactions:', enhancedError);
 
-      // D'abord récupérer le wallet_id de l'utilisateur
+      // Récupérer le wallet principal (ORDER BY updated_at DESC pour wallet multi-devises)
       const { data: userWallet } = await supabase
         .from('wallets')
         .select('id')
         .eq('user_id', effectiveUserId)
+        .order('updated_at', { ascending: false })
         .maybeSingle();
 
       const userWalletId = userWallet?.id ?? null;
 
-      // Charger les wallet_transactions seulement si on a un wallet_id
-      // Limite 30 car le filtre de déduplication (transfer_out/transfer_in) peut retirer jusqu'à la moitié des records
+      // Charger les wallet_transactions : filtre combiné wallet_id ET user_id
+      // pour capturer toutes les transactions même si le wallet principal a changé
       let walletTxData: any[] = [];
-      if (userWalletId) {
+      {
+        const orParts: string[] = [`sender_user_id.eq.${effectiveUserId}`, `receiver_user_id.eq.${effectiveUserId}`];
+        if (userWalletId) {
+          orParts.push(`sender_wallet_id.eq.${userWalletId}`, `receiver_wallet_id.eq.${userWalletId}`);
+        }
         const wtResult: any = await (supabase as any)
           .from('wallet_transactions')
           .select('*')
-          .or(`sender_wallet_id.eq.${userWalletId},receiver_wallet_id.eq.${userWalletId}`)
+          .or(orParts.join(','))
           .order('created_at', { ascending: false })
           .limit(30);
-        const wtData = wtResult.data || [];
         const walletError = wtResult.error;
-
         if (walletError) console.error('Erreur wallet_transactions:', walletError);
-        if (wtData) walletTxData = wtData;
+        walletTxData = wtResult.data || [];
       }
 
       // -------- Résolution des identités (nom + ID standardisé) --------
@@ -396,7 +416,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         otherWalletRows = (data ?? []) as any;
       }
 
-      const walletIdToUserId = new Map(otherWalletRows.map((w) => [w.id, w.user_id]));
+      const walletIdToUserId = new Map(otherWalletRows.map((w) => [String(w.id), w.user_id]));
 
       // 2) Collecter tous les user_id à résoudre (enhanced + wallet_transactions)
       const userIdsToResolve = new Set<string>();
@@ -406,6 +426,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           if (tx.sender_id) userIdsToResolve.add(tx.sender_id);
           if (tx.receiver_id) userIdsToResolve.add(tx.receiver_id);
         }
+      }
+
+      // Ajouter les user_id DIRECTS depuis wallet_transactions (sender_user_id / receiver_user_id)
+      // Ces champs sont stockés par persistTransferHistory et permettent la résolution sans passer par le wallet
+      for (const tx of walletTxData) {
+        if (tx.sender_user_id) userIdsToResolve.add(tx.sender_user_id);
+        if (tx.receiver_user_id) userIdsToResolve.add(tx.receiver_user_id);
       }
 
       for (const w of otherWalletRows) {
@@ -458,13 +485,22 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         for (const tx of enhancedData as any[]) {
           const sender = getUserDisplay(tx.sender_id);
           const receiver = getUserDisplay(tx.receiver_id);
+          // Fallback sur les noms stockés dans metadata (résolution côté backend avec admin access)
+          // nécessaire quand la RLS profiles empêche de lire le profil d'un autre utilisateur
+          const txMeta = (tx.metadata || {}) as any;
+          const senderNameResolved = (sender.name && sender.name !== 'Utilisateur')
+            ? sender.name
+            : (txMeta.sender_name || sender.name);
+          const receiverNameResolved = (receiver.name && receiver.name !== 'Utilisateur')
+            ? receiver.name
+            : (txMeta.receiver_name || receiver.name);
 
           allTransactions.push({
             ...tx,
             sender_custom_id: sender.customId,
             receiver_custom_id: receiver.customId,
-            sender_name: sender.name,
-            receiver_name: receiver.name,
+            sender_name: senderNameResolved,
+            receiver_name: receiverNameResolved,
             source: 'enhanced',
           });
         }
@@ -481,14 +517,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           const txType = (tx.transaction_type as string) || '';
           const isOutgoingType = ['transfer_out', 'international_transfer', 'withdrawal', 'mobile_money_out'].includes(txType);
           const isIncomingType = ['transfer_in', 'deposit', 'mobile_money_in', 'admin_credit'].includes(txType);
-          const isUserSender = userWalletId ? tx.sender_wallet_id === userWalletId : false;
-          const isUserReceiver = userWalletId ? tx.receiver_wallet_id === userWalletId : false;
+          // Déterminer si l'utilisateur est l'expéditeur ou le destinataire
+          // Priorité au user_id direct, fallback sur wallet_id
+          const isUserSender = tx.sender_user_id === effectiveUserId
+            || (userWalletId && tx.sender_wallet_id === userWalletId);
+          const isUserReceiver = tx.receiver_user_id === effectiveUserId
+            || (userWalletId && tx.receiver_wallet_id === userWalletId);
           if (isOutgoingType && !isUserSender) continue;
           if (isIncomingType && !isUserReceiver) continue;
 
-          const isOutgoing = userWalletId ? tx.sender_wallet_id === userWalletId : false;
+          const isOutgoing = Boolean(isUserSender);
           const otherWalletId = isOutgoing ? tx.receiver_wallet_id : tx.sender_wallet_id;
-          const otherUserId = otherWalletId ? walletIdToUserId.get(otherWalletId) : null;
+          // Priorité 1 : user_id direct stocké dans la transaction (plus fiable)
+          // Priorité 2 : résolution via wallet_id → user_id
+          const directUserId = isOutgoing ? tx.receiver_user_id : tx.sender_user_id;
+          const otherUserId = directUserId || (otherWalletId ? walletIdToUserId.get(String(otherWalletId)) : null);
 
           // Résoudre la contrepartie : local profile map → metadata names → fallback
           const resolvedDisplay = getUserDisplay(otherUserId);
@@ -2341,7 +2384,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
                       {formatWalletBalance(tx.amount, tx.currency)}
                     </p>
-                    {tx.sender_id === effectiveUserId && tx.metadata?.fee_amount && (
+                    {tx.sender_id === effectiveUserId && Number(tx.metadata?.fee_amount) > 0 && (
                       <p className="text-[10px] sm:text-xs text-orange-600">
                         +{formatWalletBalance(tx.metadata.fee_amount, tx.currency)} frais
                       </p>

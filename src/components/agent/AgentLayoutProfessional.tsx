@@ -25,7 +25,8 @@ import {
   Link2,
   DollarSign,
   FileCheck,
-  Sparkles
+  Sparkles,
+  Headphones
 } from 'lucide-react';
 import {
   Tooltip,
@@ -326,6 +327,12 @@ export function AgentLayoutProfessional({
       icon: <Link2 className="w-5 h-5" />,
       gradient: 'from-fuchsia-500 to-pink-500',
       badge: 'Nouveau'
+    },
+    {
+      id: 'support',
+      label: 'Support Technique',
+      icon: <Headphones className="w-5 h-5" />,
+      gradient: 'from-sky-500 to-blue-500'
     },
     {
       id: 'settings',

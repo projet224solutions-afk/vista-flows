@@ -19,7 +19,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { env } from '../config/env.js';
-import { AFRICAN_BANK_SOURCE_URLS } from '../constants/africanBankSources.js';
+import { collectAfricanRates, refreshBcrgOnly, checkBcrgHeadChanged } from '../services/fxRates.service.js';
 
 const REDIS_JOBS_ENABLED = (process.env.REDIS_ENABLED ?? (env.isProduction ? 'true' : 'false')) === 'true';
 
@@ -33,7 +33,6 @@ const REDIS_CONNECTION = {
 };
 
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
-const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
@@ -195,7 +194,8 @@ registerHandler('escrow.auto-release', async () => {
     .select('id, order_id, seller_id, amount, currency, commission_amount, metadata, seller_confirmed_at, orders(id, order_number, status, payment_method, shipping_address, metadata)')
     .eq('status', 'held')
     .not('seller_confirmed_at', 'is', null)
-    .lt('auto_release_date', now);
+    .lt('auto_release_date', now)
+    .is('dispute_status', null);
 
   if (!escrows?.length) return;
 
@@ -243,7 +243,7 @@ registerHandler('escrow.auto-release', async () => {
               : {}),
             auto_confirmed_reception: true,
             auto_confirmed_reception_at: now,
-            release_reason: 'buyer_confirmation_timeout_72h',
+            release_reason: 'buyer_confirmation_timeout_48h',
             vendor_amount: vendorAmount,
             commission_amount: commissionAmount,
           },
@@ -259,7 +259,7 @@ registerHandler('escrow.auto-release', async () => {
             delivered_at: orderMetadata.delivered_at || now,
             auto_confirmed_reception: true,
             auto_confirmed_reception_at: now,
-            buyer_confirmation_timeout_hours: 72,
+            buyer_confirmation_timeout_hours: 48,
           },
           updated_at: now,
         })
@@ -497,103 +497,96 @@ registerHandler('payment-links.cleanup-expired', async () => {
 });
 
 registerHandler('fx.african-rates-refresh', async () => {
+  let result: Awaited<ReturnType<typeof collectAfricanRates>>;
+
   try {
-    const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
-
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        source: 'backend_hourly_job',
-        strict_african_sources: true,
-        include_all_african_banks: true,
-        primary_source_url: BCRG_OFFICIAL_URL,
-        preferred_currency_pairs: [
-          { from: 'USD', to: 'GNF' },
-          { from: 'EUR', to: 'GNF' },
-        ],
-        bcrg_source_urls: [
-          BCRG_OFFICIAL_URL,
-        ],
-        preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
-      }),
+    result = await collectAfricanRates();
+  } catch (err: any) {
+    await createFxAlert({
+      alertType: 'fx_collection_failed',
+      severity: 'high',
+      title: 'Échec collecte FX horaire',
+      description: `La collecte horaire des taux a échoué: ${err.message}`,
+      metadata: { error: err.message },
+      dedupeMinutes: 30,
     });
+    throw err;
+  }
 
-    const raw = await response.text();
-    let payload: any = null;
-    try {
-      payload = raw ? JSON.parse(raw) : null;
-    } catch {
-      payload = { raw };
-    }
-
-    if (!response.ok) {
-      const message = payload?.error || payload?.message || `HTTP ${response.status}`;
-      await createFxAlert({
-        alertType: 'fx_collection_failed',
-        severity: 'high',
-        title: 'Échec collecte FX horaire',
-        description: `La collecte horaire des taux a échoué: ${message}`,
-        metadata: { status: response.status, payload },
-        dedupeMinutes: 30,
-      });
-      throw new Error(`African FX collect failed: ${message}`);
-    }
-
-    const { data: latestRate } = await supabaseAdmin
-      .from('currency_exchange_rates')
-      .select('retrieved_at')
-      .eq('is_active', true)
-      .order('retrieved_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const now = Date.now();
-    const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : 0;
-    const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : 9999;
-    if (ageMinutes > 90) {
-      await createFxAlert({
-        alertType: 'fx_rates_stale',
-        severity: 'critical',
-        title: 'Taux FX obsolètes',
-        description: `Les taux ne sont pas à jour depuis ${ageMinutes} minutes (>90).`,
-        metadata: { age_minutes: ageMinutes, threshold_minutes: 90 },
-        dedupeMinutes: 60,
-      });
-    }
-
-    const { data: recentGnfRuns } = await supabaseAdmin
-      .from('fx_collection_log')
-      .select('status, collected_at, error_message')
-      .eq('currency_code', 'GNF')
-      .order('collected_at', { ascending: false })
-      .limit(2);
-
-    const twoConsecutiveFailures = (recentGnfRuns || []).length >= 2
-      && (recentGnfRuns || []).every((run) => !isFxSuccessStatus(run.status));
-
-    if (twoConsecutiveFailures) {
-      await createFxAlert({
-        alertType: 'fx_two_consecutive_failures',
-        severity: 'critical',
-        title: 'Collecte FX en échec consécutif',
-        description: 'Deux collectes consécutives ont échoué pour GNF.',
-        metadata: { recent_runs: recentGnfRuns },
-        dedupeMinutes: 60,
-      });
-    }
-
-    logger.info('African FX rates refreshed from official sources', {
-      status: response.status,
-      source: payload?.source || 'african-fx-collect',
-      collected: payload?.collected_count || payload?.updated_count || null,
+  if (result.failed > 0 && result.ok === 0) {
+    await createFxAlert({
+      alertType: 'fx_collection_failed',
+      severity: 'high',
+      title: 'Échec collecte FX horaire',
+      description: `Aucun taux collecté. Échecs: ${result.failed}, durée: ${result.durationMs}ms`,
+      metadata: { failed: result.failed, ok: result.ok, fallback: result.fallback, durationMs: result.durationMs },
+      dedupeMinutes: 30,
     });
-  } catch (error: any) {
-    throw error;
+  }
+
+  const { data: latestRate } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('retrieved_at')
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const now = Date.now();
+  const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : 0;
+  const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : 9999;
+  if (ageMinutes > 90) {
+    await createFxAlert({
+      alertType: 'fx_rates_stale',
+      severity: 'critical',
+      title: 'Taux FX obsolètes',
+      description: `Les taux ne sont pas à jour depuis ${ageMinutes} minutes (>90).`,
+      metadata: { age_minutes: ageMinutes, threshold_minutes: 90 },
+      dedupeMinutes: 60,
+    });
+  }
+
+  const { data: recentGnfRuns } = await supabaseAdmin
+    .from('fx_collection_log')
+    .select('status, collected_at, error_message')
+    .eq('currency_code', 'GNF')
+    .order('collected_at', { ascending: false })
+    .limit(2);
+
+  const twoConsecutiveFailures = (recentGnfRuns || []).length >= 2
+    && (recentGnfRuns || []).every((run) => !isFxSuccessStatus(run.status));
+
+  if (twoConsecutiveFailures) {
+    await createFxAlert({
+      alertType: 'fx_two_consecutive_failures',
+      severity: 'critical',
+      title: 'Collecte FX en échec consécutif',
+      description: 'Deux collectes consécutives ont échoué pour GNF.',
+      metadata: { recent_runs: recentGnfRuns },
+      dedupeMinutes: 60,
+    });
+  }
+
+  logger.info('African FX rates refreshed from official sources', {
+    ok: result.ok,
+    fallback: result.fallback,
+    cached: result.cached,
+    failed: result.failed,
+    durationMs: result.durationMs,
+  });
+});
+
+// Surveillance BCRG temps réel — HEAD check d'abord, GET complet seulement si la page a changé
+registerHandler('fx.bcrg-live-check', async () => {
+  try {
+    const pageChanged = await checkBcrgHeadChanged();
+    if (!pageChanged) return; // Page identique → pas besoin de scraper
+    const result = await refreshBcrgOnly();
+    if (result.changed) {
+      logger.info(`[BCRG-LIVE] Taux modifiés: ${result.changedPairs.join(', ')} | USD/GNF=${result.usdGnf} (${result.durationMs}ms)`);
+    }
+  } catch (err: any) {
+    logger.warn(`[BCRG-LIVE] Échec surveillance: ${err.message}`);
   }
 });
 
@@ -677,11 +670,14 @@ export const jobQueue = {
 
       // Trigger FX immediately on startup to avoid missing today's first rate.
       this.enqueue('fx.african-rates-refresh', {}).catch(() => {});
+      this.enqueue('fx.bcrg-live-check', {}).catch(() => {});
 
       recurringTimers.push(setInterval(() => this.enqueue('idempotency.cleanup', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('orders.stuck-alert', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('payment-links.cleanup-expired', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('fx.african-rates-refresh', {}).catch(() => {}), everyHour));
+      // Surveillance BCRG toutes les 30s — HEAD check léger, GET uniquement si changement
+      recurringTimers.push(setInterval(() => this.enqueue('fx.bcrg-live-check', {}).catch(() => {}), 30 * 1000));
 
       recurringTimers.push(setInterval(() => this.enqueue('escrow.auto-release', {}).catch(() => {}), every6Hours));
       recurringTimers.push(setInterval(() => this.enqueue('subscriptions.expire-check', {}).catch(() => {}), every6Hours));
@@ -705,6 +701,8 @@ export const jobQueue = {
       await queue.add('orders.stuck-alert', {}, { repeat: { every: 3600000 } });
       await queue.add('payment-links.cleanup-expired', {}, { repeat: { every: 3600000 } });
       await queue.add('fx.african-rates-refresh', {}, { repeat: { every: 3600000 } });
+      // Surveillance BCRG toutes les 30s — HEAD check léger, GET uniquement si changement
+      await queue.add('fx.bcrg-live-check', {}, { repeat: { every: 30 * 1000 } });
 
       // Every 6 hours: escrow + subscriptions + POS
       await queue.add('escrow.auto-release', {}, { repeat: { every: 6 * 3600000 } });

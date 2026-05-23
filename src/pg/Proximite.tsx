@@ -149,11 +149,11 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
 const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
   {
     id: "vtc",
-    title: "Taxi Moto",
+    title: "Taxi",
     icon: Bike,
     count: stats.vtc,
     path: "/proximite/taxi-moto",
-    description: "Déplacements à proximité",
+    description: "Voiture & Moto à proximité",
     image: "https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-taxi-moto.png",
     accent: "#1d4ed8"
@@ -393,7 +393,7 @@ export default function Proximite() {
                 {[
                   { label: 'Boutiques', data: debugInfo.vendors },
                   { label: 'Services Pro', data: debugInfo.services },
-                  { label: 'Taxi-Moto', data: debugInfo.taxiMoto },
+                  { label: 'Taxi', data: debugInfo.taxiMoto },
                   { label: 'Livreurs', data: debugInfo.drivers }
                 ].map(item => (
                   <div key={item.label} className="rounded-lg p-2" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>

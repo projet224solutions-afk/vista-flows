@@ -580,7 +580,8 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     const currency = vendor.shop_currency || resolveVendorCurrency(vendor.country);
 
     // 3.5. Résumé financier multi-devises (prix depuis DB, FX interne, commission)
-    //      Non bloquant : si le calcul échoue, on garde charged_amount du frontend.
+    //      - Erreur "introuvable ou inactif" → BLOQUANT (produit désactivé/supprimé)
+    //      - Autre erreur (FX, DB temporaire) → non bloquant, fallback charged_amount frontend
     let financialSummary: OrderFinancialSummary | null = null;
     let financialSummaryError: string | null = null;
     try {
@@ -592,6 +593,15 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       });
     } catch (fsErr: any) {
       financialSummaryError = fsErr.message;
+      if (fsErr.message?.includes('introuvable ou inactif')) {
+        // Produit réellement absent ou désactivé → bloquer la commande
+        logger.warn(`[ORDER-BLOCKED] Commande refusée — ${fsErr.message} — user: ${userId}`);
+        return res.status(400).json({
+          success: false,
+          error: fsErr.message,
+          error_code: 'PRODUCT_UNAVAILABLE',
+        });
+      }
       logger.warn(`financial-summary: ${fsErr.message} — fallback to charged_amount`);
     }
 
@@ -679,7 +689,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       p_payment_method:         payment_method,
       p_payment_intent_id:      payment_intent_id || null,
       p_shipping_address:       shipping_address,
-      p_currency:               currency,
+      p_currency:               financialSummary?.sellerCurrency ?? buyerWalletCurrency,
       p_items: items.map(i => ({
         product_id: i.product_id,
         quantity:   i.quantity,
@@ -689,6 +699,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       p_buyer_user_id:          userId,
       p_wallet_debit_amount:    walletDebitAmount,
       p_buyer_wallet_currency:  buyerWalletCurrency,
+      p_exchange_rate_used:     financialSummary?.exchangeRate ?? null,
     });
 
     if (rpcError) {
@@ -757,29 +768,44 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       ...(order_metadata || {}),
     };
 
-    // ── Étape A : mise à jour des champs essentiels (fatal si échoue) ──────────
-    // NOTE: si create_order_core a déjà débité le wallet et créé la commande,
-    // ces champs DOIVENT être mis à jour pour que la commande soit visible.
-    // On ne retourne 500 que si les colonnes de base (payment_status, total_amount)
-    // échouent — les colonnes financières optionnelles sont traitées séparément.
-    const { error: orderUpdateError } = await supabaseAdmin
-      .from('orders')
-      .update({
+    // ── Étape A : mise à jour des champs essentiels (non-fatale depuis Phase 6) ──
+    // create_order_core a déjà créé la commande atomiquement (wallet débité + ordre en DB).
+    // On tente d'abord la mise à jour complète, puis sans metadata si elle échoue (colonne manquante?),
+    // et en dernier recours on log seulement — la commande reste valide dans tous les cas.
+    {
+      const updatePayload: Record<string, any> = {
         total_amount: effectiveChargedAmount,
         payment_status: finalPaymentStatus,
         metadata: mergedOrderMetadata,
         ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
-      })
-      .eq('id', result.order_id);
+      };
 
-    if (orderUpdateError) {
-      logger.error(`order finalization update error: ${orderUpdateError.message}`);
-      // Si le wallet a été débité (wallet payment), on log la référence pour remboursement manuel
-      if (payment_method === 'wallet' && walletDebitAmount > 0) {
-        logger.error(`[WALLET-LOSS] ORDER UPDATE FAILED après débit wallet — order_id: ${result.order_id}, user: ${userId}, montant: ${walletDebitAmount}`);
+      const { error: orderUpdateError } = await supabaseAdmin
+        .from('orders')
+        .update(updatePayload)
+        .eq('id', result.order_id);
+
+      if (orderUpdateError) {
+        logger.warn(`order finalization update failed (tentative sans metadata): ${orderUpdateError.message}`);
+        // Retry without metadata in case the column is absent or has type issues
+        const { error: retryUpdateError } = await supabaseAdmin
+          .from('orders')
+          .update({
+            total_amount: effectiveChargedAmount,
+            payment_status: finalPaymentStatus,
+            ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
+          })
+          .eq('id', result.order_id);
+
+        if (retryUpdateError) {
+          // Non-fatal: create_order_core already set payment_status correctly for wallet.
+          // Log for monitoring but do NOT return 500 — the order exists and wallet is debited.
+          logger.error(`[ORDER-UPDATE-FAILED] Impossible de mettre à jour payment_status — order: ${result.order_id}, user: ${userId}: ${retryUpdateError.message}`);
+          if (payment_method === 'wallet' && walletDebitAmount > 0) {
+            logger.error(`[WALLET-REF] Wallet débité mais update échoué — order_id: ${result.order_id}, montant: ${walletDebitAmount} ${currency}`);
+          }
+        }
       }
-      res.status(500).json({ success: false, error: 'Erreur lors de la finalisation de la commande' });
-      return;
     }
 
     // ── Étape B : champs financiers multi-devises (non-fatal) ───────────────
@@ -883,26 +909,33 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       escrowStatus = 'pending';
     }
 
-    await syncOrderMarketingContacts({
-      vendorId: vendor_id,
-      userId,
-      shippingAddress: {
-        full_name: shipping_address.full_name,
-        phone: shipping_address.phone,
-      },
-      orderTotal: effectiveChargedAmount,
-    });
+    try {
+      await syncOrderMarketingContacts({
+        vendorId: vendor_id,
+        userId,
+        shippingAddress: {
+          full_name: shipping_address.full_name,
+          phone: shipping_address.phone,
+        },
+        orderTotal: effectiveChargedAmount,
+      });
+    } catch (marketingErr: any) {
+      logger.warn(`syncOrderMarketingContacts non-fatal error — order: ${result.order_id}: ${marketingErr?.message}`);
+    }
 
     if (finalPaymentStatus === 'paid' && effectiveChargedAmount > 0) {
-      const commissionResult = await triggerAffiliateCommission(
-        userId,
-        effectiveChargedAmount,
-        'achat_produit',
-        result.order_id
-      );
-
-      if (!commissionResult.success) {
-        logger.warn(`Agent commission not credited for order ${result.order_id}: ${commissionResult.error || 'unknown error'}`);
+      try {
+        const commissionResult = await triggerAffiliateCommission(
+          userId,
+          effectiveChargedAmount,
+          'achat_produit',
+          result.order_id
+        );
+        if (!commissionResult.success) {
+          logger.warn(`Agent commission not credited for order ${result.order_id}: ${commissionResult.error || 'unknown error'}`);
+        }
+      } catch (commissionErr: any) {
+        logger.warn(`triggerAffiliateCommission non-fatal error — order: ${result.order_id}: ${commissionErr?.message}`);
       }
     }
 
@@ -1064,26 +1097,33 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
       return;
     }
 
-    await syncOrderMarketingContacts({
-      vendorId: vendor_id,
-      userId,
-      shippingAddress: {
-        full_name: shippingAddress.full_name,
-        phone: shippingAddress.phone,
-      },
-      orderTotal: total_amount,
-    });
+    try {
+      await syncOrderMarketingContacts({
+        vendorId: vendor_id,
+        userId,
+        shippingAddress: {
+          full_name: shippingAddress.full_name,
+          phone: shippingAddress.phone,
+        },
+        orderTotal: total_amount,
+      });
+    } catch (marketingErr: any) {
+      logger.warn(`syncOrderMarketingContacts non-fatal error — digital order: ${insertedOrder.id}: ${marketingErr?.message}`);
+    }
 
     if (!isCashOnDelivery && total_amount > 0) {
-      const commissionResult = await triggerAffiliateCommission(
-        userId,
-        total_amount,
-        'achat_produit_digital',
-        insertedOrder.id
-      );
-
-      if (!commissionResult.success) {
-        logger.warn(`Agent commission not credited for digital order ${insertedOrder.id}: ${commissionResult.error || 'unknown error'}`);
+      try {
+        const commissionResult = await triggerAffiliateCommission(
+          userId,
+          total_amount,
+          'achat_produit_digital',
+          insertedOrder.id
+        );
+        if (!commissionResult.success) {
+          logger.warn(`Agent commission not credited for digital order ${insertedOrder.id}: ${commissionResult.error || 'unknown error'}`);
+        }
+      } catch (commissionErr: any) {
+        logger.warn(`triggerAffiliateCommission non-fatal error — digital order: ${insertedOrder.id}: ${commissionErr?.message}`);
       }
     }
 
@@ -1473,9 +1513,19 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
           })
           .eq('order_id', orderId);
       } else {
-        const deliveryDays = estimated_delivery_days || 7;
+        // Fallback: délai du vendeur en DB, puis 3 jours par défaut
+        let vendorDefaultDays = 3;
+        const { data: vendorSettings } = await supabaseAdmin
+          .from('vendors')
+          .select('average_delivery_days')
+          .eq('id', vendor.id)
+          .maybeSingle();
+        if ((vendorSettings as any)?.average_delivery_days) {
+          vendorDefaultDays = (vendorSettings as any).average_delivery_days;
+        }
+        const deliveryDays = estimated_delivery_days || vendorDefaultDays;
         const estimatedDeliveryAt = new Date(confirmedAt.getTime() + deliveryDays * 24 * 60 * 60 * 1000);
-        const autoReleaseAt = new Date(estimatedDeliveryAt.getTime() + 72 * 60 * 60 * 1000);
+        const autoReleaseAt = new Date(estimatedDeliveryAt.getTime() + 48 * 60 * 60 * 1000);
 
         const { data: currentEscrow } = await supabaseAdmin
           .from('escrow_transactions')

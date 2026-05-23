@@ -15,7 +15,7 @@ import { cancelOrder as cancelOrderRequest, listMyOrders } from '@/services/orde
 import { toast } from 'sonner';
 import {
   Package, CheckCircle, Clock, Truck, XCircle,
-  Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote, ShoppingBag
+  Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote, ShoppingBag, Star, CalendarClock
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -593,6 +593,27 @@ export default function MyPurchasesOrdersList({
                             </div>
                           </div>
                         </div>
+
+                        {/* Délai de livraison estimé — visible dès la confirmation du vendeur */}
+                        {order.metadata?.estimated_delivery_days &&
+                          !['pending', 'delivered', 'completed', 'cancelled'].includes(order.status) && (
+                          <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <CalendarClock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
+                                Votre colis sera livré dans :{' '}
+                                <span className="font-bold">
+                                  {order.metadata.estimated_delivery_days} jour{order.metadata.estimated_delivery_days > 1 ? 's' : ''} ouvrable{order.metadata.estimated_delivery_days > 1 ? 's' : ''}
+                                </span>
+                              </p>
+                              {order.metadata.estimated_delivery_at && (
+                                <p className="text-xs text-blue-600 dark:text-blue-400">
+                                  Livraison prévue le {new Date(order.metadata.estimated_delivery_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent className="p-4 space-y-4">
                         {/* Tracker visuel */}
@@ -651,6 +672,25 @@ export default function MyPurchasesOrdersList({
                             <Button onClick={() => handleConfirmDelivery(order)} disabled={confirmingOrderId === order.id} className="w-full">
                               {confirmingOrderId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                               J'ai reçu ma commande
+                            </Button>
+                          )}
+
+                          {(order.status === 'completed' || order.status === 'delivered') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setRatingOrderData({
+                                  orderId: order.id,
+                                  vendorId: order.vendor_id,
+                                  vendorName: order.vendors?.business_name || 'ce vendeur'
+                                });
+                                setShowRatingDialog(true);
+                              }}
+                              className="w-full"
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Laisser un avis
                             </Button>
                           )}
                         </div>

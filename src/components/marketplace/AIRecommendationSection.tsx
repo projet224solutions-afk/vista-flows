@@ -19,6 +19,7 @@ interface AIProduct {
   name: string;
   price: number;
   images: string[];
+  promotional_videos?: string[];
   rating: number | null;
   reviews_count?: number | null;
   reason?: string;
@@ -126,6 +127,7 @@ export function AIRecommendationSection({
                   price={p.price}
                   currency={p.currency || 'GNF'}
                   image={p.images || []}
+                  promotionalVideos={p.promotional_videos || []}
                   rating={p.rating || 0}
                   reviewCount={p.reviews_count || 0}
                   vendor=""

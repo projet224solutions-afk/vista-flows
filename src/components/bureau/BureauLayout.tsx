@@ -25,7 +25,8 @@ import {
   MapPin,
   ShieldAlert,
   Ticket,
-  ShoppingBag
+  ShoppingBag,
+  Headphones
 } from 'lucide-react';
 import { BureauWalletDisplay } from '@/components/wallet/BureauWalletDisplay';
 
@@ -121,6 +122,11 @@ export function BureauLayout({
       id: 'communication',
       label: 'Communication',
       icon: <MessageSquare className="w-5 h-5" />
+    },
+    {
+      id: 'support',
+      label: 'Support Technique',
+      icon: <Headphones className="w-5 h-5 text-sky-500" />
     },
     {
       id: 'settings',

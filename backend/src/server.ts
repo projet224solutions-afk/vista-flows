@@ -149,6 +149,12 @@ app.use(compression());
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 // Edge Functions Stripe webhooks also need raw body for signature verification
 app.use('/edge-functions/webhooks/stripe', express.raw({ type: 'application/json' }));
+// Djomy webhook needs raw body for HMAC-SHA256 signature verification
+app.use('/webhooks/djomy', express.raw({ type: 'application/json' }));
+// ChapChapPay webhook needs raw body for HMAC-SHA256 signature verification
+app.use('/webhooks/chapchappay', express.raw({ type: 'application/json' }));
+// PayPal webhook needs raw body for API-based signature verification
+app.use('/webhooks/paypal', express.raw({ type: 'application/json' }));
 
 // Standard JSON parser for everything else
 app.use(express.json({ limit: '10mb' }));

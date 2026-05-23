@@ -156,6 +156,93 @@ export default function PDGFinance() {
     return () => clearInterval(timer);
   }, []);
 
+  // Surveillance des taux BCRG via polling Node.js — endpoint léger sans scraping
+  // Connexion SSE — le backend pousse un événement à l'instant où un taux BCRG change.
+  // Fallback polling toutes les 60s si la connexion SSE est indisponible.
+  useEffect(() => {
+    let active = true;
+    let sseReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    let lastKnownChangedAt: string | null = null;
+    let sseConnected = false;
+
+    // ── Connexion SSE via fetch (supporte les headers Authorization) ──
+    const connectSSE = async () => {
+      if (!active) return;
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { backendConfig } = await import('@/config/backend');
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token || !active) return;
+
+        const url = `${backendConfig.baseUrl}/api/v2/wallet/admin/fx-rates-stream`;
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+        });
+        if (!response.ok || !response.body) throw new Error(`SSE HTTP ${response.status}`);
+
+        sseReader = response.body.getReader();
+        sseConnected = true;
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (active) {
+          const { done, value } = await sseReader.read();
+          if (done || !active) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const payload = JSON.parse(line.slice(6));
+              if (!payload?.changedAt) continue;
+              if (lastKnownChangedAt === null) {
+                lastKnownChangedAt = payload.changedAt; // Premier événement : init sans rafraîchir
+              } else if (payload.changedAt !== lastKnownChangedAt) {
+                lastKnownChangedAt = payload.changedAt;
+                loadFxHealth().catch(() => {});
+                toast.info('Taux BCRG mis à jour — interface actualisée');
+              }
+            } catch { /* JSON invalide */ }
+          }
+        }
+      } catch { /* connexion interrompue */ }
+
+      sseConnected = false;
+      if (active) reconnectTimer = setTimeout(connectSSE, 5_000); // Reconnexion automatique
+    };
+
+    // ── Fallback polling 60s — uniquement si SSE non connecté ──
+    fallbackInterval = setInterval(async () => {
+      if (sseConnected) return; // SSE actif → pas besoin du polling
+      try {
+        const response = await backendFetch('/api/v2/wallet/admin/fx-rates-check', { method: 'GET' });
+        if (!response.success || !response.data) return;
+        const { changedAt } = response.data;
+        if (!changedAt) return;
+        if (lastKnownChangedAt === null) {
+          lastKnownChangedAt = changedAt;
+        } else if (changedAt !== lastKnownChangedAt) {
+          lastKnownChangedAt = changedAt;
+          loadFxHealth().catch(() => {});
+          toast.info('Taux BCRG mis à jour — interface actualisée');
+        }
+      } catch { /* silencieux */ }
+    }, 60 * 1000);
+
+    connectSSE();
+
+    return () => {
+      active = false;
+      sseReader?.cancel().catch(() => {});
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
+  }, []);
+
   const loadConversionStats = async (hours = 168) => {
     try {
       setConversionStatsLoading(true);

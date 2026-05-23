@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard,
-  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History, HandCoins
+  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History, HandCoins, Headphones, Loader2
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
@@ -37,6 +37,7 @@ const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDe
 const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
 const NotificationBellButton = lazy(() => import("@/components/shared/NotificationBellButton").then(m => ({ default: m.NotificationBellButton })));
 const RecentlyViewedProducts = lazy(() => import("@/components/shared/RecentlyViewedProducts"));
+const SupportTicketsUniversal = lazy(() => import("@/components/shared/SupportTicketsUniversal").then(m => ({ default: m.SupportTicketsUniversal })));
 
 export default function ClientDashboard() {
   const { user, _profile, signOut } = useAuth();
@@ -278,7 +279,7 @@ export default function ClientDashboard() {
       <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : `grid w-full ${isAffiliateEnabled ? 'grid-cols-7' : 'grid-cols-6'} lg:w-auto lg:inline-grid`} bg-muted/50 min-w-full md:min-w-0`}>
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : `grid w-full ${isAffiliateEnabled ? 'grid-cols-8' : 'grid-cols-7'} lg:w-auto lg:inline-grid`} bg-muted/50 min-w-full md:min-w-0`}>
               <TabsTrigger value="overview" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Vue' : "Vue d'ensemble"}
@@ -305,6 +306,10 @@ export default function ClientDashboard() {
                   {responsive.isMobile ? t('client.tabAffiliateShort') : t('client.tabAffiliate')}
                 </TabsTrigger>
               )}
+              <TabsTrigger value="support" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
+                <Headphones className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                {responsive.isMobile ? 'Support' : 'Support'}
+              </TabsTrigger>
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Réglages' : 'Paramètres'}
@@ -429,7 +434,8 @@ export default function ClientDashboard() {
                           price: product.price,
                           image: product.images?.[0],
                           vendor_id: product.vendor_id,
-                          vendor_name: product.vendor_name
+                          vendor_name: product.vendor_name,
+                          currency: product.currency || 'GNF',
                         });
                       }}
                       onContact={() => handleContactVendor(product)}
@@ -480,7 +486,7 @@ export default function ClientDashboard() {
                               <p className="text-xs text-muted-foreground">{item.vendor_name}</p>
                             )}
                             <p className="text-lg font-bold text-client-primary mt-1">
-                              {formatPrice(item.price * item.quantity)}
+                              {new Intl.NumberFormat('fr-FR').format(item.price * item.quantity) + ' ' + (item.currency || wallet?.currency || 'GNF')}
                             </p>
                           </div>
                           <Button
@@ -499,7 +505,10 @@ export default function ClientDashboard() {
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-lg font-semibold">Total</span>
                           <span className="text-2xl font-bold text-client-primary">
-                            {formatPrice(getCartTotal())}
+                            {(() => {
+                              const primaryCurrency = cartItems.find(i => i.currency && i.currency !== 'GNF')?.currency || cartItems[0]?.currency || wallet?.currency || 'GNF';
+                              return new Intl.NumberFormat('fr-FR').format(getCartTotal()) + ' ' + primaryCurrency;
+                            })()}
                           </span>
                         </div>
                         <Button
@@ -572,6 +581,13 @@ export default function ClientDashboard() {
             </TabsContent>
           )}
 
+          {/* Support technique */}
+          <TabsContent value="support" className="animate-fade-in">
+            <Suspense fallback={<div className="flex items-center justify-center h-40"><Loader2 className="w-6 h-6 animate-spin" /></div>}>
+              <SupportTicketsUniversal />
+            </Suspense>
+          </TabsContent>
+
           {/* Paramètres */}
           <TabsContent value="settings" className="animate-fade-in">
             <ClientSettings />
@@ -588,10 +604,14 @@ export default function ClientDashboard() {
             id: item.id,
             name: item.name,
             price: item.price,
+            quantity: item.quantity,
             image: item.image || '',
             vendorId: item.vendor_id,
+            vendor_id: item.vendor_id,
+            currency: item.currency || 'GNF',
           }))}
           totalAmount={getCartTotal()}
+          currency={cartItems.find(i => i.currency && i.currency !== 'GNF')?.currency || cartItems[0]?.currency || 'GNF'}
           onPaymentSuccess={handlePaymentSuccess}
           userId={user.id}
           customerId={customerId}

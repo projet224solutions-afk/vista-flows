@@ -29,6 +29,7 @@ import { BureauSyndicatSOSDashboard } from '@/components/bureau-syndicat/BureauS
 import TransportTicketGenerator from '@/components/syndicate/TransportTicketGenerator';
 import { ChangePasswordDialog, ChangeEmailDialog } from '@/components/bureau/BureauSettingsDialogs';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
+import { SupportTicketsUniversal } from '@/components/shared/SupportTicketsUniversal';
 
 export default function BureauDashboard() {
   const { token } = useParams();
@@ -614,6 +615,9 @@ export default function BureauDashboard() {
             </CardContent>
           </Card>
         );
+
+      case 'support':
+        return <SupportTicketsUniversal />;
 
       case 'settings':
         return (

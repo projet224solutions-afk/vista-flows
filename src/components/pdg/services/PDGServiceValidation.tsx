@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import { ServiceSubscriptionService } from '@/services/serviceSubscriptionService';
 import {
   CheckCircle, XCircle, Clock, MapPin, Phone, Mail, _Eye,
   Shield, _AlertTriangle, RefreshCw, _Store
@@ -96,9 +97,51 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
 
       if (error) throw error;
 
+      // Approbation : créer un abonnement gratuit 365 jours pour que le service
+      // apparaisse dans le marketplace (ServicesProximite utilise service_subscriptions!inner)
+      if (actionType === 'approve') {
+        let freePlanId: string | null = null;
+
+        // Chercher le plan gratuit spécifique au type de service
+        const { data: typePlan } = await supabase
+          .from('service_plans')
+          .select('id')
+          .eq('name', 'free')
+          .eq('is_active', true)
+          .eq('service_type_id', actionService.service_type_id)
+          .limit(1)
+          .maybeSingle();
+
+        if (typePlan?.id) {
+          freePlanId = typePlan.id;
+        } else {
+          // Fallback : plan global (service_type_id IS NULL)
+          const { data: globalPlan } = await supabase
+            .from('service_plans')
+            .select('id')
+            .eq('name', 'free')
+            .eq('is_active', true)
+            .is('service_type_id', null)
+            .limit(1)
+            .maybeSingle();
+          freePlanId = globalPlan?.id ?? null;
+        }
+
+        if (freePlanId) {
+          await ServiceSubscriptionService.offerFreeSubscription(
+            actionService.id,
+            actionService.user_id,
+            freePlanId,
+            365
+          );
+        }
+      }
+
       toast({
         title: actionType === 'approve' ? '✅ Service approuvé' : '❌ Service rejeté',
-        description: `${actionService.business_name} a été ${actionType === 'approve' ? 'activé' : 'rejeté'}`,
+        description: actionType === 'approve'
+          ? `${actionService.business_name} est maintenant actif et visible dans le marketplace`
+          : `${actionService.business_name} a été rejeté`,
       });
 
       setActionService(null);

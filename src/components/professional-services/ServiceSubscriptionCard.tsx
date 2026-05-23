@@ -1,15 +1,22 @@
-/**
- * Carte d'abonnement pour les services professionnels
- * Affiche le plan actuel et permet la mise à niveau
- */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Crown, Zap, Check, Star, Calendar, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Crown, Zap, Check, Star, Calendar, AlertTriangle, Wallet } from 'lucide-react';
 import { useServiceSubscription } from '@/hooks/useServiceSubscription';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -17,14 +24,16 @@ interface ServiceSubscriptionCardProps {
   serviceId: string;
   serviceTypeId?: string;
   compact?: boolean;
+  onSubscribed?: () => void;
 }
 
-export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = false }: ServiceSubscriptionCardProps) {
+export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = false, onSubscribed }: ServiceSubscriptionCardProps) {
   const { user } = useAuth();
   const {
     subscription,
     plans,
     loading,
+    isFree,
     isActive,
     isExpired,
     isExpiringSoon,
@@ -32,28 +41,76 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
     subscribe,
     canAccessFeature,
     formatAmount,
-    refresh
+    refresh,
   } = useServiceSubscription({ serviceId, serviceTypeId });
 
   const [showPlans, setShowPlans] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [selectedBilling, setSelectedBilling] = useState<'monthly' | 'yearly'>('monthly');
+  const [walletBalance, setWalletBalance] = useState(0);
 
-  const currentPlanName = subscription?.plan_display_name || 'Gratuit';
-  const isFree = !subscription?.subscription_id;
+  // Confirmation avant achat
+  const [confirmPlan, setConfirmPlan] = useState<{ id: string; name: string; price: number } | null>(null);
 
-  const handleSubscribe = async (planId: string) => {
+  // Lire le solde GNF directement depuis Supabase — même source que record_service_subscription_payment
+  const loadWalletBalance = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('user_id', user.id)
+      .eq('currency', 'GNF')
+      .maybeSingle();
+    setWalletBalance(Number(data?.balance ?? 0));
+  };
+
+  useEffect(() => {
+    loadWalletBalance();
+  }, [user?.id]);
+
+  // Plans triés par prix pour affichage cohérent (Gratuit → Basic → Pro → Premium)
+  const sortedPlans = [...plans].sort((a, b) => a.monthly_price_gnf - b.monthly_price_gnf);
+
+  const currentPlanDisplayName = isFree ? 'Gratuit' : (subscription?.plan_display_name || 'Gratuit');
+
+  // Étape 1 : vérifications pré-achat + afficher confirmation
+  const handleRequestSubscribe = (planId: string) => {
     if (!user) {
       toast.error('Vous devez être connecté');
       return;
     }
+
+    const plan = sortedPlans.find(p => p.id === planId);
+    if (!plan) return;
+
+    const price = selectedBilling === 'yearly'
+      ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
+      : plan.monthly_price_gnf;
+
+    if (price > 0 && walletBalance < price) {
+      toast.error(`Solde insuffisant — disponible : ${formatAmount(walletBalance)} GNF, requis : ${formatAmount(price)} GNF`);
+      return;
+    }
+
+    // Afficher la confirmation
+    setConfirmPlan({ id: planId, name: plan.display_name, price });
+  };
+
+  // Étape 2 : confirmer et débiter
+  const handleConfirmSubscribe = async () => {
+    if (!confirmPlan) return;
+    const { id: planId } = confirmPlan;
+    setConfirmPlan(null);
 
     try {
       setSubscribing(true);
       await subscribe(planId, selectedBilling);
       toast.success('Abonnement activé avec succès !');
       setShowPlans(false);
-      await refresh();
+      // Rafraîchir l'abonnement ET le solde wallet après paiement
+      await Promise.all([refresh(), loadWalletBalance()]);
+      // Notifier le parent pour synchroniser les composants dépendants (ex: ServiceMediaManager)
+      onSubscribed?.();
     } catch (error: any) {
       toast.error(error.message || 'Erreur lors de la souscription');
     } finally {
@@ -72,7 +129,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
     );
   }
 
-  // Version compacte (barre horizontale)
+  // ── Version compacte (barre horizontale) ──────────────────────────────────
   if (compact) {
     return (
       <>
@@ -87,7 +144,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
               <Crown className="w-4 h-4 text-primary flex-shrink-0" />
             )}
             <span className="text-sm font-medium truncate">
-              Plan {currentPlanName}
+              {currentPlanDisplayName}
             </span>
             {isExpiringSoon && (
               <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">
@@ -95,7 +152,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
                 Expire bientôt
               </Badge>
             )}
-            {isActive && !isFree && daysRemaining > 0 && (
+            {isActive && daysRemaining > 0 && (
               <span className="text-xs text-muted-foreground hidden sm:inline">
                 {daysRemaining}j restants
               </span>
@@ -121,19 +178,28 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
         <PlansDialog
           open={showPlans}
           onOpenChange={setShowPlans}
-          plans={plans}
-          currentPlanName={subscription?.plan_name}
+          plans={sortedPlans}
+          currentPlanId={subscription?.plan_id}
           selectedBilling={selectedBilling}
           onBillingChange={setSelectedBilling}
-          onSubscribe={handleSubscribe}
+          onSubscribe={handleRequestSubscribe}
           subscribing={subscribing}
           formatAmount={formatAmount}
+          walletBalance={walletBalance}
+        />
+
+        <ConfirmDialog
+          plan={confirmPlan}
+          billing={selectedBilling}
+          formatAmount={formatAmount}
+          onConfirm={handleConfirmSubscribe}
+          onCancel={() => setConfirmPlan(null)}
         />
       </>
     );
   }
 
-  // Version complète (carte)
+  // ── Version complète (carte) ───────────────────────────────────────────────
   return (
     <>
       <Card className={cn(
@@ -146,11 +212,26 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
               <Crown className="w-5 h-5 text-primary" />
               Abonnement Service
             </CardTitle>
-            <Badge variant={isFree ? "secondary" : "default"} className={cn(
-              !isFree && "bg-primary"
-            )}>
-              {currentPlanName}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={isFree ? "secondary" : "default"} className={cn(!isFree && "bg-primary")}>
+                {currentPlanDisplayName}
+              </Badge>
+              <Button
+                size="sm"
+                variant={isFree ? "default" : "outline"}
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setShowPlans(true)}
+              >
+                {isFree ? (
+                  <>
+                    <Crown className="w-3 h-3 mr-1" />
+                    Mettre à niveau
+                  </>
+                ) : (
+                  'Gérer'
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -160,14 +241,20 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <span className="text-muted-foreground">Statut</span>
             <span className={cn(
               "font-medium",
-              isActive || isFree ? "text-emerald-600" : "text-destructive"
+              isFree || isActive ? "text-emerald-600" : "text-destructive"
             )}>
-              {isFree ? '✅ Actif (Gratuit)' : isActive ? '✅ Actif' : isExpired ? '❌ Expiré' : '⏳ En attente'}
+              {isFree
+                ? '✅ Actif (Gratuit)'
+                : isActive
+                  ? '✅ Actif'
+                  : isExpired
+                    ? '❌ Expiré'
+                    : '⏳ En attente'}
             </span>
           </div>
 
           {/* Jours restants */}
-          {!isFree && isActive && (
+          {isActive && daysRemaining > 0 && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
@@ -182,31 +269,43 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             </div>
           )}
 
+          {/* Date de fin d'abonnement */}
+          {isActive && subscription?.current_period_end && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Renouvellement</span>
+              <span className="font-medium">
+                {new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}
+              </span>
+            </div>
+          )}
+
+          {/* Solde wallet */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Wallet className="w-3.5 h-3.5" />
+              Solde wallet
+            </span>
+            <span className="font-medium">{formatAmount(walletBalance)} GNF</span>
+          </div>
+
           {/* Limites du plan */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Limites du plan :</p>
-            <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="flex flex-col gap-1.5 text-xs">
               <div className="flex items-center gap-1">
                 <Check className="w-3 h-3 text-emerald-500" />
-                <span>Réservations: {subscription?.max_bookings ?? '10'}/mois</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-500" />
-                <span>Produits: {subscription?.max_products ?? '5'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {canAccessFeature('analytics') ? (
-                  <Check className="w-3 h-3 text-emerald-500" />
-                ) : (
-                  <span className="w-3 h-3 text-muted-foreground">✗</span>
-                )}
-                <span>Analytics</span>
+                <span>
+                  Produits:{' '}
+                  {subscription?.max_products != null
+                    ? subscription.max_products
+                    : isFree ? '5' : '∞'}
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 {canAccessFeature('priority_listing') ? (
                   <Check className="w-3 h-3 text-emerald-500" />
                 ) : (
-                  <span className="w-3 h-3 text-muted-foreground">✗</span>
+                  <span className="w-3 h-3 text-muted-foreground text-center">✗</span>
                 )}
                 <span>Listing prioritaire</span>
               </div>
@@ -217,64 +316,122 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
           {isExpiringSoon && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span>Votre abonnement expire dans {daysRemaining} jours. Renouvelez pour ne pas perdre vos avantages.</span>
+              <span>
+                Votre abonnement expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}.
+                Renouvelez pour ne pas perdre vos avantages.
+              </span>
             </div>
           )}
 
-          {/* Bouton */}
-          <Button
-            className="w-full"
-            variant={isFree ? "default" : "outline"}
-            onClick={() => setShowPlans(true)}
-          >
-            {isFree ? (
-              <>
-                <Crown className="w-4 h-4 mr-2" />
-                Mettre à niveau
-              </>
-            ) : (
-              'Gérer mon abonnement'
-            )}
-          </Button>
         </CardContent>
       </Card>
 
       <PlansDialog
         open={showPlans}
         onOpenChange={setShowPlans}
-        plans={plans}
-        currentPlanName={subscription?.plan_name}
+        plans={sortedPlans}
+        currentPlanId={subscription?.plan_id}
         selectedBilling={selectedBilling}
         onBillingChange={setSelectedBilling}
-        onSubscribe={handleSubscribe}
+        onSubscribe={handleRequestSubscribe}
         subscribing={subscribing}
         formatAmount={formatAmount}
+        walletBalance={walletBalance}
+      />
+
+      <ConfirmDialog
+        plan={confirmPlan}
+        billing={selectedBilling}
+        formatAmount={formatAmount}
+        onConfirm={handleConfirmSubscribe}
+        onCancel={() => setConfirmPlan(null)}
       />
     </>
   );
 }
 
-// Dialog pour afficher les plans
+// ── Dialog de confirmation avant paiement ─────────────────────────────────────
+function ConfirmDialog({
+  plan,
+  billing,
+  formatAmount,
+  onConfirm,
+  onCancel,
+}: {
+  plan: { id: string; name: string; price: number } | null;
+  billing: 'monthly' | 'yearly';
+  formatAmount: (n: number) => string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <AlertDialog open={plan !== null} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-primary" />
+            Confirmer l'abonnement
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 pt-1">
+              <p>Vous êtes sur le point de souscrire au plan :</p>
+              <div className="rounded-lg border bg-muted/50 px-4 py-3 space-y-1.5 text-sm text-foreground">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Plan</span>
+                  <span className="font-semibold">{plan?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Facturation</span>
+                  <span className="font-medium">{billing === 'yearly' ? 'Annuelle' : 'Mensuelle'}</span>
+                </div>
+                <div className="flex justify-between border-t pt-1.5 mt-1.5">
+                  <span className="text-muted-foreground">Montant débité</span>
+                  <span className="font-bold text-primary">
+                    {plan ? formatAmount(plan.price) : '—'} GNF
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ce montant sera immédiatement débité de votre portefeuille GNF.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>Annuler</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} className="bg-primary">
+            <Wallet className="w-4 h-4 mr-2" />
+            Confirmer et payer
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// ── Dialog de sélection de plan ───────────────────────────────────────────────
 function PlansDialog({
   open,
   onOpenChange,
   plans,
-  currentPlanName,
+  currentPlanId,
   selectedBilling,
   onBillingChange,
   onSubscribe,
   subscribing,
-  formatAmount
+  formatAmount,
+  walletBalance,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plans: any[];
-  currentPlanName?: string;
+  currentPlanId?: string;
   selectedBilling: 'monthly' | 'yearly';
   onBillingChange: (billing: 'monthly' | 'yearly') => void;
   onSubscribe: (planId: string) => void;
   subscribing: boolean;
   formatAmount: (amount: number) => string;
+  walletBalance: number;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -285,6 +442,15 @@ function PlansDialog({
             Choisir un plan
           </DialogTitle>
         </DialogHeader>
+
+        {/* Solde disponible */}
+        <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 text-sm">
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Wallet className="w-4 h-4" />
+            Solde disponible
+          </span>
+          <span className="font-semibold">{formatAmount(walletBalance)} GNF</span>
+        </div>
 
         {/* Toggle facturation */}
         <div className="flex items-center justify-center gap-2 py-2">
@@ -305,89 +471,107 @@ function PlansDialog({
           </Button>
         </div>
 
-        {/* Grille des plans */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {plans.map((plan) => {
-            const isCurrent = plan.name === currentPlanName;
-            const price = selectedBilling === 'yearly'
-              ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
-              : plan.monthly_price_gnf;
+        {/* Plans */}
+        {plans.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Aucun plan disponible pour ce type de service.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {plans.map((plan) => {
+              const isCurrent = plan.id === currentPlanId;
+              const price = selectedBilling === 'yearly'
+                ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
+                : plan.monthly_price_gnf;
+              const canAfford = plan.monthly_price_gnf === 0 || walletBalance >= price;
 
-            return (
-              <Card key={plan.id} className={cn(
-                "relative overflow-hidden transition-all",
-                isCurrent && "border-primary ring-1 ring-primary",
-                plan.name === 'pro' && !isCurrent && "border-primary/50"
-              )}>
-                {plan.name === 'pro' && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-bl-lg font-medium flex items-center gap-1">
-                    <Star className="w-3 h-3" />
-                    Populaire
-                  </div>
-                )}
-                {isCurrent && (
-                  <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
-                    Actuel
-                  </div>
-                )}
+              return (
+                <Card key={plan.id} className={cn(
+                  "relative overflow-hidden transition-all",
+                  isCurrent && "border-primary ring-1 ring-primary",
+                  plan.name === 'pro' && !isCurrent && "border-primary/50"
+                )}>
+                  {plan.name === 'pro' && (
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-bl-lg font-medium flex items-center gap-1">
+                      <Star className="w-3 h-3" />
+                      Populaire
+                    </div>
+                  )}
+                  {isCurrent && (
+                    <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
+                      Actuel
+                    </div>
+                  )}
 
-                <CardContent className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-bold text-lg">{plan.display_name}</h3>
-                    <p className="text-xs text-muted-foreground">{plan.description}</p>
-                  </div>
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <h3 className="font-bold text-lg">{plan.display_name}</h3>
+                      <p className="text-xs text-muted-foreground">{plan.description}</p>
+                    </div>
 
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black">
-                      {plan.monthly_price_gnf === 0 ? 'Gratuit' : formatAmount(price)}
-                    </span>
-                    {plan.monthly_price_gnf > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        /{selectedBilling === 'yearly' ? 'an' : 'mois'}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black">
+                        {plan.monthly_price_gnf === 0 ? 'Gratuit' : formatAmount(price)}
                       </span>
+                      {plan.monthly_price_gnf > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          /{selectedBilling === 'yearly' ? 'an' : 'mois'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Alerte solde insuffisant */}
+                    {!canAfford && plan.monthly_price_gnf > 0 && (
+                      <div className="flex items-center gap-1 text-[10px] text-destructive">
+                        <AlertTriangle className="w-3 h-3" />
+                        Solde insuffisant ({formatAmount(price - walletBalance)} GNF manquants)
+                      </div>
                     )}
-                  </div>
 
-                  {/* Features */}
-                  <ul className="space-y-1">
-                    {(plan.features || []).slice(0, 5).map((feature: string, i: number) => (
-                      <li key={i} className="flex items-center gap-1.5 text-xs">
-                        <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    <ul className="space-y-1">
+                      {(plan.features || [])
+                        .filter((f: string) => !/réservation|api/i.test(f))
+                        .slice(0, 5)
+                        .map((feature: string, i: number) => (
+                          <li key={i} className="flex items-center gap-1.5 text-xs">
+                            <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                    </ul>
 
-                  <div className="text-[10px] text-muted-foreground space-y-0.5">
-                    <div>📅 Réservations: {plan.max_bookings_per_month ?? '∞'}/mois</div>
-                    <div>📦 Produits: {plan.max_products ?? '∞'}</div>
-                    <div>👥 Staff: {plan.max_staff ?? '∞'}</div>
-                  </div>
+                    <div className="text-[10px] text-muted-foreground space-y-0.5">
+                      <div>📦 Produits : {plan.max_products ?? '∞'}</div>
+                      <div>👥 Staff : {plan.max_staff ?? '∞'}</div>
+                    </div>
 
-                  <Button
-                    className="w-full"
-                    variant={isCurrent ? 'outline' : plan.name === 'pro' ? 'default' : 'secondary'}
-                    disabled={isCurrent || subscribing || plan.monthly_price_gnf === 0}
-                    onClick={() => onSubscribe(plan.id)}
-                  >
-                    {subscribing ? (
-                      <span className="animate-pulse">Traitement...</span>
-                    ) : isCurrent ? (
-                      'Plan actuel'
-                    ) : plan.monthly_price_gnf === 0 ? (
-                      'Plan gratuit'
-                    ) : (
-                      <>
-                        <Zap className="w-3 h-3 mr-1" />
-                        Choisir
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <Button
+                      className="w-full"
+                      variant={isCurrent ? 'outline' : plan.name === 'pro' ? 'default' : 'secondary'}
+                      disabled={isCurrent || subscribing || plan.monthly_price_gnf === 0 || !canAfford}
+                      onClick={() => onSubscribe(plan.id)}
+                    >
+                      {subscribing ? (
+                        <span className="animate-pulse">Traitement...</span>
+                      ) : isCurrent ? (
+                        'Plan actuel'
+                      ) : plan.monthly_price_gnf === 0 ? (
+                        'Plan gratuit'
+                      ) : !canAfford ? (
+                        'Solde insuffisant'
+                      ) : (
+                        <>
+                          <Zap className="w-3 h-3 mr-1" />
+                          Choisir
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

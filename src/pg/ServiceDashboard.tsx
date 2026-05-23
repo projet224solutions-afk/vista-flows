@@ -1,25 +1,34 @@
 ﻿import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard, Bot } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Wallet, CreditCard, Bot, Images, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import { useWallet } from '@/hooks/useWallet';
+import { useServiceSubscription } from '@/hooks/useServiceSubscription';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
-import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
 import { ServiceIdBadge } from '@/components/professional-services/ServiceIdBadge';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
-const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
+const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTicketsUniversal').then(m => ({ default: m.SupportTicketsUniversal })));
 const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
+const ServiceMediaManager = lazy(() =>
+  import('@/components/professional-services/ServiceMediaManager').then(m => ({ default: m.ServiceMediaManager }))
+);
+const ServiceAnalytics = lazy(() =>
+  import('@/components/professional-services/ServiceAnalytics').then(m => ({ default: m.ServiceAnalytics }))
+);
+const ServiceReviews = lazy(() =>
+  import('@/components/professional-services/ServiceReviews').then(m => ({ default: m.ServiceReviews }))
+);
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -41,6 +50,12 @@ export default function ServiceDashboard() {
   const { wallet } = useWallet();
   const [service, setService] = useState<ProfessionalService | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Source de vérité unique pour l'abonnement — partagée avec ServiceMediaManager
+  const { isPremium, refresh: refreshSubscription } = useServiceSubscription({
+    serviceId,
+    serviceTypeId: service?.service_type_id ?? undefined,
+  });
 
   // Auto-fill GPS is now handled globally via useAutoFillGps in App.tsx
 
@@ -107,7 +122,7 @@ export default function ServiceDashboard() {
            </div>
 
           {/* Barre d'abonnement compacte */}
-          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} compact />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} compact onSubscribed={refreshSubscription} />
 
           <ServiceModuleManager
             serviceId={service.id}
@@ -135,6 +150,23 @@ export default function ServiceDashboard() {
               <CardContent className="p-0 sm:p-2">
                 <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
                   <PaymentLinksManager />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Galerie Médias */}
+          <div className="mt-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <Images className="w-5 h-5" />
+                  Galerie Médias
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 sm:p-2">
+                <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <ServiceMediaManager serviceId={service.id} isPremium={isPremium} />
                 </Suspense>
               </CardContent>
             </Card>
@@ -291,7 +323,7 @@ export default function ServiceDashboard() {
 
         {/* Carte abonnement */}
         <div className="mb-6">
-          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} onSubscribed={refreshSubscription} />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
@@ -303,7 +335,6 @@ export default function ServiceDashboard() {
                 Wallet
               </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
-              <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
               <TabsTrigger value="payment-links" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
                 <CreditCard className="w-3.5 h-3.5" />
                 Paiements
@@ -314,13 +345,17 @@ export default function ServiceDashboard() {
               </TabsTrigger>
               <TabsTrigger value="reviews" className="text-xs sm:text-sm px-2.5 sm:px-3">Avis</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2.5 sm:px-3">Stats</TabsTrigger>
-              <TabsTrigger value="api" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-                <Key className="w-3.5 h-3.5" />
-                API
+              <TabsTrigger value="media" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Images className="w-3.5 h-3.5" />
+                Médias
               </TabsTrigger>
               <TabsTrigger value="copilote" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
                 <Bot className="w-3.5 h-3.5" />
                 Copilote IA
+              </TabsTrigger>
+              <TabsTrigger value="support" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Headphones className="w-3.5 h-3.5" />
+                Support
               </TabsTrigger>
             </TabsList>
           </div>
@@ -373,10 +408,6 @@ export default function ServiceDashboard() {
             />
           </TabsContent>
 
-          <TabsContent value="bookings">
-            <BookingManagement serviceId={service.id} />
-          </TabsContent>
-
           <TabsContent value="payment-links">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <PaymentLinksManager />
@@ -393,30 +424,20 @@ export default function ServiceDashboard() {
           </TabsContent>
 
           <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Avis Clients</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Module de gestion des avis à implémenter...</p>
-              </CardContent>
-            </Card>
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <ServiceReviews serviceId={service.id} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiques Détaillées</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Module d'analytics à implémenter...</p>
-              </CardContent>
-            </Card>
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <ServiceAnalytics serviceId={service.id} />
+            </Suspense>
           </TabsContent>
 
-          <TabsContent value="api">
+          <TabsContent value="media">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <WalletApiPanel serviceId={service.id} businessName={service.business_name} />
+              <ServiceMediaManager serviceId={service.id} isPremium={isPremium} />
             </Suspense>
           </TabsContent>
 
@@ -441,6 +462,12 @@ export default function ServiceDashboard() {
                 </Suspense>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="support" className="animate-fade-in">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <SupportTicketsUniversal />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

@@ -98,7 +98,7 @@ export class ServiceSubscriptionService {
         .order('display_order');
 
       if (serviceTypeId) {
-        query = query.eq('service_type_id', serviceTypeId);
+        query = query.or(`service_type_id.eq.${serviceTypeId},service_type_id.is.null`);
       }
 
       const { data, error, status } = await query;
@@ -403,22 +403,16 @@ export class ServiceSubscriptionService {
    */
   static async cancelSubscription(subscriptionId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('service_subscriptions')
-        .update({
-          status: 'cancelled',
-          auto_renew: false,
-          cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', subscriptionId);
+      // RPC SECURITY DEFINER — contourne RLS, vérifie que l'appelant est propriétaire du service
+      const { data, error } = await supabase
+        .rpc('cancel_service_subscription', { p_subscription_id: subscriptionId });
 
       if (error) {
         console.error('❌ Erreur annulation abonnement service:', error);
         return false;
       }
 
-      return true;
+      return data === true;
     } catch (error) {
       console.error('❌ Exception annulation abonnement service:', error);
       return false;

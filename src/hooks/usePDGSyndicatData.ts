@@ -197,6 +197,32 @@ export const usePDGSyndicatData = () => {
     full_location?: string;
   }) => {
     try {
+      // Vérifier si l'email est déjà utilisé par un autre bureau
+      if (formData.president_email) {
+        const { data: existingBureau } = await supabase
+          .from('bureaus')
+          .select('id, bureau_code')
+          .eq('president_email', formData.president_email)
+          .maybeSingle();
+
+        if (existingBureau) {
+          toast.error(`Cet email est déjà utilisé par le bureau ${(existingBureau as any).bureau_code}`);
+          return null;
+        }
+
+        // Vérifier si l'email a déjà un compte dans le système
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', formData.president_email)
+          .maybeSingle();
+
+        if (existingProfile) {
+          toast.error('Cet email a déjà un compte existant dans le système');
+          return null;
+        }
+      }
+
       const access_token = crypto.randomUUID();
 
       const { data: bureau, error } = await supabase

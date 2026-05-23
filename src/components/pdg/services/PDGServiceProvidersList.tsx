@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/table';
 import { supabase } from '@/lib/supabaseClient';
 import { backendFetch } from '@/services/backendApi';
+import { ServiceSubscriptionService, ServicePlan } from '@/services/serviceSubscriptionService';
 import {
   Search, Users, MapPin, Star, Phone, Mail, _Eye,
   CheckCircle, Clock, XCircle, AlertTriangle, RefreshCw,
-  TrendingUp, ShoppingBag, Store, Globe, Loader2
+  TrendingUp, ShoppingBag, Store, Globe, Loader2, Gift, Crown, Calendar
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -94,6 +95,64 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
   const [currencyDialog, setCurrencyDialog] = useState<{
     open: boolean; provider: Provider | null; selectedCountry: string; saving: boolean; error: string | null;
   }>({ open: false, provider: null, selectedCountry: '', saving: false, error: null });
+
+  // ── État dialog "Offrir abonnement" ──────────────────────────────────────────
+  const [offerDialog, setOfferDialog] = useState<{
+    open: boolean;
+    provider: Provider | null;
+    plans: ServicePlan[];
+    selectedPlanId: string;
+    days: string;
+    saving: boolean;
+    error: string | null;
+  }>({ open: false, provider: null, plans: [], selectedPlanId: '', days: '30', saving: false, error: null });
+
+  const openOfferDialog = async (provider: Provider) => {
+    // Charger les plans disponibles pour ce type de service (+ plans globaux)
+    const plans = await ServiceSubscriptionService.getPlans(provider.service_type_id || undefined);
+    // Exclure le plan gratuit — on offre un plan payant gratuitement
+    const paidPlans = plans.filter(p => p.monthly_price_gnf > 0 && p.is_active);
+    setOfferDialog({
+      open: true,
+      provider,
+      plans: paidPlans,
+      selectedPlanId: paidPlans[0]?.id || '',
+      days: '30',
+      saving: false,
+      error: null,
+    });
+  };
+
+  const handleOfferSubscription = async () => {
+    const { provider, selectedPlanId, days } = offerDialog;
+    if (!provider || !selectedPlanId) {
+      setOfferDialog(d => ({ ...d, error: 'Sélectionnez un plan' }));
+      return;
+    }
+    const daysNum = parseInt(days, 10);
+    if (isNaN(daysNum) || daysNum <= 0) {
+      setOfferDialog(d => ({ ...d, error: 'Durée invalide (minimum 1 jour)' }));
+      return;
+    }
+    setOfferDialog(d => ({ ...d, saving: true, error: null }));
+    try {
+      const success = await ServiceSubscriptionService.offerFreeSubscription(
+        provider.id,
+        provider.user_id,
+        selectedPlanId,
+        daysNum
+      );
+      if (!success) throw new Error("Échec de l'attribution de l'abonnement");
+      const plan = offerDialog.plans.find(p => p.id === selectedPlanId);
+      toast.success(
+        `Abonnement ${plan?.display_name || ''} offert à ${provider.business_name} pour ${daysNum} jour(s)`,
+        { duration: 5000 }
+      );
+      setOfferDialog(d => ({ ...d, open: false }));
+    } catch (err: any) {
+      setOfferDialog(d => ({ ...d, saving: false, error: err.message || 'Erreur inconnue' }));
+    }
+  };
 
   const handleServiceCurrencyChange = async () => {
     const { provider, selectedCountry } = currencyDialog;
@@ -315,15 +374,26 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                         {format(new Date(p.created_at), 'dd MMM yyyy', { locale: fr })}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setCurrencyDialog({ open: true, provider: p, selectedCountry: '', saving: false, error: null })}
-                          className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-500"
-                        >
-                          <Globe className="w-3.5 h-3.5 mr-1" />
-                          Devise
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCurrencyDialog({ open: true, provider: p, selectedCountry: '', saving: false, error: null })}
+                            className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-500"
+                          >
+                            <Globe className="w-3.5 h-3.5 mr-1" />
+                            Devise
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openOfferDialog(p)}
+                            className="border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-600"
+                          >
+                            <Gift className="w-3.5 h-3.5 mr-1" />
+                            Offrir
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -334,6 +404,159 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* ── Dialog : Offrir un abonnement ─────────────────────────────────────── */}
+      <Dialog open={offerDialog.open} onOpenChange={open => setOfferDialog(d => ({ ...d, open }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="w-5 h-5 text-amber-500" />
+              Offrir un abonnement
+            </DialogTitle>
+            <DialogDescription>
+              Attribution gratuite d'un plan payant au prestataire
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Infos service */}
+            <div className="rounded-lg border bg-muted/40 px-4 py-3 space-y-1 text-sm">
+              <div className="flex items-center gap-2 font-semibold">
+                <Store className="w-4 h-4 text-muted-foreground" />
+                {offerDialog.provider?.business_name}
+              </div>
+              {offerDialog.provider?.service_type?.name && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-[10px]">
+                    {offerDialog.provider.service_type.name}
+                  </Badge>
+                </div>
+              )}
+              {offerDialog.provider?.address && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {offerDialog.provider.address}
+                </div>
+              )}
+            </div>
+
+            {/* Sélection du plan */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Crown className="w-4 h-4 text-primary" />
+                Plan à offrir
+              </Label>
+              {offerDialog.plans.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Aucun plan payant disponible pour ce type de service.
+                </p>
+              ) : (
+                <Select
+                  value={offerDialog.selectedPlanId}
+                  onValueChange={v => setOfferDialog(d => ({ ...d, selectedPlanId: v, error: null }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir un plan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {offerDialog.plans.map(plan => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        <div className="flex items-center justify-between gap-3 w-full">
+                          <span className="font-medium">{plan.display_name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {plan.monthly_price_gnf.toLocaleString()} GNF/mois
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Durée */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                Durée (jours)
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={offerDialog.days}
+                  onChange={e => setOfferDialog(d => ({ ...d, days: e.target.value, error: null }))}
+                  className="w-28"
+                  placeholder="30"
+                />
+                <div className="flex gap-1.5">
+                  {[7, 30, 90, 365].map(d => (
+                    <Button
+                      key={d}
+                      type="button"
+                      size="sm"
+                      variant={offerDialog.days === String(d) ? 'default' : 'outline'}
+                      className="text-xs px-2"
+                      onClick={() => setOfferDialog(s => ({ ...s, days: String(d), error: null }))}
+                    >
+                      {d === 365 ? '1 an' : `${d}j`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Récapitulatif */}
+            {offerDialog.selectedPlanId && offerDialog.days && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm space-y-1">
+                <p className="font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <Gift className="w-4 h-4" />
+                  Récapitulatif de l'offre
+                </p>
+                <p className="text-muted-foreground">
+                  Plan <strong>{offerDialog.plans.find(p => p.id === offerDialog.selectedPlanId)?.display_name}</strong> offert
+                  gratuitement pendant <strong>{offerDialog.days} jour(s)</strong>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Valeur : {(
+                    (offerDialog.plans.find(p => p.id === offerDialog.selectedPlanId)?.monthly_price_gnf || 0)
+                    * (parseInt(offerDialog.days, 10) / 30)
+                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })} GNF équivalent
+                </p>
+              </div>
+            )}
+
+            {/* Erreur */}
+            {offerDialog.error && (
+              <p className="text-sm text-destructive bg-destructive/10 rounded p-2 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                {offerDialog.error}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOfferDialog(d => ({ ...d, open: false }))}
+              disabled={offerDialog.saving}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleOfferSubscription}
+              disabled={offerDialog.saving || !offerDialog.selectedPlanId || offerDialog.plans.length === 0}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {offerDialog.saving
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Attribution...</>
+                : <><Gift className="w-4 h-4 mr-2" />Offrir gratuitement</>
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog changement de devise service de proximité */}
       <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>

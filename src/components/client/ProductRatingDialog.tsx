@@ -1,7 +1,3 @@
-/**
- * Dialog de notation des produits d'une commande
- * Permet de noter chaque produit individuellement après livraison
- */
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Loader2, Package, ChevronRight, Check } from 'lucide-react';
+import { Star, Loader2, Package, ChevronRight, Check, Store } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +25,8 @@ interface OrderProduct {
   rated: boolean;
 }
 
+type Step = 'products' | 'vendor' | 'done';
+
 interface ProductRatingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,11 +40,13 @@ export default function ProductRatingDialog({
   open,
   onOpenChange,
   orderId,
-  _vendorId,
+  vendorId,
   vendorName,
   onRatingSubmitted
 }: ProductRatingDialogProps) {
   const queryClient = useQueryClient();
+
+  // Produits
   const [products, setProducts] = useState<OrderProduct[]>([]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [rating, setRating] = useState(0);
@@ -54,10 +54,22 @@ export default function ProductRatingDialog({
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [allRated, setAllRated] = useState(false);
+
+  // Navigation entre étapes
+  const [step, setStep] = useState<Step>('products');
+
+  // Boutique
+  const [vendorRating, setVendorRating] = useState(0);
+  const [hoveredVendorRating, setHoveredVendorRating] = useState(0);
+  const [vendorComment, setVendorComment] = useState('');
+  const [submittingVendor, setSubmittingVendor] = useState(false);
+  const [vendorAlreadyRated, setVendorAlreadyRated] = useState(false);
 
   useEffect(() => {
     if (open && orderId) {
+      setStep('products');
+      setVendorRating(0);
+      setVendorComment('');
       loadOrderProducts();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,55 +81,75 @@ export default function ProductRatingDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Récupérer les produits de la commande
-      const { data: orderItems, error: itemsError } = await supabase
-        .from('order_items')
-        .select(`
-          id,
-          product_id,
-          quantity,
-          products:product_id (
-            name,
-            images
-          )
-        `)
-        .eq('order_id', orderId);
+      const [{ data: orderItems, error: itemsError }, { data: existingReviews }, { data: existingVendorRating }] =
+        await Promise.all([
+          supabase
+            .from('order_items')
+            .select('id, product_id, quantity, products:product_id(name, images)')
+            .eq('order_id', orderId),
+          supabase
+            .from('product_reviews')
+            .select('product_id')
+            .eq('order_id', orderId)
+            .eq('user_id', user.id),
+          supabase
+            .from('vendor_ratings')
+            .select('id')
+            .eq('order_id', orderId)
+            .eq('customer_id', user.id)
+            .maybeSingle(),
+        ]);
 
       if (itemsError) throw itemsError;
 
-      // Récupérer les avis déjà soumis pour cette commande
-      const { data: existingReviews } = await supabase
-        .from('product_reviews')
-        .select('product_id')
-        .eq('order_id', orderId)
-        .eq('user_id', user.id);
+      setVendorAlreadyRated(!!existingVendorRating);
 
       const ratedProductIds = new Set((existingReviews || []).map(r => r.product_id));
 
-      const productsList: OrderProduct[] = (orderItems || []).map(item => {
-        const product = item.products as any;
-        const images = product?.images;
-        const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
-
-        return {
-          id: item.id,
-          product_id: item.product_id,
-          product_name: product?.name || 'Produit',
-          product_image: firstImage,
-          quantity: item.quantity,
-          rated: ratedProductIds.has(item.product_id)
-        };
-      });
+      // Dédupliquer par product_id
+      const seenProductIds = new Set<string>();
+      const productsList: OrderProduct[] = (orderItems || [])
+        .filter(item => {
+          if (seenProductIds.has(item.product_id)) return false;
+          seenProductIds.add(item.product_id);
+          return true;
+        })
+        .map(item => {
+          const product = item.products as any;
+          const images = product?.images;
+          const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
+          return {
+            id: item.id,
+            product_id: item.product_id,
+            product_name: product?.name || 'Produit',
+            product_image: firstImage,
+            quantity: item.quantity,
+            rated: ratedProductIds.has(item.product_id),
+          };
+        });
 
       setProducts(productsList);
 
-      // Trouver le premier produit non noté
+      if (productsList.length === 0) {
+        // Pas de produits — aller directement à la notation boutique si pas encore notée
+        if (existingVendorRating) {
+          setStep('done');
+        } else {
+          setStep('vendor');
+        }
+        return;
+      }
+
       const firstUnrated = productsList.findIndex(p => !p.rated);
       if (firstUnrated >= 0) {
         setCurrentProductIndex(firstUnrated);
-        setAllRated(false);
       } else {
-        setAllRated(true);
+        // Tous déjà notés — aller à la boutique
+        if (existingVendorRating) {
+          setStep('done');
+        } else {
+          setStep('vendor');
+        }
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
@@ -141,35 +173,31 @@ export default function ProductRatingDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      // Insérer l'avis dans product_reviews
       const { error } = await supabase
         .from('product_reviews')
         .insert({
           product_id: currentProduct.product_id,
           order_id: orderId,
           user_id: user.id,
-          rating: rating,
+          rating,
           title: `Avis sur ${currentProduct.product_name}`.substring(0, 100),
           content: comment.trim() || 'Aucun commentaire',
           verified_purchase: true,
-          is_approved: true
+          is_approved: true,
         });
 
       if (error) throw error;
 
-      const { data: productReviewStats, error: productReviewStatsError } = await supabase
+      // Mettre à jour la note moyenne du produit
+      const { data: productReviewStats } = await supabase
         .from('product_reviews')
         .select('rating')
         .eq('product_id', currentProduct.product_id)
         .eq('is_approved', true);
 
-      if (productReviewStatsError) {
-        throw productReviewStatsError;
-      }
-
       const reviewCount = productReviewStats?.length || 0;
       const averageRating = reviewCount > 0
-        ? productReviewStats.reduce((sum, current) => sum + Number(current.rating || 0), 0) / reviewCount
+        ? productReviewStats!.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviewCount
         : rating;
 
       await supabase
@@ -181,45 +209,86 @@ export default function ProductRatingDialog({
         })
         .eq('id', currentProduct.product_id);
 
-      toast.success(`Avis soumis pour ${currentProduct.product_name}`, {
-        description: `${rating}/5 étoiles`
-      });
+      toast.success(`Avis soumis pour ${currentProduct.product_name}`, { description: `${rating}/5 étoiles` });
 
-      queryClient.invalidateQueries({ queryKey: ['ai-recommendations'] });
-      queryClient.invalidateQueries({ queryKey: ['discovery-products'] });
-      queryClient.invalidateQueries({ queryKey: ['smart-recommendations'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-recommendations'] });
 
-      // Marquer comme noté
       const updatedProducts = [...products];
       updatedProducts[currentProductIndex].rated = true;
       setProducts(updatedProducts);
-
-      // Réinitialiser pour le prochain produit
       setRating(0);
       setComment('');
 
-      // Passer au prochain produit non noté
+      // Produit suivant non noté
       const nextUnrated = updatedProducts.findIndex((p, i) => !p.rated && i > currentProductIndex);
       if (nextUnrated >= 0) {
         setCurrentProductIndex(nextUnrated);
       } else {
-        // Vérifier s'il reste des produits non notés avant le current
         const prevUnrated = updatedProducts.findIndex(p => !p.rated);
         if (prevUnrated >= 0) {
           setCurrentProductIndex(prevUnrated);
         } else {
-          // Tous notés
-          setAllRated(true);
-          onRatingSubmitted?.();
+          // Tous notés → étape boutique
+          if (vendorAlreadyRated) {
+            setStep('done');
+            onRatingSubmitted?.();
+          } else {
+            setStep('vendor');
+          }
         }
       }
     } catch (error) {
       console.error('Erreur soumission avis:', error);
-      toast.error('Erreur lors de l\'envoi de la note');
+      toast.error("Erreur lors de l'envoi de la note");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmitVendorRating = async () => {
+    if (vendorRating === 0) {
+      toast.error('Veuillez sélectionner une note pour la boutique');
+      return;
+    }
+
+    setSubmittingVendor(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
+
+      const { error } = await supabase
+        .from('vendor_ratings')
+        .insert({
+          vendor_id: vendorId,
+          customer_id: user.id,
+          order_id: orderId,
+          rating: vendorRating,
+          comment: vendorComment.trim() || null,
+        });
+
+      if (error) throw error;
+
+      toast.success(`Merci pour votre avis sur ${vendorName} !`, { description: `${vendorRating}/5 étoiles` });
+      setStep('done');
+      onRatingSubmitted?.();
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        // Doublon — déjà noté
+        setStep('done');
+        onRatingSubmitted?.();
+      } else {
+        console.error('Erreur notation boutique:', error);
+        toast.error("Erreur lors de la notation de la boutique");
+      }
+    } finally {
+      setSubmittingVendor(false);
+    }
+  };
+
+  const handleSkipVendorRating = () => {
+    setStep('done');
+    onRatingSubmitted?.();
   };
 
   const handleClose = () => {
@@ -227,7 +296,9 @@ export default function ProductRatingDialog({
     setRating(0);
     setComment('');
     setCurrentProductIndex(0);
-    if (products.some(p => p.rated)) {
+    setVendorRating(0);
+    setVendorComment('');
+    if (products.some(p => p.rated) || step === 'done') {
       onRatingSubmitted?.();
     }
   };
@@ -236,6 +307,7 @@ export default function ProductRatingDialog({
   const ratedCount = products.filter(p => p.rated).length;
   const totalCount = products.length;
 
+  // ─── Chargement ────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -248,7 +320,8 @@ export default function ProductRatingDialog({
     );
   }
 
-  if (allRated) {
+  // ─── Étape finale : Merci ───────────────────────────────────────────────────
+  if (step === 'done') {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-md">
@@ -258,14 +331,116 @@ export default function ProductRatingDialog({
               Merci pour vos avis !
             </DialogTitle>
             <DialogDescription>
-              Vous avez note tous les produits de cette commande.
+              Vos avis aident les autres clients à faire leurs choix.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 text-center">
-            <p className="text-muted-foreground">
-              Vos avis aident les autres clients a faire leurs choix.
-            </p>
+          <DialogFooter>
+            <Button onClick={handleClose}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Étape : Notation boutique ──────────────────────────────────────────────
+  if (step === 'vendor') {
+    const vendorLabels = ['', 'Très insatisfait', 'Insatisfait', 'Correct', 'Satisfait', 'Excellent !'];
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Store className="w-5 h-5 text-primary" />
+              Notez la boutique
+            </DialogTitle>
+            <DialogDescription>
+              Comment s'est passée votre expérience chez <strong>{vendorName}</strong> ?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2 space-y-5">
+            {/* Étoiles */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setVendorRating(star)}
+                    onMouseEnter={() => setHoveredVendorRating(star)}
+                    onMouseLeave={() => setHoveredVendorRating(0)}
+                    className="transition-transform hover:scale-110 focus:outline-none"
+                  >
+                    <Star
+                      className={`w-10 h-10 ${
+                        star <= (hoveredVendorRating || vendorRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-muted-foreground/30'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {(hoveredVendorRating || vendorRating) > 0 && (
+                <p className="text-sm font-medium text-muted-foreground">
+                  {vendorLabels[hoveredVendorRating || vendorRating]}
+                </p>
+              )}
+            </div>
+
+            {/* Commentaire */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Votre avis sur la boutique (optionnel)
+              </label>
+              <Textarea
+                placeholder="Délai de livraison, qualité du service, communication..."
+                value={vendorComment}
+                onChange={(e) => setVendorComment(e.target.value)}
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {vendorComment.length}/500
+              </p>
+            </div>
           </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={handleSkipVendorRating} disabled={submittingVendor}>
+              Passer
+            </Button>
+            <Button
+              onClick={handleSubmitVendorRating}
+              disabled={submittingVendor || vendorRating === 0}
+              className="gap-2"
+            >
+              {submittingVendor ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Envoi...
+                </>
+              ) : (
+                'Soumettre'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Étape : Notation produits ──────────────────────────────────────────────
+  if (products.length === 0) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Aucun produit à noter</DialogTitle>
+            <DialogDescription>
+              Impossible de charger les produits de cette commande.
+            </DialogDescription>
+          </DialogHeader>
           <DialogFooter>
             <Button onClick={handleClose}>Fermer</Button>
           </DialogFooter>
@@ -285,7 +460,7 @@ export default function ProductRatingDialog({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4 py-2">
-          {/* Liste des produits avec statut */}
+          {/* Miniatures produits */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {products.map((product, index) => (
               <button
@@ -351,7 +526,7 @@ export default function ProductRatingDialog({
             </Card>
           )}
 
-          {/* Système de notation par étoiles */}
+          {/* Étoiles */}
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm text-muted-foreground">Comment évaluez-vous ce produit ?</p>
             <div className="flex gap-2">
@@ -374,7 +549,6 @@ export default function ProductRatingDialog({
                 </button>
               ))}
             </div>
-
             {rating > 0 && (
               <p className="text-sm text-muted-foreground">
                 {rating === 1 && 'Très insatisfait'}
@@ -388,9 +562,7 @@ export default function ProductRatingDialog({
 
           {/* Commentaire */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Votre avis (optionnel)
-            </label>
+            <label className="text-sm font-medium">Votre avis (optionnel)</label>
             <Textarea
               placeholder="Partagez votre expérience..."
               value={comment}
@@ -398,18 +570,12 @@ export default function ProductRatingDialog({
               rows={2}
               maxLength={500}
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {comment.length}/500
-            </p>
+            <p className="text-xs text-muted-foreground text-right">{comment.length}/500</p>
           </div>
         </div>
 
         <DialogFooter className="flex-shrink-0 gap-2 sm:gap-0 pt-4 border-t">
-          <Button
-            variant="ghost"
-            onClick={handleClose}
-            disabled={submitting}
-          >
+          <Button variant="ghost" onClick={handleClose} disabled={submitting}>
             {ratedCount > 0 ? 'Terminer' : 'Plus tard'}
           </Button>
           <Button

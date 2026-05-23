@@ -23,6 +23,7 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
+import { SupportTicketsUniversal } from '@/components/shared/SupportTicketsUniversal';
 // Modules opérationnels complets
 import { AgentKYCManagement } from '@/components/agent/AgentKYCManagement';
 import { AgentFullFinanceModule } from '@/components/agent/modules/AgentFullFinanceModule';
@@ -397,6 +398,9 @@ export default function AgentDashboard() {
 
       case 'affiliate':
         return <AgentAffiliateLinksSection agentId={agent.id} agentToken={agent.access_token} />;
+
+      case 'support':
+        return <SupportTicketsUniversal />;
 
       case 'settings':
         return (

@@ -34,6 +34,7 @@ export interface TaxiDriver extends BaseDriver {
   last_lat: number | null;
   last_lng: number | null;
   total_rides: number | null;
+  taxi_category?: 'car' | 'motorcycle' | null;
   source: 'taxi_drivers';
 }
 

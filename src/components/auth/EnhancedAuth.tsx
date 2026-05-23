@@ -23,9 +23,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  UserCheck, Store, Truck, Bike, Ship, ArrowLeft,
+  UserCheck, Store, Truck, Bike, Car, Ship, ArrowLeft,
   Lock, Mail, Loader2, Eye, EyeOff, AlertCircle,
-  User, LogIn, UserPlus, Phone
+  User, LogIn, UserPlus, Phone, ChevronDown, Check
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -54,6 +54,19 @@ interface AccountTypeOption {
   color: string;
   bgColor: string;
 }
+
+const MOTO_TAXI_COUNTRIES = ['GN', 'SL', 'LR', 'ML', 'BF', 'NE', 'GW'];
+
+const TAXI_COUNTRY_OPTIONS = [
+  { code: 'GN', name: 'Guinée', flag: '🇬🇳' },
+  { code: 'SL', name: 'Sierra Leone', flag: '🇸🇱' },
+  { code: 'LR', name: 'Libéria', flag: '🇱🇷' },
+  { code: 'ML', name: 'Mali', flag: '🇲🇱' },
+  { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫' },
+  { code: 'NE', name: 'Niger', flag: '🇳🇪' },
+  { code: 'GW', name: 'Guinée-Bissau', flag: '🇬🇼' },
+  { code: 'OTHER', name: 'Autre pays', flag: '🌍' },
+];
 
 const accountTypeConfigs: AccountTypeOption[] = [
   {
@@ -129,6 +142,9 @@ export default function EnhancedAuth() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [taxiCategory, setTaxiCategory] = useState<'car' | 'motorcycle' | null>(null);
+  const [taxiCountry, setTaxiCountry] = useState<string | null>(null);
+  const [taxiDropdownOpen, setTaxiDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -246,6 +262,27 @@ export default function EnhancedAuth() {
           toast.info(`${t('auth.welcomeMessage')} ${t('auth.completeProfile')}`);
           localStorage.setItem('needs_profile_completion', 'true');
         }
+
+        // Taxi OAuth : créer le profil conducteur avec taxi_category sauvegardé
+        if (profile.role === 'taxi') {
+          const pendingCategory = localStorage.getItem('oauth_taxi_category');
+          const pendingCountry = localStorage.getItem('oauth_taxi_country');
+          const categoryToSave = (pendingCategory === 'car' || pendingCategory === 'motorcycle')
+            ? pendingCategory
+            : 'motorcycle';
+          supabase.from('taxi_drivers').insert({
+            user_id: user.id,
+            is_online: false,
+            status: 'pending_verification',
+            taxi_category: categoryToSave,
+            ...(pendingCountry ? { vehicle: { country: pendingCountry } } : {}),
+          }).then(({ error: dErr }) => {
+            if (dErr) console.error('Erreur création taxi driver OAuth:', dErr);
+            else console.log('✓ Profil taxi créé via OAuth, catégorie:', categoryToSave);
+          });
+          localStorage.removeItem('oauth_taxi_category');
+          localStorage.removeItem('oauth_taxi_country');
+        }
       }
 
       localStorage.removeItem('oauth_is_new_signup');
@@ -342,10 +379,18 @@ export default function EnhancedAuth() {
 
       // En mode INSCRIPTION, on doit vérifier si l'email existe déjà
       if (mode === 'signup' && accountType) {
-        // Note: On ne peut pas vérifier l'email Google AVANT l'OAuth
-        // Donc on configure les flags et on laisse useAuth gérer la détection
+        // Taxi : valider le type avant le redirect Google
+        if (accountType === 'taxi_moto' && showMotoTaxiSelector && !taxiCategory) {
+          setError('Veuillez sélectionner le type de taxi (Voiture ou Moto) avant de continuer');
+          setSocialLoading(null);
+          return;
+        }
         localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
         localStorage.setItem('oauth_is_new_signup', 'true');
+        if (accountType === 'taxi_moto') {
+          if (taxiCategory) localStorage.setItem('oauth_taxi_category', taxiCategory);
+          if (taxiCountry) localStorage.setItem('oauth_taxi_country', taxiCountry);
+        }
       } else {
         // Mode CONNEXION - nettoyer les flags
         localStorage.removeItem('oauth_intent_role');
@@ -447,6 +492,14 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
+      // Validation taxi
+      if (mode === 'signup' && accountType === 'taxi_moto') {
+        if (!taxiCountry) throw new Error('Veuillez sélectionner votre pays');
+        if (MOTO_TAXI_COUNTRIES.includes(taxiCountry) && !taxiCategory) {
+          throw new Error('Veuillez sélectionner le type de taxi (Voiture ou Moto)');
+        }
+      }
+
       // Auto-détection email vs téléphone
       const isPhone = isPhoneInput(email);
       if (isPhone) {
@@ -459,7 +512,7 @@ export default function EnhancedAuth() {
           const nameParts = fullName.trim().split(' ');
           const { error: otpErr } = await supabase.auth.signInWithOtp({
             phone: formatted,
-            options: { data: { full_name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', account_type: accountType, role: roleToUse, has_password: false } }
+            options: { data: { full_name: fullName, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '', account_type: accountType, role: roleToUse, has_password: false, ...(accountType === 'taxi_moto' ? { taxi_country: taxiCountry, ...(taxiCategory ? { taxi_category: taxiCategory } : {}) } : {}) } }
           });
           if (otpErr) throw otpErr;
           setSignupPhoneOtpSent(true);
@@ -497,6 +550,10 @@ export default function EnhancedAuth() {
           const result = await cognitoSignUp(email, password, {
             'custom:role': roleToUse,
             name: fullName,
+            ...(accountType === 'taxi_moto' ? {
+              'custom:taxi_country': taxiCountry ?? '',
+              ...(taxiCategory ? { 'custom:taxi_category': taxiCategory } : {}),
+            } : {}),
           });
 
           if (!result.success) {
@@ -588,6 +645,10 @@ export default function EnhancedAuth() {
               account_type: accountType,
               role: roleToUse,
               has_password: true,
+              ...(accountType === 'taxi_moto' ? {
+                taxi_country: taxiCountry,
+                ...(taxiCategory ? { taxi_category: taxiCategory } : {}),
+              } : {}),
               ...(detectedCountry  && { detected_country:  detectedCountry  }),
               ...(detectedCurrency && { detected_currency: detectedCurrency }),
             }
@@ -933,13 +994,19 @@ export default function EnhancedAuth() {
   // État pour basculer entre connexion et inscription sur mobile
   const [showSignupPanel, setShowSignupPanel] = useState(false);
 
-  // Auto-set client type when signup panel is shown
+  // Reset type selection when signup panel opens
   useEffect(() => {
     if (showSignupPanel) {
-      setAccountType('client');
+      setAccountType(null);
+      setTaxiCategory(null);
+      setTaxiCountry(null);
       setMode('signup');
     }
   }, [showSignupPanel]);
+
+  const showMotoTaxiSelector = accountType === 'taxi_moto'
+    && taxiCountry !== null
+    && MOTO_TAXI_COUNTRIES.includes(taxiCountry);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -1443,16 +1510,139 @@ export default function EnhancedAuth() {
                 </div>
               )}
 
-              {/* ===== FORMULAIRE INSCRIPTION (Client uniquement) ===== */}
+              {/* ===== FORMULAIRE INSCRIPTION ===== */}
               {showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
-                  {/* Info: compte client */}
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-md p-2 flex items-center gap-2">
-                    <User className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                    <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
-                      {t('auth.createClientAccount') || 'Créez votre compte client pour acheter des produits et services'}
-                    </p>
+                  {/* Sélecteur type de compte */}
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-medium text-foreground">Type de compte</Label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {accountTypes.slice(0, 3).map(type => {
+                        const Icon = type.icon;
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => { setAccountType(type.value); setTaxiCategory(null); setTaxiCountry(null); }}
+                            className={`flex flex-col items-center gap-1 py-2 px-1 rounded-md border text-[10px] font-medium transition-all ${
+                              accountType === type.value
+                                ? 'bg-primary/10 border-primary/40 text-primary shadow-sm'
+                                : 'border-border/30 hover:bg-muted/50 text-muted-foreground'
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {type.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {accountTypes.slice(3).map(type => {
+                        const Icon = type.icon;
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => { setAccountType(type.value); setTaxiCategory(null); setTaxiCountry(null); }}
+                            className={`flex items-center justify-center gap-1.5 py-2 px-1 rounded-md border text-[10px] font-medium transition-all ${
+                              accountType === type.value
+                                ? 'bg-primary/10 border-primary/40 text-primary shadow-sm'
+                                : 'border-border/30 hover:bg-muted/50 text-muted-foreground'
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {type.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  {/* Taxi: sélecteur de pays */}
+                  {accountType === 'taxi_moto' && (
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                        <span className="text-[12px]">🌍</span>
+                        Votre pays <span className="text-red-500 text-[10px] ml-0.5">*</span>
+                      </Label>
+                      <div className="grid grid-cols-4 gap-1">
+                        {TAXI_COUNTRY_OPTIONS.map(country => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => { setTaxiCountry(country.code); setTaxiCategory(null); }}
+                            className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-md border text-[9px] font-medium transition-all leading-tight ${
+                              taxiCountry === country.code
+                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 text-amber-700 dark:text-amber-400 shadow-sm'
+                                : 'border-border/30 hover:bg-muted/50 text-muted-foreground'
+                            }`}
+                          >
+                            <span className="text-[14px] leading-none">{country.flag}</span>
+                            <span className="text-center leading-tight">{country.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Taxi: dropdown avec icônes (7 pays Afrique Ouest) */}
+                  {showMotoTaxiSelector && (
+                    <div className="space-y-0.5">
+                      <Label className="text-[11px] font-medium text-foreground">
+                        Type de taxi <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setTaxiDropdownOpen(o => !o)}
+                          className="w-full flex items-center justify-between h-8 px-2 border border-input rounded-md bg-background text-xs hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                        >
+                          {taxiCategory === 'car' ? (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <Car className="h-3.5 w-3.5 text-blue-600" /> Taxi Voiture
+                            </span>
+                          ) : taxiCategory === 'motorcycle' ? (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <Bike className="h-3.5 w-3.5 text-orange-500" /> Taxi Moto
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Sélectionner le type...</span>
+                          )}
+                          <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${taxiDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {taxiDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-0.5 bg-background border border-input rounded-md shadow-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => { setTaxiCategory('car'); setTaxiDropdownOpen(false); }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors hover:bg-blue-50 ${taxiCategory === 'car' ? 'bg-blue-50 text-blue-700' : 'text-foreground'}`}
+                            >
+                              <Car className="h-4 w-4 text-blue-600 shrink-0" />
+                              <div className="flex-1">
+                                <p className="font-medium">Taxi Voiture</p>
+                                <p className="text-[10px] text-muted-foreground">Berline, SUV, citadine</p>
+                              </div>
+                              {taxiCategory === 'car' && <Check className="h-3 w-3 text-blue-600" />}
+                            </button>
+                            <div className="border-t border-border/30" />
+                            <button
+                              type="button"
+                              onClick={() => { setTaxiCategory('motorcycle'); setTaxiDropdownOpen(false); }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors hover:bg-orange-50 ${taxiCategory === 'motorcycle' ? 'bg-orange-50 text-orange-700' : 'text-foreground'}`}
+                            >
+                              <Bike className="h-4 w-4 text-orange-500 shrink-0" />
+                              <div className="flex-1">
+                                <p className="font-medium">Taxi Moto</p>
+                                <p className="text-[10px] text-muted-foreground">Moto, scooter, taxi-moto</p>
+                              </div>
+                              {taxiCategory === 'motorcycle' && <Check className="h-3 w-3 text-orange-500" />}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Formulaire d'inscription compact */}
                   {accountType && (

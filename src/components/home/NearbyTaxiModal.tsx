@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Car, _MapPin, RefreshCw, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
+import { Car, Bike, RefreshCw, AlertCircle, CheckCircle2, Navigation, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,8 @@ interface NearbyDriver {
   vehicle_type?: string;
   vehicle_plate?: string;
   full_name?: string;
+  phone?: string | null;
+  taxi_category?: 'car' | 'motorcycle';
 }
 
 interface NearbyTaxiModalProps {
@@ -91,14 +93,18 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       const userIds = data.map((d: any) => d.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, phone')
         .in('id', userIds);
 
-      const driversWithNames = data.map((driver: any) => ({
-        ...driver,
-        distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
-        full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
-      }));
+      const driversWithNames = data.map((driver: any) => {
+        const profile = profiles?.find(p => p.id === driver.user_id);
+        return {
+          ...driver,
+          distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
+          full_name: profile?.full_name || 'Chauffeur',
+          phone: profile?.phone ?? null,
+        };
+      });
 
       setDrivers(driversWithNames);
     } catch (err) {
@@ -139,14 +145,18 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
       const userIds = data.map((d: any) => d.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, phone')
         .in('id', userIds);
 
-      const driversWithNames = data.map((driver: any) => ({
-        ...driver,
-        distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
-        full_name: profiles?.find(p => p.id === driver.user_id)?.full_name || 'Chauffeur'
-      }));
+      const driversWithNames = data.map((driver: any) => {
+        const profile = profiles?.find(p => p.id === driver.user_id);
+        return {
+          ...driver,
+          distance_km: driver.distance_km === null || driver.distance_km === undefined ? null : Number(driver.distance_km),
+          full_name: profile?.full_name || 'Chauffeur',
+          phone: profile?.phone ?? null,
+        };
+      });
 
       setDrivers(driversWithNames);
     } catch (err) {
@@ -237,7 +247,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
         <DialogHeader className="pb-3 border-b border-border/40">
           <DialogTitle className="flex items-center gap-2">
             <Car className="w-5 h-5 text-taxi-primary" />
-            Taxi-Motos à proximité
+            Taxis disponibles à proximité
           </DialogTitle>
         </DialogHeader>
 
@@ -308,46 +318,90 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
 
               {/* Drivers list - Top 3 closest */}
               <div className="space-y-2">
-                {drivers.map((driver, index) => (
-                  <div
-                    key={driver.driver_id}
-                    className={cn(
-                      'flex items-center gap-3 p-3 rounded-xl',
-                      'bg-card border border-border/40',
-                      index === 0 && 'ring-2 ring-taxi-primary/50 bg-taxi-primary/5'
-                    )}
-                  >
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center",
-                      index === 0 ? "bg-taxi-primary text-white" : "bg-taxi-primary/10"
-                    )}>
-                      {index === 0 ? (
-                        <span className="text-sm font-bold">1</span>
-                      ) : (
-                        <Car className="w-5 h-5 text-taxi-primary" />
+                {drivers.map((driver, index) => {
+                  const isCar = driver.taxi_category === 'car';
+                  const accentColor = isCar ? 'text-blue-600' : 'text-orange-500';
+                  const phone = driver.phone ?? null;
+
+                  return (
+                    <div
+                      key={driver.driver_id}
+                      className={cn(
+                        'p-3 rounded-xl bg-card border border-border/40',
+                        index === 0 && 'ring-2 ring-taxi-primary/50 bg-taxi-primary/5'
                       )}
+                    >
+                      {/* Ligne principale : avatar + infos + distance */}
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                          index === 0 ? "bg-taxi-primary text-white" : "bg-taxi-primary/10"
+                        )}>
+                          {index === 0 ? (
+                            <span className="text-sm font-bold">1</span>
+                          ) : (
+                            isCar
+                              ? <Car className="w-5 h-5 text-blue-600" />
+                              : <Bike className="w-5 h-5 text-orange-500" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {driver.full_name}
+                            {index === 0 && <span className="ml-2 text-xs text-taxi-primary font-semibold">Le plus proche</span>}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {isCar
+                              ? <Car className="w-3 h-3 text-blue-500" />
+                              : <Bike className="w-3 h-3 text-orange-500" />}
+                            <p className="text-xs text-muted-foreground">
+                              {isCar ? 'Taxi voiture' : 'Taxi moto'} • {driver.vehicle_plate || '---'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={cn(
+                          "text-sm font-semibold flex-shrink-0",
+                          index === 0 ? "text-taxi-primary" : "text-muted-foreground"
+                        )}>
+                          {driver.distance_km !== null && Number.isFinite(driver.distance_km)
+                            ? `${driver.distance_km.toFixed(1)} km`
+                            : 'En ligne'}
+                        </span>
+                      </div>
+
+                      {/* Boutons téléphone + message */}
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          className={cn(
+                            'flex-1 h-8 text-xs',
+                            isCar ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'
+                          )}
+                          disabled={!phone}
+                          onClick={() => phone && window.open(`tel:${phone}`)}
+                        >
+                          <Phone className="w-3 h-3 mr-1" />
+                          {phone ? phone : 'Appeler'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={cn(
+                            'flex-1 h-8 text-xs',
+                            isCar ? 'border-blue-300 text-blue-600 hover:bg-blue-50' : 'border-orange-300 text-orange-500 hover:bg-orange-50'
+                          )}
+                          onClick={() => {
+                            onOpenChange(false);
+                            navigate(`/messages?recipientId=${driver.user_id}`);
+                          }}
+                        >
+                          <MessageCircle className="w-3 h-3 mr-1" />
+                          Message
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {driver.full_name}
-                        {index === 0 && <span className="ml-2 text-xs text-taxi-primary font-semibold">Le plus proche</span>}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {driver.vehicle_type || 'Moto'} • {driver.vehicle_plate || '---'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className={cn(
-                        "text-sm font-semibold",
-                        index === 0 ? "text-taxi-primary" : "text-muted-foreground"
-                      )}>
-                        {driver.distance_km !== null && Number.isFinite(driver.distance_km)
-                          ? `${driver.distance_km.toFixed(1)} km`
-                          : 'En ligne'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Action button */}
@@ -356,7 +410,11 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 className="w-full bg-taxi-primary hover:bg-taxi-primary/90"
                 size="lg"
               >
-                Commander un Taxi-Moto
+                {drivers.every(d => d.taxi_category === 'motorcycle')
+                  ? 'Commander un Taxi Moto'
+                  : drivers.every(d => d.taxi_category === 'car')
+                  ? 'Commander un Taxi Voiture'
+                  : 'Commander un Taxi'}
               </Button>
             </div>
           )}

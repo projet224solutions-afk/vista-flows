@@ -41,6 +41,7 @@ interface CartItem {
   vendorId?: string;
   vendor_id?: string;
   quantity?: number;
+  currency?: string;
 }
 
 interface CommissionConfig {
@@ -357,6 +358,7 @@ export default function ProductPaymentModal({
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
       const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
+      const vendorCurrencyMobile = items[0]?.currency || cur;
       const normalizedMethod = method === 'mtn_money' || method === 'orange_money'
         ? 'mobile_money'
         : method === 'cash' || method === 'cash_on_delivery'
@@ -379,7 +381,7 @@ export default function ProductPaymentModal({
           postal_code: null,
           notes: null,
         },
-        metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal },
+        metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal, vendor_currency: vendorCurrencyMobile },
       });
 
       createdOrders.push(order.id);
@@ -434,8 +436,9 @@ export default function ProductPaymentModal({
       for (const [vendorId, items] of vendorEntries) {
         const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
+        const vendorCurrencyCard = items[0]?.currency || cur;
 
-        console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission });
+        console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission, currency: vendorCurrencyCard });
 
         let order;
         try {
@@ -460,6 +463,7 @@ export default function ProductPaymentModal({
               commission_fee: commissionPerVendor,
               product_total: vendorProductTotal,
               commission_percent: commissionConfig?.commission_value || 5,
+              vendor_currency: vendorCurrencyCard,
             },
           });
         } catch (error: any) {
@@ -592,16 +596,19 @@ export default function ProductPaymentModal({
 
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+      // Devise du groupe vendeur (priorité : item.currency, fallback : cur du modal)
+      const vendorCurrency = items[0]?.currency || cur;
       const vendorChargedAmount = vendorProductTotal + commissionPerVendor;
 
       // Correction : markAsPaid toujours false, walletDebitAmount correct
       let markAsPaid = false;
       let chargedAmount = 0;
       if (paymentMethod === 'wallet') {
-        const convResult = convert(effectiveGrandTotal, cur);
+        // Convertir le total vendeur en devise du wallet acheteur pour vérifier le solde
+        const convResult = convert(vendorProductTotal + commissionPerVendor, vendorCurrency);
         const neededInWalletCur = convResult.wasConverted
           ? convResult.convertedAmount
-          : (wCur === cur ? effectiveGrandTotal : null);
+          : (wCur === vendorCurrency ? vendorProductTotal + commissionPerVendor : null);
         if (walletBalance !== null && neededInWalletCur !== null && walletBalance < neededInWalletCur) {
           toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(neededInWalletCur, wCur)}` });
           setProcessing(false);
@@ -646,6 +653,7 @@ export default function ProductPaymentModal({
             commission_fee: commissionPerVendor,
             product_total: vendorProductTotal,
             commission_percent: commissionConfig?.commission_value || 5,
+            vendor_currency: vendorCurrency,
             ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {}),
           },
         });

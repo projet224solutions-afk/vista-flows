@@ -65,8 +65,11 @@ interface ServiceSelectionOption {
   logoImage?: string;
 }
 
+// Pays où la distinction Voiture / Moto-taxi existe
+const MOTO_TAXI_COUNTRY_NAMES = ['Guinée', 'Sierra Leone', 'Liberia', 'Mali', 'Burkina Faso', 'Niger', 'Guinée-Bissau'];
+
 const QUICK_ROLE_OPTIONS: QuickRoleOption[] = [
-  { role: 'taxi', name: 'Taxi Moto', desc: 'Conducteur taxi-moto', icon: Bike, image: 'https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-taxi-moto.png' },
+  { role: 'taxi', name: 'Taxi', desc: 'Conducteur taxi', icon: Bike, image: 'https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-taxi-moto.png' },
   { role: 'livreur', name: 'Livreur', desc: 'Coursier & livraison', icon: Truck, image: 'https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-livreur.png' },
   { role: 'transitaire', name: 'Transitaire', desc: 'Import & export', icon: Briefcase, image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80' },
 ];
@@ -795,6 +798,11 @@ export default function Auth() {
   }, [formData.phone, phoneCode]);
 
   const [manualCityEntry, setManualCityEntry] = useState(false);
+  const [taxiCategory, setTaxiCategory] = useState<'car' | 'motorcycle' | null>(null);
+  const [taxiDropdownOpen, setTaxiDropdownOpen] = useState(false);
+  const showMotoTaxiSelector = selectedRole === 'taxi'
+    && !!formData.country
+    && MOTO_TAXI_COUNTRY_NAMES.includes(formData.country);
 
   const [bureaus, setBureaus] = useState<Array<{ id: string; commune: string; prefecture: string }>>([]);
 
@@ -944,6 +952,7 @@ export default function Auth() {
                 user_id: authData.user.id,
                 is_online: false,
                 status: 'pending_verification',
+                taxi_category: taxiCategory ?? (showMotoTaxiSelector ? null : 'car'),
                 vehicle: {
                   commune: validatedData.city,
                   bureau_id: bureau?.id || null,
@@ -1593,6 +1602,7 @@ export default function Auth() {
             user_id: authUser.id,
             is_online: false,
             status: 'pending_verification',
+            taxi_category: taxiCategory ?? (showMotoTaxiSelector ? null : 'car'),
             vehicle: {
               commune: formData.city,
               bureau_id: bureau?.id || null,
@@ -2713,6 +2723,7 @@ export default function Auth() {
                                   onSelect={() => {
                                     handleInputChange('country', item.country);
                                     setCountrySelectOpen(false);
+                                    setTaxiCategory(null);
                                   }}
                                   className="cursor-pointer"
                                 >
@@ -2796,6 +2807,65 @@ export default function Auth() {
                       </p>
                     )}
                   </div>
+
+                  {/* ── TYPE DE TAXI ── dropdown avec icônes sous Ville */}
+                  {selectedRole === 'taxi' && (showMotoTaxiSelector || !formData.country) && (
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Type de taxi <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setTaxiDropdownOpen(o => !o)}
+                          className="w-full flex items-center justify-between px-3 py-2 border border-input rounded-md bg-background text-sm hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
+                        >
+                          {taxiCategory === 'car' ? (
+                            <span className="flex items-center gap-2 text-foreground font-medium">
+                              <Car className="h-4 w-4 text-blue-600" /> Taxi Voiture
+                            </span>
+                          ) : taxiCategory === 'motorcycle' ? (
+                            <span className="flex items-center gap-2 text-foreground font-medium">
+                              <Bike className="h-4 w-4 text-orange-500" /> Taxi Moto
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Sélectionner le type de taxi...</span>
+                          )}
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${taxiDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {taxiDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-background border border-input rounded-md shadow-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => { setTaxiCategory('car'); setTaxiDropdownOpen(false); }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-blue-50 ${taxiCategory === 'car' ? 'bg-blue-50 text-blue-700' : 'text-foreground'}`}
+                            >
+                              <Car className="h-5 w-5 text-blue-600 shrink-0" />
+                              <div>
+                                <p className="font-medium">Taxi Voiture</p>
+                                <p className="text-xs text-muted-foreground">Berline, SUV, citadine</p>
+                              </div>
+                              {taxiCategory === 'car' && <Check className="h-4 w-4 text-blue-600 ml-auto" />}
+                            </button>
+                            <div className="border-t border-border/40" />
+                            <button
+                              type="button"
+                              onClick={() => { setTaxiCategory('motorcycle'); setTaxiDropdownOpen(false); }}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-orange-50 ${taxiCategory === 'motorcycle' ? 'bg-orange-50 text-orange-700' : 'text-foreground'}`}
+                            >
+                              <Bike className="h-5 w-5 text-emerald-600 shrink-0" />
+                              <div>
+                                <p className="font-medium">Taxi Moto</p>
+                                <p className="text-xs text-muted-foreground">Moto, scooter, taxi-moto</p>
+                              </div>
+                              {taxiCategory === 'motorcycle' && <Check className="h-4 w-4 text-orange-500 ml-auto" />}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="address">Adresse</Label>

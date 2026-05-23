@@ -59,7 +59,9 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  currency?: string | null;
   images?: string[];
+  promotional_videos?: string[];
   is_active: boolean;
   stock_quantity?: number;
   category_id?: string;
@@ -243,6 +245,7 @@ export default function VendorShop() {
           id,
           name,
           price,
+          currency,
           images,
           promotional_videos,
           is_active,
@@ -622,6 +625,14 @@ export default function VendorShop() {
               <p className="text-muted-foreground mb-4">{vendor.description}</p>
             )}
 
+            {/* Délai de livraison */}
+            {(vendor as any).average_delivery_days && (
+              <div className="flex items-center gap-2 mb-3 text-sm text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg px-3 py-2 w-fit">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <span>Livraison en {(vendor as any).average_delivery_days} jour{(vendor as any).average_delivery_days > 1 ? 's' : ''} ouvrable{(vendor as any).average_delivery_days > 1 ? 's' : ''}</span>
+              </div>
+            )}
+
             {/* Informations de contact et localisation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               {(vendor.city || vendor.neighborhood || vendor.address) && (
@@ -758,7 +769,7 @@ export default function VendorShop() {
                           promotionalVideos={product.promotional_videos || []}
                           title={product.name}
                           price={product.price}
-                          currency={vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
+                          currency={product.currency || vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
                           vendor={vendor.business_name}
                           vendorId={vendor.id}
                           vendorPublicId={vendor.public_id}

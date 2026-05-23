@@ -90,6 +90,66 @@ export default function TaxiMotoClient() {
     }
   });
 
+  // Restaurer la course active au montage (persistance inter-sessions)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const restoreActiveRide = async () => {
+      try {
+        const { data } = await supabase
+          .from('taxi_trips')
+          .select('id, status, pickup_address, dropoff_address, price_total, requested_at, driver_id')
+          .eq('customer_id', user.id)
+          .in('status', ['pending', 'accepted', 'arriving', 'started', 'in_progress'])
+          .order('requested_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          let driverInfo = undefined;
+          if (data.driver_id) {
+            const { data: driverData } = await supabase
+              .from('taxi_drivers')
+              .select('vehicle_type, vehicle_plate, rating, user_id')
+              .eq('id', data.driver_id)
+              .maybeSingle();
+            if (driverData) {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, phone, avatar_url')
+                .eq('id', driverData.user_id)
+                .maybeSingle();
+              driverInfo = {
+                id: data.driver_id,
+                name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Chauffeur' : 'Chauffeur',
+                rating: driverData.rating || 5,
+                phone: profile?.phone || '',
+                vehicleType: driverData.vehicle_type,
+                vehicleNumber: driverData.vehicle_plate || '',
+                photo: profile?.avatar_url || undefined,
+              };
+            }
+          }
+          setCurrentRide({
+            id: data.id,
+            status: data.status as any,
+            pickupAddress: data.pickup_address || '',
+            destinationAddress: data.dropoff_address || '',
+            estimatedPrice: data.price_total || 0,
+            driver: driverInfo,
+            createdAt: data.requested_at || '',
+          });
+          setActiveTab('tracking');
+        }
+      } catch (err) {
+        console.error('[TaxiMotoClient] Error restoring active ride:', err);
+      }
+    };
+
+    restoreActiveRide();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   // Demander automatiquement la position GPS au chargement
   useEffect(() => {
     const initGPS = async () => {

@@ -215,6 +215,10 @@ export function processTaxiDriver(
   );
   const distance = getDriverDistance(userPosition, position);
 
+  const rawCategory = raw.taxi_category;
+  const taxiCategory: 'car' | 'motorcycle' | null =
+    rawCategory === 'car' ? 'car' : rawCategory === 'motorcycle' ? 'motorcycle' : null;
+
   return {
     id: String(raw.id || ''),
     user_id: String(raw.user_id || ''),
@@ -226,6 +230,7 @@ export function processTaxiDriver(
     total_rides: typeof raw.total_rides === 'number' ? raw.total_rides : 0,
     last_lat: position?.lat ?? null,
     last_lng: position?.lng ?? null,
+    taxi_category: taxiCategory,
     distance,
     profile: profileMap.get(String(raw.user_id || '')) ?? null,
     source: 'taxi_drivers',

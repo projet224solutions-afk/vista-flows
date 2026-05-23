@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { _dataManager } from '@/services/DataManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useCurrentVendor } from './useCurrentVendor';
@@ -276,7 +275,7 @@ export function usePaymentLinks() {
           link_type: data.linkType || 'payment',
           owner_type: ownerType,
           owner_user_id: effectiveOwnerUserId,
-          vendeur_id: vendorId || '00000000-0000-0000-0000-000000000000',
+          vendeur_id: vendorId || null,
           client_id: clientUuid,
           product_id: data.product_id || null,
           service_id: data.service_id || null,

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
-  MapPin, Bell, User, Phone, Mail, Car,
+  MapPin, Bell, User, Phone, Mail, Car, Bike,
   Settings as SettingsIcon, Save, LogOut, Loader2, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,6 +33,9 @@ interface DriverProfile {
   avatar_url: string | null;
   vehicle_type: string;
   vehicle_plate: string | null;
+  taxi_category: 'car' | 'motorcycle';
+  vehicle_brand: string | null;
+  vehicle_seats: number;
   gilet_number: string | null;
   moto_serial_number: string | null;
   rating: number;
@@ -97,6 +100,9 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         avatar_url: profileData.avatar_url,
         vehicle_type: driverData.vehicle_type || 'moto',
         vehicle_plate: driverData.vehicle_plate,
+        taxi_category: driverData.taxi_category === 'car' ? 'car' : 'motorcycle',
+        vehicle_brand: driverData.vehicle_brand || vehicleData.vehicle_brand || '',
+        vehicle_seats: driverData.vehicle_seats || 4,
         gilet_number: vehicleData.gilet_number || '',
         moto_serial_number: vehicleData.moto_serial_number || '',
         rating: driverData.rating || 5,
@@ -157,6 +163,9 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
           .from('taxi_drivers')
           .update({
             vehicle_plate: profile.vehicle_plate,
+            taxi_category: profile.taxi_category,
+            vehicle_brand: profile.vehicle_brand,
+            vehicle_seats: profile.vehicle_seats,
             vehicle: updatedVehicle,
           })
           .eq('id', driverId);
@@ -320,14 +329,32 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               Véhicule
             </h4>
 
+            {/* Sélection catégorie taxi */}
             <div>
-              <Label htmlFor="vehicle_type" className="text-sm">Type</Label>
-              <Input
-                id="vehicle_type"
-                value={profile.vehicle_type}
-                disabled
-                className="mt-1 bg-gray-50"
-              />
+              <Label className="text-sm">Type de taxi</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <Button
+                  type="button"
+                  variant={profile.taxi_category === 'car' ? 'default' : 'outline'}
+                  className={profile.taxi_category === 'car' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                  onClick={() => setProfile({ ...profile, taxi_category: 'car' })}
+                >
+                  <Car className="w-4 h-4 mr-2" />
+                  Taxi Voiture
+                </Button>
+                <Button
+                  type="button"
+                  variant={profile.taxi_category === 'motorcycle' ? 'default' : 'outline'}
+                  className={profile.taxi_category === 'motorcycle' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                  onClick={() => setProfile({ ...profile, taxi_category: 'motorcycle' })}
+                >
+                  <Bike className="w-4 h-4 mr-2" />
+                  Taxi Moto
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ce choix détermine votre interface de travail et votre type dans l'application.
+              </p>
             </div>
 
             <div>
@@ -341,27 +368,60 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="moto_serial_number" className="text-sm">Numéro de série de la moto</Label>
-              <Input
-                id="moto_serial_number"
-                value={profile.moto_serial_number || ''}
-                onChange={(e) => setProfile({ ...profile, moto_serial_number: e.target.value })}
-                placeholder="Ex: MT-2024-12345678"
-                className="mt-1"
-              />
-            </div>
+            {/* Champs spécifiques voiture */}
+            {profile.taxi_category === 'car' && (
+              <>
+                <div>
+                  <Label htmlFor="vehicle_brand" className="text-sm">Marque & modèle</Label>
+                  <Input
+                    id="vehicle_brand"
+                    value={profile.vehicle_brand || ''}
+                    onChange={(e) => setProfile({ ...profile, vehicle_brand: e.target.value })}
+                    placeholder="Ex: Toyota Corolla"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vehicle_seats" className="text-sm">Nombre de places passagers</Label>
+                  <select
+                    id="vehicle_seats"
+                    value={profile.vehicle_seats}
+                    onChange={(e) => setProfile({ ...profile, vehicle_seats: parseInt(e.target.value) })}
+                    className="w-full mt-1 p-2 border rounded-lg bg-background text-sm"
+                  >
+                    {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                      <option key={n} value={n}>{n} places</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
 
-            <div>
-              <Label htmlFor="gilet_number" className="text-sm">Numéro de gilet</Label>
-              <Input
-                id="gilet_number"
-                value={profile.gilet_number || ''}
-                onChange={(e) => setProfile({ ...profile, gilet_number: e.target.value })}
-                placeholder="Ex: G-001"
-                className="mt-1"
-              />
-            </div>
+            {/* Champs spécifiques moto */}
+            {profile.taxi_category === 'motorcycle' && (
+              <>
+                <div>
+                  <Label htmlFor="moto_serial_number" className="text-sm">Numéro de série de la moto</Label>
+                  <Input
+                    id="moto_serial_number"
+                    value={profile.moto_serial_number || ''}
+                    onChange={(e) => setProfile({ ...profile, moto_serial_number: e.target.value })}
+                    placeholder="Ex: MT-2024-12345678"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gilet_number" className="text-sm">Numéro de gilet</Label>
+                  <Input
+                    id="gilet_number"
+                    value={profile.gilet_number || ''}
+                    onChange={(e) => setProfile({ ...profile, gilet_number: e.target.value })}
+                    placeholder="Ex: G-001"
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

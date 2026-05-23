@@ -234,7 +234,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             business_name,
             user_id,
             shop_slug,
-            country
+            country,
+            average_delivery_days
           )
         `
         )
@@ -421,6 +422,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           productId: product.id,
           productName: product.name,
           amount: totalAmount,
+          currency: (product as any).currency || 'GNF',
           quantity,
           vendorId: product.vendor_id,
           productType: isDigital ? 'digital' : 'physical'
@@ -940,7 +942,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               {!isAffiliateProduct && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="w-4 h-4" />
-                  <span>Livraison rapide disponible</span>
+                  <span>
+                    {(product?.vendors as any)?.average_delivery_days
+                      ? `Livraison estimée : ${(product.vendors as any).average_delivery_days} jour${(product.vendors as any).average_delivery_days > 1 ? 's' : ''} ouvrable${(product.vendors as any).average_delivery_days > 1 ? 's' : ''}`
+                      : 'Livraison disponible'}
+                  </span>
                 </div>
               )}
             </div>

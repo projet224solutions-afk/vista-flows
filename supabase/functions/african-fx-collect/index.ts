@@ -100,7 +100,9 @@ const AFRICAN_CURRENCIES: Record<string, CurrencyConfig> = {
   SZL: { country: "Eswatini", peggedTo: "ZAR" },
 
   // ── Source officielle HTML tentée (Niveau 1 prioritaire, fallback si échec) ──
-  GNF: { country: "Guinée", fallbackReason: "BCRG (bcrg.gov.gn) souvent inaccessible — serveur instable. Scraping tenté à chaque collecte." },
+  GNF: { country: "Guinée" },
+  // GNF : source BCRG (bcrg-guinee.org) OBLIGATOIRE.
+  // Si BCRG inaccessible → heartbeat sur dernier taux BCRG (jamais de fallback API pour GNF).
 
   // ── Devises en fallback API documenté (Niveau 4) ──
   NGN: { country: "Nigeria", fallbackReason: "CBN : api.cbn.gov.ng nécessite accès API spécifique" },
@@ -241,22 +243,26 @@ async function scrapeBceao(): Promise<BceaoRates | null> {
 }
 
 // ── BCRG : Banque Centrale de la République de Guinée ──
-// URL principale : https://www.bcrg.gov.gn
-// Le site affiche "Cours des devises" sur la homepage avec USD/GNF et EUR/GNF.
-// ATTENTION : le serveur est souvent inaccessible. En cas d'échec → fallback API.
+// Source OFFICIELLE et OBLIGATOIRE pour les taux GNF.
+// Site : https://www.bcrg-guinee.org
+// Le site publie un fixing quotidien USD/GNF et EUR/GNF.
+// En cas d'échec → heartbeat (taux conservé, last_bcrg_scraped_at NON mis à jour)
+// → les transactions GNF refusées si last_bcrg_scraped_at > 24h.
 
 interface BcrgRates {
   usdGnf: number;
-  eurGnf?: number;
+  eurGnf?: number;   // Optionnel — calculé depuis BCEAO si absent dans le HTML BCRG
+  scrapedUrl: string; // URL qui a fourni les données
 }
 
 const BCRG_PRIMARY_URL = "https://www.bcrg-guinee.org";
-const BCRG_SCRAPE_URLS = [
-  "https://www.bcrg-guinee.org",
-  "https://www.bcrg-guinee.org/cours-de-change",
-  "https://www.bcrg.gov.gn",
-  "https://www.bcrg.gov.gn/cours-de-change",
-];
+
+// Plages historiques raisonnables pour les taux GNF (2024-2026).
+// Si un taux scraped sort de ces plages → données "floues" → rejeté.
+const GNF_SANITY_RANGES: Record<"USD" | "EUR", { min: number; max: number }> = {
+  USD: { min: 6_500, max: 14_000 },
+  EUR: { min: 7_500, max: 16_000 },
+};
 
 function normalizeBcrgUrl(rawUrl: string): string {
   try {
@@ -302,7 +308,8 @@ function extractBcrgRateFromHtml(html: string, currency: 'USD' | 'EUR'): number 
       if (!rawValue) continue;
 
       const parsed = parseFrenchNumber(rawValue);
-      if (!Number.isNaN(parsed) && parsed > 1000 && parsed < 25000) {
+      const range = GNF_SANITY_RANGES[currency];
+      if (!Number.isNaN(parsed) && parsed >= range.min && parsed <= range.max) {
         return parsed;
       }
     }
@@ -343,10 +350,15 @@ async function scrapeBcrg(): Promise<BcrgRates | null> {
     console.warn(`[BCRG] Erreur homepage: ${msg}`);
   }
 
+  const todayStr = new Date().toISOString().split('T')[0];
   const fixingUrls = homepageHtml ? extractBcrgFixingUrls(homepageHtml) : [];
   const urlsToTry = Array.from(new Set([
+    `${BCRG_PRIMARY_URL}/cours_des_devises/fixing-du-${todayStr}`,
     ...fixingUrls,
-    ...BCRG_SCRAPE_URLS,
+    BCRG_PRIMARY_URL,
+    `${BCRG_PRIMARY_URL}/cours-de-change`,
+    "https://www.bcrg.gov.gn",
+    "https://www.bcrg.gov.gn/cours-de-change",
   ]));
 
   for (const url of urlsToTry) {
@@ -363,7 +375,7 @@ async function scrapeBcrg(): Promise<BcrgRates | null> {
       const eurGnf = extractBcrgRateFromHtml(html, 'EUR');
 
       console.log(`[BCRG] Taux scrappés — USD/GNF: ${usdGnf}${eurGnf ? `, EUR/GNF: ${eurGnf}` : ""} (source: ${url})`);
-      return { usdGnf, eurGnf };
+      return { usdGnf, eurGnf, scrapedUrl: url };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("abort")) {
@@ -434,6 +446,7 @@ async function upsertRateAndLog(
   margin: number,
   today: string,
   now: string,
+  extraFields: Record<string, unknown> = {},
 ) {
   const { rateUsd, rateEur, source, sourceUrl, sourceType } = collected;
   const finalRateUsd = rateUsd * (1 + margin);
@@ -447,6 +460,7 @@ async function upsertRateAndLog(
     retrieved_at: now,
     status: "OK",
     is_active: true,
+    ...extraFields,
   };
 
   const invFinalRateUsd = rateUsd > 0 ? 1 / finalRateUsd : 0;
@@ -535,14 +549,16 @@ serve(async (req) => {
     // ── 2. Taux existants pour détecter les variations ──
     const { data: existingRates } = await supabase
       .from("currency_exchange_rates")
-      .select("from_currency, to_currency, rate")
+      .select("from_currency, to_currency, rate, source_type")
       .eq("is_active", true)
       .in("to_currency", Object.keys(AFRICAN_CURRENCIES));
 
     const existingMap = new Map<string, number>();
+    const existingSourceTypeMap = new Map<string, string>();
     if (existingRates) {
       for (const r of existingRates) {
         existingMap.set(`${r.from_currency}->${r.to_currency}`, Number(r.rate));
+        existingSourceTypeMap.set(`${r.from_currency}->${r.to_currency}`, r.source_type || "");
       }
     }
 
@@ -658,16 +674,66 @@ serve(async (req) => {
 
       // ─── NIVEAU 1 : Sources HTML officielles ───
 
-      // GNF via BCRG
-      if (code === "GNF" && bcrgRates) {
-        const eurGnf = bcrgRates.eurGnf || bcrgRates.usdGnf * eurUsdRate;
-        collected = {
-          rateUsd: bcrgRates.usdGnf,
-          rateEur: eurGnf,
-          source: "bcrg-official-html",
-          sourceUrl: BCRG_PRIMARY_URL,
-          sourceType: "official_html",
-        };
+      // GNF via BCRG (Banque Centrale de la République de Guinée)
+      // Règle ABSOLUE : GNF ne doit JAMAIS utiliser open.er-api.com comme source.
+      // Si BCRG est inaccessible, on fait un heartbeat (retrieved_at ← now) sur le
+      // dernier taux officiel BCRG déjà en DB, afin qu'il reste "frais" pour
+      // les vérifications de fraîcheur dans create_order_core.
+      if (code === "GNF") {
+        if (bcrgRates) {
+          // BCRG accessible → taux frais, source officielle
+          const eurGnf = bcrgRates.eurGnf || bcrgRates.usdGnf * eurUsdRate;
+          collected = {
+            rateUsd: bcrgRates.usdGnf,
+            rateEur: eurGnf,
+            source: "bcrg-official-html",
+            sourceUrl: bcrgRates.scrapedUrl,
+            sourceType: "official_html",
+          };
+        } else {
+          // BCRG inaccessible → NE PAS basculer sur open.er-api.com
+          // Vérifier si un taux official_html BCRG existe déjà en DB
+          const existingUsdGnfType = existingSourceTypeMap.get("USD->GNF");
+          if (existingUsdGnfType === "official_html") {
+            // Heartbeat : mise à jour de retrieved_at uniquement — on garde la source BCRG
+            await Promise.all([
+              supabase.from("currency_exchange_rates")
+                .update({ retrieved_at: now, effective_date: today, status: "BCRG_CACHED", is_active: true })
+                .eq("from_currency", "USD").eq("to_currency", "GNF"),
+              supabase.from("currency_exchange_rates")
+                .update({ retrieved_at: now, effective_date: today, status: "BCRG_CACHED", is_active: true })
+                .eq("from_currency", "EUR").eq("to_currency", "GNF"),
+              supabase.from("currency_exchange_rates")
+                .update({ retrieved_at: now, effective_date: today, status: "BCRG_CACHED", is_active: true })
+                .eq("from_currency", "GNF").eq("to_currency", "USD"),
+              supabase.from("currency_exchange_rates")
+                .update({ retrieved_at: now, effective_date: today, status: "BCRG_CACHED", is_active: true })
+                .eq("from_currency", "GNF").eq("to_currency", "EUR"),
+            ]);
+            await supabase.from("fx_collection_log").insert({
+              currency_code: "GNF",
+              source: "bcrg-heartbeat",
+              source_url: BCRG_PRIMARY_URL,
+              source_type: "official_html",
+              status: "BCRG_CACHED",
+              error_message: "BCRG inaccessible — dernier taux officiel BCRG conservé (heartbeat retrieved_at mis à jour)",
+            });
+            results.push({
+              currency: "GNF",
+              status: "BCRG_CACHED",
+              sourceType: "official_html",
+              source: "bcrg-heartbeat",
+              note: "Site BCRG inaccessible, dernier taux BCRG conservé",
+            });
+            continue; // Ne pas passer au fallback API pour GNF
+          } else {
+            // Aucun taux BCRG officiel en DB (première collecte ou table vide)
+            // Autoriser le fallback API uniquement dans ce cas exceptionnel
+            // en le marquant clairement BCRG_MISSING pour alerte PDG
+            console.warn("[BCRG] Aucun taux official_html GNF en DB. Fallback API autorisé une seule fois.");
+          }
+          // Si pas de taux BCRG existant → passer au bloc Level 4 fallback API (collected reste null)
+        }
       }
 
       // XOF via BCEAO (scraping + parité fixe EUR)
@@ -775,7 +841,10 @@ serve(async (req) => {
         const finalRateEur = collected.rateEur * (1 + margin);
         const invFinalRateUsd = collected.rateUsd > 0 ? 1 / finalRateUsd : 0;
         const invFinalRateEur = collected.rateEur > 0 ? 1 / finalRateEur : 0;
-        
+        const noChangeBcrgExtra = (code === "GNF" && collected.sourceType === "official_html")
+          ? { last_bcrg_scraped_at: now }
+          : {};
+
         await Promise.all([
           supabase
             .from("currency_exchange_rates")
@@ -790,6 +859,7 @@ serve(async (req) => {
               margin,
               final_rate_usd: finalRateUsd,
               final_rate_eur: finalRateEur,
+              ...noChangeBcrgExtra,
             })
             .eq("from_currency", "USD")
             .eq("to_currency", code),
@@ -806,6 +876,7 @@ serve(async (req) => {
               margin,
               final_rate_usd: finalRateUsd,
               final_rate_eur: finalRateEur,
+              ...noChangeBcrgExtra,
             })
             .eq("from_currency", "EUR")
             .eq("to_currency", code),
@@ -822,6 +893,7 @@ serve(async (req) => {
               margin,
               final_rate_usd: invFinalRateUsd,
               final_rate_eur: invFinalRateEur,
+              ...noChangeBcrgExtra,
             })
             .eq("from_currency", code)
             .eq("to_currency", "USD"),
@@ -838,6 +910,7 @@ serve(async (req) => {
               margin,
               final_rate_usd: invFinalRateUsd,
               final_rate_eur: invFinalRateEur,
+              ...noChangeBcrgExtra,
             })
             .eq("from_currency", code)
             .eq("to_currency", "EUR"),
@@ -863,7 +936,10 @@ serve(async (req) => {
       }
 
       // ─── Upsert + log ───
-      await upsertRateAndLog(supabase, code, collected, margin, today, now);
+      const gnfExtra = (code === "GNF" && collected.sourceType === "official_html")
+        ? { last_bcrg_scraped_at: now }
+        : {};
+      await upsertRateAndLog(supabase, code, collected, margin, today, now, gnfExtra);
 
       results.push({
         currency: code, status: "OK",

@@ -20,7 +20,9 @@ import {
   Trash2,
   LocateFixed,
   PhoneCall,
+  Images,
 } from "lucide-react";
+import { ServiceMediaManager } from "@/components/professional-services/ServiceMediaManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -396,8 +398,10 @@ export default function ServiceDetailPage() {
         .from('service_gallery_images')
         .select('id, image_url, caption')
         .eq('professional_service_id', id)
+        .eq('media_type', 'image')
+        .not('image_url', 'is', null)
         .order('display_order');
-      if (!error && data) setGalleryImages(data);
+      if (!error && data) setGalleryImages(data as { id: string; image_url: string; caption?: string }[]);
     } catch (e) {
       console.warn('Erreur chargement galerie:', e);
     }
@@ -801,14 +805,23 @@ export default function ServiceDetailPage() {
 
         {/* === Tabs Section === */}
         <Tabs defaultValue="info" className="mt-6 mb-6">
-          <TabsList className="w-full rounded-xl h-12 bg-muted/60 p-1">
-            <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+          <TabsList className="w-full rounded-xl h-12 bg-muted/60 p-1 gap-0.5">
+            <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm">
               Informations
             </TabsTrigger>
-            <TabsTrigger value="hours" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+            <TabsTrigger value="media" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm gap-1">
+              <Images className="w-3.5 h-3.5 hidden sm:block" />
+              Médias
+              {galleryImages.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold data-[state=active]:bg-white/20 data-[state=active]:text-white">
+                  {galleryImages.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="hours" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm">
               Horaires
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+            <TabsTrigger value="reviews" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm">
               Avis ({reviews.length})
             </TabsTrigger>
           </TabsList>
@@ -870,6 +883,15 @@ export default function ServiceDetailPage() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* --- Médias (galerie images + vidéos) --- */}
+          <TabsContent value="media">
+            <Card className="rounded-2xl border-0 shadow-md">
+              <CardContent className="p-5 md:p-6">
+                <ServiceMediaManager serviceId={id!} readonly={!isOwner} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -1018,58 +1040,42 @@ export default function ServiceDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* === Gallery === */}
-        {(galleryImages.length > 0 || isOwner) && (
+        {/* === Aperçu galerie (preview compact hors onglets) === */}
+        {galleryImages.length > 0 && (
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Camera className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">Photos</h2>
+                <h2 className="text-xl font-bold text-foreground">Galerie</h2>
                 <Badge variant="secondary" className="rounded-full">{galleryImages.length}</Badge>
               </div>
-              {isOwner && (
-                <label className="cursor-pointer">
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
-                  <Button asChild variant="outline" size="sm" disabled={uploadingImage} className="rounded-xl">
-                    <span>
-                      {uploadingImage ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
-                      ) : (
-                        <ImagePlus className="w-4 h-4 mr-2" />
-                      )}
-                      Ajouter
-                    </span>
-                  </Button>
-                </label>
-              )}
             </div>
-
-            {galleryImages.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {galleryImages.map((img) => (
-                  <div key={img.id} className="relative group rounded-2xl overflow-hidden aspect-square bg-muted shadow-sm">
-                    <img src={img.image_url} alt={img.caption || 'Photo du service'} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
-                    {isOwner && (
-                      <button onClick={() => handleDeleteGalleryImage(img.id)} className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : isOwner ? (
-              <Card className="rounded-2xl border-0 shadow-md">
-                <CardContent className="p-8 text-center">
-                  <Camera className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-muted-foreground mb-1">Aucune photo pour le moment</p>
-                  <p className="text-sm text-muted-foreground/70">Ajoutez des photos pour attirer plus de clients</p>
-                </CardContent>
-              </Card>
-            ) : null}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {galleryImages.slice(0, 7).map((img, idx) => (
+                <div
+                  key={img.id}
+                  className="relative rounded-xl overflow-hidden aspect-square bg-muted shadow-sm cursor-pointer group"
+                  onClick={() => {/* handled in onglet Médias */}}
+                >
+                  <img
+                    src={img.image_url}
+                    alt={img.caption || `Photo ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  {/* Dernier item : overlay "Voir tout" */}
+                  {idx === 6 && galleryImages.length > 7 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">+{galleryImages.length - 7}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* === Portfolio + Vidéo de présentation === */}
+        {/* === Portfolio legacy + Vidéo de présentation === */}
         {(portfolioImages.length > 0 || promoVideoUrl) && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">

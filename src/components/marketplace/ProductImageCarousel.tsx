@@ -3,8 +3,8 @@
  * 224Solutions - Auto-défilement fluide avec animations premium
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { PlayCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { PlayCircle, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductImageCarouselProps {
@@ -40,7 +40,23 @@ export function ProductImageCarousel({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [loadedMedia, setLoadedMedia] = useState<Set<number>>(new Set([0]));
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const [isMuted, setIsMuted] = useState(true);
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Refs pour accès direct au DOM — React ne met pas à jour muted de façon réactive
+  const videoRefsMap = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const singleVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const hasVideos = mediaItems.some(m => m.type === 'video');
+
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const next = !isMuted;
+    setIsMuted(next);
+    // Appliquer directement sur les éléments DOM
+    videoRefsMap.current.forEach(el => { el.muted = next; });
+    if (singleVideoRef.current) singleVideoRef.current.muted = next;
+  }, [isMuted]);
 
   useEffect(() => {
     if (mediaItems.length <= 1 || isHovered) {
@@ -93,6 +109,7 @@ export function ProductImageCarousel({
         {item.type === 'video' ? (
           <>
             <video
+              ref={singleVideoRef}
               src={item.src}
               className="w-full h-full object-cover"
               muted
@@ -104,6 +121,13 @@ export function ProductImageCarousel({
             <div className="absolute left-2 top-2 rounded-full bg-black/60 p-1 text-white">
               <PlayCircle className="h-4 w-4" />
             </div>
+            <button
+              onClick={toggleMute}
+              className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors z-20"
+              title={isMuted ? 'Activer le son' : 'Couper le son'}
+            >
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
           </>
         ) : (
           <img
@@ -215,6 +239,10 @@ export function ProductImageCarousel({
                 item.type === 'video' ? (
                   <>
                     <video
+                      ref={(el) => {
+                        if (el) videoRefsMap.current.set(index, el);
+                        else videoRefsMap.current.delete(index);
+                      }}
                       src={item.src}
                       className={cn(
                         'w-full h-full object-cover transition-transform duration-700',
@@ -265,6 +293,16 @@ export function ProductImageCarousel({
             {currentIndex + 1}/{mediaItems.length}
           </div>
         </div>
+      )}
+
+      {hasVideos && (
+        <button
+          onClick={toggleMute}
+          className="absolute right-2 top-2 z-30 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+          title={isMuted ? 'Activer le son' : 'Couper le son'}
+        >
+          {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
       )}
 
       {!loadedMedia.has(0) && (

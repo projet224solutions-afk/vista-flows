@@ -3057,7 +3057,7 @@ export function POSSystem() {
         receivedAmount={receivedAmount}
         total={total}
         change={change}
-        currency={settings?.currency || 'GNF'}
+        currency={selectedCurrency}
         mode={keypadMode}
         productName={selectedCartItemForQuantity?.name}
         maxQuantity={selectedCartItemForQuantity ? products.find(p => p.id === selectedCartItemForQuantity.id)?.stock : undefined}
@@ -3077,20 +3077,33 @@ export function POSSystem() {
         }}
         orderData={{
           orderNumber: lastOrderNumber,
-          items: cart,
-          subtotal,
-          tax,
+          // Convertir tous les montants GNF → devise sélectionnée pour l'affichage du reçu
+          items: selectedCurrency !== 'GNF'
+            ? cart.map(item => ({
+                ...item,
+                price: vendorConvert(item.price),
+                total: vendorConvert(item.total),
+                discount: item.discount ? {
+                  ...item.discount,
+                  discountAmount: item.discount.discountAmount != null
+                    ? vendorConvert(item.discount.discountAmount)
+                    : item.discount.discountAmount,
+                } : item.discount,
+              }))
+            : cart,
+          subtotal: selectedCurrency !== 'GNF' ? vendorConvert(subtotal) : subtotal,
+          tax: selectedCurrency !== 'GNF' ? vendorConvert(tax) : tax,
           taxRate,
           taxEnabled,
-          discount: discountValue,
+          discount: selectedCurrency !== 'GNF' ? vendorConvert(discountValue) : discountValue,
           discountMode,
           discountPercent,
-          totalBeforeDiscount,
-          total,
+          totalBeforeDiscount: selectedCurrency !== 'GNF' ? vendorConvert(totalBeforeDiscount) : totalBeforeDiscount,
+          total: selectedCurrency !== 'GNF' ? vendorConvert(total) : total,
           paymentMethod,
-          receivedAmount,
-          change,
-          currency: settings?.currency || 'GNF',
+          receivedAmount: selectedCurrency !== 'GNF' ? vendorConvert(receivedAmount) : receivedAmount,
+          change: selectedCurrency !== 'GNF' ? vendorConvert(change) : change,
+          currency: selectedCurrency,
           companyName: companyName,
           logoUrl: settings?.logo_url,
           receiptFooter: settings?.receipt_footer
@@ -3105,7 +3118,7 @@ export function POSSystem() {
         onConfirm={(product, quantity) => {
           addToCart(product, quantity);
         }}
-        currency={settings?.currency || 'GNF'}
+        currency={selectedCurrency}
       />
 
       {/* Modal Scanner Code-barres + Vérification Photo */}

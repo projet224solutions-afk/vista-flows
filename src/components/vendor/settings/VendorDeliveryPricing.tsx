@@ -17,7 +17,8 @@ import {
   Save,
   TrendingUp,
   MapPin,
-  Info
+  Info,
+  Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,13 +33,15 @@ interface DeliveryConfig {
   pricePerKm: number;
   rushBonus: number;
   enabled: boolean;
+  averageDeliveryDays: number;
 }
 
 const DEFAULT_CONFIG: DeliveryConfig = {
   basePrice: 5000,
   pricePerKm: 1000,
   rushBonus: 2000,
-  enabled: true
+  enabled: true,
+  averageDeliveryDays: 3
 };
 
 export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDeliveryPricingProps) {
@@ -52,7 +55,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
       try {
         const { data, _error } = await supabase
           .from('vendors')
-          .select('delivery_base_price, delivery_price_per_km, delivery_rush_bonus, delivery_enabled')
+          .select('delivery_base_price, delivery_price_per_km, delivery_rush_bonus, delivery_enabled, average_delivery_days')
           .eq('id', vendorId)
           .single();
 
@@ -61,7 +64,8 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
             basePrice: data.delivery_base_price || DEFAULT_CONFIG.basePrice,
             pricePerKm: data.delivery_price_per_km || DEFAULT_CONFIG.pricePerKm,
             rushBonus: data.delivery_rush_bonus || DEFAULT_CONFIG.rushBonus,
-            enabled: data.delivery_enabled ?? DEFAULT_CONFIG.enabled
+            enabled: data.delivery_enabled ?? DEFAULT_CONFIG.enabled,
+            averageDeliveryDays: (data as any).average_delivery_days ?? DEFAULT_CONFIG.averageDeliveryDays
           });
         }
       } catch (error) {
@@ -86,8 +90,9 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
           delivery_base_price: config.basePrice,
           delivery_price_per_km: config.pricePerKm,
           delivery_rush_bonus: config.rushBonus,
-          delivery_enabled: config.enabled
-        })
+          delivery_enabled: config.enabled,
+          average_delivery_days: config.averageDeliveryDays
+        } as any)
         .eq('id', vendorId);
 
       if (error) throw error;
@@ -147,6 +152,29 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
               checked={config.enabled}
               onCheckedChange={(checked) => setConfig({ ...config, enabled: checked })}
             />
+          </div>
+
+          {/* Délai de livraison estimé — toujours visible */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-600" />
+              Délai de livraison estimé (jours ouvrables)
+            </Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={config.averageDeliveryDays}
+                onChange={(e) => setConfig({ ...config, averageDeliveryDays: Math.max(1, parseInt(e.target.value) || 1) })}
+                className="w-24"
+                min={1}
+                max={60}
+                step={1}
+              />
+              <span className="text-muted-foreground">jour(s)</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nombre de jours ouvrables avant livraison. Ce délai sera affiché au client lors de l'achat.
+            </p>
           </div>
 
           {config.enabled && (

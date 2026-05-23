@@ -325,31 +325,47 @@ export async function getSellerCurrency(vendorId: string): Promise<string> {
  */
 export async function getProductOriginalPrice(productId: string): Promise<ProductOriginalPrice | null> {
   try {
+    // LEFT JOIN sur vendors (pas !inner) : un produit valide ne doit pas échouer
+    // simplement parce que son vendeur manque dans la table vendors.
     const { data, error } = await supabaseAdmin
       .from('products')
       .select(`
         id, price, compare_price,
         original_price_currency, seller_currency,
-        vendor_id,
-        product_type,
-        vendors!inner(shop_currency, country, seller_country_code)
+        vendor_id, is_active,
+        vendors(shop_currency, country, seller_country_code)
       `)
       .eq('id', productId)
-      .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      logger.error(`getProductOriginalPrice: erreur DB pour ${productId}: ${error.message}`);
+      return null;
+    }
 
-    const vendor = (data as any).vendors;
+    if (!data) {
+      logger.warn(`[PRICING] Produit ${productId} supprimé ou inexistant`);
+      return null;
+    }
+
+    if (!data.is_active) {
+      logger.warn(`[PRICING] Produit ${productId} existe mais est inactif (is_active=false)`);
+      return null;
+    }
+
+    const vendor = Array.isArray((data as any).vendors)
+      ? (data as any).vendors[0]
+      : (data as any).vendors;
+
     const sellerCurrency = data.seller_currency
       || vendor?.shop_currency
       || 'GNF';
 
-    const productType = (data as any).product_type === 'digital'
-      ? 'digital'
-      : (data as any).product_type === 'service'
-        ? 'service'
-        : 'physical';
+    if (!vendor) {
+      logger.warn(`[PRICING] Produit ${productId} : vendeur ${data.vendor_id} absent de la table vendors — devise fallback: ${sellerCurrency}`);
+    }
+
+    const productType: 'physical' | 'digital' | 'service' = 'physical';
 
     return {
       productId: data.id,
@@ -360,8 +376,8 @@ export async function getProductOriginalPrice(productId: string): Promise<Produc
       vendorCurrency: sellerCurrency,
       productType,
     };
-  } catch (err) {
-    logger.error(`getProductOriginalPrice: erreur pour ${productId}:`, err);
+  } catch (err: any) {
+    logger.error(`getProductOriginalPrice: exception pour ${productId}: ${err.message}`);
     return null;
   }
 }
@@ -644,8 +660,10 @@ export async function buildOrderFinancialSummary(params: {
     getSellerCurrency(params.vendorId),
   ]);
 
-  // Calculer le total original dans la devise vendeur
+  // Calculer le total original dans la devise RÉELLE du produit (pas la devise shop du vendeur)
+  // Ex: produit à 25 000 GNF d'un vendeur GBP → priceCurrency = 'GNF', pas 'GBP'
   let totalOriginal = 0;
+  let priceCurrency: string = sellerCurrency; // fallback si liste vide
   const productType = params.productType || 'physical';
 
   for (const item of params.items) {
@@ -654,14 +672,16 @@ export async function buildOrderFinancialSummary(params: {
       throw new Error(`Produit ${item.productId} introuvable ou inactif`);
     }
     // Les prix sont TOUJOURS lus depuis la DB (pas le frontend)
+    priceCurrency = product.currency; // devise réelle du prix (priorité absolue sur shop_currency)
     totalOriginal += product.amount * item.quantity;
   }
 
-  // Commission dans la devise vendeur
-  const commission = calculateMarketplaceCommission(totalOriginal, sellerCurrency, productType);
+  // Commission dans la devise du prix produit
+  const commission = calculateMarketplaceCommission(totalOriginal, priceCurrency, productType);
 
-  // Conversion vers la devise acheteur
-  const isCross = sellerCurrency.toUpperCase() !== buyerCurrency.toUpperCase();
+  // Conversion vers la devise acheteur — comparaison sur la devise PRIX (product.currency)
+  // Si le produit est en GNF et l'acheteur paie en GNF → isCross = false, pas de conversion
+  const isCross = priceCurrency.toUpperCase() !== buyerCurrency.toUpperCase();
   let totalPaid    = totalOriginal;
   let fxRate       = 1;
   let fxSource     = 'identity';
@@ -669,7 +689,7 @@ export async function buildOrderFinancialSummary(params: {
   let rateLockExp: string | null = null;
 
   if (isCross) {
-    const fx = await getInternalFxRate(sellerCurrency, buyerCurrency);
+    const fx = await getInternalFxRate(priceCurrency, buyerCurrency);
     fxRate      = fx.rate;
     fxSource    = fx.source;
     fxFetchedAt = fx.fetched_at;
@@ -683,7 +703,7 @@ export async function buildOrderFinancialSummary(params: {
   }
 
   return {
-    sellerCurrency,
+    sellerCurrency:      priceCurrency, // devise réelle du prix produit (pas nécessairement shop_currency)
     totalOriginalAmount:  totalOriginal,
     platformFeePercent:  commission.feePercent,
     platformFeeAmount:   commission.feeAmount,

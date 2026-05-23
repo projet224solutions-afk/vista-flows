@@ -1,10 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '@/lib/supabaseClient';
 import {
   ServiceSubscriptionService,
   ServicePlan,
-  ActiveServiceSubscription
 } from '@/services/serviceSubscriptionService';
+
+export interface ActiveServiceSubscription {
+  subscription_id: string;
+  plan_id: string;
+  plan_name: string;
+  plan_display_name: string;
+  status: string;
+  current_period_end: string | null;
+  auto_renew: boolean;
+  price_paid: number;
+  max_bookings: number | null;
+  max_products: number | null;
+  max_staff: number | null;
+  priority_listing: boolean;
+  analytics_access: boolean;
+  can_upload_video: boolean;
+  features: string[];
+}
 
 interface UseServiceSubscriptionProps {
   serviceId?: string;
@@ -21,17 +39,55 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     try {
       setLoading(true);
 
-      // Charger les plans filtrés par type de service
       const plansData = await ServiceSubscriptionService.getPlans(serviceTypeId);
       setPlans(plansData);
 
-      // Charger l'abonnement si un serviceId est fourni
-      if (serviceId) {
-        const subData = await ServiceSubscriptionService.getServiceSubscription(serviceId);
-        setSubscription(subData);
+      if (!serviceId) {
+        setSubscription(null);
+        return;
       }
+
+      // Utiliser le RPC SECURITY DEFINER plutôt qu'une requête directe
+      // → contourne les problèmes de RLS (user_id mismatch sur les subscriptions seedées)
+      const { data, error } = await supabase
+        .rpc('get_service_subscription', { p_service_id: serviceId });
+
+      if (error) {
+        console.error('❌ Erreur RPC get_service_subscription:', error);
+        setSubscription(null);
+        return;
+      }
+
+      const row = (data as any[])?.[0];
+
+      // Si le RPC retourne le plan gratuit sans subscription_id → pas d'abonnement actif payant
+      if (!row || !row.subscription_id) {
+        setSubscription(null);
+        return;
+      }
+
+      const rawFeatures = row.features;
+      setSubscription({
+        subscription_id: row.subscription_id,
+        plan_id: row.plan_id,
+        plan_name: row.plan_name || 'free',
+        plan_display_name: row.plan_display_name || 'Gratuit',
+        status: row.status || 'active',
+        current_period_end: row.current_period_end,
+        auto_renew: row.auto_renew ?? false,
+        price_paid: row.price_paid || 0,
+        max_bookings: row.max_bookings ?? null,
+        max_products: row.max_products ?? null,
+        max_staff: row.max_staff ?? null,
+        priority_listing: row.priority_listing ?? false,
+        analytics_access: row.analytics_access ?? false,
+        can_upload_video: row.can_upload_video === true,
+        features: Array.isArray(rawFeatures)
+          ? rawFeatures
+          : (typeof rawFeatures === 'string' ? JSON.parse(rawFeatures) : []),
+      });
     } catch (error) {
-      console.error('Erreur chargement données abonnement service:', error);
+      console.error('❌ Erreur chargement abonnement service:', error);
     } finally {
       setLoading(false);
     }
@@ -60,13 +116,14 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
       serviceId,
       planId,
       pricePaid: price,
-      billingCycle
+      billingCycle,
     });
 
-    if (subscriptionId) {
-      await loadData();
+    if (!subscriptionId) {
+      throw new Error('La souscription a échoué — aucun identifiant retourné');
     }
 
+    await loadData();
     return subscriptionId;
   };
 
@@ -79,36 +136,35 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     if (success) {
       await loadData();
     }
-
     return success;
   };
 
-  const isActive = subscription?.status === 'active';
-  const isExpired = subscription?.status === 'expired' || subscription?.status === 'cancelled';
-  const isPremium = subscription?.plan_name === 'premium' || subscription?.plan_name === 'pro';
+  // subscription null = plan gratuit par défaut (jamais souscrit)
+  const isFree = subscription === null;
+  const isActive = subscription !== null && subscription.status === 'active';
+  const isExpired = subscription !== null &&
+    (subscription.status === 'expired' || subscription.status === 'cancelled');
+  const isPremium = subscription?.can_upload_video === true
+    || subscription?.plan_name === 'premium'
+    || subscription?.plan_name === 'pro';
 
   const daysRemaining = subscription?.current_period_end
-    ? ServiceSubscriptionService.getDaysRemaining(subscription.current_period_end)
+    ? Math.max(0, Math.ceil(
+        (new Date(subscription.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      ))
     : 0;
 
   const isExpiringSoon = isActive && daysRemaining <= 7 && daysRemaining > 0;
 
   const canAccessFeature = (feature: string): boolean => {
     if (!subscription) return false;
-
     switch (feature) {
-      case 'analytics':
-        return subscription.analytics_access;
-      case 'priority_listing':
-        return subscription.priority_listing;
-      case 'unlimited_bookings':
-        return subscription.max_bookings === null;
-      case 'unlimited_products':
-        return subscription.max_products === null;
-      case 'unlimited_staff':
-        return subscription.max_staff === null;
-      default:
-        return subscription.features?.includes(feature) || false;
+      case 'analytics':       return subscription.analytics_access;
+      case 'priority_listing': return subscription.priority_listing;
+      case 'unlimited_bookings': return subscription.max_bookings === null;
+      case 'unlimited_products': return subscription.max_products === null;
+      case 'unlimited_staff':    return subscription.max_staff === null;
+      default: return subscription.features?.includes(feature) || false;
     }
   };
 
@@ -116,6 +172,7 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     subscription,
     plans,
     loading,
+    isFree,
     isActive,
     isExpired,
     isPremium,
@@ -125,6 +182,6 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     cancel,
     canAccessFeature,
     refresh: loadData,
-    formatAmount: ServiceSubscriptionService.formatAmount
+    formatAmount: ServiceSubscriptionService.formatAmount,
   };
 }
