@@ -73,9 +73,47 @@ export default function TaxiMotoClient() {
   const responsive = useResponsive();
   const { error, _capture, clear } = useTaxiErrorBoundary();
 
-  const [activeTab, setActiveTab] = useState('booking');
+  // Initialisation immédiate depuis localStorage — évite le flash "Réservation" si course active
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try { return localStorage.getItem('taxi_active_ride_id') ? 'tracking' : 'booking'; }
+    catch { return 'booking'; }
+  });
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
+  const [restorationDone, setRestorationDone] = useState(false);
+
+  // Synchroniser localStorage avec l'état de la course
+  useEffect(() => {
+    try {
+      if (currentRide?.id) {
+        localStorage.setItem('taxi_active_ride_id', currentRide.id);
+      } else {
+        localStorage.removeItem('taxi_active_ride_id');
+      }
+    } catch { /* ignore */ }
+  }, [currentRide?.id]);
+
+  // Forcer l'onglet suivi dès qu'une course devient active
+  useEffect(() => {
+    if (currentRide) {
+      setActiveTab('tracking');
+    } else if (restorationDone && !currentRide) {
+      // Restauration terminée et aucune course → revenir à la réservation si on était sur tracking
+      setActiveTab(prev => prev === 'tracking' ? 'booking' : prev);
+    }
+  }, [currentRide, restorationDone]);
+
+  // Intercepteur de changement d'onglet — bloque si course en cours
+  const handleTabChange = (tab: string) => {
+    if (currentRide && tab !== 'tracking') {
+      toast.warning('Course en cours', {
+        description: 'Terminez ou annulez votre course pour changer d\'onglet.',
+        duration: 3000,
+      });
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   // Hook de notifications temps réel
   useRideNotifications(user?.id, (notification) => {
@@ -139,10 +177,15 @@ export default function TaxiMotoClient() {
             driver: driverInfo,
             createdAt: data.requested_at || '',
           });
-          setActiveTab('tracking');
+          // activeTab sera forcé à 'tracking' par l'useEffect sur currentRide
+        } else {
+          // Aucune course active — nettoyer le localStorage pour éviter un flash au prochain chargement
+          try { localStorage.removeItem('taxi_active_ride_id'); } catch { /* ignore */ }
         }
+        setRestorationDone(true);
       } catch (err) {
         console.error('[TaxiMotoClient] Error restoring active ride:', err);
+        setRestorationDone(true);
       }
     };
 
@@ -391,11 +434,32 @@ export default function TaxiMotoClient() {
         </Card>
       )}
 
+      {/* Bandeau "Course active" — visible uniquement quand une course est en cours */}
+      {currentRide && (
+        <div className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} rounded-xl bg-green-500 text-white px-4 py-2.5 flex items-center justify-between shadow-md`}>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" />
+            <span className={`${responsive.isMobile ? 'text-xs' : 'text-sm'} font-semibold`}>
+              Course en cours — suivi activé
+            </span>
+          </div>
+          <Badge className="bg-white/20 text-white border-white/30 text-xs font-medium">
+            {currentRide.status === 'pending' ? 'Recherche chauffeur' :
+             currentRide.status === 'accepted' ? 'Chauffeur assigné' :
+             currentRide.status === 'in_progress' ? 'En route' : 'En cours'}
+          </Badge>
+        </div>
+      )}
+
       {/* Navigation par onglets - Responsive */}
       <div className={responsive.isMobile ? 'px-3 mt-3' : 'px-4 mt-4'}>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className={`grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm ${responsive.isMobile ? 'h-12' : ''}`}>
-            <TabsTrigger value="booking" className={responsive.isMobile ? 'text-xs' : ''}>
+            <TabsTrigger
+              value="booking"
+              disabled={!!currentRide}
+              className={`${responsive.isMobile ? 'text-xs' : ''} ${currentRide ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
               <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Réserver'}
               {responsive.isMobile && <span className="ml-1">Réserver</span>}
@@ -408,12 +472,20 @@ export default function TaxiMotoClient() {
                 <span className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="history" className={responsive.isMobile ? 'text-xs' : ''}>
+            <TabsTrigger
+              value="history"
+              disabled={!!currentRide}
+              className={`${responsive.isMobile ? 'text-xs' : ''} ${currentRide ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
               <History className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Historique'}
               {responsive.isMobile && <span className="ml-1">Histo</span>}
             </TabsTrigger>
-            <TabsTrigger value="my-purchases" className={responsive.isMobile ? 'text-xs' : ''}>
+            <TabsTrigger
+              value="my-purchases"
+              disabled={!!currentRide}
+              className={`${responsive.isMobile ? 'text-xs' : ''} ${currentRide ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
               <ShoppingBag className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Mes Achats'}
               {responsive.isMobile && <span className="ml-1">Achats</span>}
