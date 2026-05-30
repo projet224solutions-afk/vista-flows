@@ -57,6 +57,7 @@ const BroadcastMessageCenter = lazy(() => import('@/components/pdg/BroadcastMess
 const PDGCampaignSupervision = lazy(() => import('@/components/pdg/PDGCampaignSupervision'));
 const DeletedUsersRestore = lazy(() => import('@/components/pdg/DeletedUsersRestore'));
 const PDGSupportTechnique = lazy(() => import('@/components/pdg/PDGSupportTechnique'));
+const PDGShareholderManagement = lazy(() => import('@/components/pdg/PDGShareholderManagement'));
 
 // Tabs that redirect to dedicated pages instead of inline content
 const EXTERNAL_TABS: Record<string, string> = {
@@ -604,6 +605,9 @@ export default function PDG224Solutions() {
               )}
               {activeTab === 'deleted-users-restore' && (
                 <ErrorBoundary><DeletedUsersRestore /></ErrorBoundary>
+              )}
+              {activeTab === 'shareholders' && (
+                <ErrorBoundary><PDGShareholderManagement /></ErrorBoundary>
               )}
               {activeTab === 'support-technique' && (
                 <ErrorBoundary><PDGSupportTechnique /></ErrorBoundary>

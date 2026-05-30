@@ -78,6 +78,7 @@ const _VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscript
 const TaxiMotoClient = lazyWithRetry(() => import("./pg/TaxiMotoClient"));
 const TaxiMotoRouter = lazyWithRetry(() => import("./components/taxi-moto/TaxiMotoRouter"));
 const SyndicatDashboardUltraPro = lazyWithRetry(() => import("./pg/SyndicatDashboardUltraPro"));
+const ActionnaireDashboard = lazyWithRetry(() => import("./pg/ActionnaireDashboard"));
 const UserActivationPage = lazyWithRetry(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazyWithRetry(() => import("./pg/TransitaireDashboard"));
 const PDG224Solutions = lazyWithRetry(() => import("./pg/PDG224Solutions"));
@@ -492,6 +493,7 @@ function App() {
                 />
                 {/* Removed legacy TaxiDashboard */}
                 <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
+                <Route path="/actionnaire/dashboard" element={<ProtectedRoute allowedRoles={['actionnaire', 'admin', 'pdg', 'ceo']}><ActionnaireDashboard /></ProtectedRoute>} />
                 <Route
                   path="/invite/:invitationToken"
                   element={<UserActivationPage />}

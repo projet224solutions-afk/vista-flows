@@ -77,6 +77,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
     syndicat: '/syndicat',
     bureau: '/bureau',
     transitaire: '/transitaire',
+    actionnaire: '/actionnaire/dashboard',
     client: '/client',
     agent: '/agent-dashboard',
     vendor_agent: '/home', // Les vendor_agents sont redirigés via leur access_token

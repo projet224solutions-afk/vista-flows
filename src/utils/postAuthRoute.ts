@@ -69,6 +69,7 @@ const PROTECTED_ROUTE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: '/taxi', roles: ['taxi', 'driver', 'admin'] },
   { prefix: '/driver-subscription', roles: ['taxi', 'driver', 'livreur', 'admin'] },
   { prefix: '/transitaire', roles: ['transitaire', 'admin'] },
+  { prefix: '/actionnaire', roles: ['actionnaire', 'admin', 'pdg', 'ceo'] },
   { prefix: '/syndicat', roles: ['syndicat', 'admin'] },
   { prefix: '/bureau/change-password', roles: ['syndicat', 'admin'] },
   { prefix: '/bureau', roles: ['syndicat', 'admin'] },
@@ -264,6 +265,7 @@ export function resolvePostAuthRouteSync(role: string): string {
   if (r === 'prestataire') return '/service-selection';
   if (r === 'vendor_agent') return '/home';
   if (r === 'taxi' || r === 'driver') return '/taxi';
+  if (r === 'actionnaire') return '/actionnaire/dashboard';
   return getDashboardRoute(role);
 }
 

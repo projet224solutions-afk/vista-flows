@@ -33988,6 +33988,7 @@ export type Database = {
         | "bureau"
         | "vendor_agent"
         | "driver"
+        | "actionnaire"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
       vendor_certification_status: "NON_CERTIFIE" | "CERTIFIE" | "SUSPENDU"
       wallet_status: "active" | "suspended" | "blocked" | "pending_verification"
@@ -34296,6 +34297,7 @@ export const Constants = {
         "bureau",
         "vendor_agent",
         "driver",
+        "actionnaire",
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
       vendor_certification_status: ["NON_CERTIFIE", "CERTIFIE", "SUSPENDU"],

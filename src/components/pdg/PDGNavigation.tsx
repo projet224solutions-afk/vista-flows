@@ -52,6 +52,7 @@ const categories: NavCategory[] = [
     bgColor: 'bg-blue-500',
     items: [
       { value: 'users', label: 'Utilisateurs', icon: Users, permission: 'view_users' },
+      { value: 'shareholders', label: 'Actionnaires', icon: Percent, permission: 'view_users' },
       { value: 'products', label: 'Produits', icon: Package, permission: 'view_products' },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent, permission: 'view_transfer_fees' },
       { value: 'kyc', label: 'Gestion KYC', icon: Shield, permission: 'view_kyc' },

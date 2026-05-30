@@ -44,6 +44,7 @@ import marketplacePriceRoutes from './routes/marketplacePrice.routes.js';
 import coreRoutes from './routes/core.routes.js';
 import campaignRoutes from './routes/campaigns.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
+import shareholderRoutes from './routes/shareholders.routes.js';
 // @ts-ignore
 import migrationsRoutes from './routes/migrations.js';
 // @ts-ignore
@@ -236,6 +237,7 @@ app.use('/api/marketplace-visibility', marketplaceVisibilityRoutes);
 app.use('/api/marketplace', marketplacePriceRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/core', coreRoutes);
+app.use('/api/shareholders', shareholderRoutes);
 app.use('/edge-functions', edgeFunctionsRoutes);
 
 // ==================== ERROR HANDLING ====================
