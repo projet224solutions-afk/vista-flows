@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useGPSLocation } from "@/hooks/useGPSLocation";
@@ -15,7 +16,7 @@ import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { GeolocationService } from "@/services/taxi/GeolocationService";
-import { Car, Star } from "lucide-react";
+import { Car, Star, ShoppingCart } from "lucide-react";
 
 // Hooks modulaires refactorisés
 import { useTaxiDriverProfile } from "@/hooks/useTaxiDriverProfile";
@@ -45,6 +46,7 @@ const ONLINE_SINCE_KEY = 'taxi_driver_online_since';
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
+    const navigate = useNavigate();
 
     // GPS unifié avec fallback et error handling
     const {
@@ -509,6 +511,13 @@ export default function TaxiMotoDriver() {
 
             {activeTab === 'my-purchases' && (
                 <div className="min-h-screen bg-gray-950 pb-24 p-3 sm:p-4">
+                    <button
+                        onClick={() => navigate('/marketplace')}
+                        className="w-full mb-4 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+                    >
+                        <ShoppingCart className="w-5 h-5" />
+                        Aller au marketplace
+                    </button>
                     <MyPurchasesOrdersList
                         title="Mes Achats Personnels"
                         emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
