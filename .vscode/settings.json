@@ -1,11 +1,8 @@
 {
-  "deno.enable": true,
+  "deno.enable": false,
   "deno.enablePaths": ["supabase/functions"],
   "deno.unstable": true,
   "deno.lint": true,
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.validate.enable": true,
   "editor.formatOnSave": true,

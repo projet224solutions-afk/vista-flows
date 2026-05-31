@@ -7,21 +7,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CognitoAuthProvider } from "@/contexts/CognitoAuthContext";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
-import CountrySelectionGate from "@/components/auth/CountrySelectionGate";
 import { ThemeProvider } from "next-themes";
 // OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
-import { VendorCurrencyProvider } from "@/contexts/VendorCurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
-import EscrowDisputePage from "./components/escrow/EscrowDisputePage";
-import VendorDisputePage from "./components/vendor/VendorDisputePage";
 import { NotificationsRealtimeListener } from "@/components/common/NotificationsRealtimeListener";
 import DeepLinkInitializer from "@/components/DeepLinkInitializer";
 
@@ -71,14 +67,12 @@ const DriverProfile = lazyWithRetry(() => import("./pg/driver/DriverProfile"));
 const DriverSettings = lazyWithRetry(() => import("./pg/driver/DriverSettings"));
 const DriverHelp = lazyWithRetry(() => import("./pg/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pg/TaxiMotoDriver"));
-const TaxiCarDriver = lazyWithRetry(() => import("./pg/TaxiCarDriver"));
-const TaxiTrackingPage = lazyWithRetry(() => import("./pg/TaxiTrackingPage"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pg/DriverSubscriptionPage"));
-const _VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
+const VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pg/TaxiMotoClient"));
 const TaxiMotoRouter = lazyWithRetry(() => import("./components/taxi-moto/TaxiMotoRouter"));
+const LiveLocationTrack = lazyWithRetry(() => import("./pg/LiveLocationTrack"));
 const SyndicatDashboardUltraPro = lazyWithRetry(() => import("./pg/SyndicatDashboardUltraPro"));
-const ActionnaireDashboard = lazyWithRetry(() => import("./pg/ActionnaireDashboard"));
 const UserActivationPage = lazyWithRetry(() => import("./components/agent-system/UserActivationPage"));
 const TransitaireDashboard = lazyWithRetry(() => import("./pg/TransitaireDashboard"));
 const PDG224Solutions = lazyWithRetry(() => import("./pg/PDG224Solutions"));
@@ -87,7 +81,7 @@ const PdgSecurity = lazyWithRetry(() => import("./pg/PdgSecurity"));
 const PdgDebug = lazyWithRetry(() => import("./pg/PdgDebug"));
 const CompetitiveAnalysis = lazyWithRetry(() => import("./pg/pdg/CompetitiveAnalysis"));
 const ApiSupervision = lazyWithRetry(() => import("./pg/pdg/ApiSupervision"));
-const _SystemDebugPage = lazyWithRetry(() => import("./pg/pdg/SystemDebugPage"));
+const SystemDebugPage = lazyWithRetry(() => import("./pg/pdg/SystemDebugPage"));
 const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
 const MonitoringDashboard = lazyWithRetry(() => import("./pg/pdg/MonitoringDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pg/BureauDashboard"));
@@ -132,9 +126,7 @@ const ServiceRedirect = lazyWithRetry(() => import("./pg/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pg/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pg/UniversalLoginPage"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pg/SetPasswordAfterOAuth"));
-const SelectCountryPage = lazyWithRetry(() => import("./pg/SelectCountryPage"));
 const ResetPassword = lazyWithRetry(() => import("./pg/ResetPassword"));
-const AuthConfirm = lazyWithRetry(() => import("./pg/AuthConfirm"));
 const AgentCreation = lazyWithRetry(() => import("./pg/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pg/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pg/BadgeVerification"));
@@ -196,7 +188,7 @@ const PageLoader = memo(() => {
           margin: '0 auto', animation: 'spin 0.8s linear infinite'
         }} />
       </div>
-      <style dangerouslySetInnerHTML={{__html: '@keyframes spin { to { transform: rotate(360deg); } }'}} />
+      <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { to { transform: rotate(360deg); } }' }} />
     </div>
   );
 });
@@ -265,16 +257,6 @@ function AppPrefetcher() {
   return null;
 }
 
-function RoutedEscrowDisputePage() {
-  const { escrowId = "" } = useParams<{ escrowId: string }>();
-  return <EscrowDisputePage escrowId={escrowId} />;
-}
-
-function RoutedVendorDisputePage() {
-  const { escrowId = "" } = useParams<{ escrowId: string }>();
-  return <VendorDisputePage escrowId={escrowId} />;
-}
-
 function App() {
   useEffect(() => {
     // Important: éviter la perte de session OAuth entre http/https sur le domaine production
@@ -290,7 +272,7 @@ function App() {
       if (cleaned > 0) {
         console.log(`🧹 Nettoyage: ${cleaned} entrée(s) de persistence expirée(s) supprimée(s)`);
       }
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Enregistrement du Service Worker pour PWA (centralisé dans src/main.tsx)
 
@@ -305,385 +287,376 @@ function App() {
             <LanguageProvider>
               <CurrencyProvider>
                 <AuthProvider>
-                <VendorCurrencyProvider>
-                <GpsAutoFill />
-                <CognitoAuthProvider>
-                  <OAuthPasswordGate />
-                  <CountrySelectionGate />
-                  <CartProvider>
-                  <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                    {/* Réception globale des notifications (Realtime + toast) */}
-                    <NotificationsRealtimeListener />
-                  {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
-                  {/* Prompt d'installation PWA automatique */}
-                  <Suspense fallback={null}>
-                    <AutoInstallPrompt delayMs={8000} />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <MerchantOnboarding />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <WebRTCCallProvider>
-                      <></>
-                    </WebRTCCallProvider>
-                  </Suspense>
+                  <GpsAutoFill />
+                  <CognitoAuthProvider>
+                    <OAuthPasswordGate />
+                    <CartProvider>
+                      <TooltipProvider>
+                        <Toaster />
+                        <Sonner />
+                        {/* Réception globale des notifications (Realtime + toast) */}
+                        <NotificationsRealtimeListener />
+                        {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
+                        {/* Prompt d'installation PWA automatique */}
+                        <Suspense fallback={null}>
+                          <AutoInstallPrompt delayMs={8000} />
+                        </Suspense>
+                        <Suspense fallback={null}>
+                          <MerchantOnboarding />
+                        </Suspense>
+                        <Suspense fallback={null}>
+                          <WebRTCCallProvider>
+                            <></>
+                          </WebRTCCallProvider>
+                        </Suspense>
 
-                  <ErrorBoundary>
-                <DeepLinkInitializer />
-                <Suspense fallback={<PageLoader />}>
-                <Routes>
-                {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
-                <Route path="/" element={<RootRedirect />} />
-                <Route path="/index" element={<Navigate to="/" replace />} />
-                <Route path="/index.html" element={<Navigate to="/" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                {/* Accueil application (avec footer + services) */}
-                <Route path="/home" element={<Home />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Navigate to="/auth" replace />} />
-<Route path="/universal-login" element={<UniversalLoginPage />} />
-                <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
-                <Route path="/auth/select-country" element={<SelectCountryPage />} />
-                <Route path="/auth/confirm" element={<AuthConfirm />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/agent/create" element={<AgentCreation />} />
-                <Route path="/worker/settings" element={<WorkerSettings />} />
-                {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}
-                <Route path="/install-app" element={<InstallMobileApp />} />
+                        <ErrorBoundary>
+                          <DeepLinkInitializer />
+                          <Suspense fallback={<PageLoader />}>
+                            <Routes>
+                              {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
+                              <Route path="/" element={<RootRedirect />} />
+                              <Route path="/index" element={<Navigate to="/" replace />} />
+                              <Route path="/index.html" element={<Navigate to="/" replace />} />
+                              <Route path="/dashboard" element={<Dashboard />} />
+                              {/* Accueil application (avec footer + services) */}
+                              <Route path="/home" element={<Home />} />
+                              <Route path="/auth" element={<Auth />} />
+                              <Route path="/login" element={<Navigate to="/auth" replace />} />
+                              <Route path="/universal-login" element={<UniversalLoginPage />} />
+                              <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
+                              <Route path="/reset-password" element={<ResetPassword />} />
+                              <Route path="/agent/create" element={<AgentCreation />} />
+                              <Route path="/worker/settings" element={<WorkerSettings />} />
+                              {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}
+                              <Route path="/install-app" element={<InstallMobileApp />} />
 
-                {/* Main App Routes */}
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/marketplace/visual-search" element={<VisualSearch />} />
-                <Route path="/marketplace/similar/:id" element={<SimilarProducts />} />
-                <Route path="/marketplace/others/:id" element={<OtherProducts />} />
-                <Route path="/marketplace/for-you" element={<ForYouPage />} />
-                <Route path="/marketplace/product/:id" element={<ProductDetail />} />
-                <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/product/:id/*" element={<ProductDetail />} />
-                <Route path="/produit/:id" element={<ProductDetail />} />
-                <Route path="/produit/:id/*" element={<ProductDetail />} />
-                {/* Short URL redirect - must be before shop/boutique routes */}
-                <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
-                <Route path="/s/:shortCode/*" element={<ShortLinkRedirect />} />
-                <Route path="/shop/:vendorId" element={<VendorShop />} />
-                <Route path="/shop/:vendorId/*" element={<VendorShop />} />
-                <Route path="/boutique/:slug" element={<VendorShop />} />
-                <Route path="/boutique/:slug/*" element={<VendorShop />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/contact-user" element={<ContactUserById />} />
-                {/* Messagerie directe: supporte les deux formats (legacy direct_ + nouveau direct/) */}
-                <Route path="/communication/direct/:userId" element={<DirectConversation />} />
-                <Route path="/communication/direct_:userId" element={<DirectConversation />} />
-                <Route path="/proximite" element={<Proximite />} />
-                <Route path="/proximite/taxi-moto" element={<NearbyTaxiMoto />} />
-                <Route path="/proximite/livraison" element={<NearbyLivraison />} />
-                <Route path="/proximite/boutiques" element={<NearbyBoutiques />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/digital-products" element={<DigitalProducts />} />
-                <Route path="/digital-product/:id" element={<DigitalProductDetail />} />
-                <Route path="/boutiques" element={<NearbyBoutiques />} />
+                              {/* Main App Routes */}
+                              <Route path="/marketplace" element={<Marketplace />} />
+                              <Route path="/marketplace/visual-search" element={<VisualSearch />} />
+                              <Route path="/marketplace/similar/:id" element={<SimilarProducts />} />
+                              <Route path="/marketplace/others/:id" element={<OtherProducts />} />
+                              <Route path="/marketplace/for-you" element={<ForYouPage />} />
+                              <Route path="/marketplace/product/:id" element={<ProductDetail />} />
+                              <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
+                              <Route path="/product/:id" element={<ProductDetail />} />
+                              <Route path="/product/:id/*" element={<ProductDetail />} />
+                              <Route path="/produit/:id" element={<ProductDetail />} />
+                              <Route path="/produit/:id/*" element={<ProductDetail />} />
+                              {/* Short URL redirect - must be before shop/boutique routes */}
+                              <Route path="/s/:shortCode" element={<ShortLinkRedirect />} />
+                              <Route path="/s/:shortCode/*" element={<ShortLinkRedirect />} />
+                              <Route path="/shop/:vendorId" element={<VendorShop />} />
+                              <Route path="/shop/:vendorId/*" element={<VendorShop />} />
+                              <Route path="/boutique/:slug" element={<VendorShop />} />
+                              <Route path="/boutique/:slug/*" element={<VendorShop />} />
+                              <Route path="/cart" element={<Cart />} />
+                              <Route path="/messages" element={<Messages />} />
+                              <Route path="/notifications" element={<Notifications />} />
+                              <Route path="/contact-user" element={<ContactUserById />} />
+                              {/* Messagerie directe: supporte les deux formats (legacy direct_ + nouveau direct/) */}
+                              <Route path="/communication/direct/:userId" element={<DirectConversation />} />
+                              <Route path="/communication/direct_:userId" element={<DirectConversation />} />
+                              <Route path="/proximite" element={<Proximite />} />
+                              <Route path="/proximite/taxi-moto" element={<NearbyTaxiMoto />} />
+                              <Route path="/proximite/livraison" element={<NearbyLivraison />} />
+                              <Route path="/proximite/boutiques" element={<NearbyBoutiques />} />
+                              <Route path="/categories" element={<Categories />} />
+                              <Route path="/digital-products" element={<DigitalProducts />} />
+                              <Route path="/digital-product/:id" element={<DigitalProductDetail />} />
+                              <Route path="/boutiques" element={<NearbyBoutiques />} />
 
-                <Route path="/services-proximite" element={<ServicesProximite />} />
-                <Route path="/services-proximite/:id" element={<ServiceDetail />} />
-                {/* Page publique menu restaurant pour commande client */}
-                <Route path="/restaurant/:serviceId/menu" element={<RestaurantPublicMenu />} />
-                {/* Alias legacy: /service/:id -> /services-proximite/:id */}
-                <Route path="/service/:id" element={<ServiceRedirect />} />
-                {/* Service Selection - Protected for logged-in users to create their professional service */}
-                <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}><ServiceSelection /></ProtectedRoute>} />
-                <Route path="/devis" element={<Devis />} />
-                <Route path="/delivery-request" element={<DeliveryRequest />} />
-                <Route path="/delivery" element={<DeliveryClient />} />
-                <Route path="/taxi" element={<TaxiMotoRouter />} />
-                <Route path="/taxi-moto" element={<TaxiMotoClient />} />
-                <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
-                <Route path="/taxi/car/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiCarDriver /></ProtectedRoute>} />
-                <Route path="/taxi/tracking/:rideId" element={<TaxiTrackingPage />} />
-                {/* Redirection 301 depuis l'alias vers la route normalisée */}
-                <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
-                {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
-                {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
-                <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
-                <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><SubscriptionsPage /></ProtectedRoute>} />
-                <Route path="/tracking" element={<ClientTrackingPage />} />
-                <Route path="/client-tracking" element={<ClientTrackingPage />} />
-                <Route path="/profil" element={<Profil />} />
-                <Route path="/my-purchases" element={<MyPurchases />} />
-                <Route path="/payment/success" element={<PaymentSuccessRedirect />} />
-                <Route path="/mes-commandes" element={<MesCommandes />} />
-                <Route path="/profile/:userId" element={<UserPublicProfile />} />
+                              <Route path="/services-proximite" element={<ServicesProximite />} />
+                              <Route path="/services-proximite/:id" element={<ServiceDetail />} />
+                              {/* Page publique menu restaurant pour commande client */}
+                              <Route path="/restaurant/:serviceId/menu" element={<RestaurantPublicMenu />} />
+                              {/* Alias legacy: /service/:id -> /services-proximite/:id */}
+                              <Route path="/service/:id" element={<ServiceRedirect />} />
+                              {/* Service Selection - Protected for logged-in users to create their professional service */}
+                              <Route path="/service-selection" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}><ServiceSelection /></ProtectedRoute>} />
+                              <Route path="/devis" element={<Devis />} />
+                              <Route path="/delivery-request" element={<DeliveryRequest />} />
+                              <Route path="/delivery" element={<DeliveryClient />} />
+                              <Route path="/taxi" element={<TaxiMotoRouter />} />
+                              <Route path="/taxi-moto" element={<TaxiMotoClient />} />
+                              {/* Suivi public de position partagée (lien client → chauffeur) */}
+                              <Route path="/track/:userId" element={<LiveLocationTrack />} />
+                              <Route path="/taxi-moto/driver" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'admin']}><TaxiMotoDriver /></ProtectedRoute>} />
+                              {/* Redirection 301 depuis l'alias vers la route normalisée */}
+                              <Route path="/taxi-moto-driver" element={<Navigate to="/taxi-moto/driver" replace />} />
+                              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
+                              {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
+                              <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
+                              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><SubscriptionsPage /></ProtectedRoute>} />
+                              <Route path="/tracking" element={<ClientTrackingPage />} />
+                              <Route path="/client-tracking" element={<ClientTrackingPage />} />
+                              <Route path="/profil" element={<Profil />} />
+                              <Route path="/my-purchases" element={<MyPurchases />} />
+                              <Route path="/payment/success" element={<PaymentSuccessRedirect />} />
+                              <Route path="/mes-commandes" element={<MesCommandes />} />
+                              <Route path="/profile/:userId" element={<UserPublicProfile />} />
 
-                {/* Affiliate Routes - Vendeur */}
-                <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
+                              {/* Affiliate Routes - Vendeur */}
+                              <Route path="/ref/:vendorId" element={<AffiliateRedirect />} />
 
-                {/* Affiliate Routes - Agent (redirection vers page de connexion) */}
-                <Route path="/register" element={<AgentAffiliateRedirect />} />
-                <Route path="/r/:token" element={<AgentAffiliateRedirect />} />
-                <Route
-                  path="/affiliate/activation"
-                  element={
-                    <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
-                      <AffiliateActivationPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/affiliate/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
-                      <AffiliateDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
+                              {/* Affiliate Routes - Agent (redirection vers page de connexion) */}
+                              <Route path="/register" element={<AgentAffiliateRedirect />} />
+                              <Route path="/r/:token" element={<AgentAffiliateRedirect />} />
+                              <Route
+                                path="/affiliate/activation"
+                                element={
+                                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
+                                    <AffiliateActivationPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/affiliate/dashboard"
+                                element={
+                                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
+                                    <AffiliateDashboardPage />
+                                  </ProtectedRoute>
+                                }
+                              />
 
-                {/* Dashboard Routes */}
-                <Route
-                  path="/vendeur/*"
-                  element={
-                    <ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess>
-                      <VendeurDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Dashboard Vendeur Digital - Interface dédiée produits numériques */}
-                <Route
-                  path="/vendeur-digital/*"
-                  element={
-                    <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                      <DigitalVendorDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/livreur"
-                  element={
-                    <ProtectedRoute allowedRoles={['livreur', 'admin']}>
-                      <LivreurDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/livreur/profile"
-                  element={
-                    <ProtectedRoute allowedRoles={['livreur', 'admin']}>
-                      <DriverProfile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/livreur/settings"
-                  element={
-                    <ProtectedRoute allowedRoles={['livreur', 'admin']}>
-                      <DriverSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/livreur/help"
-                  element={
-                    <ProtectedRoute allowedRoles={['livreur', 'admin']}>
-                      <DriverHelp />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Removed legacy TaxiDashboard */}
-                <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
-                <Route path="/actionnaire/dashboard" element={<ProtectedRoute allowedRoles={['actionnaire', 'admin', 'pdg', 'ceo']}><ActionnaireDashboard /></ProtectedRoute>} />
-                <Route
-                  path="/invite/:invitationToken"
-                  element={<UserActivationPage />}
-                />
-                <Route
-                  path="/payment/:paymentId"
-                  element={<PaymentPage />}
-                />
-                <Route
-                  path="/pay/:token"
-                  element={<PaymentLinkPage />}
-                />
-                <Route
-                  path="/payment"
-                  element={<Payment />}
-                />
-                <Route
-                  path="/payment-core"
-                  element={<PaymentCorePage />}
-                />
+                              {/* Dashboard Routes */}
+                              <Route
+                                path="/vendeur/*"
+                                element={
+                                  <ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess>
+                                    <VendeurDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Dashboard Vendeur Digital - Interface dédiée produits numériques */}
+                              <Route
+                                path="/vendeur-digital/*"
+                                element={
+                                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                                    <DigitalVendorDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/livreur"
+                                element={
+                                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                                    <LivreurDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/livreur/profile"
+                                element={
+                                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                                    <DriverProfile />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/livreur/settings"
+                                element={
+                                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                                    <DriverSettings />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/livreur/help"
+                                element={
+                                  <ProtectedRoute allowedRoles={['livreur', 'admin']}>
+                                    <DriverHelp />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Removed legacy TaxiDashboard */}
+                              <Route path="/syndicat" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><SyndicatDashboardUltraPro /></ProtectedRoute>} />
+                              <Route
+                                path="/invite/:invitationToken"
+                                element={<UserActivationPage />}
+                              />
+                              <Route
+                                path="/payment/:paymentId"
+                                element={<PaymentPage />}
+                              />
+                              <Route
+                                path="/pay/:token"
+                                element={<PaymentLinkPage />}
+                              />
+                              <Route
+                                path="/payment"
+                                element={<Payment />}
+                              />
+                              <Route
+                                path="/payment-core"
+                                element={<PaymentCorePage />}
+                              />
 
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/digital-purchase/:productId" element={<DigitalPurchaseDownload />} />
-                <Route path="/my-digital-purchases" element={<MyDigitalPurchases />} />
-                <Route path="/my-digital-subscriptions" element={<MyDigitalSubscriptions />} />
-                <Route
-                  path="/wallet"
-                  element={
-                    <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
-                      <Wallet />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/subscriptions"
-                  element={
-                    <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                      <SubscriptionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/migrate-ids"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <MigrateIds />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/transitaire"
-                  element={
-                    <ProtectedRoute allowedRoles={['transitaire', 'admin']}>
-                      <TransitaireDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Rediriger /admin vers /pdg - Interface principale de gestion */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg']}>
-                      <PDG224Solutions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <PDG224Solutions />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg/debug"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <PdgDebug />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg/api-supervision"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <ApiSupervision />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg/command-center"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <PdgCommandCenter />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg/security"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <PdgSecurity />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pdg/competitive-analysis"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
-                      <CompetitiveAnalysis />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/pdg224solutionssoulbah" element={<ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}><PDG224Solutions /></ProtectedRoute>} />
-                <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><PDGCopilotDashboard /></ProtectedRoute>} />
-                <Route path="/pdg/monitoring" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><MonitoringDashboard /></ProtectedRoute>} />
+                              <Route path="/orders" element={<Orders />} />
+                              <Route path="/digital-purchase/:productId" element={<DigitalPurchaseDownload />} />
+                              <Route path="/my-digital-purchases" element={<MyDigitalPurchases />} />
+                              <Route path="/my-digital-subscriptions" element={<MyDigitalSubscriptions />} />
+                              <Route
+                                path="/wallet"
+                                element={
+                                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
+                                    <Wallet />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/subscriptions"
+                                element={
+                                  <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
+                                    <SubscriptionsPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/admin/migrate-ids"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin']}>
+                                    <MigrateIds />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/transitaire"
+                                element={
+                                  <ProtectedRoute allowedRoles={['transitaire', 'admin']}>
+                                    <TransitaireDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Rediriger /admin vers /pdg - Interface principale de gestion */}
+                              <Route
+                                path="/admin"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg']}>
+                                    <PDG224Solutions />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <PDG224Solutions />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg/debug"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <PdgDebug />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg/api-supervision"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <ApiSupervision />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg/command-center"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <PdgCommandCenter />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg/security"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <PdgSecurity />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/pdg/competitive-analysis"
+                                element={
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                    <CompetitiveAnalysis />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route path="/pdg224solutionssoulbah" element={<ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}><PDG224Solutions /></ProtectedRoute>} />
+                              <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><PDGCopilotDashboard /></ProtectedRoute>} />
+                              <Route path="/pdg/monitoring" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><MonitoringDashboard /></ProtectedRoute>} />
 
-                {/* Agent & Bureau Login with MFA */}
-                <Route path="/agent/login" element={<AgentLogin />} />
-                <Route path="/agent-login" element={<Navigate to="/agent/login" replace />} />
-                <Route path="/bureau/login" element={<BureauLogin />} />
-                <Route path="/bureau-login" element={<Navigate to="/bureau/login" replace />} />
-                <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
-                <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
+                              {/* Agent & Bureau Login with MFA */}
+                              <Route path="/agent/login" element={<AgentLogin />} />
+                              <Route path="/agent-login" element={<Navigate to="/agent/login" replace />} />
+                              <Route path="/bureau/login" element={<BureauLogin />} />
+                              <Route path="/bureau-login" element={<Navigate to="/bureau/login" replace />} />
+                              <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
+                              <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
 
-                {/* Agent & Bureau Dashboards */}
-                <Route path="/bureau/:token" element={<BureauDashboard />} />
-                <Route path="/worker/:token" element={<WorkerDashboard />} />
-                <Route path="/agent/activate/:token" element={<AgentActivation />} />
-                <Route path="/agent/:token" element={<AgentDashboardPublic />} />
-                <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
-                <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
-                <Route path="/agent-dashboard" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
-                <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
-                <Route path="/bureau/monitoring" element={<BureauMonitoringPage />} />
-                <Route path="/stolen-moto-declaration" element={<StolenMotoDeclaration />} />
-                <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
-                <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
-                <Route
-                  path="/vendeur-simple"
-                  element={<ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess><VendeurDashboard /></ProtectedRoute>}
-                />
+                              {/* Agent & Bureau Dashboards */}
+                              <Route path="/bureau/:token" element={<BureauDashboard />} />
+                              <Route path="/worker/:token" element={<WorkerDashboard />} />
+                              <Route path="/agent/activate/:token" element={<AgentActivation />} />
+                              <Route path="/agent/:token" element={<AgentDashboardPublic />} />
+                              <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
+                              <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
+                              <Route path="/agent-dashboard" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
+                              <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
+                              <Route path="/bureau/monitoring" element={<BureauMonitoringPage />} />
+                              <Route path="/stolen-moto-declaration" element={<StolenMotoDeclaration />} />
+                              <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
+                              <Route path="/client/contracts" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientContracts /></ProtectedRoute>} />
+                              <Route
+                                path="/vendeur-simple"
+                                element={<ProtectedRoute allowedRoles={['vendeur', 'admin']} allowOfflineAccess><VendeurDashboard /></ProtectedRoute>}
+                              />
 
-                {/* Professional Services Routes */}
-                <Route
-                  path="/services"
-                  element={
-                    <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
-                      <ServiceSelection />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/service/:serviceId"
-                  element={
-                    <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin', 'prestataire']}>
-                      <ServiceDashboard />
-                    </ProtectedRoute>
-                  }
-                />
+                              {/* Professional Services Routes */}
+                              <Route
+                                path="/services"
+                                element={
+                                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin']}>
+                                    <ServiceSelection />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/dashboard/service/:serviceId"
+                                element={
+                                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'agent', 'syndicat', 'transitaire', 'admin', 'prestataire']}>
+                                    <ServiceDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
 
-                {/* Bug Bounty - Public */}
-                <Route path="/bug-bounty" element={<BugBounty />} />
+                              {/* Bug Bounty - Public */}
+                              <Route path="/bug-bounty" element={<BugBounty />} />
 
-                {/* Badge Verification - Public */}
-                <Route path="/badge/:vehicleId" element={<BadgeVerification />} />
+                              {/* Badge Verification - Public */}
+                              <Route path="/badge/:vehicleId" element={<BadgeVerification />} />
 
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                {/* Page justification litige Escrow */}
-                <Route path="/escrow/dispute/:escrowId" element={<RoutedEscrowDisputePage />} />
-                <Route path="/escrow/vendor-dispute/:escrowId" element={<RoutedVendorDisputePage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Suspense fallback={null}>
-                <CommunicationWidget position="bottom-right" showNotifications={true} />
-                <QuickFooter />
-              </Suspense>
-            </Suspense>
-            </ErrorBoundary>
-          </TooltipProvider>
-        </CartProvider>
-      </CognitoAuthProvider>
-      </VendorCurrencyProvider>
-      </AuthProvider>
-      </CurrencyProvider>
-      </LanguageProvider>
-      </BrowserRouter>
-    </ThemeProvider>
-  </QueryClientProvider>
+                              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                            <Suspense fallback={null}>
+                              <CommunicationWidget position="bottom-right" showNotifications={true} />
+                              <QuickFooter />
+                            </Suspense>
+                          </Suspense>
+                        </ErrorBoundary>
+                      </TooltipProvider>
+                    </CartProvider>
+                  </CognitoAuthProvider>
+                </AuthProvider>
+              </CurrencyProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
     </>
   );
 }

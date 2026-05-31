@@ -8,6 +8,7 @@ import { Bell, LogOut, Wifi, WifiOff, MapPin, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { TaxiMotoSOSButton } from "@/components/taxi-moto/TaxiMotoSOSButton";
+import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
 import { cn } from "@/lib/utils";
 
 interface DriverHeaderProps {
@@ -76,8 +77,8 @@ export function DriverHeader({
             </div>
           </div>
 
-          {/* Center: SOS Button (priority) */}
-          {isOnline && driverId && (
+          {/* Center: SOS Button (toujours accessible) */}
+          {driverId && (
             <TaxiMotoSOSButton
               taxiId={driverId}
               driverName={driverName}
@@ -89,7 +90,10 @@ export function DriverHeader({
 
           {/* Right: Actions compactes */}
           <div className="flex items-center gap-1 shrink-0">
-            {/* Quick Transfer removed for mobile space */}
+            {/* Suivre un client par ID / lien partagé */}
+            <div className="text-gray-300 hover:text-white">
+              <UserTrackerButton />
+            </div>
 
             {/* Notifications */}
             <Button

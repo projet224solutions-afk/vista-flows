@@ -1,0 +1,87 @@
+/**
+ * PARTAGE DE POSITION EN TEMPS RÉEL — 224Solutions Taxi-Moto
+ *
+ * Permet à un client de partager sa position GPS en direct (par son ID ou un lien)
+ * et à un chauffeur (ou n'importe qui possédant le lien) de la suivre en temps réel.
+ *
+ * Implémentation via Supabase Realtime **Broadcast** : aucun schéma/table requis.
+ * - Le partageur (client) émet sa position sur le canal `live-location-<userId>`.
+ * - Le suiveur (chauffeur / lien) s'abonne au même canal et reçoit la position.
+ */
+
+export const LIVE_LOCATION_PREFIX = 'live-location-';
+
+/** Nom du canal Realtime pour un utilisateur donné. */
+export function liveLocationChannelName(userId: string): string {
+  return `${LIVE_LOCATION_PREFIX}${userId}`;
+}
+
+/** Événements broadcast échangés sur le canal. */
+export const LIVE_LOCATION_EVENTS = {
+  /** Le partageur émet sa position. */
+  position: 'position',
+  /** Un suiveur demande la position courante immédiatement (à l'abonnement). */
+  request: 'request',
+  /** Le partageur a arrêté le partage. */
+  stop: 'stop',
+} as const;
+
+/** Position partagée diffusée sur le canal. */
+export interface LivePosition {
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  heading?: number | null;
+  speed?: number | null;
+  /** Timestamp d'émission (ms). */
+  ts: number;
+  /** Nom affichable du partageur (optionnel). */
+  name?: string;
+}
+
+const UUID_RE = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
+
+/**
+ * Extrait un identifiant utilisateur depuis une saisie libre :
+ * accepte un UUID brut, un lien `…/track/<id>` ou un ID personnalisé.
+ */
+export function extractUserId(input: string): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // 1) UUID présent dans la chaîne (lien ou ID collé)
+  const uuid = trimmed.match(UUID_RE);
+  if (uuid) return uuid[0];
+
+  // 2) Lien de type …/track/<id>
+  const fromPath = trimmed.match(/\/track\/([^/?#\s]+)/i);
+  if (fromPath) return decodeURIComponent(fromPath[1]);
+
+  // 3) Sinon, on considère la saisie comme un ID direct (ex: custom_id)
+  return trimmed;
+}
+
+/** Construit le lien public de suivi pour un utilisateur. */
+export function buildShareLink(userId: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/track/${encodeURIComponent(userId)}`;
+}
+
+/** Lien Google Maps (itinéraire) vers une position. */
+export function googleMapsDirectionsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}
+
+/** Formate un délai écoulé depuis un timestamp (ms) en libellé court FR. */
+export function formatElapsed(ts?: number): string {
+  if (!ts) return 'Jamais';
+  const diffMs = Date.now() - ts;
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 5) return "À l'instant";
+  if (diffSec < 60) return `Il y a ${diffSec} s`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  return `Il y a ${diffH} h`;
+}

@@ -1,6 +1,6 @@
 /**
  * USER TRACKER BUTTON - 224SOLUTIONS
- * Bouton compact pour ouvrir le tracker d'utilisateur
+ * Bouton pour ouvrir le tracker d'utilisateur (suivre un client par ID / lien)
  */
 
 import { useState } from 'react';
@@ -9,27 +9,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MapPinned } from "lucide-react";
 import { UserTracker } from "./UserTracker";
 
-export function UserTrackerButton() {
+interface UserTrackerButtonProps {
+  /** Variante visible et libellée (ex: dans le dashboard chauffeur). */
+  prominent?: boolean;
+  className?: string;
+}
+
+export function UserTrackerButton({ prominent = false, className }: UserTrackerButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 px-2 gap-1 text-xs"
-          title="Tracker un utilisateur"
-        >
-          <MapPinned className="w-4 h-4" />
-          <span className="hidden sm:inline">Track</span>
-        </Button>
+        {prominent ? (
+          <Button
+            className={className ?? "w-full bg-blue-600 hover:bg-blue-700 text-white"}
+            title="Suivre un client par ID ou lien"
+          >
+            <MapPinned className="w-4 h-4 mr-2" />
+            Suivre un client (ID / lien)
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={className ?? "h-9 px-2 gap-1 text-xs"}
+            title="Suivre un client par ID ou lien"
+          >
+            <MapPinned className="w-4 h-4" />
+            <span className="hidden sm:inline">Suivre client</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPinned className="w-5 h-5 text-primary" />
-            Tracker un utilisateur
+            Suivre un client
           </DialogTitle>
         </DialogHeader>
         <UserTracker />

@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
 import { calculateDistance } from '@/hooks/useGeoDistance';
 import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
+import { ShareLocationButton } from "@/components/taxi-moto/ShareLocationButton";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -73,11 +74,12 @@ export default function TaxiMotoClient() {
   const responsive = useResponsive();
   const { error, _capture, clear } = useTaxiErrorBoundary();
 
-  // Initialisation immédiate depuis localStorage — évite le flash "Réservation" si course active
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    try { return localStorage.getItem('taxi_active_ride_id') ? 'tracking' : 'booking'; }
-    catch { return 'booking'; }
-  });
+  // On démarre TOUJOURS sur l'onglet "Réserver".
+  // L'onglet "Suivi" n'est activé que si une course réellement active est retrouvée
+  // en base (cf. restoreActiveRide). Ceci évite d'atterrir directement sur le suivi
+  // à cause d'un identifiant périmé dans localStorage (course fantôme), bug qui
+  // empêchait le client de réserver après avoir cliqué sur "Commander".
+  const [activeTab, setActiveTab] = useState<string>('booking');
   const [nearbyDrivers, setNearbyDrivers] = useState<Driver[]>([]);
   const [currentRide, setCurrentRide] = useState<CurrentRide | null>(null);
   const [restorationDone, setRestorationDone] = useState(false);
@@ -143,7 +145,12 @@ export default function TaxiMotoClient() {
           .limit(1)
           .maybeSingle();
 
-        if (data) {
+        // Ignorer une course "pending" périmée (jamais acceptée, > 2h) : elle ne doit
+        // pas piéger le client sur l'onglet Suivi et l'empêcher de réserver à nouveau.
+        const isStalePending = data?.status === 'pending' && data?.requested_at &&
+          (Date.now() - new Date(data.requested_at).getTime()) > 2 * 60 * 60 * 1000;
+
+        if (data && !isStalePending) {
           let driverInfo = undefined;
           if (data.driver_id) {
             const { data: driverData } = await supabase
@@ -493,7 +500,25 @@ export default function TaxiMotoClient() {
           </TabsList>
 
           {/* Réservation */}
-          <TabsContent value="booking" className="mt-4">
+          <TabsContent value="booking" className="mt-4 space-y-4">
+            {/* Partage de position : le client donne son ID/lien au chauffeur */}
+            <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
+              <CardContent className={`${responsive.isMobile ? 'p-3' : 'p-4'} flex items-center justify-between gap-3`}>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">Partager ma position</p>
+                  <p className="text-xs text-muted-foreground">
+                    Aidez le chauffeur à vous localiser avec précision
+                  </p>
+                </div>
+                <ShareLocationButton
+                  userId={user?.id}
+                  userName={profile?.first_name || 'Client'}
+                  variant="compact"
+                  className="shrink-0"
+                />
+              </CardContent>
+            </Card>
+
             <TaxiMotoBooking
               userLocation={location}
               nearbyDrivers={nearbyDrivers}

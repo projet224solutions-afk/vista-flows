@@ -3,14 +3,15 @@
  * Composant pour tracker la position d'un utilisateur en temps réel
  */
 
-import { useState, useEffect } from 'react';
-import { _Card, _CardContent, _CardHeader, _CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { _MapPin, Search, X, Navigation, Clock, User } from "lucide-react";
+import { Search, X, Navigation, Clock, User, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTrackLocation } from "@/hooks/useLiveLocation";
+import { extractUserId, formatElapsed } from "@/lib/liveLocation";
 
 interface TrackedUser {
   id: string;
@@ -31,24 +32,81 @@ export function UserTracker() {
   const [loading, setLoading] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
 
+  // Suivi de la position partagée en direct (clients comme chauffeurs)
+  const live = useTrackLocation(isTracking ? trackedUser?.id ?? null : null);
+
+  // La position en direct (broadcast) prime sur la dernière position connue en base
+  const displayLat = live.position?.lat ?? trackedUser?.lastLat;
+  const displayLng = live.position?.lng ?? trackedUser?.lastLng;
+  const isLive = !!live.position;
+
+  // Position GPS du chauffeur (origine de l'itinéraire vers le client)
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Évite de rouvrir la navigation externe à chaque mise à jour de position
+  const navOpenedRef = useRef(false);
+
+  // Suivre la position du chauffeur tant que le tracking est actif
+  useEffect(() => {
+    if (!isTracking || !navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* GPS chauffeur indisponible : itinéraire centré sur le client */ },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [isTracking]);
+
+  // Réinitialiser le garde d'ouverture quand on relance/arrête un suivi
+  useEffect(() => {
+    if (!isTracking) navOpenedRef.current = false;
+  }, [isTracking]);
+
+  const hasClientPosition = displayLat !== undefined && displayLng !== undefined;
+
+  // Carte d'itinéraire intégrée (s'ouvre automatiquement dès la localisation)
+  const embedSrc = hasClientPosition
+    ? (myLocation
+        ? `https://maps.google.com/maps?saddr=${myLocation.lat},${myLocation.lng}&daddr=${displayLat},${displayLng}&output=embed`
+        : `https://maps.google.com/maps?q=${displayLat},${displayLng}&z=16&output=embed`)
+    : null;
+
+  // Lien de navigation GPS turn-by-turn (application Google Maps)
+  const navUrl = hasClientPosition
+    ? (myLocation
+        ? `https://www.google.com/maps/dir/?api=1&origin=${myLocation.lat},${myLocation.lng}&destination=${displayLat},${displayLng}&travelmode=driving`
+        : `https://www.google.com/maps/dir/?api=1&destination=${displayLat},${displayLng}&travelmode=driving`)
+    : null;
+
+  // Ouvre automatiquement la navigation GPS une seule fois dès que le client est localisé
+  useEffect(() => {
+    if (isTracking && hasClientPosition && navUrl && !navOpenedRef.current) {
+      navOpenedRef.current = true;
+      try {
+        window.open(navUrl, '_blank', 'noopener');
+      } catch { /* popup bloquée : l'itinéraire reste visible dans la carte intégrée */ }
+    }
+  }, [isTracking, hasClientPosition, navUrl]);
+
   /**
    * Rechercher et charger les données d'un utilisateur
    */
   const trackUser = async () => {
-    if (!userId.trim()) {
-      toast.error('Veuillez saisir un ID utilisateur');
+    // Accepte un ID brut, un UUID collé ou un lien …/track/<id>
+    const id = extractUserId(userId);
+    if (!id) {
+      toast.error('Veuillez saisir un ID ou un lien de suivi');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('🔍 Recherche utilisateur:', userId);
+      console.log('🔍 Recherche utilisateur:', id);
 
       // 1. Vérifier si c'est un chauffeur taxi
       const { data: driverData, error: _driverError } = await supabase
         .from('taxi_drivers')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', id)
         .maybeSingle();
 
       if (driverData) {
@@ -58,11 +116,11 @@ export function UserTracker() {
         const { data: profile } = await supabase
           .from('profiles')
           .select('first_name, last_name, phone')
-          .eq('id', userId)
+          .eq('id', id)
           .single();
 
         setTrackedUser({
-          id: userId,
+          id,
           firstName: profile?.first_name,
           lastName: profile?.last_name,
           phone: profile?.phone,
@@ -83,25 +141,27 @@ export function UserTracker() {
       const { data: profileData, error: _profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', id)
+        .maybeSingle();
 
       if (profileData) {
         console.log('✅ Utilisateur trouvé:', profileData);
         setTrackedUser({
-          id: userId,
+          id,
           firstName: profileData.first_name,
           lastName: profileData.last_name,
           phone: profileData.phone
         });
         setIsTracking(true);
-        toast.success('👤 Utilisateur trouvé');
+        toast.success('👤 Client trouvé — en attente de sa position partagée');
         return;
       }
 
-      // Aucun utilisateur trouvé
-      toast.error('❌ Utilisateur introuvable');
-      console.error('Utilisateur non trouvé');
+      // 3. Profil introuvable mais on peut quand même suivre la position
+      //    partagée en direct (le client a peut-être juste donné son ID/lien).
+      setTrackedUser({ id });
+      setIsTracking(true);
+      toast.success('📡 Suivi de la position en direct activé');
 
     } catch (error) {
       console.error('❌ Erreur lors du tracking:', error);
@@ -165,13 +225,11 @@ export function UserTracker() {
    * Ouvrir Google Maps avec la position
    */
   const openInMaps = () => {
-    if (!trackedUser?.lastLat || !trackedUser?.lastLng) {
+    if (!navUrl) {
       toast.error('Position GPS non disponible');
       return;
     }
-
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${trackedUser.lastLat},${trackedUser.lastLng}`;
-    window.open(url, '_blank');
+    window.open(navUrl, '_blank', 'noopener');
   };
 
   /**
@@ -199,7 +257,7 @@ export function UserTracker() {
           <div className="space-y-3">
             <div className="flex gap-2">
               <Input
-                placeholder="ID Utilisateur (UUID)"
+                placeholder="ID du client ou lien de suivi"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 className="font-mono text-sm"
@@ -211,11 +269,11 @@ export function UserTracker() {
                 className="shrink-0"
               >
                 <Search className="w-4 h-4 mr-2" />
-                {loading ? 'Recherche...' : 'Tracker'}
+                {loading ? 'Recherche...' : 'Suivre'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              💡 Entrez l'ID d'un utilisateur pour voir sa position en temps réel
+              💡 Collez l'ID ou le lien que le client vous a communiqué pour voir sa position en temps réel
             </p>
           </div>
         )}
@@ -274,21 +332,46 @@ export function UserTracker() {
             )}
 
             {/* Position GPS */}
-            {trackedUser.lastLat && trackedUser.lastLng ? (
+            {displayLat !== undefined && displayLng !== undefined ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-900">
+                  <span className="text-sm font-medium text-green-900 flex items-center gap-2">
                     📍 Position GPS
+                    {isLive && (
+                      <Badge variant="default" className="bg-green-500 text-[10px] h-4 px-1.5">
+                        EN DIRECT
+                      </Badge>
+                    )}
                   </span>
                   <div className="flex items-center gap-1 text-xs text-green-700">
                     <Clock className="w-3 h-3" />
-                    {formatLastSeen(trackedUser.lastSeen)}
+                    {isLive ? formatElapsed(live.position?.ts) : formatLastSeen(trackedUser.lastSeen)}
                   </div>
                 </div>
 
+                {/* Itinéraire : la navigation s'ouvre automatiquement dès la localisation */}
+                {embedSrc && (
+                  <div className="rounded-lg overflow-hidden border border-green-200 aspect-video bg-white">
+                    <iframe
+                      title="Itinéraire vers le client"
+                      width="100%"
+                      height="100%"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={embedSrc}
+                    />
+                  </div>
+                )}
+
                 <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100">
-                  Lat: {trackedUser.lastLat.toFixed(6)}<br />
-                  Lng: {trackedUser.lastLng.toFixed(6)}
+                  Lat: {displayLat.toFixed(6)}<br />
+                  Lng: {displayLng.toFixed(6)}
+                  {isLive && live.position?.accuracy ? (
+                    <><br />Précision: ±{Math.round(live.position.accuracy)} m</>
+                  ) : null}
+                  {!myLocation && (
+                    <><br /><span className="text-amber-600">Activez votre GPS pour afficher l'itinéraire complet</span></>
+                  )}
                 </div>
 
                 <Button
@@ -297,16 +380,16 @@ export function UserTracker() {
                   size="sm"
                 >
                   <Navigation className="w-4 h-4 mr-2" />
-                  Ouvrir dans Google Maps
+                  {myLocation ? "Démarrer la navigation GPS" : "Ouvrir dans Google Maps"}
                 </Button>
               </div>
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
                 <p className="text-sm text-yellow-800">
-                  ⚠️ Position GPS non disponible
+                  ⏳ En attente de la position partagée
                 </p>
                 <p className="text-xs text-yellow-600 mt-1">
-                  L'utilisateur n'a pas encore partagé sa position
+                  Demandez au client d'appuyer sur « Partager ma position » puis « Démarrer le partage ».
                 </p>
               </div>
             )}
@@ -314,8 +397,9 @@ export function UserTracker() {
             {/* Indicateur de tracking actif */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
               <p className="text-xs text-blue-800 font-medium flex items-center justify-center gap-2">
-                <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                Tracking en temps réel actif
+                <Radio className="w-3 h-3 animate-pulse" />
+                {live.connected ? 'Connecté — suivi en temps réel actif' : 'Connexion au canal de suivi…'}
+                {live.sharerStopped && ' (partage arrêté par le client)'}
               </p>
             </div>
           </div>

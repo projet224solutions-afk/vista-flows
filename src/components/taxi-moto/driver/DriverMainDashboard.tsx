@@ -4,15 +4,15 @@
  */
 
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
-import { _ErrorBanner } from '@/components/ui/ErrorBanner';
 import { GoOnlineButton } from './GoOnlineButton';
 import { DriverStatsRow } from './DriverStatsRow';
 import { MiniMap } from './MiniMap';
 import { RideRequestCard } from './RideRequestCard';
-import { Car, _Crown, Zap, AlertCircle } from 'lucide-react';
+import { Car, Zap, AlertCircle } from 'lucide-react';
 import { DriverTutorial } from '@/components/taxi-moto/DriverTutorial';
 import { DriverDiagnostic } from '@/components/taxi-moto/DriverDiagnostic';
 import { DriverVehicleInfo } from './DriverVehicleInfo';
+import { UserTrackerButton } from '@/components/taxi-moto/UserTrackerButton';
 import { cn } from '@/lib/utils';
 
 interface RideRequest {
@@ -62,6 +62,7 @@ interface DriverMainDashboardProps {
   onClearError: () => void;
   onExpandMap: () => void;
   onStatClick?: (statId: string) => void;
+  onGoToMarketplace?: () => void;
 }
 
 export function DriverMainDashboard({
@@ -82,7 +83,8 @@ export function DriverMainDashboard({
   onDeclineRide,
   onClearError,
   onExpandMap,
-  onStatClick
+  onStatClick,
+  onGoToMarketplace
 }: DriverMainDashboardProps) {
   return (
     <div className="min-h-screen bg-gray-950 pb-24 overflow-x-hidden w-full max-w-full">
@@ -136,7 +138,13 @@ export function DriverMainDashboard({
           rating={stats.rating || 5.0}
           onlineTime={stats.onlineTime || '0m'}
           onStatClick={onStatClick}
+          onGoToMarketplace={onGoToMarketplace}
         />
+
+        {/* Suivre un client par ID / lien partagé */}
+        <div className="px-2 pt-2">
+          <UserTrackerButton prominent />
+        </div>
 
         {/* Main Content */}
         <div className="px-2 space-y-3 w-full max-w-full">
