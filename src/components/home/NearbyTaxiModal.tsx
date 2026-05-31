@@ -30,8 +30,8 @@ interface NearbyTaxiModalProps {
 
 const MAX_DISTANCE_KM = 5;
 const FALLBACK_LOCATION = { lat: 9.509167, lng: -13.712222 }; // Conakry (fallback)
-const FALLBACK_RADIUS_KM = 50;
-const SEARCH_RADII_KM = [MAX_DISTANCE_KM, 10, 20, FALLBACK_RADIUS_KM] as const;
+const FALLBACK_RADIUS_KM = 20;
+const SEARCH_RADII_KM = [MAX_DISTANCE_KM, 10, FALLBACK_RADIUS_KM] as const;
 
 export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const navigate = useNavigate();
