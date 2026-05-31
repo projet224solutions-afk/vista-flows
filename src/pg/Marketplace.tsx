@@ -1,27 +1,28 @@
 ﻿// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { _Grid, List, ArrowUpDown, _Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, _Share2, _Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, _Star, _Sparkles } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/SearchBar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import { TranslatedProductCard } from "@/components/marketplace/TranslatedProductCard";
-import { _UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
-import { _ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
+import { UniversalMarketplaceCard } from "@/components/marketplace/UniversalMarketplaceCard";
+import { ProfessionalServiceCard } from "@/components/marketplace/ProfessionalServiceCard";
 import { ServiceTypesGrid } from "@/components/marketplace/ServiceTypesGrid";
 import { CurrencyIndicator } from "@/components/marketplace/CurrencyIndicator";
 import QuickFooter from "@/components/QuickFooter";
 import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
-import { _FavoriteButton } from "@/components/ui/FavoriteButton";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { BrowseModal } from "@/components/marketplace/BrowseModal";
 import { supabase } from "@/integrations/supabase/client";
 
 import { useMarketplaceUniversal } from "@/hooks/useMarketplaceUniversal";
+import { useContactVendor } from "@/hooks/useContactVendor";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
-import { _ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
+import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
@@ -40,10 +41,10 @@ import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTr
 const BRAND_BLUE = '#04439e';
 const BRAND_ORANGE = '#ff4000';
 
-/** Loading state with 10s timeout - prevents infinite skeleton on mobile PWA */
+/** Loading state with 10s timeout ÔÇö prevents infinite skeleton on mobile PWA */
 function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
   const [timedOut, setTimedOut] = useState(false);
-
+  
   useEffect(() => {
     const timer = setTimeout(() => setTimedOut(true), 20000);
     return () => clearTimeout(timer);
@@ -54,11 +55,11 @@ function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
       <div className="flex flex-col items-center justify-center py-16 gap-4">
         <div className="text-center space-y-2">
           <p className="text-sm font-medium text-foreground">Impossible de charger les produits</p>
-          <p className="text-xs text-muted-foreground">Vérifiez votre connexion internet</p>
+          <p className="text-xs text-muted-foreground">V├®rifiez votre connexion internet</p>
         </div>
         <div className="flex gap-2">
           <Button variant="default" size="sm" onClick={onRetry}>
-            Réessayer
+            R├®essayer
           </Button>
           <Button variant="outline" size="sm" onClick={() => {
             if ('caches' in window) {
@@ -89,7 +90,7 @@ function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// Configuration des catégories numériques pour le filtre
+// Configuration des cat├®gories num├®riques pour le filtre
 const DIGITAL_CATEGORIES = [
   { id: 'all', name: 'Tous', icon: Package },
   { id: 'voyage', name: 'Voyage', icon: Plane },
@@ -97,10 +98,10 @@ const DIGITAL_CATEGORIES = [
   { id: 'formation', name: 'Formations', icon: GraduationCap },
   { id: 'livre', name: 'Livres', icon: BookOpen },
   { id: 'ai', name: 'IA', icon: Bot },
-  { id: 'physique_affilie', name: 'Affiliés', icon: ShoppingBag },
+  { id: 'physique_affilie', name: 'Affili├®s', icon: ShoppingBag },
 ] as const;
 
-const _PAGE_LIMIT = 24;
+const PAGE_LIMIT = 24;
 
 interface Category {
   id: string;
@@ -109,7 +110,7 @@ interface Category {
   is_active: boolean;
 }
 
-interface _Product {
+interface Product {
   id: string;
   name: string;
   price: number;
@@ -124,7 +125,7 @@ interface _Product {
 export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isMobile, _isTablet } = useResponsive();
+  const { isMobile, isTablet } = useResponsive();
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
@@ -138,7 +139,7 @@ export default function Marketplace() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
   const [selectedDigitalCategory, setSelectedDigitalCategory] = useState<string>("all");
-  const [_viewMode, _setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showBrowseModal, setShowBrowseModal] = useState(false);
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position' | 'visibility'>("visibility");
   const [showFilters, setShowFilters] = useState(false);
@@ -148,24 +149,24 @@ export default function Marketplace() {
   const [vendorName, setVendorName] = useState<string | null>(null);
   const [deferRecommendations, setDeferRecommendations] = useState(false);
 
-  // Behavior tracking différé pour ne pas ralentir l'ouverture initiale
+  // Behavior tracking diff├®r├® pour ne pas ralentir l'ouverture initiale
   useBehaviorTracking({ sessionType: 'browse' }, deferRecommendations);
   useRecommendationRealtimeInvalidation(deferRecommendations);
-
+  
   const vendorId = searchParams.get('vendor') || undefined;
-  const _includePhysicalVendors = searchParams.get('includePhysical') === '1';
+  const includePhysicalVendors = searchParams.get('includePhysical') === '1';
 
   const [vendorSlug, setVendorSlug] = useState<string | null>(null);
 
-  // Déterminer quelle catégorie passer au hook:
-  // - Si on filtre par produits numériques et une catégorie numérique est sélectionnée, l'utiliser
-  // - Sinon utiliser la catégorie e-commerce classique
-  const effectiveCategory = selectedItemType === 'digital_product' && selectedDigitalCategory !== 'all'
-    ? selectedDigitalCategory
+  // D├®terminer quelle cat├®gorie passer au hook:
+  // - Si on filtre par produits num├®riques et une cat├®gorie num├®rique est s├®lectionn├®e, l'utiliser
+  // - Sinon utiliser la cat├®gorie e-commerce classique
+  const effectiveCategory = selectedItemType === 'digital_product' && selectedDigitalCategory !== 'all' 
+    ? selectedDigitalCategory 
     : selectedCategory;
 
-  // 🔥 UTILISER LE HOOK UNIVERSEL pour charger TOUT (produits + services pro + numériques)
-  const {
+  // ­ƒöÑ UTILISER LE HOOK UNIVERSEL pour charger TOUT (produits + services pro + num├®riques)
+  const { 
     items: marketplaceItems,
     loading: marketplaceLoading,
     total: marketplaceTotal,
@@ -221,7 +222,7 @@ export default function Marketplace() {
 
   const shouldLoadRecommendations = shouldEnableRecommendations && deferRecommendations;
 
-  // Recommandations secondaires chargées après le contenu principal et le premier rendu mobile
+  // Recommandations secondaires charg├®es apr├¿s le contenu principal et le premier rendu mobile
   const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6, shouldLoadRecommendations);
   const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6, shouldLoadRecommendations);
   const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8, shouldLoadRecommendations);
@@ -229,7 +230,7 @@ export default function Marketplace() {
   const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8, shouldLoadRecommendations);
   const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8, shouldLoadRecommendations);
 
-  // Charger le nom du vendeur si filtré par vendeur
+  // Charger le nom du vendeur si filtr├® par vendeur
   useEffect(() => {
     if (vendorId) {
       const loadVendorName = async () => {
@@ -250,16 +251,15 @@ export default function Marketplace() {
     }
   }, [vendorId]);
 
-  // Charger les catégories et les localisations
+  // Charger les cat├®gories et les localisations
   useEffect(() => {
     loadCategories();
     loadLocations();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCategories = async () => {
     try {
-      // Charger les catégories qui ont au moins un produit actif
+      // Charger les cat├®gories qui ont au moins un produit actif
       const { data: categoriesWithProducts, error: countError } = await supabase
         .from('products')
         .select('category_id')
@@ -268,7 +268,7 @@ export default function Marketplace() {
 
       if (countError) throw countError;
 
-      // Compter les produits par catégorie
+      // Compter les produits par cat├®gorie
       const categoryProductCount = new Map<string, number>();
       (categoriesWithProducts || []).forEach(product => {
         if (product.category_id) {
@@ -277,9 +277,9 @@ export default function Marketplace() {
         }
       });
 
-      // Charger uniquement les catégories qui ont des produits
+      // Charger uniquement les cat├®gories qui ont des produits
       const categoryIdsWithProducts = Array.from(categoryProductCount.keys());
-
+      
       if (categoryIdsWithProducts.length === 0) {
         setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
         return;
@@ -293,8 +293,8 @@ export default function Marketplace() {
         .order('name');
 
       if (error) throw error;
-
-      // Trier par nombre de produits (décroissant)
+      
+      // Trier par nombre de produits (d├®croissant)
       const sortedCategories = (data || []).sort((a, b) => {
         const countA = categoryProductCount.get(a.id) || 0;
         const countB = categoryProductCount.get(b.id) || 0;
@@ -304,7 +304,7 @@ export default function Marketplace() {
       const allCategory = { id: 'all', name: t('common.all'), is_active: true };
       setCategories([allCategory, ...sortedCategories]);
     } catch (error) {
-      console.error('Erreur chargement catégories:', error);
+      console.error('Erreur chargement cat├®gories:', error);
       setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
     }
   };
@@ -312,7 +312,7 @@ export default function Marketplace() {
   const loadLocations = async (countryFilter?: string) => {
     try {
       // Charger les pays distincts depuis les vendeurs visibles sur le marketplace
-      // (actifs, avec un pays défini)
+      // (actifs, avec un pays d├®fini)
       const { data: countryData, error: countryError } = await supabase
         .from('vendors')
         .select('country')
@@ -333,7 +333,7 @@ export default function Marketplace() {
         )
       ];
 
-      // Si aucun pays trouvé, on peut aussi chercher dans les produits numériques
+      // Si aucun pays trouv├®, on peut aussi chercher dans les produits num├®riques
       if (uniqueCountries.length === 0) {
         const { data: digitalVendors } = await supabase
           .from('digital_products')
@@ -351,7 +351,7 @@ export default function Marketplace() {
 
       setCountries([...new Set(uniqueCountries)].sort());
 
-      // Charger les villes distinctes (filtrées par pays si sélectionné)
+      // Charger les villes distinctes (filtr├®es par pays si s├®lectionn├®)
       let cityQuery = supabase
         .from('vendors')
         .select('city, country')
@@ -360,7 +360,7 @@ export default function Marketplace() {
         .neq('city', '')
         .or('business_type.is.null,business_type.neq.physical');
 
-      // Si un pays est sélectionné, filtrer les villes par ce pays
+      // Si un pays est s├®lectionn├®, filtrer les villes par ce pays
       if (countryFilter && countryFilter !== 'all') {
         cityQuery = cityQuery.ilike('country', countryFilter);
       }
@@ -387,70 +387,32 @@ export default function Marketplace() {
   // Recharger les villes quand le pays change
   useEffect(() => {
     loadLocations(selectedCountry);
-    // Réinitialiser la ville si on change de pays
+    // R├®initialiser la ville si on change de pays
     if (selectedCountry !== 'all') {
       setSelectedCity('all');
     }
   }, [selectedCountry]);
 
   const handleProductClick = (itemId: string) => {
-    const item = marketplaceItems.find(p => p.id === itemId);
-    if (item?.item_type === 'professional_service') {
-      navigate(`/services-proximite/${itemId}`);
-      return;
-    }
-    if (item?.item_type === 'menu_item') {
-      navigate(`/restaurant/${item.service_id}/menu`);
-      return;
-    }
-    if (item?.item_type === 'service_product') {
-      navigate(`/services-proximite/${item.service_id}`);
-      return;
-    }
     setSelectedProductId(itemId);
     setShowProductModal(true);
   };
 
-  const handleContactVendor = async (itemId: string) => {
-    // Trouver l'item dans la liste
+  const [contactLoading, setContactLoading] = useState<string | null>(null);
+  const contactVendor = useContactVendor();
+  const handleContactVendor = (itemId: string) => {
     const item = marketplaceItems.find(p => p.id === itemId);
     if (!item) {
       toast.error('Item introuvable');
       return;
     }
-
-    if (!item.vendor_user_id) {
-      toast.error('Informations du vendeur non disponibles');
-      return;
-    }
-
-    try {
-      if (!user) {
-        toast.error('Veuillez vous connecter pour contacter le vendeur');
-        navigate('/auth');
-        return;
-      }
-
-      // Créer un message initial
-      const initialMessage = `Bonjour, je suis intéressé par "${item.name}". Pouvez-vous me donner plus d'informations ?`;
-
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          recipient_id: item.vendor_user_id,
-          content: initialMessage,
-          type: 'text'
-        });
-
-      if (error) throw error;
-
-      toast.success('Message envoyé au vendeur!');
-      navigate(`/messages?recipientId=${item.vendor_user_id}`);
-    } catch (error) {
-      console.error('Erreur lors du contact:', error);
-      toast.error('Impossible de contacter le vendeur');
-    }
+    contactVendor({
+      vendorUserId: item.vendor_user_id,
+      vendorId: item.vendor_id,
+      productId: item.id,
+      productName: item.name,
+      onLoadingChange: (l) => setContactLoading(l ? itemId : null),
+    });
   };
 
   return (
@@ -481,7 +443,7 @@ export default function Marketplace() {
                 <>
                   <ShareButton
                     title={vendorName || 'Boutique'}
-                    text={`Découvrez la boutique ${vendorName} sur 224 Solutions`}
+                    text={`D├®couvrez la boutique ${vendorName} sur 224 Solutions`}
                     url={`${window.location.origin}/boutique/${vendorSlug || vendorId}`}
                     variant="outline"
                     size="icon"
@@ -490,8 +452,8 @@ export default function Marketplace() {
                     useShortUrl={true}
                     ogType="shop"
                   />
-                  <Button
-                    variant="ghost"
+                  <Button 
+                    variant="ghost" 
                     size="sm"
                     onClick={() => navigate('/marketplace')}
                     className="text-xs"
@@ -501,9 +463,9 @@ export default function Marketplace() {
                 </>
               )}
               {user && (
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
                   className="relative h-8 w-8"
                   onClick={() => navigate('/cart')}
                 >
@@ -517,7 +479,7 @@ export default function Marketplace() {
               )}
             </div>
           </div>
-
+          
           {/* Search bar */}
           <div className="mt-2">
             <SearchBar
@@ -545,7 +507,7 @@ export default function Marketplace() {
               className={cn(
                 'cursor-pointer whitespace-nowrap shrink-0 px-2 py-1 text-[10px] sm:text-xs',
                 selectedCategory === category.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
               )}
               onClick={() => {
@@ -570,8 +532,8 @@ export default function Marketplace() {
             }}
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
-              selectedItemType === 'professional_service'
-                ? 'text-white shadow-sm'
+              selectedItemType === 'professional_service' 
+                ? 'text-white shadow-sm' 
                 : 'bg-card border border-border hover:border-secondary/50'
             )}
             style={selectedItemType === 'professional_service' ? { backgroundColor: BRAND_BLUE } : undefined}
@@ -583,8 +545,8 @@ export default function Marketplace() {
             onClick={() => setSelectedItemType('digital_product')}
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
-              selectedItemType === 'digital_product'
-                ? 'text-white shadow-sm'
+              selectedItemType === 'digital_product' 
+                ? 'text-white shadow-sm' 
                 : 'bg-card border border-border hover:border-accent/50'
             )}
             style={selectedItemType === 'digital_product' ? { backgroundColor: BRAND_ORANGE } : undefined}
@@ -615,7 +577,7 @@ export default function Marketplace() {
                   )}
                   style={isSelected ? { backgroundColor: BRAND_BLUE } : undefined}
                 >
-                  <div
+                  <div 
                     className="w-5 h-5 rounded-md flex items-center justify-center"
                     style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : BRAND_BLUE }}
                   >
@@ -683,21 +645,22 @@ export default function Marketplace() {
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-1 rounded-lg shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowBrowseModal(true)}
-              className="h-8 px-2 gap-1.5 text-[10px] sm:text-xs hover:text-white whitespace-nowrap"
-              style={{ color: BRAND_BLUE }}
-              title="Explorer le Marketplace"
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
-              <List className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline">Explorer</span>
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex items-start gap-1 rounded-lg shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBrowseModal(true)}
+                className="h-11 w-11 p-0 hover:text-white"
+                style={{ color: BRAND_BLUE }}
+                title="Explorer"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <List className="w-6 h-6" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Panneau de filtres avances */}
@@ -785,10 +748,10 @@ export default function Marketplace() {
             maxItems={8}
           />
 
-          {/* Populaire en ce moment - basé sur product_scores trending */}
+          {/* Populaire en ce moment ÔÇö bas├® sur product_scores trending */}
           <AIRecommendationSection
             title="Populaire en ce moment"
-            subtitle="Les produits les plus consultés"
+            subtitle="Les produits les plus consult├®s"
             products={trendingProducts}
             isLoading={loadingTrendingProducts}
             icon="trending"
@@ -796,10 +759,10 @@ export default function Marketplace() {
             maxItems={8}
           />
 
-          {/* Récemment consultés */}
+          {/* R├®cemment consult├®s */}
           <AIRecommendationSection
-            title="Récemment consultés"
-            subtitle="Vos dernières visites"
+            title="R├®cemment consult├®s"
+            subtitle="Vos derni├¿res visites"
             products={recentlyViewed}
             isLoading={loadingRecentlyViewed}
             icon="clock"
@@ -811,15 +774,15 @@ export default function Marketplace() {
 
       {/* Results */}
       <section className="px-2 sm:px-4 py-2">
-        {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
+        {/* Si "Services Pro" est s├®lectionn├®, afficher la grille des types de services */}
         {selectedItemType === 'professional_service' ? (
-          <ServiceTypesGrid
-            onBack={() => setSelectedItemType('all')}
+          <ServiceTypesGrid 
+            onBack={() => setSelectedItemType('all')} 
             searchQuery={searchQuery}
           />
         ) : (
           <>
-            {/* Barre de recherche pour produits numériques */}
+            {/* Barre de recherche pour produits num├®riques */}
             {selectedItemType === 'digital_product' && (
               <div className="mb-4">
                 <SearchBar
@@ -844,7 +807,7 @@ export default function Marketplace() {
               </div>
             ) : (
               <MarketplaceGrid>
-                {marketplaceItems.map((item) => (
+                {marketplaceItems.filter(item => item.item_type !== 'professional_service').map((item) => (
                   <TranslatedProductCard
                     key={item.id}
                     id={item.id}
@@ -866,28 +829,8 @@ export default function Marketplace() {
                     isPremium={item.is_premium || item.is_featured}
                     stock={item.stock}
                     category={item.category_name}
-                    itemType={item.item_type}
-                    productMode={item.product_mode}
-                    affiliateUrl={item.affiliate_url}
                     onBuy={() => handleProductClick(item.id)}
                     onAddToCart={() => {
-                      if (item.item_type === 'professional_service') {
-                        navigate(`/services-proximite/${item.id}`);
-                        return;
-                      }
-                      if (item.item_type === 'menu_item') {
-                        navigate(`/restaurant/${item.service_id}/menu`);
-                        return;
-                      }
-                      if (item.item_type === 'service_product') {
-                        navigate(`/services-proximite/${item.service_id}`);
-                        return;
-                      }
-                      if (item.item_type === 'digital_product' || item.product_mode === 'affiliate') {
-                        toast.info("Ce produit s'achète directement via le bouton Acheter.");
-                        return;
-                      }
-
                       addToCart({
                         id: item.id,
                         name: item.name,
@@ -903,12 +846,13 @@ export default function Marketplace() {
                       toast.success(t('marketplace.addToCart'));
                     }}
                     onContact={() => handleContactVendor(item.id)}
+                    contactLoading={contactLoading === item.id}
                   />
                 ))}
               </MarketplaceGrid>
             )}
 
-            {/* Infinite Scroll - charge automatiquement au défilement */}
+            {/* Infinite Scroll - charge automatiquement au d├®filement */}
             <InfiniteScrollTrigger
               onTrigger={marketplaceLoadMore}
               hasMore={marketplaceHasMore}
@@ -923,7 +867,7 @@ export default function Marketplace() {
       {/* Footer de navigation */}
       <QuickFooter />
 
-      {/* Modal de détails du produit */}
+      {/* Modal de d├®tails du produit */}
       <ProductDetailModal
         productId={selectedProductId}
         open={showProductModal}

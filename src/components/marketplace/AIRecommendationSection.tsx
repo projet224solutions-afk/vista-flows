@@ -3,6 +3,7 @@
  * Navigation horizontale fluide avec swipe, flèches et snap
  */
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Clock, Gift, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,8 @@ import { HorizontalScrollRow, ScrollItem } from "./HorizontalScrollRow";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useCart } from "@/contexts/CartContext";
+import { useContactVendor } from "@/hooks/useContactVendor";
 import { cn } from "@/lib/utils";
-import { _toast } from "sonner";
 
 interface AIProduct {
   product_id: string;
@@ -52,9 +53,7 @@ export function AIRecommendationSection({
   title,
   subtitle,
   products,
-  _isLoading,
   icon = 'sparkles',
-  _showReason = true,
   seeAllLink,
   maxItems = 12,
   className,
@@ -63,6 +62,8 @@ export function AIRecommendationSection({
   const { t } = useTranslation();
   const { isMobile, isTablet } = useResponsive();
   const { addToCart } = useCart();
+  const contactVendor = useContactVendor();
+  const [contactLoadingId, setContactLoadingId] = useState<string | null>(null);
   const Icon = icons[icon];
   const displayProducts = products?.slice(0, maxItems) || [];
 
@@ -133,6 +134,13 @@ export function AIRecommendationSection({
                   vendor=""
                   onBuy={() => navigate(`/product/${p.product_id}`)}
                   onAddToCart={() => handleAddToCart(p)}
+                  onContact={() => contactVendor({
+                    vendorId: p.vendor_id,
+                    productId: p.product_id,
+                    productName: p.name,
+                    onLoadingChange: (l) => setContactLoadingId(l ? p.product_id : null),
+                  })}
+                  contactLoading={contactLoadingId === p.product_id}
                 />
             </ScrollItem>
           ))}
