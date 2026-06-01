@@ -571,24 +571,7 @@ export default function TaxiMotoTracking({
                     </Button>
                 )}
             </div>
-
-            {/* SOS */}
-            <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
-                <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-medium text-red-800 dark:text-red-200">Urgence ?</p>
-                            <p className="text-xs text-red-600 dark:text-red-300">
-                                Activez l'alerte SOS si vous vous sentez en danger
-                            </p>
-                        </div>
-                        <Button variant="destructive" onClick={() => toast.error('🚨 Alerte SOS activée !')}>
-                            <AlertTriangle className="w-4 h-4 mr-2" />
-                            SOS
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Bloc SOS retiré côté client : seul le chauffeur peut déclencher une alerte SOS. */}
         </div>
     );
 }

@@ -14,6 +14,8 @@ import {
   liveLocationChannelName,
   LIVE_LOCATION_EVENTS,
   type LivePosition,
+  type TaxiEnrouteInfo,
+  type SharedProfile,
 } from '@/lib/liveLocation';
 
 const HEARTBEAT_MS = 4000;
@@ -22,15 +24,20 @@ const HEARTBEAT_MS = 4000;
  * Partage la position GPS de l'utilisateur courant sur son canal.
  * Renvoie l'état du partage et la dernière position émise.
  */
-export function useShareMyLocation(userId: string | undefined, name?: string) {
+export function useShareMyLocation(userId: string | undefined, name?: string, profile?: SharedProfile) {
   const [sharing, setSharing] = useState(false);
   const [lastPosition, setLastPosition] = useState<LivePosition | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Signaux reçus du chauffeur (taxi en route + position du taxi)
+  const [taxiEnroute, setTaxiEnroute] = useState<TaxiEnrouteInfo | null>(null);
+  const [driverPosition, setDriverPosition] = useState<LivePosition | null>(null);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastPosRef = useRef<LivePosition | null>(null);
+  const profileRef = useRef<SharedProfile | undefined>(profile);
+  profileRef.current = profile;
 
   const emit = useCallback((pos: LivePosition) => {
     channelRef.current?.send({
@@ -39,6 +46,27 @@ export function useShareMyLocation(userId: string | undefined, name?: string) {
       payload: pos,
     });
   }, []);
+
+  /** Diffuse la fiche du client (réponse à une demande de suivi). */
+  const emitProfile = useCallback(() => {
+    if (profileRef.current) {
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: LIVE_LOCATION_EVENTS.profile,
+        payload: profileRef.current,
+      });
+    }
+  }, []);
+
+  /** Répond au chauffeur : confirme (et re-partage la position) ou refuse le suivi. */
+  const respondToTaxi = useCallback((confirmed: boolean) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: confirmed ? LIVE_LOCATION_EVENTS.positionConfirmed : LIVE_LOCATION_EVENTS.positionDeclined,
+      payload: { ts: Date.now() },
+    });
+    if (confirmed && lastPosRef.current) emit(lastPosRef.current);
+  }, [emit]);
 
   const stop = useCallback(() => {
     if (watchIdRef.current !== null && navigator.geolocation) {
@@ -56,6 +84,8 @@ export function useShareMyLocation(userId: string | undefined, name?: string) {
     }
     lastPosRef.current = null;
     setSharing(false);
+    setTaxiEnroute(null);
+    setDriverPosition(null);
   }, []);
 
   const start = useCallback(() => {
@@ -75,9 +105,20 @@ export function useShareMyLocation(userId: string | undefined, name?: string) {
       config: { broadcast: { self: false } },
     });
 
-    // Répondre immédiatement aux demandes des suiveurs
+    // Répondre immédiatement aux demandes des suiveurs (position + fiche)
     channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
       if (lastPosRef.current) emit(lastPosRef.current);
+      emitProfile();
+    });
+
+    // Le chauffeur a localisé le client → "votre taxi est en route"
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
+      setTaxiEnroute(payload as TaxiEnrouteInfo);
+    });
+
+    // Position du taxi (pour suivre son arrivée)
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
+      setDriverPosition(payload as LivePosition);
     });
 
     channel.subscribe();
@@ -109,64 +150,164 @@ export function useShareMyLocation(userId: string | undefined, name?: string) {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 }
     );
 
-    // Battement régulier : ré-émet la dernière position pour les suiveurs récents
+    // Battement régulier : ré-émet la dernière position ET la fiche pour les
+    // suiveurs récents (garantit que le chauffeur reçoit le profil de façon fiable).
     heartbeatRef.current = setInterval(() => {
       if (lastPosRef.current) {
         lastPosRef.current = { ...lastPosRef.current, ts: Date.now(), name };
         emit(lastPosRef.current);
       }
+      emitProfile();
     }, HEARTBEAT_MS);
 
     setSharing(true);
-  }, [userId, name, emit]);
+  }, [userId, name, emit, emitProfile]);
 
   // Nettoyage au démontage
   useEffect(() => stop, [stop]);
 
-  return { sharing, lastPosition, error, start, stop };
+  return { sharing, lastPosition, error, start, stop, taxiEnroute, driverPosition, respondToTaxi };
+}
+
+interface TrackLocationOptions {
+  /** Si vrai, rediffuse la position du chauffeur (suivi d'arrivée côté client). */
+  announceAsTaxi?: boolean;
+  /** Si vrai, notifie le client ("votre taxi est en route") → déclenche sa confirmation.
+   *  Mis à vrai SEULEMENT après que le chauffeur a confirmé la localisation (vu la fiche). */
+  notifyClient?: boolean;
+  /** Nom du chauffeur (transmis dans la notification). */
+  driverName?: string;
+  /** Position du chauffeur, rediffusée au client pour suivre l'arrivée du taxi. */
+  driverPosition?: { lat: number; lng: number } | null;
 }
 
 /**
  * Suit la position partagée par un utilisateur (par son ID).
- * Renvoie la dernière position reçue + l'état de la connexion.
+ * Côté chauffeur (announceAsTaxi), annonce "taxi en route" et rediffuse sa
+ * propre position pour le suivi d'arrivée côté client.
  */
-export function useTrackLocation(userId: string | null | undefined) {
+export function useTrackLocation(
+  userId: string | null | undefined,
+  options: TrackLocationOptions = {}
+) {
+  const { announceAsTaxi = false, notifyClient = false, driverName, driverPosition } = options;
   const [position, setPosition] = useState<LivePosition | null>(null);
   const [connected, setConnected] = useState(false);
   const [sharerStopped, setSharerStopped] = useState(false);
+  const [clientResponse, setClientResponse] = useState<'confirmed' | 'declined' | null>(null);
+  const [clientProfile, setClientProfile] = useState<SharedProfile | null>(null);
+
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const subscribedRef = useRef(false);
+  const enrouteSentRef = useRef(false);
+  const hasPositionRef = useRef(false);
+  const notifyClientRef = useRef(notifyClient);
+  notifyClientRef.current = notifyClient;
+  const driverNameRef = useRef(driverName);
+  driverNameRef.current = driverName;
+  const driverPosRef = useRef<{ lat: number; lng: number } | null>(driverPosition ?? null);
+  driverPosRef.current = driverPosition ?? null;
+
+  // Envoie "taxi en route" une seule fois, quand le chauffeur a confirmé (notifyClient)
+  // ET qu'on a reçu la position du client.
+  const maybeSendEnroute = useCallback(() => {
+    if (notifyClientRef.current && hasPositionRef.current && !enrouteSentRef.current
+        && subscribedRef.current && channelRef.current) {
+      enrouteSentRef.current = true;
+      channelRef.current.send({
+        type: 'broadcast',
+        event: LIVE_LOCATION_EVENTS.taxiEnroute,
+        payload: { driverName: driverNameRef.current, ts: Date.now() },
+      });
+    }
+  }, []);
+
+  const sendDriverPosition = useCallback(() => {
+    const p = driverPosRef.current;
+    if (!announceAsTaxi || !p || !channelRef.current || !subscribedRef.current) return;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: LIVE_LOCATION_EVENTS.driverPosition,
+      payload: { lat: p.lat, lng: p.lng, ts: Date.now(), name: driverName },
+    });
+  }, [announceAsTaxi, driverName]);
 
   useEffect(() => {
     setPosition(null);
     setConnected(false);
     setSharerStopped(false);
+    setClientResponse(null);
+    setClientProfile(null);
+    subscribedRef.current = false;
+    enrouteSentRef.current = false;
+    hasPositionRef.current = false;
 
     if (!userId) return;
 
     const channel = supabase.channel(liveLocationChannelName(userId), {
       config: { broadcast: { self: false } },
     });
+    channelRef.current = channel;
 
     channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.position }, ({ payload }) => {
       setSharerStopped(false);
       setPosition(payload as LivePosition);
+      hasPositionRef.current = true;
+      // "Taxi en route" seulement si le chauffeur a déjà confirmé la localisation
+      maybeSendEnroute();
+    });
+
+    // Fiche du client (nom, tél, adresse, photo ou infos boutique)
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.profile }, ({ payload }) => {
+      setClientProfile(payload as SharedProfile);
     });
 
     channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.stop }, () => {
       setSharerStopped(true);
     });
 
+    // Réponse du client à la demande de confirmation de position (feedback chauffeur)
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.positionConfirmed }, () => {
+      setClientResponse('confirmed');
+    });
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.positionDeclined }, () => {
+      setClientResponse('declined');
+    });
+
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         setConnected(true);
+        subscribedRef.current = true;
         // Demander la position courante sans attendre le prochain battement
         channel.send({ type: 'broadcast', event: LIVE_LOCATION_EVENTS.request, payload: {} });
+        // Envoyer immédiatement notre position (chauffeur) si disponible
+        sendDriverPosition();
       }
     });
 
+    // Battement : rediffuse régulièrement la position du taxi pour que le client
+    // (même abonné tardivement ou GPS chauffeur statique) la reçoive de façon fiable.
+    const heartbeat = announceAsTaxi
+      ? setInterval(sendDriverPosition, 3500)
+      : null;
+
     return () => {
+      if (heartbeat) clearInterval(heartbeat);
+      subscribedRef.current = false;
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, announceAsTaxi, driverName, sendDriverPosition, maybeSendEnroute]);
 
-  return { position, connected, sharerStopped };
+  // Rediffuse immédiatement la position du chauffeur dès qu'elle change (réactivité)
+  useEffect(() => {
+    sendDriverPosition();
+  }, [driverPosition, sendDriverPosition]);
+
+  // Dès que le chauffeur confirme la localisation (notifyClient), notifier le client
+  useEffect(() => {
+    maybeSendEnroute();
+  }, [notifyClient, maybeSendEnroute]);
+
+  return { position, connected, sharerStopped, clientResponse, clientProfile };
 }

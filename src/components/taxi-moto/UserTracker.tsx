@@ -7,11 +7,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Navigation, Clock, User, Radio } from "lucide-react";
+import { Search, X, Navigation, Clock, User, Radio, Store, Phone, MapPin, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTrackLocation } from "@/hooks/useLiveLocation";
-import { extractUserId, formatElapsed } from "@/lib/liveLocation";
+import { extractUserId, formatElapsed, type SharedProfile } from "@/lib/liveLocation";
+
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 interface TrackedUser {
   id: string;
@@ -26,22 +28,39 @@ interface TrackedUser {
   vehicleType?: string;
 }
 
-export function UserTracker() {
+interface UserTrackerProps {
+  /** Nom du chauffeur, transmis au client dans la notification "taxi en route". */
+  driverName?: string;
+}
+
+export function UserTracker({ driverName }: UserTrackerProps = {}) {
   const [userId, setUserId] = useState('');
   const [trackedUser, setTrackedUser] = useState<TrackedUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+  // Le chauffeur a vu la fiche du client et confirmé la localisation
+  const [localizationConfirmed, setLocalizationConfirmed] = useState(false);
+  // Fiche du client chargée DIRECTEMENT par le chauffeur (profils publics, fiable)
+  const [localProfile, setLocalProfile] = useState<SharedProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  // Suivi de la position partagée en direct (clients comme chauffeurs)
-  const live = useTrackLocation(isTracking ? trackedUser?.id ?? null : null);
+  // Position GPS du chauffeur (origine de l'itinéraire vers le client)
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Suivi de la position partagée. On s'abonne pour recevoir la fiche + la position,
+  // mais on ne notifie le client (taxi_enroute) qu'APRÈS confirmation de la fiche.
+  const live = useTrackLocation(isTracking ? trackedUser?.id ?? null : null, {
+    announceAsTaxi: true,
+    notifyClient: localizationConfirmed,
+    driverName,
+    driverPosition: myLocation,
+  });
 
   // La position en direct (broadcast) prime sur la dernière position connue en base
   const displayLat = live.position?.lat ?? trackedUser?.lastLat;
   const displayLng = live.position?.lng ?? trackedUser?.lastLng;
   const isLive = !!live.position;
 
-  // Position GPS du chauffeur (origine de l'itinéraire vers le client)
-  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
   // Évite de rouvrir la navigation externe à chaque mise à jour de position
   const navOpenedRef = useRef(false);
 
@@ -60,6 +79,15 @@ export function UserTracker() {
   useEffect(() => {
     if (!isTracking) navOpenedRef.current = false;
   }, [isTracking]);
+
+  // Feedback : le client a confirmé ou refusé le partage de sa position
+  useEffect(() => {
+    if (live.clientResponse === 'confirmed') {
+      toast.success('✅ Le client a confirmé sa position');
+    } else if (live.clientResponse === 'declined') {
+      toast.warning('Le client a annulé le partage de sa position');
+    }
+  }, [live.clientResponse]);
 
   const hasClientPosition = displayLat !== undefined && displayLng !== undefined;
 
@@ -90,14 +118,63 @@ export function UserTracker() {
   /**
    * Rechercher et charger les données d'un utilisateur
    */
+  /**
+   * Charge directement la fiche du client (profil public + boutique éventuelle)
+   * à partir de l'ID saisi — fiable, sans dépendre de la diffusion du client.
+   */
+  const loadClientProfile = async (rawId: string) => {
+    setLocalProfile(null);
+    const isUuid = UUID_RE.test(rawId);
+    const sel = 'id, first_name, last_name, full_name, phone, avatar_url, city, country, custom_id';
+    let prof: any = null;
+    try {
+      const query = isUuid
+        ? supabase.from('profiles').select(sel).eq('id', rawId)
+        : supabase.from('profiles').select(sel).ilike('custom_id', rawId);
+      const { data } = await query.maybeSingle();
+      prof = data;
+    } catch { /* profil non lisible → on retombera sur la diffusion du client */ }
+
+    if (!prof) return;
+
+    let vendor: any = null;
+    try {
+      const { data } = await supabase
+        .from('vendors')
+        .select('business_name, address, city, neighborhood, phone, logo_url')
+        .eq('user_id', prof.id)
+        .maybeSingle();
+      vendor = data;
+    } catch { /* pas de boutique */ }
+
+    const isShop = !!vendor;
+    setLocalProfile({
+      name: prof.full_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Client',
+      phone: vendor?.phone || prof.phone || undefined,
+      address: isShop
+        ? [vendor?.address, vendor?.neighborhood, vendor?.city].filter(Boolean).join(', ') || undefined
+        : [prof.city, prof.country].filter(Boolean).join(', ') || undefined,
+      photo: vendor?.logo_url || prof.avatar_url || undefined,
+      customId: prof.custom_id || undefined,
+      isShop,
+      shopName: vendor?.business_name || undefined,
+    });
+  };
+
   const trackUser = async () => {
     // Accepte un ID brut, un UUID collé ou un lien …/track/<id>
-    const id = extractUserId(userId);
-    if (!id) {
+    const raw = extractUserId(userId);
+    if (!raw) {
       toast.error('Veuillez saisir un ID ou un lien de suivi');
       return;
     }
 
+    // Le canal de partage est keyé par l'identifiant que le client diffuse
+    // (son custom_id type CLT0005, ou son UUID). On l'utilise tel quel.
+    const id = raw;
+    setLocalizationConfirmed(false); // on doit d'abord revoir la fiche du client
+    setProfileLoading(true);
+    void loadClientProfile(id);      // tente une lecture directe (cas UUID)
     setLoading(true);
     try {
       console.log('🔍 Recherche utilisateur:', id);
@@ -177,9 +254,22 @@ export function UserTracker() {
   const stopTracking = () => {
     setTrackedUser(null);
     setIsTracking(false);
+    setLocalizationConfirmed(false);
+    setLocalProfile(null);
     setUserId('');
     toast.info('⏸️ Tracking arrêté');
   };
+
+  // Fiche affichée : priorité à la lecture directe (UUID), repli sur la diffusion du client
+  const clientProfile = localProfile || live.clientProfile;
+
+  // Stoppe le "Chargement…" dès que la fiche arrive, ou après un délai de garde
+  useEffect(() => {
+    if (clientProfile) { setProfileLoading(false); return; }
+    if (!isTracking) return;
+    const t = setTimeout(() => setProfileLoading(false), 8000);
+    return () => clearTimeout(t);
+  }, [clientProfile, isTracking]);
 
   /**
    * S'abonner aux mises à jour en temps réel
@@ -278,8 +368,90 @@ export function UserTracker() {
           </div>
         )}
 
-        {/* Informations de l'utilisateur tracké */}
-        {trackedUser && isTracking && (
+        {/* Étape 1 : fiche du client/boutique à confirmer AVANT la localisation */}
+        {isTracking && !localizationConfirmed && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base flex items-center gap-2">
+                {clientProfile?.isShop
+                  ? <Store className="w-5 h-5 text-primary" />
+                  : <User className="w-5 h-5 text-primary" />}
+                {clientProfile?.isShop ? 'Boutique à localiser' : 'Client à localiser'}
+              </h3>
+              <Button variant="ghost" size="sm" onClick={stopTracking} className="text-red-600 hover:bg-red-50">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {!clientProfile && profileLoading ? (
+              <div className="bg-muted/40 border rounded-lg p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Chargement de la fiche du client…
+              </div>
+            ) : !clientProfile ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center text-sm text-amber-700">
+                Profil non disponible pour cet identifiant.<br />
+                Vous pouvez tout de même confirmer pour localiser le client.
+              </div>
+            ) : (
+              <div className="rounded-lg border bg-card p-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  {clientProfile.photo ? (
+                    <img src={clientProfile.photo} alt="" className="w-14 h-14 rounded-full object-cover border" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                      {clientProfile.isShop
+                        ? <Store className="w-6 h-6 text-primary" />
+                        : <User className="w-6 h-6 text-primary" />}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">
+                      {clientProfile.shopName || clientProfile.name || 'Client'}
+                    </p>
+                    {clientProfile.isShop && clientProfile.name && (
+                      <p className="text-xs text-muted-foreground truncate">Gérant : {clientProfile.name}</p>
+                    )}
+                    {clientProfile.customId && (
+                      <p className="text-[11px] font-mono text-muted-foreground">ID : {clientProfile.customId}</p>
+                    )}
+                    {clientProfile.isShop && (
+                      <Badge variant="outline" className="mt-1 text-[10px]">🏪 Boutique</Badge>
+                    )}
+                  </div>
+                </div>
+                {clientProfile.phone && (
+                  <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <a href={`tel:${clientProfile.phone}`} className="font-medium">{clientProfile.phone}</a>
+                  </div>
+                )}
+                {clientProfile.address && (
+                  <div className="flex items-start gap-2 text-sm bg-muted/50 p-2 rounded">
+                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <span>{clientProfile.address}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center">
+              Vérifiez les informations puis confirmez pour démarrer la localisation en temps réel.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => setLocalizationConfirmed(true)} className="w-full">
+                <Navigation className="w-4 h-4 mr-2" />
+                Confirmer la localisation
+              </Button>
+              <Button variant="outline" onClick={stopTracking} className="w-full">
+                Annuler
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Étape 2 : suivi en temps réel (après confirmation de la fiche) */}
+        {trackedUser && isTracking && localizationConfirmed && (
           <div className="space-y-3">
             {/* En-tête avec nom et badges */}
             <div className="flex items-start justify-between">

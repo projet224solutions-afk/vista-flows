@@ -13,9 +13,11 @@ interface UserTrackerButtonProps {
   /** Variante visible et libellée (ex: dans le dashboard chauffeur). */
   prominent?: boolean;
   className?: string;
+  /** Nom du chauffeur, transmis au client dans la notification "taxi en route". */
+  driverName?: string;
 }
 
-export function UserTrackerButton({ prominent = false, className }: UserTrackerButtonProps) {
+export function UserTrackerButton({ prominent = false, className, driverName }: UserTrackerButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -48,7 +50,7 @@ export function UserTrackerButton({ prominent = false, className }: UserTrackerB
             Suivre un client
           </DialogTitle>
         </DialogHeader>
-        <UserTracker />
+        <UserTracker driverName={driverName} />
       </DialogContent>
     </Dialog>
   );

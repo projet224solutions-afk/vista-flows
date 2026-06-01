@@ -68,6 +68,33 @@ interface CurrentRide {
   createdAt: string;
 }
 
+// Statuts pour lesquels on restaure la course au chargement ET on force l'onglet Suivi.
+// IMPORTANT : on ne restaure QUE les courses avec un chauffeur assigné. Une course en
+// simple attente ('requested'/'pending') ne doit PAS rediriger le client vers le suivi —
+// il doit pouvoir réserver normalement (saisir position + destination).
+const RESTORE_TRIP_STATUSES = ['accepted', 'arriving', 'started', 'in_progress'] as const;
+
+/** Mappe le statut DB (taxi_trips) vers le statut d'affichage de l'interface client. */
+function mapTripStatus(dbStatus?: string): CurrentRide['status'] {
+  switch (dbStatus) {
+    case 'requested':
+    case 'pending':
+      return 'pending';
+    case 'accepted':
+      return 'accepted';
+    case 'arriving':
+    case 'driver_arriving':
+      return 'driver_arriving';
+    case 'started':
+    case 'in_progress':
+      return 'in_progress';
+    case 'completed':
+      return 'completed';
+    default:
+      return (dbStatus || '').includes('cancel') ? 'cancelled' : 'pending';
+  }
+}
+
 export default function TaxiMotoClient() {
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
@@ -140,17 +167,17 @@ export default function TaxiMotoClient() {
           .from('taxi_trips')
           .select('id, status, pickup_address, dropoff_address, price_total, requested_at, driver_id')
           .eq('customer_id', user.id)
-          .in('status', ['pending', 'accepted', 'arriving', 'started', 'in_progress'])
+          .in('status', RESTORE_TRIP_STATUSES as unknown as string[])
           .order('requested_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // Ignorer une course "pending" périmée (jamais acceptée, > 2h) : elle ne doit
-        // pas piéger le client sur l'onglet Suivi et l'empêcher de réserver à nouveau.
-        const isStalePending = data?.status === 'pending' && data?.requested_at &&
-          (Date.now() - new Date(data.requested_at).getTime()) > 2 * 60 * 60 * 1000;
+        // Filet de sécurité : ne pas restaurer une course "fantôme" trop ancienne
+        // (chauffeur bloqué / course jamais clôturée) qui piégerait le client.
+        const isStale = data?.requested_at &&
+          (Date.now() - new Date(data.requested_at).getTime()) > 3 * 60 * 60 * 1000;
 
-        if (data && !isStalePending) {
+        if (data && !isStale) {
           let driverInfo = undefined;
           if (data.driver_id) {
             const { data: driverData } = await supabase
@@ -177,7 +204,7 @@ export default function TaxiMotoClient() {
           }
           setCurrentRide({
             id: data.id,
-            status: data.status as any,
+            status: mapTripStatus(data.status),
             pickupAddress: data.pickup_address || '',
             destinationAddress: data.dropoff_address || '',
             estimatedPrice: data.price_total || 0,
@@ -247,14 +274,72 @@ export default function TaxiMotoClient() {
   }, [currentRide?.id]);
 
   const updateCurrentRide = (trip: any) => {
-    if (trip.status === 'accepted') {
-      setCurrentRide(prev => prev ? { ...prev, status: 'accepted' } : null);
-    } else if (trip.status === 'in_progress') {
-      setCurrentRide(prev => prev ? { ...prev, status: 'in_progress' } : null);
-    } else if (trip.status === 'completed') {
+    const status: string = trip.status;
+
+    // Course terminée
+    if (status === 'completed') {
       toast.success('Course terminée !');
       setCurrentRide(null);
       setActiveTab('history');
+      return;
+    }
+
+    // Course annulée (par le chauffeur ou le système) → libérer le client
+    if (status?.includes('cancel')) {
+      toast.warning('Course annulée', {
+        description: trip.cancel_reason || 'La course a été annulée.',
+      });
+      setCurrentRide(null);
+      setActiveTab('booking');
+      return;
+    }
+
+    // Notifications de progression
+    if (status === 'accepted') {
+      toast.success('Chauffeur trouvé ! Il arrive vers vous.');
+    } else if (status === 'arriving' || status === 'driver_arriving') {
+      toast.info('Votre chauffeur arrive.');
+    } else if (status === 'started' || status === 'in_progress') {
+      toast.info('Course démarrée.');
+    }
+
+    // Mise à jour du statut affiché (avec récupération du chauffeur si nécessaire)
+    setCurrentRide(prev => (prev ? { ...prev, status: mapTripStatus(status) } : null));
+
+    // Si un chauffeur vient d'être assigné et qu'on ne l'a pas encore, le charger
+    if (trip.driver_id && status === 'accepted') {
+      void loadDriverInfo(trip.driver_id);
+    }
+  };
+
+  /** Charge les infos du chauffeur assigné et les fusionne dans currentRide. */
+  const loadDriverInfo = async (driverId: string) => {
+    try {
+      const { data: driverData } = await supabase
+        .from('taxi_drivers')
+        .select('vehicle_type, vehicle_plate, rating, user_id')
+        .eq('id', driverId)
+        .maybeSingle();
+      if (!driverData) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, phone, avatar_url')
+        .eq('id', driverData.user_id)
+        .maybeSingle();
+      setCurrentRide(prev => prev ? {
+        ...prev,
+        driver: {
+          id: driverId,
+          name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Chauffeur' : 'Chauffeur',
+          rating: driverData.rating || 5,
+          phone: profile?.phone || '',
+          vehicleType: driverData.vehicle_type,
+          vehicleNumber: driverData.vehicle_plate || '',
+          photo: profile?.avatar_url || undefined,
+        },
+      } : null);
+    } catch (err) {
+      console.warn('[TaxiMotoClient] Impossible de charger le chauffeur:', err);
     }
   };
 
@@ -453,6 +538,7 @@ export default function TaxiMotoClient() {
           <Badge className="bg-white/20 text-white border-white/30 text-xs font-medium">
             {currentRide.status === 'pending' ? 'Recherche chauffeur' :
              currentRide.status === 'accepted' ? 'Chauffeur assigné' :
+             currentRide.status === 'driver_arriving' ? 'Chauffeur en approche' :
              currentRide.status === 'in_progress' ? 'En route' : 'En cours'}
           </Badge>
         </div>

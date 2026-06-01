@@ -11,20 +11,52 @@
 
 export const LIVE_LOCATION_PREFIX = 'live-location-';
 
-/** Nom du canal Realtime pour un utilisateur donné. */
+/**
+ * Nom du canal Realtime pour un identifiant donné.
+ * On normalise (trim + majuscules) pour que le partageur et le suiveur
+ * tombent sur le même canal même si la casse diffère (ex: CLT0005 vs clt0005).
+ */
 export function liveLocationChannelName(userId: string): string {
-  return `${LIVE_LOCATION_PREFIX}${userId}`;
+  return `${LIVE_LOCATION_PREFIX}${String(userId).trim().toUpperCase()}`;
 }
 
 /** Événements broadcast échangés sur le canal. */
 export const LIVE_LOCATION_EVENTS = {
-  /** Le partageur émet sa position. */
+  /** Le partageur (client) émet sa position. */
   position: 'position',
   /** Un suiveur demande la position courante immédiatement (à l'abonnement). */
   request: 'request',
   /** Le partageur a arrêté le partage. */
   stop: 'stop',
+  /** Le chauffeur signale qu'il a localisé le client → demande de confirmation de position. */
+  taxiEnroute: 'taxi_enroute',
+  /** Le chauffeur diffuse sa propre position (pour le suivi d'arrivée côté client). */
+  driverPosition: 'driver_position',
+  /** Le client a confirmé sa position → le suivi peut démarrer. */
+  positionConfirmed: 'position_confirmed',
+  /** Le client a refusé / annulé le suivi. */
+  positionDeclined: 'position_declined',
+  /** Le client diffuse sa fiche (nom, tél, adresse, photo, ou infos boutique). */
+  profile: 'profile',
 } as const;
+
+/** Infos transmises au client quand le taxi se met en route. */
+export interface TaxiEnrouteInfo {
+  driverName?: string;
+  ts: number;
+}
+
+/** Fiche du client (ou de sa boutique) diffusée au chauffeur avant la localisation. */
+export interface SharedProfile {
+  name?: string;
+  phone?: string;
+  address?: string;
+  photo?: string;
+  customId?: string;
+  /** Vrai si le partageur est une boutique/vendeur. */
+  isShop?: boolean;
+  shopName?: string;
+}
 
 /** Position partagée diffusée sur le canal. */
 export interface LivePosition {

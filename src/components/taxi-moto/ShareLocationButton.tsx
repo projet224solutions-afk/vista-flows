@@ -6,7 +6,7 @@
  * interface "Suivre un client" pour voir la position exacte en direct.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,10 +16,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { MapPin, Share2, Copy, Check, Radio, Link2, Square } from 'lucide-react';
+import { MapPin, Share2, Copy, Check, Radio, Link2, Square, Car } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { useShareMyLocation } from '@/hooks/useLiveLocation';
-import { buildShareLink } from '@/lib/liveLocation';
+import { buildShareLink, type SharedProfile } from '@/lib/liveLocation';
+import { TaxiArrivalTracking } from './TaxiArrivalTracking';
 
 interface ShareLocationButtonProps {
   userId: string | undefined;
@@ -29,13 +31,8 @@ interface ShareLocationButtonProps {
   className?: string;
 }
 
-/**
- * Renvoie un identifiant de partage utilisable même si l'utilisateur n'est pas
- * (encore) connecté : on retombe sur un jeton persistant stocké localement.
- * Ainsi l'ID et le lien ne sont jamais vides.
- */
-function resolveShareId(userId: string | undefined): string {
-  if (userId) return userId;
+/** Jeton de secours persistant si l'utilisateur n'est pas connecté. */
+function guestToken(): string {
   try {
     let token = localStorage.getItem('taxi_share_token');
     if (!token) {
@@ -60,12 +57,119 @@ export function ShareLocationButton({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<'id' | 'link' | null>(null);
 
-  // ID de partage robuste (réel si connecté, sinon jeton persistant)
-  const shareId = useMemo(() => resolveShareId(userId), [userId]);
+  // ID de partage = le custom_id du client (ex: CLT0005), celui qu'il voit
+  // partout dans l'app et que le chauffeur saisira. On le lit sur SA propre
+  // ligne user_ids (autorisé par la RLS). Replis : UUID auth, puis jeton invité.
+  const [shareId, setShareId] = useState<string>(() => (userId ? '' : guestToken()));
 
-  const { sharing, lastPosition, error, start, stop } = useShareMyLocation(shareId, userName);
+  // Fiche partagée au chauffeur (nom, tél, adresse, photo, ou infos boutique)
+  const [sharedProfile, setSharedProfile] = useState<SharedProfile | undefined>(undefined);
 
-  const shareLink = buildShareLink(shareId);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!userId) {
+        if (!cancelled) setShareId(guestToken());
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from('user_ids')
+          .select('custom_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (!cancelled) setShareId(data?.custom_id || userId);
+      } catch {
+        if (!cancelled) setShareId(userId);
+      }
+
+      // Charger la fiche du client + sa boutique éventuelle (lecture de SES propres données)
+      try {
+        const [{ data: prof }, { data: vendor }] = await Promise.all([
+          supabase.from('profiles')
+            .select('first_name, last_name, full_name, phone, avatar_url, city, country, custom_id')
+            .eq('id', userId).maybeSingle(),
+          supabase.from('vendors')
+            .select('business_name, address, city, neighborhood, phone, logo_url')
+            .eq('user_id', userId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        const fullName = (prof?.full_name
+          || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim()
+          || userName || 'Client');
+        const isShop = !!vendor;
+        setSharedProfile({
+          name: fullName,
+          phone: vendor?.phone || prof?.phone || undefined,
+          address: isShop
+            ? [vendor?.address, vendor?.neighborhood, vendor?.city].filter(Boolean).join(', ') || undefined
+            : [prof?.city, prof?.country].filter(Boolean).join(', ') || undefined,
+          photo: vendor?.logo_url || prof?.avatar_url || undefined,
+          customId: prof?.custom_id || undefined,
+          isShop,
+          shopName: vendor?.business_name || undefined,
+        });
+      } catch { /* fiche optionnelle */ }
+    })();
+    return () => { cancelled = true; };
+  }, [userId, userName]);
+
+  const { sharing, lastPosition, error, start, stop, taxiEnroute, driverPosition, respondToTaxi } =
+    useShareMyLocation(shareId, userName, sharedProfile);
+
+  // Modale de confirmation bloquante (le chauffeur a localisé le client)
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Suivi d'arrivée du taxi (ouvert APRÈS confirmation de la position)
+  const [arrivalOpen, setArrivalOpen] = useState(false);
+  const enrouteNotifiedRef = useRef(false);
+
+  // Quand le chauffeur localise le client → notification + demande de confirmation BLOQUANTE
+  useEffect(() => {
+    if (!taxiEnroute || enrouteNotifiedRef.current) return;
+    enrouteNotifiedRef.current = true;
+
+    const who = taxiEnroute.driverName ? `${taxiEnroute.driverName}` : 'Votre taxi';
+    // Notification navigateur (si autorisée)
+    try {
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('🚕 Confirmez votre position', { body: `${who} vous a localisé. Confirmez pour suivre son arrivée.` });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then((p) => {
+            if (p === 'granted') new Notification('🚕 Confirmez votre position', { body: `${who} vous a localisé.` });
+          });
+        }
+      }
+    } catch { /* notifications indisponibles */ }
+
+    // Ouvre la modale de confirmation BLOQUANTE (ferme le dialogue de partage)
+    setOpen(false);
+    setConfirmOpen(true);
+  }, [taxiEnroute]);
+
+  // Réarme la confirmation si le partage est relancé
+  useEffect(() => {
+    if (!sharing) enrouteNotifiedRef.current = false;
+  }, [sharing]);
+
+  // Le client confirme sa position → on prévient le chauffeur et on ouvre le suivi.
+  // On ferme d'abord la modale de confirmation PUIS on ouvre le suivi (léger délai)
+  // pour éviter que deux dialogues basculent au même instant (overlay résiduel Radix).
+  const handleConfirmPosition = () => {
+    respondToTaxi(true);
+    setConfirmOpen(false);
+    setTimeout(() => setArrivalOpen(true), 180);
+  };
+
+  // Le client annule → on prévient le chauffeur et on arrête le partage
+  const handleCancelPosition = () => {
+    respondToTaxi(false);
+    setConfirmOpen(false);
+    stop();
+    toast.info('Suivi annulé', { description: 'Vous avez annulé le partage de votre position.' });
+  };
+
+  const shareLink = shareId ? buildShareLink(shareId) : '';
 
   const copy = async (value: string, kind: 'id' | 'link') => {
     try {
@@ -95,6 +199,7 @@ export function ShareLocationButton({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
@@ -234,6 +339,53 @@ export function ShareLocationButton({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Modale de confirmation BLOQUANTE — le client doit confirmer sa position ou annuler */}
+    <Dialog open={confirmOpen} onOpenChange={() => { /* bloquant : pas de fermeture libre */ }}>
+      <DialogContent
+        className="max-w-sm [&>button]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Car className="w-5 h-5 text-primary" />
+            Confirmez votre position
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {taxiEnroute?.driverName ? `${taxiEnroute.driverName}` : 'Votre taxi'} vous a localisé.
+            Confirmez votre position pour suivre l'arrivée de votre taxi en temps réel.
+          </p>
+          {lastPosition && (
+            <div className="text-xs font-mono bg-muted rounded p-2 text-center">
+              📍 {lastPosition.lat.toFixed(5)}, {lastPosition.lng.toFixed(5)}
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleConfirmPosition} className="w-full">
+              <Check className="w-4 h-4 mr-2" />
+              Confirmer ma position
+            </Button>
+            <Button onClick={handleCancelPosition} variant="outline" className="w-full">
+              Annuler
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Suivi d'arrivée du taxi — s'ouvre APRÈS confirmation de la position */}
+    <TaxiArrivalTracking
+      open={arrivalOpen}
+      onOpenChange={setArrivalOpen}
+      clientPos={lastPosition}
+      driverPos={driverPosition}
+      driverName={taxiEnroute?.driverName}
+    />
+    </>
   );
 }
 
