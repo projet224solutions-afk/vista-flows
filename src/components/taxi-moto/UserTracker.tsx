@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTrackLocation } from "@/hooks/useLiveLocation";
 import { extractUserId, formatElapsed, type SharedProfile } from "@/lib/liveLocation";
+import { GPS_CONFIG } from "@/services/gps/PrecisionGeolocationService";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -42,10 +43,11 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
   const [localizationConfirmed, setLocalizationConfirmed] = useState(false);
   // Fiche du client chargée DIRECTEMENT par le chauffeur (profils publics, fiable)
   const [localProfile, setLocalProfile] = useState<SharedProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
+  // Le client a refusé la demande de localisation
+  const [clientDeclined, setClientDeclined] = useState(false);
 
   // Position GPS du chauffeur (origine de l'itinéraire vers le client)
-  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
 
   // Suivi de la position partagée. On s'abonne pour recevoir la fiche + la position,
   // mais on ne notifie le client (taxi_enroute) qu'APRÈS confirmation de la fiche.
@@ -68,9 +70,11 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
   useEffect(() => {
     if (!isTracking || !navigator.geolocation) return;
     const watchId = navigator.geolocation.watchPosition(
-      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
       () => { /* GPS chauffeur indisponible : itinéraire centré sur le client */ },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+      // maximumAge:2000 → position fraîche (<2s), haute précision via enableHighAccuracy,
+      // robuste (évite les timeouts de démarrage à froid du GPS)
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTracking]);
@@ -83,9 +87,11 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
   // Feedback : le client a confirmé ou refusé le partage de sa position
   useEffect(() => {
     if (live.clientResponse === 'confirmed') {
-      toast.success('✅ Le client a confirmé sa position');
+      toast.success('✅ Le client a confirmé le partage de sa position');
+      setClientDeclined(false);
     } else if (live.clientResponse === 'declined') {
-      toast.warning('Le client a annulé le partage de sa position');
+      toast.warning('Le client a refusé la demande de localisation');
+      setClientDeclined(true);
     }
   }, [live.clientResponse]);
 
@@ -98,11 +104,13 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
         : `https://maps.google.com/maps?q=${displayLat},${displayLng}&z=16&output=embed`)
     : null;
 
-  // Lien de navigation GPS turn-by-turn (application Google Maps)
+  // Lien de navigation GPS turn-by-turn (application Google Maps).
+  // dir_action=navigate → lance DIRECTEMENT le guidage vocal (sur mobile),
+  // sans aperçu ni saisie : le chauffeur est guidé immédiatement vers le client.
   const navUrl = hasClientPosition
     ? (myLocation
-        ? `https://www.google.com/maps/dir/?api=1&origin=${myLocation.lat},${myLocation.lng}&destination=${displayLat},${displayLng}&travelmode=driving`
-        : `https://www.google.com/maps/dir/?api=1&destination=${displayLat},${displayLng}&travelmode=driving`)
+        ? `https://www.google.com/maps/dir/?api=1&origin=${myLocation.lat},${myLocation.lng}&destination=${displayLat},${displayLng}&travelmode=driving&dir_action=navigate`
+        : `https://www.google.com/maps/dir/?api=1&destination=${displayLat},${displayLng}&travelmode=driving&dir_action=navigate`)
     : null;
 
   // Ouvre automatiquement la navigation GPS une seule fois dès que le client est localisé
@@ -173,7 +181,7 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
     // (son custom_id type CLT0005, ou son UUID). On l'utilise tel quel.
     const id = raw;
     setLocalizationConfirmed(false); // on doit d'abord revoir la fiche du client
-    setProfileLoading(true);
+    setClientDeclined(false);
     void loadClientProfile(id);      // tente une lecture directe (cas UUID)
     setLoading(true);
     try {
@@ -262,14 +270,6 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
 
   // Fiche affichée : priorité à la lecture directe (UUID), repli sur la diffusion du client
   const clientProfile = localProfile || live.clientProfile;
-
-  // Stoppe le "Chargement…" dès que la fiche arrive, ou après un délai de garde
-  useEffect(() => {
-    if (clientProfile) { setProfileLoading(false); return; }
-    if (!isTracking) return;
-    const t = setTimeout(() => setProfileLoading(false), 8000);
-    return () => clearTimeout(t);
-  }, [clientProfile, isTracking]);
 
   /**
    * S'abonner aux mises à jour en temps réel
@@ -383,15 +383,14 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
               </Button>
             </div>
 
-            {!clientProfile && profileLoading ? (
-              <div className="bg-muted/40 border rounded-lg p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Chargement de la fiche du client…
+            {clientDeclined ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center text-sm text-red-700">
+                ❌ Le client a refusé la demande de localisation.
               </div>
             ) : !clientProfile ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center text-sm text-amber-700">
-                Profil non disponible pour cet identifiant.<br />
-                Vous pouvez tout de même confirmer pour localiser le client.
+              <div className="bg-muted/40 border rounded-lg p-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                En attente de l'autorisation du client…
               </div>
             ) : (
               <div className="rounded-lg border bg-card p-3 space-y-3">
@@ -535,14 +534,22 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
                   </div>
                 )}
 
-                <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100">
-                  Lat: {displayLat.toFixed(6)}<br />
-                  Lng: {displayLng.toFixed(6)}
-                  {isLive && live.position?.accuracy ? (
-                    <><br />Précision: ±{Math.round(live.position.accuracy)} m</>
-                  ) : null}
-                  {!myLocation && (
-                    <><br /><span className="text-amber-600">Activez votre GPS pour afficher l'itinéraire complet</span></>
+                <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100 space-y-0.5">
+                  <div>
+                    📍 Client : {displayLat.toFixed(6)}, {displayLng.toFixed(6)}
+                    {isLive && live.position?.accuracy ? ` (±${Math.round(live.position.accuracy)} m)` : ''}
+                  </div>
+                  {myLocation ? (
+                    <div>
+                      🛵 Vous : {myLocation.lat.toFixed(6)}, {myLocation.lng.toFixed(6)}
+                      {myLocation.accuracy ? ` (±${Math.round(myLocation.accuracy)} m)` : ''}
+                    </div>
+                  ) : (
+                    <div className="text-amber-600">Activez votre GPS pour afficher l'itinéraire complet</div>
+                  )}
+                  {((live.position?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS
+                    || (myLocation?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS) && (
+                    <div className="text-amber-600">⚠️ Signal GPS faible — la précision peut varier</div>
                   )}
                 </div>
 

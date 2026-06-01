@@ -1,0 +1,195 @@
+/**
+ * useShareRequestResponder — Écouteur GLOBAL de demandes de localisation.
+ *
+ * Monté pour tout utilisateur connecté (client, service, vendeur…), il :
+ *  - résout le custom_id de l'utilisateur (lecture de SA propre ligne user_ids),
+ *  - s'abonne en permanence à son canal `live-location-<custom_id>`,
+ *  - reçoit les demandes `share_request` d'un chauffeur (même si l'utilisateur
+ *    ne partage pas encore sa position),
+ *  - sur accept() : démarre le partage GPS (position + fiche) et écoute le taxi,
+ *  - sur decline() : refuse.
+ *
+ * Permet à n'importe quel compte connecté de recevoir la notification de partage.
+ */
+
+import { useEffect, useRef, useState, useCallback } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  liveLocationChannelName,
+  LIVE_LOCATION_EVENTS,
+  type LivePosition,
+  type SharedProfile,
+} from '@/lib/liveLocation';
+
+const HEARTBEAT_MS = 4000;
+
+interface ShareRequestInfo {
+  driverName?: string;
+  ts: number;
+}
+
+export function useShareRequestResponder(authUserId: string | undefined, displayName?: string) {
+  const [request, setRequest] = useState<ShareRequestInfo | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [lastPosition, setLastPosition] = useState<LivePosition | null>(null);
+  const [driverPosition, setDriverPosition] = useState<LivePosition | null>(null);
+  const [taxiEnroute, setTaxiEnroute] = useState<{ driverName?: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const subscribedRef = useRef(false);
+  const sharingRef = useRef(false); // déjà en partage → ignorer les relances de demande
+  const watchIdRef = useRef<number | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastPosRef = useRef<LivePosition | null>(null);
+  const profileRef = useRef<SharedProfile | undefined>(undefined);
+
+  // Charger le custom_id + la fiche (profil/boutique) de l'utilisateur
+  const [customId, setCustomId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!authUserId) { setCustomId(null); profileRef.current = undefined; return; }
+    (async () => {
+      try {
+        const { data: uid } = await supabase
+          .from('user_ids').select('custom_id').eq('user_id', authUserId).maybeSingle();
+        if (!cancelled) setCustomId(uid?.custom_id || authUserId);
+      } catch { if (!cancelled) setCustomId(authUserId); }
+
+      try {
+        const [{ data: prof }, { data: vendor }] = await Promise.all([
+          supabase.from('profiles')
+            .select('first_name, last_name, full_name, phone, avatar_url, city, country, custom_id')
+            .eq('id', authUserId).maybeSingle(),
+          supabase.from('vendors')
+            .select('business_name, address, city, neighborhood, phone, logo_url')
+            .eq('user_id', authUserId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        const isShop = !!vendor;
+        profileRef.current = {
+          name: (prof?.full_name || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim() || displayName || 'Client'),
+          phone: vendor?.phone || prof?.phone || undefined,
+          address: isShop
+            ? [vendor?.address, vendor?.neighborhood, vendor?.city].filter(Boolean).join(', ') || undefined
+            : [prof?.city, prof?.country].filter(Boolean).join(', ') || undefined,
+          photo: vendor?.logo_url || prof?.avatar_url || undefined,
+          customId: prof?.custom_id || undefined,
+          isShop,
+          shopName: vendor?.business_name || undefined,
+        };
+      } catch { /* fiche optionnelle */ }
+    })();
+    return () => { cancelled = true; };
+  }, [authUserId, displayName]);
+
+  const send = useCallback((event: string, payload: unknown) => {
+    channelRef.current?.send({ type: 'broadcast', event, payload });
+  }, []);
+
+  const emitPosition = useCallback((pos: LivePosition) => send(LIVE_LOCATION_EVENTS.position, pos), [send]);
+  const emitProfile = useCallback(() => {
+    if (profileRef.current) send(LIVE_LOCATION_EVENTS.profile, profileRef.current);
+  }, [send]);
+
+  // Abonnement permanent au canal de l'utilisateur (écoute des demandes)
+  useEffect(() => {
+    setRequest(null);
+    if (!customId) return;
+
+    const channel = supabase.channel(liveLocationChannelName(customId), {
+      config: { broadcast: { self: false } },
+    });
+    channelRef.current = channel;
+
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.shareRequest }, ({ payload }) => {
+      // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
+      if (sharingRef.current) return;
+      setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
+    });
+    // Demande de position immédiate (si déjà en partage)
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
+      if (lastPosRef.current) emitPosition(lastPosRef.current);
+      emitProfile();
+    });
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
+      setTaxiEnroute({ driverName: (payload as any)?.driverName });
+    });
+    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
+      setDriverPosition(payload as LivePosition);
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') subscribedRef.current = true;
+    });
+
+    return () => {
+      subscribedRef.current = false;
+      channelRef.current = null;
+      supabase.removeChannel(channel);
+    };
+  }, [customId, emitPosition, emitProfile]);
+
+  // Démarre le partage GPS (réponse à une demande acceptée)
+  const startSharing = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      setError("La géolocalisation n'est pas supportée par cet appareil");
+      return;
+    }
+    emitProfile();
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const pos: LivePosition = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          ts: Date.now(),
+          name: displayName,
+        };
+        lastPosRef.current = pos;
+        setLastPosition(pos);
+        emitPosition(pos);
+      },
+      () => setError("Impossible d'obtenir votre position GPS."),
+      // maximumAge:2000 → position fraîche (<2s), précise et robuste partout
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
+    );
+    heartbeatRef.current = setInterval(() => {
+      if (lastPosRef.current) emitPosition({ ...lastPosRef.current, ts: Date.now() });
+      emitProfile();
+    }, HEARTBEAT_MS);
+    sharingRef.current = true;
+    setSharing(true);
+  }, [displayName, emitPosition, emitProfile]);
+
+  const stopSharing = useCallback(() => {
+    if (watchIdRef.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (heartbeatRef.current) { clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    lastPosRef.current = null;
+    sharingRef.current = false;
+    setSharing(false);
+  }, []);
+
+  const accept = useCallback(() => {
+    send(LIVE_LOCATION_EVENTS.positionConfirmed, { ts: Date.now() });
+    startSharing();
+    setRequest(null);
+  }, [send, startSharing]);
+
+  const decline = useCallback(() => {
+    send(LIVE_LOCATION_EVENTS.positionDeclined, { ts: Date.now() });
+    stopSharing();
+    setDriverPosition(null);
+    setTaxiEnroute(null);
+    setRequest(null);
+  }, [send, stopSharing]);
+
+  // Nettoyage GPS au démontage
+  useEffect(() => stopSharing, [stopSharing]);
+
+  return { request, sharing, lastPosition, driverPosition, taxiEnroute, error, accept, decline, stopSharing };
+}

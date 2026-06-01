@@ -38,6 +38,8 @@ export const LIVE_LOCATION_EVENTS = {
   positionDeclined: 'position_declined',
   /** Le client diffuse sa fiche (nom, tél, adresse, photo, ou infos boutique). */
   profile: 'profile',
+  /** Le chauffeur demande au client (même non partageur) d'autoriser le partage. */
+  shareRequest: 'share_request',
 } as const;
 
 /** Infos transmises au client quand le taxi se met en route. */

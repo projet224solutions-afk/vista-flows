@@ -19,6 +19,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { NotificationsRealtimeListener } from "@/components/common/NotificationsRealtimeListener";
+import { LocationShareListener } from "@/components/taxi-moto/LocationShareListener";
 import DeepLinkInitializer from "@/components/DeepLinkInitializer";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
@@ -296,6 +297,8 @@ function App() {
                         <Sonner />
                         {/* Réception globale des notifications (Realtime + toast) */}
                         <NotificationsRealtimeListener />
+                        {/* Écouteur global des demandes de localisation taxi (tous comptes) */}
+                        <LocationShareListener />
                         {/* OfflineBanner retiré - uniquement dans VendeurDashboard */}
                         {/* Prompt d'installation PWA automatique */}
                         <Suspense fallback={null}>

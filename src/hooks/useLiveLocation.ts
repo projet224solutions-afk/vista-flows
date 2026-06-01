@@ -147,7 +147,7 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
             : 'Impossible d\'obtenir votre position GPS.'
         );
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
     );
 
     // Battement régulier : ré-émet la dernière position ET la fiche pour les
@@ -280,6 +280,16 @@ export function useTrackLocation(
         subscribedRef.current = true;
         // Demander la position courante sans attendre le prochain battement
         channel.send({ type: 'broadcast', event: LIVE_LOCATION_EVENTS.request, payload: {} });
+        // Côté chauffeur : demander au client (même non partageur) d'autoriser le partage.
+        // L'écouteur global du client est abonné en permanence → un seul envoi suffit
+        // (un retry rouvrirait la modale après acceptation).
+        if (announceAsTaxi) {
+          channel.send({
+            type: 'broadcast',
+            event: LIVE_LOCATION_EVENTS.shareRequest,
+            payload: { driverName, ts: Date.now() },
+          });
+        }
         // Envoyer immédiatement notre position (chauffeur) si disponible
         sendDriverPosition();
       }
