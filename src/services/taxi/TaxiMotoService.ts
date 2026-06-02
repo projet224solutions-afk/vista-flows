@@ -92,35 +92,35 @@ export class TaxiMotoService {
         return [];
       }
 
-      // Pour chaque conducteur, récupérer le profil pour avoir le nom
-      const driversWithProfiles = await Promise.all(
-        (drivers || []).map(async (d: any) => {
-          let profile = { full_name: 'Conducteur', phone: '' };
-          if (d.user_id) {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('full_name, phone')
-              .eq('id', d.user_id)
-              .single();
-            if (profileData) {
-              profile = profileData;
-            }
-          }
-          return {
-            id: d.user_id || d.id,
-            driver_code: `DRV${d.id?.slice(0, 4) || '0000'}`,
-            full_name: profile.full_name || 'Conducteur',
-            phone: profile.phone || '',
-            current_lat: d.last_lat || 0,
-            current_lng: d.last_lng || 0,
-            vehicle_type: d.vehicle_type || 'moto',
-            vehicle_plate: d.vehicle_plate,
-            rating: d.rating || 4.5,
-            total_trips: d.total_rides || 0,
-            distance_km: 0
-          };
-        })
-      );
+      // Récupérer TOUS les profils en UNE seule requête (évite le N+1 à grande échelle)
+      const userIds = [...new Set((drivers || []).map((d: any) => d.user_id).filter(Boolean))];
+      const profileMap: Record<string, { full_name?: string; phone?: string }> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, phone')
+          .in('id', userIds);
+        (profilesData || []).forEach((p: any) => {
+          profileMap[p.id] = { full_name: p.full_name, phone: p.phone };
+        });
+      }
+
+      const driversWithProfiles = (drivers || []).map((d: any) => {
+        const profile = (d.user_id && profileMap[d.user_id]) || { full_name: 'Conducteur', phone: '' };
+        return {
+          id: d.user_id || d.id,
+          driver_code: `DRV${d.id?.slice(0, 4) || '0000'}`,
+          full_name: profile.full_name || 'Conducteur',
+          phone: profile.phone || '',
+          current_lat: d.last_lat || 0,
+          current_lng: d.last_lng || 0,
+          vehicle_type: d.vehicle_type || 'moto',
+          vehicle_plate: d.vehicle_plate,
+          rating: d.rating || 4.5,
+          total_trips: d.total_rides || 0,
+          distance_km: 0
+        };
+      });
 
       return driversWithProfiles;
     } catch (error) {

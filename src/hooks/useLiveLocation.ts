@@ -18,7 +18,8 @@ import {
   type SharedProfile,
 } from '@/lib/liveLocation';
 
-const HEARTBEAT_MS = 4000;
+// Heartbeat de re-diffusion (10 s) — réduit le volume de messages Realtime à grande échelle.
+const HEARTBEAT_MS = 10000;
 
 /**
  * Partage la position GPS de l'utilisateur courant sur son canal.
@@ -298,7 +299,7 @@ export function useTrackLocation(
     // Battement : rediffuse régulièrement la position du taxi pour que le client
     // (même abonné tardivement ou GPS chauffeur statique) la reçoive de façon fiable.
     const heartbeat = announceAsTaxi
-      ? setInterval(sendDriverPosition, 3500)
+      ? setInterval(sendDriverPosition, 8000)
       : null;
 
     return () => {

@@ -132,75 +132,81 @@ router.post('/complete', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 
     const earning = resolveDriverEarning(delivery);
 
-    // Idempotent : déjà livrée → on renvoie le gain sans réécrire
-    if (delivery.status === 'delivered') {
-      res.json({ success: true, already_completed: true, driver_earning: delivery.driver_earning ?? earning });
-      return;
-    }
+    const alreadyDelivered = delivery.status === 'delivered';
 
-    const { error: updateError } = await supabaseAdmin
-      .from('deliveries')
-      .update({
-        status: 'delivered',
-        completed_at: new Date().toISOString(),
-        driver_earning: earning,
-        proof_photo_url: proof_photo_url || null,
-        client_signature: signature || null,
-      })
-      .eq('id', delivery_id)
-      .eq('driver_id', userId);
+    // 1) Marquer livrée + écrire le gain + incrémenter les totaux (une seule fois)
+    if (!alreadyDelivered) {
+      const { error: updateError } = await supabaseAdmin
+        .from('deliveries')
+        .update({
+          status: 'delivered',
+          completed_at: new Date().toISOString(),
+          driver_earning: earning,
+          proof_photo_url: proof_photo_url || null,
+          client_signature: signature || null,
+        })
+        .eq('id', delivery_id)
+        .eq('driver_id', userId);
 
-    if (updateError) throw updateError;
+      if (updateError) throw updateError;
 
-    // Incrémenter les totaux du driver (best-effort, ne bloque pas la livraison)
-    try {
-      const { data: driverRow } = await supabaseAdmin
-        .from('drivers')
-        .select('id, earnings_total, total_deliveries')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (driverRow) {
-        await supabaseAdmin
+      // Incrémenter les totaux du driver (best-effort, ne bloque pas la livraison)
+      try {
+        const { data: driverRow } = await supabaseAdmin
           .from('drivers')
-          .update({
-            earnings_total: (Number(driverRow.earnings_total) || 0) + earning,
-            total_deliveries: (Number(driverRow.total_deliveries) || 0) + 1,
-            status: 'online',
-          })
-          .eq('id', driverRow.id);
+          .select('id, earnings_total, total_deliveries')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (driverRow) {
+          await supabaseAdmin
+            .from('drivers')
+            .update({
+              earnings_total: (Number(driverRow.earnings_total) || 0) + earning,
+              total_deliveries: (Number(driverRow.total_deliveries) || 0) + 1,
+              status: 'online',
+            })
+            .eq('id', driverRow.id);
+        }
+      } catch (statErr: any) {
+        logger.warn(`[Delivery] driver totals update failed: ${statErr.message}`);
       }
-    } catch (statErr: any) {
-      logger.warn(`[Delivery] driver totals update failed: ${statErr.message}`);
     }
 
-    // Crédit wallet automatique du gain livreur (sauf encaissement en espèces).
-    // Idempotence partagée avec /payment → aucun double crédit possible.
+    // 2) Règlement du gain — idempotent ET ré-essayable.
+    //    On ne marque "réglé" (driver_payment_method) QUE si cash ou crédit RÉUSSI ;
+    //    si le crédit échoue on laisse null pour qu'un futur appel puisse recréditer.
+    //    La clé d'idempotence `delivery-earning:<id>` empêche tout double crédit.
     const method = String(delivery.payment_method || 'prepaid').toLowerCase();
+    const isCash = !shouldCreditWallet(method);
     let credited = false;
-    if (shouldCreditWallet(method)) {
-      const creditResult = await creditWallet(
-        userId,
-        earning,
-        `Gain livraison #${String(delivery_id).slice(0, 8)}`,
-        `delivery_${delivery_id}`,
-        'delivery_earning',
-        `delivery-earning:${delivery_id}`,
-      );
-      credited = creditResult.success;
-      if (!creditResult.success) {
-        logger.warn(`[Delivery] wallet credit failed for delivery=${delivery_id}: ${creditResult.error}`);
+
+    if (!delivery.driver_payment_method) {
+      if (!isCash) {
+        const creditResult = await creditWallet(
+          userId,
+          earning,
+          `Gain livraison #${String(delivery_id).slice(0, 8)}`,
+          `delivery_${delivery_id}`,
+          'delivery_earning',
+          `delivery-earning:${delivery_id}`,
+        );
+        credited = creditResult.success;
+        if (!creditResult.success) {
+          logger.warn(`[Delivery] wallet credit failed for delivery=${delivery_id}: ${creditResult.error}`);
+        }
+      }
+
+      if (isCash || credited) {
+        await supabaseAdmin
+          .from('deliveries')
+          .update({ driver_payment_method: method })
+          .eq('id', delivery_id)
+          .eq('driver_id', userId);
       }
     }
 
-    // Marquer l'encaissement réglé (évite la réapparition d'une étape de paiement manuelle)
-    await supabaseAdmin
-      .from('deliveries')
-      .update({ driver_payment_method: method })
-      .eq('id', delivery_id)
-      .eq('driver_id', userId);
-
-    logger.info(`[Delivery] Completed: delivery=${delivery_id}, driver=${userId}, earning=${earning}, credited=${credited}`);
+    logger.info(`[Delivery] Completed: delivery=${delivery_id}, driver=${userId}, earning=${earning}, credited=${credited}, alreadyDelivered=${alreadyDelivered}`);
     await emitCoreFeatureEvent({
       featureKey: 'delivery.complete',
       coreEngine: 'commerce',
@@ -208,10 +214,10 @@ router.post('/complete', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       criticality: 'high',
       status: 'success',
       userId,
-      payload: { delivery_id, driver_earning: earning, credited },
+      payload: { delivery_id, driver_earning: earning, credited, already_completed: alreadyDelivered },
     });
 
-    res.json({ success: true, driver_earning: earning, credited });
+    res.json({ success: true, driver_earning: earning, credited, already_completed: alreadyDelivered });
   } catch (error: any) {
     logger.error(`[Delivery] complete error: ${error.message}`);
     await emitCoreFeatureEvent({

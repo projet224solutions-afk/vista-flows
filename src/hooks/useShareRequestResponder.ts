@@ -22,7 +22,9 @@ import {
   type SharedProfile,
 } from '@/lib/liveLocation';
 
-const HEARTBEAT_MS = 4000;
+// Heartbeat de re-diffusion de position. 10 s = bon compromis fraîcheur/charge
+// (réduit ~2,5× le volume de messages Realtime à grande échelle).
+const HEARTBEAT_MS = 10000;
 
 interface ShareRequestInfo {
   driverName?: string;

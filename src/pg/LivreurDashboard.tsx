@@ -73,7 +73,7 @@ export default function LivreurDashboard() {
   const { hasAccess, _subscription, loading: _subscriptionLoading, _isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
-  const { driver, stats, goOnline, goOffline, pause, updateLocation, _uploadProof } = useDriver();
+  const { driver, stats, goOnline, goOffline, pause, updateLocation, _uploadProof, loadDriverProfile } = useDriver();
 
   // Hook pour les livraisons
   const {
@@ -116,6 +116,8 @@ export default function LivreurDashboard() {
       // Recharger toutes les données
       loadCurrentDelivery();
       loadDeliveryHistory();
+      // Rafraîchir gains/stats (jour/semaine/mois) + solde wallet après crédit
+      loadDriverProfile();
 
       // Recharger les livraisons disponibles
       if (location) {
