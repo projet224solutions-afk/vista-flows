@@ -44,10 +44,18 @@ export const LIVE_LOCATION_EVENTS = {
   online: 'online',
 } as const;
 
-/** Infos transmises au client quand le taxi se met en route. */
+/** Rôle de l'initiateur du suivi : chauffeur (taxi) ou commerçant/service. */
+export type RequesterRole = 'driver' | 'merchant';
+
+/** Infos transmises au client quand l'initiateur se met en route / localise. */
 export interface TaxiEnrouteInfo {
   driverName?: string;
   ts: number;
+  /**
+   * 'driver' (défaut) : le chauffeur vient vers le client (taxi-moto).
+   * 'merchant' : le CLIENT doit aller vers le vendeur/service → navigation côté client.
+   */
+  requesterRole?: RequesterRole;
 }
 
 /** Fiche du client (ou de sa boutique) diffusée au chauffeur avant la localisation. */

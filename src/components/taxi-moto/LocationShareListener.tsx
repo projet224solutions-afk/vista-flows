@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useShareRequestResponder } from '@/hooks/useShareRequestResponder';
 import { TaxiArrivalTracking } from './TaxiArrivalTracking';
+import { ClientNavigationToMerchant } from './ClientNavigationToMerchant';
 
 export function LocationShareListener() {
   const { user, profile } = useAuth();
@@ -27,10 +28,14 @@ export function LocationShareListener() {
     ? `${profile.first_name} ${profile?.last_name || ''}`.trim()
     : undefined;
 
-  const { request, lastPosition, driverPosition, taxiEnroute, error, accept, decline } =
+  const { request, lastPosition, driverPosition, taxiEnroute, error, accept, decline, stopSharing } =
     useShareRequestResponder(user?.id, displayName);
 
   const [arrivalOpen, setArrivalOpen] = useState(false);
+
+  // Mode : 'merchant' = le client doit aller vers le vendeur/service (navigation côté client)
+  const isMerchant =
+    taxiEnroute?.requesterRole === 'merchant' || request?.requesterRole === 'merchant';
 
   // Surfacer une erreur GPS (sinon le partage reste muet après acceptation)
   useEffect(() => {
@@ -95,8 +100,10 @@ export function LocationShareListener() {
                 <MapPin className="w-5 h-5 text-primary" />
               </div>
               <p className="text-sm">
-                <strong>{request?.driverName || 'Un chauffeur'}</strong> souhaite vous localiser.
-                Partagez votre position pour qu'il vienne vous récupérer.
+                <strong>{request?.driverName || (isMerchant ? 'Un vendeur' : 'Un chauffeur')}</strong> souhaite vous localiser.
+                {isMerchant
+                  ? ' Confirmez pour recevoir l\'itinéraire vers lui.'
+                  : ' Partagez votre position pour qu\'il vienne vous récupérer.'}
               </p>
             </div>
             <p className="text-xs text-muted-foreground text-center">
@@ -115,14 +122,27 @@ export function LocationShareListener() {
         </DialogContent>
       </Dialog>
 
-      {/* Suivi d'arrivée du taxi (après acceptation) */}
-      <TaxiArrivalTracking
-        open={arrivalOpen}
-        onOpenChange={setArrivalOpen}
-        clientPos={lastPosition}
-        driverPos={driverPosition}
-        driverName={taxiEnroute?.driverName}
-      />
+      {/* Après acceptation : selon le rôle de l'initiateur */}
+      {isMerchant ? (
+        /* Vendeur/Service : le CLIENT navigue vers lui ; fermeture auto à l'arrivée */
+        <ClientNavigationToMerchant
+          open={arrivalOpen}
+          onOpenChange={setArrivalOpen}
+          clientPos={lastPosition}
+          merchantPos={driverPosition}
+          merchantName={taxiEnroute?.driverName}
+          onArrived={() => { stopSharing(); setArrivalOpen(false); }}
+        />
+      ) : (
+        /* Taxi : le client suit l'arrivée du chauffeur */
+        <TaxiArrivalTracking
+          open={arrivalOpen}
+          onOpenChange={setArrivalOpen}
+          clientPos={lastPosition}
+          driverPos={driverPosition}
+          driverName={taxiEnroute?.driverName}
+        />
+      )}
     </>
   );
 }

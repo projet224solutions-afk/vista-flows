@@ -29,6 +29,7 @@ const HEARTBEAT_MS = 10000;
 interface ShareRequestInfo {
   driverName?: string;
   ts: number;
+  requesterRole?: 'driver' | 'merchant';
 }
 
 export function useShareRequestResponder(authUserId: string | undefined, displayName?: string) {
@@ -36,7 +37,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
   const [sharing, setSharing] = useState(false);
   const [lastPosition, setLastPosition] = useState<LivePosition | null>(null);
   const [driverPosition, setDriverPosition] = useState<LivePosition | null>(null);
-  const [taxiEnroute, setTaxiEnroute] = useState<{ driverName?: string } | null>(null);
+  const [taxiEnroute, setTaxiEnroute] = useState<{ driverName?: string; requesterRole?: 'driver' | 'merchant' } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Le client écoute/diffuse sur PLUSIEURS canaux (son custom_id ET son user_id)
@@ -118,7 +119,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
         send(LIVE_LOCATION_EVENTS.online, { ts: Date.now(), name: displayName });
         // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
         if (sharingRef.current) return;
-        setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
+        setRequest({ driverName: (payload as any)?.driverName, ts: Date.now(), requesterRole: (payload as any)?.requesterRole });
       });
       // Demande de position immédiate (si déjà en partage)
       channel.on(LIVE_LOCATION_EVENTS.request, () => {
@@ -126,7 +127,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
         emitProfile();
       });
       channel.on(LIVE_LOCATION_EVENTS.taxiEnroute, (payload) => {
-        setTaxiEnroute({ driverName: (payload as any)?.driverName });
+        setTaxiEnroute({ driverName: (payload as any)?.driverName, requesterRole: (payload as any)?.requesterRole });
       });
       channel.on(LIVE_LOCATION_EVENTS.driverPosition, (payload) => {
         setDriverPosition(payload as LivePosition);

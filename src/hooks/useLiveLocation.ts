@@ -168,6 +168,8 @@ interface TrackLocationOptions {
   driverName?: string;
   /** Position du chauffeur, rediffusée au client pour suivre l'arrivée du taxi. */
   driverPosition?: { lat: number; lng: number } | null;
+  /** Rôle de l'initiateur : 'driver' (taxi, défaut) ou 'merchant' (vendeur/service). */
+  requesterRole?: 'driver' | 'merchant';
 }
 
 /**
@@ -179,7 +181,7 @@ export function useTrackLocation(
   userId: string | null | undefined,
   options: TrackLocationOptions = {}
 ) {
-  const { announceAsTaxi = false, notifyClient = false, driverName, driverPosition } = options;
+  const { announceAsTaxi = false, notifyClient = false, driverName, driverPosition, requesterRole = 'driver' } = options;
   const [position, setPosition] = useState<LivePosition | null>(null);
   const [connected, setConnected] = useState(false);
   const [sharerStopped, setSharerStopped] = useState(false);
@@ -194,6 +196,8 @@ export function useTrackLocation(
   notifyClientRef.current = notifyClient;
   const driverNameRef = useRef(driverName);
   driverNameRef.current = driverName;
+  const requesterRoleRef = useRef(requesterRole);
+  requesterRoleRef.current = requesterRole;
   const driverPosRef = useRef<{ lat: number; lng: number } | null>(driverPosition ?? null);
   driverPosRef.current = driverPosition ?? null;
 
@@ -213,6 +217,7 @@ export function useTrackLocation(
       channelRef.current.send(LIVE_LOCATION_EVENTS.taxiEnroute, {
         driverName: driverNameRef.current,
         ts: Date.now(),
+        requesterRole: requesterRoleRef.current,
       });
     }
   }, []);
@@ -264,7 +269,7 @@ export function useTrackLocation(
       // sa modale de confirmation (la demande initiale était perdue app fermée).
       if (announceAsTaxi && !hasPositionRef.current && !reRequestedRef.current && channelRef.current) {
         reRequestedRef.current = true;
-        channelRef.current.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now() });
+        channelRef.current.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now(), requesterRole: requesterRoleRef.current });
       }
     });
 
@@ -295,7 +300,7 @@ export function useTrackLocation(
         // L'écouteur global du client est abonné en permanence → un seul envoi suffit
         // (un retry rouvrirait la modale après acceptation).
         if (announceAsTaxi) {
-          channel.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now() });
+          channel.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now(), requesterRole: requesterRoleRef.current });
           // Détection hors ligne : pas d'accusé du client sous 5 s → pas en ligne
           if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
           offlineTimerRef.current = setTimeout(() => {

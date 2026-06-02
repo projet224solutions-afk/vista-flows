@@ -1,18 +1,18 @@
 ﻿/**
  * DASHBOARD VENDEUR PROFESSIONNEL - 224SOLUTIONS
- * Interface complète avec sidebar et tous les modules
+ * Interface compl├¿te avec sidebar et tous les modules
  *
  * @version 2.0.0 - Refactoring complet
  * @updated 2025-02-09
  *
- * Optimisations appliquées:
- * ✓ Types stricts (plus de `any`)
- * ✓ Composants extraits et mémoïsés (VendorHeader, VendorRoutes, VendorDashboardHome)
- * ✓ Chunking intelligent des imports lazy par catégorie
- * ✓ GlobalLoader unifié pour tous les Suspense
- * ✓ Aria-labels pour l'accessibilité
- * ✓ Hooks stabilisés avec useCallback
- * ✓ Gestion d'erreurs centralisée
+ * Optimisations appliqu├®es:
+ * Ô£à Types stricts (plus de `any`)
+ * Ô£à Composants extraits et m├®mo├»s├®s (VendorHeader, VendorRoutes, VendorDashboardHome)
+ * Ô£à Chunking intelligent des imports lazy par cat├®gorie
+ * Ô£à GlobalLoader unifi├® pour tous les Suspense
+ * Ô£à Aria-labels pour l'accessibilit├®
+ * Ô£à Hooks stabilis├®s avec useCallback
+ * Ô£à Gestion d'erreurs centralis├®e
  */
 
 import { useState, useEffect, useCallback, Suspense, lazy } from 'react';
@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleRedirect } from '@/hooks/useRoleRedirect';
+import { UserTrackerButton } from '@/components/taxi-moto/UserTrackerButton';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -28,7 +29,6 @@ import { VendorSidebar } from '@/components/vendor/VendorSidebar';
 import { useVendorStats } from '@/hooks/useVendorData';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
-import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useVendorErrorBoundary } from '@/hooks/useVendorErrorBoundary';
 import { PageLoader } from '@/components/ui/GlobalLoader';
@@ -44,7 +44,7 @@ const SubscriptionExpiryBanner = lazy(() =>
 );
 
 // ============================================================================
-// Hook personnalisé pour charger les commandes récentes
+// Hook personnalis├® pour charger les commandes r├®centes
 // ============================================================================
 
 function useRecentOrders(userId: string | undefined) {
@@ -57,7 +57,7 @@ function useRecentOrders(userId: string | undefined) {
     const loadRecentOrders = async () => {
       setLoading(true);
       try {
-        // 1. Récupérer le vendor
+        // 1. R├®cup├®rer le vendor
         const { data: vendor, error: vendorError } = await supabase
           .from('vendors')
           .select('id')
@@ -74,7 +74,7 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 2. Récupérer les commandes avec profil client
+        // 2. R├®cup├®rer les commandes avec profil client
         const { data, error } = await supabase
           .from('orders')
           .select(`
@@ -93,7 +93,7 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 3. Récupérer les profils des clients pour afficher leurs noms
+        // 3. R├®cup├®rer les profils des clients pour afficher leurs noms
         const userIds = (data || [])
           .map((o: OrderFromSupabase) => o.customer?.user_id)
           .filter(Boolean) as string[];
@@ -113,7 +113,7 @@ function useRecentOrders(userId: string | undefined) {
           }
         }
 
-        // 4. Transformer les données avec noms clients réels
+        // 4. Transformer les donn├®es avec noms clients r├®els
         const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => {
           const orderUserId = order.customer?.user_id;
           const clientName = orderUserId && profilesMap[orderUserId]
@@ -146,7 +146,7 @@ function useRecentOrders(userId: string | undefined) {
 }
 
 // ============================================================================
-// Composants d'état (Offline, Error, Loading)
+// Composants d'├®tat (Offline, Error, Loading)
 // ============================================================================
 
 function OfflineState() {
@@ -190,10 +190,10 @@ function VendorMissingState({ onGoHome }: { onGoHome: () => void }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Retournez à l'accueil pour utiliser votre compte utilisateur.
+            Retournez ├á l'accueil pour utiliser votre compte utilisateur.
           </p>
-          <Button onClick={onGoHome} className="w-full" aria-label="Aller à l'accueil">
-            Aller à l'accueil
+          <Button onClick={onGoHome} className="w-full" aria-label="Aller ├á l'accueil">
+            Aller ├á l'accueil
           </Button>
         </CardContent>
       </Card>
@@ -205,27 +205,23 @@ function ErrorState({
   onGoHome,
   onReload,
   t,
-  description,
-  helperText,
 }: {
   onGoHome: () => void;
   onReload: () => void;
   t: (key: string) => string;
-  description?: string;
-  helperText?: string;
 }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle className="text-destructive">{t('vendor.loadError')}</CardTitle>
-          <CardDescription>{description || t('vendor.loadErrorDesc')}</CardDescription>
+          <CardDescription>{t('vendor.loadErrorDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{helperText || t('vendor.checkConnection')}</p>
+          <p className="text-sm text-muted-foreground">{t('vendor.checkConnection')}</p>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={onGoHome} className="w-full" aria-label="Aller à l'accueil">
-              Aller à l'accueil
+            <Button onClick={onGoHome} className="w-full" aria-label="Aller ├á l'accueil">
+              Aller ├á l'accueil
             </Button>
             <Button
               onClick={onReload}
@@ -242,36 +238,6 @@ function ErrorState({
   );
 }
 
-function getVendorLoadErrorCopy(error: string | null) {
-  const normalizedError = error?.toLowerCase() || '';
-
-  if (!normalizedError) {
-    return {
-      description: 'Impossible de charger les données de votre espace vendeur.',
-      helperText: 'Réessayez dans quelques instants. Si le problème persiste, contactez le support.',
-    };
-  }
-
-  if (normalizedError.includes('timeout') || normalizedError.includes('network') || normalizedError.includes('fetch')) {
-    return {
-      description: 'Le chargement des données vendeur a expiré avant la réponse du serveur.',
-      helperText: 'Votre connexion semble instable. Réessayez dans quelques instants.',
-    };
-  }
-
-  if (normalizedError.includes('jwt') || normalizedError.includes('session') || normalizedError.includes('auth')) {
-    return {
-      description: 'Votre session vendeur n’est plus disponible.',
-      helperText: 'Reconnectez-vous puis rechargez la page.',
-    };
-  }
-
-  return {
-    description: 'Impossible de charger complètement les données de votre espace vendeur.',
-    helperText: 'Réessayez. Si le problème persiste, contactez le support.',
-  };
-}
-
 // ============================================================================
 // Composant principal
 // ============================================================================
@@ -282,22 +248,21 @@ export default function VendeurDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { connectivity } = useOnlineStatus();
   useRoleRedirect();
 
-  // 🔄 Initialisation automatique du mode offline (cache catalogue, stock, sync)
+  // ­ƒöä Initialisation automatique du mode offline (cache catalogue, stock, sync)
   const { reinitialize: reinitOffline } = useOfflineInitialization();
 
-  // Business type pour règles POS
+  // Business type pour r├¿gles POS
   const { canAccessPOS } = useCurrentVendor();
 
   // Stats vendeur
   const { stats, loading: statsLoading, error: statsError } = useVendorStats();
 
-  // Gestion des erreurs centralisée
+  // Gestion des erreurs centralis├®e
   const { error, clearError } = useVendorErrorBoundary();
 
-  // Commandes récentes (hook personnalisé)
+  // Commandes r├®centes (hook personnalis├®)
   const { orders: recentOrders } = useRecentOrders(user?.id);
   const [showAllOrders, setShowAllOrders] = useState(false);
 
@@ -323,7 +288,7 @@ export default function VendeurDashboard() {
     setShowAllOrders(prev => !prev);
   }, []);
 
-  // Redirection vers dashboard par défaut ou vers l'interface digitale
+  // Redirection vers dashboard par d├®faut ou vers l'interface digitale
   useEffect(() => {
     const path = location.pathname;
     if (path === '/vendeur' || path === '/vendeur/') {
@@ -332,7 +297,7 @@ export default function VendeurDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ⚠ Si le vendeur est de type digital ou service, rediriger IMMÉDIATEMENT vers l'interface dédiée
+  // ÔÜí Si le vendeur est de type digital ou service, rediriger IMM├ëDIATEMENT vers l'interface d├®di├®e
   useEffect(() => {
     if (!user?.id) return;
     const checkBusinessType = async () => {
@@ -353,10 +318,10 @@ export default function VendeurDashboard() {
         if (proService) {
           navigate(`/dashboard/service/${proService.id}`, { replace: true });
         } else {
-          console.warn('Vendeur de type service sans professional_service associé');
+          console.warn('Vendeur de type service sans professional_service associ├®');
           toast({
-            title: 'Configuration incomplète',
-            description: 'Votre profil de service n\'est pas encore configuré. Contactez le support.',
+            title: 'Configuration incompl├¿te',
+            description: 'Votre profil de service n\'est pas encore configur├®. Contactez le support.',
             variant: 'destructive',
           });
         }
@@ -365,7 +330,7 @@ export default function VendeurDashboard() {
     void checkBusinessType();
   }, [user?.id, navigate, location.pathname, toast]);
 
-  // Handler de déconnexion stabilisé
+  // Handler de d├®connexion stabilis├®
   const handleSignOut = useCallback(async () => {
     try {
       await signOut();
@@ -375,7 +340,7 @@ export default function VendeurDashboard() {
       });
       navigate('/');
     } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err);
+      console.error('Erreur lors de la d├®connexion:', err);
       toast({
         title: t('common.error'),
         description: t('error.generic'),
@@ -392,15 +357,15 @@ export default function VendeurDashboard() {
     void reinitOffline();
   }, [resetTimeout, reinitOffline]);
 
-  // ===========================================================================
-  // États de chargement et d'erreur
-  // ===========================================================================
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // ├ëtats de chargement et d'erreur
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 
   if (loadingTimedOut) {
     return (
       <DataLoadTimeoutState
-        title="Impossible de charger les données vendeur"
-        description="Le chargement a dépassé le délai attendu. Vérifiez votre connexion puis réessayez."
+        title="Impossible de charger les donn├®es vendeur"
+        description="Le chargement a d├®pass├® le d├®lai attendu. V├®rifiez votre connexion puis r├®essayez."
         onRetry={handleRetryAfterTimeout}
         onReload={handleReload}
       />
@@ -408,22 +373,13 @@ export default function VendeurDashboard() {
   }
 
   if (!isLoading && !user) {
-    const copy = getVendorLoadErrorCopy('session_missing');
-    return (
-      <ErrorState
-        onGoHome={handleGoHome}
-        onReload={handleReload}
-        t={t}
-        description={copy.description}
-        helperText={copy.helperText}
-      />
-    );
+    return <ErrorState onGoHome={handleGoHome} onReload={handleReload} t={t} />;
   }
 
-  // État: Stats non chargées (après le loading)
+  // ├ëtat: Stats non charg├®es (apr├¿s le loading)
   if (!isLoading && stats === null) {
     const isVendorMissing = statsError === 'Vendor profile not found';
-    const isOffline = connectivity === 'offline';
+    const isOffline = !navigator.onLine;
 
     if (isOffline) {
       return <OfflineState />;
@@ -433,26 +389,17 @@ export default function VendeurDashboard() {
       return <VendorMissingState onGoHome={handleGoHome} />;
     }
 
-    const copy = getVendorLoadErrorCopy(statsError);
-    return (
-      <ErrorState
-        onGoHome={handleGoHome}
-        onReload={handleReload}
-        t={t}
-        description={copy.description}
-        helperText={copy.helperText}
-      />
-    );
+    return <ErrorState onGoHome={handleGoHome} onReload={handleReload} t={t} />;
   }
 
-  // État: Chargement
+  // ├ëtat: Chargement
   if (isLoading) {
     return <PageLoader text={t('vendor.loadingSpace')} />;
   }
 
-  // ===========================================================================
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   // Rendu principal
-  // ===========================================================================
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Vendeur';
   const vendorId = stats?.vendorId || '';
@@ -489,6 +436,16 @@ export default function VendeurDashboard() {
             role="main"
             aria-label="Contenu principal du dashboard vendeur"
           >
+            {/* Localiser un client : le client reçoit l'itinéraire pour venir à la boutique */}
+            <div className="mb-4 max-w-xs">
+              <UserTrackerButton
+                mode="merchant"
+                prominent
+                driverName={displayName}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+              />
+            </div>
+
             <VendorRoutes
               recentOrders={recentOrders}
               showAllOrders={showAllOrders}
@@ -500,7 +457,7 @@ export default function VendeurDashboard() {
         </div>
       </div>
 
-      {/* CommunicationWidget retiré - le composant global retourne null, évite le lazy load inutile */}
+      {/* CommunicationWidget retir├® - le composant global retourne null, ├®vite le lazy load inutile */}
     </SidebarProvider>
   );
 }

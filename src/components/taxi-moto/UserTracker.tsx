@@ -16,6 +16,7 @@ import { GPS_CONFIG } from "@/services/gps/PrecisionGeolocationService";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { resolveTrackingTarget } from "@/services/taxiTrackingService";
 import { sendLocateRequest } from "@/services/pushBackendService";
+import { calculateDistance } from "@/hooks/useGeoDistance";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -58,9 +59,15 @@ interface UserTrackerProps {
   onActiveChange?: (active: boolean) => void;
   /** Appelé quand le chauffeur clique « Course terminée » (le parent ferme le dialog). */
   onFinish?: () => void;
+  /**
+   * 'taxi' (défaut) : le chauffeur navigue vers le client.
+   * 'merchant' : vendeur/service — le CLIENT navigue vers nous, on voit le client approcher.
+   */
+  mode?: 'taxi' | 'merchant';
 }
 
-export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: UserTrackerProps = {}) {
+export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mode = 'taxi' }: UserTrackerProps = {}) {
+  const isMerchant = mode === 'merchant';
   const [userId, setUserId] = useState('');
   const [trackedUser, setTrackedUser] = useState<TrackedUser | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,6 +89,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
     notifyClient: localizationConfirmed,
     driverName,
     driverPosition: myLocation,
+    requesterRole: isMerchant ? 'merchant' : 'driver',
   });
 
   // La position en direct (broadcast) prime sur la dernière position connue en base
@@ -163,6 +171,25 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
   }, [live.clientResponse]);
 
   const hasClientPosition = displayLat !== undefined && displayLng !== undefined;
+
+  // ===== Mode vendeur/service : on regarde le CLIENT approcher de NOUS =====
+  const clientDistanceKm = (isMerchant && hasClientPosition && myLocation)
+    ? calculateDistance(displayLat!, displayLng!, myLocation.lat, myLocation.lng)
+    : null;
+  const merchantEtaMin = clientDistanceKm !== null ? Math.max(1, Math.round((clientDistanceKm / 15) * 60)) : null;
+  const merchantArrived = clientDistanceKm !== null && clientDistanceKm <= 0.02; // ~20 m
+  const merchantMapSrc = (isMerchant && hasClientPosition && myLocation)
+    ? `https://maps.google.com/maps?saddr=${displayLat},${displayLng}&daddr=${myLocation.lat},${myLocation.lng}&output=embed`
+    : null;
+
+  // Fermeture auto à l'arrivée du client (≤ ~20 m) côté vendeur
+  useEffect(() => {
+    if (isMerchant && merchantArrived) {
+      const t = setTimeout(() => { stopTracking(); onFinish?.(); }, 1500);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMerchant, merchantArrived]);
 
   // Carte d'itinéraire intégrée (s'ouvre automatiquement dès la localisation)
   const embedSrc = hasClientPosition
@@ -612,6 +639,48 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
 
             {/* Position GPS */}
             {displayLat !== undefined && displayLng !== undefined ? (
+              isMerchant ? (
+              /* MODE VENDEUR/SERVICE : on voit le client approcher de nous */
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-900 flex items-center gap-2">
+                    🚶 {merchantArrived ? 'Client arrivé !' : 'Le client arrive vers vous'}
+                    {isLive && (
+                      <Badge variant="default" className="bg-blue-500 text-[10px] h-4 px-1.5">EN DIRECT</Badge>
+                    )}
+                  </span>
+                  <div className="flex items-center gap-1 text-xs text-blue-700">
+                    <Clock className="w-3 h-3" />
+                    {isLive ? formatElapsed(live.position?.ts) : '—'}
+                  </div>
+                </div>
+                {clientDistanceKm !== null && !merchantArrived && (
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="rounded border p-2 bg-white/60">
+                      <div className="text-base font-bold text-blue-700">{clientDistanceKm.toFixed(clientDistanceKm < 1 ? 2 : 1)} km</div>
+                      <div className="text-[10px] text-muted-foreground">Distance</div>
+                    </div>
+                    <div className="rounded border p-2 bg-white/60">
+                      <div className="text-base font-bold text-blue-700">{merchantEtaMin} min</div>
+                      <div className="text-[10px] text-muted-foreground">Arrivée estimée</div>
+                    </div>
+                  </div>
+                )}
+                {merchantMapSrc && !merchantArrived && (
+                  <div className="rounded-lg overflow-hidden border border-blue-200 aspect-video bg-white">
+                    <iframe title="Le client en route vers vous" width="100%" height="100%" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={merchantMapSrc} />
+                  </div>
+                )}
+                {merchantArrived ? (
+                  <p className="text-sm text-center text-green-700 font-medium">🎉 Le client est arrivé à votre position.</p>
+                ) : (
+                  <div className="text-xs font-mono text-blue-800 bg-white/50 p-2 rounded border border-blue-100">
+                    📍 Client : {displayLat.toFixed(6)}, {displayLng.toFixed(6)}
+                    {isLive && live.position?.accuracy ? ` (±${Math.round(live.position.accuracy)} m)` : ''}
+                  </div>
+                )}
+              </div>
+              ) : (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-green-900 flex items-center gap-2">
@@ -670,6 +739,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
                   {myLocation ? "Démarrer la navigation GPS" : "Ouvrir dans Google Maps"}
                 </Button>
               </div>
+              )
             ) : live.targetOnline === false ? (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                 <p className="text-sm font-medium text-red-800">

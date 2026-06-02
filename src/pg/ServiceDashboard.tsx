@@ -1,34 +1,24 @@
 ﻿import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Wallet, CreditCard, Bot, Images, Headphones } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserTrackerButton } from '@/components/taxi-moto/UserTrackerButton';
 import { Badge } from '@/components/ui/badge';
 import { useProfessionalServices } from '@/hooks/useProfessionalServices';
-import { useWallet } from '@/hooks/useWallet';
-import { useServiceSubscription } from '@/hooks/useServiceSubscription';
 import type { ProfessionalService } from '@/hooks/useProfessionalServices';
 import { ServiceModuleManager } from '@/components/professional-services/modules/ServiceModuleManager';
+import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
 import { ServiceIdBadge } from '@/components/professional-services/ServiceIdBadge';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
-const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTicketsUniversal').then(m => ({ default: m.SupportTicketsUniversal })));
+const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
 const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
-const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
-const ServiceMediaManager = lazy(() =>
-  import('@/components/professional-services/ServiceMediaManager').then(m => ({ default: m.ServiceMediaManager }))
-);
-const ServiceAnalytics = lazy(() =>
-  import('@/components/professional-services/ServiceAnalytics').then(m => ({ default: m.ServiceAnalytics }))
-);
-const ServiceReviews = lazy(() =>
-  import('@/components/professional-services/ServiceReviews').then(m => ({ default: m.ServiceReviews }))
-);
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -47,15 +37,8 @@ export default function ServiceDashboard() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { userServices, loading } = useProfessionalServices();
-  const { wallet } = useWallet();
   const [service, setService] = useState<ProfessionalService | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // Source de vérité unique pour l'abonnement — partagée avec ServiceMediaManager
-  const { isPremium, refresh: refreshSubscription } = useServiceSubscription({
-    serviceId,
-    serviceTypeId: service?.service_type_id ?? undefined,
-  });
 
   // Auto-fill GPS is now handled globally via useAutoFillGps in App.tsx
 
@@ -96,33 +79,33 @@ export default function ServiceDashboard() {
     );
   }
 
-  // Pour les services avec module complet → afficher directement
+  // Pour les services avec module complet ÔåÆ afficher directement
   if (isFullModuleService(service)) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
-          {/* Header avec bouton paramètres */}
-           <div className="flex items-center justify-between mb-6">
-             <div className="flex items-center gap-3">
-               <Store className="w-6 h-6 text-primary" />
-               <h1 className="text-xl sm:text-2xl font-bold">{service.business_name}</h1>
-             </div>
-             <div className="flex items-center gap-2">
-               <ServiceIdBadge serviceId={service.id} compact />
-               <Button
-                 variant="outline"
-                 size="sm"
-                 className="gap-2"
-                 onClick={() => setSettingsOpen(true)}
-               >
-                 <Settings className="w-4 h-4" />
+          {/* Header avec bouton param├¿tres */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Store className="w-6 h-6 text-primary" />
+              <h1 className="text-xl sm:text-2xl font-bold">{service.business_name}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <ServiceIdBadge serviceId={service.id} compact />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">Paramètres</span>
-               </Button>
-             </div>
-           </div>
+              </Button>
+            </div>
+          </div>
 
           {/* Barre d'abonnement compacte */}
-          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} compact onSubscribed={refreshSubscription} />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} compact />
 
           <ServiceModuleManager
             serviceId={service.id}
@@ -155,23 +138,6 @@ export default function ServiceDashboard() {
             </Card>
           </div>
 
-          {/* Galerie Médias */}
-          <div className="mt-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Images className="w-5 h-5" />
-                  Galerie Médias
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 sm:p-2">
-                <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                  <ServiceMediaManager serviceId={service.id} isPremium={isPremium} />
-                </Suspense>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Bouton Mes Achats */}
           <div className="mt-6">
             <Button
@@ -194,29 +160,6 @@ export default function ServiceDashboard() {
                 emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
               />
             </Suspense>
-          </div>
-
-          <div className="mt-6">
-            <Card className="shadow-elegant">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-primary" />
-                  Assistant IA — {service.business_name}
-                </CardTitle>
-                <CardDescription>
-                  Votre copilote intelligent pour gérer et développer votre activité
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                  <CopiloteChat
-                    userRole="prestataire"
-                    serviceId={service.id}
-                    height="calc(100vh - 260px)"
-                  />
-                </Suspense>
-              </CardContent>
-            </Card>
           </div>
         </div>
         <ServiceSettingsPanel
@@ -286,7 +229,7 @@ export default function ServiceDashboard() {
               <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} {wallet?.currency || 'GNF'}</div>
+              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} GNF</div>
             </CardContent>
           </Card>
 
@@ -313,7 +256,7 @@ export default function ServiceDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium">Note</CardTitle>
-              <span className="text-sm sm:text-xl">⭐</span>
+              <span className="text-sm sm:text-xl">Ô¡É</span>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               <div className="text-lg sm:text-2xl font-bold">{service.rating.toFixed(1)}/5</div>
@@ -323,7 +266,17 @@ export default function ServiceDashboard() {
 
         {/* Carte abonnement */}
         <div className="mb-6">
-          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} onSubscribed={refreshSubscription} />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} />
+        </div>
+
+        {/* Localiser un client : il reçoit l'itinéraire pour venir au service */}
+        <div className="mb-6 max-w-xs">
+          <UserTrackerButton
+            mode="merchant"
+            prominent
+            driverName={service.business_name}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+          />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
@@ -335,6 +288,7 @@ export default function ServiceDashboard() {
                 Wallet
               </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
+              <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">R├®servations</TabsTrigger>
               <TabsTrigger value="payment-links" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
                 <CreditCard className="w-3.5 h-3.5" />
                 Paiements
@@ -345,17 +299,9 @@ export default function ServiceDashboard() {
               </TabsTrigger>
               <TabsTrigger value="reviews" className="text-xs sm:text-sm px-2.5 sm:px-3">Avis</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2.5 sm:px-3">Stats</TabsTrigger>
-              <TabsTrigger value="media" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-                <Images className="w-3.5 h-3.5" />
-                Médias
-              </TabsTrigger>
-              <TabsTrigger value="copilote" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-                <Bot className="w-3.5 h-3.5" />
-                Copilote IA
-              </TabsTrigger>
-              <TabsTrigger value="support" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-                <Headphones className="w-3.5 h-3.5" />
-                Support
+              <TabsTrigger value="api" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Key className="w-3.5 h-3.5" />
+                API
               </TabsTrigger>
             </TabsList>
           </div>
@@ -372,20 +318,20 @@ export default function ServiceDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Téléphone</p>
-                    <p className="mt-1">{service.phone || 'Non renseigné'}</p>
+                    <p className="text-sm font-medium text-muted-foreground">T├®l├®phone</p>
+                    <p className="mt-1">{service.phone || 'Non renseign├®'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Email</p>
-                    <p className="mt-1">{service.email || 'Non renseigné'}</p>
+                    <p className="mt-1">{service.email || 'Non renseign├®'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Adresse</p>
-                    <p className="mt-1">{service.address || 'Non renseignée'}</p>
+                    <p className="mt-1">{service.address || 'Non renseign├®e'}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Site Web</p>
-                    <p className="mt-1">{service.website || 'Non renseigné'}</p>
+                    <p className="mt-1">{service.website || 'Non renseign├®'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -408,6 +354,10 @@ export default function ServiceDashboard() {
             />
           </TabsContent>
 
+          <TabsContent value="bookings">
+            <BookingManagement serviceId={service.id} />
+          </TabsContent>
+
           <TabsContent value="payment-links">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <PaymentLinksManager />
@@ -418,55 +368,36 @@ export default function ServiceDashboard() {
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <MyPurchasesOrdersList
                 title="Mes Achats Personnels"
-                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
+                emptyMessage="Vous n'avez pas encore effectu├® d'achats sur le marketplace"
               />
             </Suspense>
           </TabsContent>
 
           <TabsContent value="reviews">
-            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <ServiceReviews serviceId={service.id} />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <ServiceAnalytics serviceId={service.id} />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="media">
-            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <ServiceMediaManager serviceId={service.id} isPremium={isPremium} />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="copilote" className="animate-fade-in">
-            <Card className="shadow-elegant">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-primary" />
-                  Assistant IA — {service.business_name}
-                </CardTitle>
-                <CardDescription>
-                  Votre copilote intelligent pour gérer et développer votre activité
-                </CardDescription>
+                <CardTitle>Avis Clients</CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                  <CopiloteChat
-                    userRole="prestataire"
-                    serviceId={service.id}
-                    height="calc(100vh - 260px)"
-                  />
-                </Suspense>
+              <CardContent>
+                <p className="text-muted-foreground">Module de gestion des avis ├á impl├®menter...</p>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="support" className="animate-fade-in">
+          <TabsContent value="analytics">
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiques D├®taill├®es</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Module d'analytics ├á impl├®menter...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="api">
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-              <SupportTicketsUniversal />
+              <WalletApiPanel serviceId={service.id} businessName={service.business_name} />
             </Suspense>
           </TabsContent>
         </Tabs>

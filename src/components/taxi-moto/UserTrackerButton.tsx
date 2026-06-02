@@ -13,25 +13,40 @@ interface UserTrackerButtonProps {
   /** Variante visible et libellée (ex: dans le dashboard chauffeur). */
   prominent?: boolean;
   className?: string;
-  /** Nom du chauffeur, transmis au client dans la notification "taxi en route". */
+  /** Nom de l'initiateur, transmis au client dans la notification. */
   driverName?: string;
   /**
    * ID du chauffeur taxi (taxi_drivers). Si fourni : active le « mode course »
    * (statut occupé + suivi persistant jusqu'à « Course terminée »).
    */
   driverId?: string | null;
+  /**
+   * 'taxi' (défaut) : le chauffeur navigue vers le client.
+   * 'merchant' : vendeur/service — le CLIENT navigue vers nous (logique inversée).
+   */
+  mode?: 'taxi' | 'merchant';
 }
 
-export function UserTrackerButton({ prominent = false, className, driverName, driverId }: UserTrackerButtonProps) {
+export function UserTrackerButton({ prominent = false, className, driverName, driverId, mode = 'taxi' }: UserTrackerButtonProps) {
   const [open, setOpen] = useState(false);
-  // Une course est active : le dialog ne peut plus être fermé par clic extérieur/échap.
+  // Une session est active : le dialog ne peut plus être fermé par clic extérieur/échap.
   const [courseActive, setCourseActive] = useState(false);
+
+  const isMerchant = mode === 'merchant';
+  const prominentLabel = isMerchant ? 'Localiser un client' : 'Suivre un client (ID / lien)';
+  const compactLabel = isMerchant ? 'Localiser client' : 'Suivre client';
+  const dialogTitle = courseActive
+    ? (isMerchant ? 'Client en approche' : 'Course en cours')
+    : (isMerchant ? 'Localiser un client' : 'Suivre un client');
+  const titleAttr = isMerchant
+    ? "Localiser un client (ID ou numéro) pour qu'il vienne vers vous"
+    : "Suivre un client par ID ou lien";
 
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        // Tant qu'une course est active, on bloque la fermeture (reste sur la navigation).
+        // Tant qu'une session est active, on bloque la fermeture.
         if (!next && courseActive) return;
         setOpen(next);
       }}
@@ -40,20 +55,20 @@ export function UserTrackerButton({ prominent = false, className, driverName, dr
         {prominent ? (
           <Button
             className={className ?? "w-full bg-blue-600 hover:bg-blue-700 text-white"}
-            title="Suivre un client par ID ou lien"
+            title={titleAttr}
           >
             <MapPinned className="w-4 h-4 mr-2" />
-            Suivre un client (ID / lien)
+            {prominentLabel}
           </Button>
         ) : (
           <Button
             variant="ghost"
             size="sm"
             className={className ?? "h-9 px-2 gap-1 text-xs"}
-            title="Suivre un client par ID ou lien"
+            title={titleAttr}
           >
             <MapPinned className="w-4 h-4" />
-            <span className="hidden sm:inline">Suivre client</span>
+            <span className="hidden sm:inline">{compactLabel}</span>
           </Button>
         )}
       </DialogTrigger>
@@ -66,12 +81,13 @@ export function UserTrackerButton({ prominent = false, className, driverName, dr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPinned className="w-5 h-5 text-primary" />
-            {courseActive ? 'Course en cours' : 'Suivre un client'}
+            {dialogTitle}
           </DialogTitle>
         </DialogHeader>
         <UserTracker
           driverName={driverName}
           driverId={driverId}
+          mode={mode}
           onActiveChange={setCourseActive}
           onFinish={() => { setCourseActive(false); setOpen(false); }}
         />
