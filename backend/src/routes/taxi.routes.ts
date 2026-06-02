@@ -150,4 +150,86 @@ router.get('/resolve-target', verifyJWT, async (req: AuthenticatedRequest, res: 
   }
 });
 
+/**
+ * POST /api/v2/taxi/rate
+ * Enregistre l'avis d'un client sur une course + recalcule la moyenne du chauffeur.
+ * Service role → contourne la RLS (le client ne peut pas écrire dans taxi_drivers).
+ *
+ * Body : { ride_id, stars (1-5), comment? }
+ */
+router.post('/rate', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { ride_id, stars, comment } = req.body || {};
+
+    const starsNum = Number(stars);
+    if (!ride_id || typeof ride_id !== 'string') {
+      res.status(400).json({ success: false, error: 'ride_id requis' });
+      return;
+    }
+    if (!Number.isFinite(starsNum) || starsNum < 1 || starsNum > 5) {
+      res.status(400).json({ success: false, error: 'stars doit être entre 1 et 5' });
+      return;
+    }
+
+    // Récupérer la course pour connaître le chauffeur et vérifier que le client en est l'auteur
+    const { data: trip, error: tripErr } = await supabaseAdmin
+      .from('taxi_trips')
+      .select('id, driver_id, customer_id')
+      .eq('id', ride_id)
+      .maybeSingle();
+
+    if (tripErr) throw tripErr;
+    if (!trip || !(trip as any).driver_id) {
+      res.status(404).json({ success: false, error: 'Course ou chauffeur introuvable' });
+      return;
+    }
+    const driverId = (trip as any).driver_id;
+
+    // Sécurité : seul le client de la course peut la noter
+    if ((trip as any).customer_id && (trip as any).customer_id !== userId) {
+      res.status(403).json({ success: false, error: 'Vous ne pouvez noter que vos propres courses' });
+      return;
+    }
+
+    // Anti-doublon : une note par course/utilisateur
+    const { data: existing } = await supabaseAdmin
+      .from('taxi_ratings')
+      .select('id')
+      .eq('ride_id', ride_id)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabaseAdmin
+        .from('taxi_ratings')
+        .update({ stars: Math.round(starsNum), comment: comment || null })
+        .eq('id', (existing as any).id);
+    } else {
+      const { error: insErr } = await supabaseAdmin
+        .from('taxi_ratings')
+        .insert({ ride_id, driver_id: driverId, user_id: userId, stars: Math.round(starsNum), comment: comment || null });
+      if (insErr) throw insErr;
+    }
+
+    // Recalculer la moyenne du chauffeur et la persister
+    const { data: all } = await supabaseAdmin
+      .from('taxi_ratings')
+      .select('stars')
+      .eq('driver_id', driverId);
+
+    let average: number | null = null;
+    if (Array.isArray(all) && all.length > 0) {
+      average = Math.round((all.reduce((s: number, r: any) => s + (Number(r.stars) || 0), 0) / all.length) * 10) / 10;
+      await supabaseAdmin.from('taxi_drivers').update({ rating: average }).eq('user_id', driverId);
+    }
+
+    logger.info(`[Taxi] rate: ride=${ride_id}, driver=${driverId}, stars=${Math.round(starsNum)}, avg=${average}`);
+    res.json({ success: true, average, total_ratings: Array.isArray(all) ? all.length : 0 });
+  } catch (error: any) {
+    logger.error(`[Taxi] rate error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'enregistrement de l\'avis' });
+  }
+});
+
 export default router;

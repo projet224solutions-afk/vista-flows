@@ -42,3 +42,13 @@ export async function resolveTrackingTarget(q: string): Promise<ResolveTargetRes
     profile: payload.profile,
   };
 }
+
+/**
+ * Enregistre l'avis d'un client sur une course (backend service role → moyenne chauffeur mise à jour).
+ */
+export async function rateRide(rideId: string, stars: number, comment?: string) {
+  return backendFetch<{ average?: number; total_ratings?: number }>('/api/v2/taxi/rate', {
+    method: 'POST',
+    body: { ride_id: rideId, stars, comment },
+  });
+}

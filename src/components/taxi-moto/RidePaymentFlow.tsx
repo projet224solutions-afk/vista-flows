@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
 import { toast } from "sonner";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
+import { rateRide } from "@/services/taxiTrackingService";
 
 interface RidePaymentFlowProps {
     rideId: string;
@@ -38,11 +39,29 @@ export default function RidePaymentFlow({
         toast.error(`Erreur de paiement: ${error}`);
     };
 
-    const handleSubmitRating = () => {
-        if (rating > 0) {
-            toast.success(`Merci pour votre note de ${rating} étoiles !`);
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmitRating = async () => {
+        if (rating <= 0) {
+            onPaymentSuccess();
+            return;
         }
-        onPaymentSuccess();
+        setSubmitting(true);
+        try {
+            // Enregistrement via backend (service role → moyenne chauffeur mise à jour, RLS contournée)
+            const res = await rateRide(rideId, rating);
+            if (res.success) {
+                toast.success(`Merci pour votre note de ${rating} étoiles !`);
+            } else {
+                toast.warning(res.error || 'Note non enregistrée, mais merci pour votre retour.');
+            }
+        } catch (e) {
+            console.error('Erreur enregistrement avis:', e);
+            toast.warning('Note non enregistrée, mais merci pour votre retour.');
+        } finally {
+            setSubmitting(false);
+            onPaymentSuccess();
+        }
     };
 
     if (showRating) {
@@ -81,9 +100,10 @@ export default function RidePaymentFlow({
 
                         <Button
                             onClick={handleSubmitRating}
+                            disabled={submitting}
                             className="w-full"
                         >
-                            Terminer
+                            {submitting ? 'Enregistrement…' : 'Terminer'}
                         </Button>
                     </div>
                 </CardContent>
