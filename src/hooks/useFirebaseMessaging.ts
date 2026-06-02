@@ -30,7 +30,21 @@ export function useFirebaseMessaging() {
   // Initialisation au montage
   useEffect(() => {
     const init = async () => {
-      // Vérifier le support
+      // Plateforme native (Capacitor) → push natif FCM (réveille même app fermée)
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          setStatus(prev => ({ ...prev, isSupported: true, isLoading: false }));
+          if (user) {
+            const { registerNativePush } = await import('@/lib/nativePush');
+            await registerNativePush();
+            setStatus(prev => ({ ...prev, isEnabled: true, permission: 'granted' }));
+          }
+          return; // ne pas exécuter le chemin web
+        }
+      } catch { /* @capacitor/core indisponible → chemin web */ }
+
+      // Vérifier le support (web)
       const isSupported = 'Notification' in window && 'serviceWorker' in navigator;
 
       setStatus(prev => ({
