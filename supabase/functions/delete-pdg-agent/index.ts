@@ -149,16 +149,27 @@ serve(async (req) => {
         .maybeSingle();
       userIdsData = userIds;
     }
-    
+
+    // 🛡️ DURCISSEMENT : ne jamais supprimer un compte privilégié via cette fonction.
+    const PDG_PROTECTED_ROLES = ['pdg', 'ceo', 'admin', 'actionnaire'];
+    if (PDG_PROTECTED_ROLES.includes((profileData?.role || '').toLowerCase())) {
+      console.warn(`⛔ Suppression bloquée: compte privilégié ${profileData?.role} (${profileData?.email})`);
+      return new Response(
+        JSON.stringify({ success: false, error: `Suppression interdite : ce compte a le rôle privilégié « ${profileData?.role} ».`, protected: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
     // Récupérer le wallet agent
     const { data: agentWallet } = await supabaseAdmin
       .from('agent_wallets')
       .select('*')
       .eq('agent_id', agent.id)
       .maybeSingle();
-    
+
+    // Rétention d'archive étendue à 365 jours (fenêtre de récupération large).
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    expiresAt.setDate(expiresAt.getDate() + 365);
     
     const archiveData = {
       original_user_id: agent.user_id || agent.id,
@@ -187,6 +198,19 @@ serve(async (req) => {
       console.warn('⚠️ Erreur archivage (non bloquante):', archiveError.message);
     } else {
       console.log('✅ Données agent archivées');
+    }
+
+    // 🔔 Alerte/trace admin : enregistrer la suppression dans l'audit (non bloquant)
+    try {
+      await supabaseAdmin.from('audit_logs').insert({
+        actor_id: user.id,
+        action: 'AGENT_DELETED',
+        target_type: 'agent',
+        target_id: agent.id,
+        data_json: { agent_code: agent.agent_code, name: agent.name, user_id: agent.user_id },
+      });
+    } catch (e) {
+      console.error('audit_logs insert (delete-pdg-agent) failed:', e instanceof Error ? e.message : String(e));
     }
 
     // 2. Supprimer le wallet de l'agent

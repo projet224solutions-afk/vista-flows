@@ -252,6 +252,19 @@ Deno.serve(async (req) => {
       console.log('✅ Données archivées avec succès');
     }
 
+    // 🔔 Alerte/trace admin : enregistrer la suppression dans l'audit (non bloquant)
+    try {
+      await supabaseAdmin.from('audit_logs').insert({
+        actor_id: currentUser.id,
+        action: 'USER_DELETED',
+        target_type: 'user',
+        target_id: userId,
+        data_json: { email: userToDelete?.email, role: userToDelete?.role, forced: force === true },
+      });
+    } catch (e) {
+      console.error('audit_logs insert (delete-user) failed:', e instanceof Error ? e.message : String(e));
+    }
+
     // ========================================
     // SUPPRESSION COMPLÈTE DE TOUTES LES DONNÉES
     // ========================================

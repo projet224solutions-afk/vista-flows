@@ -178,6 +178,16 @@ serve(async (req) => {
         .eq('id', userId)
         .maybeSingle();
 
+      // 🛡️ DURCISSEMENT : un agent ne peut JAMAIS supprimer un compte privilégié.
+      const AGENT_PROTECTED_ROLES = ['pdg', 'ceo', 'admin', 'actionnaire'];
+      if (AGENT_PROTECTED_ROLES.includes((profileToArchive?.role || '').toLowerCase())) {
+        console.warn(`⛔ Agent bloqué: tentative de suppression d'un compte ${profileToArchive?.role} (${email})`);
+        return new Response(
+          JSON.stringify({ success: false, error: `Suppression interdite : un agent ne peut pas supprimer un compte « ${profileToArchive?.role} ».`, protected: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        );
+      }
+
       const { data: walletData } = await supabaseAdmin
         .from('wallets')
         .select('*')
@@ -191,7 +201,7 @@ serve(async (req) => {
         .maybeSingle();
 
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      expiresAt.setDate(expiresAt.getDate() + 365);
 
       const fullName = profileToArchive?.first_name && profileToArchive?.last_name
         ? `${profileToArchive.first_name} ${profileToArchive.last_name}`.trim()
