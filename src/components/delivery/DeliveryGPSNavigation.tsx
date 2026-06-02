@@ -138,7 +138,8 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
       if (currentLocation) {
         const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
         const destination = `${target.latitude},${target.longitude}`;
-        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+        // dir_action=navigate → lance directement le guidage vocal (mobile)
+        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&dir_action=navigate`;
       } else {
         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.latitude},${target.longitude}`;
       }
@@ -148,7 +149,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
       const encodedAddress = encodeURIComponent(addressText + ', Guinée');
       if (currentLocation) {
         const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
-        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodedAddress}&travelmode=driving`;
+        mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodedAddress}&travelmode=driving&dir_action=navigate`;
       } else {
         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
       }
@@ -184,6 +185,21 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
 
   const pickupCoords = parseCoords(activeDelivery.pickup_address);
   const deliveryCoords = parseCoords(activeDelivery.delivery_address);
+
+  // Cible courante (récupération puis destination) pour la carte intégrée
+  const currentTargetAddr = isPickingUp ? activeDelivery.pickup_address : activeDelivery.delivery_address;
+  const currentTarget = parseCoords(currentTargetAddr);
+  const currentTargetText = parseAddress(currentTargetAddr);
+  const hasTargetCoords = !!currentTarget && (currentTarget.latitude !== 0 || currentTarget.longitude !== 0);
+
+  // Carte d'itinéraire INTÉGRÉE dans l'app (comme le taxi-moto) — pas de redirection forcée
+  const embedSrc = hasTargetCoords
+    ? (currentLocation
+        ? `https://maps.google.com/maps?saddr=${currentLocation.latitude},${currentLocation.longitude}&daddr=${currentTarget!.latitude},${currentTarget!.longitude}&output=embed`
+        : `https://maps.google.com/maps?q=${currentTarget!.latitude},${currentTarget!.longitude}&z=16&output=embed`)
+    : (currentTargetText && currentTargetText !== 'Adresse non disponible'
+        ? `https://maps.google.com/maps?q=${encodeURIComponent(currentTargetText + ', Guinée')}&output=embed`
+        : null);
 
   return (
     <div className="space-y-4">
@@ -277,6 +293,20 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
             </div>
           </div>
 
+          {/* Carte d'itinéraire intégrée — la navigation reste DANS l'application */}
+          {embedSrc && (
+            <div className="rounded-lg overflow-hidden border border-orange-200 dark:border-orange-800 aspect-video bg-white">
+              <iframe
+                title={isPickingUp ? "Itinéraire vers le vendeur" : "Itinéraire vers le client"}
+                width="100%"
+                height="100%"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={embedSrc}
+              />
+            </div>
+          )}
+
           {/* Distance et temps estimé */}
           {distance !== null && duration !== null && (
             <div className="grid grid-cols-2 gap-3">
@@ -316,7 +346,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
             style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
           >
             <ExternalLink className="w-5 h-5" />
-            🗺️ Ouvrir dans Google Maps
+            🧭 Démarrer la navigation GPS
           </Button>
         </CardContent>
       </Card>
