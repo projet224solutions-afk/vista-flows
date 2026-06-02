@@ -66,8 +66,16 @@ async function findActiveUserId(raw: string): Promise<string | null> {
     .limit(1).maybeSingle();
   if (byPublic?.id) return byPublic.id;
 
-  // 4. téléphone → profiles.phone
+  // 4. téléphone → profiles.phone (robuste : 9 derniers chiffres via RPC)
   if (PHONE_RE.test(raw)) {
+    // 4a. Match robuste (ignore espaces/indicatif) — gère les formats incohérents
+    try {
+      const { data: rpcId, error: rpcErr } = await supabaseAdmin
+        .rpc('resolve_user_id_by_phone', { p_phone: raw });
+      if (!rpcErr && rpcId) return rpcId as string;
+    } catch { /* RPC pas encore appliquée → repli variantes */ }
+
+    // 4b. Repli : variantes exactes (si la RPC n'est pas disponible)
     const filter = phoneVariants(raw).map((v) => `phone.eq.${v}`).join(',');
     const { data: byPhone } = await supabaseAdmin
       .from('profiles').select('id').or(filter).limit(1).maybeSingle();
