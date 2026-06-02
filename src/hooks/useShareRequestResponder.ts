@@ -133,7 +133,12 @@ export function useShareRequestResponder(authUserId: string | undefined, display
       });
 
       channel.subscribe((status) => {
-        if (status === 'subscribed') subscribedRef.current = true;
+        if (status === 'subscribed') {
+          subscribedRef.current = true;
+          // Annoncer « je suis en ligne » dès l'abonnement → un chauffeur qui me
+          // suivait (et m'a réveillé par push) reçoit ce signal et relance sa demande.
+          channel.send(LIVE_LOCATION_EVENTS.online, { ts: Date.now(), name: displayName });
+        }
       });
       return channel;
     });

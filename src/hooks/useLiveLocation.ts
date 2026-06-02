@@ -201,6 +201,8 @@ export function useTrackLocation(
   const [targetOnline, setTargetOnline] = useState<boolean | null>(null);
   const onlineSeenRef = useRef(false);
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Évite de relancer la demande en boucle quand le client (re)vient en ligne
+  const reRequestedRef = useRef(false);
 
   // Envoie "taxi en route" une seule fois, quand le chauffeur a confirmé (notifyClient)
   // ET qu'on a reçu la position du client.
@@ -234,6 +236,7 @@ export function useTrackLocation(
     hasPositionRef.current = false;
     setTargetOnline(null);
     onlineSeenRef.current = false;
+    reRequestedRef.current = false;
     if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
 
     if (!userId) return;
@@ -252,11 +255,17 @@ export function useTrackLocation(
       maybeSendEnroute();
     });
 
-    // Accusé « je suis en ligne » envoyé par le client dès réception de la demande
+    // Accusé « je suis en ligne » (à la réception de la demande OU à l'ouverture de l'app)
     channel.on(LIVE_LOCATION_EVENTS.online, () => {
       onlineSeenRef.current = true;
       setTargetOnline(true);
       if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
+      // Le client vient (re)d'ouvrir l'app → relancer la demande UNE fois pour afficher
+      // sa modale de confirmation (la demande initiale était perdue app fermée).
+      if (announceAsTaxi && !hasPositionRef.current && !reRequestedRef.current && channelRef.current) {
+        reRequestedRef.current = true;
+        channelRef.current.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now() });
+      }
     });
 
     // Fiche du client (nom, tél, adresse, photo ou infos boutique)

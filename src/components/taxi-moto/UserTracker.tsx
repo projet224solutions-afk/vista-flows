@@ -15,6 +15,7 @@ import { extractUserId, formatElapsed, type SharedProfile } from "@/lib/liveLoca
 import { GPS_CONFIG } from "@/services/gps/PrecisionGeolocationService";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { resolveTrackingTarget } from "@/services/taxiTrackingService";
+import { sendLocateRequest } from "@/services/pushBackendService";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -132,6 +133,23 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
 
   // Sécurité : restaurer la disponibilité si le composant est démonté en pleine course
   useEffect(() => endCourse, [endCourse]);
+
+  // Client hors ligne → envoyer un push pour qu'il ouvre l'app (une seule fois)
+  const pushSentRef = useRef(false);
+  useEffect(() => {
+    if (live.targetOnline === false && trackedUser?.id && !pushSentRef.current) {
+      pushSentRef.current = true;
+      sendLocateRequest(trackedUser.id, driverName)
+        .then((r) => {
+          const delivered = (r as any)?.delivered ?? (r?.data as any)?.delivered;
+          if (r?.success && delivered !== false) {
+            toast.info('📲 Notification envoyée au client pour qu\'il ouvre l\'application');
+          }
+        })
+        .catch(() => { /* push best-effort */ });
+    }
+    if (live.targetOnline === true) pushSentRef.current = false; // réarmer si re-déconnexion
+  }, [live.targetOnline, trackedUser?.id, driverName]);
 
   // Feedback : le client a confirmé ou refusé le partage de sa position
   useEffect(() => {
