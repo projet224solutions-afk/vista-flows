@@ -262,27 +262,14 @@ export default function PDGUsers() {
 
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        toast.error('Session expirée, veuillez vous reconnecter');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('delete-user', {
+      // Migré Edge Function → backend Node.js (/api/admin/delete-user)
+      const res = await backendFetch<{ message?: string }>('/api/admin/delete-user', {
+        method: 'POST',
         body: { userId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
       });
 
-      if (error) {
-        console.error('Erreur suppression:', error);
-        throw error;
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Échec de la suppression');
+      if (!res.success) {
+        throw new Error(res.error || 'Échec de la suppression');
       }
 
       toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
