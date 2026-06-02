@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { userId } = await req.json();
+    const { userId, force } = await req.json();
 
     if (!userId) {
       return new Response(
@@ -169,6 +169,22 @@ Deno.serve(async (req) => {
       .eq('id', userId)
       .maybeSingle();
 
+    // 🛡️ DURCISSEMENT : protéger les comptes privilégiés d'une suppression accidentelle.
+    // Un compte PDG/CEO/admin/actionnaire ne peut être supprimé que si `force: true`
+    // est explicitement fourni (double confirmation côté appelant).
+    const PROTECTED_ROLES = ['pdg', 'ceo', 'admin', 'actionnaire'];
+    if (PROTECTED_ROLES.includes((userToDelete?.role || '').toLowerCase()) && force !== true) {
+      console.warn(`⛔ Suppression refusée (compte protégé): ${userToDelete?.email} [${userToDelete?.role}]`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Compte protégé (rôle « ${userToDelete?.role} »). Suppression refusée par sécurité. Pour vraiment supprimer ce compte privilégié, renvoyez la requête avec "force": true.`,
+          protected: true,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
     console.log(`🗑️ Début suppression utilisateur ${userId} (${userToDelete?.email || 'email inconnu'})`);
 
     // ========================================
@@ -201,8 +217,9 @@ Deno.serve(async (req) => {
       roleSpecificData = data;
     }
     
+    // Rétention d'archive étendue à 365 jours (fenêtre de récupération large).
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    expiresAt.setDate(expiresAt.getDate() + 365);
     
     const archiveData = {
       original_user_id: userId,
