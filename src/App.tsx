@@ -68,6 +68,7 @@ const DriverProfile = lazyWithRetry(() => import("./pg/driver/DriverProfile"));
 const DriverSettings = lazyWithRetry(() => import("./pg/driver/DriverSettings"));
 const DriverHelp = lazyWithRetry(() => import("./pg/driver/DriverHelp"));
 const TaxiMotoDriver = lazyWithRetry(() => import("./pg/TaxiMotoDriver"));
+const ActionnaireDashboard = lazyWithRetry(() => import("./pg/ActionnaireDashboard"));
 const DriverSubscriptionPage = lazyWithRetry(() => import("./pg/DriverSubscriptionPage"));
 const VendorSubscriptionPage = lazyWithRetry(() => import("./pg/VendorSubscriptionPage"));
 const TaxiMotoClient = lazyWithRetry(() => import("./pg/TaxiMotoClient"));
@@ -448,6 +449,16 @@ function App() {
                                   </ProtectedRoute>
                                 }
                               />
+                              {/* Actionnaire — la redirection post-login pointe sur /actionnaire/dashboard */}
+                              <Route
+                                path="/actionnaire/dashboard"
+                                element={
+                                  <ProtectedRoute allowedRoles={['actionnaire', 'admin', 'pdg', 'ceo']}>
+                                    <ActionnaireDashboard />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route path="/actionnaire" element={<Navigate to="/actionnaire/dashboard" replace />} />
                               <Route
                                 path="/livreur/profile"
                                 element={
