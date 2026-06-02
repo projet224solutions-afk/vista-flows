@@ -267,9 +267,10 @@ export default function VendeurDashboard() {
   const [showAllOrders, setShowAllOrders] = useState(false);
 
   const isLoading = authLoading || profileLoading || statsLoading;
-  // Mobile: 15s timeout (slow networks), Desktop: 10s
+  // Marge élargie : la base distante peut être lente (~1,5 s/requête) + réseau mobile.
+  // Mobile: 30s, Desktop: 25s (évite l'écran de timeout sur connexions/serveur lents).
   const isMobileDevice = typeof navigator !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent);
-  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, isMobileDevice ? 15000 : 10000);
+  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, isMobileDevice ? 30000 : 25000);
 
   useEffect(() => {
     if (loadingTimedOut) {
