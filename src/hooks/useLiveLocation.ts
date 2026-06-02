@@ -8,8 +8,6 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 import {
   liveLocationChannelName,
   LIVE_LOCATION_EVENTS,
@@ -17,6 +15,7 @@ import {
   type TaxiEnrouteInfo,
   type SharedProfile,
 } from '@/lib/liveLocation';
+import { getLiveChannel, type LiveChannel } from '@/lib/realtime';
 
 // Heartbeat de re-diffusion (10 s) — réduit le volume de messages Realtime à grande échelle.
 const HEARTBEAT_MS = 10000;
@@ -33,7 +32,7 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
   const [taxiEnroute, setTaxiEnroute] = useState<TaxiEnrouteInfo | null>(null);
   const [driverPosition, setDriverPosition] = useState<LivePosition | null>(null);
 
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<LiveChannel | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastPosRef = useRef<LivePosition | null>(null);
@@ -41,31 +40,22 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
   profileRef.current = profile;
 
   const emit = useCallback((pos: LivePosition) => {
-    channelRef.current?.send({
-      type: 'broadcast',
-      event: LIVE_LOCATION_EVENTS.position,
-      payload: pos,
-    });
+    channelRef.current?.send(LIVE_LOCATION_EVENTS.position, pos);
   }, []);
 
   /** Diffuse la fiche du client (réponse à une demande de suivi). */
   const emitProfile = useCallback(() => {
     if (profileRef.current) {
-      channelRef.current?.send({
-        type: 'broadcast',
-        event: LIVE_LOCATION_EVENTS.profile,
-        payload: profileRef.current,
-      });
+      channelRef.current?.send(LIVE_LOCATION_EVENTS.profile, profileRef.current);
     }
   }, []);
 
   /** Répond au chauffeur : confirme (et re-partage la position) ou refuse le suivi. */
   const respondToTaxi = useCallback((confirmed: boolean) => {
-    channelRef.current?.send({
-      type: 'broadcast',
-      event: confirmed ? LIVE_LOCATION_EVENTS.positionConfirmed : LIVE_LOCATION_EVENTS.positionDeclined,
-      payload: { ts: Date.now() },
-    });
+    channelRef.current?.send(
+      confirmed ? LIVE_LOCATION_EVENTS.positionConfirmed : LIVE_LOCATION_EVENTS.positionDeclined,
+      { ts: Date.now() },
+    );
     if (confirmed && lastPosRef.current) emit(lastPosRef.current);
   }, [emit]);
 
@@ -79,8 +69,8 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
       heartbeatRef.current = null;
     }
     if (channelRef.current) {
-      channelRef.current.send({ type: 'broadcast', event: LIVE_LOCATION_EVENTS.stop, payload: {} });
-      supabase.removeChannel(channelRef.current);
+      channelRef.current.send(LIVE_LOCATION_EVENTS.stop, {});
+      channelRef.current.close();
       channelRef.current = null;
     }
     lastPosRef.current = null;
@@ -101,24 +91,22 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
       return;
     }
 
-    // Canal de l'utilisateur partageur
-    const channel = supabase.channel(liveLocationChannelName(userId), {
-      config: { broadcast: { self: false } },
-    });
+    // Canal de l'utilisateur partageur (transport via abstraction : Supabase ou Ably)
+    const channel = getLiveChannel(liveLocationChannelName(userId));
 
     // Répondre immédiatement aux demandes des suiveurs (position + fiche)
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
+    channel.on(LIVE_LOCATION_EVENTS.request, () => {
       if (lastPosRef.current) emit(lastPosRef.current);
       emitProfile();
     });
 
     // Le chauffeur a localisé le client → "votre taxi est en route"
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
+    channel.on(LIVE_LOCATION_EVENTS.taxiEnroute, (payload) => {
       setTaxiEnroute(payload as TaxiEnrouteInfo);
     });
 
     // Position du taxi (pour suivre son arrivée)
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
+    channel.on(LIVE_LOCATION_EVENTS.driverPosition, (payload) => {
       setDriverPosition(payload as LivePosition);
     });
 
@@ -198,7 +186,7 @@ export function useTrackLocation(
   const [clientResponse, setClientResponse] = useState<'confirmed' | 'declined' | null>(null);
   const [clientProfile, setClientProfile] = useState<SharedProfile | null>(null);
 
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const channelRef = useRef<LiveChannel | null>(null);
   const subscribedRef = useRef(false);
   const enrouteSentRef = useRef(false);
   const hasPositionRef = useRef(false);
@@ -215,10 +203,9 @@ export function useTrackLocation(
     if (notifyClientRef.current && hasPositionRef.current && !enrouteSentRef.current
         && subscribedRef.current && channelRef.current) {
       enrouteSentRef.current = true;
-      channelRef.current.send({
-        type: 'broadcast',
-        event: LIVE_LOCATION_EVENTS.taxiEnroute,
-        payload: { driverName: driverNameRef.current, ts: Date.now() },
+      channelRef.current.send(LIVE_LOCATION_EVENTS.taxiEnroute, {
+        driverName: driverNameRef.current,
+        ts: Date.now(),
       });
     }
   }, []);
@@ -226,10 +213,8 @@ export function useTrackLocation(
   const sendDriverPosition = useCallback(() => {
     const p = driverPosRef.current;
     if (!announceAsTaxi || !p || !channelRef.current || !subscribedRef.current) return;
-    channelRef.current.send({
-      type: 'broadcast',
-      event: LIVE_LOCATION_EVENTS.driverPosition,
-      payload: { lat: p.lat, lng: p.lng, ts: Date.now(), name: driverName },
+    channelRef.current.send(LIVE_LOCATION_EVENTS.driverPosition, {
+      lat: p.lat, lng: p.lng, ts: Date.now(), name: driverName,
     });
   }, [announceAsTaxi, driverName]);
 
@@ -245,12 +230,10 @@ export function useTrackLocation(
 
     if (!userId) return;
 
-    const channel = supabase.channel(liveLocationChannelName(userId), {
-      config: { broadcast: { self: false } },
-    });
+    const channel = getLiveChannel(liveLocationChannelName(userId));
     channelRef.current = channel;
 
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.position }, ({ payload }) => {
+    channel.on(LIVE_LOCATION_EVENTS.position, (payload) => {
       setSharerStopped(false);
       setPosition(payload as LivePosition);
       hasPositionRef.current = true;
@@ -259,37 +242,33 @@ export function useTrackLocation(
     });
 
     // Fiche du client (nom, tél, adresse, photo ou infos boutique)
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.profile }, ({ payload }) => {
+    channel.on(LIVE_LOCATION_EVENTS.profile, (payload) => {
       setClientProfile(payload as SharedProfile);
     });
 
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.stop }, () => {
+    channel.on(LIVE_LOCATION_EVENTS.stop, () => {
       setSharerStopped(true);
     });
 
     // Réponse du client à la demande de confirmation de position (feedback chauffeur)
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.positionConfirmed }, () => {
+    channel.on(LIVE_LOCATION_EVENTS.positionConfirmed, () => {
       setClientResponse('confirmed');
     });
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.positionDeclined }, () => {
+    channel.on(LIVE_LOCATION_EVENTS.positionDeclined, () => {
       setClientResponse('declined');
     });
 
     channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
+      if (status === 'subscribed') {
         setConnected(true);
         subscribedRef.current = true;
         // Demander la position courante sans attendre le prochain battement
-        channel.send({ type: 'broadcast', event: LIVE_LOCATION_EVENTS.request, payload: {} });
+        channel.send(LIVE_LOCATION_EVENTS.request, {});
         // Côté chauffeur : demander au client (même non partageur) d'autoriser le partage.
         // L'écouteur global du client est abonné en permanence → un seul envoi suffit
         // (un retry rouvrirait la modale après acceptation).
         if (announceAsTaxi) {
-          channel.send({
-            type: 'broadcast',
-            event: LIVE_LOCATION_EVENTS.shareRequest,
-            payload: { driverName, ts: Date.now() },
-          });
+          channel.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now() });
         }
         // Envoyer immédiatement notre position (chauffeur) si disponible
         sendDriverPosition();
@@ -306,7 +285,7 @@ export function useTrackLocation(
       if (heartbeat) clearInterval(heartbeat);
       subscribedRef.current = false;
       channelRef.current = null;
-      supabase.removeChannel(channel);
+      channel.close();
     };
   }, [userId, announceAsTaxi, driverName, sendDriverPosition, maybeSendEnroute]);
 

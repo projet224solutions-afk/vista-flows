@@ -22,6 +22,8 @@ export function getAblyClient(): Promise<any> {
     const Ably = mod?.default ?? mod;
 
     return new Ably.Realtime({
+      // Parité avec Supabase (broadcast self:false) : ne pas se ré-écho ses propres messages
+      echoMessages: false,
       // Récupère un token signé auprès du backend (JWT Supabase → TokenRequest Ably)
       authCallback: async (
         _tokenParams: unknown,

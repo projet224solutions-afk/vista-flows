@@ -13,7 +13,6 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import {
   liveLocationChannelName,
@@ -21,6 +20,7 @@ import {
   type LivePosition,
   type SharedProfile,
 } from '@/lib/liveLocation';
+import { getLiveChannel, type LiveChannel } from '@/lib/realtime';
 
 // Heartbeat de re-diffusion de position. 10 s = bon compromis fraîcheur/charge
 // (réduit ~2,5× le volume de messages Realtime à grande échelle).
@@ -41,7 +41,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
 
   // Le client écoute/diffuse sur PLUSIEURS canaux (son custom_id ET son user_id)
   // afin d'être joignable que le chauffeur saisisse l'ID, l'UUID ou le téléphone.
-  const channelsRef = useRef<RealtimeChannel[]>([]);
+  const channelsRef = useRef<LiveChannel[]>([]);
   const subscribedRef = useRef(false);
   const sharingRef = useRef(false); // déjà en partage → ignorer les relances de demande
   const watchIdRef = useRef<number | null>(null);
@@ -89,7 +89,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
   }, [authUserId, displayName]);
 
   const send = useCallback((event: string, payload: unknown) => {
-    channelsRef.current.forEach((c) => c.send({ type: 'broadcast', event, payload }));
+    channelsRef.current.forEach((c) => c.send(event, payload));
   }, []);
 
   const emitPosition = useCallback((pos: LivePosition) => send(LIVE_LOCATION_EVENTS.position, pos), [send]);
@@ -110,29 +110,27 @@ export function useShareRequestResponder(authUserId: string | undefined, display
     ));
 
     const channels = keys.map((channelName) => {
-      const channel = supabase.channel(channelName, {
-        config: { broadcast: { self: false } },
-      });
+      const channel = getLiveChannel(channelName);
 
-      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.shareRequest }, ({ payload }) => {
+      channel.on(LIVE_LOCATION_EVENTS.shareRequest, (payload) => {
         // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
         if (sharingRef.current) return;
         setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
       });
       // Demande de position immédiate (si déjà en partage)
-      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
+      channel.on(LIVE_LOCATION_EVENTS.request, () => {
         if (lastPosRef.current) emitPosition(lastPosRef.current);
         emitProfile();
       });
-      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
+      channel.on(LIVE_LOCATION_EVENTS.taxiEnroute, (payload) => {
         setTaxiEnroute({ driverName: (payload as any)?.driverName });
       });
-      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
+      channel.on(LIVE_LOCATION_EVENTS.driverPosition, (payload) => {
         setDriverPosition(payload as LivePosition);
       });
 
       channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') subscribedRef.current = true;
+        if (status === 'subscribed') subscribedRef.current = true;
       });
       return channel;
     });
@@ -142,7 +140,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
     return () => {
       subscribedRef.current = false;
       channelsRef.current = [];
-      channels.forEach((c) => supabase.removeChannel(c));
+      channels.forEach((c) => c.close());
     };
   }, [customId, authUserId, emitPosition, emitProfile]);
 
