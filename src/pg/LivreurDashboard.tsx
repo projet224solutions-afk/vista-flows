@@ -46,7 +46,6 @@ const _CommunicationWidget = lazy(() => import("@/components/communication/Commu
 const DriverLayout = lazy(() => import('@/components/driver/DriverLayout').then(m => ({ default: m.DriverLayout })));
 const DeliveryChat = lazy(() => import('@/components/delivery/DeliveryChat'));
 const DeliveryGPSNavigation = lazy(() => import('@/components/delivery/DeliveryGPSNavigation').then(m => ({ default: m.DeliveryGPSNavigation })));
-const _DeliveryPaymentModal = lazy(() => import('@/components/delivery/DeliveryPaymentModal'));
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTicketsUniversal').then(m => ({ default: m.SupportTicketsUniversal })));
 

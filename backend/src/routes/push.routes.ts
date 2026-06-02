@@ -18,12 +18,28 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 
 const router = Router();
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 router.post('/locate-request', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { target_user_id, driver_name } = req.body || {};
-    if (!target_user_id || typeof target_user_id !== 'string') {
-      res.status(400).json({ success: false, error: 'target_user_id requis' });
+    if (!target_user_id || typeof target_user_id !== 'string' || !UUID_RE.test(target_user_id)) {
+      res.status(400).json({ success: false, error: 'target_user_id (UUID) requis' });
+      return;
+    }
+
+    // 🛡️ Anti-spam : pas plus d'un push « localiser » par utilisateur toutes les 2 min
+    const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', target_user_id)
+      .ilike('title', '%localiser%')
+      .gte('created_at', since)
+      .limit(1)
+      .maybeSingle();
+    if (recent) {
+      res.json({ success: true, delivered: false, reason: 'throttled' });
       return;
     }
 
