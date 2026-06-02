@@ -33,6 +33,7 @@ import subscriptionRoutes from './routes/subscriptions.routes.js';
 import paymentRoutes from './routes/payments.routes.js';
 import walletRoutesV2 from './routes/wallet.v2.routes.js';
 import deliveryRoutes from './routes/delivery.routes.js';
+import taxiRoutes from './routes/taxi.routes.js';
 import vendorRoutes from './routes/vendors.routes.js';
 import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
@@ -215,6 +216,7 @@ app.use('/media', mediaRoutes);
 
 app.use('/api/v2/wallet', walletRoutesV2);
 app.use('/api/v2/delivery', deliveryRoutes);
+app.use('/api/v2/taxi', taxiRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 

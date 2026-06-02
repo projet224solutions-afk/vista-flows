@@ -14,6 +14,7 @@ import { useTrackLocation } from "@/hooks/useLiveLocation";
 import { extractUserId, formatElapsed, type SharedProfile } from "@/lib/liveLocation";
 import { GPS_CONFIG } from "@/services/gps/PrecisionGeolocationService";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
+import { resolveTrackingTarget } from "@/services/taxiTrackingService";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -237,35 +238,43 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
     setClientDeclined(false);
     setLoading(true);
 
-    // Résoudre la clé de canal :
-    //  - UUID ou custom_id (CLT0005…) → utilisés tels quels (le client diffuse dessus)
-    //  - numéro de téléphone → résolu en user_id via profiles (lecture publique),
-    //    le client diffuse aussi sur son canal user_id.
+    // Résolution via backend (service role) : vérifie que le compte est ACTIF.
+    // Un compte SUPPRIMÉ n'existe plus dans profiles/user_ids → 'not_found' → on refuse.
+    // Gère aussi ID / UUID / custom_id / téléphone / email et renvoie la fiche.
     let id = raw;
-    try {
-      if (!UUID_RE.test(raw) && PHONE_RE.test(raw)) {
-        const variants = phoneVariants(raw);
-        const filter = variants.map((v) => `phone.eq.${v}`).join(',');
-        const { data: byPhone } = await supabase
-          .from('profiles')
-          .select('id')
-          .or(filter)
-          .limit(1)
-          .maybeSingle();
-        if (!byPhone?.id) {
-          setLoading(false);
-          toast.error('Aucun client trouvé avec ce numéro de téléphone');
-          return;
-        }
-        id = byPhone.id as string;
+    let preloadedProfile = false;
+    const resolved = await resolveTrackingTarget(raw);
+    if (resolved) {
+      if (resolved.status !== 'active') {
+        setLoading(false);
+        toast.error('Compte introuvable — il est peut-être supprimé ou inexistant');
+        return;
       }
-    } catch {
-      setLoading(false);
-      toast.error('Erreur lors de la recherche du numéro');
-      return;
+      if (resolved.trackingKey) id = resolved.trackingKey;
+      if (resolved.profile) { setLocalProfile(resolved.profile); preloadedProfile = true; }
+    } else {
+      // Repli si le backend est injoignable : résolution locale du téléphone uniquement
+      try {
+        if (!UUID_RE.test(raw) && PHONE_RE.test(raw)) {
+          const variants = phoneVariants(raw);
+          const filter = variants.map((v) => `phone.eq.${v}`).join(',');
+          const { data: byPhone } = await supabase
+            .from('profiles').select('id').or(filter).limit(1).maybeSingle();
+          if (!byPhone?.id) {
+            setLoading(false);
+            toast.error('Aucun client trouvé avec ce numéro de téléphone');
+            return;
+          }
+          id = byPhone.id as string;
+        }
+      } catch {
+        setLoading(false);
+        toast.error('Erreur lors de la recherche');
+        return;
+      }
     }
 
-    void loadClientProfile(id);      // charge la fiche (UUID résolu / custom_id)
+    if (!preloadedProfile) void loadClientProfile(id); // charge la fiche si pas déjà fournie
     try {
       console.log('🔍 Recherche utilisateur:', id);
 
