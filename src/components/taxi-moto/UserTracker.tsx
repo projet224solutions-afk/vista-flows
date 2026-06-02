@@ -88,9 +88,6 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
   const displayLng = live.position?.lng ?? trackedUser?.lastLng;
   const isLive = !!live.position;
 
-  // Évite de rouvrir la navigation externe à chaque mise à jour de position
-  const navOpenedRef = useRef(false);
-
   // Suivre la position du chauffeur tant que le tracking est actif
   useEffect(() => {
     if (!isTracking || !navigator.geolocation) return;
@@ -102,11 +99,6 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTracking]);
-
-  // Réinitialiser le garde d'ouverture quand on relance/arrête un suivi
-  useEffect(() => {
-    if (!isTracking) navOpenedRef.current = false;
   }, [isTracking]);
 
   // ===== Mode course (taxi) : statut occupé + course persistante =====
@@ -170,15 +162,9 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
         : `https://www.google.com/maps/dir/?api=1&destination=${displayLat},${displayLng}&travelmode=driving&dir_action=navigate`)
     : null;
 
-  // Ouvre automatiquement la navigation GPS une seule fois dès que le client est localisé
-  useEffect(() => {
-    if (isTracking && hasClientPosition && navUrl && !navOpenedRef.current) {
-      navOpenedRef.current = true;
-      try {
-        window.open(navUrl, '_blank', 'noopener');
-      } catch { /* popup bloquée : l'itinéraire reste visible dans la carte intégrée */ }
-    }
-  }, [isTracking, hasClientPosition, navUrl]);
+  // NB : on n'ouvre PLUS Google Maps automatiquement. La carte d'itinéraire reste
+  // affichée DANS l'app (carte intégrée ci-dessous). Le chauffeur ouvre Google Maps
+  // uniquement s'il le souhaite, via le bouton « Démarrer la navigation GPS ».
 
   /**
    * Rechercher et charger les données d'un utilisateur
