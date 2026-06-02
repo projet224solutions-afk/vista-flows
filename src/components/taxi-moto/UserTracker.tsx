@@ -3,18 +3,32 @@
  * Composant pour tracker la position d'un utilisateur en temps réel
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Navigation, Clock, User, Radio, Store, Phone, MapPin, Loader2 } from "lucide-react";
+import { Search, X, Navigation, Clock, User, Radio, Store, Phone, MapPin, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTrackLocation } from "@/hooks/useLiveLocation";
 import { extractUserId, formatElapsed, type SharedProfile } from "@/lib/liveLocation";
 import { GPS_CONFIG } from "@/services/gps/PrecisionGeolocationService";
+import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+// Numéro de téléphone : uniquement chiffres / séparateurs / +, au moins 7 caractères.
+// (Les custom_id type CLT0005/DRV1234 contiennent des lettres → exclus.)
+const PHONE_RE = /^\+?[\d\s().-]{7,}$/;
+
+/** Variantes d'un numéro pour la recherche (avec/sans +, sans séparateurs, sans 00). */
+function phoneVariants(raw: string): string[] {
+  const compact = raw.replace(/[\s().-]/g, '');
+  const digits = compact.replace(/[^\d]/g, '');
+  const withPlus = digits ? `+${digits}` : '';
+  const noPrefix = digits.startsWith('00') ? digits.slice(2) : digits;
+  return Array.from(new Set([raw.trim(), compact, digits, withPlus, noPrefix].filter(Boolean)));
+}
 
 interface TrackedUser {
   id: string;
@@ -32,9 +46,19 @@ interface TrackedUser {
 interface UserTrackerProps {
   /** Nom du chauffeur, transmis au client dans la notification "taxi en route". */
   driverName?: string;
+  /**
+   * ID du chauffeur taxi (taxi_drivers). Si fourni : active le « mode course » —
+   * le chauffeur passe occupé (masqué de la recherche) à la confirmation et le
+   * suivi reste actif jusqu'à « Course terminée ».
+   */
+  driverId?: string | null;
+  /** Notifie le parent quand une course est active (pour empêcher la fermeture du dialog). */
+  onActiveChange?: (active: boolean) => void;
+  /** Appelé quand le chauffeur clique « Course terminée » (le parent ferme le dialog). */
+  onFinish?: () => void;
 }
 
-export function UserTracker({ driverName }: UserTrackerProps = {}) {
+export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: UserTrackerProps = {}) {
   const [userId, setUserId] = useState('');
   const [trackedUser, setTrackedUser] = useState<TrackedUser | null>(null);
   const [loading, setLoading] = useState(false);
@@ -83,6 +107,38 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
   useEffect(() => {
     if (!isTracking) navOpenedRef.current = false;
   }, [isTracking]);
+
+  // ===== Mode course (taxi) : statut occupé + course persistante =====
+  // Garde l'état "course active" et la dernière position sans recréer les callbacks
+  const courseActiveRef = useRef(false);
+  const myLocationRef = useRef(myLocation);
+  useEffect(() => { myLocationRef.current = myLocation; }, [myLocation]);
+
+  // À la confirmation de la localisation : passer le chauffeur OCCUPÉ
+  // → il disparaît de la recherche "taxi disponible" des clients.
+  useEffect(() => {
+    if (driverId && localizationConfirmed && !courseActiveRef.current) {
+      courseActiveRef.current = true;
+      onActiveChange?.(true);
+      const loc = myLocationRef.current;
+      TaxiMotoService.updateDriverStatus(driverId, true, false, loc?.lat, loc?.lng)
+        .catch((e) => console.error('Statut occupé non appliqué:', e));
+    }
+  }, [driverId, localizationConfirmed, onActiveChange]);
+
+  // Fin de course : restaurer la disponibilité (le client le revoit dans la recherche)
+  const endCourse = useCallback(() => {
+    if (driverId && courseActiveRef.current) {
+      courseActiveRef.current = false;
+      const loc = myLocationRef.current;
+      TaxiMotoService.updateDriverStatus(driverId, true, true, loc?.lat, loc?.lng)
+        .catch((e) => console.error('Disponibilité non restaurée:', e));
+    }
+    onActiveChange?.(false);
+  }, [driverId, onActiveChange]);
+
+  // Sécurité : restaurer la disponibilité si le composant est démonté en pleine course
+  useEffect(() => endCourse, [endCourse]);
 
   // Feedback : le client a confirmé ou refusé le partage de sa position
   useEffect(() => {
@@ -177,13 +233,39 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
       return;
     }
 
-    // Le canal de partage est keyé par l'identifiant que le client diffuse
-    // (son custom_id type CLT0005, ou son UUID). On l'utilise tel quel.
-    const id = raw;
     setLocalizationConfirmed(false); // on doit d'abord revoir la fiche du client
     setClientDeclined(false);
-    void loadClientProfile(id);      // tente une lecture directe (cas UUID)
     setLoading(true);
+
+    // Résoudre la clé de canal :
+    //  - UUID ou custom_id (CLT0005…) → utilisés tels quels (le client diffuse dessus)
+    //  - numéro de téléphone → résolu en user_id via profiles (lecture publique),
+    //    le client diffuse aussi sur son canal user_id.
+    let id = raw;
+    try {
+      if (!UUID_RE.test(raw) && PHONE_RE.test(raw)) {
+        const variants = phoneVariants(raw);
+        const filter = variants.map((v) => `phone.eq.${v}`).join(',');
+        const { data: byPhone } = await supabase
+          .from('profiles')
+          .select('id')
+          .or(filter)
+          .limit(1)
+          .maybeSingle();
+        if (!byPhone?.id) {
+          setLoading(false);
+          toast.error('Aucun client trouvé avec ce numéro de téléphone');
+          return;
+        }
+        id = byPhone.id as string;
+      }
+    } catch {
+      setLoading(false);
+      toast.error('Erreur lors de la recherche du numéro');
+      return;
+    }
+
+    void loadClientProfile(id);      // charge la fiche (UUID résolu / custom_id)
     try {
       console.log('🔍 Recherche utilisateur:', id);
 
@@ -260,12 +342,25 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
    * Arrêter le tracking
    */
   const stopTracking = () => {
+    endCourse();
     setTrackedUser(null);
     setIsTracking(false);
     setLocalizationConfirmed(false);
     setLocalProfile(null);
     setUserId('');
     toast.info('⏸️ Tracking arrêté');
+  };
+
+  // « Course terminée » : clôt la course et demande au parent de fermer la vue
+  const finishCourse = () => {
+    endCourse();
+    setTrackedUser(null);
+    setIsTracking(false);
+    setLocalizationConfirmed(false);
+    setLocalProfile(null);
+    setUserId('');
+    toast.success('✅ Course terminée');
+    onFinish?.();
   };
 
   // Fiche affichée : priorité à la lecture directe (UUID), repli sur la diffusion du client
@@ -347,7 +442,7 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
           <div className="space-y-3">
             <div className="flex gap-2">
               <Input
-                placeholder="ID du client ou lien de suivi"
+                placeholder="ID, téléphone ou lien de suivi"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 className="font-mono text-sm"
@@ -363,7 +458,7 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              💡 Collez l'ID ou le lien que le client vous a communiqué pour voir sa position en temps réel
+              💡 Saisissez l'<strong>ID</strong>, le <strong>numéro de téléphone</strong> ou le <strong>lien</strong> du client pour voir sa position en temps réel
             </p>
           </div>
         )}
@@ -581,6 +676,18 @@ export function UserTracker({ driverName }: UserTrackerProps = {}) {
                 {live.sharerStopped && ' (partage arrêté par le client)'}
               </p>
             </div>
+
+            {/* Course terminée : restaure la disponibilité du chauffeur (mode course taxi) */}
+            {driverId && (
+              <Button
+                onClick={finishCourse}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                size="lg"
+              >
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Course terminée
+              </Button>
+            )}
           </div>
         )}
     </div>

@@ -15,13 +15,27 @@ interface UserTrackerButtonProps {
   className?: string;
   /** Nom du chauffeur, transmis au client dans la notification "taxi en route". */
   driverName?: string;
+  /**
+   * ID du chauffeur taxi (taxi_drivers). Si fourni : active le « mode course »
+   * (statut occupé + suivi persistant jusqu'à « Course terminée »).
+   */
+  driverId?: string | null;
 }
 
-export function UserTrackerButton({ prominent = false, className, driverName }: UserTrackerButtonProps) {
+export function UserTrackerButton({ prominent = false, className, driverName, driverId }: UserTrackerButtonProps) {
   const [open, setOpen] = useState(false);
+  // Une course est active : le dialog ne peut plus être fermé par clic extérieur/échap.
+  const [courseActive, setCourseActive] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Tant qu'une course est active, on bloque la fermeture (reste sur la navigation).
+        if (!next && courseActive) return;
+        setOpen(next);
+      }}
+    >
       <DialogTrigger asChild>
         {prominent ? (
           <Button
@@ -43,14 +57,24 @@ export function UserTrackerButton({ prominent = false, className, driverName }: 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className={courseActive ? "max-w-md [&>button]:hidden" : "max-w-md"}
+        onPointerDownOutside={(e) => { if (courseActive) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (courseActive) e.preventDefault(); }}
+        onInteractOutside={(e) => { if (courseActive) e.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPinned className="w-5 h-5 text-primary" />
-            Suivre un client
+            {courseActive ? 'Course en cours' : 'Suivre un client'}
           </DialogTitle>
         </DialogHeader>
-        <UserTracker driverName={driverName} />
+        <UserTracker
+          driverName={driverName}
+          driverId={driverId}
+          onActiveChange={setCourseActive}
+          onFinish={() => { setCourseActive(false); setOpen(false); }}
+        />
       </DialogContent>
     </Dialog>
   );

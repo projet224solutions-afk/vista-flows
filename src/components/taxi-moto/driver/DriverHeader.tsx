@@ -92,7 +92,7 @@ export function DriverHeader({
           <div className="flex items-center gap-1 shrink-0">
             {/* Suivre un client par ID / lien partagé */}
             <div className="text-gray-300 hover:text-white">
-              <UserTrackerButton driverName={driverName} />
+              <UserTrackerButton driverName={driverName} driverId={driverId} />
             </div>
 
             {/* Notifications */}

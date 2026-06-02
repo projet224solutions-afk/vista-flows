@@ -37,7 +37,9 @@ export function useShareRequestResponder(authUserId: string | undefined, display
   const [taxiEnroute, setTaxiEnroute] = useState<{ driverName?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  // Le client écoute/diffuse sur PLUSIEURS canaux (son custom_id ET son user_id)
+  // afin d'être joignable que le chauffeur saisisse l'ID, l'UUID ou le téléphone.
+  const channelsRef = useRef<RealtimeChannel[]>([]);
   const subscribedRef = useRef(false);
   const sharingRef = useRef(false); // déjà en partage → ignorer les relances de demande
   const watchIdRef = useRef<number | null>(null);
@@ -85,7 +87,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
   }, [authUserId, displayName]);
 
   const send = useCallback((event: string, payload: unknown) => {
-    channelRef.current?.send({ type: 'broadcast', event, payload });
+    channelsRef.current.forEach((c) => c.send({ type: 'broadcast', event, payload }));
   }, []);
 
   const emitPosition = useCallback((pos: LivePosition) => send(LIVE_LOCATION_EVENTS.position, pos), [send]);
@@ -93,43 +95,54 @@ export function useShareRequestResponder(authUserId: string | undefined, display
     if (profileRef.current) send(LIVE_LOCATION_EVENTS.profile, profileRef.current);
   }, [send]);
 
-  // Abonnement permanent au canal de l'utilisateur (écoute des demandes)
+  // Abonnement permanent aux canaux de l'utilisateur (custom_id ET user_id).
+  // Deux canaux distincts permettent au chauffeur de joindre le client par son
+  // ID personnalisé, son UUID, ou son numéro de téléphone (résolu en user_id).
   useEffect(() => {
     setRequest(null);
-    if (!customId) return;
+    if (!customId || !authUserId) return;
 
-    const channel = supabase.channel(liveLocationChannelName(customId), {
-      config: { broadcast: { self: false } },
-    });
-    channelRef.current = channel;
+    // Clés de canal dédupliquées (custom_id peut déjà valoir authUserId si absent)
+    const keys = Array.from(new Set(
+      [customId, authUserId].map((k) => liveLocationChannelName(k))
+    ));
 
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.shareRequest }, ({ payload }) => {
-      // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
-      if (sharingRef.current) return;
-      setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
-    });
-    // Demande de position immédiate (si déjà en partage)
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
-      if (lastPosRef.current) emitPosition(lastPosRef.current);
-      emitProfile();
-    });
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
-      setTaxiEnroute({ driverName: (payload as any)?.driverName });
-    });
-    channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
-      setDriverPosition(payload as LivePosition);
+    const channels = keys.map((channelName) => {
+      const channel = supabase.channel(channelName, {
+        config: { broadcast: { self: false } },
+      });
+
+      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.shareRequest }, ({ payload }) => {
+        // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
+        if (sharingRef.current) return;
+        setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
+      });
+      // Demande de position immédiate (si déjà en partage)
+      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.request }, () => {
+        if (lastPosRef.current) emitPosition(lastPosRef.current);
+        emitProfile();
+      });
+      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.taxiEnroute }, ({ payload }) => {
+        setTaxiEnroute({ driverName: (payload as any)?.driverName });
+      });
+      channel.on('broadcast', { event: LIVE_LOCATION_EVENTS.driverPosition }, ({ payload }) => {
+        setDriverPosition(payload as LivePosition);
+      });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') subscribedRef.current = true;
+      });
+      return channel;
     });
 
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') subscribedRef.current = true;
-    });
+    channelsRef.current = channels;
 
     return () => {
       subscribedRef.current = false;
-      channelRef.current = null;
-      supabase.removeChannel(channel);
+      channelsRef.current = [];
+      channels.forEach((c) => supabase.removeChannel(c));
     };
-  }, [customId, emitPosition, emitProfile]);
+  }, [customId, authUserId, emitPosition, emitProfile]);
 
   // Démarre le partage GPS (réponse à une demande acceptée)
   const startSharing = useCallback(() => {

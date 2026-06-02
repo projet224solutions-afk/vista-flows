@@ -143,7 +143,7 @@ export function DriverMainDashboard({
 
         {/* Suivre un client par ID / lien partagé */}
         <div className="px-2 pt-2">
-          <UserTrackerButton prominent />
+          <UserTrackerButton prominent driverId={driverId} />
         </div>
 
         {/* Main Content */}

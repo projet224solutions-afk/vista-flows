@@ -6,6 +6,7 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { completeDelivery as completeDeliveryBackend } from '@/services/deliveryBackendService';
 
 interface UseDeliveryActionsProps {
   driverId: string | null;
@@ -213,25 +214,25 @@ export function useDeliveryActions({
         return;
       }
 
-      // Enregistrer photo et signature
-      const { error: updateError } = await supabase
-        .from('deliveries')
-        .update({
-          proof_photo_url: photoUrl,
-          client_signature: signature,
-          status: 'delivered',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', deliveryId)
-        .eq('driver_id', driverId);
+      // Finalisation côté backend Node.js : écrit la preuve, calcule driver_earning (98,5 %)
+      // et incrémente les totaux du livreur. Le frontend ne calcule plus les gains.
+      const result = await completeDeliveryBackend(deliveryId, photoUrl, signature);
 
-      if (updateError) {
-        console.error('❌ Update error:', updateError);
-        throw updateError;
+      if (!result.success) {
+        console.error('❌ Backend completion error:', result.error);
+        throw new Error(result.error || 'Erreur lors de la finalisation');
       }
 
-      console.log('✅ Delivery completed successfully');
-      toast.success('🎉 Livraison terminée avec succès!');
+      console.log('✅ Delivery completed successfully (backend)');
+      if (result.driver_earning && result.credited) {
+        toast.success(`🎉 Livraison terminée ! ${result.driver_earning.toLocaleString()} GNF crédités sur votre wallet`);
+        // Rafraîchir le solde wallet affiché
+        window.dispatchEvent(new Event('wallet-updated'));
+      } else if (result.driver_earning) {
+        toast.success(`🎉 Livraison terminée ! Gain : ${result.driver_earning.toLocaleString()} GNF (espèces)`);
+      } else {
+        toast.success('🎉 Livraison terminée avec succès!');
+      }
 
       // Forcer le rechargement après un délai pour laisser la DB se synchroniser
       setTimeout(() => {
@@ -251,6 +252,7 @@ export function useDeliveryActions({
     if (!driverId) return;
 
     try {
+      // 1) Trace sur la livraison
       const { error } = await supabase
         .from('deliveries')
         .update({
@@ -260,7 +262,25 @@ export function useDeliveryActions({
 
       if (error) throw error;
 
-      toast.warning('Problème signalé au support!');
+      // 2) Crée un vrai ticket support (visible côté support/PDG)
+      const { error: ticketError } = await supabase
+        .from('support_tickets')
+        .insert({
+          subject: `Problème livraison #${deliveryId.slice(0, 8)}`,
+          description: problem,
+          category: 'delivery',
+          priority: 'high',
+          requester_id: driverId,
+          status: 'open',
+        });
+
+      if (ticketError) {
+        console.error('Erreur création ticket support:', ticketError);
+        toast.warning('Problème enregistré (ticket support non créé)');
+        return;
+      }
+
+      toast.success('Problème signalé au support — un ticket a été créé');
     } catch (error) {
       console.error('Error reporting problem:', error);
       toast.error('Impossible de signaler le problème');

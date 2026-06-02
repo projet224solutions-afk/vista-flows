@@ -4,7 +4,7 @@ import './config/load-env.js';
 
 /**
  * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v3 (Phase 6)
- *
+ * 
  * Architecture: Express/TypeScript
  * Auth: JWT Supabase
  * Database: PostgreSQL via Supabase
@@ -32,6 +32,7 @@ import healthRoutes from './routes/health.routes.js';
 import subscriptionRoutes from './routes/subscriptions.routes.js';
 import paymentRoutes from './routes/payments.routes.js';
 import walletRoutesV2 from './routes/wallet.v2.routes.js';
+import deliveryRoutes from './routes/delivery.routes.js';
 import vendorRoutes from './routes/vendors.routes.js';
 import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
@@ -40,11 +41,9 @@ import inventoryRoutes from './routes/inventory.routes.js';
 import affiliateRoutes from './routes/affiliate.routes.js';
 import paymentLinksRoutes from './routes/paymentLinks.routes.js';
 import marketplaceVisibilityRoutes from './routes/marketplaceVisibility.routes.js';
-import marketplacePriceRoutes from './routes/marketplacePrice.routes.js';
 import coreRoutes from './routes/core.routes.js';
 import campaignRoutes from './routes/campaigns.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
-import shareholderRoutes from './routes/shareholders.routes.js';
 // @ts-ignore
 import migrationsRoutes from './routes/migrations.js';
 // @ts-ignore
@@ -150,12 +149,6 @@ app.use(compression());
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 // Edge Functions Stripe webhooks also need raw body for signature verification
 app.use('/edge-functions/webhooks/stripe', express.raw({ type: 'application/json' }));
-// Djomy webhook needs raw body for HMAC-SHA256 signature verification
-app.use('/webhooks/djomy', express.raw({ type: 'application/json' }));
-// ChapChapPay webhook needs raw body for HMAC-SHA256 signature verification
-app.use('/webhooks/chapchappay', express.raw({ type: 'application/json' }));
-// PayPal webhook needs raw body for API-based signature verification
-app.use('/webhooks/paypal', express.raw({ type: 'application/json' }));
 
 // Standard JSON parser for everything else
 app.use(express.json({ limit: '10mb' }));
@@ -221,6 +214,7 @@ app.use('/media', mediaRoutes);
 // ==================== V2 ROUTES ====================
 
 app.use('/api/v2/wallet', walletRoutesV2);
+app.use('/api/v2/delivery', deliveryRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 
@@ -234,10 +228,8 @@ app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payment-links', paymentLinksRoutes);
 app.use('/api/marketplace-visibility', marketplaceVisibilityRoutes);
-app.use('/api/marketplace', marketplacePriceRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/core', coreRoutes);
-app.use('/api/shareholders', shareholderRoutes);
 app.use('/edge-functions', edgeFunctionsRoutes);
 
 // ==================== ERROR HANDLING ====================
@@ -280,7 +272,6 @@ const gracefulShutdown = async (signal: string) => {
 
   if (!server) {
     process.exit(0);
-    return;
   }
 
   server.close(async () => {

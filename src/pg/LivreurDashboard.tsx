@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, TrendingUp, Car, MessageSquare, Headphones } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
-import { _supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { useDriver } from "@/hooks/useDriver";
@@ -26,6 +26,8 @@ import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
+import { UserTrackerButton } from "@/components/taxi-moto/UserTrackerButton";
+import { processDeliveryPayment as processDeliveryPaymentBackend } from "@/services/deliveryBackendService";
 
 // Lazy loading des composants lourds
 const NearbyDeliveriesPanel = lazy(() => import('@/components/delivery/NearbyDeliveriesPanel').then(m => ({ default: m.NearbyDeliveriesPanel })));
@@ -59,6 +61,11 @@ export default function LivreurDashboard() {
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Nom du livreur transmis au client dans la notification « livreur en route »
+  const driverName = profile?.first_name
+    ? `${profile.first_name} ${profile?.last_name || ''}`.trim()
+    : 'Livreur';
+
   // Gestion des erreurs centralisée
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
@@ -80,7 +87,7 @@ export default function LivreurDashboard() {
     _loadTracking,
     subscribeToTracking,
     trackPosition: trackDeliveryPosition,
-    processPayment: processDeliveryPayment,
+    processPayment: _processDeliveryPayment,
     loadDeliveryHistory,
     loadCurrentDelivery
   } = useDelivery();
@@ -303,6 +310,57 @@ export default function LivreurDashboard() {
     }
   };
 
+  /**
+   * Signaler un problème sur la course taxi en cours → crée un vrai ticket support.
+   */
+  const handleReportRideProblem = async () => {
+    if (!currentRide || !user) return;
+    const problem = prompt('Décrivez le problème :');
+    if (!problem) return;
+    try {
+      const { error } = await supabase.from('support_tickets').insert({
+        subject: `Problème course #${currentRide.id.slice(0, 8)}`,
+        description: problem,
+        category: 'other',
+        priority: 'high',
+        requester_id: user.id,
+        status: 'open',
+      });
+      if (error) throw error;
+      toast.success('Problème signalé au support — un ticket a été créé');
+    } catch (error) {
+      console.error('Erreur signalement course:', error);
+      toast.error('Impossible de signaler le problème');
+    }
+  };
+
+  /**
+   * Encaisser une livraison via le backend Node.js (crédit wallet réel + marquage payé).
+   * Remplace l'ancien stub frontend qui ne faisait qu'un toast.
+   */
+  const handleDeliveryPayment = async (method: string) => {
+    if (!currentDelivery) return;
+    try {
+      const result = await processDeliveryPaymentBackend(currentDelivery.id, method);
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors de l\'encaissement');
+        return;
+      }
+      const amount = (result.amount || 0).toLocaleString();
+      toast.success(
+        result.credited
+          ? `💰 ${amount} GNF crédités sur votre wallet`
+          : `✅ Encaissement espèces enregistré (${amount} GNF)`
+      );
+      window.dispatchEvent(new Event('wallet-updated'));
+      setShowPaymentModal(false);
+      loadCurrentDelivery();
+      loadDeliveryHistory();
+    } catch (error) {
+      captureError('network', 'Erreur lors de l\'encaissement', error);
+    }
+  };
+
   if (loading && !currentDelivery && nearbyDeliveries.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -403,18 +461,27 @@ export default function LivreurDashboard() {
             )}
           </div>
 
-          {/* Bouton de navigation */}
-          <Button
-            onClick={() => navigate('/delivery-request')}
-            style={{
-              background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
-              color: 'white'
-            }}
-            className="gap-2"
-          >
-            <Package className="h-4 w-4" />
-            {!isMobile && t('delivery.newDelivery')}
-          </Button>
+          {/* Actions d'en-tête */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Localiser un client par ID / lien partagé (système taxi-moto) */}
+            <UserTrackerButton
+              driverName={driverName}
+              className="h-9 px-2 gap-1 text-xs text-orange-600 hover:text-green-700 hover:bg-orange-50"
+            />
+
+            {/* Bouton de navigation */}
+            <Button
+              onClick={() => navigate('/delivery-request')}
+              style={{
+                background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
+                color: 'white'
+              }}
+              className="gap-2"
+            >
+              <Package className="h-4 w-4" />
+              {!isMobile && t('delivery.newDelivery')}
+            </Button>
+          </div>
         </div>
 
         {/* Onglets de navigation - Responsive */}
@@ -452,6 +519,27 @@ export default function LivreurDashboard() {
 
           {/* 📦 Liste des livraisons disponibles */}
           <TabsContent value="missions" className="space-y-3">
+            {/* 📍 Localiser un client par ID / lien (système taxi-moto) */}
+            <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-green-600/5">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Navigation className="h-4 w-4 text-orange-600" />
+                  <p className="font-semibold text-sm bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
+                    Localiser un client
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Saisissez l'ID ou le lien partagé par le client pour voir sa position en temps réel,
+                  obtenir l'itinéraire et le prévenir que vous êtes en route.
+                </p>
+                <UserTrackerButton
+                  prominent
+                  driverName={driverName}
+                  className="w-full text-white bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700"
+                />
+              </CardContent>
+            </Card>
+
             {/* Panneau des colis à proximité */}
             <NearbyDeliveriesPanel />
 
@@ -577,8 +665,8 @@ export default function LivreurDashboard() {
                         </Button>
                       </div>
 
-                      {/* Bouton de paiement - 5 méthodes disponibles */}
-                      {currentDelivery.status === 'delivered' && (currentDelivery as any).payment_status !== 'paid' && (
+                      {/* Bouton de paiement - encaissement via backend */}
+                      {currentDelivery.status === 'delivered' && !(currentDelivery as any).driver_payment_method && (
                         <Button
                           onClick={handleProcessPayment}
                           className="w-full text-white"
@@ -671,14 +759,7 @@ export default function LivreurDashboard() {
                         </Button>
                       )}
                       <Button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const problem = prompt("Décrivez le problème:");
-                          if (problem && currentRide) {
-                            toast.info('Problème signalé pour la course #' + currentRide.id.slice(0, 8));
-                            // TODO: Implement ride problem reporting via TaxiMotoService
-                          }
-                        }}
+                        onClick={handleReportRideProblem}
                         variant="destructive"
                         disabled={loading}
                         className="w-full"
@@ -932,39 +1013,21 @@ export default function LivreurDashboard() {
               </div>
               <div className="space-y-2">
                 <Button
-                  onClick={() => {
-                    if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'cash');
-                    }
-                    setShowPaymentModal(false);
-                    toast.success('Paiement en espèces enregistré');
-                  }}
+                  onClick={() => handleDeliveryPayment('cash')}
                   className="w-full"
                   variant="outline"
                 >
                   💵 Paiement en espèces
                 </Button>
                 <Button
-                  onClick={() => {
-                    if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'mobile_money');
-                    }
-                    setShowPaymentModal(false);
-                    toast.success('Paiement mobile money enregistré');
-                  }}
+                  onClick={() => handleDeliveryPayment('mobile_money')}
                   className="w-full"
                   variant="outline"
                 >
                   📱 Mobile Money
                 </Button>
                 <Button
-                  onClick={() => {
-                    if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'wallet');
-                    }
-                    setShowPaymentModal(false);
-                    toast.success('Paiement wallet enregistré');
-                  }}
+                  onClick={() => handleDeliveryPayment('wallet')}
                   className="w-full"
                   variant="outline"
                 >

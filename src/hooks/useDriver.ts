@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { DriverService, type DriverData } from '@/services/driver/DriverService';
+import { getDeliveryStats } from '@/services/deliveryBackendService';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
 
@@ -33,9 +34,21 @@ export function useDriver() {
       if (driverData) {
         setDriver(driverData);
 
-        // Charger les statistiques
-        const driverStats = await DriverService.getDriverStats(driverData.id);
-        setStats(driverStats);
+        // Statistiques calculées côté backend Node.js (filtre driver_id = user.id,
+        // corrige le mismatch historique drivers.id ≠ user.id)
+        const backendStats = await getDeliveryStats();
+        if (backendStats) {
+          setStats({
+            todayEarnings: backendStats.todayEarnings,
+            todayDeliveries: backendStats.todayDeliveries,
+            weekEarnings: backendStats.weekEarnings,
+            weekDeliveries: backendStats.weekDeliveries,
+            monthEarnings: backendStats.monthEarnings,
+            monthDeliveries: backendStats.monthDeliveries,
+          });
+          // Refléter le total réel des gains dans le profil affiché
+          setDriver((prev) => prev ? { ...prev, earnings_total: backendStats.totalEarnings } : prev);
+        }
       }
     } catch (error) {
       console.error('[useDriver] Error loading profile:', error);
