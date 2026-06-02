@@ -10,6 +10,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.4",
     "@types/pg": "^8.20.0",
+    "ably": "^2.21.0",
     "bullmq": "^5.73.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
