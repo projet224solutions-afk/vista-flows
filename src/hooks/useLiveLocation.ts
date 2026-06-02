@@ -136,7 +136,7 @@ export function useShareMyLocation(userId: string | undefined, name?: string, pr
             : 'Impossible d\'obtenir votre position GPS.'
         );
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
 
     // Battement régulier : ré-émet la dernière position ET la fiche pour les
@@ -197,6 +197,11 @@ export function useTrackLocation(
   const driverPosRef = useRef<{ lat: number; lng: number } | null>(driverPosition ?? null);
   driverPosRef.current = driverPosition ?? null;
 
+  // Détection en ligne/hors ligne du client suivi (accusé de réception)
+  const [targetOnline, setTargetOnline] = useState<boolean | null>(null);
+  const onlineSeenRef = useRef(false);
+  const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Envoie "taxi en route" une seule fois, quand le chauffeur a confirmé (notifyClient)
   // ET qu'on a reçu la position du client.
   const maybeSendEnroute = useCallback(() => {
@@ -227,6 +232,9 @@ export function useTrackLocation(
     subscribedRef.current = false;
     enrouteSentRef.current = false;
     hasPositionRef.current = false;
+    setTargetOnline(null);
+    onlineSeenRef.current = false;
+    if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
 
     if (!userId) return;
 
@@ -237,8 +245,18 @@ export function useTrackLocation(
       setSharerStopped(false);
       setPosition(payload as LivePosition);
       hasPositionRef.current = true;
+      // Une position reçue = client en ligne
+      onlineSeenRef.current = true;
+      setTargetOnline(true);
       // "Taxi en route" seulement si le chauffeur a déjà confirmé la localisation
       maybeSendEnroute();
+    });
+
+    // Accusé « je suis en ligne » envoyé par le client dès réception de la demande
+    channel.on(LIVE_LOCATION_EVENTS.online, () => {
+      onlineSeenRef.current = true;
+      setTargetOnline(true);
+      if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
     });
 
     // Fiche du client (nom, tél, adresse, photo ou infos boutique)
@@ -269,6 +287,11 @@ export function useTrackLocation(
         // (un retry rouvrirait la modale après acceptation).
         if (announceAsTaxi) {
           channel.send(LIVE_LOCATION_EVENTS.shareRequest, { driverName, ts: Date.now() });
+          // Détection hors ligne : pas d'accusé du client sous 5 s → pas en ligne
+          if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
+          offlineTimerRef.current = setTimeout(() => {
+            if (!onlineSeenRef.current) setTargetOnline(false);
+          }, 5000);
         }
         // Envoyer immédiatement notre position (chauffeur) si disponible
         sendDriverPosition();
@@ -283,6 +306,7 @@ export function useTrackLocation(
 
     return () => {
       if (heartbeat) clearInterval(heartbeat);
+      if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
       subscribedRef.current = false;
       channelRef.current = null;
       channel.close();
@@ -299,5 +323,5 @@ export function useTrackLocation(
     maybeSendEnroute();
   }, [notifyClient, maybeSendEnroute]);
 
-  return { position, connected, sharerStopped, clientResponse, clientProfile };
+  return { position, connected, sharerStopped, clientResponse, clientProfile, targetOnline };
 }

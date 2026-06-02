@@ -40,6 +40,8 @@ export const LIVE_LOCATION_EVENTS = {
   profile: 'profile',
   /** Le chauffeur demande au client (même non partageur) d'autoriser le partage. */
   shareRequest: 'share_request',
+  /** Le client accuse réception (« je suis en ligne ») dès qu'il reçoit une demande. */
+  online: 'online',
 } as const;
 
 /** Infos transmises au client quand le taxi se met en route. */

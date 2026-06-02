@@ -96,7 +96,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
       () => { /* GPS chauffeur indisponible : itinéraire centré sur le client */ },
       // maximumAge:2000 → position fraîche (<2s), haute précision via enableHighAccuracy,
       // robuste (évite les timeouts de démarrage à froid du GPS)
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, [isTracking]);
@@ -652,13 +652,24 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish }: 
                   {myLocation ? "Démarrer la navigation GPS" : "Ouvrir dans Google Maps"}
                 </Button>
               </div>
+            ) : live.targetOnline === false ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <p className="text-sm font-medium text-red-800">
+                  📴 L'utilisateur n'est pas en ligne
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Il n'a pas de connexion Internet ou l'application est fermée. Réessayez quand il sera en ligne.
+                </p>
+              </div>
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
                 <p className="text-sm text-yellow-800">
                   ⏳ En attente de la position partagée
                 </p>
                 <p className="text-xs text-yellow-600 mt-1">
-                  Demandez au client d'appuyer sur « Partager ma position » puis « Démarrer le partage ».
+                  {live.targetOnline === true
+                    ? 'Utilisateur en ligne ✓ — en attente de sa confirmation de partage.'
+                    : 'Vérification de la présence du client…'}
                 </p>
               </div>
             )}

@@ -113,6 +113,9 @@ export function useShareRequestResponder(authUserId: string | undefined, display
       const channel = getLiveChannel(channelName);
 
       channel.on(LIVE_LOCATION_EVENTS.shareRequest, (payload) => {
+        // Accuser réception immédiatement (« je suis en ligne »), même si déjà en partage
+        // → permet au chauffeur de savoir que l'utilisateur est joignable.
+        send(LIVE_LOCATION_EVENTS.online, { ts: Date.now(), name: displayName });
         // Déjà en partage → ignorer les relances (évite la ré-ouverture de la modale)
         if (sharingRef.current) return;
         setRequest({ driverName: (payload as any)?.driverName, ts: Date.now() });
@@ -166,7 +169,7 @@ export function useShareRequestResponder(authUserId: string | undefined, display
       },
       () => setError("Impossible d'obtenir votre position GPS."),
       // maximumAge:2000 → position fraîche (<2s), précise et robuste partout
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 2000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
     heartbeatRef.current = setInterval(() => {
       if (lastPosRef.current) emitPosition({ ...lastPosRef.current, ts: Date.now() });
