@@ -85,7 +85,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-white text-lg flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-violet-400" />
+            <Receipt className="w-5 h-5 text-[#04439e]" />
             Historique des transactions
           </CardTitle>
           <Button
@@ -115,7 +115,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
                   key={tx.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 >
-                  <div className="p-2 rounded-full bg-violet-500/20 text-violet-400">
+                  <div className="p-2 rounded-full bg-[#04439e]/20 text-[#04439e]">
                     {getCategoryIcon(tx.merchant_category)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-red-400 font-semibold text-sm">
+                    <p className="text-[#ff4000] font-semibold text-sm">
                       -{formatAmount(tx.amount)}
                     </p>
                     <Badge
@@ -135,8 +135,8 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
                       className={cn(
                         "text-[10px] px-1.5",
                         tx.status === 'completed'
-                          ? "text-green-400 border-green-400/30"
-                          : "text-yellow-400 border-yellow-400/30"
+                          ? "text-[#ff4000] border-[#ff4000]/30"
+                          : "text-[#ff4000] border-[#ff4000]/30"
                       )}
                     >
                       {tx.status === 'completed' ? 'Complété' : tx.status}

@@ -103,7 +103,7 @@ export default function VendorRatingDialog({
                   <Star
                     className={`w-10 h-10 ${
                       star <= (hoveredRating || rating)
-                        ? 'fill-yellow-400 text-yellow-400'
+                        ? 'fill-[#ff4000] text-[#ff4000]'
                         : 'text-gray-300'
                     }`}
                   />

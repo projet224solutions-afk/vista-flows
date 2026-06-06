@@ -51,7 +51,7 @@ const SIZES = {
 
 const VARIANTS = {
   primary: {
-    dots: ['bg-blue-600', 'bg-indigo-600', 'bg-purple-600'],
+    dots: ['bg-blue-600', 'bg-[#04439e]', 'bg-[#04439e]'],
     text: 'text-slate-700',
   },
   muted: {

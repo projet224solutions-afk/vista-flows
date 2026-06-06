@@ -171,7 +171,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isActive ? (
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
             ) : (
               <AlertTriangle className="w-5 h-5 text-destructive" />
             )}

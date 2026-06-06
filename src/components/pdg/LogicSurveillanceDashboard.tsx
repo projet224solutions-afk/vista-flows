@@ -106,12 +106,12 @@ const DOMAIN_ICONS: Record<string, React.ElementType> = {
 
 const DOMAIN_COLORS: Record<string, string> = {
   pos: 'bg-blue-500',
-  stock: 'bg-green-500',
-  wallet: 'bg-purple-500',
-  commission: 'bg-yellow-500',
+  stock: 'bg-[#ff4000]',
+  wallet: 'bg-[#04439e]',
+  commission: 'bg-[#ff4000]',
   order: 'bg-orange-500',
-  sync: 'bg-cyan-500',
-  security: 'bg-red-500',
+  sync: 'bg-[#04439e]',
+  security: 'bg-[#ff4000]',
   default: 'bg-gray-500'
 };
 
@@ -257,8 +257,8 @@ const LogicSurveillanceDashboard: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-500 text-white';
-      case 'warning': return 'bg-yellow-500 text-black';
+      case 'critical': return 'bg-[#ff4000] text-white';
+      case 'warning': return 'bg-[#ff4000] text-black';
       default: return 'bg-blue-500 text-white';
     }
   };
@@ -266,7 +266,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge className="bg-orange-500">En attente</Badge>;
-      case 'corrected': return <Badge className="bg-green-500">Corrigé</Badge>;
+      case 'corrected': return <Badge className="bg-[#ff4000]">Corrigé</Badge>;
       case 'ignored': return <Badge variant="secondary">Ignoré</Badge>;
       case 'escalated': return <Badge variant="destructive">Escaladé</Badge>;
       default: return <Badge>{status}</Badge>;
@@ -307,12 +307,12 @@ const LogicSurveillanceDashboard: React.FC = () => {
           {/* Bouton Monitor Live 24/7 - Spectaculaire */}
           <Button
             onClick={() => setShowLiveMonitor(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/40 border-0"
+            className="bg-[#ff4000] hover:bg-[#ff4000] text-white font-bold shadow-lg shadow-[#ff4000]/40 border-0"
           >
             <Monitor className="h-4 w-4 mr-2 animate-pulse" />
             <span className="relative flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-ping absolute -left-1" />
-              <span className="w-2 h-2 bg-red-500 rounded-full relative -left-1" />
+              <span className="w-2 h-2 bg-[#ff4000] rounded-full animate-ping absolute -left-1" />
+              <span className="w-2 h-2 bg-[#ff4000] rounded-full relative -left-1" />
               Voir Système Live 24/7
             </span>
           </Button>
@@ -338,15 +338,15 @@ const LogicSurveillanceDashboard: React.FC = () => {
 
       {/* Alertes critiques */}
       {(dashboardData?.critical_anomalies || 0) > 0 && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-950/30">
+        <Card className="border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <AlertOctagon className="h-8 w-8 text-red-500" />
+              <AlertOctagon className="h-8 w-8 text-[#ff4000]" />
               <div>
-                <p className="font-bold text-red-500">
+                <p className="font-bold text-[#ff4000]">
                   {dashboardData?.critical_anomalies} ANOMALIE(S) CRITIQUE(S) DÉTECTÉE(S)
                 </p>
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-[#ff4000]">
                   Action immédiate requise - Vérifiez les détails ci-dessous
                 </p>
               </div>
@@ -360,7 +360,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-green-500" />
+              <Activity className="h-4 w-4 text-[#ff4000]" />
               Santé Système
             </CardTitle>
           </CardHeader>
@@ -405,12 +405,12 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Zap className="h-4 w-4 text-green-500" />
+              <Zap className="h-4 w-4 text-[#ff4000]" />
               Auto-corrigées
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {dashboardData?.auto_corrected_today || 0}
             </div>
             <div className="text-xs text-muted-foreground">aujourd'hui</div>
@@ -420,7 +420,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <FileText className="h-4 w-4 text-purple-500" />
+              <FileText className="h-4 w-4 text-[#04439e]" />
               Règles actives
             </CardTitle>
           </CardHeader>
@@ -488,7 +488,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
               <ScrollArea className="h-[500px]">
                 {!dashboardData?.recent_anomalies?.length ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <CheckCircle className="h-12 w-12 mb-4 text-green-500" />
+                    <CheckCircle className="h-12 w-12 mb-4 text-[#ff4000]" />
                     <p className="text-lg font-medium">Aucune anomalie détectée</p>
                     <p className="text-sm">Le système fonctionne correctement</p>
                   </div>
@@ -521,11 +521,11 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                 </p>
                                 <div className="text-xs space-y-1 bg-muted p-2 rounded">
                                   <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    <CheckCircle className="h-3 w-3 text-[#ff4000]" />
                                     <span><strong>Attendu:</strong> {formatValue(anomaly.expected_value)}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <XCircle className="h-3 w-3 text-red-500" />
+                                    <XCircle className="h-3 w-3 text-[#ff4000]" />
                                     <span><strong>Réel:</strong> {formatValue(anomaly.actual_value)}</span>
                                   </div>
                                 </div>
@@ -561,7 +561,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                       <AlertDialogCancel>Annuler</AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleCorrection(anomaly.id, 'auto')}
-                                        className="bg-green-600"
+                                        className="bg-[#ff4000]"
                                       >
                                         Correction Auto
                                       </AlertDialogAction>
@@ -633,7 +633,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                       {rule.severity}
                                     </Badge>
                                     {rule.auto_correct_enabled && (
-                                      <Badge variant="outline" className="text-green-600 border-green-600">
+                                      <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">
                                         <Zap className="h-3 w-3 mr-1" />
                                         Auto-correct
                                       </Badge>
@@ -687,11 +687,11 @@ const LogicSurveillanceDashboard: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Réussies</p>
-                      <p className="text-xl font-bold text-green-600">{dashboardData.last_snapshot.passed_checks}</p>
+                      <p className="text-xl font-bold text-[#ff4000]">{dashboardData.last_snapshot.passed_checks}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Échouées</p>
-                      <p className="text-xl font-bold text-red-600">{dashboardData.last_snapshot.failed_checks}</p>
+                      <p className="text-xl font-bold text-[#ff4000]">{dashboardData.last_snapshot.failed_checks}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Anomalies</p>

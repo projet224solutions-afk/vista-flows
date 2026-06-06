@@ -322,13 +322,13 @@ export default function TaxiMotoBooking({
                     {(pickupAddress || destinationAddress) && (
                         <div className="flex flex-wrap gap-2">
                             {pickupAddress && (
-                                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                                <Badge variant="secondary" className="bg-orange-100 text-[#ff4000] text-xs">
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                     Départ validé GPS
                                 </Badge>
                             )}
                             {destinationAddress && (
-                                <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
+                                <Badge variant="secondary" className="bg-orange-100 text-[#ff4000] text-xs">
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                     Destination validée GPS
                                 </Badge>
@@ -393,7 +393,7 @@ export default function TaxiMotoBooking({
                                     <div className="text-xs text-muted-foreground">Distance réelle</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-lg font-bold text-green-600">
+                                    <div className="text-lg font-bold text-[#ff4000]">
                                         {routeInfo.durationText}
                                     </div>
                                     <div className="text-xs text-muted-foreground">Temps estimé</div>
@@ -418,7 +418,7 @@ export default function TaxiMotoBooking({
                 <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-green-600" />
+                            <DollarSign className="w-5 h-5 text-[#ff4000]" />
                             Détail du prix
                         </CardTitle>
                     </CardHeader>
@@ -439,7 +439,7 @@ export default function TaxiMotoBooking({
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
-                            <span className="text-green-600">
+                            <span className="text-[#ff4000]">
                                 {(priceEstimate.totalPrice || 0).toLocaleString()} GNF
                             </span>
                         </div>
@@ -493,7 +493,7 @@ export default function TaxiMotoBooking({
                                     <div>
                                         <div className="font-medium">{driver.name}</div>
                                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                            <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
                                             {driver.rating} • {driver.rides} courses
                                         </div>
                                     </div>

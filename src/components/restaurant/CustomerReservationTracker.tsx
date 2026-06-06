@@ -49,13 +49,13 @@ const statusConfig = {
   pending: {
     label: 'En attente',
     icon: Timer,
-    color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30',
+    color: 'text-[#ff4000] bg-orange-100 dark:bg-[#ff4000]/30',
     description: 'Votre réservation est en attente de confirmation par le restaurant'
   },
   confirmed: {
     label: 'Confirmée',
     icon: CheckCircle2,
-    color: 'text-green-600 bg-green-100 dark:bg-green-900/30',
+    color: 'text-[#ff4000] bg-orange-100 dark:bg-[#ff4000]/30',
     description: 'Le restaurant a confirmé votre réservation'
   },
   seated: {
@@ -73,7 +73,7 @@ const statusConfig = {
   cancelled: {
     label: 'Annulée',
     icon: XCircle,
-    color: 'text-red-600 bg-red-100 dark:bg-red-900/30',
+    color: 'text-[#ff4000] bg-orange-100 dark:bg-[#ff4000]/30',
     description: 'Cette réservation a été annulée'
   },
   no_show: {
@@ -267,7 +267,7 @@ Merci d'avoir réservé avec 224Solutions !
             key={reservation.id}
             className={cn(
               "transition-all",
-              reservation.status === 'confirmed' && "ring-2 ring-green-500/50",
+              reservation.status === 'confirmed' && "ring-2 ring-[#ff4000]/50",
               reservation.status === 'seated' && "ring-2 ring-blue-500/50"
             )}
           >

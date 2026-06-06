@@ -243,7 +243,7 @@ export const useBureauAuth = () => {
     localStorage.removeItem('bureau_user');
     sessionStorage.removeItem('bureau_user');
     toast.success('Déconnexion réussie');
-    window.location.href = '/bureau/login';
+    window.location.href = '/';
   };
 
   /**

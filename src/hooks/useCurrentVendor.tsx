@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useAgent } from '@/contexts/AgentContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { cacheData, getCachedData } from '@/lib/offlineDB';
 
@@ -63,7 +63,6 @@ export const useCurrentVendor = () => {
   const authProfileId = auth.profile?.id;
   const agentVendorId = agentContext.vendorId;
   const hasAgent = !!agentContext.agent;
-  const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
 
   // Le loading global inclut le chargement du profil auth
   const loading = auth.loading || auth.profileLoading || internalLoading;
@@ -100,9 +99,9 @@ export const useCurrentVendor = () => {
           if (vendorInfo) {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`, vendorInfo, CACHE_TTL_VENDOR);
           }
-        } catch (_agentVendorError) {
+        } catch (agentVendorError) {
           console.log('📴 Requête vendeur agent indisponible - récupération cache');
-          vendorInfo = await getCachedData<{business_type: string; user_id: string}>(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`);
+          vendorInfo = await getCachedData<{ business_type: string; user_id: string }>(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`);
         }
 
         const vendorAuthUserId = vendorInfo?.user_id || agentVendorId;
@@ -121,7 +120,7 @@ export const useCurrentVendor = () => {
           userId: vendorInfo?.user_id,
           businessType: vendorInfo?.business_type,
           agentPermissions: agentContext.agent?.permissions,
-          fromCache: !isOnline
+          fromCache: !vendorInfo
         });
         setInternalLoading(false);
         return;
@@ -149,9 +148,9 @@ export const useCurrentVendor = () => {
             await cacheData(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`, vendorProfile, CACHE_TTL_VENDOR);
             console.log('💾 Profil vendeur mis en cache');
           }
-        } catch (_vendorProfileError) {
+        } catch (vendorProfileError) {
           console.log('📴 Requête vendeur indisponible - récupération cache');
-          vendorProfile = await getCachedData<{id: string; business_type: string}>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
+          vendorProfile = await getCachedData<{ id: string; business_type: string }>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
 
           if (!vendorProfile) {
             console.warn('⚠️ Pas de cache vendeur disponible après échec réseau');
@@ -184,7 +183,7 @@ export const useCurrentVendor = () => {
       if (authUserId) {
         console.log('🔄 Tentative récupération cache après erreur...');
         try {
-          const cachedProfile = await getCachedData<{id: string; business_type: string}>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
+          const cachedProfile = await getCachedData<{ id: string; business_type: string }>(`${CACHE_KEY_VENDOR_PROFILE}_${authUserId}`);
           if (cachedProfile) {
             setVendorData({
               vendorId: cachedProfile.id || authUserId,
@@ -207,7 +206,6 @@ export const useCurrentVendor = () => {
     } finally {
       setInternalLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUserId, authProfileId, agentVendorId, hasAgent, auth.user, auth.profile, agentContext.agent, auth.loading, auth.profileLoading]);
 
   useEffect(() => {

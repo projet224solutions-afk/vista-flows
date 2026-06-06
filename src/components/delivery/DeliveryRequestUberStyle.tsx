@@ -111,7 +111,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               {/* Adresse de livraison */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-green-600" />
+                  <MapPin className="h-4 w-4 text-[#ff4000]" />
                   Adresse de livraison
                 </Label>
                 <Input
@@ -174,7 +174,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 onClick={() => setStep('confirm')}
                 disabled={!pickupAddress || !deliveryAddress || !customerName || !customerPhone}
                 style={{
-                  background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
+                  background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(15 100% 50%))',
                   color: 'white'
                 }}
               >
@@ -206,7 +206,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">Livraison</p>
                   <p className="text-sm text-muted-foreground">{deliveryAddress}</p>
@@ -238,7 +238,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               className="flex-1"
               size="lg"
               style={{
-                background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
+                background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(15 100% 50%))',
                 color: 'white'
               }}
             >

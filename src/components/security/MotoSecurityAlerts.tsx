@@ -172,9 +172,9 @@ export default function MotoSecurityAlerts({
 
     const getStatusColor = (statut: string) => {
         switch (statut) {
-            case 'en_cours': return 'bg-red-100 text-red-800 border-red-200';
-            case 'resolue': return 'bg-green-100 text-green-800 border-green-200';
-            case 'faux_positif': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'en_cours': return 'bg-orange-100 text-[#ff4000] border-orange-200';
+            case 'resolue': return 'bg-orange-100 text-[#ff4000] border-orange-200';
+            case 'faux_positif': return 'bg-orange-100 text-[#ff4000] border-orange-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -214,26 +214,26 @@ export default function MotoSecurityAlerts({
             {/* Statistiques */}
             {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="border-red-200">
+                    <Card className="border-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-red-600">Alertes en cours</p>
-                                    <p className="text-2xl font-bold text-red-800">{stats.alertes_en_cours}</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">Alertes en cours</p>
+                                    <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_en_cours}</p>
                                 </div>
-                                <AlertTriangle className="w-8 h-8 text-red-600" />
+                                <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-green-200">
+                    <Card className="border-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-green-600">Résolues</p>
-                                    <p className="text-2xl font-bold text-green-800">{stats.alertes_resolues}</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">Résolues</p>
+                                    <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_resolues}</p>
                                 </div>
-                                <CheckCircle className="w-8 h-8 text-green-600" />
+                                <CheckCircle className="w-8 h-8 text-[#ff4000]" />
                             </div>
                         </CardContent>
                     </Card>
@@ -250,14 +250,14 @@ export default function MotoSecurityAlerts({
                         </CardContent>
                     </Card>
 
-                    <Card className="border-purple-200">
+                    <Card className="border-blue-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalées}</p>
+                                    <p className="text-sm font-medium text-[#04439e]">Motos uniques</p>
+                                    <p className="text-2xl font-bold text-[#04439e]">{stats.motos_uniques_signalées}</p>
                                 </div>
-                                <Activity className="w-8 h-8 text-purple-600" />
+                                <Activity className="w-8 h-8 text-[#04439e]" />
                             </div>
                         </CardContent>
                     </Card>
@@ -405,7 +405,7 @@ export default function MotoSecurityAlerts({
                                                         onClick={() => resolveAlert(alert.id)}
                                                         disabled={resolving === alert.id}
                                                         size="sm"
-                                                        className="bg-green-600 hover:bg-green-700"
+                                                        className="bg-[#ff4000] hover:bg-[#ff4000]"
                                                     >
                                                         {resolving === alert.id ? (
                                                             <Loader2 className="w-4 h-4 animate-spin" />

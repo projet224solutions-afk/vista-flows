@@ -63,7 +63,7 @@ export function RideRequestNotification({
   const timeDisplay = timeAgo < 60 ? `${timeAgo}s` : `${Math.floor(timeAgo / 60)}min`;
 
   return (
-    <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-300 shadow-xl animate-in slide-in-from-top duration-300">
+    <Card className="bg-gradient-to-br from-orange-50 to-orange-50 border-orange-300 shadow-xl animate-in slide-in-from-top duration-300">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -76,7 +76,7 @@ export function RideRequestNotification({
             <p className="text-sm text-gray-700 font-medium">{request.customerName}</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               +{request.estimatedEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF</div>
@@ -85,14 +85,14 @@ export function RideRequestNotification({
 
         <div className="space-y-2 mb-3">
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
-            <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-700">Départ</p>
               <p className="text-sm font-semibold truncate">{request.pickupAddress}</p>
             </div>
           </div>
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
-            <MapPin className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-700">Arrivée</p>
               <p className="text-sm font-semibold truncate">{request.destinationAddress}</p>
@@ -110,7 +110,7 @@ export function RideRequestNotification({
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
             <span className="font-bold">{request.customerRating}</span>
           </div>
         </div>
@@ -124,7 +124,7 @@ export function RideRequestNotification({
             variant="outline"
             size="lg"
             disabled={isAccepting}
-            className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 border-2 border-[#ff4000] text-[#ff4000] hover:bg-orange-50 hover:border-[#ff4000] font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="text-xl mr-1">❌</span> Refuser
           </Button>
@@ -135,7 +135,7 @@ export function RideRequestNotification({
             }}
             size="lg"
             disabled={isAccepting}
-            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000] text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAccepting ? (
               <>

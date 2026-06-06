@@ -167,8 +167,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
                   mode.color === 'blue'
-                      ? 'bg-[#04439e]'
-                    : 'bg-[linear-gradient(135deg,#ff4000_0%,#ff6a33_100%)]',
+                    ? 'bg-[#04439e]'
+                    : 'bg-[#ff4000]',
                   'text-white shadow-lg'
                 )}>
                   <Icon className="w-6 h-6" />

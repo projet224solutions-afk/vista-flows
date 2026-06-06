@@ -259,7 +259,7 @@ Réponse:`;
           <Star
             key={star}
             className={`h-4 w-4 ${
-              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+              star <= rating ? 'fill-[#ff4000] text-[#ff4000]' : 'text-gray-300'
             }`}
           />
         ))}
@@ -316,7 +316,7 @@ Réponse:`;
                 <ScrollArea className="h-[600px]">
                   {pendingReviews.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-12 text-center">
-                      <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+                      <CheckCircle2 className="h-12 w-12 text-[#ff4000] mb-4" />
                       <p className="text-muted-foreground">
                         Tous les avis ont été traités !
                       </p>

@@ -54,7 +54,7 @@ export default function DriverProfile() {
                       {driver?.is_verified ? '✓ Vérifié' : 'En attente de vérification'}
                     </Badge>
                     <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      <Star className="h-4 w-4 text-[#ff4000] fill-[#ff4000]" />
                       <span className="font-semibold">{driver?.rating || 0}</span>
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export default function DriverProfile() {
                 <div>
                   <p className="text-xs text-muted-foreground">Note moyenne</p>
                   <div className="flex items-center gap-1">
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                    <Star className="h-5 w-5 text-[#ff4000] fill-[#ff4000]" />
                     <p className="text-2xl font-bold">{driver?.rating || 0}</p>
                   </div>
                 </div>

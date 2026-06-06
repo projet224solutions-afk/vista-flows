@@ -64,7 +64,7 @@ function getDisplayName(profile: UserProfile | null, fallback = 'Utilisateur'): 
   return profile.full_name || firstLast || profile.custom_id || fallback;
 }
 
-async function sendEmail(email: string, subject: string, html: string): Promise<boolean> {
+export async function sendEmail(email: string, subject: string, html: string): Promise<boolean> {
   const apiKey = env.RESEND_API_KEY;
   if (!apiKey) {
     logger.warn('[TransactionEmail] RESEND_API_KEY non configurée — email non envoyé');

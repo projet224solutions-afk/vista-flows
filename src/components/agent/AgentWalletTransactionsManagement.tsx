@@ -170,11 +170,11 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700"><CheckCircle className="w-3 h-3 mr-1" />Complété</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />Complété</Badge>;
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-700"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -184,11 +184,11 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
     switch (type) {
       case 'deposit':
       case 'credit':
-        return <ArrowDownLeft className="w-5 h-5 text-green-600" />;
+        return <ArrowDownLeft className="w-5 h-5 text-[#ff4000]" />;
       case 'withdrawal':
       case 'debit':
       case 'transfer':
-        return <ArrowUpRight className="w-5 h-5 text-red-600" />;
+        return <ArrowUpRight className="w-5 h-5 text-[#ff4000]" />;
       default:
         return <CreditCard className="w-5 h-5 text-muted-foreground" />;
     }
@@ -216,7 +216,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
     <div className="space-y-6">
       {/* Header avec solde */}
       <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6">
+        <div className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm mb-1">Solde Disponible</p>
@@ -353,7 +353,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         tx.transaction_type === 'deposit' || tx.transaction_type === 'credit'
-                          ? 'bg-green-100' : 'bg-red-100'
+                          ? 'bg-orange-100' : 'bg-orange-100'
                       }`}>
                         {getTypeIcon(tx.transaction_type)}
                       </div>
@@ -372,7 +372,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                     <div className="text-right">
                       <p className={`font-bold ${
                         tx.transaction_type === 'deposit' || tx.transaction_type === 'credit'
-                          ? 'text-green-600' : 'text-red-600'
+                          ? 'text-[#ff4000]' : 'text-[#ff4000]'
                       }`}>
                         {tx.transaction_type === 'deposit' || tx.transaction_type === 'credit' ? '+' : '-'}
                         {formatAmount(tx.amount)} {tx.currency || 'GNF'}

@@ -50,14 +50,14 @@ interface DeliveryOrder {
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
-  pending: { label: 'En attente', color: 'bg-yellow-500' },
+  pending: { label: 'En attente', color: 'bg-[#ff4000]' },
   assigned: { label: 'Livreur assigné', color: 'bg-blue-500' },
-  driver_on_way_to_vendor: { label: 'Livreur en route', color: 'bg-indigo-500' },
-  driver_arrived_vendor: { label: 'Livreur arrivé', color: 'bg-purple-500' },
-  picked_up: { label: 'Colis récupéré', color: 'bg-cyan-500' },
+  driver_on_way_to_vendor: { label: 'Livreur en route', color: 'bg-[#04439e]' },
+  driver_arrived_vendor: { label: 'Livreur arrivé', color: 'bg-[#04439e]' },
+  picked_up: { label: 'Colis récupéré', color: 'bg-[#04439e]' },
   in_transit: { label: 'En livraison', color: 'bg-orange-500' },
-  delivered: { label: 'Livré', color: 'bg-green-500' },
-  cancelled: { label: 'Annulé', color: 'bg-red-500' }
+  delivered: { label: 'Livré', color: 'bg-[#ff4000]' },
+  cancelled: { label: 'Annulé', color: 'bg-[#ff4000]' }
 };
 
 export function VendorDeliveryManagement() {
@@ -209,9 +209,9 @@ export function VendorDeliveryManagement() {
 
       {/* Stats rapides */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="bg-yellow-50 dark:bg-yellow-950/20">
+        <Card className="bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-yellow-600">{pendingOrders.length}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{pendingOrders.length}</p>
             <p className="text-xs text-muted-foreground">En attente</p>
           </CardContent>
         </Card>
@@ -221,9 +221,9 @@ export function VendorDeliveryManagement() {
             <p className="text-xs text-muted-foreground">En cours</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-50 dark:bg-green-950/20">
+        <Card className="bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{completedOrders.length}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{completedOrders.length}</p>
             <p className="text-xs text-muted-foreground">Terminées</p>
           </CardContent>
         </Card>
@@ -269,7 +269,7 @@ export function VendorDeliveryManagement() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                      <p className="font-bold text-[#ff4000]">{formatCurrency(order.delivery_fee)}</p>
                       <Badge variant="outline" className="text-xs">
                         {order.payment_method === 'cod' ? 'COD' : 'Prépayé'}
                       </Badge>
@@ -279,7 +279,7 @@ export function VendorDeliveryManagement() {
                   <div className="mt-4 flex gap-2">
                     {order.status === 'pending' && !order.ready_for_pickup && (
                       <Button
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-green-500"
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-[#ff4000]"
                         onClick={() => markReadyForPickup(order.id)}
                         disabled={generatingCode === order.id}
                       >
@@ -352,7 +352,7 @@ export function VendorDeliveryManagement() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                      <p className="font-bold text-[#ff4000]">{formatCurrency(order.delivery_fee)}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
                     </div>
                   </div>
@@ -393,7 +393,7 @@ export function VendorDeliveryManagement() {
                     <p className="font-medium">{order.customer_name}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
                   </div>
-                  <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                  <p className="font-bold text-[#ff4000]">{formatCurrency(order.delivery_fee)}</p>
                 </div>
               </CardContent>
             </Card>

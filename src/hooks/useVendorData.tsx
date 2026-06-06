@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
 import { useCurrentVendor } from './useCurrentVendor';
 
 const STATS_TIMEOUT_MS = 10000;
@@ -104,28 +103,25 @@ export interface SupportTicket {
 }
 
 export function useVendorStats() {
-  const { user } = useAuth();
-  const { vendorId: currentVendorId, userId: currentVendorUserId, loading: vendorLoading } = useCurrentVendor();
+  const { userId, loading: vendorLoading } = useCurrentVendor();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (vendorLoading) {
+    if (!userId) {
+      // Le contexte vendeur (useCurrentVendor) résout le vendor_id de façon asynchrone (~1,5 s sur la
+      // base distante). Tant qu'il charge, on RESTE en chargement : sinon le dashboard verrait
+      // stats=null sans erreur et afficherait « Erreur de chargement » prématurément.
+      if (!vendorLoading) setLoading(false);
       return;
     }
 
-    const ownerUserId = currentVendorUserId || user?.id;
-    if (!ownerUserId && !currentVendorId) {
-      setLoading(false);
-      return;
-    }
-
-    const STATS_CACHE_KEY = `vendor_stats_cache_${currentVendorId || ownerUserId}`;
+    const STATS_CACHE_KEY = `vendor_stats_cache_${userId}`;
 
     const fetchStats = async () => {
       const startedAt = performance.now();
-      console.info('[VENDOR STATS START]', { userId: ownerUserId, vendorId: currentVendorId });
+      console.info('[VENDOR STATS START]', { userId });
 
       const withTimeout = <T,>(promiseFactory: () => PromiseLike<T>, timeoutMs: number, label: string) =>
         Promise.race<T>([
@@ -135,30 +131,26 @@ export function useVendorStats() {
 
       try {
         // Get vendor ID first
-        let vendor = currentVendorId ? { id: currentVendorId } : null;
-        if (!vendor && ownerUserId) {
-          const result = await withTimeout(
-            () =>
-              supabase
-                .from('vendors')
-                .select('id')
-                .eq('user_id', ownerUserId)
-                .maybeSingle(),
-            STATS_TIMEOUT_MS,
-            'vendor_lookup_timeout',
-          );
-          vendor = result.data;
-        }
+        const { data: vendor } = await withTimeout(
+          () =>
+            supabase
+              .from('vendors')
+              .select('id')
+              .eq('user_id', userId)
+              .maybeSingle(),
+          STATS_TIMEOUT_MS,
+          'vendor_lookup_timeout',
+        );
 
         if (!vendor) {
           setError('Vendor profile not found');
-          console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId: ownerUserId });
+          console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId });
           setLoading(false);
           return;
         }
 
         // 🚀 PARALLEL: Fire all stats queries at once instead of sequential
-        const [ordersResult, productsResult, lowStockResult, overdueResult, _customerResult] = await Promise.allSettled([
+        const [ordersResult, productsResult, lowStockResult, overdueResult, customerResult] = await Promise.allSettled([
           withTimeout(
             () => supabase.from('orders').select('total_amount, status, customer_id').eq('vendor_id', vendor.id),
             STATS_TIMEOUT_MS, 'orders_stats_timeout',
@@ -212,7 +204,7 @@ export function useVendorStats() {
         // ✨ Persister pour le mode offline
         try {
           localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(newStats));
-        } catch (_e) {}
+        } catch (e) { }
 
         console.info('[VENDOR STATS SUCCESS]', {
           vendorId: vendor.id,
@@ -223,9 +215,9 @@ export function useVendorStats() {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
         if (message.includes('timeout')) {
-          console.error('[VENDOR STATS FAIL]', { userId: ownerUserId, message, type: 'timeout' });
+          console.error('[VENDOR STATS FAIL]', { userId, message, type: 'timeout' });
         } else {
-          console.error('[VENDOR STATS FAIL]', { userId: ownerUserId, message });
+          console.error('[VENDOR STATS FAIL]', { userId, message });
         }
 
         // ✨ Fallback sur cache en cas d'erreur réseau
@@ -238,7 +230,7 @@ export function useVendorStats() {
             setLoading(false);
             return;
           }
-        } catch (_e) {}
+        } catch (e) { }
 
         setError(message);
       } finally {
@@ -247,40 +239,34 @@ export function useVendorStats() {
     };
 
     fetchStats();
-  }, [user, currentVendorId, currentVendorUserId, vendorLoading]);
+  }, [userId, vendorLoading]);
 
   return { stats, loading, error };
 }
 
 export function useProspects() {
-  const { user } = useAuth();
-  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
+  const { userId } = useCurrentVendor();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (vendorLoading) return;
-    if (!user && !currentVendorId) return;
+    if (!userId) return;
 
     const fetchProspects = async () => {
       try {
-        let vendorId = currentVendorId;
-        if (!vendorId && user?.id) {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-          vendorId = vendor?.id || null;
-        }
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
 
-        if (!vendorId) return;
+        if (!vendor) return;
 
         const { data, error: fetchError } = await supabase
           .from('prospects')
           .select('*')
-          .eq('vendor_id', vendorId)
+          .eq('vendor_id', vendor.id)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
@@ -293,25 +279,21 @@ export function useProspects() {
     };
 
     fetchProspects();
-  }, [user, currentVendorId, vendorLoading]);
+  }, [userId]);
 
   const createProspect = async (prospectData: Omit<Prospect, 'id' | 'created_at'>) => {
     try {
-      let vendorId = currentVendorId;
-      if (!vendorId && user?.id) {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        vendorId = vendor?.id || null;
-      }
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
 
-      if (!vendorId) throw new Error('Vendor not found');
+      if (!vendor) throw new Error('Vendor not found');
 
       const { data, error } = await supabase
         .from('prospects')
-        .insert([{ ...prospectData, vendor_id: vendorId }])
+        .insert([{ ...prospectData, vendor_id: vendor.id }])
         .select()
         .single();
 
@@ -346,29 +328,23 @@ export function useProspects() {
 }
 
 export function useCustomerCredits() {
-  const { user } = useAuth();
-  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
+  const { userId } = useCurrentVendor();
   const [credits, setCredits] = useState<CustomerCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (vendorLoading) return;
-    if (!user && !currentVendorId) return;
+    if (!userId) return;
 
     const fetchCredits = async () => {
       try {
-        let vendorId = currentVendorId;
-        if (!vendorId && user?.id) {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-          vendorId = vendor?.id || null;
-        }
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
 
-        if (!vendorId) return;
+        if (!vendor) return;
 
         const { data, error: fetchError } = await supabase
           .from('customer_credits')
@@ -379,7 +355,7 @@ export function useCustomerCredits() {
               user_id
             )
           `)
-          .eq('vendor_id', vendorId);
+          .eq('vendor_id', vendor.id);
 
         if (fetchError) throw fetchError;
         setCredits(data || []);
@@ -391,35 +367,29 @@ export function useCustomerCredits() {
     };
 
     fetchCredits();
-  }, [user, currentVendorId, vendorLoading]);
+  }, [userId]);
 
   return { credits, loading, error };
 }
 
 export function usePaymentSchedules() {
-  const { user } = useAuth();
-  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
+  const { userId } = useCurrentVendor();
   const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (vendorLoading) return;
-    if (!user && !currentVendorId) return;
+    if (!userId) return;
 
     const fetchSchedules = async () => {
       try {
-        let vendorId = currentVendorId;
-        if (!vendorId && user?.id) {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-          vendorId = vendor?.id || null;
-        }
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
 
-        if (!vendorId) return;
+        if (!vendor) return;
 
         const { data, error: fetchError } = await supabase
           .from('payment_schedules')
@@ -432,7 +402,7 @@ export function usePaymentSchedules() {
               )
             )
           `)
-          .eq('order.vendor_id', vendorId)
+          .eq('order.vendor_id', vendor.id)
           .order('due_date', { ascending: true });
 
         if (fetchError) throw fetchError;
@@ -445,40 +415,34 @@ export function usePaymentSchedules() {
     };
 
     fetchSchedules();
-  }, [user, currentVendorId, vendorLoading]);
+  }, [userId]);
 
   return { schedules, loading, error };
 }
 
 export function usePromoCodes() {
-  const { user } = useAuth();
-  const { vendorId: currentVendorId, loading: vendorLoading } = useCurrentVendor();
+  const { userId } = useCurrentVendor();
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (vendorLoading) return;
-    if (!user && !currentVendorId) return;
+    if (!userId) return;
 
     const fetchPromoCodes = async () => {
       try {
-        let vendorId = currentVendorId;
-        if (!vendorId && user?.id) {
-          const { data: vendor } = await supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-          vendorId = vendor?.id || null;
-        }
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
 
-        if (!vendorId) return;
+        if (!vendor) return;
 
         const { data, error: fetchError } = await supabase
           .from('promo_codes')
           .select('*')
-          .eq('vendor_id', vendorId)
+          .eq('vendor_id', vendor.id)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
@@ -491,25 +455,21 @@ export function usePromoCodes() {
     };
 
     fetchPromoCodes();
-  }, [user, currentVendorId, vendorLoading]);
+  }, [userId]);
 
   const createPromoCode = async (codeData: Omit<PromoCode, 'id' | 'used_count' | 'created_at'>) => {
     try {
-      let vendorId = currentVendorId;
-      if (!vendorId && user?.id) {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        vendorId = vendor?.id || null;
-      }
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
 
-      if (!vendorId) throw new Error('Vendor not found');
+      if (!vendor) throw new Error('Vendor not found');
 
       const { data, error } = await supabase
         .from('promo_codes')
-        .insert([{ ...codeData, vendor_id: vendorId }])
+        .insert([{ ...codeData, vendor_id: vendor.id }])
         .select()
         .single();
 
@@ -526,20 +486,20 @@ export function usePromoCodes() {
 }
 
 export function useSupportTickets() {
-  const { user } = useAuth();
+  const { userId } = useCurrentVendor();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     const fetchTickets = async () => {
       try {
         const { data: vendor } = await supabase
           .from('vendors')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .single();
 
         if (!vendor) return;
@@ -548,7 +508,7 @@ export function useSupportTickets() {
           .from('support_tickets')
           .select('*')
           .eq('vendor_id', vendor.id)
-          .order('created_at', { ascending: false});
+          .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
         setTickets(data || []);
@@ -560,7 +520,7 @@ export function useSupportTickets() {
     };
 
     fetchTickets();
-  }, [user]);
+  }, [userId]);
 
   const updateTicketStatus = async (id: string, status: string) => {
     try {

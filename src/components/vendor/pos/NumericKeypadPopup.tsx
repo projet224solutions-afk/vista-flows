@@ -65,7 +65,7 @@ export function NumericKeypadPopup({
         <div className={`bg-gradient-to-r ${isQuantityMode ? 'from-blue-500/10 via-blue-500/5' : 'from-primary/10 via-primary/5'} to-transparent p-4 border-b border-border/50`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${isQuantityMode ? 'from-blue-500 to-blue-600' : 'from-primary to-primary/80'} flex items-center justify-center shadow-lg`}>
+              <div className={`w-10 h-10 rounded-xl bg-[#04439e] ${isQuantityMode ? '' : 'from-primary to-primary/80'} flex items-center justify-center shadow-lg`}>
                 {isQuantityMode ? (
                   <Package className="h-5 w-5 text-white" />
                 ) : (
@@ -84,7 +84,7 @@ export function NumericKeypadPopup({
                 </p>
               </div>
             </div>
-            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-green-500'} animate-pulse shadow-lg`} />
+            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-[#ff4000]'} animate-pulse shadow-lg`} />
           </div>
         </div>
 
@@ -119,8 +119,8 @@ export function NumericKeypadPopup({
             {!isQuantityMode && receivedAmount > 0 && (
               <div className={`text-sm font-medium px-3 py-2 rounded-lg ${
                 change >= 0
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  ? 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
+                  : 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
               }`}>
                 Rendu: {change.toLocaleString()} {currency}
               </div>
@@ -161,7 +161,7 @@ export function NumericKeypadPopup({
               <Button
                 variant="outline"
                 onClick={() => handleInput('clear')}
-                className="h-14 text-sm font-bold bg-background/80 hover:bg-red-50 hover:border-red-400 hover:scale-105 active:scale-95 transition-all duration-150 shadow-sm text-red-600"
+                className="h-14 text-sm font-bold bg-background/80 hover:bg-orange-50 hover:border-[#ff4000] hover:scale-105 active:scale-95 transition-all duration-150 shadow-sm text-[#ff4000]"
               >
                 C
               </Button>
@@ -190,7 +190,7 @@ export function NumericKeypadPopup({
             )}
             <Button
               onClick={() => handleInput('enter')}
-              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-[#ff4000] to-[#e53900] hover:from-[#e53900] hover:to-[#cc3200]'} text-white`}
+              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-[#04439e]' : 'bg-[#04439e]'} text-white`}
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               {isQuantityMode ? 'Confirmer quantité' : 'Valider'}

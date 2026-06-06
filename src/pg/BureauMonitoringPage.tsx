@@ -79,7 +79,7 @@ export default function BureauMonitoringPage() {
         <p className="text-muted-foreground mb-6">
           Vous devez être connecté en tant que bureau/syndicat pour accéder à cette page.
         </p>
-        <Button onClick={() => navigate('/bureau-login')}>
+        <Button onClick={() => navigate('/auth')}>
           Se Connecter
         </Button>
       </div>

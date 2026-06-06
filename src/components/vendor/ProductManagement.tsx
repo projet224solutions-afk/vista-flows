@@ -512,6 +512,16 @@ export default function ProductManagement() {
       return;
     }
 
+    // Prix barré : doit être strictement supérieur au prix de vente
+    if (payload.compare_price && payload.compare_price.trim() !== '') {
+      const comparePrice = parseFloat(payload.compare_price);
+      const sellPrice = parseFloat(payload.price);
+      if (!Number.isNaN(comparePrice) && comparePrice > 0 && comparePrice <= sellPrice) {
+        toast.error('Le prix barré doit être supérieur au prix de vente');
+        return;
+      }
+    }
+
     // Validation obligatoire de l'image
     const hasExistingImages = editingProduct?.images && editingProduct.images.length > 0;
     const hasNewImages = selectedImages.length > 0;
@@ -675,6 +685,13 @@ export default function ProductManagement() {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Retirer une image EXISTANTE (édition) — propagée à updateProduct via editingProduct.images
+  const removeExistingImage = (index: number) => {
+    setEditingProduct(prev => prev
+      ? { ...prev, images: (prev.images || []).filter((_, i) => i !== index) }
+      : prev);
+  };
+
   // AI Generation Functions
   const handleGenerateDescription = async () => {
     if (!formData.name) {
@@ -722,32 +739,52 @@ export default function ProductManagement() {
 
     try {
       setGeneratingImage(true);
-      toast.info('🎨 Génération image IA en cours...');
 
       const categoryName = categoryMode === 'existing' && formData.category_id
         ? categories.find(c => c.id === formData.category_id)?.name
         : formData.category_name || undefined;
 
-      const { data, error } = await supabase.functions.invoke('generate-product-image', {
-        body: {
-          productName: formData.name,
-          category: categoryName,
-          description: formData.description
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.imageUrl) {
-        // Convert base64 or URL to File
-        const response = await fetch(data.imageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
-        setSelectedImages(prev => [...prev, file]);
-        toast.success('✅ Image générée par IA');
-      } else if (data?.error) {
-        throw new Error(data.error);
+      // Image de référence : image existante du produit, sinon 1ère image sélectionnée
+      let referenceUrl: string | null = editingProduct?.images?.[0] || null;
+      if (!referenceUrl && selectedImages[0]) {
+        referenceUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedImages[0]);
+        });
       }
+
+      let generatedUrl: string | undefined;
+
+      if (referenceUrl) {
+        // Imiter l'image existante (même style/cadrage) en tenant compte du titre + description
+        toast.info("🎨 Génération d'une image similaire à l'existante...");
+        const { data, error } = await supabase.functions.invoke('generate-similar-image', {
+          body: { imageUrl: referenceUrl, productName: formData.name, description: formData.description }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        generatedUrl = data?.similarImageUrl;
+      } else {
+        // Génération fraîche basée sur le titre + description
+        toast.info('🎨 Génération image IA en cours...');
+        const { data, error } = await supabase.functions.invoke('generate-product-image', {
+          body: { productName: formData.name, category: categoryName, description: formData.description }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        generatedUrl = data?.imageUrl;
+      }
+
+      if (!generatedUrl) throw new Error('Aucune image générée');
+
+      // Convertir (base64 ou URL) en fichier
+      const response = await fetch(generatedUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
+      setSelectedImages(prev => [...prev, file]);
+      toast.success('✅ Image générée par IA');
     } catch (error: any) {
       console.error('Erreur génération image:', error);
       toast.error(error.message || 'Erreur lors de la génération');
@@ -844,15 +881,15 @@ export default function ProductManagement() {
     <div className="space-y-6">
       {/* Product Limit Exceeded Banner - Produits désactivés */}
       {productLimitStatus && productLimitStatus.excess_products > 0 && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-950">
+        <Card className="border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-[#ff4000] dark:text-[#ff4000] flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-900 dark:text-red-100">
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">
                   ⚠️ Produits automatiquement désactivés
                 </h3>
-                <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+                <p className="text-sm text-[#ff4000] dark:text-orange-200 mt-1">
                   Vous avez {productLimitStatus.active_products} produits actifs mais votre abonnement ne permet que {productLimitStatus.max_allowed} produits actifs.
                   <br />
                   <strong>{productLimitStatus.excess_products} produit(s)</strong> ont été automatiquement désactivés et ne sont pas visibles sur le marketplace.
@@ -969,9 +1006,9 @@ export default function ProductManagement() {
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
             <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-              <span className="text-green-600">✓ {stats.active} actifs</span>
+              <span className="text-[#ff4000]">✓ {stats.active} actifs</span>
               {stats.total - stats.active > 0 && (
-                <span className="text-red-600">● {stats.total - stats.active} désactivés</span>
+                <span className="text-[#ff4000]">● {stats.total - stats.active} désactivés</span>
               )}
             </div>
           </CardContent>
@@ -1572,7 +1609,7 @@ export default function ProductManagement() {
                           placeholder="Ex: 230000"
                         />
                         {formData.units_per_carton && formData.price && (
-                          <p className="text-xs text-green-600">
+                          <p className="text-xs text-[#ff4000]">
                             Économie: {fc(convert(
                               (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) -
                               parseFloat(formData.price_carton || '0')
@@ -1700,7 +1737,7 @@ export default function ProductManagement() {
                         <Video className="h-6 w-6" />
                         <Badge
                           variant={isPremium ? "default" : "secondary"}
-                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-green-500' : ''}`}
+                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-[#ff4000]' : ''}`}
                         >
                           {isPremium ? '✓ Premium' : '🔒 Premium'}
                         </Badge>
@@ -1765,7 +1802,7 @@ export default function ProductManagement() {
                     ))}
                     {/* New Videos */}
                     {selectedVideos.map((video, index) => (
-                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-green-500/50 bg-black">
+                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-[#ff4000]/50 bg-black">
                         <video
                           src={URL.createObjectURL(video)}
                           controls
@@ -1803,6 +1840,15 @@ export default function ProductManagement() {
                           alt={`Existing ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-1 right-1 h-5 w-5 p-0"
+                          onClick={() => removeExistingImage(index)}
+                          title="Retirer cette image"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                         <Badge className="absolute top-1 left-1 text-[8px]" variant="secondary">
                           Existante
                         </Badge>

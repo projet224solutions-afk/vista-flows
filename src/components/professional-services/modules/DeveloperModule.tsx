@@ -185,9 +185,9 @@ export function DeveloperModule({ _serviceId, businessName }: DeveloperModulePro
   const getProjectStatusBadge = (status: Project['status']) => {
     const styles = {
       en_cours: 'bg-blue-100 text-blue-800',
-      termine: 'bg-green-100 text-green-800',
-      en_attente: 'bg-yellow-100 text-yellow-800',
-      maintenance: 'bg-purple-100 text-purple-800'
+      termine: 'bg-orange-100 text-[#ff4000]',
+      en_attente: 'bg-orange-100 text-[#ff4000]',
+      maintenance: 'bg-blue-100 text-[#04439e]'
     };
     const labels = {
       en_cours: 'En cours',
@@ -200,9 +200,9 @@ export function DeveloperModule({ _serviceId, businessName }: DeveloperModulePro
 
   const getQuoteStatusBadge = (status: Quote['status']) => {
     const styles = {
-      en_attente: 'bg-yellow-100 text-yellow-800',
-      accepte: 'bg-green-100 text-green-800',
-      refuse: 'bg-red-100 text-red-800',
+      en_attente: 'bg-orange-100 text-[#ff4000]',
+      accepte: 'bg-orange-100 text-[#ff4000]',
+      refuse: 'bg-orange-100 text-[#ff4000]',
       expire: 'bg-gray-100 text-gray-800'
     };
     const labels = {
@@ -259,7 +259,7 @@ export function DeveloperModule({ _serviceId, businessName }: DeveloperModulePro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-yellow-500" />
+              <FileText className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Devis en attente</span>
             </div>
             <p className="text-2xl font-bold mt-1">{pendingQuotes}</p>
@@ -268,7 +268,7 @@ export function DeveloperModule({ _serviceId, businessName }: DeveloperModulePro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-lg font-bold mt-1">{formatPrice(totalRevenue)}</p>
@@ -496,7 +496,7 @@ export function DeveloperModule({ _serviceId, businessName }: DeveloperModulePro
                 <div className="h-32 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative">
                   <Code className="h-12 w-12 text-primary/50" />
                   {item.featured && (
-                    <Badge className="absolute top-2 right-2 bg-yellow-100 text-yellow-800">
+                    <Badge className="absolute top-2 right-2 bg-orange-100 text-[#ff4000]">
                       Featured
                     </Badge>
                   )}

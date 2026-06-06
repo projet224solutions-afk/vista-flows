@@ -33,16 +33,16 @@ export function WalletTransactionsList() {
 
   const getTransactionIcon = (tx: any) => {
     if (tx.sender_id === user?.id && tx.receiver_id !== user?.id) {
-      return <ArrowUpRight className="w-4 h-4 text-red-600" />;
+      return <ArrowUpRight className="w-4 h-4 text-[#ff4000]" />;
     }
-    return <ArrowDownLeft className="w-4 h-4 text-green-600" />;
+    return <ArrowDownLeft className="w-4 h-4 text-[#ff4000]" />;
   };
 
   const getTransactionColor = (tx: any) => {
     if (tx.sender_id === user?.id && tx.receiver_id !== user?.id) {
-      return 'text-red-600';
+      return 'text-[#ff4000]';
     }
-    return 'text-green-600';
+    return 'text-[#ff4000]';
   };
 
   const filteredTransactions = transactions.filter(tx => {
@@ -69,8 +69,8 @@ export function WalletTransactionsList() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <History className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <History className="w-5 h-5 text-[#04439e]" />
             </div>
             <div>
               <CardTitle>Historique des transactions</CardTitle>

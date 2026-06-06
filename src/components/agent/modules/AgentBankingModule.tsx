@@ -106,17 +106,17 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed': return <Badge className="bg-green-100 text-green-700 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Complété</Badge>;
-      case 'pending': return <Badge className="bg-yellow-100 text-yellow-700 flex items-center gap-1"><Clock className="w-3 h-3" />En attente</Badge>;
-      case 'failed': return <Badge className="bg-red-100 text-red-700 flex items-center gap-1"><XCircle className="w-3 h-3" />Échoué</Badge>;
+      case 'completed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><CheckCircle className="w-3 h-3" />Complété</Badge>;
+      case 'pending': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><Clock className="w-3 h-3" />En attente</Badge>;
+      case 'failed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><XCircle className="w-3 h-3" />Échoué</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const getTxIcon = (type: string) => {
     if (['deposit', 'receive', 'credit'].includes(type))
-      return <ArrowDownLeft className="w-4 h-4 text-green-500" />;
-    return <ArrowUpRight className="w-4 h-4 text-red-500" />;
+      return <ArrowDownLeft className="w-4 h-4 text-[#ff4000]" />;
+    return <ArrowUpRight className="w-4 h-4 text-[#ff4000]" />;
   };
 
   if (loading) {
@@ -160,24 +160,24 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ArrowDownLeft className="h-4 w-4 text-green-500" />
+              <ArrowDownLeft className="h-4 w-4 text-[#ff4000]" />
               Total Entrant
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatAmount(stats.totalIn, walletCurrency)}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{formatAmount(stats.totalIn, walletCurrency)}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-red-500" />
+              <ArrowUpRight className="h-4 w-4 text-[#ff4000]" />
               Total Sortant
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatAmount(stats.totalOut, walletCurrency)}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{formatAmount(stats.totalOut, walletCurrency)}</div>
           </CardContent>
         </Card>
 
@@ -237,7 +237,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                           </div>
                           <div className="flex items-center gap-3">
                             {getStatusBadge(tx.status)}
-                            <span className={`font-bold text-sm ${['deposit', 'receive', 'credit'].includes(tx.transaction_type) ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className={`font-bold text-sm ${['deposit', 'receive', 'credit'].includes(tx.transaction_type) ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                               {['deposit', 'receive', 'credit'].includes(tx.transaction_type) ? '+' : '-'}
                               {formatAmount(tx.amount || 0, tx.currency || walletCurrency)}
                             </span>
@@ -265,11 +265,11 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-sm text-muted-foreground">Total entrant</span>
-                  <span className="font-bold text-green-600">{formatAmount(stats.totalIn, walletCurrency)}</span>
+                  <span className="font-bold text-[#ff4000]">{formatAmount(stats.totalIn, walletCurrency)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-sm text-muted-foreground">Total sortant</span>
-                  <span className="font-bold text-red-600">{formatAmount(stats.totalOut, walletCurrency)}</span>
+                  <span className="font-bold text-[#ff4000]">{formatAmount(stats.totalOut, walletCurrency)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-sm text-muted-foreground">Transactions totales</span>
@@ -285,15 +285,15 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-sm text-muted-foreground flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" />Complétées
+                    <CheckCircle className="w-4 h-4 text-[#ff4000]" />Complétées
                   </span>
-                  <span className="font-bold text-green-600">{stats.completed}</span>
+                  <span className="font-bold text-[#ff4000]">{stats.completed}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-yellow-500" />En attente
+                    <Clock className="w-4 h-4 text-[#ff4000]" />En attente
                   </span>
-                  <span className="font-bold text-yellow-600">{stats.pending}</span>
+                  <span className="font-bold text-[#ff4000]">{stats.pending}</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-sm text-muted-foreground flex items-center gap-2">

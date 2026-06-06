@@ -86,11 +86,11 @@ export default function UserActivationPage() {
 
   if (!invitationToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-orange-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
-            <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-red-600 mb-2">Lien Invalide</h2>
+            <Shield className="w-16 h-16 text-[#ff4000] mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-[#ff4000] mb-2">Lien Invalide</h2>
             <p className="text-muted-foreground">
               Ce lien d'invitation n'est pas valide ou a expiré.
             </p>
@@ -108,20 +108,20 @@ export default function UserActivationPage() {
 
   if (isActivated && activationResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-blue-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-gradient-to-r from-[#ff4000] to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl text-green-600">
+            <CardTitle className="text-2xl text-[#ff4000]">
               🎉 Activation Réussie !
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Alert className="border-green-200 bg-green-50">
-              <Sparkles className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-orange-200 bg-orange-50">
+              <Sparkles className="h-4 w-4 text-[#ff4000]" />
+              <AlertDescription className="text-[#ff4000]">
                 Votre compte 224Solutions a été activé avec succès !
                 Bienvenue dans notre écosystème digital.
               </AlertDescription>
@@ -143,7 +143,7 @@ export default function UserActivationPage() {
               {activationResult.downloadUrl && (
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-[#04439e]"
                   onClick={() => window.open(activationResult.downloadUrl, '_blank')}
                 >
                   <Download className="w-5 h-5 mr-2" />
@@ -173,13 +173,13 @@ export default function UserActivationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-50 to-orange-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-[#04439e] rounded-full flex items-center justify-center mx-auto mb-4">
             <Crown className="w-10 h-10 text-white" />
           </div>
-          <CardTitle className="text-3xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl bg-[#04439e] bg-clip-text text-transparent">
             Bienvenue chez 224Solutions
           </CardTitle>
           <p className="text-muted-foreground mt-2">
@@ -235,26 +235,26 @@ export default function UserActivationPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-50 p-6 rounded-lg">
             <h4 className="font-semibold mb-3 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-500" />
+              <Sparkles className="w-5 h-5 text-[#04439e]" />
               Ce que vous obtenez :
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                 <span>Accès complet à la plateforme</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                 <span>Support de votre agent</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                 <span>Commissions automatiques</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                 <span>Outils professionnels</span>
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function UserActivationPage() {
               size="lg"
               onClick={handleActivation}
               disabled={!selectedDevice || loading}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8"
+              className="bg-[#04439e] px-8"
             >
               {loading ? (
                 <>

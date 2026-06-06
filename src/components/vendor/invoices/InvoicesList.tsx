@@ -64,10 +64,10 @@ export default function InvoicesList() {
 
   const getStatusConfig = (status: string) => {
     const config: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; icon: typeof Clock; className: string }> = {
-      pending: { label: t('invoice.status.pending'), variant: 'secondary', icon: Clock, className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400' },
-      paid: { label: t('invoice.status.paid'), variant: 'default', icon: CheckCircle, className: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' },
-      cancelled: { label: t('invoice.status.cancelled'), variant: 'destructive', icon: XCircle, className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400' },
-      overdue: { label: t('invoice.status.overdue'), variant: 'destructive', icon: Clock, className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400' }
+      pending: { label: t('invoice.status.pending'), variant: 'secondary', icon: Clock, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+      paid: { label: t('invoice.status.paid'), variant: 'default', icon: CheckCircle, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+      cancelled: { label: t('invoice.status.cancelled'), variant: 'destructive', icon: XCircle, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+      overdue: { label: t('invoice.status.overdue'), variant: 'destructive', icon: Clock, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' }
     };
     return config[status] || config.pending;
   };
@@ -95,15 +95,12 @@ export default function InvoicesList() {
   const handleDownloadOrGenerate = async (invoice: Invoice) => {
     if (!invoice.pdf_url) {
       try {
-        const { _data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
-          body: {
-            invoice_id: invoice.id,
-            ref: invoice.ref,
-            vendor_id: vendorId
-          }
+        const { backendFetch } = await import('@/services/backendApi');
+        const resp = await backendFetch<any>('/api/documents/invoice-pdf', {
+          body: { invoice_id: invoice.id, ref: invoice.ref }
         });
 
-        if (error) throw error;
+        if (!resp.success) throw new Error(resp.error || 'Erreur génération PDF');
         toast.success(t('invoice.pdfGenerated'));
         loadInvoices();
       } catch (error: any) {
@@ -220,7 +217,7 @@ export default function InvoicesList() {
                           {t('invoice.dueDate')}: {new Date(invoice.due_date).toLocaleDateString()}
                         </p>
                         {invoice.paid_at && (
-                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                          <p className="text-[11px] text-[#ff4000] dark:text-[#ff4000] font-medium">
                             ✓ {t('invoice.paidOn')} {new Date(invoice.paid_at).toLocaleDateString()}
                           </p>
                         )}

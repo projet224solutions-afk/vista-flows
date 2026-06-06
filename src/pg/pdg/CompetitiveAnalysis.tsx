@@ -127,9 +127,9 @@ export default function CompetitiveAnalysis() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80 || score >= 8) return 'text-green-600 dark:text-green-400';
-    if (score >= 60 || score >= 6) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 80 || score >= 8) return 'text-[#ff4000] dark:text-[#ff4000]';
+    if (score >= 60 || score >= 6) return 'text-[#ff4000] dark:text-[#ff4000]';
+    return 'text-[#ff4000] dark:text-[#ff4000]';
   };
 
   const getImpactColor = (impact: string) => {
@@ -311,7 +311,7 @@ export default function CompetitiveAnalysis() {
 
                         {platform.strengths && platform.strengths.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
+                            <h4 className="text-sm font-semibold text-[#ff4000] dark:text-[#ff4000]">
                               ✓ Points forts
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
@@ -324,7 +324,7 @@ export default function CompetitiveAnalysis() {
 
                         {platform.weaknesses && platform.weaknesses.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
+                            <h4 className="text-sm font-semibold text-[#ff4000] dark:text-[#ff4000]">
                               ✗ Faiblesses
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
@@ -363,7 +363,7 @@ export default function CompetitiveAnalysis() {
                         {competitiveAnalysis.ranking.map((platform, index) => (
                           <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
                             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                              index === 0 ? 'bg-yellow-500 text-white' :
+                              index === 0 ? 'bg-[#ff4000] text-white' :
                               index === 1 ? 'bg-gray-400 text-white' :
                               index === 2 ? 'bg-orange-600 text-white' :
                               'bg-muted'
@@ -521,7 +521,7 @@ export default function CompetitiveAnalysis() {
 
                         {platform.strengths && platform.strengths.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
+                            <h4 className="text-sm font-semibold text-[#ff4000] dark:text-[#ff4000]">
                               ✓ Points forts sécurité
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
@@ -534,7 +534,7 @@ export default function CompetitiveAnalysis() {
 
                         {platform.weaknesses && platform.weaknesses.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
+                            <h4 className="text-sm font-semibold text-[#ff4000] dark:text-[#ff4000]">
                               ✗ Vulnérabilités
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">

@@ -26,7 +26,7 @@ export function SimpleMapView({
   ].filter(Boolean);
 
   return (
-    <Card className="overflow-hidden shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50" style={{ height }}>
+    <Card className="overflow-hidden shadow-lg bg-gradient-to-br from-blue-50 to-blue-50" style={{ height }}>
       <div className="relative w-full h-full flex items-center justify-center">
         <div className="absolute inset-0 opacity-10">
           <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
@@ -67,11 +67,11 @@ export function SimpleMapView({
 
               {pickupLocation && (
                 <div className="flex items-start gap-3 p-4 bg-white/80 backdrop-blur rounded-lg shadow">
-                  <div className="p-2 bg-green-600 rounded-full">
+                  <div className="p-2 bg-[#ff4000] rounded-full">
                     <MapPin className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-green-900">Point de départ</p>
+                    <p className="font-semibold text-[#ff4000]">Point de départ</p>
                     <p className="text-sm text-gray-600">
                       {pickupLocation.latitude.toFixed(6)}, {pickupLocation.longitude.toFixed(6)}
                     </p>
@@ -81,11 +81,11 @@ export function SimpleMapView({
 
               {destinationLocation && (
                 <div className="flex items-start gap-3 p-4 bg-white/80 backdrop-blur rounded-lg shadow">
-                  <div className="p-2 bg-red-600 rounded-full">
+                  <div className="p-2 bg-[#ff4000] rounded-full">
                     <MapPin className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-red-900">Destination</p>
+                    <p className="font-semibold text-[#ff4000]">Destination</p>
                     <p className="text-sm text-gray-600">
                       {destinationLocation.latitude.toFixed(6)}, {destinationLocation.longitude.toFixed(6)}
                     </p>

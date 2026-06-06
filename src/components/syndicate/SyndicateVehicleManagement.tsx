@@ -543,9 +543,9 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
      */
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'active': return 'bg-green-100 text-green-800';
-            case 'suspended': return 'bg-red-100 text-red-800';
-            case 'maintenance': return 'bg-yellow-100 text-yellow-800';
+            case 'active': return 'bg-orange-100 text-[#ff4000]';
+            case 'suspended': return 'bg-orange-100 text-[#ff4000]';
+            case 'maintenance': return 'bg-orange-100 text-[#ff4000]';
             case 'retired': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
         }
@@ -613,8 +613,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                        <div className="text-2xl font-bold text-green-600">
+                        <CheckCircle className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
+                        <div className="text-2xl font-bold text-[#ff4000]">
                             {vehicles.filter(v => v.verified).length}
                         </div>
                         <div className="text-sm text-gray-600">Vérifiés</div>
@@ -623,8 +623,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <QrCode className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                        <div className="text-2xl font-bold text-purple-600">
+                        <QrCode className="w-8 h-8 mx-auto mb-2 text-[#04439e]" />
+                        <div className="text-2xl font-bold text-[#04439e]">
                             {vehicles.filter(v => v.digital_badge_id).length}
                         </div>
                         <div className="text-sm text-gray-600">Badges Générés</div>
@@ -851,8 +851,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.registration_document && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
-                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                    <div className="mt-2 p-2 bg-orange-50 rounded-md">
+                                                        <p className="text-xs text-[#ff4000] flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.registration_document.name} ({(uploadedFiles.registration_document.size / 1024).toFixed(2)} KB)
                                                         </p>
@@ -885,8 +885,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.insurance_document && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
-                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                    <div className="mt-2 p-2 bg-orange-50 rounded-md">
+                                                        <p className="text-xs text-[#ff4000] flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.insurance_document.name} ({(uploadedFiles.insurance_document.size / 1024).toFixed(2)} KB)
                                                         </p>
@@ -919,8 +919,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.technical_control && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
-                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                    <div className="mt-2 p-2 bg-orange-50 rounded-md">
+                                                        <p className="text-xs text-[#ff4000] flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.technical_control.name} ({(uploadedFiles.technical_control.size / 1024).toFixed(2)} KB)
                                                         </p>
@@ -953,8 +953,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.vehicle_photo && (
-                                                    <div className="mt-2 p-2 bg-green-50 rounded-md">
-                                                        <p className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                                                    <div className="mt-2 p-2 bg-orange-50 rounded-md">
+                                                        <p className="text-xs text-[#ff4000] flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.vehicle_photo.name} ({(uploadedFiles.vehicle_photo.size / 1024).toFixed(2)} KB)
                                                         </p>
@@ -1066,7 +1066,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
-                                            <QrCode className="w-4 h-4 text-purple-600" />
+                                            <QrCode className="w-4 h-4 text-[#04439e]" />
                                             <div className="text-sm">
                                                 <p className="font-mono">{vehicle.digital_badge_id}</p>
                                                 <p className="text-xs text-gray-600">
@@ -1082,8 +1082,8 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             </Badge>
                                             {vehicle.verified && (
                                                 <div className="flex items-center gap-1">
-                                                    <CheckCircle className="w-3 h-3 text-green-600" />
-                                                    <span className="text-xs text-green-600">Vérifié</span>
+                                                    <CheckCircle className="w-3 h-3 text-[#ff4000]" />
+                                                    <span className="text-xs text-[#ff4000]">Vérifié</span>
                                                 </div>
                                             )}
                                         </div>
@@ -1164,7 +1164,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                 {vehicle.status === 'suspended' && (
                                                     <Button
                                                         size="sm"
-                                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                                        className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
                                                         onClick={() => reactivateVehicle(vehicle.id)}
                                                     >
                                                         <CheckCircle className="w-4 h-4 mr-1" />

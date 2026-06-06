@@ -35,7 +35,7 @@ export default function PWAInstallButton({
         className={className}
         disabled
       >
-        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+        <CheckCircle className="w-4 h-4 mr-2 text-[#ff4000]" />
         Application installée
       </Button>
     );

@@ -81,7 +81,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
     return (
       <Card
         className={`cursor-pointer transition-all hover:shadow-lg ${
-          hasActiveAlerts ? 'border-red-500 border-2' : ''
+          hasActiveAlerts ? 'border-[#ff4000] border-2' : ''
         }`}
         onClick={() => navigate('/emergency')}
       >
@@ -89,7 +89,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${
-                hasActiveAlerts ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-green-100 text-green-600'
+                hasActiveAlerts ? 'bg-orange-100 text-[#ff4000] animate-pulse' : 'bg-orange-100 text-[#ff4000]'
               }`}>
                 <AlertTriangle className="h-5 w-5" />
               </div>
@@ -112,11 +112,11 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
   }
 
   return (
-    <Card className={hasActiveAlerts ? 'border-red-500 border-2' : ''}>
+    <Card className={hasActiveAlerts ? 'border-[#ff4000] border-2' : ''}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <AlertTriangle className={hasActiveAlerts ? 'h-5 w-5 text-red-600 animate-pulse' : 'h-5 w-5'} />
+            <AlertTriangle className={hasActiveAlerts ? 'h-5 w-5 text-[#ff4000] animate-pulse' : 'h-5 w-5'} />
             Système d'Urgence SOS
           </span>
           {hasActiveAlerts && (
@@ -134,7 +134,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
               <Activity className="h-4 w-4" />
               <span className="text-sm">Alertes Actives</span>
             </div>
-            <p className={`text-3xl font-bold ${hasActiveAlerts ? 'text-red-600 animate-pulse' : 'text-green-600'}`}>
+            <p className={`text-3xl font-bold ${hasActiveAlerts ? 'text-[#ff4000] animate-pulse' : 'text-[#ff4000]'}`}>
               {stats.active_alerts || 0}
             </p>
           </div>
@@ -144,7 +144,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
               <CheckCircle className="h-4 w-4" />
               <span className="text-sm">Résolues Aujourd'hui</span>
             </div>
-            <p className="text-3xl font-bold text-green-600">
+            <p className="text-3xl font-bold text-[#ff4000]">
               {stats.resolved_alerts || 0}
             </p>
           </div>

@@ -96,7 +96,7 @@ export function InteractiveMapNavigation({
       el.style.backgroundImage = 'url(/taxi-icon.png)';
       el.style.backgroundSize = 'cover';
       el.style.borderRadius = '50%';
-      el.style.border = '3px solid #3B82F6';
+      el.style.border = '3px solid #04439e';
       el.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.6)';
 
       driverMarker.current = new mapboxgl.Marker({ element: el })
@@ -126,7 +126,7 @@ export function InteractiveMapNavigation({
       const pickupEl = document.createElement('div');
       pickupEl.style.width = '30px';
       pickupEl.style.height = '30px';
-      pickupEl.style.backgroundColor = '#10B981';
+      pickupEl.style.backgroundColor = '#ff4000';
       pickupEl.style.borderRadius = '50%';
       pickupEl.style.border = '3px solid white';
       pickupEl.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
@@ -144,7 +144,7 @@ export function InteractiveMapNavigation({
       const destEl = document.createElement('div');
       destEl.style.width = '30px';
       destEl.style.height = '30px';
-      destEl.style.backgroundColor = '#EF4444';
+      destEl.style.backgroundColor = '#ff4000';
       destEl.style.borderRadius = '50%';
       destEl.style.border = '3px solid white';
       destEl.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
@@ -250,7 +250,7 @@ export function InteractiveMapNavigation({
                 'line-cap': 'round'
               },
               paint: {
-                'line-color': '#3B82F6',
+                'line-color': '#04439e',
                 'line-width': 5,
                 'line-opacity': 0.75
               }
@@ -303,7 +303,7 @@ export function InteractiveMapNavigation({
     <div className="space-y-4">
       {/* Carte interactive */}
       <Card className="overflow-hidden">
-        <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-blue-50">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Navigation className="w-5 h-5 text-blue-600" />
@@ -335,7 +335,7 @@ export function InteractiveMapNavigation({
 
       {/* Informations de route */}
       {routeInfo && (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-50">
           <CardContent className="pt-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-lg p-3 text-center">
@@ -381,11 +381,11 @@ export function InteractiveMapNavigation({
 
           {/* Itinéraire */}
           <div className="space-y-2">
-            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+            <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-green-800 uppercase">Départ</p>
+                  <p className="text-xs font-semibold text-[#ff4000] uppercase">Départ</p>
                   <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                 </div>
               </div>
@@ -395,11 +395,11 @@ export function InteractiveMapNavigation({
               <ArrowRight className="w-6 h-6 text-blue-500" />
             </div>
 
-            <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+            <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-red-800 uppercase">Arrivée</p>
+                  <p className="text-xs font-semibold text-[#ff4000] uppercase">Arrivée</p>
                   <p className="text-sm text-gray-900">{activeRide.destination.address}</p>
                 </div>
               </div>
@@ -410,7 +410,7 @@ export function InteractiveMapNavigation({
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">Prix course</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-lg font-bold text-[#ff4000]">
                 {activeRide.estimatedPrice.toLocaleString()} GNF
               </p>
             </div>

@@ -9,10 +9,10 @@ export function DriverSubscriptionInfo() {
 
   if (loading) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+      <Card className="bg-gradient-to-br from-blue-50 to-blue-50 border-blue-200">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="w-5 h-5 text-purple-600" />
+            <Calendar className="w-5 h-5 text-[#04439e]" />
             📅 Mon Abonnement
           </CardTitle>
         </CardHeader>
@@ -56,15 +56,15 @@ export function DriverSubscriptionInfo() {
   return (
     <Card className={`border-2 ${
       isActive
-        ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+        ? 'bg-gradient-to-br from-orange-50 to-orange-50 border-orange-300'
         : isExpired
-        ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
+        ? 'bg-gradient-to-br from-orange-50 to-orange-50 border-orange-300'
         : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
     }`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Calendar className={`w-5 h-5 ${
-            isActive ? 'text-green-600' : isExpired ? 'text-red-600' : 'text-gray-600'
+            isActive ? 'text-[#ff4000]' : isExpired ? 'text-[#ff4000]' : 'text-gray-600'
           }`} />
           📅 Mon Abonnement
         </CardTitle>
@@ -99,16 +99,16 @@ export function DriverSubscriptionInfo() {
         )}
 
         {isExpired && (
-          <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
-            <p className="text-xs text-center text-red-800 font-bold">
+          <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+            <p className="text-xs text-center text-[#ff4000] font-bold">
               ⚠️ Abonnement expiré
             </p>
           </div>
         )}
 
         {isActive && (
-          <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg">
-            <p className="text-xs text-center text-green-800 font-bold">
+          <div className="mt-3 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+            <p className="text-xs text-center text-[#ff4000] font-bold">
               ✅ Abonnement actif
             </p>
           </div>

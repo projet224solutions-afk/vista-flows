@@ -75,12 +75,12 @@ export default function InstallMobileApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 pb-24">
       <div className="max-w-2xl mx-auto py-8 space-y-6">
         {/* En-tête */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-6 rounded-3xl shadow-2xl">
+            <div className="bg-[#04439e] p-6 rounded-3xl shadow-2xl">
               <Smartphone className="w-16 h-16 text-white" />
             </div>
           </div>
@@ -94,15 +94,15 @@ export default function InstallMobileApp() {
 
         {/* Statut d'installation */}
         {isInstalled ? (
-          <Card className="bg-green-50 border-green-200 shadow-lg">
+          <Card className="bg-orange-50 border-orange-200 shadow-lg">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="bg-green-500 p-3 rounded-full">
+                <div className="bg-[#ff4000] p-3 rounded-full">
                   <Check className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-green-900">Application déjà installée!</p>
-                  <p className="text-sm text-green-700">Vous pouvez la retrouver sur votre écran d'accueil</p>
+                  <p className="font-semibold text-[#ff4000]">Application déjà installée!</p>
+                  <p className="text-sm text-[#ff4000]">Vous pouvez la retrouver sur votre écran d'accueil</p>
                 </div>
               </div>
             </CardContent>
@@ -111,16 +111,16 @@ export default function InstallMobileApp() {
           <>
             {/* Bouton d'installation automatique (si disponible) */}
             {isInstallable && (
-              <Card className="border-2 border-primary shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+              <Card className="border-2 border-primary shadow-lg bg-gradient-to-r from-blue-50 to-blue-50">
                 <CardContent className="pt-6 space-y-4">
                   <div className="text-center">
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-2">
+                    <span className="inline-block px-3 py-1 bg-orange-100 text-[#ff4000] rounded-full text-sm font-medium mb-2">
                       ✨ Installation rapide disponible
                     </span>
                   </div>
                   <Button
                     onClick={handleInstallClick}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white h-14 text-lg shadow-lg"
+                    className="w-full bg-[#04439e] text-white h-14 text-lg shadow-lg"
                   >
                     <Download className="w-5 h-5 mr-2" />
                     Installer maintenant
@@ -134,7 +134,7 @@ export default function InstallMobileApp() {
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Chrome className="w-5 h-5 text-green-600" />
+                    <Chrome className="w-5 h-5 text-[#ff4000]" />
                     Installation sur Android
                   </CardTitle>
                   <CardDescription>
@@ -184,7 +184,7 @@ export default function InstallMobileApp() {
                   {/* Bouton pour rafraëchir si le prompt n'apparaët pas */}
                   {!isInstallable && (
                     <div className="pt-4 border-t">
-                      <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg mb-3">
+                      <p className="text-sm text-[#ff4000] bg-orange-50 p-3 rounded-lg mb-3">
                         💡 Si vous ne voyez pas l'option "Installer", essayez de rafraëchir la page ou utilisez le menu du navigateur.
                       </p>
                       <Button onClick={handleRefresh} variant="outline" className="w-full gap-2">
@@ -209,16 +209,16 @@ export default function InstallMobileApp() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {!isSafari && (
-                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                      <p className="text-sm text-amber-800 font-medium">
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <p className="text-sm text-[#ff4000] font-medium">
                         ⚠️ Vous n'êtes pas dans Safari. Ouvrez ce lien dans Safari pour voir l'option "Sur l'écran d'accueil".
                       </p>
                     </div>
                   )}
 
                   {!isSecureOrigin && (
-                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                      <p className="text-sm text-red-800 font-medium">
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <p className="text-sm text-[#ff4000] font-medium">
                         ⚠️ Domaine non sécurisé: iOS exige HTTPS pour installer l'application.
                       </p>
                     </div>
@@ -320,8 +320,8 @@ export default function InstallMobileApp() {
           <CardContent>
             <div className="grid gap-4">
               <div className="flex items-start gap-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600" />
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <Check className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Accès rapide</p>
@@ -329,8 +329,8 @@ export default function InstallMobileApp() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600" />
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <Check className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Mode hors ligne</p>
@@ -338,8 +338,8 @@ export default function InstallMobileApp() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600" />
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <Check className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Notifications</p>
@@ -347,8 +347,8 @@ export default function InstallMobileApp() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600" />
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <Check className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">0 Mo d'espace</p>

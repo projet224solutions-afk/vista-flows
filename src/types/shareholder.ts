@@ -49,11 +49,11 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 };
 
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  pending:         'bg-yellow-100 text-yellow-800',
+  pending:         'bg-orange-100 text-[#ff4000]',
   approved:        'bg-blue-100 text-blue-800',
-  sent_to_wallet:  'bg-green-100 text-green-800',
-  withdrawn:       'bg-purple-100 text-purple-800',
-  cancelled:       'bg-red-100 text-red-800',
+  sent_to_wallet:  'bg-orange-100 text-[#ff4000]',
+  withdrawn:       'bg-blue-100 text-[#04439e]',
+  cancelled:       'bg-orange-100 text-[#ff4000]',
 };
 
 export const VOTE_TARGET_LABELS: Record<VoteTarget, string> = {

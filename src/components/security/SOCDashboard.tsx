@@ -28,10 +28,10 @@ export function SOCDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'resolved': return 'text-green-600';
-      case 'contained': return 'text-yellow-600';
+      case 'resolved': return 'text-[#ff4000]';
+      case 'contained': return 'text-[#ff4000]';
       case 'investigating': return 'text-blue-600';
-      default: return 'text-red-600';
+      default: return 'text-[#ff4000]';
     }
   };
 
@@ -64,14 +64,14 @@ export function SOCDashboard() {
         {/* Statut SOC */}
         <div className={`p-4 rounded-lg border ${
           socStatus.operational
-            ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-            : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
+            ? 'bg-orange-50 dark:bg-[#ff4000] border-orange-200 dark:border-[#ff4000]'
+            : 'bg-orange-50 dark:bg-[#ff4000] border-orange-200 dark:border-[#ff4000]'
         }`}>
           <div className="flex items-center gap-2 mb-2">
             {socStatus.operational ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-600" />
+              <XCircle className="w-5 h-5 text-[#ff4000]" />
             )}
             <span className="font-semibold">
               {socStatus.operational ? 'SOC opérationnel' : 'SOC hors ligne'}
@@ -85,7 +85,7 @@ export function SOCDashboard() {
         {/* Métriques SOC */}
         <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="sm">
           <div className="p-4 bg-muted rounded-lg">
-            <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
+            <AlertTriangle className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats?.total_incidents || 0}</div>
             <div className="text-xs text-muted-foreground">Incidents totaux</div>
           </div>
@@ -95,12 +95,12 @@ export function SOCDashboard() {
             <div className="text-xs text-muted-foreground">Alertes en cours</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <CheckCircle className="w-8 h-8 text-green-500 mb-2" />
+            <CheckCircle className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats?.open_incidents || 0}</div>
             <div className="text-xs text-muted-foreground">Incidents ouverts</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Clock className="w-8 h-8 text-purple-500 mb-2" />
+            <Clock className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{stats?.avg_mttr_minutes || 0} min</div>
             <div className="text-xs text-muted-foreground">MTTR moyen</div>
           </div>
@@ -115,7 +115,7 @@ export function SOCDashboard() {
 
           {recentIncidents.length === 0 ? (
             <div className="p-4 border rounded-lg text-center text-muted-foreground">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
               <p className="text-sm">Aucun incident actif</p>
             </div>
           ) : (

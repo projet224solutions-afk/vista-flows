@@ -245,6 +245,7 @@ export default function VendorShop() {
           id,
           name,
           price,
+          compare_price,
           currency,
           images,
           promotional_videos,
@@ -467,7 +468,7 @@ export default function VendorShop() {
           key={i}
           className={`w-4 h-4 ${
             i < Math.floor(rating)
-              ? 'fill-yellow-400 text-yellow-400'
+              ? 'fill-[#ff4000] text-[#ff4000]'
               : 'text-muted-foreground/30'
           }`}
         />
@@ -769,6 +770,7 @@ export default function VendorShop() {
                           promotionalVideos={product.promotional_videos || []}
                           title={product.name}
                           price={product.price}
+                          originalPrice={product.compare_price && product.compare_price > product.price ? product.compare_price : undefined}
                           currency={product.currency || vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
                           vendor={vendor.business_name}
                           vendorId={vendor.id}
@@ -793,7 +795,7 @@ export default function VendorShop() {
                   <div className="space-y-6">
                     {showAffiliateFlightPartnerExperience && (
                       <div className="space-y-4">
-                        <div className="overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+                        <div className="overflow-hidden rounded-3xl border border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-orange-50">
                           <div className="grid gap-6 p-5 md:grid-cols-[1.5fr_1fr] md:p-7">
                             <div>
                               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
@@ -922,7 +924,7 @@ export default function VendorShop() {
                                   showOriginal
                                 />
                               ) : (
-                                <span className="font-bold text-lg text-green-600">Gratuit</span>
+                                <span className="font-bold text-lg text-[#ff4000]">Gratuit</span>
                               )}
                               <Button size="sm" variant="outline">
                                 Voir détails
@@ -962,6 +964,7 @@ export default function VendorShop() {
                         promotionalVideos={product.promotional_videos || []}
                         title={product.name}
                         price={product.price}
+                        originalPrice={product.compare_price && product.compare_price > product.price ? product.compare_price : undefined}
                         currency={vendor.shop_currency || (vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF')}
                         vendor={vendor.business_name}
                         vendorId={vendor.id}

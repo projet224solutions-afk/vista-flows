@@ -414,13 +414,13 @@ export function BarcodeScannerModal({
         {foundProduct && (verificationState === 'found' || verificationState === 'verifying') && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline" className="flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-300">
+              <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-[#ff4000] border-orange-300">
                 <Eye className="h-3 w-3" />
                 Vérification visuelle requise
               </Badge>
             </div>
 
-            <Card className="border-2 border-amber-300 bg-amber-50/50">
+            <Card className="border-2 border-orange-300 bg-orange-50/50">
               <CardContent className="p-4">
                 <div className="flex gap-4">
                   {/* Image produit */}
@@ -456,7 +456,7 @@ export function BarcodeScannerModal({
                 <Separator className="my-4" />
 
                 <div className="text-center">
-                  <p className="text-sm font-medium text-amber-700 mb-3">
+                  <p className="text-sm font-medium text-[#ff4000] mb-3">
                     <AlertTriangle className="inline h-4 w-4 mr-1" />
                     Le produit scanné correspond-il à l'image ci-dessus ?
                   </p>
@@ -464,14 +464,14 @@ export function BarcodeScannerModal({
                   <div className="flex gap-3 justify-center">
                     <Button
                       variant="outline"
-                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      className="border-orange-300 text-[#ff4000] hover:bg-orange-50"
                       onClick={reportVisualMismatch}
                     >
                       <X className="h-4 w-4 mr-2" />
                       Non, différent
                     </Button>
                     <Button
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-[#ff4000] hover:bg-[#ff4000]"
                       onClick={confirmVisualMatch}
                     >
                       <Check className="h-4 w-4 mr-2" />
@@ -487,16 +487,16 @@ export function BarcodeScannerModal({
         {/* Visual Mismatch Warning */}
         {foundProduct && verificationState === 'mismatch' && (
           <div className="space-y-4">
-            <Card className="border-2 border-red-300 bg-red-50/50">
+            <Card className="border-2 border-orange-300 bg-orange-50/50">
               <CardContent className="p-4">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="h-8 w-8 text-red-600" />
+                  <div className="w-16 h-16 mx-auto mb-3 bg-orange-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="h-8 w-8 text-[#ff4000]" />
                   </div>
-                  <h3 className="font-semibold text-red-700 mb-2">
+                  <h3 className="font-semibold text-[#ff4000] mb-2">
                     Discordance détectée
                   </h3>
-                  <p className="text-sm text-red-600 mb-4">
+                  <p className="text-sm text-[#ff4000] mb-4">
                     Le produit physique ne correspond pas à l'image enregistrée.
                     Veuillez vérifier manuellement ou rescanner.
                   </p>
@@ -532,13 +532,13 @@ export function BarcodeScannerModal({
         {foundProduct && verificationState === 'confirmed' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-300">
+              <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-[#ff4000] border-orange-300">
                 <Check className="h-3 w-3" />
                 Produit vérifié
               </Badge>
             </div>
 
-            <Card className="border-2 border-green-300 bg-green-50/50">
+            <Card className="border-2 border-orange-300 bg-orange-50/50">
               <CardContent className="p-4">
                 <div className="flex gap-4 mb-4">
                   {/* Image produit */}
@@ -650,7 +650,7 @@ export function BarcodeScannerModal({
                   </div>
 
                   {quantity >= getMaxQuantity() && (
-                    <p className="text-xs text-amber-600 text-center">
+                    <p className="text-xs text-[#ff4000] text-center">
                       Stock maximum atteint
                     </p>
                   )}
@@ -687,7 +687,7 @@ export function BarcodeScannerModal({
                     </Button>
 
                     <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      className="flex-1 bg-[#ff4000] hover:bg-[#ff4000]"
                       onClick={handleAddToCart}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />

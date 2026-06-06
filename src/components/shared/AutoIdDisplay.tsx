@@ -52,7 +52,7 @@ export function AutoIdDisplay({
           title="Copier l'ID"
         >
           {copied ? (
-            <Check className="w-3 h-3 text-green-500" />
+            <Check className="w-3 h-3 text-[#ff4000]" />
           ) : (
             <Copy className="w-3 h-3" />
           )}

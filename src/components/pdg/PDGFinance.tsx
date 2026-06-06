@@ -67,10 +67,10 @@ export default function PDGFinance() {
 
   const formatRateAgeCountdown = (ageSeconds: number | null | undefined): string => {
     if (typeof ageSeconds !== 'number' || ageSeconds < 0) return 'N/A';
-    // Affiche l'âge du taux écoulé (MM:SS format)
-    const minutes = Math.floor(ageSeconds / 60);
-    const seconds = ageSeconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    // Compte à rebours dans le cycle de rafraîchissement BCRG (1 min) : 59 → 00 puis redémarre.
+    // Basé sur l'âge réel du taux : atteint 00 quand le taux a ~60 s (juste avant le prochain scrape).
+    const remaining = 59 - (Math.floor(ageSeconds) % 60);
+    return String(remaining).padStart(2, '0');
   };
 
   const visibleBankSources = (() => {
@@ -270,7 +270,7 @@ export default function PDGFinance() {
       if (response.data?.changed_under_one_hour) {
         toast.warning(`Changement de taux detecte en ${response.data?.minutes_between || 'N/A'} min.${response.data?.alert_created ? ' Alerte enregistree.' : ' Alerte deja active.'}`);
       } else {
-        toast.success('Aucun changement de taux en moins d\'1 heure.');
+        toast.success('Aucun changement de taux en moins d\'1 minute.');
       }
       await loadFxHealth();
     } catch (error: any) {
@@ -449,7 +449,7 @@ export default function PDGFinance() {
         <PlatformRevenueOverview />
 
         {/* FX Commission Management Card */}
-        <Card className="border-border/40 bg-gradient-to-br from-blue-500/5 to-purple-500/5 backdrop-blur-sm">
+        <Card className="border-border/40 bg-gradient-to-br from-blue-500/5 to-[#04439e]/5 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <DollarSign className="w-5 h-5 text-blue-500" />
@@ -467,7 +467,7 @@ export default function PDGFinance() {
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
                 {fxError && (
-                  <p className="text-xs text-red-500">Erreur: {fxError}</p>
+                  <p className="text-xs text-[#ff4000]">Erreur: {fxError}</p>
                 )}
                 <Button type="button" variant="outline" size="sm" onClick={loadFxHealth} className="gap-2">
                   <RefreshCw className="w-3 h-3" />
@@ -488,7 +488,7 @@ export default function PDGFinance() {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-purple-200/50 bg-purple-50/30 p-3">
+                <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 p-3">
                   <p className="text-xs text-muted-foreground font-medium">Taux Actuel</p>
                   <p className="text-lg font-semibold mt-1">
                     {fxHealth.current_rate
@@ -502,9 +502,9 @@ export default function PDGFinance() {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-emerald-200/50 bg-emerald-50/30 p-3">
+                <div className="rounded-lg border border-orange-200/50 bg-orange-50/30 p-3">
                   <p className="text-xs text-muted-foreground font-medium">Taux Final (avec commission)</p>
-                  <p className="text-lg font-semibold mt-1 text-emerald-600">
+                  <p className="text-lg font-semibold mt-1 text-[#ff4000]">
                     {typeof fxHealth.current_rate?.final_rate_usd === 'number'
                       ? fxHealth.current_rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })
                       : 'N/A'}
@@ -533,7 +533,7 @@ export default function PDGFinance() {
               </Button>
               <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
                 <AlertTriangle className="w-4 h-4" />
-                {alertCheckLoading ? 'Vérification...' : 'Alerte changement < 1h'}
+                {alertCheckLoading ? 'Vérification...' : 'Alerte changement < 1 min'}
               </Button>
               <Button
                 type="button"
@@ -662,7 +662,7 @@ export default function PDGFinance() {
             </Button>
             <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
               <AlertTriangle className="w-4 h-4" />
-              {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1h'}
+              {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1 min'}
             </Button>
           </div>
         </CardHeader>
@@ -676,7 +676,7 @@ export default function PDGFinance() {
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
               {fxError && (
-                <p className="text-xs text-red-500">Erreur: {fxError}</p>
+                <p className="text-xs text-[#ff4000]">Erreur: {fxError}</p>
               )}
               <Button type="button" variant="outline" size="sm" onClick={loadFxHealth} className="gap-2">
                 <RefreshCw className="w-3 h-3" />
@@ -710,7 +710,6 @@ export default function PDGFinance() {
                   { key: 'EUR_GNF', label: 'EUR → GNF', name: 'Euro' },
                   { key: 'GBP_GNF', label: 'GBP → GNF', name: 'Livre sterling' },
                   { key: 'XOF_GNF', label: 'XOF → GNF', name: 'CFA UEMOA' },
-                  { key: 'XAF_GNF', label: 'XAF → GNF', name: 'CFA CEMAC' },
                   { key: 'CAD_GNF', label: 'CAD → GNF', name: 'Dollar canadien' },
                 ].map(({ key, label }) => {
                   const kr = fxHealth.key_rates?.[key];
@@ -875,11 +874,11 @@ export default function PDGFinance() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#ff4000]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-green-500" />
+              <div className="w-8 h-8 rounded-lg bg-[#ff4000]/10 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-[#ff4000]" />
               </div>
               Revenus Totaux
             </CardTitle>
@@ -889,7 +888,7 @@ export default function PDGFinance() {
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 {(stats.total_revenue || 0).toLocaleString()} GNF
               </p>
-              <p className="text-xs text-green-500 flex items-center gap-1">
+              <p className="text-xs text-[#ff4000] flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 +12.5% ce mois
               </p>
@@ -945,11 +944,11 @@ export default function PDGFinance() {
           className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group cursor-pointer"
           onClick={() => setShowWalletsDialog(true)}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#04439e]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Wallet className="w-4 h-4 text-purple-500" />
+              <div className="w-8 h-8 rounded-lg bg-[#04439e]/10 flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-[#04439e]" />
               </div>
               Wallets Actifs
             </CardTitle>
@@ -1080,14 +1079,14 @@ export default function PDGFinance() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      trans.status === 'completed' ? 'bg-green-500/10' :
+                      trans.status === 'completed' ? 'bg-[#ff4000]/10' :
                       trans.status === 'pending' ? 'bg-orange-500/10' :
-                      'bg-red-500/10'
+                      'bg-[#ff4000]/10'
                     }`}>
                       <DollarSign className={`w-6 h-6 ${
-                        trans.status === 'completed' ? 'text-green-500' :
+                        trans.status === 'completed' ? 'text-[#ff4000]' :
                         trans.status === 'pending' ? 'text-orange-500' :
-                        'text-red-500'
+                        'text-[#ff4000]'
                       }`} />
                     </div>
                     <div>
@@ -1115,9 +1114,9 @@ export default function PDGFinance() {
                       {Number(trans.amount).toLocaleString()} GNF
                     </p>
                     <Badge variant="outline" className={
-                      trans.status === 'completed' ? 'border-green-500/50 bg-green-500/10 text-green-500' :
+                      trans.status === 'completed' ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]' :
                       trans.status === 'pending' ? 'border-orange-500/50 bg-orange-500/10 text-orange-500' :
-                      'border-red-500/50 bg-red-500/10 text-red-500'
+                      'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]'
                     }>
                       {trans.status}
                     </Badge>
@@ -1276,27 +1275,27 @@ export default function PDGFinance() {
                                 <span className="font-mono text-muted-foreground">{dateStr} {timeStr}</span>
                                 {tx.id && <span className="font-mono text-[10px] text-muted-foreground/70 hidden sm:inline">{String(tx.id).slice(0, 16)}</span>}
                               </div>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isIntl ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isIntl ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-[#ff4000]'}`}>
                                 {isIntl ? 'International' : 'Domestique'}
                               </span>
                             </div>
                             {/* Ligne 2 : expéditeur → destinataire + pays */}
                             <div className="flex items-center gap-1 font-medium">
-                              <span className="text-red-700">{tx.sender_name}</span>
+                              <span className="text-[#ff4000]">{tx.sender_name}</span>
                               <span className="text-muted-foreground">({tx.sender_country})</span>
                               <span className="text-muted-foreground mx-1">→</span>
-                              <span className="text-green-700">{tx.receiver_name}</span>
+                              <span className="text-[#ff4000]">{tx.receiver_name}</span>
                               <span className="text-muted-foreground">({tx.receiver_country})</span>
                             </div>
                             {/* Ligne 3 : montants */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="rounded bg-red-50 border border-red-100 p-2">
+                              <div className="rounded bg-orange-50 border border-orange-100 p-2">
                                 <p className="text-[10px] text-muted-foreground">Montant envoyé</p>
-                                <p className="font-bold text-red-700">{Math.round(tx.amount_sent).toLocaleString('fr-FR')} <span className="font-normal">{tx.sender_currency}</span></p>
+                                <p className="font-bold text-[#ff4000]">{Math.round(tx.amount_sent).toLocaleString('fr-FR')} <span className="font-normal">{tx.sender_currency}</span></p>
                               </div>
-                              <div className="rounded bg-green-50 border border-green-100 p-2">
+                              <div className="rounded bg-orange-50 border border-orange-100 p-2">
                                 <p className="text-[10px] text-muted-foreground">Montant reçu</p>
-                                <p className="font-bold text-green-700">{Math.round(tx.amount_received).toLocaleString('fr-FR')} <span className="font-normal">{tx.receiver_currency}</span></p>
+                                <p className="font-bold text-[#ff4000]">{Math.round(tx.amount_received).toLocaleString('fr-FR')} <span className="font-normal">{tx.receiver_currency}</span></p>
                               </div>
                               {tx.fee_amount > 0 && (
                                 <div className="rounded bg-orange-50 border border-orange-100 p-2">
@@ -1308,7 +1307,11 @@ export default function PDGFinance() {
                                 <div className="rounded bg-blue-50 border border-blue-100 p-2">
                                   <p className="text-[10px] text-muted-foreground">Taux appliqué</p>
                                   <p className="font-semibold text-blue-700">
-                                    1 {tx.sender_currency} = {tx.rate_used >= 1 ? tx.rate_used.toLocaleString('fr-FR', { maximumFractionDigits: 4 }) : (1 / tx.rate_used).toLocaleString('fr-FR', { maximumFractionDigits: 4 })} {tx.receiver_currency}
+                                    {/* rate_used = unités de receiver pour 1 sender. Si < 1, on inverse
+                                        le NOMBRE *et* les devises pour rester cohérent (ex. 1 XOF = 15,49 GNF). */}
+                                    {tx.rate_used >= 1
+                                      ? `1 ${tx.sender_currency} = ${tx.rate_used.toLocaleString('fr-FR', { maximumFractionDigits: 4 })} ${tx.receiver_currency}`
+                                      : `1 ${tx.receiver_currency} = ${(1 / tx.rate_used).toLocaleString('fr-FR', { maximumFractionDigits: 4 })} ${tx.sender_currency}`}
                                   </p>
                                   {tx.rate_source && <p className="text-[10px] text-muted-foreground truncate">{tx.rate_source}</p>}
                                 </div>
@@ -1353,7 +1356,7 @@ export default function PDGFinance() {
                                 <td className="p-2 text-right hidden sm:table-cell text-muted-foreground">{r.margin != null ? `${(Number(r.margin) * 100).toFixed(1)}%` : '—'}</td>
                                 <td className="p-2 text-muted-foreground truncate max-w-[120px] hidden sm:table-cell">{r.source || '—'}</td>
                                 <td className="p-2 text-center">
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${r.status === 'OK' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status || '—'}</span>
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${r.status === 'OK' ? 'bg-orange-100 text-[#ff4000]' : 'bg-orange-100 text-[#ff4000]'}`}>{r.status || '—'}</span>
                                 </td>
                               </tr>
                             );
@@ -1438,9 +1441,9 @@ export default function PDGFinance() {
 
                       {/* Informations wallet */}
                       <div className="space-y-4">
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20">
+                        <div className="p-4 rounded-lg bg-gradient-to-br from-[#ff4000]/10 to-transparent border border-[#ff4000]/20">
                           <p className="text-sm text-muted-foreground mb-1">Solde</p>
-                          <p className="text-3xl font-bold text-green-600">
+                          <p className="text-3xl font-bold text-[#ff4000]">
                             {Number(wallet.balance).toLocaleString()} {wallet.currency}
                           </p>
                         </div>
@@ -1450,7 +1453,7 @@ export default function PDGFinance() {
                             <span className="text-muted-foreground">Statut:</span>
                             <Badge
                               variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
-                              className={wallet.wallet_status === 'active' ? 'bg-green-500' : ''}
+                              className={wallet.wallet_status === 'active' ? 'bg-[#ff4000]' : ''}
                             >
                               {wallet.wallet_status}
                             </Badge>

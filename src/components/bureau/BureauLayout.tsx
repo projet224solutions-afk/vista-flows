@@ -75,7 +75,7 @@ export function BureauLayout({
     {
       id: 'sos',
       label: 'Alertes SOS',
-      icon: <AlertTriangle className="w-5 h-5 text-red-500" />
+      icon: <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
     },
     {
       id: 'motos',
@@ -85,7 +85,7 @@ export function BureauLayout({
     {
       id: 'security',
       label: 'Sécurité Vol',
-      icon: <ShieldAlert className="w-5 h-5 text-red-600" />
+      icon: <ShieldAlert className="w-5 h-5 text-[#ff4000]" />
     },
     {
       id: 'wallet',
@@ -95,12 +95,12 @@ export function BureauLayout({
     {
       id: 'tickets',
       label: 'Tickets Transport',
-      icon: <Ticket className="w-5 h-5 text-amber-600" />
+      icon: <Ticket className="w-5 h-5 text-[#ff4000]" />
     },
     {
       id: 'my-purchases',
       label: 'Mes Achats',
-      icon: <ShoppingBag className="w-5 h-5 text-emerald-600" />
+      icon: <ShoppingBag className="w-5 h-5 text-[#ff4000]" />
     },
     {
       id: 'workers',
@@ -126,7 +126,7 @@ export function BureauLayout({
     {
       id: 'support',
       label: 'Support Technique',
-      icon: <Headphones className="w-5 h-5 text-sky-500" />
+      icon: <Headphones className="w-5 h-5 text-[#04439e]" />
     },
     {
       id: 'settings',
@@ -151,7 +151,7 @@ export function BureauLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-orange-50">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
@@ -164,7 +164,7 @@ export function BureauLayout({
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-lg">
+              <div className="p-1.5 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-lg">
                 <Building2 className="w-4 h-4 text-white" />
               </div>
               <span className="font-semibold text-slate-800">Bureau</span>
@@ -174,13 +174,13 @@ export function BureauLayout({
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
               {alertsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff4000] rounded-full text-white text-xs flex items-center justify-center">
                   {alertsCount}
                 </span>
               )}
             </Button>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white text-xs">
+              <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white text-xs">
                 {getInitials(bureau.president_name)}
               </AvatarFallback>
             </Avatar>
@@ -221,7 +221,7 @@ export function BureauLayout({
               </div>
             )}
             {sidebarCollapsed && (
-              <div className="p-2 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl">
+              <div className="p-2 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl">
                 <Building2 className="w-5 h-5 text-white" />
               </div>
             )}
@@ -241,10 +241,10 @@ export function BureauLayout({
 
           {/* Bureau Info */}
           {!sidebarCollapsed && (
-            <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 mx-3 mt-3 rounded-xl">
+            <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-50 mx-3 mt-3 rounded-xl">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12 ring-2 ring-white shadow">
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white font-semibold">
+                  <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white font-semibold">
                     {getInitials(bureau.president_name)}
                   </AvatarFallback>
                 </Avatar>
@@ -283,7 +283,7 @@ export function BureauLayout({
                   className={cn(
                     "w-full justify-start gap-3 h-11 transition-all",
                     activeTab === item.id
-                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white shadow-md"
                       : "text-slate-600 hover:bg-slate-100",
                     sidebarCollapsed && "justify-center px-2"
                   )}
@@ -317,7 +317,7 @@ export function BureauLayout({
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start gap-3 text-red-600 hover:bg-red-50 hover:text-red-700",
+                "w-full justify-start gap-3 text-[#ff4000] hover:bg-orange-50 hover:text-[#ff4000]",
                 sidebarCollapsed && "justify-center"
               )}
               onClick={onLogout}
@@ -350,7 +350,7 @@ export function BureauLayout({
             <Badge variant={bureau.status === 'active' ? "default" : "secondary"} className={cn(
               "px-3 py-1",
               bureau.status === 'active'
-                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                ? "bg-orange-100 text-[#ff4000] hover:bg-orange-100"
                 : "bg-slate-100 text-slate-600"
             )}>
               {bureau.status === 'active' ? '● Actif' : '○ Inactif'}
@@ -358,7 +358,7 @@ export function BureauLayout({
             <Button variant="ghost" size="icon" className="relative" onClick={() => onTabChange('alerts')}>
               <Bell className="w-5 h-5" />
               {alertsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff4000] rounded-full text-white text-xs flex items-center justify-center">
                   {alertsCount}
                 </span>
               )}
@@ -366,7 +366,7 @@ export function BureauLayout({
             <Separator orientation="vertical" className="h-8" />
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 ring-2 ring-slate-100">
-                <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white">
+                <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
                   {getInitials(bureau.president_name)}
                 </AvatarFallback>
               </Avatar>

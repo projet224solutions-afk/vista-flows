@@ -352,7 +352,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <MapPin className="h-5 w-5 text-green-600" />
+            <MapPin className="h-5 w-5 text-[#ff4000]" />
             Informations du destinataire
           </CardTitle>
         </CardHeader>
@@ -416,15 +416,15 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
           {/* Affichage du prix calculé */}
           {priceResult && (
-            <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800">
-              <h4 className="font-semibold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
+            <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20 rounded-lg border border-orange-200 dark:border-[#ff4000]">
+              <h4 className="font-semibold text-[#ff4000] dark:text-orange-300 mb-3 flex items-center gap-2">
                 <Route className="h-4 w-4" />
                 Estimation de livraison
               </h4>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
                   <p className="text-xs text-muted-foreground">Distance</p>
-                  <p className="font-bold text-green-700 dark:text-green-400">{priceResult.distance} km</p>
+                  <p className="font-bold text-[#ff4000] dark:text-[#ff4000]">{priceResult.distance} km</p>
                 </div>
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
                   <p className="text-xs text-muted-foreground">Temps estimé</p>

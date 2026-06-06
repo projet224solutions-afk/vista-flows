@@ -94,22 +94,13 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
     try {
       setLoading(true);
 
-      // Extraire le token de l'URL
-      const currentPath = window.location.pathname;
-      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
-      const agentToken = tokenMatch ? tokenMatch[1] : null;
+      // Backend Node (agent connecté → résolu par JWT)
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/products/list', { method: 'POST', body: {} });
 
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
+      if (!resp.success) throw new Error(resp.error || 'Erreur chargement produits');
 
-      const { data, error } = await supabase.functions.invoke('agent-get-products', {
-        body: { agentToken }
-      });
-
-      if (error) throw error;
-
+      const data = resp.data;
       if (data) {
         setProducts(data.products || []);
         setVendors(data.vendors || []);
@@ -132,20 +123,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
-      const currentPath = window.location.pathname;
-      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
-      const agentToken = tokenMatch ? tokenMatch[1] : null;
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch('/api/agents/products/toggle-status', { method: 'POST', body: { productId, currentStatus } });
 
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
-
-      const { error } = await supabase.functions.invoke('agent-toggle-product-status', {
-        body: { agentToken, productId, currentStatus }
-      });
-
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur');
 
       toast.success(`Produit ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
       await loadProducts();
@@ -157,20 +138,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
 
   const deleteProduct = async (productId: string) => {
     try {
-      const currentPath = window.location.pathname;
-      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
-      const agentToken = tokenMatch ? tokenMatch[1] : null;
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch('/api/agents/products/delete', { method: 'POST', body: { productId } });
 
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
-
-      const { error } = await supabase.functions.invoke('agent-delete-product', {
-        body: { agentToken, productId }
-      });
-
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur');
 
       toast.success('Produit supprimé avec succès');
       setShowDeleteConfirm(null);
@@ -185,18 +156,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
     if (!editingProduct) return;
 
     try {
-      const currentPath = window.location.pathname;
-      const tokenMatch = currentPath.match(/\/agent\/([^\/]+)/);
-      const agentToken = tokenMatch ? tokenMatch[1] : null;
-
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
-
-      const { error } = await supabase.functions.invoke('agent-update-product', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch('/api/agents/products/update', {
+        method: 'POST',
         body: {
-          agentToken,
           productId: editingProduct.id,
           updates: {
             name: editingProduct.name,
@@ -208,7 +171,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
         }
       });
 
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur');
 
       toast.success('Produit mis à jour avec succès');
       setEditingProduct(null);
@@ -263,10 +226,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Actifs</CardTitle>
-            <TrendingUp className="w-4 h-4 text-green-500" />
+            <TrendingUp className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {stats.active}
             </div>
             <p className="text-xs text-muted-foreground mt-1">en vente</p>
@@ -276,10 +239,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Inactifs</CardTitle>
-            <TrendingDown className="w-4 h-4 text-red-500" />
+            <TrendingDown className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {stats.inactive}
             </div>
             <p className="text-xs text-muted-foreground mt-1">suspendus</p>
@@ -289,10 +252,10 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Stock Total</CardTitle>
-            <Box className="w-4 h-4 text-purple-500" />
+            <Box className="w-4 h-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
+            <div className="text-2xl font-bold text-[#04439e]">
               {stats.totalStock.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
@@ -384,9 +347,9 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
                   </div>
                   <div className="flex items-center gap-2">
                     {product.is_active ? (
-                      <Badge className="bg-green-500">Actif</Badge>
+                      <Badge className="bg-[#ff4000]">Actif</Badge>
                     ) : (
-                      <Badge className="bg-red-500">Inactif</Badge>
+                      <Badge className="bg-[#ff4000]">Inactif</Badge>
                     )}
                   </div>
                 </div>
@@ -417,7 +380,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
                     size="sm"
                     onClick={() => setShowDeleteConfirm(product.id)}
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 text-[#ff4000]" />
                   </Button>
                 </div>
               </div>
@@ -463,7 +426,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>
-                  <Badge className={viewProduct.is_active ? "bg-green-500" : "bg-red-500"}>
+                  <Badge className={viewProduct.is_active ? "bg-[#ff4000]" : "bg-[#ff4000]"}>
                     {viewProduct.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>
@@ -561,7 +524,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => showDeleteConfirm && deleteProduct(showDeleteConfirm)}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
             >
               Supprimer
             </AlertDialogAction>

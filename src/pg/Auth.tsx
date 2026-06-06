@@ -1099,7 +1099,8 @@ export default function Auth() {
         if (authData.user && affiliateData.token) {
           try {
             console.log('🔗 [Affiliation] Enregistrement du parrainage...');
-            const { data: affiliateResult, error: affiliateError } = await supabase.functions.invoke('register-with-affiliate', {
+            const { backendFetch } = await import('@/services/backendApi');
+            const affiliateResult = await backendFetch<any>('/api/agents/affiliate-links/register', {
               body: {
                 user_id: authData.user.id,
                 email: validatedData.email,
@@ -1111,9 +1112,9 @@ export default function Auth() {
               }
             });
 
-            if (affiliateError) {
-              console.error('⚠️ [Affiliation] Erreur:', affiliateError);
-            } else if (affiliateResult?.success) {
+            if (!affiliateResult?.success) {
+              console.error('⚠️ [Affiliation] Erreur:', affiliateResult?.error);
+            } else {
               console.log('✓ [Affiliation] Parrainage enregistré avec succès');
               toast({
                 title: "Parrainage enregistré !",
@@ -1662,10 +1663,11 @@ export default function Auth() {
         } catch (e) { console.error('Erreur sync prestataire:', e); }
       }
 
-      // Affiliation
+      // Affiliation (backend Node)
       if (affiliateData.token) {
         try {
-          await supabase.functions.invoke('register-with-affiliate', {
+          const { backendFetch } = await import('@/services/backendApi');
+          await backendFetch('/api/agents/affiliate-links/register', {
             body: {
               user_id: authUser.id,
               email: proxyEmail,
@@ -1881,10 +1883,10 @@ export default function Auth() {
 
               {/* Section: Inscription directe par rôle */}
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
-                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                <h4 className="text-sm font-semibold text-[#ff4000] mb-3 flex items-center justify-center gap-2">
+                  <span className="w-8 h-0.5 bg-[#ff4000] rounded"></span>
                   Inscription Rapide
-                  <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
+                  <span className="w-8 h-0.5 bg-[#ff4000] rounded"></span>
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {QUICK_ROLE_OPTIONS.map((item) => {
@@ -1898,7 +1900,7 @@ export default function Auth() {
                         setSelectedRole(item.role);
                         setShowSignup(true);
                       }}
-                      className="group flex flex-col items-center p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border-2 hover:border-amber-500 hover:shadow-lg hover:scale-[1.02] transition-all border-amber-200"
+                      className="group flex flex-col items-center p-3 bg-gradient-to-br from-orange-50 to-white rounded-xl border-2 hover:border-[#ff4000] hover:shadow-lg hover:scale-[1.02] transition-all border-orange-200"
                     >
                       <div className="relative mb-2 h-24 w-full overflow-hidden rounded-xl">
                         <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
@@ -1908,7 +1910,7 @@ export default function Auth() {
                             {item.logoImage ? (
                               <img src={item.logoImage} alt={item.name} className="h-full w-full object-cover" loading="lazy" />
                             ) : (
-                              <Icon className="h-6 w-6 text-amber-700" />
+                              <Icon className="h-6 w-6 text-[#ff4000]" />
                             )}
                           </div>
                         </div>
@@ -1962,10 +1964,10 @@ export default function Auth() {
 
               {/* Section: Services Professionnels */}
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
-                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                <h4 className="text-sm font-semibold text-[#04439e] mb-3 flex items-center justify-center gap-2">
+                  <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
                   Services Professionnels
-                  <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+                  <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {PROFESSIONAL_SERVICE_OPTIONS.map((service) => {
@@ -1974,8 +1976,8 @@ export default function Auth() {
                     <button
                       key={service.id}
                       onClick={() => handleServiceTypeSelect(service.id)}
-                      className={`group flex flex-col items-center p-3 bg-gradient-to-br from-violet-50 to-white rounded-xl border-2 hover:border-violet-500 hover:shadow-lg hover:scale-[1.02] transition-all ${
-                        selectedServiceType === service.id ? 'border-violet-500 ring-2 ring-violet-500/30' : 'border-violet-200'
+                      className={`group flex flex-col items-center p-3 bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 hover:border-[#04439e] hover:shadow-lg hover:scale-[1.02] transition-all ${
+                        selectedServiceType === service.id ? 'border-[#04439e] ring-2 ring-[#04439e]/30' : 'border-blue-200'
                       }`}
                     >
                       <div className="relative mb-2 h-24 w-full overflow-hidden rounded-xl">
@@ -1986,7 +1988,7 @@ export default function Auth() {
                             {service.logoImage ? (
                               <img src={service.logoImage} alt={service.name} className="h-full w-full object-cover" loading="lazy" />
                             ) : (
-                              <Icon className="h-6 w-6 text-violet-700" />
+                              <Icon className="h-6 w-6 text-[#04439e]" />
                             )}
                           </div>
                         </div>
@@ -2015,7 +2017,7 @@ export default function Auth() {
                     }
                     handleGoogleLogin(false);
                   }}
-                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md transition-all duration-200"
                   disabled={oauthLoading !== null}
                 >
                   {oauthLoading === 'google' ? (
@@ -2149,10 +2151,10 @@ export default function Auth() {
                     </div>
                   </div>
                 </div>
-                <div className="mb-6 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl">
+                <div className="mb-6 p-3 bg-gradient-to-r from-orange-50 to-orange-50 border border-orange-200/60 rounded-xl">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                    <p className="text-amber-700 text-xs">
+                    <AlertCircle className="h-4 w-4 text-[#ff4000] flex-shrink-0" />
+                    <p className="text-[#ff4000] text-xs">
                       Nouveau inscrit ? Confirmez votre email avant de vous connecter.
                     </p>
                   </div>
@@ -2208,10 +2210,10 @@ export default function Auth() {
                         setShowVendorTypeSelection(false);
                         setShowSignup(true);
                       }}
-                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-indigo-400 hover:bg-indigo-50/60 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-200"
+                      className="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 rounded-xl border-2 border-border/60 bg-background hover:border-[#04439e] hover:bg-blue-50/60 hover:shadow-lg hover:shadow-[#04439e]/10 transition-all duration-200"
                     >
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-indigo-100 group-hover:bg-indigo-500 flex items-center justify-center shrink-0 transition-colors">
-                        <Laptop className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600 group-hover:text-white transition-colors" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-100 group-hover:bg-[#04439e] flex items-center justify-center shrink-0 transition-colors">
+                        <Laptop className="h-6 w-6 sm:h-7 sm:w-7 text-[#04439e] group-hover:text-white transition-colors" />
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">Digitaux</span>
@@ -2231,7 +2233,7 @@ export default function Auth() {
                         localStorage.setItem('oauth_is_new_signup', 'true');
                         handleGoogleLogin(false);
                       }}
-                      className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
+                      className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md transition-all duration-200"
                       disabled={oauthLoading !== null}
                     >
                       {oauthLoading === 'google' ? (
@@ -2296,14 +2298,14 @@ export default function Auth() {
                     onClick={() => handleRoleClick('vendeur')}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'prestataire'
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
+                        ? 'bg-gradient-to-br from-[#ff4000] to-[#ff4000] border-[#ff4000] text-white shadow-lg shadow-[#ff4000]/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-orange-300 hover:bg-orange-50/50'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-orange-100 group-hover:bg-orange-200'
                     }`}>
-                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-emerald-600'}`} />
+                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-[#ff4000]'}`} />
                     </div>
                     <span className={`text-sm font-semibold ${selectedRole === 'prestataire' ? 'text-white' : 'text-foreground'}`}>
                       Service
@@ -2319,20 +2321,20 @@ export default function Auth() {
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
                 selectedRole === 'vendeur' ? 'bg-primary/5 border-primary/20' :
-                selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
+                selectedRole === 'prestataire' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
-                selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
-                selectedRole === 'transitaire' ? 'bg-purple-50 border-purple-200' :
-                selectedRole === 'client' ? 'bg-emerald-50 border-emerald-200' :
+                selectedRole === 'taxi' ? 'bg-orange-50 border-orange-200' :
+                selectedRole === 'transitaire' ? 'bg-blue-50 border-blue-200' :
+                selectedRole === 'client' ? 'bg-orange-50 border-orange-200' :
                 'bg-muted/50 border-border'
               }`}>
                 <p className={`text-sm ${
                   selectedRole === 'vendeur' ? 'text-primary' :
-                  selectedRole === 'prestataire' ? 'text-emerald-800' :
+                  selectedRole === 'prestataire' ? 'text-[#ff4000]' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
-                  selectedRole === 'taxi' ? 'text-yellow-800' :
-                  selectedRole === 'transitaire' ? 'text-purple-800' :
-                  selectedRole === 'client' ? 'text-emerald-800' :
+                  selectedRole === 'taxi' ? 'text-[#ff4000]' :
+                  selectedRole === 'transitaire' ? 'text-[#04439e]' :
+                  selectedRole === 'client' ? 'text-[#ff4000]' :
                   'text-foreground'
                 }`}>
                   <strong>Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'prestataire de service' : selectedRole === 'vendeur' ? 'vendeur e-commerce' : selectedRole}` : ''}.
@@ -2340,9 +2342,9 @@ export default function Auth() {
                     <span className={`block mt-2 font-semibold ${
                       selectedRole === 'vendeur' ? 'text-primary' :
                       selectedRole === 'livreur' ? 'text-orange-700' :
-                      selectedRole === 'taxi' ? 'text-yellow-700' :
-                      selectedRole === 'transitaire' ? 'text-purple-700' :
-                      selectedRole === 'client' ? 'text-emerald-700' :
+                      selectedRole === 'taxi' ? 'text-[#ff4000]' :
+                      selectedRole === 'transitaire' ? 'text-[#04439e]' :
+                      selectedRole === 'client' ? 'text-[#ff4000]' :
                       'text-primary'
                     }`}>
                       Service sélectionné : {(() => {
@@ -2353,7 +2355,7 @@ export default function Auth() {
                     </span>
                   )}
                   {selectedRole === 'vendeur' && !selectedServiceType && vendorShopType === 'digital' && (
-                    <span className="block mt-1 font-semibold text-purple-700">
+                    <span className="block mt-1 font-semibold text-[#04439e]">
                       Mode produits digitaux (fichiers, formations, e-books)
                     </span>
                   )}
@@ -2370,9 +2372,9 @@ export default function Auth() {
             {showResetPassword ? (
               <form onSubmit={handlePasswordReset} className="space-y-4">
                 {error && (
-                  <Alert className="bg-red-50 border-red-200">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-800">
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <AlertCircle className="h-4 w-4 text-[#ff4000]" />
+                    <AlertDescription className="text-[#ff4000]">
                       {error}
                     </AlertDescription>
                   </Alert>
@@ -2407,9 +2409,9 @@ export default function Auth() {
                       />
                     </div>
                     {error && (
-                      <Alert className="bg-red-50 border-red-200">
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                        <AlertDescription className="text-red-800">{error}</AlertDescription>
+                      <Alert className="bg-orange-50 border-orange-200">
+                        <AlertCircle className="h-4 w-4 text-[#ff4000]" />
+                        <AlertDescription className="text-[#ff4000]">{error}</AlertDescription>
                       </Alert>
                     )}
                     <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || resetOtpCode.length < 4}>
@@ -2445,17 +2447,17 @@ export default function Auth() {
                 )}
 
                 {phoneNotFoundReset && !resetOtpSent && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
                     <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <AlertCircle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-amber-800">Numéro non reconnu</p>
-                        <p className="text-xs text-amber-700">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                        <p className="text-sm font-medium text-[#ff4000]">Numéro non reconnu</p>
+                        <p className="text-xs text-[#ff4000]">Ce numéro n'est lié à aucun compte 224Solutions.</p>
                       </div>
                     </div>
                     <Button
                       type="button"
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+                      className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white text-sm"
                       onClick={() => {
                         setShowResetPassword(false);
                         setPhoneNotFoundReset(false);
@@ -2519,9 +2521,9 @@ export default function Auth() {
             ) : showNewPasswordForm ? (
               <form onSubmit={handleNewPasswordSubmit} className="space-y-4">
                 {error && (
-                  <Alert className="bg-red-50 border-red-200">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-800">
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <AlertCircle className="h-4 w-4 text-[#ff4000]" />
+                    <AlertDescription className="text-[#ff4000]">
                       {error}
                     </AlertDescription>
                   </Alert>
@@ -2586,7 +2588,7 @@ export default function Auth() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  className="w-full bg-gradient-to-r from-[#04439e] to-blue-600 hover:from-[#04439e] hover:to-blue-700 text-white"
                   disabled={loading}
                 >
                   {loading ? (
@@ -2797,12 +2799,12 @@ export default function Auth() {
                     )}
 
                     {selectedRole === 'taxi' && formData.city && !manualCityEntry && (
-                      <p className="text-xs text-green-600 mt-1">
+                      <p className="text-xs text-[#ff4000] mt-1">
                         Vous serez automatiquement synchronisé avec le bureau syndical de {formData.city}
                       </p>
                     )}
                     {selectedRole === 'taxi' && formData.city && manualCityEntry && (
-                      <p className="text-xs text-amber-600 mt-1">
+                      <p className="text-xs text-[#ff4000] mt-1">
                         Ville saisie manuellement - synchronisation bureau non garantie
                       </p>
                     )}
@@ -2812,7 +2814,7 @@ export default function Auth() {
                   {selectedRole === 'taxi' && (showMotoTaxiSelector || !formData.country) && (
                     <div>
                       <Label className="text-sm font-medium">
-                        Type de taxi <span className="text-red-500">*</span>
+                        Type de taxi <span className="text-[#ff4000]">*</span>
                       </Label>
                       <div className="relative mt-1">
                         <button
@@ -2854,7 +2856,7 @@ export default function Auth() {
                               onClick={() => { setTaxiCategory('motorcycle'); setTaxiDropdownOpen(false); }}
                               className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors hover:bg-orange-50 ${taxiCategory === 'motorcycle' ? 'bg-orange-50 text-orange-700' : 'text-foreground'}`}
                             >
-                              <Bike className="h-5 w-5 text-emerald-600 shrink-0" />
+                              <Bike className="h-5 w-5 text-[#ff4000] shrink-0" />
                               <div>
                                 <p className="font-medium">Taxi Moto</p>
                                 <p className="text-xs text-muted-foreground">Moto, scooter, taxi-moto</p>
@@ -2938,15 +2940,15 @@ export default function Auth() {
                         }}
                         placeholder={getPhoneExample(phoneCode)}
                         required
-                        className={`flex-1 ${phoneError ? 'border-red-500 focus:ring-red-500' : ''}`}
+                        className={`flex-1 ${phoneError ? 'border-[#ff4000] focus:ring-[#ff4000]' : ''}`}
                       />
                     </div>
                     {phoneError ? (
-                      <p className="text-xs text-red-500 mt-1">
+                      <p className="text-xs text-[#ff4000] mt-1">
                         ✕ {phoneError}
                       </p>
                     ) : formData.phone && !phoneError ? (
-                      <p className="text-xs text-green-600 mt-1">
+                      <p className="text-xs text-[#ff4000] mt-1">
                         ✓ Format valide ({getPhoneLengthHint(phoneCode)})
                       </p>
                     ) : (
@@ -2982,9 +2984,9 @@ export default function Auth() {
                     />
                   </div>
                   {error && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                      <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
-                      <p className="text-sm text-red-800">{error}</p>
+                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <AlertCircle className="h-4 w-4 text-[#ff4000] shrink-0" />
+                      <p className="text-sm text-[#ff4000]">{error}</p>
                     </div>
                   )}
                   <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || loginPhoneOtp.length < 4}>
@@ -3006,9 +3008,9 @@ export default function Auth() {
               /* Formulaire OTP téléphone — inscription */
               ) : phoneSignupOtpSent ? (
                 <form onSubmit={handlePhoneSignupVerify} className="space-y-4">
-                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                    <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <p className="text-sm text-emerald-800">Code SMS envoyé au <strong>{phoneSignupPhone}</strong></p>
+                  <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <Phone className="h-4 w-4 text-[#ff4000] shrink-0" />
+                    <p className="text-sm text-[#ff4000]">Code SMS envoyé au <strong>{phoneSignupPhone}</strong></p>
                   </div>
                   <div>
                     <Label htmlFor="signup-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Code de vérification</Label>
@@ -3025,19 +3027,19 @@ export default function Auth() {
                     />
                   </div>
                   {error && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                      <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
-                      <p className="text-sm text-red-800">{error}</p>
+                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <AlertCircle className="h-4 w-4 text-[#ff4000] shrink-0" />
+                      <p className="text-sm text-[#ff4000]">{error}</p>
                     </div>
                   )}
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading || phoneSignupOtp.length < 4}>
+                  <Button type="submit" className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white" disabled={loading || phoneSignupOtp.length < 4}>
                     {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Création du compte...</> : 'Créer mon compte'}
                   </Button>
                   <button
                     type="button"
                     onClick={handleResendPhoneSignupOtp}
                     disabled={loading || phoneSignupResendCooldown > 0}
-                    className="w-full text-sm text-emerald-600 hover:underline disabled:text-muted-foreground disabled:no-underline py-1"
+                    className="w-full text-sm text-[#ff4000] hover:underline disabled:text-muted-foreground disabled:no-underline py-1"
                   >
                     {phoneSignupResendCooldown > 0 ? `Renvoyer le code (${phoneSignupResendCooldown}s)` : 'Renvoyer le code'}
                   </button>
@@ -3067,7 +3069,7 @@ export default function Auth() {
                     onClick={() => setSignupMethod('phone')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                       signupMethod === 'phone'
-                        ? 'bg-white shadow-sm text-emerald-600'
+                        ? 'bg-white shadow-sm text-[#ff4000]'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -3097,23 +3099,23 @@ export default function Auth() {
 
               {/* Numéro utilisé pour l'inscription par téléphone */}
               {showSignup && signupMethod === 'phone' && (
-                <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                  <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                  <p className="text-sm text-emerald-800">
+                <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <Phone className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
+                  <p className="text-sm text-[#ff4000]">
                     Votre numéro <strong>{phoneCode} {formData.phone || '...'}</strong> sera utilisé pour vous connecter par SMS.
                   </p>
                 </div>
               )}
 
               {loginPhoneNotFound && !showSignup && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                    <p className="text-sm text-amber-800">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                    <AlertCircle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
+                    <p className="text-sm text-[#ff4000]">Ce numéro n'est lié à aucun compte 224Solutions.</p>
                   </div>
                   <Button
                     type="button"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
+                    className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white text-sm"
                     onClick={() => {
                       setLoginPhoneNotFound(false);
                       // Pré-remplir le numéro depuis le champ de connexion
@@ -3196,7 +3198,7 @@ export default function Auth() {
                       setError(null);
                       setSuccess(null);
                     }}
-                    className="text-sm text-purple-600 hover:underline"
+                    className="text-sm text-[#04439e] hover:underline"
                   >
                     {t('auth.forgotPassword')}
                   </button>
@@ -3237,7 +3239,7 @@ export default function Auth() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-14 gap-3 font-medium text-base hover:bg-red-50 hover:border-red-300 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
+                        className="w-full h-14 gap-3 font-medium text-base hover:bg-orange-50 hover:border-orange-300 hover:shadow-lg transition-all duration-200 relative overflow-hidden group"
                         onClick={() => handleGoogleLogin(false)}
                         disabled={loading || oauthLoading !== null}
                         aria-label={showSignup ? "S'inscrire avec Google" : "Se connecter avec Google"}
@@ -3503,7 +3505,7 @@ export default function Auth() {
                     required
                   />
                 </div>
-                {phoneError && <p className="text-[10px] text-red-500 mt-0.5">{phoneError}</p>}
+                {phoneError && <p className="text-[10px] text-[#ff4000] mt-0.5">{phoneError}</p>}
               </div>
 
               {/* Pays & Ville */}
@@ -3595,7 +3597,7 @@ export default function Auth() {
               </div>
 
               {error && (
-                <p className="text-xs text-red-600 bg-red-50 p-2 rounded-md">{error}</p>
+                <p className="text-xs text-[#ff4000] bg-orange-50 p-2 rounded-md">{error}</p>
               )}
 
               {/* Bouton Créer */}
@@ -3630,7 +3632,7 @@ export default function Auth() {
                 setShowRoleSelectionModal(false);
                 handleGoogleLogin(false);
               }}
-              className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 hover:shadow-md transition-all duration-200"
+              className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-white border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md transition-all duration-200"
               disabled={oauthLoading !== null}
             >
               {oauthLoading === 'google' ? (

@@ -207,12 +207,12 @@ export function VendorSubscriptionSimple() {
 
           {/* Message expiration */}
           {isExpired && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 text-red-800 font-bold mb-1">
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center gap-2 text-[#ff4000] font-bold mb-1">
                 <AlertCircle className="w-5 h-5" />
                 Abonnement expiré
               </div>
-              <p className="text-sm text-red-700">
+              <p className="text-sm text-[#ff4000]">
                 Choisissez un nouveau plan pour continuer.
               </p>
             </div>

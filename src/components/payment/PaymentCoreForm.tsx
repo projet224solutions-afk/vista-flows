@@ -34,9 +34,9 @@ interface PaymentCoreFormProps {
 
 const paymentMethods: { id: PaymentMethod; name: string; icon: React.ReactNode; color: string }[] = [
   { id: 'OM', name: 'Orange Money', icon: <Smartphone className="h-5 w-5" />, color: 'bg-orange-500' },
-  { id: 'MOMO', name: 'MTN MoMo', icon: <Smartphone className="h-5 w-5" />, color: 'bg-yellow-500' },
+  { id: 'MOMO', name: 'MTN MoMo', icon: <Smartphone className="h-5 w-5" />, color: 'bg-[#ff4000]' },
   { id: 'CARD', name: 'Carte Bancaire', icon: <CreditCard className="h-5 w-5" />, color: 'bg-blue-500' },
-  { id: 'KULU', name: 'KULU', icon: <CreditCard className="h-5 w-5" />, color: 'bg-purple-500' },
+  { id: 'KULU', name: 'KULU', icon: <CreditCard className="h-5 w-5" />, color: 'bg-[#04439e]' },
 ];
 
 const typeLabels: Record<PaymentType, string> = {
@@ -96,11 +96,11 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-green-200 bg-green-50">
+      <Card className="w-full max-w-md mx-auto border-orange-200 bg-orange-50">
         <CardContent className="pt-6 text-center">
-          <CheckCircle2 className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-green-700 mb-2">Paiement Initié</h3>
-          <p className="text-green-600 mb-4">{resultMessage}</p>
+          <CheckCircle2 className="h-12 w-12 sm:h-16 sm:w-16 text-[#ff4000] mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-[#ff4000] mb-2">Paiement Initié</h3>
+          <p className="text-[#ff4000] mb-4">{resultMessage}</p>
           <p className="text-sm text-muted-foreground mb-4">
             Confirmez le paiement sur votre téléphone pour finaliser la transaction.
           </p>

@@ -269,7 +269,7 @@ export default function DetailedTransactionsList() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20">
+            <div className="p-4 rounded-lg bg-gradient-to-br from-[#ff4000]/10 to-transparent border border-[#ff4000]/20">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <DollarSign className="w-4 h-4" />
                 Total Transactions
@@ -285,7 +285,7 @@ export default function DetailedTransactionsList() {
                 {formatAmount(filteredTransactions.reduce((sum, t) => sum + (t.amount > 0 ? t.amount : 0), 0))}
               </div>
             </div>
-            <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
+            <div className="p-4 rounded-lg bg-gradient-to-br from-[#04439e]/10 to-transparent border border-[#04439e]/20">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <DollarSign className="w-4 h-4" />
                 Frais de Plateforme
@@ -316,13 +316,13 @@ export default function DetailedTransactionsList() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         transaction.amount > 0
-                          ? 'bg-green-500/10'
-                          : 'bg-red-500/10'
+                          ? 'bg-[#ff4000]/10'
+                          : 'bg-[#ff4000]/10'
                       }`}>
                         {transaction.amount > 0 ? (
-                          <ArrowDownLeft className="w-5 h-5 text-green-500" />
+                          <ArrowDownLeft className="w-5 h-5 text-[#ff4000]" />
                         ) : (
-                          <ArrowUpRight className="w-5 h-5 text-red-500" />
+                          <ArrowUpRight className="w-5 h-5 text-[#ff4000]" />
                         )}
                       </div>
                       <div>
@@ -351,8 +351,8 @@ export default function DetailedTransactionsList() {
                         </div>
                       )}
                       {transaction.receiver_info && (
-                        <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/5 border border-green-500/10">
-                          <User className="w-4 h-4 text-green-500 mt-0.5" />
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-[#ff4000]/5 border border-[#ff4000]/10">
+                          <User className="w-4 h-4 text-[#ff4000] mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <div className="text-xs text-muted-foreground">Destinataire</div>
                             <div className="font-medium truncate">{transaction.receiver_info.name}</div>
@@ -392,7 +392,7 @@ export default function DetailedTransactionsList() {
                     <div>
                       <div className="text-sm text-muted-foreground">Montant</div>
                       <div className={`text-2xl font-bold ${
-                        transaction.amount > 0 ? 'text-green-500' : 'text-red-500'
+                        transaction.amount > 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'
                       }`}>
                         {transaction.amount > 0 ? '+' : ''}{formatAmount(transaction.amount)}
                       </div>

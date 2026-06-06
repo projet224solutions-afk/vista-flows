@@ -15,9 +15,9 @@ import type { BTPProject, BTPTask, BTPDailyReport, BTPProfessional } from '@/hoo
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   'planifie': { label: 'Planifié', color: 'bg-muted text-muted-foreground' },
   'en_cours': { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
-  'en_pause': { label: 'En pause', color: 'bg-amber-100 text-amber-800' },
-  'termine': { label: 'Terminé', color: 'bg-green-100 text-green-800' },
-  'annule': { label: 'Annulé', color: 'bg-red-100 text-red-800' },
+  'en_pause': { label: 'En pause', color: 'bg-orange-100 text-[#ff4000]' },
+  'termine': { label: 'Terminé', color: 'bg-orange-100 text-[#ff4000]' },
+  'annule': { label: 'Annulé', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 const TASK_STATUS_MAP: Record<string, { label: string; icon: any }> = {
@@ -175,7 +175,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                   const assigned = professionals.find(p => p.id === task.assigned_to);
                   return (
                     <div key={task.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                      <Icon className={`h-5 w-5 shrink-0 ${task.status === 'termine' ? 'text-green-500' : task.status === 'en_cours' ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                      <Icon className={`h-5 w-5 shrink-0 ${task.status === 'termine' ? 'text-[#ff4000]' : task.status === 'en_cours' ? 'text-blue-500' : 'text-muted-foreground'}`} />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium ${task.status === 'termine' ? 'line-through text-muted-foreground' : ''}`}>{task.title}</p>
                         {assigned && <p className="text-xs text-muted-foreground">👷 {assigned.name}</p>}
@@ -227,7 +227,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                       <div className="flex justify-between items-start mb-2">
                         <p className="text-sm font-bold">{new Date(report.report_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {report.weather === 'ensoleille' && <Sun className="h-4 w-4 text-amber-500" />}
+                          {report.weather === 'ensoleille' && <Sun className="h-4 w-4 text-[#ff4000]" />}
                           {report.weather === 'nuageux' && <Cloud className="h-4 w-4" />}
                           {report.weather === 'pluie' && <CloudRain className="h-4 w-4 text-blue-500" />}
                           <span>👷 {report.workers_present}</span>

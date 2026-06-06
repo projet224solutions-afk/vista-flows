@@ -1,5 +1,3 @@
-WARN: environment variable is unset: TWILIO_AUTH_TOKEN
-Initialising login role...
 export type Json =
   | string
   | number
@@ -13,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -764,7 +737,6 @@ export type Database = {
           balance: number | null
           created_at: string | null
           currency: string | null
-          currency_type: string | null
           exchange_rates_cache: Json | null
           id: string
           last_exchange_update: string | null
@@ -778,7 +750,6 @@ export type Database = {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
-          currency_type?: string | null
           exchange_rates_cache?: Json | null
           id?: string
           last_exchange_update?: string | null
@@ -792,7 +763,6 @@ export type Database = {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
-          currency_type?: string | null
           exchange_rates_cache?: Json | null
           id?: string
           last_exchange_update?: string | null
@@ -862,9 +832,7 @@ export type Database = {
           commission_rate: number | null
           commission_sous_agent: number | null
           country_code: string | null
-          country_name: string | null
           created_at: string | null
-          currency: string | null
           detected_country: string | null
           detected_currency: string | null
           detection_accuracy: string | null
@@ -897,9 +865,7 @@ export type Database = {
           commission_rate?: number | null
           commission_sous_agent?: number | null
           country_code?: string | null
-          country_name?: string | null
           created_at?: string | null
-          currency?: string | null
           detected_country?: string | null
           detected_currency?: string | null
           detection_accuracy?: string | null
@@ -932,9 +898,7 @@ export type Database = {
           commission_rate?: number | null
           commission_sous_agent?: number | null
           country_code?: string | null
-          country_name?: string | null
           created_at?: string | null
-          currency?: string | null
           detected_country?: string | null
           detected_currency?: string | null
           detection_accuracy?: string | null
@@ -3310,99 +3274,6 @@ export type Database = {
           },
         ]
       }
-      checkout_rate_locks: {
-        Row: {
-          buyer_id: string
-          converted_amount: number
-          created_at: string | null
-          exchange_rate: number
-          expires_at: string
-          from_currency: string
-          id: string
-          locked_at: string
-          order_id: string | null
-          original_amount: number
-          rate_fetched_at: string | null
-          rate_source: string | null
-          status: string
-          to_currency: string
-          updated_at: string | null
-          vendor_id: string | null
-        }
-        Insert: {
-          buyer_id: string
-          converted_amount: number
-          created_at?: string | null
-          exchange_rate: number
-          expires_at: string
-          from_currency: string
-          id?: string
-          locked_at?: string
-          order_id?: string | null
-          original_amount: number
-          rate_fetched_at?: string | null
-          rate_source?: string | null
-          status?: string
-          to_currency: string
-          updated_at?: string | null
-          vendor_id?: string | null
-        }
-        Update: {
-          buyer_id?: string
-          converted_amount?: number
-          created_at?: string | null
-          exchange_rate?: number
-          expires_at?: string
-          from_currency?: string
-          id?: string
-          locked_at?: string
-          order_id?: string | null
-          original_amount?: number
-          rate_fetched_at?: string | null
-          rate_source?: string | null
-          status?: string
-          to_currency?: string
-          updated_at?: string | null
-          vendor_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkout_rate_locks_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "active_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkout_rate_locks_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkout_rate_locks_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "checkout_rate_locks_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "checkout_rate_locks_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       china_dropship_logs: {
         Row: {
           created_at: string
@@ -4806,92 +4677,6 @@ export type Database = {
         }
         Relationships: []
       }
-      core_feature_health_events: {
-        Row: {
-          correlation_id: string | null
-          country_code: string | null
-          created_at: string
-          feature_key: string
-          id: string
-          payload: Json
-          region: string | null
-          signal_type: string
-          source: string
-          status: string
-          user_id: string | null
-        }
-        Insert: {
-          correlation_id?: string | null
-          country_code?: string | null
-          created_at?: string
-          feature_key: string
-          id?: string
-          payload?: Json
-          region?: string | null
-          signal_type?: string
-          source?: string
-          status: string
-          user_id?: string | null
-        }
-        Update: {
-          correlation_id?: string | null
-          country_code?: string | null
-          created_at?: string
-          feature_key?: string
-          id?: string
-          payload?: Json
-          region?: string | null
-          signal_type?: string
-          source?: string
-          status?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "core_feature_health_events_feature_key_fkey"
-            columns: ["feature_key"]
-            isOneToOne: false
-            referencedRelation: "core_feature_registry"
-            referencedColumns: ["feature_key"]
-          },
-        ]
-      }
-      core_feature_registry: {
-        Row: {
-          auto_monitor: boolean
-          core_engine: string
-          created_at: string
-          criticality: string
-          enabled: boolean
-          feature_key: string
-          metadata: Json
-          owner_module: string | null
-          updated_at: string
-        }
-        Insert: {
-          auto_monitor?: boolean
-          core_engine: string
-          created_at?: string
-          criticality?: string
-          enabled?: boolean
-          feature_key: string
-          metadata?: Json
-          owner_module?: string | null
-          updated_at?: string
-        }
-        Update: {
-          auto_monitor?: boolean
-          core_engine?: string
-          created_at?: string
-          criticality?: string
-          enabled?: boolean
-          feature_key?: string
-          metadata?: Json
-          owner_module?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       corridor_fee_history: {
         Row: {
           amount: number
@@ -5006,108 +4791,6 @@ export type Database = {
           symbol?: string
         }
         Relationships: []
-      }
-      currency_conversion_logs: {
-        Row: {
-          buyer_user_id: string | null
-          commission_converted: number | null
-          commission_original: number | null
-          converted_amount: number | null
-          created_at: string
-          error_message: string | null
-          exchange_rate: number | null
-          exchange_rate_source: string | null
-          from_currency: string
-          id: string
-          is_cross_currency: boolean
-          metadata: Json | null
-          order_id: string | null
-          original_amount: number | null
-          rate_fetched_at: string | null
-          status: string
-          to_currency: string
-          vendor_id: string | null
-          wallet_debit_amount: number | null
-        }
-        Insert: {
-          buyer_user_id?: string | null
-          commission_converted?: number | null
-          commission_original?: number | null
-          converted_amount?: number | null
-          created_at?: string
-          error_message?: string | null
-          exchange_rate?: number | null
-          exchange_rate_source?: string | null
-          from_currency: string
-          id?: string
-          is_cross_currency?: boolean
-          metadata?: Json | null
-          order_id?: string | null
-          original_amount?: number | null
-          rate_fetched_at?: string | null
-          status?: string
-          to_currency: string
-          vendor_id?: string | null
-          wallet_debit_amount?: number | null
-        }
-        Update: {
-          buyer_user_id?: string | null
-          commission_converted?: number | null
-          commission_original?: number | null
-          converted_amount?: number | null
-          created_at?: string
-          error_message?: string | null
-          exchange_rate?: number | null
-          exchange_rate_source?: string | null
-          from_currency?: string
-          id?: string
-          is_cross_currency?: boolean
-          metadata?: Json | null
-          order_id?: string | null
-          original_amount?: number | null
-          rate_fetched_at?: string | null
-          status?: string
-          to_currency?: string
-          vendor_id?: string | null
-          wallet_debit_amount?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "currency_conversion_logs_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "active_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "currency_conversion_logs_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "currency_conversion_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "currency_conversion_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "currency_conversion_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       currency_exchange_rates: {
         Row: {
@@ -8882,7 +8565,6 @@ export type Database = {
           admin_action: string | null
           admin_id: string | null
           amount: number
-          auto_release_at: string | null
           auto_release_date: string | null
           auto_release_enabled: boolean | null
           available_to_release_at: string | null
@@ -8898,7 +8580,6 @@ export type Database = {
           notes: string | null
           order_id: string | null
           payer_id: string | null
-          payment_method: string | null
           receiver_id: string | null
           refunded_at: string | null
           released_at: string | null
@@ -8916,7 +8597,6 @@ export type Database = {
           admin_action?: string | null
           admin_id?: string | null
           amount: number
-          auto_release_at?: string | null
           auto_release_date?: string | null
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
@@ -8932,7 +8612,6 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           payer_id?: string | null
-          payment_method?: string | null
           receiver_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
@@ -8950,7 +8629,6 @@ export type Database = {
           admin_action?: string | null
           admin_id?: string | null
           amount?: number
-          auto_release_at?: string | null
           auto_release_date?: string | null
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
@@ -8966,7 +8644,6 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           payer_id?: string | null
-          payment_method?: string | null
           receiver_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
@@ -10946,45 +10623,6 @@ export type Database = {
           },
         ]
       }
-      identity_user_modules: {
-        Row: {
-          activated_at: string
-          created_at: string
-          deactivated_at: string | null
-          id: string
-          metadata: Json
-          module_key: string
-          source: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          activated_at?: string
-          created_at?: string
-          deactivated_at?: string | null
-          id?: string
-          metadata?: Json
-          module_key: string
-          source?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          activated_at?: string
-          created_at?: string
-          deactivated_at?: string | null
-          id?: string
-          metadata?: Json
-          module_key?: string
-          source?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       ids_reserved: {
         Row: {
           created_at: string | null
@@ -11878,76 +11516,14 @@ export type Database = {
           },
         ]
       }
-      location_permissions: {
-        Row: {
-          can_adjust: boolean | null
-          can_manage: boolean | null
-          can_receive: boolean | null
-          can_sell: boolean | null
-          can_transfer: boolean | null
-          can_view: boolean | null
-          granted_at: string | null
-          granted_by: string | null
-          id: string
-          is_active: boolean | null
-          location_id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          can_adjust?: boolean | null
-          can_manage?: boolean | null
-          can_receive?: boolean | null
-          can_sell?: boolean | null
-          can_transfer?: boolean | null
-          can_view?: boolean | null
-          granted_at?: string | null
-          granted_by?: string | null
-          id?: string
-          is_active?: boolean | null
-          location_id: string
-          role?: string
-          user_id: string
-        }
-        Update: {
-          can_adjust?: boolean | null
-          can_manage?: boolean | null
-          can_receive?: boolean | null
-          can_sell?: boolean | null
-          can_transfer?: boolean | null
-          can_view?: boolean | null
-          granted_at?: string | null
-          granted_by?: string | null
-          id?: string
-          is_active?: boolean | null
-          location_id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "location_permissions_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       location_stock: {
         Row: {
-          available_quantity: number | null
-          bin_location: string | null
-          cost_price: number | null
           created_at: string | null
           expiry_date: string | null
           id: string
           in_transit_quantity: number | null
           last_counted_at: string | null
           last_movement_at: string | null
-          last_purchase_price: number | null
-          last_sale_at: string | null
-          last_stock_update: string | null
           location_id: string
           lot_number: string | null
           maximum_stock: number | null
@@ -11955,24 +11531,17 @@ export type Database = {
           product_id: string
           quantity: number
           reorder_point: number | null
-          reorder_quantity: number | null
           reserved_quantity: number | null
           shelf_location: string | null
           updated_at: string | null
         }
         Insert: {
-          available_quantity?: number | null
-          bin_location?: string | null
-          cost_price?: number | null
           created_at?: string | null
           expiry_date?: string | null
           id?: string
           in_transit_quantity?: number | null
           last_counted_at?: string | null
           last_movement_at?: string | null
-          last_purchase_price?: number | null
-          last_sale_at?: string | null
-          last_stock_update?: string | null
           location_id: string
           lot_number?: string | null
           maximum_stock?: number | null
@@ -11980,24 +11549,17 @@ export type Database = {
           product_id: string
           quantity?: number
           reorder_point?: number | null
-          reorder_quantity?: number | null
           reserved_quantity?: number | null
           shelf_location?: string | null
           updated_at?: string | null
         }
         Update: {
-          available_quantity?: number | null
-          bin_location?: string | null
-          cost_price?: number | null
           created_at?: string | null
           expiry_date?: string | null
           id?: string
           in_transit_quantity?: number | null
           last_counted_at?: string | null
           last_movement_at?: string | null
-          last_purchase_price?: number | null
-          last_sale_at?: string | null
-          last_stock_update?: string | null
           location_id?: string
           lot_number?: string | null
           maximum_stock?: number | null
@@ -12005,7 +11567,6 @@ export type Database = {
           product_id?: string
           quantity?: number
           reorder_point?: number | null
-          reorder_quantity?: number | null
           reserved_quantity?: number | null
           shelf_location?: string | null
           updated_at?: string | null
@@ -12027,73 +11588,6 @@ export type Database = {
           },
           {
             foreignKeyName: "location_stock_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "v_product_stock_summary"
-            referencedColumns: ["product_id"]
-          },
-        ]
-      }
-      location_stock_history: {
-        Row: {
-          created_at: string | null
-          id: string
-          location_id: string
-          movement_type: string
-          notes: string | null
-          performed_by: string | null
-          product_id: string
-          quantity_after: number
-          quantity_before: number
-          quantity_change: number
-          reference_id: string | null
-          reference_type: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          location_id: string
-          movement_type: string
-          notes?: string | null
-          performed_by?: string | null
-          product_id: string
-          quantity_after: number
-          quantity_before: number
-          quantity_change: number
-          reference_id?: string | null
-          reference_type?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          location_id?: string
-          movement_type?: string
-          notes?: string | null
-          performed_by?: string | null
-          product_id?: string
-          quantity_after?: number
-          quantity_before?: number
-          quantity_change?: number
-          reference_id?: string | null
-          reference_type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "location_stock_history_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "location_stock_history_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "location_stock_history_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "v_product_stock_summary"
@@ -14081,78 +13575,60 @@ export type Database = {
       }
       order_items: {
         Row: {
-          buyer_currency: string | null
           cost_price: number | null
           created_at: string | null
           discount_amount: number | null
           discount_type: string | null
           discount_value: number | null
-          exchange_rate_used: number | null
           final_unit_price: number | null
           id: string
           loss_amount: number | null
           order_id: string
-          original_currency: string | null
           original_unit_price: number | null
           product_id: string
-          product_name: string | null
           profit_after_discount: number | null
           profit_before_discount: number | null
           quantity: number
           total_price: number
           unit_price: number
-          unit_price_converted: number | null
-          unit_price_original: number | null
           variant_id: string | null
         }
         Insert: {
-          buyer_currency?: string | null
           cost_price?: number | null
           created_at?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
-          exchange_rate_used?: number | null
           final_unit_price?: number | null
           id?: string
           loss_amount?: number | null
           order_id: string
-          original_currency?: string | null
           original_unit_price?: number | null
           product_id: string
-          product_name?: string | null
           profit_after_discount?: number | null
           profit_before_discount?: number | null
           quantity: number
           total_price: number
           unit_price: number
-          unit_price_converted?: number | null
-          unit_price_original?: number | null
           variant_id?: string | null
         }
         Update: {
-          buyer_currency?: string | null
           cost_price?: number | null
           created_at?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           discount_value?: number | null
-          exchange_rate_used?: number | null
           final_unit_price?: number | null
           id?: string
           loss_amount?: number | null
           order_id?: string
-          original_currency?: string | null
           original_unit_price?: number | null
           product_id?: string
-          product_name?: string | null
           profit_after_discount?: number | null
           profit_before_discount?: number | null
           quantity?: number
           total_price?: number
           unit_price?: number
-          unit_price_converted?: number | null
-          unit_price_original?: number | null
           variant_id?: string | null
         }
         Relationships: [
@@ -14196,37 +13672,20 @@ export type Database = {
       orders: {
         Row: {
           billing_address: Json | null
-          buyer_currency: string | null
           cancellable: boolean | null
           created_at: string | null
-          currency: string | null
           customer_id: string
           discount_amount: number | null
-          exchange_rate_source: string | null
-          exchange_rate_used: number | null
           full_name: string | null
           id: string
           is_archived: boolean | null
-          is_cross_currency: boolean | null
-          location_id: string | null
           metadata: Json | null
           notes: string | null
           order_number: string
-          original_currency: string | null
-          paid_currency: string | null
           payment_intent_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
-          platform_fee_amount: number | null
-          platform_fee_currency: string | null
-          platform_fee_percent: number | null
-          pos_cashier_id: string | null
           public_id: string | null
-          rate_fetched_at: string | null
-          rate_locked_at: string | null
-          seller_currency: string | null
-          seller_net_amount: number | null
-          seller_net_currency: string | null
           shipping_address: Json
           shipping_amount: number | null
           source: Database["public"]["Enums"]["order_source"]
@@ -14234,44 +13693,25 @@ export type Database = {
           subtotal: number
           tax_amount: number | null
           total_amount: number
-          total_original_amount: number | null
-          total_paid_amount: number | null
           updated_at: string | null
           vendor_id: string
         }
         Insert: {
           billing_address?: Json | null
-          buyer_currency?: string | null
           cancellable?: boolean | null
           created_at?: string | null
-          currency?: string | null
           customer_id: string
           discount_amount?: number | null
-          exchange_rate_source?: string | null
-          exchange_rate_used?: number | null
           full_name?: string | null
           id?: string
           is_archived?: boolean | null
-          is_cross_currency?: boolean | null
-          location_id?: string | null
           metadata?: Json | null
           notes?: string | null
           order_number: string
-          original_currency?: string | null
-          paid_currency?: string | null
           payment_intent_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          platform_fee_amount?: number | null
-          platform_fee_currency?: string | null
-          platform_fee_percent?: number | null
-          pos_cashier_id?: string | null
           public_id?: string | null
-          rate_fetched_at?: string | null
-          rate_locked_at?: string | null
-          seller_currency?: string | null
-          seller_net_amount?: number | null
-          seller_net_currency?: string | null
           shipping_address: Json
           shipping_amount?: number | null
           source?: Database["public"]["Enums"]["order_source"]
@@ -14279,44 +13719,25 @@ export type Database = {
           subtotal: number
           tax_amount?: number | null
           total_amount: number
-          total_original_amount?: number | null
-          total_paid_amount?: number | null
           updated_at?: string | null
           vendor_id: string
         }
         Update: {
           billing_address?: Json | null
-          buyer_currency?: string | null
           cancellable?: boolean | null
           created_at?: string | null
-          currency?: string | null
           customer_id?: string
           discount_amount?: number | null
-          exchange_rate_source?: string | null
-          exchange_rate_used?: number | null
           full_name?: string | null
           id?: string
           is_archived?: boolean | null
-          is_cross_currency?: boolean | null
-          location_id?: string | null
           metadata?: Json | null
           notes?: string | null
           order_number?: string
-          original_currency?: string | null
-          paid_currency?: string | null
           payment_intent_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
-          platform_fee_amount?: number | null
-          platform_fee_currency?: string | null
-          platform_fee_percent?: number | null
-          pos_cashier_id?: string | null
           public_id?: string | null
-          rate_fetched_at?: string | null
-          rate_locked_at?: string | null
-          seller_currency?: string | null
-          seller_net_amount?: number | null
-          seller_net_currency?: string | null
           shipping_address?: Json
           shipping_amount?: number | null
           source?: Database["public"]["Enums"]["order_source"]
@@ -14324,8 +13745,6 @@ export type Database = {
           subtotal?: number
           tax_amount?: number | null
           total_amount?: number
-          total_original_amount?: number | null
-          total_paid_amount?: number | null
           updated_at?: string | null
           vendor_id?: string
         }
@@ -14335,13 +13754,6 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
             referencedColumns: ["id"]
           },
           {
@@ -16521,7 +15933,6 @@ export type Database = {
           compare_price: number | null
           cost_price: number | null
           created_at: string | null
-          currency: string | null
           description: string | null
           dimensions: Json | null
           free_shipping: boolean | null
@@ -16535,8 +15946,6 @@ export type Database = {
           marketplace_batch: number | null
           marketplace_position: number | null
           name: string
-          needs_currency_review: boolean | null
-          original_price_currency: string | null
           price: number
           price_carton: number | null
           promotional_videos: string[] | null
@@ -16545,8 +15954,6 @@ export type Database = {
           reviews_count: number | null
           section: string | null
           sell_by_carton: boolean | null
-          seller_country_code: string | null
-          seller_currency: string | null
           seo_description: string | null
           seo_title: string | null
           sku: string | null
@@ -16569,7 +15976,6 @@ export type Database = {
           compare_price?: number | null
           cost_price?: number | null
           created_at?: string | null
-          currency?: string | null
           description?: string | null
           dimensions?: Json | null
           free_shipping?: boolean | null
@@ -16583,8 +15989,6 @@ export type Database = {
           marketplace_batch?: number | null
           marketplace_position?: number | null
           name: string
-          needs_currency_review?: boolean | null
-          original_price_currency?: string | null
           price: number
           price_carton?: number | null
           promotional_videos?: string[] | null
@@ -16593,8 +15997,6 @@ export type Database = {
           reviews_count?: number | null
           section?: string | null
           sell_by_carton?: boolean | null
-          seller_country_code?: string | null
-          seller_currency?: string | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
@@ -16617,7 +16019,6 @@ export type Database = {
           compare_price?: number | null
           cost_price?: number | null
           created_at?: string | null
-          currency?: string | null
           description?: string | null
           dimensions?: Json | null
           free_shipping?: boolean | null
@@ -16631,8 +16032,6 @@ export type Database = {
           marketplace_batch?: number | null
           marketplace_position?: number | null
           name?: string
-          needs_currency_review?: boolean | null
-          original_price_currency?: string | null
           price?: number
           price_carton?: number | null
           promotional_videos?: string[] | null
@@ -16641,8 +16040,6 @@ export type Database = {
           reviews_count?: number | null
           section?: string | null
           sell_by_carton?: boolean | null
-          seller_country_code?: string | null
-          seller_currency?: string | null
           seo_description?: string | null
           seo_title?: string | null
           sku?: string | null
@@ -16788,13 +16185,12 @@ export type Database = {
           avatar_url: string | null
           city: string | null
           country: string | null
-          country_code: string | null
           created_at: string | null
           custom_id: string | null
           detected_country: string | null
           detected_currency: string | null
           detected_language: string | null
-          email: string | null
+          email: string
           first_name: string | null
           full_name: string | null
           geo_detection_method: string | null
@@ -16805,7 +16201,6 @@ export type Database = {
           last_name: string | null
           phone: string | null
           preferred_language: string | null
-          profile_completed: boolean | null
           public_id: string | null
           role: Database["public"]["Enums"]["user_role"]
           status: string | null
@@ -16816,13 +16211,12 @@ export type Database = {
           avatar_url?: string | null
           city?: string | null
           country?: string | null
-          country_code?: string | null
           created_at?: string | null
           custom_id?: string | null
           detected_country?: string | null
           detected_currency?: string | null
           detected_language?: string | null
-          email?: string | null
+          email: string
           first_name?: string | null
           full_name?: string | null
           geo_detection_method?: string | null
@@ -16833,7 +16227,6 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           preferred_language?: string | null
-          profile_completed?: boolean | null
           public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
@@ -16844,13 +16237,12 @@ export type Database = {
           avatar_url?: string | null
           city?: string | null
           country?: string | null
-          country_code?: string | null
           created_at?: string | null
           custom_id?: string | null
           detected_country?: string | null
           detected_currency?: string | null
           detected_language?: string | null
-          email?: string | null
+          email?: string
           first_name?: string | null
           full_name?: string | null
           geo_detection_method?: string | null
@@ -16861,7 +16253,6 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           preferred_language?: string | null
-          profile_completed?: boolean | null
           public_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: string | null
@@ -19848,39 +19239,30 @@ export type Database = {
           created_at: string | null
           display_order: number | null
           id: string
-          image_url: string | null
+          image_url: string
           is_cover: boolean | null
-          media_type: string
           professional_service_id: string
-          thumbnail_url: string | null
           updated_at: string | null
-          video_url: string | null
         }
         Insert: {
           caption?: string | null
           created_at?: string | null
           display_order?: number | null
           id?: string
-          image_url?: string | null
+          image_url: string
           is_cover?: boolean | null
-          media_type?: string
           professional_service_id: string
-          thumbnail_url?: string | null
           updated_at?: string | null
-          video_url?: string | null
         }
         Update: {
           caption?: string | null
           created_at?: string | null
           display_order?: number | null
           id?: string
-          image_url?: string | null
+          image_url?: string
           is_cover?: boolean | null
-          media_type?: string
           professional_service_id?: string
-          thumbnail_url?: string | null
           updated_at?: string | null
-          video_url?: string | null
         }
         Relationships: [
           {
@@ -20980,7 +20362,6 @@ export type Database = {
           loss_date: string | null
           loss_number: string
           loss_type: string
-          notes: string | null
           product_id: string
           quantity: number
           reason: string
@@ -21008,7 +20389,6 @@ export type Database = {
           loss_date?: string | null
           loss_number: string
           loss_type: string
-          notes?: string | null
           product_id: string
           quantity: number
           reason: string
@@ -21036,7 +20416,6 @@ export type Database = {
           loss_date?: string | null
           loss_number?: string
           loss_type?: string
-          notes?: string | null
           product_id?: string
           quantity?: number
           reason?: string
@@ -21301,8 +20680,6 @@ export type Database = {
           expense_id: string | null
           id: string
           is_locked: boolean | null
-          is_stock_updated: boolean | null
-          location_id: string | null
           notes: string | null
           purchase_number: string
           status: string
@@ -21320,8 +20697,6 @@ export type Database = {
           expense_id?: string | null
           id?: string
           is_locked?: boolean | null
-          is_stock_updated?: boolean | null
-          location_id?: string | null
           notes?: string | null
           purchase_number: string
           status?: string
@@ -21339,8 +20714,6 @@ export type Database = {
           expense_id?: string | null
           id?: string
           is_locked?: boolean | null
-          is_stock_updated?: boolean | null
-          location_id?: string | null
           notes?: string | null
           purchase_number?: string
           status?: string
@@ -21351,15 +20724,7 @@ export type Database = {
           validated_by?: string | null
           vendor_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "stock_purchases_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       stock_transfer_items: {
         Row: {
@@ -21368,17 +20733,12 @@ export type Database = {
           id: string
           loss_reason: string | null
           lot_number: string | null
-          missing_reason: string | null
           notes: string | null
           product_id: string
           quantity_lost: number | null
-          quantity_missing: number | null
           quantity_received: number | null
           quantity_sent: number
-          reception_notes: string | null
-          total_value: number | null
           transfer_id: string
-          unit_cost: number | null
           updated_at: string | null
         }
         Insert: {
@@ -21387,17 +20747,12 @@ export type Database = {
           id?: string
           loss_reason?: string | null
           lot_number?: string | null
-          missing_reason?: string | null
           notes?: string | null
           product_id: string
           quantity_lost?: number | null
-          quantity_missing?: number | null
           quantity_received?: number | null
           quantity_sent: number
-          reception_notes?: string | null
-          total_value?: number | null
           transfer_id: string
-          unit_cost?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -21406,17 +20761,12 @@ export type Database = {
           id?: string
           loss_reason?: string | null
           lot_number?: string | null
-          missing_reason?: string | null
           notes?: string | null
           product_id?: string
           quantity_lost?: number | null
-          quantity_missing?: number | null
           quantity_received?: number | null
           quantity_sent?: number
-          reception_notes?: string | null
-          total_value?: number | null
           transfer_id?: string
-          unit_cost?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -21452,20 +20802,11 @@ export type Database = {
       }
       stock_transfers: {
         Row: {
-          approval_status: string | null
-          confirmed_at: string | null
-          confirmed_by: string | null
           created_at: string | null
           created_by: string | null
-          delivered_at: string | null
           destination_location_id: string
-          destination_type: string | null
           expected_arrival_at: string | null
-          from_location_id: string | null
           id: string
-          initiated_at: string | null
-          initiated_by: string | null
-          metadata: Json | null
           notes: string | null
           received_at: string | null
           received_by: string | null
@@ -21475,15 +20816,10 @@ export type Database = {
           shipping_notes: string | null
           source_location_id: string
           status: string
-          to_location_id: string | null
           total_items: number | null
-          total_items_missing: number | null
-          total_items_received: number | null
-          total_items_sent: number | null
           total_quantity_lost: number | null
           total_quantity_received: number | null
           total_quantity_sent: number | null
-          total_value: number | null
           transfer_number: string
           transport_cost: number | null
           transport_method: string | null
@@ -21492,20 +20828,11 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
-          approval_status?: string | null
-          confirmed_at?: string | null
-          confirmed_by?: string | null
           created_at?: string | null
           created_by?: string | null
-          delivered_at?: string | null
           destination_location_id: string
-          destination_type?: string | null
           expected_arrival_at?: string | null
-          from_location_id?: string | null
           id?: string
-          initiated_at?: string | null
-          initiated_by?: string | null
-          metadata?: Json | null
           notes?: string | null
           received_at?: string | null
           received_by?: string | null
@@ -21515,15 +20842,10 @@ export type Database = {
           shipping_notes?: string | null
           source_location_id: string
           status?: string
-          to_location_id?: string | null
           total_items?: number | null
-          total_items_missing?: number | null
-          total_items_received?: number | null
-          total_items_sent?: number | null
           total_quantity_lost?: number | null
           total_quantity_received?: number | null
           total_quantity_sent?: number | null
-          total_value?: number | null
           transfer_number: string
           transport_cost?: number | null
           transport_method?: string | null
@@ -21532,20 +20854,11 @@ export type Database = {
           vendor_id: string
         }
         Update: {
-          approval_status?: string | null
-          confirmed_at?: string | null
-          confirmed_by?: string | null
           created_at?: string | null
           created_by?: string | null
-          delivered_at?: string | null
           destination_location_id?: string
-          destination_type?: string | null
           expected_arrival_at?: string | null
-          from_location_id?: string | null
           id?: string
-          initiated_at?: string | null
-          initiated_by?: string | null
-          metadata?: Json | null
           notes?: string | null
           received_at?: string | null
           received_by?: string | null
@@ -21555,15 +20868,10 @@ export type Database = {
           shipping_notes?: string | null
           source_location_id?: string
           status?: string
-          to_location_id?: string | null
           total_items?: number | null
-          total_items_missing?: number | null
-          total_items_received?: number | null
-          total_items_sent?: number | null
           total_quantity_lost?: number | null
           total_quantity_received?: number | null
           total_quantity_sent?: number | null
-          total_value?: number | null
           transfer_number?: string
           transport_cost?: number | null
           transport_method?: string | null
@@ -21580,24 +20888,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_transfers_from_location_id_fkey"
-            columns: ["from_location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_transfers_source_location_id_fkey"
             columns: ["source_location_id"]
             isOneToOne: false
             referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_transfers_to_location_id_fkey"
-            columns: ["to_location_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_locations"
             referencedColumns: ["id"]
           },
           {
@@ -26071,443 +25365,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vendor_campaign_audit_logs: {
-        Row: {
-          action: string
-          campaign_id: string | null
-          created_at: string | null
-          details: Json | null
-          id: string
-          ip_address: string | null
-          user_agent: string | null
-          vendor_id: string
-        }
-        Insert: {
-          action: string
-          campaign_id?: string | null
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          vendor_id: string
-        }
-        Update: {
-          action?: string
-          campaign_id?: string | null
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_campaign_audit_logs_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_audit_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_audit_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_audit_logs_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_campaign_deliveries: {
-        Row: {
-          campaign_id: string
-          channel: string
-          clicked_at: string | null
-          created_at: string | null
-          customer_user_id: string | null
-          delivered_at: string | null
-          external_contact_id: string | null
-          failure_reason: string | null
-          id: string
-          last_attempt_at: string | null
-          max_retries: number | null
-          metadata: Json | null
-          provider: string | null
-          provider_message_id: string | null
-          read_at: string | null
-          recipient_id: string
-          retry_count: number | null
-          sent_at: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          campaign_id: string
-          channel: string
-          clicked_at?: string | null
-          created_at?: string | null
-          customer_user_id?: string | null
-          delivered_at?: string | null
-          external_contact_id?: string | null
-          failure_reason?: string | null
-          id?: string
-          last_attempt_at?: string | null
-          max_retries?: number | null
-          metadata?: Json | null
-          provider?: string | null
-          provider_message_id?: string | null
-          read_at?: string | null
-          recipient_id: string
-          retry_count?: number | null
-          sent_at?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          campaign_id?: string
-          channel?: string
-          clicked_at?: string | null
-          created_at?: string | null
-          customer_user_id?: string | null
-          delivered_at?: string | null
-          external_contact_id?: string | null
-          failure_reason?: string | null
-          id?: string
-          last_attempt_at?: string | null
-          max_retries?: number | null
-          metadata?: Json | null
-          provider?: string | null
-          provider_message_id?: string | null
-          read_at?: string | null
-          recipient_id?: string
-          retry_count?: number | null
-          sent_at?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_campaign_deliveries_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_deliveries_external_contact_id_fkey"
-            columns: ["external_contact_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_marketing_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_deliveries_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_campaign_recipients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_campaign_quotas: {
-        Row: {
-          campaigns_this_month: number | null
-          campaigns_today: number | null
-          created_at: string | null
-          emails_this_month: number | null
-          id: string
-          is_suspended: boolean | null
-          last_campaign_at: string | null
-          max_campaigns_per_day: number | null
-          max_campaigns_per_month: number | null
-          max_emails_per_month: number | null
-          max_recipients_per_campaign: number | null
-          max_sms_per_month: number | null
-          sms_this_month: number | null
-          suspended_at: string | null
-          suspended_by: string | null
-          suspended_reason: string | null
-          updated_at: string | null
-          vendor_id: string
-        }
-        Insert: {
-          campaigns_this_month?: number | null
-          campaigns_today?: number | null
-          created_at?: string | null
-          emails_this_month?: number | null
-          id?: string
-          is_suspended?: boolean | null
-          last_campaign_at?: string | null
-          max_campaigns_per_day?: number | null
-          max_campaigns_per_month?: number | null
-          max_emails_per_month?: number | null
-          max_recipients_per_campaign?: number | null
-          max_sms_per_month?: number | null
-          sms_this_month?: number | null
-          suspended_at?: string | null
-          suspended_by?: string | null
-          suspended_reason?: string | null
-          updated_at?: string | null
-          vendor_id: string
-        }
-        Update: {
-          campaigns_this_month?: number | null
-          campaigns_today?: number | null
-          created_at?: string | null
-          emails_this_month?: number | null
-          id?: string
-          is_suspended?: boolean | null
-          last_campaign_at?: string | null
-          max_campaigns_per_day?: number | null
-          max_campaigns_per_month?: number | null
-          max_emails_per_month?: number | null
-          max_recipients_per_campaign?: number | null
-          max_sms_per_month?: number | null
-          sms_this_month?: number | null
-          suspended_at?: string | null
-          suspended_by?: string | null
-          suspended_reason?: string | null
-          updated_at?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_campaign_quotas_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: true
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_quotas_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: true
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_quotas_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: true
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_campaign_recipients: {
-        Row: {
-          campaign_id: string
-          created_at: string | null
-          customer_user_id: string | null
-          eligibility_snapshot: Json | null
-          eligible_channels: string[] | null
-          email: string | null
-          external_contact_id: string | null
-          full_name: string | null
-          id: string
-          phone: string | null
-          preferred_language: string | null
-          vendor_id: string
-        }
-        Insert: {
-          campaign_id: string
-          created_at?: string | null
-          customer_user_id?: string | null
-          eligibility_snapshot?: Json | null
-          eligible_channels?: string[] | null
-          email?: string | null
-          external_contact_id?: string | null
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          preferred_language?: string | null
-          vendor_id: string
-        }
-        Update: {
-          campaign_id?: string
-          created_at?: string | null
-          customer_user_id?: string | null
-          eligibility_snapshot?: Json | null
-          eligible_channels?: string[] | null
-          email?: string | null
-          external_contact_id?: string | null
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          preferred_language?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_campaign_recipients_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_recipients_external_contact_id_fkey"
-            columns: ["external_contact_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_marketing_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_recipients_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_recipients_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaign_recipients_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_campaigns: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          created_by: string
-          id: string
-          image_url: string | null
-          link_text: string | null
-          link_url: string | null
-          message_body: string
-          message_html: string | null
-          message_type: string | null
-          metadata: Json | null
-          scheduled_at: string | null
-          selected_channels: string[]
-          started_at: string | null
-          status: string | null
-          store_id: string | null
-          subject: string | null
-          target_filters: Json | null
-          target_type: string
-          title: string
-          total_delivered: number | null
-          total_eligible: number | null
-          total_failed: number | null
-          total_read: number | null
-          total_sent: number | null
-          total_skipped: number | null
-          total_targeted: number | null
-          updated_at: string | null
-          vendor_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          created_by: string
-          id?: string
-          image_url?: string | null
-          link_text?: string | null
-          link_url?: string | null
-          message_body: string
-          message_html?: string | null
-          message_type?: string | null
-          metadata?: Json | null
-          scheduled_at?: string | null
-          selected_channels?: string[]
-          started_at?: string | null
-          status?: string | null
-          store_id?: string | null
-          subject?: string | null
-          target_filters?: Json | null
-          target_type?: string
-          title: string
-          total_delivered?: number | null
-          total_eligible?: number | null
-          total_failed?: number | null
-          total_read?: number | null
-          total_sent?: number | null
-          total_skipped?: number | null
-          total_targeted?: number | null
-          updated_at?: string | null
-          vendor_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          created_by?: string
-          id?: string
-          image_url?: string | null
-          link_text?: string | null
-          link_url?: string | null
-          message_body?: string
-          message_html?: string | null
-          message_type?: string | null
-          metadata?: Json | null
-          scheduled_at?: string | null
-          selected_channels?: string[]
-          started_at?: string | null
-          status?: string | null
-          store_id?: string | null
-          subject?: string | null
-          target_filters?: Json | null
-          target_type?: string
-          title?: string
-          total_delivered?: number | null
-          total_eligible?: number | null
-          total_failed?: number | null
-          total_read?: number | null
-          total_sent?: number | null
-          total_skipped?: number | null
-          total_targeted?: number | null
-          updated_at?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_campaigns_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaigns_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_campaigns_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vendor_certifications: {
         Row: {
           created_at: string
@@ -26692,100 +25549,6 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_credit_sales_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_customer_links: {
-        Row: {
-          created_at: string | null
-          customer_user_id: string
-          email: string | null
-          full_name: string | null
-          id: string
-          is_active: boolean | null
-          last_purchase_at: string | null
-          linked_via: string
-          marketing_email_opt_in: boolean | null
-          marketing_in_app_opt_in: boolean | null
-          marketing_push_opt_in: boolean | null
-          marketing_sms_opt_in: boolean | null
-          metadata: Json | null
-          phone: string | null
-          preferred_language: string | null
-          source_type: string
-          store_id: string | null
-          total_orders: number | null
-          total_spent: number | null
-          updated_at: string | null
-          vendor_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          customer_user_id: string
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_purchase_at?: string | null
-          linked_via?: string
-          marketing_email_opt_in?: boolean | null
-          marketing_in_app_opt_in?: boolean | null
-          marketing_push_opt_in?: boolean | null
-          marketing_sms_opt_in?: boolean | null
-          metadata?: Json | null
-          phone?: string | null
-          preferred_language?: string | null
-          source_type?: string
-          store_id?: string | null
-          total_orders?: number | null
-          total_spent?: number | null
-          updated_at?: string | null
-          vendor_id: string
-        }
-        Update: {
-          created_at?: string | null
-          customer_user_id?: string
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_purchase_at?: string | null
-          linked_via?: string
-          marketing_email_opt_in?: boolean | null
-          marketing_in_app_opt_in?: boolean | null
-          marketing_push_opt_in?: boolean | null
-          marketing_sms_opt_in?: boolean | null
-          metadata?: Json | null
-          phone?: string | null
-          preferred_language?: string | null
-          source_type?: string
-          store_id?: string | null
-          total_orders?: number | null
-          total_spent?: number | null
-          updated_at?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_customer_links_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_customer_links_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_customer_links_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -27019,191 +25782,6 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: true
             referencedRelation: "user_search_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_locations: {
-        Row: {
-          address: string | null
-          city: string | null
-          code: string | null
-          coordinates: Json | null
-          country: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          is_default: boolean | null
-          is_pos_enabled: boolean | null
-          location_type: string
-          manager_email: string | null
-          manager_name: string | null
-          manager_phone: string | null
-          name: string
-          settings: Json | null
-          updated_at: string | null
-          vendor_id: string
-        }
-        Insert: {
-          address?: string | null
-          city?: string | null
-          code?: string | null
-          coordinates?: Json | null
-          country?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          is_pos_enabled?: boolean | null
-          location_type?: string
-          manager_email?: string | null
-          manager_name?: string | null
-          manager_phone?: string | null
-          name: string
-          settings?: Json | null
-          updated_at?: string | null
-          vendor_id: string
-        }
-        Update: {
-          address?: string | null
-          city?: string | null
-          code?: string | null
-          coordinates?: Json | null
-          country?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          is_pos_enabled?: boolean | null
-          location_type?: string
-          manager_email?: string | null
-          manager_name?: string | null
-          manager_phone?: string | null
-          name?: string
-          settings?: Json | null
-          updated_at?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_locations_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_locations_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_locations_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_marketing_contacts: {
-        Row: {
-          contact_type: string
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          is_active: boolean | null
-          last_purchase_at: string | null
-          linked_via: string
-          marketing_email_opt_in: boolean | null
-          marketing_in_app_opt_in: boolean | null
-          marketing_push_opt_in: boolean | null
-          marketing_sms_opt_in: boolean | null
-          metadata: Json | null
-          normalized_contact: string
-          phone: string | null
-          preferred_language: string | null
-          source_type: string
-          store_id: string | null
-          total_orders: number | null
-          total_spent: number | null
-          updated_at: string | null
-          vendor_id: string
-        }
-        Insert: {
-          contact_type: string
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_purchase_at?: string | null
-          linked_via?: string
-          marketing_email_opt_in?: boolean | null
-          marketing_in_app_opt_in?: boolean | null
-          marketing_push_opt_in?: boolean | null
-          marketing_sms_opt_in?: boolean | null
-          metadata?: Json | null
-          normalized_contact: string
-          phone?: string | null
-          preferred_language?: string | null
-          source_type?: string
-          store_id?: string | null
-          total_orders?: number | null
-          total_spent?: number | null
-          updated_at?: string | null
-          vendor_id: string
-        }
-        Update: {
-          contact_type?: string
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_purchase_at?: string | null
-          linked_via?: string
-          marketing_email_opt_in?: boolean | null
-          marketing_in_app_opt_in?: boolean | null
-          marketing_push_opt_in?: boolean | null
-          marketing_sms_opt_in?: boolean | null
-          metadata?: Json | null
-          normalized_contact?: string
-          phone?: string | null
-          preferred_language?: string | null
-          source_type?: string
-          store_id?: string | null
-          total_orders?: number | null
-          total_spent?: number | null
-          updated_at?: string | null
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_marketing_contacts_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "user_search_view"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_marketing_contacts_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_performance"
-            referencedColumns: ["vendor_id"]
-          },
-          {
-            foreignKeyName: "vendor_marketing_contacts_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -27910,7 +26488,6 @@ export type Database = {
           country: string | null
           cover_image_url: string | null
           created_at: string | null
-          currency_locked: boolean | null
           delivery_base_price: number | null
           delivery_enabled: boolean | null
           delivery_price_per_km: number | null
@@ -27930,9 +26507,7 @@ export type Database = {
           phone: string | null
           public_id: string | null
           rating: number | null
-          seller_country_code: string | null
           service_type: string | null
-          shop_currency: string | null
           shop_slug: string | null
           total_reviews: number | null
           updated_at: string | null
@@ -27947,7 +26522,6 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
-          currency_locked?: boolean | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
           delivery_price_per_km?: number | null
@@ -27967,9 +26541,7 @@ export type Database = {
           phone?: string | null
           public_id?: string | null
           rating?: number | null
-          seller_country_code?: string | null
           service_type?: string | null
-          shop_currency?: string | null
           shop_slug?: string | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -27984,7 +26556,6 @@ export type Database = {
           country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
-          currency_locked?: boolean | null
           delivery_base_price?: number | null
           delivery_enabled?: boolean | null
           delivery_price_per_km?: number | null
@@ -28004,9 +26575,7 @@ export type Database = {
           phone?: string | null
           public_id?: string | null
           rating?: number | null
-          seller_country_code?: string | null
           service_type?: string | null
-          shop_currency?: string | null
           shop_slug?: string | null
           total_reviews?: number | null
           updated_at?: string | null
@@ -28878,18 +27447,11 @@ export type Database = {
           blocked_reason: string | null
           created_at: string | null
           currency: string | null
-          currency_lock_reason: string | null
-          currency_locked: boolean | null
-          currency_locked_at: string | null
           daily_limit: number | null
           id: number
           is_blocked: boolean | null
           monthly_limit: number | null
-          pin_enabled: boolean
-          pin_failed_attempts: number
           pin_hash: string | null
-          pin_locked_until: string | null
-          pin_updated_at: string | null
           updated_at: string | null
           user_id: string
           wallet_status: Database["public"]["Enums"]["wallet_status"] | null
@@ -28901,18 +27463,11 @@ export type Database = {
           blocked_reason?: string | null
           created_at?: string | null
           currency?: string | null
-          currency_lock_reason?: string | null
-          currency_locked?: boolean | null
-          currency_locked_at?: string | null
           daily_limit?: number | null
           id?: number
           is_blocked?: boolean | null
           monthly_limit?: number | null
-          pin_enabled?: boolean
-          pin_failed_attempts?: number
           pin_hash?: string | null
-          pin_locked_until?: string | null
-          pin_updated_at?: string | null
           updated_at?: string | null
           user_id: string
           wallet_status?: Database["public"]["Enums"]["wallet_status"] | null
@@ -28924,18 +27479,11 @@ export type Database = {
           blocked_reason?: string | null
           created_at?: string | null
           currency?: string | null
-          currency_lock_reason?: string | null
-          currency_locked?: boolean | null
-          currency_locked_at?: string | null
           daily_limit?: number | null
           id?: number
           is_blocked?: boolean | null
           monthly_limit?: number | null
-          pin_enabled?: boolean
-          pin_failed_attempts?: number
           pin_hash?: string | null
-          pin_locked_until?: string | null
-          pin_updated_at?: string | null
           updated_at?: string | null
           user_id?: string
           wallet_status?: Database["public"]["Enums"]["wallet_status"] | null
@@ -29469,8 +28017,8 @@ export type Database = {
           random_review: boolean | null
           release_id: string | null
           release_status:
-            | Database["public"]["Enums"]["release_status_enum"]
-            | null
+          | Database["public"]["Enums"]["release_status_enum"]
+          | null
           risk_level: Database["public"]["Enums"]["risk_level_enum"] | null
           scheduled_release_at: string | null
           seller_email: string | null
@@ -30321,11 +28869,11 @@ export type Database = {
         Returns: boolean
       }
       _st_coveredby:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       _st_covers:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       _st_crosses: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
@@ -30380,24 +28928,24 @@ export type Database = {
       }
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       acquire_taxi_lock:
-        | {
-            Args: {
-              p_locked_by: string
-              p_resource_id: string
-              p_resource_type: string
-              p_ttl_seconds?: number
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_locked_by: string
-              p_resource_id: string
-              p_resource_type: string
-              p_timeout_seconds?: number
-            }
-            Returns: boolean
-          }
+      | {
+        Args: {
+          p_locked_by: string
+          p_resource_id: string
+          p_resource_type: string
+          p_ttl_seconds?: number
+        }
+        Returns: boolean
+      }
+      | {
+        Args: {
+          p_locked_by: string
+          p_resource_id: string
+          p_resource_type: string
+          p_timeout_seconds?: number
+        }
+        Returns: boolean
+      }
       activate_panic_mode: {
         Args: { p_pdg_id: string; p_reason: string }
         Returns: Json
@@ -30425,54 +28973,45 @@ export type Database = {
       }
       addauth: { Args: { "": string }; Returns: boolean }
       addgeometrycolumn:
-        | {
-            Args: {
-              catalog_name: string
-              column_name: string
-              new_dim: number
-              new_srid_in: number
-              new_type: string
-              schema_name: string
-              table_name: string
-              use_typmod?: boolean
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              column_name: string
-              new_dim: number
-              new_srid: number
-              new_type: string
-              schema_name: string
-              table_name: string
-              use_typmod?: boolean
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              column_name: string
-              new_dim: number
-              new_srid: number
-              new_type: string
-              table_name: string
-              use_typmod?: boolean
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          catalog_name: string
+          column_name: string
+          new_dim: number
+          new_srid_in: number
+          new_type: string
+          schema_name: string
+          table_name: string
+          use_typmod?: boolean
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          column_name: string
+          new_dim: number
+          new_srid: number
+          new_type: string
+          schema_name: string
+          table_name: string
+          use_typmod?: boolean
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          column_name: string
+          new_dim: number
+          new_srid: number
+          new_type: string
+          table_name: string
+          use_typmod?: boolean
+        }
+        Returns: string
+      }
       admin_approve_payment: {
         Args: { p_admin_id: string; p_notes?: string; p_release_id: string }
         Returns: boolean
-      }
-      admin_change_vendor_currency: {
-        Args: {
-          p_new_country_code: string
-          p_new_currency: string
-          p_reason?: string
-          p_vendor_id: string
-        }
-        Returns: Json
       }
       admin_process_withdrawal: {
         Args: {
@@ -30576,7 +29115,6 @@ export type Database = {
         Args: { p_agent_id: string }
         Returns: Json
       }
-      backfill_vendor_customer_links: { Args: never; Returns: number }
       benchmark_ping: { Args: never; Returns: Json }
       block_ip_address: {
         Args: {
@@ -30589,25 +29127,25 @@ export type Database = {
       }
       bureau_exists: { Args: { p_bureau_id: string }; Returns: boolean }
       calculate_agent_commission:
-        | {
-            Args: {
-              p_agent_id: string
-              p_amount: number
-              p_related_user_id?: string
-              p_source_type: string
-              p_transaction_id?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_transaction_id?: string
-              p_transaction_type: string
-              p_user_id: string
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          p_agent_id: string
+          p_amount: number
+          p_related_user_id?: string
+          p_source_type: string
+          p_transaction_id?: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_transaction_id?: string
+          p_transaction_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       calculate_commission: {
         Args: {
           p_amount: number
@@ -30709,28 +29247,28 @@ export type Database = {
         Returns: number
       }
       calculate_transfer_fee:
-        | {
-            Args: {
-              p_amount: number
-              p_country_from?: string
-              p_country_to?: string
-              p_currency_from: string
-              p_currency_to: string
-            }
-            Returns: {
-              amount_after_fee: number
-              fee_amount: number
-              fee_percentage: number
-            }[]
-          }
-        | {
-            Args: { p_amount: number; p_fee_type?: string }
-            Returns: {
-              fee_amount: number
-              fee_rate: number
-              net_amount: number
-            }[]
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_country_from?: string
+          p_country_to?: string
+          p_currency_from: string
+          p_currency_to: string
+        }
+        Returns: {
+          amount_after_fee: number
+          fee_amount: number
+          fee_percentage: number
+        }[]
+      }
+      | {
+        Args: { p_amount: number; p_fee_type?: string }
+        Returns: {
+          fee_amount: number
+          fee_rate: number
+          net_amount: number
+        }[]
+      }
       calculate_vendor_trust_score: {
         Args: { p_vendor_id: string }
         Returns: number
@@ -30742,10 +29280,6 @@ export type Database = {
       can_view_message: {
         Args: { _message_id: string; _user_id: string }
         Returns: boolean
-      }
-      cancel_order_and_refund_wallet: {
-        Args: { p_order_id: string; p_reason?: string; p_user_id: string }
-        Returns: Json
       }
       change_plan_price: {
         Args: {
@@ -30832,14 +29366,6 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
-      complete_country_setup: {
-        Args: {
-          p_country_code: string
-          p_country_name: string
-          p_currency: string
-        }
-        Returns: Json
-      }
       compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
       compute_product_scores: { Args: never; Returns: undefined }
       compute_user_preferences: {
@@ -30848,15 +29374,6 @@ export type Database = {
       }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
-        Returns: Json
-      }
-      confirm_transfer_reception: {
-        Args: {
-          p_notes?: string
-          p_received_items: Json
-          p_transfer_id: string
-          p_user_id?: string
-        }
         Returns: Json
       }
       convert_currency: {
@@ -30951,18 +29468,6 @@ export type Database = {
         }
         Returns: string
       }
-      create_marketplace_order_secure: {
-        Args: {
-          p_auto_release_days?: number
-          p_currency?: string
-          p_items?: Json
-          p_payment_method: string
-          p_shipping_address?: Json
-          p_vendor_id: string
-          p_wallet_debit_amount?: number
-        }
-        Returns: Json
-      }
       create_online_order: {
         Args: {
           p_items: Json
@@ -30981,8 +29486,6 @@ export type Database = {
       create_order_core: {
         Args: {
           p_auto_release_days?: number
-          p_buyer_user_id?: string
-          p_buyer_wallet_currency?: string
           p_currency?: string
           p_customer_id: string
           p_items?: Json
@@ -30992,7 +29495,6 @@ export type Database = {
           p_shipping_address?: Json
           p_vendor_id: string
           p_vendor_user_id: string
-          p_wallet_debit_amount?: number
         }
         Returns: Json
       }
@@ -31041,31 +29543,18 @@ export type Database = {
         }
         Returns: string
       }
-      create_stock_transfer:
-        | {
-            Args: {
-              p_created_by: string
-              p_destination_location_id: string
-              p_expected_arrival?: string
-              p_items: Json
-              p_notes?: string
-              p_source_location_id: string
-              p_vendor_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_created_by?: string
-              p_destination_location_id: string
-              p_expected_arrival?: string
-              p_items: Json
-              p_notes?: string
-              p_source_location_id: string
-              p_vendor_id: string
-            }
-            Returns: string
-          }
+      create_stock_transfer: {
+        Args: {
+          p_created_by: string
+          p_destination_location_id: string
+          p_expected_arrival?: string
+          p_items: Json
+          p_notes?: string
+          p_source_location_id: string
+          p_vendor_id: string
+        }
+        Returns: string
+      }
       create_syndicate_worker_secure: {
         Args: {
           p_access_level?: string
@@ -31123,72 +29612,68 @@ export type Database = {
         }
         Returns: Json
       }
-      credit_agent_wallet_gnf: {
-        Args: { p_agent_id: string; p_amount: number }
+      credit_wallet:
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_transaction_type?: string
+          p_user_id: string
+        }
         Returns: undefined
       }
-      credit_wallet:
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_transaction_type?: string
-              p_user_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: { credit_amount: number; receiver_user_id: string }
-            Returns: undefined
-          }
+      | {
+        Args: { credit_amount: number; receiver_user_id: string }
+        Returns: undefined
+      }
       customer_belongs_to_auth_user: {
         Args: { p_customer_id: string }
         Returns: boolean
       }
       deactivate_panic_mode: { Args: { p_pdg_id: string }; Returns: Json }
       declare_vehicle_recovered:
-        | {
-            Args: {
-              p_bureau_id: string
-              p_ip_address?: string
-              p_recovered_by: string
-              p_recovery_notes?: string
-              p_user_agent?: string
-              p_vehicle_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_recovered_by: string
-              p_recovery_location?: string
-              p_recovery_notes?: string
-              p_vehicle_id: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_bureau_id: string
+          p_ip_address?: string
+          p_recovered_by: string
+          p_recovery_notes?: string
+          p_user_agent?: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_recovered_by: string
+          p_recovery_location?: string
+          p_recovery_notes?: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
       declare_vehicle_stolen:
-        | {
-            Args: {
-              p_bureau_id: string
-              p_declared_by: string
-              p_ip_address?: string
-              p_location?: string
-              p_reason: string
-              p_user_agent?: string
-              p_vehicle_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_declared_by: string
-              p_location?: string
-              p_reason: string
-              p_vehicle_id: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_bureau_id: string
+          p_declared_by: string
+          p_ip_address?: string
+          p_location?: string
+          p_reason: string
+          p_user_agent?: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_declared_by: string
+          p_location?: string
+          p_reason: string
+          p_vehicle_id: string
+        }
+        Returns: Json
+      }
       decrement_product_stock: {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
@@ -31343,70 +29828,55 @@ export type Database = {
       disablelongtransactions: { Args: never; Returns: string }
       dispute_escrow: { Args: { p_escrow_id: string }; Returns: boolean }
       dropgeometrycolumn:
-        | {
-            Args: {
-              catalog_name: string
-              column_name: string
-              schema_name: string
-              table_name: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              column_name: string
-              schema_name: string
-              table_name: string
-            }
-            Returns: string
-          }
-        | { Args: { column_name: string; table_name: string }; Returns: string }
+      | {
+        Args: {
+          catalog_name: string
+          column_name: string
+          schema_name: string
+          table_name: string
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          column_name: string
+          schema_name: string
+          table_name: string
+        }
+        Returns: string
+      }
+      | { Args: { column_name: string; table_name: string }; Returns: string }
       dropgeometrytable:
-        | {
-            Args: {
-              catalog_name: string
-              schema_name: string
-              table_name: string
-            }
-            Returns: string
-          }
-        | { Args: { schema_name: string; table_name: string }; Returns: string }
-        | { Args: { table_name: string }; Returns: string }
+      | {
+        Args: {
+          catalog_name: string
+          schema_name: string
+          table_name: string
+        }
+        Returns: string
+      }
+      | { Args: { schema_name: string; table_name: string }; Returns: string }
+      | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
       ensure_pdg_wallet: { Args: never; Returns: string }
-      ensure_user_wallet: { Args: { p_user_id: string }; Returns: number }
       ensure_wallet: {
         Args: { p_currency?: string; p_user_id: string }
         Returns: string
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      execute_atomic_wallet_transfer:
-        | {
-            Args: {
-              p_amount: number
-              p_description: string
-              p_receiver_id: string
-              p_recipient_balance_before: number
-              p_recipient_wallet_id: number
-              p_sender_balance_before: number
-              p_sender_id: string
-              p_sender_wallet_id: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_description: string
-              p_receiver_id: string
-              p_recipient_balance_before: number
-              p_recipient_wallet_id: string
-              p_sender_balance_before: number
-              p_sender_id: string
-              p_sender_wallet_id: string
-            }
-            Returns: Json
-          }
+      execute_atomic_wallet_transfer: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_receiver_id: string
+          p_recipient_balance_before: number
+          p_recipient_wallet_id: string
+          p_sender_balance_before: number
+          p_sender_id: string
+          p_sender_wallet_id: string
+        }
+        Returns: Json
+      }
       execute_banking_transaction: {
         Args: {
           p_actor_id: string
@@ -31663,13 +30133,6 @@ export type Database = {
           type: string
         }[]
       }
-      get_active_service_subscription_limits: {
-        Args: never
-        Returns: {
-          max_products: number
-          professional_service_id: string
-        }[]
-      }
       get_active_subscription: {
         Args: { p_user_id: string }
         Returns: {
@@ -31753,14 +30216,9 @@ export type Database = {
           total_drivers: number
         }[]
       }
-      get_buyer_currency: { Args: { p_user_id: string }; Returns: string }
       get_card_stats: { Args: { p_card_id: string }; Returns: Json }
       get_config: { Args: { p_key: string }; Returns: string }
       get_config_int: { Args: { p_key: string }; Returns: number }
-      get_currency_for_country: {
-        Args: { p_country_code: string }
-        Returns: string
-      }
       get_escrow_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -31788,7 +30246,6 @@ export type Database = {
         }[]
       }
       get_inventory_stats: { Args: { p_vendor_id: string }; Returns: Json }
-      get_location_stats: { Args: { p_location_id: string }; Returns: Json }
       get_logic_surveillance_dashboard: { Args: never; Returns: Json }
       get_marketplace_rotation_info: { Args: never; Returns: Json }
       get_online_users: {
@@ -31897,20 +30354,12 @@ export type Database = {
           week_views: number
         }[]
       }
-      get_product_display_price: {
-        Args: { p_buyer_id?: string; p_product_id: string }
-        Returns: Json
-      }
       get_product_rating: {
         Args: { p_product_id: string }
         Returns: {
           average_rating: number
           total_reviews: number
         }[]
-      }
-      get_product_stock_by_locations: {
-        Args: { p_product_id: string; p_vendor_id: string }
-        Returns: Json
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_purchase_commission_percent: { Args: never; Returns: number }
@@ -32052,32 +30501,32 @@ export type Database = {
       }
       get_transfer_fee_percent: { Args: never; Returns: number }
       get_trending_products:
-        | {
-            Args: { p_days?: number; p_limit?: number }
-            Returns: {
-              avg_rating: number
-              product_id: string
-              review_count: number
-              trend_score: number
-              view_count: number
-              wishlist_count: number
-            }[]
-          }
-        | {
-            Args: { p_limit?: number }
-            Returns: {
-              currency: string
-              images: Json
-              name: string
-              price: number
-              product_id: string
-              rating: number
-              reason: string
-              score: number
-              vendor_id: string
-              vendor_name: string
-            }[]
-          }
+      | {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          avg_rating: number
+          product_id: string
+          review_count: number
+          trend_score: number
+          view_count: number
+          wishlist_count: number
+        }[]
+      }
+      | {
+        Args: { p_limit?: number }
+        Returns: {
+          currency: string
+          images: Json
+          name: string
+          price: number
+          product_id: string
+          rating: number
+          reason: string
+          score: number
+          vendor_id: string
+          vendor_name: string
+        }[]
+      }
       get_user_agent: {
         Args: { p_user_id: string }
         Returns: {
@@ -32182,7 +30631,6 @@ export type Database = {
         Args: { p_vendor_id: string }
         Returns: Json
       }
-      get_vendor_currency: { Args: { p_vendor_id: string }; Returns: string }
       get_vendor_product_analytics: {
         Args: {
           p_limit?: number
@@ -32224,11 +30672,6 @@ export type Database = {
       }
       identity_role_prefix: { Args: { p_role: string }; Returns: string }
       identity_role_to_prefix: { Args: { p_role: string }; Returns: string }
-      identity_stage_prefix: { Args: { p_prefix: string }; Returns: string }
-      increment_campaign_quota: {
-        Args: { p_vendor_id: string }
-        Returns: undefined
-      }
       increment_digital_product_views: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -32246,52 +30689,51 @@ export type Database = {
         Returns: undefined
       }
       increment_shared_link_views:
-        | {
-            Args: { p_short_code: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { p_short_code: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-      increment_sms_quota: { Args: { p_vendor_id: string }; Returns: undefined }
+      | {
+        Args: { p_short_code: string }
+        Returns: {
+          error: true
+        } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+      }
+      | {
+        Args: { p_short_code: string }
+        Returns: {
+          error: true
+        } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+      }
       increment_stock_batch: { Args: { p_items: Json }; Returns: Json }
       initialize_marketplace_positions: { Args: never; Returns: Json }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:
-        | {
-            Args: {
-              p_amount: number
-              p_currency?: string
-              p_order_id: string
-              p_payer_id: string
-              p_receiver_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_auto_release_days?: number
-              p_currency?: string
-              p_metadata?: Json
-              p_order_id: string
-              p_payer_id: string
-              p_receiver_id: string
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_order_id: string
+          p_payer_id: string
+          p_receiver_id: string
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_auto_release_days?: number
+          p_currency?: string
+          p_metadata?: Json
+          p_order_id: string
+          p_payer_id: string
+          p_receiver_id: string
+        }
+        Returns: string
+      }
       is_admin:
-        | { Args: never; Returns: boolean }
-        | { Args: { _user_id: string }; Returns: boolean }
+      | { Args: never; Returns: boolean }
+      | { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_ceo: { Args: never; Returns: boolean }
       is_admin_or_pdg:
-        | { Args: never; Returns: boolean }
-        | { Args: { user_id: string }; Returns: boolean }
+      | { Args: never; Returns: boolean }
+      | { Args: { user_id: string }; Returns: boolean }
       is_agent_in_same_pdg: {
         Args: { _pdg_id: string; _user_id: string }
         Returns: boolean
@@ -32437,8 +30879,8 @@ export type Database = {
         Returns: string
       }
       populate_geometry_columns:
-        | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
-        | { Args: { use_typmod?: boolean }; Returns: string }
+      | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
+      | { Args: { use_typmod?: boolean }; Returns: string }
       pos_sale_from_location: {
         Args: {
           p_location_id: string
@@ -32487,14 +30929,6 @@ export type Database = {
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
       presence_heartbeat: { Args: { p_user_id: string }; Returns: undefined }
-      preview_campaign_audience: {
-        Args: {
-          p_target_filters?: Json
-          p_target_type?: string
-          p_vendor_id: string
-        }
-        Returns: Json
-      }
       preview_next_id: { Args: { p_prefix: string }; Returns: string }
       preview_wallet_transfer: {
         Args: { p_amount: number; p_receiver_id: string; p_sender_id: string }
@@ -32580,28 +31014,28 @@ export type Database = {
         Returns: Json
       }
       process_secure_wallet_transfer:
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_receiver_id: string
-              p_receiver_type?: string
-              p_sender_id: string
-              p_sender_type?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_recipient_id: string
-              p_recipient_type: string
-              p_sender_id: string
-              p_sender_type: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_receiver_id: string
+          p_receiver_type?: string
+          p_sender_id: string
+          p_sender_type?: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_recipient_id: string
+          p_recipient_type: string
+          p_sender_id: string
+          p_sender_type: string
+        }
+        Returns: Json
+      }
       process_successful_payment: {
         Args: { p_transaction_id: string }
         Returns: boolean
@@ -32634,50 +31068,50 @@ export type Database = {
         Returns: Json
       }
       process_wallet_transfer:
-        | {
-            Args: {
-              p_amount: number
-              p_currency: string
-              p_description?: string
-              p_receiver_id: string
-              p_sender_id: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-              transfer_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_currency?: string
-              p_description?: string
-              p_receiver_id: string
-              p_sender_id: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_description?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          transfer_id: string
+        }[]
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: Json
+      }
       process_wallet_transfer_with_fees:
-        | {
-            Args: {
-              p_amount: number
-              p_currency?: string
-              p_description?: string
-              p_receiver_code: string
-              p_sender_code: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_receiver_id: string
-              p_sender_id: string
-            }
-            Returns: Json
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_receiver_code: string
+          p_sender_code: string
+        }
+        Returns: Json
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_receiver_id: string
+          p_sender_id: string
+        }
+        Returns: Json
+      }
       purchase_to_location: {
         Args: {
           p_location_id: string
@@ -32688,25 +31122,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      receive_transfer:
-        | {
-            Args: {
-              p_items_received: Json
-              p_received_by?: string
-              p_reception_notes?: string
-              p_transfer_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_items_received: Json
-              p_received_by: string
-              p_reception_notes?: string
-              p_transfer_id: string
-            }
-            Returns: boolean
-          }
+      receive_transfer: {
+        Args: {
+          p_items_received: Json
+          p_received_by: string
+          p_reception_notes?: string
+          p_transfer_id: string
+        }
+        Returns: boolean
+      }
       record_pdg_revenue: {
         Args: {
           p_amount: number
@@ -32782,22 +31206,22 @@ export type Database = {
         Returns: boolean
       }
       release_taxi_lock:
-        | {
-            Args: {
-              p_locked_by: string
-              p_resource_id: string
-              p_resource_type: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_locked_by: string
-              p_resource_id: string
-              p_resource_type: string
-            }
-            Returns: undefined
-          }
+      | {
+        Args: {
+          p_locked_by: string
+          p_resource_id: string
+          p_resource_type: string
+        }
+        Returns: boolean
+      }
+      | {
+        Args: {
+          p_locked_by: string
+          p_resource_id: string
+          p_resource_type: string
+        }
+        Returns: undefined
+      }
       release_vendor_funds: {
         Args: {
           p_admin_id: string
@@ -32835,8 +31259,6 @@ export type Database = {
         }
         Returns: Json
       }
-      reset_campaign_quotas_daily: { Args: never; Returns: undefined }
-      reset_campaign_quotas_monthly: { Args: never; Returns: undefined }
       resolve_cache_errors: { Args: never; Returns: number }
       resolve_user_for_subscription: {
         Args: { p_identifier: string }
@@ -32903,11 +31325,11 @@ export type Database = {
         Returns: string
       }
       send_broadcast_message:
-        | { Args: { p_broadcast_id: string }; Returns: Json }
-        | {
-            Args: { p_broadcast_id: string; p_sender_id: string }
-            Returns: Json
-          }
+      | { Args: { p_broadcast_id: string }; Returns: Json }
+      | {
+        Args: { p_broadcast_id: string; p_sender_id: string }
+        Returns: Json
+      }
       set_agent_permissions: {
         Args: { p_agent_id: string; p_permissions: Json }
         Returns: Json
@@ -32924,25 +31346,16 @@ export type Database = {
         }
         Returns: undefined
       }
-      ship_transfer:
-        | {
-            Args: {
-              p_shipped_by?: string
-              p_shipping_notes?: string
-              p_transfer_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_shipped_by: string
-              p_shipping_notes?: string
-              p_transfer_id: string
-              p_transport_method?: string
-              p_transport_reference?: string
-            }
-            Returns: boolean
-          }
+      ship_transfer: {
+        Args: {
+          p_shipped_by: string
+          p_shipping_notes?: string
+          p_transfer_id: string
+          p_transport_method?: string
+          p_transport_reference?: string
+        }
+        Returns: boolean
+      }
       soft_delete_message: {
         Args: {
           p_delete_for_everyone?: boolean
@@ -32992,86 +31405,86 @@ export type Database = {
         Returns: unknown
       }
       st_angle:
-        | { Args: { line1: unknown; line2: unknown }; Returns: number }
-        | {
-            Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
-            Returns: number
-          }
+      | { Args: { line1: unknown; line2: unknown }; Returns: number }
+      | {
+        Args: { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
+        Returns: number
+      }
       st_area:
-        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-        | { Args: { "": string }; Returns: number }
+      | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+      | { Args: { "": string }; Returns: number }
       st_asencodedpolyline: {
         Args: { geom: unknown; nprecision?: number }
         Returns: string
       }
       st_asewkt: { Args: { "": string }; Returns: string }
       st_asgeojson:
-        | {
-            Args: { geog: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
-            Args: {
-              geom_column?: string
-              maxdecimaldigits?: number
-              pretty_bool?: boolean
-              r: Record<string, unknown>
-            }
-            Returns: string
-          }
-        | { Args: { "": string }; Returns: string }
+      | {
+        Args: { geog: unknown; maxdecimaldigits?: number; options?: number }
+        Returns: string
+      }
+      | {
+        Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+        Returns: string
+      }
+      | {
+        Args: {
+          geom_column?: string
+          maxdecimaldigits?: number
+          pretty_bool?: boolean
+          r: Record<string, unknown>
+        }
+        Returns: string
+      }
+      | { Args: { "": string }; Returns: string }
       st_asgml:
-        | {
-            Args: {
-              geog: unknown
-              id?: string
-              maxdecimaldigits?: number
-              nprefix?: string
-              options?: number
-            }
-            Returns: string
-          }
-        | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | { Args: { "": string }; Returns: string }
-        | {
-            Args: {
-              geog: unknown
-              id?: string
-              maxdecimaldigits?: number
-              nprefix?: string
-              options?: number
-              version: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              geom: unknown
-              id?: string
-              maxdecimaldigits?: number
-              nprefix?: string
-              options?: number
-              version: number
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          geog: unknown
+          id?: string
+          maxdecimaldigits?: number
+          nprefix?: string
+          options?: number
+        }
+        Returns: string
+      }
+      | {
+        Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+        Returns: string
+      }
+      | { Args: { "": string }; Returns: string }
+      | {
+        Args: {
+          geog: unknown
+          id?: string
+          maxdecimaldigits?: number
+          nprefix?: string
+          options?: number
+          version: number
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          geom: unknown
+          id?: string
+          maxdecimaldigits?: number
+          nprefix?: string
+          options?: number
+          version: number
+        }
+        Returns: string
+      }
       st_askml:
-        | {
-            Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
-            Returns: string
-          }
-        | {
-            Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string }
-            Returns: string
-          }
-        | { Args: { "": string }; Returns: string }
+      | {
+        Args: { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
+        Returns: string
+      }
+      | {
+        Args: { geom: unknown; maxdecimaldigits?: number; nprefix?: string }
+        Returns: string
+      }
+      | { Args: { "": string }; Returns: string }
       st_aslatlontext: {
         Args: { geom: unknown; tmpl?: string }
         Returns: string
@@ -33088,60 +31501,60 @@ export type Database = {
         Returns: unknown
       }
       st_assvg:
-        | {
-            Args: { geog: unknown; maxdecimaldigits?: number; rel?: number }
-            Returns: string
-          }
-        | {
-            Args: { geom: unknown; maxdecimaldigits?: number; rel?: number }
-            Returns: string
-          }
-        | { Args: { "": string }; Returns: string }
+      | {
+        Args: { geog: unknown; maxdecimaldigits?: number; rel?: number }
+        Returns: string
+      }
+      | {
+        Args: { geom: unknown; maxdecimaldigits?: number; rel?: number }
+        Returns: string
+      }
+      | { Args: { "": string }; Returns: string }
       st_astext: { Args: { "": string }; Returns: string }
       st_astwkb:
-        | {
-            Args: {
-              geom: unknown
-              prec?: number
-              prec_m?: number
-              prec_z?: number
-              with_boxes?: boolean
-              with_sizes?: boolean
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              geom: unknown[]
-              ids: number[]
-              prec?: number
-              prec_m?: number
-              prec_z?: number
-              with_boxes?: boolean
-              with_sizes?: boolean
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          geom: unknown
+          prec?: number
+          prec_m?: number
+          prec_z?: number
+          with_boxes?: boolean
+          with_sizes?: boolean
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          geom: unknown[]
+          ids: number[]
+          prec?: number
+          prec_m?: number
+          prec_z?: number
+          with_boxes?: boolean
+          with_sizes?: boolean
+        }
+        Returns: string
+      }
       st_asx3d: {
         Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
         Returns: string
       }
       st_azimuth:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: number }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: number }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
       st_boundingdiagonal: {
         Args: { fits?: boolean; geom: unknown }
         Returns: unknown
       }
       st_buffer:
-        | {
-            Args: { geom: unknown; options?: string; radius: number }
-            Returns: unknown
-          }
-        | {
-            Args: { geom: unknown; quadsegs: number; radius: number }
-            Returns: unknown
-          }
+      | {
+        Args: { geom: unknown; options?: string; radius: number }
+        Returns: unknown
+      }
+      | {
+        Args: { geom: unknown; quadsegs: number; radius: number }
+        Returns: unknown
+      }
       st_centroid: { Args: { "": string }; Returns: unknown }
       st_clipbybox2d: {
         Args: { box: unknown; geom: unknown }
@@ -33170,11 +31583,11 @@ export type Database = {
       }
       st_coorddim: { Args: { geometry: unknown }; Returns: number }
       st_coveredby:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_covers:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_crosses: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_curvetoline: {
         Args: { flags?: number; geom: unknown; tol?: number; toltype?: number }
@@ -33193,17 +31606,17 @@ export type Database = {
         Returns: boolean
       }
       st_distance:
-        | {
-            Args: { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
-            Returns: number
-          }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+      | {
+        Args: { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
+        Returns: number
+      }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
       st_distancesphere:
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
-        | {
-            Args: { geom1: unknown; geom2: unknown; radius: number }
-            Returns: number
-          }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: number }
+      | {
+        Args: { geom1: unknown; geom2: unknown; radius: number }
+        Returns: number
+      }
       st_distancespheroid: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: number
@@ -33219,21 +31632,21 @@ export type Database = {
       }
       st_equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_expand:
-        | { Args: { box: unknown; dx: number; dy: number }; Returns: unknown }
-        | {
-            Args: { box: unknown; dx: number; dy: number; dz?: number }
-            Returns: unknown
-          }
-        | {
-            Args: {
-              dm?: number
-              dx: number
-              dy: number
-              dz?: number
-              geom: unknown
-            }
-            Returns: unknown
-          }
+      | { Args: { box: unknown; dx: number; dy: number }; Returns: unknown }
+      | {
+        Args: { box: unknown; dx: number; dy: number; dz?: number }
+        Returns: unknown
+      }
+      | {
+        Args: {
+          dm?: number
+          dx: number
+          dy: number
+          dz?: number
+          geom: unknown
+        }
+        Returns: unknown
+      }
       st_force3d: { Args: { geom: unknown; zvalue?: number }; Returns: unknown }
       st_force3dm: {
         Args: { geom: unknown; mvalue?: number }
@@ -33248,16 +31661,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
-        | {
-            Args: { area: unknown; npoints: number; seed: number }
-            Returns: unknown
-          }
+      | { Args: { area: unknown; npoints: number }; Returns: unknown }
+      | {
+        Args: { area: unknown; npoints: number; seed: number }
+        Returns: unknown
+      }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geog: unknown; maxchars?: number }; Returns: string }
-        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
+      | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+      | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -33271,9 +31684,9 @@ export type Database = {
       st_geometryfromtext: { Args: { "": string }; Returns: unknown }
       st_geomfromewkt: { Args: { "": string }; Returns: unknown }
       st_geomfromgeojson:
-        | { Args: { "": Json }; Returns: unknown }
-        | { Args: { "": Json }; Returns: unknown }
-        | { Args: { "": string }; Returns: unknown }
+      | { Args: { "": Json }; Returns: unknown }
+      | { Args: { "": Json }; Returns: unknown }
+      | { Args: { "": string }; Returns: unknown }
       st_geomfromgml: { Args: { "": string }; Returns: unknown }
       st_geomfromkml: { Args: { "": string }; Returns: unknown }
       st_geomfrommarc21: { Args: { marc21xml: string }; Returns: unknown }
@@ -33301,8 +31714,8 @@ export type Database = {
         Returns: unknown
       }
       st_intersects:
-        | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      | { Args: { geog1: unknown; geog2: unknown }; Returns: boolean }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_isvaliddetail: {
         Args: { flags?: number; geom: unknown }
         Returns: Database["public"]["CompositeTypes"]["valid_detail"]
@@ -33314,8 +31727,8 @@ export type Database = {
         }
       }
       st_length:
-        | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
-        | { Args: { "": string }; Returns: number }
+      | { Args: { geog: unknown; use_spheroid?: boolean }; Returns: number }
+      | { Args: { "": string }; Returns: number }
       st_letters: { Args: { font?: Json; letters: string }; Returns: unknown }
       st_linecrossingdirection: {
         Args: { line1: unknown; line2: unknown }
@@ -33455,8 +31868,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geog: unknown; srid: number }; Returns: unknown }
-        | { Args: { geom: unknown; srid: number }; Returns: unknown }
+      | { Args: { geog: unknown; srid: number }; Returns: unknown }
+      | { Args: { geom: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -33479,8 +31892,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geog: unknown }; Returns: number }
-        | { Args: { geom: unknown }; Returns: number }
+      | { Args: { geog: unknown }; Returns: number }
+      | { Args: { geom: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -33509,22 +31922,22 @@ export type Database = {
       }
       st_touches: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       st_transform:
-        | {
-            Args: { from_proj: string; geom: unknown; to_proj: string }
-            Returns: unknown
-          }
-        | {
-            Args: { from_proj: string; geom: unknown; to_srid: number }
-            Returns: unknown
-          }
-        | { Args: { geom: unknown; to_proj: string }; Returns: unknown }
+      | {
+        Args: { from_proj: string; geom: unknown; to_proj: string }
+        Returns: unknown
+      }
+      | {
+        Args: { from_proj: string; geom: unknown; to_srid: number }
+        Returns: unknown
+      }
+      | { Args: { geom: unknown; to_proj: string }; Returns: unknown }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
-        | {
-            Args: { geom1: unknown; geom2: unknown; gridsize: number }
-            Returns: unknown
-          }
+      | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
+      | {
+        Args: { geom1: unknown; geom2: unknown; gridsize: number }
+        Returns: unknown
+      }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown
@@ -33541,25 +31954,25 @@ export type Database = {
         Returns: unknown
       }
       subscribe_driver:
-        | {
-            Args: {
-              p_billing_cycle?: string
-              p_payment_method?: string
-              p_transaction_id?: string
-              p_type: string
-              p_user_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_payment_method: string
-              p_transaction_id?: string
-              p_type: string
-              p_user_id: string
-            }
-            Returns: string
-          }
+      | {
+        Args: {
+          p_billing_cycle?: string
+          p_payment_method?: string
+          p_transaction_id?: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      | {
+        Args: {
+          p_payment_method: string
+          p_transaction_id?: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       subscribe_user: {
         Args: {
           p_billing_cycle?: string
@@ -33587,85 +32000,85 @@ export type Database = {
         Returns: undefined
       }
       track_product_view:
-        | {
-            Args: {
-              p_city?: string
-              p_country_code?: string
-              p_device_type?: string
-              p_fingerprint_hash?: string
-              p_ip_address?: unknown
-              p_product_id: string
-              p_referer_url?: string
-              p_session_id?: string
-              p_user_agent?: string
-              p_user_id?: string
-              p_vendor_id: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-              view_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_country_code?: string
-              p_device_type?: string
-              p_fingerprint_hash?: string
-              p_ip_address?: string
-              p_product_id: string
-              p_referer_url?: string
-              p_session_id?: string
-              p_user_agent?: string
-              p_user_id?: string
-              p_vendor_id: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-              view_id: string
-            }[]
-          }
+      | {
+        Args: {
+          p_city?: string
+          p_country_code?: string
+          p_device_type?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: unknown
+          p_product_id: string
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          view_id: string
+        }[]
+      }
+      | {
+        Args: {
+          p_country_code?: string
+          p_device_type?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: string
+          p_product_id: string
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          view_id: string
+        }[]
+      }
       track_shop_visit:
-        | {
-            Args: {
-              p_city?: string
-              p_country_code?: string
-              p_device_type?: string
-              p_entry_page?: string
-              p_fingerprint_hash?: string
-              p_ip_address?: unknown
-              p_referer_url?: string
-              p_session_id?: string
-              p_user_agent?: string
-              p_user_id?: string
-              p_vendor_id: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-              visit_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_country_code?: string
-              p_device_type?: string
-              p_entry_page?: string
-              p_fingerprint_hash?: string
-              p_ip_address?: string
-              p_referer_url?: string
-              p_session_id?: string
-              p_user_agent?: string
-              p_user_id?: string
-              p_vendor_id: string
-            }
-            Returns: {
-              message: string
-              success: boolean
-              visit_id: string
-            }[]
-          }
+      | {
+        Args: {
+          p_city?: string
+          p_country_code?: string
+          p_device_type?: string
+          p_entry_page?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: unknown
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          visit_id: string
+        }[]
+      }
+      | {
+        Args: {
+          p_country_code?: string
+          p_device_type?: string
+          p_entry_page?: string
+          p_fingerprint_hash?: string
+          p_ip_address?: string
+          p_referer_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_vendor_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+          visit_id: string
+        }[]
+      }
       transfer_between_wallets: {
         Args: {
           p_amount: number
@@ -33732,30 +32145,30 @@ export type Database = {
         Returns: undefined
       }
       update_wallet_balance_atomic:
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_transaction_id: string
-              p_wallet_id: number
-            }
-            Returns: {
-              new_balance: number
-              success: boolean
-            }[]
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_tx_id: string
-              p_wallet_id: string
-            }
-            Returns: {
-              new_balance: number
-              success: boolean
-            }[]
-          }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_transaction_id: string
+          p_wallet_id: number
+        }
+        Returns: {
+          new_balance: number
+          success: boolean
+        }[]
+      }
+      | {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_tx_id: string
+          p_wallet_id: string
+        }
+        Returns: {
+          new_balance: number
+          success: boolean
+        }[]
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string
@@ -33767,27 +32180,27 @@ export type Database = {
         Returns: string
       }
       upsert_service_type:
-        | {
-            Args: {
-              p_category: string
-              p_code: string
-              p_commission_rate?: number
-              p_description: string
-              p_name: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_category: string
-              p_code: string
-              p_commission_rate?: number
-              p_description: string
-              p_icon?: string
-              p_name: string
-            }
-            Returns: undefined
-          }
+      | {
+        Args: {
+          p_category: string
+          p_code: string
+          p_commission_rate?: number
+          p_description: string
+          p_name: string
+        }
+        Returns: undefined
+      }
+      | {
+        Args: {
+          p_category: string
+          p_code: string
+          p_commission_rate?: number
+          p_description: string
+          p_icon?: string
+          p_name: string
+        }
+        Returns: undefined
+      }
       validate_secure_payment: {
         Args: {
           p_amount_paid: number
@@ -33839,156 +32252,155 @@ export type Database = {
     }
     Enums: {
       agent_type_enum:
-        | "commercial"
-        | "logistique"
-        | "support"
-        | "administratif"
-        | "manager"
-        | "technique"
+      | "commercial"
+      | "logistique"
+      | "support"
+      | "administratif"
+      | "manager"
+      | "technique"
       call_status_type: "ringing" | "accepted" | "rejected" | "ended" | "missed"
       commission_type: "percentage" | "fixed" | "tiered"
       decision_enum: "AUTO_APPROVED" | "ADMIN_REVIEW" | "BLOCKED"
       delivery_status:
-        | "pending"
-        | "assigned"
-        | "picked_up"
-        | "in_transit"
-        | "delivered"
-        | "cancelled"
+      | "pending"
+      | "assigned"
+      | "picked_up"
+      | "in_transit"
+      | "delivered"
+      | "cancelled"
       escrow_status_type: "holding" | "released" | "disputed" | "cancelled"
       fraud_signal_enum:
-        | "UNUSUAL_AMOUNT"
-        | "NEW_SELLER"
-        | "HIGH_VELOCITY"
-        | "RISKY_COUNTRY"
-        | "SUSPICIOUS_PATTERN"
-        | "CARD_TESTING"
-        | "DEVICE_MISMATCH"
+      | "UNUSUAL_AMOUNT"
+      | "NEW_SELLER"
+      | "HIGH_VELOCITY"
+      | "RISKY_COUNTRY"
+      | "SUSPICIOUS_PATTERN"
+      | "CARD_TESTING"
+      | "DEVICE_MISMATCH"
       id_normalization_reason:
-        | "duplicate_detected"
-        | "format_invalid"
-        | "prefix_mismatch"
-        | "sequence_gap"
-        | "collision_resolved"
-        | "manual_override"
-        | "migration_fix"
+      | "duplicate_detected"
+      | "format_invalid"
+      | "prefix_mismatch"
+      | "sequence_gap"
+      | "collision_resolved"
+      | "manual_override"
+      | "migration_fix"
       message_type:
-        | "text"
-        | "image"
-        | "file"
-        | "call"
-        | "location"
-        | "audio"
-        | "video"
+      | "text"
+      | "image"
+      | "file"
+      | "call"
+      | "location"
+      | "audio"
+      | "video"
       order_source: "online" | "pos"
       order_status:
-        | "pending"
-        | "confirmed"
-        | "preparing"
-        | "ready"
-        | "in_transit"
-        | "delivered"
-        | "cancelled"
-        | "completed"
-        | "processing"
+      | "pending"
+      | "confirmed"
+      | "preparing"
+      | "ready"
+      | "in_transit"
+      | "delivered"
+      | "cancelled"
+      | "completed"
+      | "processing"
       payment_method:
-        | "mobile_money"
-        | "card"
-        | "cash"
-        | "bank_transfer"
-        | "wallet"
+      | "mobile_money"
+      | "card"
+      | "cash"
+      | "bank_transfer"
+      | "wallet"
       payment_method_type:
-        | "card"
-        | "wallet"
-        | "mobile_money"
-        | "escrow"
-        | "orange_money"
-        | "mtn"
-        | "wave"
+      | "card"
+      | "wallet"
+      | "mobile_money"
+      | "escrow"
+      | "orange_money"
+      | "mtn"
+      | "wave"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       release_status_enum:
-        | "PENDING"
-        | "SCHEDULED"
-        | "RELEASED"
-        | "REJECTED"
-        | "DISPUTED"
+      | "PENDING"
+      | "SCHEDULED"
+      | "RELEASED"
+      | "REJECTED"
+      | "DISPUTED"
       ride_status:
-        | "requested"
-        | "accepted"
-        | "in_progress"
-        | "completed"
-        | "cancelled"
+      | "requested"
+      | "accepted"
+      | "in_progress"
+      | "completed"
+      | "cancelled"
       risk_level_enum: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
       stripe_payment_status:
-        | "PENDING"
-        | "PROCESSING"
-        | "SUCCEEDED"
-        | "FAILED"
-        | "CANCELED"
-        | "REFUNDED"
-        | "DISPUTED"
+      | "PENDING"
+      | "PROCESSING"
+      | "SUCCEEDED"
+      | "FAILED"
+      | "CANCELED"
+      | "REFUNDED"
+      | "DISPUTED"
       stripe_transaction_type:
-        | "PAYMENT"
-        | "COMMISSION"
-        | "WITHDRAWAL"
-        | "REFUND"
-        | "CHARGEBACK"
+      | "PAYMENT"
+      | "COMMISSION"
+      | "WITHDRAWAL"
+      | "REFUND"
+      | "CHARGEBACK"
       stripe_wallet_status: "ACTIVE" | "FROZEN" | "SUSPENDED"
       stripe_withdrawal_status:
-        | "PENDING"
-        | "PROCESSING"
-        | "COMPLETED"
-        | "FAILED"
-        | "CANCELED"
+      | "PENDING"
+      | "PROCESSING"
+      | "COMPLETED"
+      | "FAILED"
+      | "CANCELED"
       tracking_status_type:
-        | "waiting"
-        | "in_progress"
-        | "delivered"
-        | "cancelled"
+      | "waiting"
+      | "in_progress"
+      | "delivered"
+      | "cancelled"
       transaction_status:
-        | "pending"
-        | "processing"
-        | "completed"
-        | "failed"
-        | "cancelled"
-        | "refunded"
-        | "disputed"
+      | "pending"
+      | "processing"
+      | "completed"
+      | "failed"
+      | "cancelled"
+      | "refunded"
+      | "disputed"
       transaction_status_type:
-        | "pending"
-        | "completed"
-        | "failed"
-        | "refunded"
-        | "cancelled"
+      | "pending"
+      | "completed"
+      | "failed"
+      | "refunded"
+      | "cancelled"
       transaction_type:
-        | "transfer"
-        | "deposit"
-        | "withdrawal"
-        | "payment"
-        | "refund"
-        | "commission"
-        | "mobile_money_in"
-        | "mobile_money_out"
-        | "card_payment"
-        | "bank_transfer"
-        | "transfer_in"
-        | "transfer_out"
+      | "transfer"
+      | "deposit"
+      | "withdrawal"
+      | "payment"
+      | "refund"
+      | "commission"
+      | "mobile_money_in"
+      | "mobile_money_out"
+      | "card_payment"
+      | "bank_transfer"
+      | "transfer_in"
+      | "transfer_out"
       user_presence_status: "online" | "offline" | "away" | "busy" | "in_call"
       user_role:
-        | "admin"
-        | "vendeur"
-        | "livreur"
-        | "taxi"
-        | "syndicat"
-        | "transitaire"
-        | "client"
-        | "ceo"
-        | "agent"
-        | "pdg"
-        | "prestataire"
-        | "bureau"
-        | "vendor_agent"
-        | "driver"
-        | "actionnaire"
+      | "admin"
+      | "vendeur"
+      | "livreur"
+      | "taxi"
+      | "syndicat"
+      | "transitaire"
+      | "client"
+      | "ceo"
+      | "agent"
+      | "pdg"
+      | "prestataire"
+      | "bureau"
+      | "vendor_agent"
+      | "driver"
       vehicle_type: "moto" | "car" | "bicycle" | "truck"
       vendor_certification_status: "NON_CERTIFIE" | "CERTIFIE" | "SUSPENDU"
       wallet_status: "active" | "suspended" | "blocked" | "pending_verification"
@@ -34013,121 +32425,118 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       agent_type_enum: [
@@ -34297,7 +32706,6 @@ export const Constants = {
         "bureau",
         "vendor_agent",
         "driver",
-        "actionnaire",
       ],
       vehicle_type: ["moto", "car", "bicycle", "truck"],
       vendor_certification_status: ["NON_CERTIFIE", "CERTIFIE", "SUSPENDU"],
@@ -34305,4 +32713,3 @@ export const Constants = {
     },
   },
 } as const
-<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

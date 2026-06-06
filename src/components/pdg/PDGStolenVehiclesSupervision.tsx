@@ -258,9 +258,9 @@ export default function PDGStolenVehiclesSupervision() {
     const _getStatusBadge = (status: string) => {
         switch (status) {
             case 'stolen':
-                return <Badge className="bg-red-600 text-white">🚨 VOLÉE</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">🚨 VOLÉE</Badge>;
             case 'recovered':
-                return <Badge className="bg-green-600 text-white">✅ Retrouvée</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">✅ Retrouvée</Badge>;
             case 'blocked':
                 return <Badge className="bg-orange-600 text-white">🔒 Bloquée</Badge>;
             default:
@@ -271,11 +271,11 @@ export default function PDGStolenVehiclesSupervision() {
     const getSeverityBadge = (severity: string) => {
         switch (severity) {
             case 'critical':
-                return <Badge className="bg-red-600 text-white">Critique</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">Critique</Badge>;
             case 'high':
                 return <Badge className="bg-orange-600 text-white">Élevée</Badge>;
             case 'medium':
-                return <Badge className="bg-yellow-600 text-white">Moyenne</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">Moyenne</Badge>;
             default:
                 return <Badge className="bg-blue-600 text-white">Basse</Badge>;
         }
@@ -283,8 +283,8 @@ export default function PDGStolenVehiclesSupervision() {
 
     const getActionIcon = (action: string) => {
         switch (action) {
-            case 'THEFT_DECLARED': return <ShieldAlert className="w-4 h-4 text-red-600" />;
-            case 'RECOVERY_DECLARED': return <ShieldCheck className="w-4 h-4 text-green-600" />;
+            case 'THEFT_DECLARED': return <ShieldAlert className="w-4 h-4 text-[#ff4000]" />;
+            case 'RECOVERY_DECLARED': return <ShieldCheck className="w-4 h-4 text-[#ff4000]" />;
             case 'GPS_TRACKED': return <MapPin className="w-4 h-4 text-blue-600" />;
             case 'FRAUD_ATTEMPT': return <AlertTriangle className="w-4 h-4 text-orange-600" />;
             default: return <Activity className="w-4 h-4 text-gray-600" />;
@@ -304,7 +304,7 @@ export default function PDGStolenVehiclesSupervision() {
             {/* En-tête */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <ShieldAlert className="w-8 h-8 text-red-600" />
+                    <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
                     <div>
                         <h2 className="text-2xl font-bold">Supervision Motos Volées</h2>
                         <p className="text-muted-foreground">Vue centralisée de tous les bureaux</p>
@@ -318,25 +318,25 @@ export default function PDGStolenVehiclesSupervision() {
 
             {/* Statistiques globales */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-orange-200 bg-orange-50">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <ShieldAlert className="w-8 h-8 text-red-600" />
+                            <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
                             <div>
-                                <p className="text-2xl font-bold text-red-700">{stats.totalStolen}</p>
-                                <p className="text-sm text-red-600">Motos volées</p>
+                                <p className="text-2xl font-bold text-[#ff4000]">{stats.totalStolen}</p>
+                                <p className="text-sm text-[#ff4000]">Motos volées</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-orange-200 bg-orange-50">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-8 h-8 text-green-600" />
+                            <ShieldCheck className="w-8 h-8 text-[#ff4000]" />
                             <div>
-                                <p className="text-2xl font-bold text-green-700">{stats.totalRecovered}</p>
-                                <p className="text-sm text-green-600">Retrouvées</p>
+                                <p className="text-2xl font-bold text-[#ff4000]">{stats.totalRecovered}</p>
+                                <p className="text-sm text-[#ff4000]">Retrouvées</p>
                             </div>
                         </div>
                     </CardContent>
@@ -369,9 +369,9 @@ export default function PDGStolenVehiclesSupervision() {
 
             {/* Alertes critiques */}
             {fraudAlerts.length > 0 && (
-                <Alert className="border-red-500 bg-red-50">
-                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                    <AlertDescription className="text-red-800">
+                <Alert className="border-[#ff4000] bg-orange-50">
+                    <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
+                    <AlertDescription className="text-[#ff4000]">
                         <strong>🚨 {fraudAlerts.length} alerte(s) de fraude non résolue(s)</strong>
                         <p className="text-sm mt-1">
                             Des activités suspectes ont été détectées sur des véhicules volés.
@@ -399,10 +399,10 @@ export default function PDGStolenVehiclesSupervision() {
 
                 {/* Tab: Motos volées */}
                 <TabsContent value="stolen">
-                    <Card className="border-red-200">
-                        <CardHeader className="bg-red-50">
+                    <Card className="border-orange-200">
+                        <CardHeader className="bg-orange-50">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2 text-red-800">
+                                <CardTitle className="flex items-center gap-2 text-[#ff4000]">
                                     <ShieldAlert className="w-5 h-5" />
                                     Motos déclarées volées - Tous bureaux
                                 </CardTitle>
@@ -420,7 +420,7 @@ export default function PDGStolenVehiclesSupervision() {
                         <CardContent className="p-0">
                             {filteredVehicles.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
-                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
                                     <p>Aucune moto déclarée volée</p>
                                 </div>
                             ) : (
@@ -440,7 +440,7 @@ export default function PDGStolenVehiclesSupervision() {
                                         </TableHeader>
                                         <TableBody>
                                             {filteredVehicles.map((vehicle) => (
-                                                <TableRow key={vehicle.id} className="bg-red-50/50">
+                                                <TableRow key={vehicle.id} className="bg-orange-50/50">
                                                     <TableCell>
                                                         <Badge variant="outline" className="flex items-center gap-1 w-fit">
                                                             <Building2 className="w-3 h-3" />
@@ -456,7 +456,7 @@ export default function PDGStolenVehiclesSupervision() {
                                                     <TableCell>{vehicle.owner_name}</TableCell>
                                                     <TableCell>
                                                         {vehicle.stolen_declared_at && (
-                                                            <div className="flex items-center gap-1 text-sm text-red-700">
+                                                            <div className="flex items-center gap-1 text-sm text-[#ff4000]">
                                                                 <Clock className="w-3 h-3" />
                                                                 {format(new Date(vehicle.stolen_declared_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                                                             </div>
@@ -506,7 +506,7 @@ export default function PDGStolenVehiclesSupervision() {
                         <CardContent className="p-0">
                             {fraudAlerts.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
-                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
                                     <p>Aucune alerte de fraude active</p>
                                 </div>
                             ) : (

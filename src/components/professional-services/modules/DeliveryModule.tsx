@@ -164,11 +164,11 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
 
   const getStatusBadge = (status: Delivery['status']) => {
     const styles = {
-      en_attente: 'bg-yellow-100 text-yellow-800',
+      en_attente: 'bg-orange-100 text-[#ff4000]',
       collecte: 'bg-blue-100 text-blue-800',
-      en_transit: 'bg-purple-100 text-purple-800',
-      livree: 'bg-green-100 text-green-800',
-      echec: 'bg-red-100 text-red-800'
+      en_transit: 'bg-blue-100 text-[#04439e]',
+      livree: 'bg-orange-100 text-[#ff4000]',
+      echec: 'bg-orange-100 text-[#ff4000]'
     };
     const labels = {
       en_attente: 'En attente',
@@ -182,7 +182,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
 
   const getCourierStatusBadge = (status: Courier['status']) => {
     const styles = {
-      disponible: 'bg-green-100 text-green-800',
+      disponible: 'bg-orange-100 text-[#ff4000]',
       en_course: 'bg-blue-100 text-blue-800',
       hors_ligne: 'bg-gray-100 text-gray-800'
     };
@@ -239,7 +239,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <AlertCircle className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">En attente</span>
             </div>
             <p className="text-2xl font-bold mt-1">{pendingDeliveries}</p>
@@ -257,7 +257,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Livrées</span>
             </div>
             <p className="text-2xl font-bold mt-1">{completedToday}</p>
@@ -266,7 +266,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Truck className="h-4 w-4 text-purple-500" />
+              <Truck className="h-4 w-4 text-[#04439e]" />
               <span className="text-sm text-muted-foreground">Livreurs dispo</span>
             </div>
             <p className="text-2xl font-bold mt-1">{availableCouriers}</p>
@@ -275,7 +275,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-xl font-bold mt-1">{formatPrice(totalRevenue)}</p>
@@ -520,7 +520,7 @@ export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="flex items-center gap-1 text-yellow-500">
+                      <div className="flex items-center gap-1 text-[#ff4000]">
                         <span>⭐</span>
                         <span className="font-medium">{courier.rating}</span>
                       </div>

@@ -52,13 +52,13 @@ const COUNTRY_OPTIONS = [
 ];
 
 const USER_ROLES = [
-  { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-green-600' },
+  { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-[#ff4000]' },
   { value: 'vendeur', label: 'Vendeur', icon: ShoppingBag, description: 'Boutique/Commerce', color: 'text-blue-600' },
-  { value: 'livreur', label: 'Livreur', icon: Truck, description: 'Livraison de colis', color: 'text-yellow-600' },
-  { value: 'taxi', label: 'Taxi', icon: Car, description: 'Transport de personnes', color: 'text-purple-600' },
+  { value: 'livreur', label: 'Livreur', icon: Truck, description: 'Livraison de colis', color: 'text-[#ff4000]' },
+  { value: 'taxi', label: 'Taxi', icon: Car, description: 'Transport de personnes', color: 'text-[#04439e]' },
   { value: 'transitaire', label: 'Transitaire', icon: Ship, description: 'Logistique internationale', color: 'text-orange-600' },
-  { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
-  { value: 'prestataire', label: 'Prestataire', icon: Building2, description: 'Service de proximité', color: 'text-teal-600' },
+  { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-[#ff4000]' },
+  { value: 'prestataire', label: 'Prestataire', icon: Building2, description: 'Service de proximité', color: 'text-[#ff4000]' },
 ];
 
 // Codes synchronisés avec service_types en BDD
@@ -239,9 +239,9 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl w-[95vw] h-[80vh] flex flex-col p-0 top-[10%] translate-y-0">
-        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
+        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white p-4 rounded-t-lg">
           <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
-          <DialogDescription className="text-emerald-100">
+          <DialogDescription className="text-orange-100">
             Sélectionnez le type d'utilisateur et remplissez les informations
           </DialogDescription>
         </DialogHeader>
@@ -415,10 +415,10 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
           {/* Champs spécifiques au rôle Syndicat */}
           {formData.role === 'syndicat' && (
-            <div className="space-y-3 p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
+            <div className="space-y-3 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border-2 border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-pink-600" />
-                <h3 className="font-semibold text-pink-900 dark:text-pink-100">Informations du Bureau Syndical</h3>
+                <Building2 className="w-5 h-5 text-[#ff4000]" />
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">Informations du Bureau Syndical</h3>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -533,10 +533,10 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
           {/* Champs spécifiques au rôle Prestataire */}
           {formData.role === 'prestataire' && (
-            <div className="space-y-3 p-4 bg-teal-50 dark:bg-teal-950/20 rounded-lg border-2 border-teal-200 dark:border-teal-800">
+            <div className="space-y-3 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border-2 border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-teal-600" />
-                <h3 className="font-semibold text-teal-900 dark:text-teal-100">Informations du Service</h3>
+                <Building2 className="w-5 h-5 text-[#ff4000]" />
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">Informations du Service</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -591,14 +591,14 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           )}
           {/* Champs spécifiques aux rôles Taxi et Livreur */}
           {(formData.role === 'taxi' || formData.role === 'livreur') && (
-            <div className="space-y-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+            <div className="space-y-3 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border-2 border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2">
                 {formData.role === 'taxi' ? (
-                  <Car className="w-5 h-5 text-yellow-600" />
+                  <Car className="w-5 h-5 text-[#ff4000]" />
                 ) : (
-                  <Truck className="w-5 h-5 text-yellow-600" />
+                  <Truck className="w-5 h-5 text-[#ff4000]" />
                 )}
-                <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">
                   Informations du Véhicule
                 </h3>
               </div>

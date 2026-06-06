@@ -76,14 +76,14 @@ export function AgentServiceSubscriptionsModule({
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-emerald-100 text-emerald-700 flex items-center gap-1">
+          <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
             Actif
           </Badge>
         );
       case 'expired':
         return (
-          <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
+          <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1">
             <XCircle className="w-3 h-3" />
             Expiré
           </Badge>
@@ -97,7 +97,7 @@ export function AgentServiceSubscriptionsModule({
         );
       case 'pending':
         return (
-          <Badge className="bg-amber-100 text-amber-700 flex items-center gap-1">
+          <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1">
             <Clock className="w-3 h-3" />
             En attente
           </Badge>
@@ -131,7 +131,7 @@ export function AgentServiceSubscriptionsModule({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl shadow-lg">
+          <div className="p-3 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl shadow-lg">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export function AgentServiceSubscriptionsModule({
       {/* Stats Overview */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -160,42 +160,42 @@ export function AgentServiceSubscriptionsModule({
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-md bg-gradient-to-br from-emerald-50 to-green-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Revenus Mensuels</p>
-                  <p className="text-2xl font-bold text-emerald-700">
+                  <p className="text-2xl font-bold text-[#ff4000]">
                     {ServiceSubscriptionService.formatAmount(stats.monthly_revenue || 0)}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-emerald-400" />
+                <DollarSign className="w-8 h-8 text-[#ff4000]" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Total Abonnements</p>
-                  <p className="text-2xl font-bold text-purple-700">{stats.total_subscriptions}</p>
+                  <p className="text-2xl font-bold text-[#04439e]">{stats.total_subscriptions}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-purple-400" />
+                <TrendingUp className="w-8 h-8 text-[#04439e]" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-yellow-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Services Actifs</p>
-                  <p className="text-2xl font-bold text-amber-700">
+                  <p className="text-2xl font-bold text-[#ff4000]">
                     {plans.filter(p => p.is_active).length}
                   </p>
                 </div>
-                <Store className="w-8 h-8 text-amber-400" />
+                <Store className="w-8 h-8 text-[#ff4000]" />
               </div>
             </CardContent>
           </Card>
@@ -333,7 +333,7 @@ export function AgentServiceSubscriptionsModule({
                         <ul className="space-y-1">
                           {plan.features.slice(0, 4).map((feature, idx) => (
                             <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
-                              <CheckCircle className="w-3 h-3 text-emerald-500" />
+                              <CheckCircle className="w-3 h-3 text-[#ff4000]" />
                               {feature}
                             </li>
                           ))}

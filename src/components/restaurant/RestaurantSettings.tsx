@@ -345,7 +345,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               disabled={gpsLoading}
               className={`gap-2 transition-all duration-300 ${
                 gpsSuccess
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                  ? 'bg-[#ff4000] hover:bg-[#ff4000] text-white border-[#ff4000]'
                   : 'border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground'
               }`}
             >

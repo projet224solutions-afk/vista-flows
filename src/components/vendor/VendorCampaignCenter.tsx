@@ -63,11 +63,11 @@ const MESSAGE_TYPES = [
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
   draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200', icon: Clock },
   scheduled: { label: 'Programmée', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', icon: Calendar },
-  queued: { label: 'En file', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', icon: Clock },
+  queued: { label: 'En file', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: Clock },
   sending: { label: 'En cours', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', icon: Send },
-  sent: { label: 'Envoyée', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', icon: CheckCircle },
-  partial: { label: 'Partielle', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200', icon: AlertTriangle },
-  failed: { label: 'Échouée', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', icon: XCircle },
+  sent: { label: 'Envoyée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: CheckCircle },
+  partial: { label: 'Partielle', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: AlertTriangle },
+  failed: { label: 'Échouée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: XCircle },
   cancelled: { label: 'Annulée', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: Pause },
 };
 
@@ -196,8 +196,8 @@ export default function VendorCampaignCenter() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-orange-100 dark:bg-[#ff4000]/30">
+                <CheckCircle className="h-4 w-4 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.sent}</p>
@@ -222,8 +222,8 @@ export default function VendorCampaignCenter() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Users className="h-4 w-4 text-purple-600" />
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-[#04439e]/30">
+                <Users className="h-4 w-4 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalReach.toLocaleString()}</p>
@@ -620,7 +620,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
               )}
               {loadingPreview && <p className="text-sm text-muted-foreground text-center">Calcul de l'audience...</p>}
               {previewFailed && (
-                <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-[#ff4000] dark:text-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30 p-3 rounded-lg">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <span>{previewError || 'Impossible de calculer l\'audience. Vous pouvez continuer malgré tout.'}</span>
                 </div>
@@ -759,8 +759,8 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
                   <div className="grid grid-cols-4 gap-3 pt-2">
                     <StatBox label="Ciblés" value={campaign.total_targeted} />
                     <StatBox label="Éligibles" value={campaign.total_eligible} />
-                    <StatBox label="Envoyés" value={campaign.total_sent} color="text-green-600" />
-                    <StatBox label="Échoués" value={campaign.total_failed} color="text-red-600" />
+                    <StatBox label="Envoyés" value={campaign.total_sent} color="text-[#ff4000]" />
+                    <StatBox label="Échoués" value={campaign.total_failed} color="text-[#ff4000]" />
                   </div>
                 </CardContent>
               </Card>
@@ -773,7 +773,7 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
                   <div className="grid grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="pt-4 text-center">
-                        <p className="text-3xl font-bold text-green-600">{analytics.rates.delivery_rate}%</p>
+                        <p className="text-3xl font-bold text-[#ff4000]">{analytics.rates.delivery_rate}%</p>
                         <p className="text-xs text-muted-foreground">Taux de délivrance</p>
                       </CardContent>
                     </Card>
@@ -785,7 +785,7 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
                     </Card>
                     <Card>
                       <CardContent className="pt-4 text-center">
-                        <p className="text-3xl font-bold text-red-600">{analytics.rates.failure_rate}%</p>
+                        <p className="text-3xl font-bold text-[#ff4000]">{analytics.rates.failure_rate}%</p>
                         <p className="text-xs text-muted-foreground">Taux d'échec</p>
                       </CardContent>
                     </Card>

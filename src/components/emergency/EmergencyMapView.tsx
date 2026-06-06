@@ -74,7 +74,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-red-600" />
+            <MapPin className="h-5 w-5 text-[#ff4000]" />
             Position Temps Réel
           </span>
           <div className="flex gap-2">
@@ -123,7 +123,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
           {/* Badge position actuelle */}
           <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-20">
             <div className="flex items-center gap-2">
-              <div className="h-3 w-3 bg-red-600 rounded-full animate-ping" />
+              <div className="h-3 w-3 bg-[#ff4000] rounded-full animate-ping" />
               <div>
                 <p className="text-xs font-medium">Position Actuelle</p>
                 <p className="text-xs text-muted-foreground">

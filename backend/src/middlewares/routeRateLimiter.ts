@@ -1,6 +1,6 @@
 /**
  * 🛡️ PER-ROUTE RATE LIMITER - Phase 6
- *
+ * 
  * Redis-backed rate limiting for critical endpoints.
  * Falls back to in-memory if Redis unavailable.
  * Configurable per-route with IP + user + API key dimensions.
@@ -137,9 +137,9 @@ export const authRateLimit = routeRateLimit({
   maxRequests: 10, windowSeconds: 900, keyPrefix: 'auth', perUser: false, perIp: true,
 });
 
-/** Create order: 30 req / min per user */
+/** Create order: 5 req / min per user */
 export const orderCreateRateLimit = routeRateLimit({
-  maxRequests: 30, windowSeconds: 60, keyPrefix: 'order:create', perUser: true, perIp: true,
+  maxRequests: 5, windowSeconds: 60, keyPrefix: 'order:create', perUser: true, perIp: true,
 });
 
 /** Manage existing orders: 10 req / min per user */
@@ -147,9 +147,9 @@ export const orderManageRateLimit = routeRateLimit({
   maxRequests: 10, windowSeconds: 60, keyPrefix: 'order:manage', perUser: true, perIp: true,
 });
 
-/** Payment endpoints: 30 req / min per user */
+/** Payment endpoints: 10 req / min per user */
 export const paymentRateLimit = routeRateLimit({
-  maxRequests: 30, windowSeconds: 60, keyPrefix: 'payment', perUser: true, perIp: true,
+  maxRequests: 10, windowSeconds: 60, keyPrefix: 'payment', perUser: true, perIp: true,
 });
 
 /** Webhook endpoints: 100 req / min per IP (Stripe retries) */

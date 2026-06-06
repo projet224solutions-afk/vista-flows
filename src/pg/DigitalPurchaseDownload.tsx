@@ -58,10 +58,10 @@ interface DigitalProduct {
 function getFileIcon(url: string) {
   const ext = url.split('.').pop()?.toLowerCase() || '';
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return <Image className="w-5 h-5 text-blue-500" />;
-  if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) return <Music className="w-5 h-5 text-purple-500" />;
-  if (['mp4', 'webm', 'avi', 'mov', 'mkv'].includes(ext)) return <Video className="w-5 h-5 text-red-500" />;
+  if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) return <Music className="w-5 h-5 text-[#04439e]" />;
+  if (['mp4', 'webm', 'avi', 'mov', 'mkv'].includes(ext)) return <Video className="w-5 h-5 text-[#ff4000]" />;
   if (['pdf', 'doc', 'docx', 'txt', 'epub'].includes(ext)) return <FileText className="w-5 h-5 text-orange-500" />;
-  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <Package className="w-5 h-5 text-green-500" />;
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <Package className="w-5 h-5 text-[#ff4000]" />;
   return <Package className="w-5 h-5 text-muted-foreground" />;
 }
 
@@ -312,9 +312,9 @@ export default function DigitalPurchaseDownload() {
 
         {/* Success Banner - animated, auto-hides */}
         {showSuccess && (
-          <Card className="border-green-500/30 bg-green-500/5 animate-in fade-in slide-in-from-top-2 duration-500">
+          <Card className="border-[#ff4000]/30 bg-[#ff4000]/5 animate-in fade-in slide-in-from-top-2 duration-500">
             <CardContent className="p-5 text-center">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-3" />
               <h1 className="text-xl font-bold text-foreground mb-1">
                 {isSubscription ? 'Abonnement activé !' : 'Achat réussi !'}
               </h1>
@@ -333,9 +333,9 @@ export default function DigitalPurchaseDownload() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                isSubscription ? 'bg-primary/10' : 'bg-green-500/10'
+                isSubscription ? 'bg-primary/10' : 'bg-[#ff4000]/10'
               }`}>
-                {isSubscription ? <RefreshCw className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-green-500" />}
+                {isSubscription ? <RefreshCw className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-[#ff4000]" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -345,7 +345,7 @@ export default function DigitalPurchaseDownload() {
                   <Badge variant="outline" className={
                     isSubscription
                       ? 'bg-primary/10 text-primary border-primary/20 text-xs'
-                      : 'bg-green-500/10 text-green-600 border-green-500/20 text-xs'
+                      : 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20 text-xs'
                   }>
                     {isSubscription
                       ? (access.billing_cycle === 'yearly' ? 'Annuel' : 'Mensuel')

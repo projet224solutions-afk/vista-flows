@@ -166,10 +166,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Profit Net</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(stats?.totalProfit || 0)}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{formatCurrency(stats?.totalProfit || 0)}</div>
             <p className="text-xs text-muted-foreground">
               Marge: {(stats?.averageMargin || 0).toFixed(1)}%
             </p>
@@ -269,8 +269,8 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                           <Badge
                             variant="outline"
                             className={supplier.is_verified
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              ? "bg-orange-50 text-[#ff4000] border-orange-200"
+                              : "bg-orange-50 text-[#ff4000] border-orange-200"
                             }
                           >
                             {supplier.is_verified ? 'Vérifié' : 'Non vérifié'}

@@ -76,7 +76,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
       }}
     >
       {/* En-tête principal */}
-      <div className="relative h-[120px] bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] overflow-hidden">
+      <div className="relative h-[120px] bg-gradient-to-r from-[#0f172a] via-[#04439e] to-[#04439e] overflow-hidden">
         {/* Motif géométrique subtil */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -99,11 +99,11 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
                 République de Guinée
               </div>
               <div className="flex items-center justify-start gap-1 text-xs font-semibold mb-1 pl-4">
-                <span className="text-red-400">Travail</span>
+                <span className="text-[#ff4000]">Travail</span>
                 <span className="text-white">-</span>
-                <span className="text-yellow-400">Justice</span>
+                <span className="text-[#ff4000]">Justice</span>
                 <span className="text-white">-</span>
-                <span className="text-green-400">Solidarité</span>
+                <span className="text-[#ff4000]">Solidarité</span>
               </div>
               <h1 className="text-white text-xl font-bold tracking-wide">
                 {displayTitle}
@@ -117,7 +117,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           {/* Badge de sécurité droite */}
           <div className="text-right">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-[#ff4000] rounded-full animate-pulse" />
               <span className="text-white text-xs font-semibold">CARTE OFFICIELLE</span>
             </div>
             <div className="text-white/50 text-xs mt-1.5 tracking-wider">
@@ -127,7 +127,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
         </div>
 
         {/* Bande de sécurité holographique */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#04439e]" />
       </div>
 
       {/* Corps principal */}
@@ -144,7 +144,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
                   <div className="text-center">
                     <User className="w-12 h-12 text-blue-300 mx-auto mb-1" />
                     <div className="text-4xl font-bold text-blue-400">
@@ -158,7 +158,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
 
           {/* Badge véhicule - Séparé et bien stylé */}
           <div className="mt-3 flex justify-center">
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400/30">
+            <div className="bg-[#04439e] text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400/30">
               <div className="flex items-center gap-2">
                 <Bike className="w-4 h-4" />
                 <span className="tracking-wide">{getVehicleLabel()}</span>
@@ -195,7 +195,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           {/* Grille d'informations */}
           <div className="grid grid-cols-2 gap-2.5 mb-2.5">
             {/* Matricule véhicule */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2.5 border border-blue-100">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-50 rounded-lg p-2.5 border border-blue-100">
               <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
                 <CreditCard className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Immatriculation</span>
@@ -206,8 +206,8 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
 
             {/* Numéro de série */}
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-2.5 border border-purple-100">
-              <div className="flex items-center gap-1.5 text-purple-600 mb-0.5">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-50 rounded-lg p-2.5 border border-blue-100">
+              <div className="flex items-center gap-1.5 text-[#04439e] mb-0.5">
                 <Bike className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider">N° Série</span>
               </div>
@@ -217,8 +217,8 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
 
             {/* Date de naissance */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-2.5 border border-amber-100">
-              <div className="flex items-center gap-1.5 text-amber-600 mb-0.5">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-lg p-2.5 border border-orange-100">
+              <div className="flex items-center gap-1.5 text-[#ff4000] mb-0.5">
                 <Calendar className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Naissance</span>
               </div>
@@ -228,8 +228,8 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
 
             {/* Date d'expiration */}
-            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg p-2.5 border border-red-100">
-              <div className="flex items-center gap-1.5 text-red-600 mb-0.5">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-50 rounded-lg p-2.5 border border-orange-100">
+              <div className="flex items-center gap-1.5 text-[#ff4000] mb-0.5">
                 <Calendar className="w-3.5 h-3.5" />
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Expiration</span>
               </div>

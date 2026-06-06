@@ -72,7 +72,7 @@ export const ProductRecommendations = ({
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   {rec.product?.rating && (
                     <>
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                       <span>{rec.product.rating.toFixed(1)}</span>
                     </>
                   )}

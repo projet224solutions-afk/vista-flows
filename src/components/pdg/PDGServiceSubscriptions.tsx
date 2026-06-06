@@ -58,22 +58,22 @@ const SERVICE_ICONS: Record<string, any> = {
 };
 
 const SERVICE_COLORS: Record<string, string> = {
-  restaurant: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
-  location: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-  construction: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
-  vtc: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-  sport: 'from-green-500/20 to-green-600/10 border-green-500/30',
-  beaute: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',
-  informatique: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30',
-  education: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/30',
-  livraison: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
-  media: 'from-rose-500/20 to-rose-600/10 border-rose-500/30',
-  agriculture: 'from-lime-500/20 to-lime-600/10 border-lime-500/30',
-  sante: 'from-red-500/20 to-red-600/10 border-red-500/30',
-  reparation: 'from-slate-500/20 to-slate-600/10 border-slate-500/30',
-  menage: 'from-violet-500/20 to-violet-600/10 border-violet-500/30',
-  ecommerce: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
-  securite: 'from-sky-500/20 to-sky-600/10 border-sky-500/30',
+  restaurant: ' border-orange-500/30',
+  location: ' border-blue-500/30',
+  construction: ' border-[#ff4000]/30',
+  vtc: ' border-[#04439e]/30',
+  sport: ' border-[#ff4000]/30',
+  beaute: ' border-[#ff4000]/30',
+  informatique: ' border-[#04439e]/30',
+  education: ' border-[#04439e]/30',
+  livraison: ' border-[#ff4000]/30',
+  media: ' border-[#ff4000]/30',
+  agriculture: ' border-[#ff4000]/30',
+  sante: ' border-[#ff4000]/30',
+  reparation: ' border-slate-500/30',
+  menage: ' border-[#04439e]/30',
+  ecommerce: ' border-[#ff4000]/30',
+  securite: ' border-[#04439e]/30',
 };
 
 interface ServiceTypeInfo {
@@ -325,7 +325,7 @@ export default function PDGServiceSubscriptions() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active': return <Badge className="bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />Actif</Badge>;
+      case 'active': return <Badge className="bg-[#ff4000] text-white"><CheckCircle className="w-3 h-3 mr-1" />Actif</Badge>;
       case 'expired': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Expiré</Badge>;
       case 'cancelled': return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />Annulé</Badge>;
       case 'past_due': return <Badge className="bg-orange-500 text-white"><AlertCircle className="w-3 h-3 mr-1" />Impayé</Badge>;
@@ -406,7 +406,7 @@ export default function PDGServiceSubscriptions() {
             const stStats = serviceTypeStats[st.id];
             const hasData = stStats && stStats.total > 0;
             const isActive = activeServiceTab === st.id;
-            const colorClass = SERVICE_COLORS[st.code] || 'from-gray-500/20 to-gray-600/10 border-gray-500/30';
+            const colorClass = SERVICE_COLORS[st.code] || ' border-gray-500/30';
 
             return (
               <button
@@ -444,7 +444,7 @@ export default function PDGServiceSubscriptions() {
             <CardContent>
               <div className="text-2xl font-bold">{currentStats.total_subscriptions}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-500 font-medium">{currentStats.active_subscriptions} actifs</span>
+                <span className="text-[#ff4000] font-medium">{currentStats.active_subscriptions} actifs</span>
                 {currentStats.expired_subscriptions > 0 && (
                   <span className="text-destructive ml-2">{currentStats.expired_subscriptions} expirés</span>
                 )}
@@ -504,7 +504,7 @@ export default function PDGServiceSubscriptions() {
             <div className="flex gap-3 pb-3">
               {activeServiceTypes.map(st => {
                 const stStats = serviceTypeStats[st.id];
-                const colorClass = SERVICE_COLORS[st.code] || 'from-gray-500/20 to-gray-600/10 border-gray-500/30';
+                const colorClass = SERVICE_COLORS[st.code] || ' border-gray-500/30';
 
                 return (
                   <Card
@@ -522,7 +522,7 @@ export default function PDGServiceSubscriptions() {
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <p className="text-lg font-bold text-green-500">{stStats.active}</p>
+                          <p className="text-lg font-bold text-[#ff4000]">{stStats.active}</p>
                           <p className="text-[10px] text-muted-foreground">Actifs</p>
                         </div>
                         <div>

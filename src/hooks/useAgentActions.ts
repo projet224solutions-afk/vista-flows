@@ -137,8 +137,9 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         requestBody.driverData = userData.driverData;
       }
 
-      // Créer l'utilisateur via edge function
-      console.log('[useAgentActions] Appel edge function avec:', {
+      // Créer l'utilisateur via le BACKEND Node (migré depuis l'edge create-user-by-agent)
+      // → atomique avec rollback complet côté serveur (pas de compte orphelin).
+      console.log('[useAgentActions] Appel backend /api/agents/users avec:', {
         agentId,
         agentCode,
         role: userData.role,
@@ -146,82 +147,16 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
         hasSession: true
       });
 
-      const { data, error } = await supabase.functions.invoke('create-user-by-agent', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<{ user: any }>('/api/agents/users', {
+        method: 'POST',
         body: requestBody,
       });
 
-      // Log détaillé pour debug
-      console.log('[useAgentActions] Réponse edge function:', {
-        data,
-        error,
-        hasError: !!error,
-        hasData: !!data
-      });
+      console.log('[useAgentActions] Réponse backend:', resp);
 
-      if (error) {
-        console.error('[useAgentActions] Edge function error complet:', {
-          message: error.message,
-          name: error.name,
-          context: error.context,
-          details: JSON.stringify(error, null, 2)
-        });
-
-        // Extraire le code de statut si disponible
-        const statusMatch = error.message?.match(/status code (\d+)/i);
-        const statusCode = statusMatch ? parseInt(statusMatch[1]) : null;
-
-        console.error('📍 Status Code:', statusCode);
-
-        // Erreurs par code de statut
-        if (statusCode === 401 || error.message?.includes('UNAUTHORIZED') || error.message?.includes('Non autorisé')) {
-          return {
-            success: false,
-            error: '❌ Non autorisé. Vérifiez vos permissions (Code: 401)'
-          };
-        }
-        if (statusCode === 403 || error.message?.includes('INSUFFICIENT_PERMISSIONS')) {
-          return {
-            success: false,
-            error: '❌ Permissions insuffisantes pour créer des utilisateurs (Code: 403)'
-          };
-        }
-        if (statusCode === 400 || error.message?.includes('VALIDATION_ERROR')) {
-          return {
-            success: false,
-            error: '❌ Données invalides: ' + (error.message || 'Vérifiez le formulaire')
-          };
-        }
-        if (statusCode === 500) {
-          return {
-            success: false,
-            error: '❌ Erreur serveur (Code: 500). Contactez le support.'
-          };
-        }
-
-        return {
-          success: false,
-          error: `❌ Erreur (Code: ${statusCode || 'inconnu'}): ${error.message || "Erreur lors de la création"}`
-        };
-      }
-
-      // Vérifier si la réponse contient une erreur
-      if (data?.error || data?.code) {
-        console.error('[useAgentActions] Erreur dans data:', data);
-
-        if (data.code === 'EMAIL_EXISTS') {
-          return { success: false, error: '⚠️ Cet email est déjà utilisé par un autre utilisateur' };
-        }
-        if (data.code === 'UNAUTHORIZED' || data.code === 'UNAUTHENTICATED') {
-          return { success: false, error: '❌ Session expirée. Veuillez vous reconnecter.' };
-        }
-        if (data.code === 'INSUFFICIENT_PERMISSIONS') {
-          return { success: false, error: '❌ Vous n\'avez pas les permissions pour créer des utilisateurs.' };
-        }
-        if (data.code === 'CANNOT_CREATE_AGENTS') {
-          return { success: false, error: '❌ Vous ne pouvez pas créer de sous-agents.' };
-        }
-
-        return { success: false, error: data.error || `Erreur (${data.code})` };
+      if (!resp.success) {
+        return { success: false, error: resp.error || "Erreur lors de la création de l'utilisateur" };
       }
 
       toast.success(`Utilisateur ${userData.role} créé avec succès!`);

@@ -27,14 +27,14 @@ interface EcommerceModuleProps {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
   confirmed: 'bg-blue-100 text-blue-800',
-  preparing: 'bg-purple-100 text-purple-800',
-  ready: 'bg-cyan-100 text-cyan-800',
+  preparing: 'bg-blue-100 text-[#04439e]',
+  ready: 'bg-blue-100 text-[#04439e]',
   in_transit: 'bg-orange-100 text-orange-800',
-  delivered: 'bg-green-100 text-green-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  delivered: 'bg-orange-100 text-[#ff4000]',
+  completed: 'bg-orange-100 text-[#ff4000]',
+  cancelled: 'bg-orange-100 text-[#ff4000]',
 };
 
 const statusLabels: Record<string, string> = {
@@ -122,7 +122,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                 {stats?.orders.pending || 0} en attente
               </Badge>
               {(stats?.orders.pending || 0) > 0 && (
-                <Clock className="w-3 h-3 text-yellow-500" />
+                <Clock className="w-3 h-3 text-[#ff4000]" />
               )}
             </div>
           </CardContent>
@@ -136,7 +136,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
           <CardContent>
             <div className="text-2xl font-bold">{stats?.products.total || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="text-green-600">{stats?.products.active || 0} actifs</span>
+              <span className="text-[#ff4000]">{stats?.products.active || 0} actifs</span>
               {(stats?.products.lowStock || 0) > 0 && (
                 <Badge variant="destructive" className="text-xs">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -157,8 +157,8 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
             <div className="flex items-center gap-1 text-xs">
               {(stats?.clients.newThisMonth || 0) > 0 ? (
                 <>
-                  <ArrowUpRight className="w-3 h-3 text-green-500" />
-                  <span className="text-green-600">+{stats?.clients.newThisMonth} ce mois</span>
+                  <ArrowUpRight className="w-3 h-3 text-[#ff4000]" />
+                  <span className="text-[#ff4000]">+{stats?.clients.newThisMonth} ce mois</span>
                 </>
               ) : (
                 <span className="text-muted-foreground">Aucun nouveau ce mois</span>
@@ -277,7 +277,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-yellow-500" />
+                      <Clock className="w-4 h-4 text-[#ff4000]" />
                       <span className="text-sm">En attente</span>
                     </div>
                     <div className="flex gap-2">
@@ -305,7 +305,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                       <span className="text-sm">Livrées</span>
                     </div>
                     <div className="flex gap-2">
@@ -319,7 +319,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <XCircle className="w-4 h-4 text-red-500" />
+                      <XCircle className="w-4 h-4 text-[#ff4000]" />
                       <span className="text-sm">Annulées</span>
                     </div>
                     <div className="flex gap-2">

@@ -125,19 +125,19 @@ export default function ReportStolenMoto({
 
     if (success) {
         return (
-            <Card className={`border-green-200 bg-green-50 ${className}`}>
+            <Card className={`border-orange-200 bg-orange-50 ${className}`}>
                 <CardContent className="p-6 text-center">
-                    <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-green-800 mb-2">
+                    <CheckCircle className="w-16 h-16 text-[#ff4000] mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-[#ff4000] mb-2">
                         Moto signalée volée avec succès
                     </h3>
-                    <p className="text-green-700 mb-4">
+                    <p className="text-[#ff4000] mb-4">
                         Votre déclaration a été enregistrée et les bureaux concernés ont été alertés.
                     </p>
                     <Button
                         onClick={() => setSuccess(false)}
                         variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-100"
+                        className="border-orange-300 text-[#ff4000] hover:bg-orange-100"
                     >
                         Déclarer une autre moto
                     </Button>
@@ -147,13 +147,13 @@ export default function ReportStolenMoto({
     }
 
     return (
-        <Card className={`border-red-200 ${className}`}>
-            <CardHeader className="bg-red-50 border-b border-red-200">
-                <CardTitle className="flex items-center gap-2 text-red-800">
+        <Card className={`border-orange-200 ${className}`}>
+            <CardHeader className="bg-orange-50 border-b border-orange-200">
+                <CardTitle className="flex items-center gap-2 text-[#ff4000]">
                     <AlertTriangle className="w-6 h-6" />
                     Déclarer une moto volée
                 </CardTitle>
-                <p className="text-red-700 text-sm">
+                <p className="text-[#ff4000] text-sm">
                     Cette déclaration sera transmise à tous les bureaux syndicats et au PDG
                 </p>
             </CardHeader>
@@ -161,9 +161,9 @@ export default function ReportStolenMoto({
             <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
-                        <Alert className="border-red-200 bg-red-50">
-                            <XCircle className="w-4 h-4 text-red-600" />
-                            <AlertDescription className="text-red-800">
+                        <Alert className="border-orange-200 bg-orange-50">
+                            <XCircle className="w-4 h-4 text-[#ff4000]" />
+                            <AlertDescription className="text-[#ff4000]">
                                 {error}
                             </AlertDescription>
                         </Alert>
@@ -241,14 +241,14 @@ export default function ReportStolenMoto({
                         />
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                         <div className="flex items-start gap-3">
-                            <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
+                            <Shield className="w-5 h-5 text-[#ff4000] mt-0.5" />
                             <div>
-                                <h4 className="font-medium text-yellow-800 mb-1">
+                                <h4 className="font-medium text-[#ff4000] mb-1">
                                     Important - Sécurité
                                 </h4>
-                                <ul className="text-sm text-yellow-700 space-y-1">
+                                <ul className="text-sm text-[#ff4000] space-y-1">
                                     <li>• Cette déclaration sera vérifiée par les bureaux syndicats</li>
                                     <li>• Toute tentative d'enregistrement de cette moto sera bloquée</li>
                                     <li>• Les autorités compétentes seront informées</li>
@@ -262,7 +262,7 @@ export default function ReportStolenMoto({
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                            className="bg-[#ff4000] hover:bg-[#ff4000] text-white flex-1"
                         >
                             {loading ? (
                                 <>

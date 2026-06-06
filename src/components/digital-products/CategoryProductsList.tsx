@@ -250,7 +250,7 @@ export function CategoryProductsList({
                       </Badge>
                     )}
                     {product.is_featured && (
-                      <Badge className="text-[10px] px-1.5 py-0.5 bg-yellow-500">
+                      <Badge className="text-[10px] px-1.5 py-0.5 bg-[#ff4000]">
                         <Star className="w-3 h-3 mr-1" />
                         Featured
                       </Badge>

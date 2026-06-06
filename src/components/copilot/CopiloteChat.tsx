@@ -1068,7 +1068,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                   <Bot className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-[#ff4000] rounded-full border-2 border-background"></div>
             </div>
             <div className="min-w-0 flex-1">
               <CardTitle className="text-base sm:text-2xl flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -1095,7 +1095,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               variant="ghost"
               size="icon"
               onClick={clearHistory}
-              className="h-9 w-9 sm:h-11 sm:w-11 text-muted-foreground hover:text-red-500"
+              className="h-9 w-9 sm:h-11 sm:w-11 text-muted-foreground hover:text-[#ff4000]"
             >
               <Trash2 className="h-4 w-4 sm:h-6 sm:w-6" />
             </Button>
@@ -1344,9 +1344,9 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
 
           {/* Transcription intermédiaire microphone */}
           {isListening && interimTranscript && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0" />
-              <span className="text-xs text-red-700 dark:text-red-300 italic truncate">{interimTranscript}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000]">
+              <span className="w-2 h-2 bg-[#ff4000] rounded-full animate-pulse flex-shrink-0" />
+              <span className="text-xs text-[#ff4000] dark:text-orange-300 italic truncate">{interimTranscript}</span>
             </div>
           )}
 
@@ -1361,7 +1361,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className={`flex-1 min-w-0 h-10 sm:h-14 text-sm sm:text-base px-3 sm:px-4 transition-colors ${isListening ? 'border-red-400 ring-1 ring-red-300' : ''}`}
+            className={`flex-1 min-w-0 h-10 sm:h-14 text-sm sm:text-base px-3 sm:px-4 transition-colors ${isListening ? 'border-[#ff4000] ring-1 ring-orange-300' : ''}`}
           />
           <input
             ref={fileInputRef}

@@ -93,28 +93,28 @@ export default function AffiliateActivationPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Commissions sur chaque vente</p>
                   <p className="text-xs text-muted-foreground">Gagnez un pourcentage sur les transactions de vos filleuls</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Tableau de bord dédié</p>
                   <p className="text-xs text-muted-foreground">Suivez vos performances, liens et paiements en temps réel</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Liens de parrainage illimités</p>
                   <p className="text-xs text-muted-foreground">Créez autant de liens que nécessaire pour vos campagnes</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium">Paiement direct au wallet</p>
                   <p className="text-xs text-muted-foreground">Commissions créditées automatiquement sur votre portefeuille</p>

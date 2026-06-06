@@ -75,11 +75,11 @@ export default function SecurityMonitoring() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'bg-green-500';
+        return 'bg-[#ff4000]';
       case 'degraded':
-        return 'bg-yellow-500';
+        return 'bg-[#ff4000]';
       case 'critical':
-        return 'bg-red-500';
+        return 'bg-[#ff4000]';
       default:
         return 'bg-gray-500';
     }
@@ -89,11 +89,11 @@ export default function SecurityMonitoring() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'degraded':
-        return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
+        return <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
       case 'critical':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-[#ff4000]" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
     }
@@ -216,12 +216,12 @@ export default function SecurityMonitoring() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-600" />
+              <XCircle className="h-4 w-4 text-[#ff4000]" />
               Erreurs Critiques
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">
+            <div className="text-3xl font-bold text-[#ff4000]">
               {health?.metrics.criticalErrors || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -233,12 +233,12 @@ export default function SecurityMonitoring() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
               Erreurs En Attente
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">
+            <div className="text-3xl font-bold text-[#ff4000]">
               {health?.metrics.pendingErrors || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -267,12 +267,12 @@ export default function SecurityMonitoring() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-purple-600" />
+              <Users className="h-4 w-4 text-[#04439e]" />
               Utilisateurs Actifs
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-[#04439e]">
               {health?.metrics.activeUsers || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -342,7 +342,7 @@ export default function SecurityMonitoring() {
             <CardContent>
               {violations.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-600" />
+                  <CheckCircle className="h-12 w-12 mx-auto mb-3 text-[#ff4000]" />
                   <p>Aucune violation CSP détectée</p>
                   <p className="text-sm">Le système est sécurisé</p>
                 </div>
@@ -351,17 +351,17 @@ export default function SecurityMonitoring() {
                   {violations.map((violation, index) => (
                     <div
                       key={index}
-                      className="p-3 border border-red-200 rounded-lg bg-red-50"
+                      className="p-3 border border-orange-200 rounded-lg bg-orange-50"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-red-900">
+                          <p className="font-medium text-[#ff4000]">
                             {violation.violatedDirective}
                           </p>
-                          <p className="text-sm text-red-700 mt-1 break-all">
+                          <p className="text-sm text-[#ff4000] mt-1 break-all">
                             URI bloquée: {violation.blockedUri}
                           </p>
-                          <p className="text-xs text-red-600 mt-1">
+                          <p className="text-xs text-[#ff4000] mt-1">
                             {new Date(violation.timestamp).toLocaleString()}
                           </p>
                         </div>
@@ -388,7 +388,7 @@ export default function SecurityMonitoring() {
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <p className="font-medium">Uptime Système</p>
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 <p className="text-2xl font-bold">
                   {healthReport ? Math.floor(healthReport.uptime / 3600) : 0}h
@@ -402,19 +402,19 @@ export default function SecurityMonitoring() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Monitoring Service</span>
-                    <Badge className="bg-green-500">Actif</Badge>
+                    <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Health Check Service</span>
-                    <Badge className="bg-green-500">Actif</Badge>
+                    <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Content Security Policy</span>
-                    <Badge className="bg-green-500">Actif</Badge>
+                    <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Secure Logger</span>
-                    <Badge className="bg-green-500">Actif</Badge>
+                    <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                 </div>
               </div>

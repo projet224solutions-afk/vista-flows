@@ -63,7 +63,7 @@ function StatCard({
             <p className={cn('text-2xl font-bold mt-1', color)}>{value}</p>
             {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
           </div>
-          <div className={cn('p-2.5 rounded-xl', color.includes('blue') ? 'bg-blue-50' : color.includes('green') ? 'bg-green-50' : color.includes('yellow') ? 'bg-yellow-50' : 'bg-gray-50')}>
+          <div className={cn('p-2.5 rounded-xl', color.includes('blue') ? 'bg-blue-50' : color.includes('green') ? 'bg-orange-50' : color.includes('yellow') ? 'bg-orange-50' : 'bg-gray-50')}>
             <Icon className={cn('w-5 h-5', color)} />
           </div>
         </div>
@@ -183,9 +183,9 @@ function RevenueCalculatorDialog({
                   </div>
                 );
               })()}
-              <div className="flex justify-between px-3 py-2 bg-green-50">
-                <span className="font-semibold text-green-800">Part actionnaire ({preview.percentage}%)</span>
-                <span className="font-bold text-green-800">{fmt(preview.shareholder_amount, preview.currency)}</span>
+              <div className="flex justify-between px-3 py-2 bg-orange-50">
+                <span className="font-semibold text-[#ff4000]">Part actionnaire ({preview.percentage}%)</span>
+                <span className="font-bold text-[#ff4000]">{fmt(preview.shareholder_amount, preview.currency)}</span>
               </div>
               <div className="flex justify-between px-3 py-2 bg-blue-50">
                 <span className="font-semibold text-blue-800">Revenus nets plateforme</span>
@@ -225,7 +225,7 @@ function RevenueCalculatorDialog({
                 Modifier période
               </Button>
               <Button
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-[#ff4000] hover:bg-[#ff4000]"
                 disabled={loading}
                 onClick={() => onConfirmSave(preview)}
               >
@@ -260,7 +260,7 @@ function SuspendDialog({
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           {isSuspended
-            ? <PlayCircle className="w-5 h-5 text-green-600" />
+            ? <PlayCircle className="w-5 h-5 text-[#ff4000]" />
             : <PauseCircle className="w-5 h-5 text-orange-500" />}
           {isSuspended ? 'Réactiver' : 'Suspendre'} l&apos;actionnaire
         </DialogTitle>
@@ -276,7 +276,7 @@ function SuspendDialog({
             Annuler
           </Button>
           <Button
-            className={cn('flex-1', isSuspended ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-500 hover:bg-orange-600')}
+            className={cn('flex-1', isSuspended ? 'bg-[#ff4000] hover:bg-[#ff4000]' : 'bg-orange-500 hover:bg-orange-600')}
             onClick={onConfirm}
             disabled={loading}
           >
@@ -362,7 +362,7 @@ function TransferDialog({
           />
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex gap-2">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-xs text-[#ff4000] flex gap-2">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
           <span>L&apos;actionnaire source sera archivé. L&apos;assignment (% et catégorie) sera transféré à la destination.</span>
         </div>
@@ -404,13 +404,13 @@ function DeleteShareholderDialog({
   return (
     <DialogContent className="max-w-sm">
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2 text-red-600">
+        <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
           <Trash2 className="w-5 h-5" />
           Supprimer l&apos;actionnaire
         </DialogTitle>
       </DialogHeader>
       <div className="space-y-4 pt-2">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800 space-y-1.5">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-[#ff4000] space-y-1.5">
           <p className="font-semibold flex items-center gap-1.5">
             <AlertTriangle className="w-4 h-4" />
             Action irréversible
@@ -513,7 +513,7 @@ function ShareholderTable({
                   <div className="flex items-center gap-1">
                     {a.action_scope === 'global'
                       ? <Globe className="w-3.5 h-3.5 text-blue-500" />
-                      : <MapPin className="w-3.5 h-3.5 text-green-500" />
+                      : <MapPin className="w-3.5 h-3.5 text-[#ff4000]" />
                     }
                     <span className="text-xs">{SCOPE_LABELS[a.action_scope]}</span>
                   </div>
@@ -529,8 +529,8 @@ function ShareholderTable({
                 <Badge
                   className={cn(
                     'text-xs',
-                    sh.status === 'active'    && 'bg-green-100 text-green-800',
-                    sh.status === 'suspended' && 'bg-red-100 text-red-800',
+                    sh.status === 'active'    && 'bg-orange-100 text-[#ff4000]',
+                    sh.status === 'suspended' && 'bg-orange-100 text-[#ff4000]',
                     sh.status === 'archived'  && 'bg-gray-100 text-gray-600',
                   )}
                   variant="secondary"
@@ -563,7 +563,7 @@ function ShareholderTable({
                     className={cn(
                       'h-7 w-7',
                       sh.status === 'suspended'
-                        ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                        ? 'text-[#ff4000] hover:text-[#ff4000] hover:bg-orange-50'
                         : 'text-orange-500 hover:text-orange-600 hover:bg-orange-50',
                     )}
                     onClick={() => onSuspend(sh)}
@@ -584,7 +584,7 @@ function ShareholderTable({
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50"
+                    className="h-7 w-7 text-[#ff4000] hover:text-[#ff4000] hover:bg-orange-50"
                     onClick={() => onDelete(sh)}
                     title="Supprimer"
                   >
@@ -678,11 +678,11 @@ function RevenueTable({ revenues }: { revenues: ShareholderRevenue[] }) {
                 </div>
 
                 {/* Part actionnaire */}
-                <div className="flex justify-between items-center px-3 py-2 bg-green-50 rounded-lg">
-                  <span className="text-sm font-bold text-green-800">
+                <div className="flex justify-between items-center px-3 py-2 bg-orange-50 rounded-lg">
+                  <span className="text-sm font-bold text-[#ff4000]">
                     − Part actionnaire ({Number(r.percentage)}%)
                   </span>
-                  <span className="text-sm font-black text-green-700">−{fmt(share, r.currency)}</span>
+                  <span className="text-sm font-black text-[#ff4000]">−{fmt(share, r.currency)}</span>
                 </div>
 
                 {/* Séparateur */}
@@ -777,7 +777,7 @@ function PaymentsTable({
                 {p.status === 'pending' && (
                   <Button
                     size="sm"
-                    className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                    className="h-7 text-xs bg-[#ff4000] hover:bg-[#ff4000] text-white"
                     disabled={loading}
                     onClick={() => onApprove(p.id)}
                   >
@@ -798,7 +798,7 @@ function PaymentsTable({
                   </Button>
                 )}
                 {p.status === 'sent_to_wallet' && (
-                  <span className="text-xs text-green-600 flex items-center gap-1">
+                  <span className="text-xs text-[#ff4000] flex items-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5" />
                     Crédité le {p.sent_to_wallet_at
                       ? format(new Date(p.sent_to_wallet_at), 'dd/MM/yy', { locale: fr })
@@ -848,8 +848,8 @@ function PercentageSummaryTable({ percentages }: { percentages: any[] }) {
             <TableCell className="text-right">
               <span className={cn(
                 'font-bold text-sm',
-                p.used_percentage >= 80 ? 'text-red-600' :
-                p.used_percentage >= 50 ? 'text-yellow-600' : 'text-green-600',
+                p.used_percentage >= 80 ? 'text-[#ff4000]' :
+                p.used_percentage >= 50 ? 'text-[#ff4000]' : 'text-[#ff4000]',
               )}>
                 {p.used_percentage}%
               </span>
@@ -857,7 +857,7 @@ function PercentageSummaryTable({ percentages }: { percentages: any[] }) {
             <TableCell className="text-right">
               <span className={cn(
                 'font-bold text-sm',
-                p.remaining_percentage <= 20 ? 'text-red-600' : 'text-green-600',
+                p.remaining_percentage <= 20 ? 'text-[#ff4000]' : 'text-[#ff4000]',
               )}>
                 {p.remaining_percentage}%
               </span>
@@ -886,9 +886,9 @@ function PercentageSummaryTable({ percentages }: { percentages: any[] }) {
 function VoteStatusBadge({ status }: { status: ShareholderVote['status'] }) {
   const map: Record<string, { label: string; className: string }> = {
     draft:     { label: 'Brouillon', className: 'bg-gray-100 text-gray-700' },
-    open:      { label: 'Ouvert',    className: 'bg-green-100 text-green-800' },
+    open:      { label: 'Ouvert',    className: 'bg-orange-100 text-[#ff4000]' },
     closed:    { label: 'Clôturé',   className: 'bg-blue-100 text-blue-800' },
-    cancelled: { label: 'Annulé',    className: 'bg-red-100 text-red-700' },
+    cancelled: { label: 'Annulé',    className: 'bg-orange-100 text-[#ff4000]' },
   };
   const cfg = map[status] ?? map.draft;
   return <Badge className={cn('text-xs', cfg.className)} variant="secondary">{cfg.label}</Badge>;
@@ -958,7 +958,7 @@ function VoteFormDialog({
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Titre */}
           <div className="space-y-1">
-            <label className="text-sm font-medium">Titre <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium">Titre <span className="text-[#ff4000]">*</span></label>
             <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Approbation de l'expansion au Sénégal" />
           </div>
 
@@ -981,7 +981,7 @@ function VoteFormDialog({
               <Input type="datetime-local" value={startDate} onChange={e => setStartDate(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Clôture <span className="text-red-500">*</span></label>
+              <label className="text-sm font-medium">Clôture <span className="text-[#ff4000]">*</span></label>
               <Input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           </div>
@@ -1139,10 +1139,10 @@ function VotesTabPDG({
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Ouverts',     count: openVotes.length,      color: 'text-green-700',  bg: 'bg-green-50' },
+          { label: 'Ouverts',     count: openVotes.length,      color: 'text-[#ff4000]',  bg: 'bg-orange-50' },
           { label: 'Brouillons',  count: draftVotes.length,     color: 'text-gray-600',   bg: 'bg-gray-50' },
           { label: 'Clôturés',    count: closedVotes.length,    color: 'text-blue-700',   bg: 'bg-blue-50' },
-          { label: 'Annulés',     count: cancelledVotes.length, color: 'text-red-600',    bg: 'bg-red-50' },
+          { label: 'Annulés',     count: cancelledVotes.length, color: 'text-[#ff4000]',    bg: 'bg-orange-50' },
         ].map(s => (
           <Card key={s.label} className={cn('border-0 shadow-sm', s.bg)}>
             <CardContent className="pt-3 pb-3 text-center">
@@ -1195,9 +1195,9 @@ function VotesTabPDG({
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
                           <div className="flex items-center justify-center gap-1 text-xs">
-                            <span className="text-green-700 font-semibold">{vote.total_yes ?? 0}</span>
+                            <span className="text-[#ff4000] font-semibold">{vote.total_yes ?? 0}</span>
                             <span className="text-muted-foreground">/</span>
-                            <span className="text-red-600 font-semibold">{vote.total_no ?? 0}</span>
+                            <span className="text-[#ff4000] font-semibold">{vote.total_no ?? 0}</span>
                             <span className="text-muted-foreground">/</span>
                             <span className="text-gray-500">{vote.total_abstain ?? 0}</span>
                             <span className="text-muted-foreground ml-1">({total})</span>
@@ -1215,12 +1215,12 @@ function VotesTabPDG({
                                 onClick={() => { setSelectedVote(vote); setShowEdit(true); }}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7 text-green-700" title="Publier"
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-[#ff4000]" title="Publier"
                                 disabled={actionLoading}
                                 onClick={() => act(() => shareholderService.publishVote(vote.id), 'Vote publié')}>
                                 <Send className="w-3.5 h-3.5" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600" title="Supprimer"
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-[#ff4000]" title="Supprimer"
                                 disabled={actionLoading}
                                 onClick={() => act(() => shareholderService.deleteVote(vote.id), 'Brouillon supprimé')}>
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1234,7 +1234,7 @@ function VotesTabPDG({
                                 onClick={() => act(() => shareholderService.closeVote(vote.id), 'Vote clôturé')}>
                                 <Lock className="w-3.5 h-3.5" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600" title="Annuler"
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-[#ff4000]" title="Annuler"
                                 disabled={actionLoading}
                                 onClick={() => act(() => shareholderService.cancelVote(vote.id), 'Vote annulé')}>
                                 <XCircle className="w-3.5 h-3.5" />
@@ -1434,19 +1434,19 @@ export default function PDGShareholderManagement() {
             title="Actifs"
             value={stats.active_shareholders}
             icon={Activity}
-            color="text-green-600"
+            color="text-[#ff4000]"
           />
           <StatCard
             title="Paiements en attente"
             value={formatCurrency(stats.pending_payments)}
             icon={DollarSign}
-            color="text-yellow-600"
+            color="text-[#ff4000]"
           />
           <StatCard
             title="Total distribué"
             value={formatCurrency(stats.sent_payments)}
             icon={TrendingUp}
-            color="text-purple-600"
+            color="text-[#04439e]"
           />
         </div>
       )}
@@ -1460,7 +1460,7 @@ export default function PDGShareholderManagement() {
           <TabsTrigger value="payments"    className="text-xs">
             Paiements
             {payments.filter(p => p.status === 'pending').length > 0 && (
-              <Badge className="ml-1 h-4 text-xs bg-yellow-500 text-white">
+              <Badge className="ml-1 h-4 text-xs bg-[#ff4000] text-white">
                 {payments.filter(p => p.status === 'pending').length}
               </Badge>
             )}
@@ -1470,7 +1470,7 @@ export default function PDGShareholderManagement() {
             <Vote className="w-3 h-3" />
             Votes
             {votes.filter(v => v.status === 'open').length > 0 && (
-              <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-green-500 text-white">
+              <Badge className="ml-0.5 h-4 px-1 text-[10px] bg-[#ff4000] text-white">
                 {votes.filter(v => v.status === 'open').length}
               </Badge>
             )}
@@ -1502,7 +1502,7 @@ export default function PDGShareholderManagement() {
                         <Badge
                           className={cn(
                             'text-xs',
-                            sh.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
+                            sh.status === 'active' ? 'bg-orange-100 text-[#ff4000]' : 'bg-orange-100 text-[#ff4000]',
                           )}
                           variant="secondary"
                         >
@@ -1535,9 +1535,9 @@ export default function PDGShareholderManagement() {
 
           {/* Paiements en attente */}
           {payments.filter(p => p.status === 'pending').length > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50/40">
+            <Card className="border-orange-200 bg-orange-50/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-yellow-800 flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold text-[#ff4000] flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
                   Paiements en attente d'approbation
                 </CardTitle>

@@ -117,10 +117,10 @@ export function ShipmentManager() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'created': return 'bg-blue-100 text-blue-800';
-      case 'picked_up': return 'bg-purple-100 text-purple-800';
+      case 'picked_up': return 'bg-blue-100 text-[#04439e]';
       case 'in_transit': return 'bg-orange-100 text-orange-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivered': return 'bg-orange-100 text-[#ff4000]';
+      case 'cancelled': return 'bg-orange-100 text-[#ff4000]';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -244,8 +244,8 @@ export function ShipmentManager() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Package className="h-5 w-5 text-green-600" />
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Package className="h-5 w-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Livrées</p>
@@ -312,7 +312,7 @@ export function ShipmentManager() {
                       </div>
 
                       <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                        <MapPin className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-medium">{shipment.receiver_name}</p>
                           <p className="text-muted-foreground">{shipment.receiver_address}</p>

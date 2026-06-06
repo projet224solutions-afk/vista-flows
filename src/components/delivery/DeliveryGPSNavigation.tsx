@@ -204,7 +204,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
   return (
     <div className="space-y-4">
       {/* Carte de navigation active */}
-      <Card className="bg-gradient-to-r from-orange-50 to-green-50 dark:from-orange-950/30 dark:to-green-950/30 border-orange-200 dark:border-orange-800">
+      <Card className="bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/30 dark:to-[#ff4000]/30 border-orange-200 dark:border-orange-800">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -250,11 +250,11 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
 
           {/* Itinéraire */}
           <div className="space-y-3">
-            <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800">
+            <div className="bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg p-3 border border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-green-800 dark:text-green-400 uppercase mb-1">
+                  <p className="text-xs font-semibold text-[#ff4000] dark:text-[#ff4000] uppercase mb-1">
                     📦 Point de récupération
                   </p>
                   <p className="text-sm text-foreground">
@@ -273,11 +273,11 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
               <ArrowRight className="w-6 h-6 text-orange-500" />
             </div>
 
-            <div className="bg-red-50 dark:bg-red-950/30 rounded-lg p-3 border border-red-200 dark:border-red-800">
+            <div className="bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg p-3 border border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-red-800 dark:text-red-400 uppercase mb-1">
+                  <p className="text-xs font-semibold text-[#ff4000] dark:text-[#ff4000] uppercase mb-1">
                     🏠 Destination finale
                   </p>
                   <p className="text-sm text-foreground">
@@ -343,7 +343,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
             onClick={openGoogleMaps}
             className="w-full text-white gap-2"
             size="lg"
-            style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
+            style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(15 100% 50%))' }}
           >
             <ExternalLink className="w-5 h-5" />
             🧭 Démarrer la navigation GPS
@@ -357,7 +357,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
               <p className="text-xs text-muted-foreground mb-1">💰 Rémunération</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-lg font-bold text-[#ff4000]">
                 {(activeDelivery.delivery_fee || activeDelivery.driver_earning || 0).toLocaleString()} GNF
               </p>
             </div>

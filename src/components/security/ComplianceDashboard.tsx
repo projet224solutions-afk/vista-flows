@@ -81,7 +81,7 @@ export function ComplianceDashboard() {
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Certifié</Badge>;
+        return <Badge className="bg-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />Certifié</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':
@@ -154,7 +154,7 @@ export function ComplianceDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <CheckCircle className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{certifiedCount}</div>
                 <div className="text-xs text-muted-foreground">Certifiées</div>
@@ -176,7 +176,7 @@ export function ComplianceDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <FileCheck className="w-8 h-8 text-purple-500" />
+              <FileCheck className="w-8 h-8 text-[#04439e]" />
               <div>
                 <div className="text-2xl font-bold">{audits.length}</div>
                 <div className="text-xs text-muted-foreground">Audits</div>
@@ -187,7 +187,7 @@ export function ComplianceDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Award className="w-8 h-8 text-yellow-500" />
+              <Award className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{avgProgress.toFixed(0)}%</div>
                 <div className="text-xs text-muted-foreground">Progression</div>
@@ -249,7 +249,7 @@ export function ComplianceDashboard() {
                   )}
                   {cert.valid_from && (
                     <div className="flex items-center gap-1">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                       <span>Obtenue le {new Date(cert.valid_from).toLocaleDateString('fr-FR')}</span>
                     </div>
                   )}
@@ -299,9 +299,9 @@ export function ComplianceDashboard() {
                   </div>
                   {audit.overall_score && (
                     <div className="mt-2 text-sm">
-                      Score: <span className="font-medium text-green-600">{audit.overall_score}%</span>
+                      Score: <span className="font-medium text-[#ff4000]">{audit.overall_score}%</span>
                       {audit.non_conformities > 0 && (
-                        <span className="ml-2 text-red-500">• {audit.non_conformities} non-conformités</span>
+                        <span className="ml-2 text-[#ff4000]">• {audit.non_conformities} non-conformités</span>
                       )}
                     </div>
                   )}

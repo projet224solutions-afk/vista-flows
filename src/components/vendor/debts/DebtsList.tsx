@@ -174,7 +174,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                   </div>
                   <div className="text-center border-x border-border">
                     <p className="text-[10px] text-muted-foreground uppercase">Payé</p>
-                    <p className="text-xs font-semibold text-green-600">{formatAmount(debt.paid_amount)}</p>
+                    <p className="text-xs font-semibold text-[#ff4000]">{formatAmount(debt.paid_amount)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] text-muted-foreground uppercase">Restant</p>
@@ -271,7 +271,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                 <TableCell className="font-medium">{debt.customer_name}</TableCell>
                 <TableCell>{debt.customer_phone}</TableCell>
                 <TableCell>{formatAmount(debt.total_amount)}</TableCell>
-                <TableCell className="text-green-600">{formatAmount(debt.paid_amount)}</TableCell>
+                <TableCell className="text-[#ff4000]">{formatAmount(debt.paid_amount)}</TableCell>
                 <TableCell className="text-orange-600 font-medium">
                   {formatAmount(debt.remaining_amount)}
                 </TableCell>

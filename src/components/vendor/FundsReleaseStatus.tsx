@@ -217,10 +217,10 @@ export function FundsReleaseStatus() {
             <CardTitle className="text-sm font-medium">
               Total reçu
             </CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <Clock className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {((walletBalance?.total_received || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
@@ -234,10 +234,10 @@ export function FundsReleaseStatus() {
             <CardTitle className="text-sm font-medium">
               Total envoyé
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {((walletBalance?.total_sent || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
@@ -306,14 +306,14 @@ export function FundsReleaseStatus() {
 
                       {/* Pending Admin Review */}
                       {isPending && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                           <div className="flex items-start gap-3">
-                            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                            <AlertTriangle className="h-5 w-5 text-[#ff4000] mt-0.5" />
                             <div>
-                              <p className="font-medium text-yellow-900">
+                              <p className="font-medium text-[#ff4000]">
                                 Révision en cours
                               </p>
-                              <p className="text-sm text-yellow-700 mt-1">
+                              <p className="text-sm text-[#ff4000] mt-1">
                                 Votre paiement nécessite une validation manuelle par notre équipe. Cela peut prendre jusqu'à 24 heures.
                               </p>
                             </div>

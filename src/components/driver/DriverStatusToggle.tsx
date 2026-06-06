@@ -70,11 +70,11 @@ export function DriverStatusToggle({
   const getStatusColor = () => {
     switch (status) {
       case 'online':
-        return 'bg-green-500';
+        return 'bg-[#ff4000]';
       case 'on_delivery':
         return 'bg-blue-500';
       case 'paused':
-        return 'bg-yellow-500';
+        return 'bg-[#ff4000]';
       default:
         return 'bg-gray-500';
     }
@@ -101,8 +101,8 @@ export function DriverStatusToggle({
           <span className="text-sm font-medium">{getStatusLabel()}</span>
           {(location || gpsActive) && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Navigation className="h-3 w-3 text-green-500" />
-              <span className="text-green-500 font-medium">GPS actif</span>
+              <Navigation className="h-3 w-3 text-[#ff4000]" />
+              <span className="text-[#ff4000] font-medium">GPS actif</span>
             </span>
           )}
         </div>
@@ -122,7 +122,7 @@ export function DriverStatusToggle({
         )}
 
         <div className="flex items-center gap-2">
-          <Power className={`h-4 w-4 ${isOnline ? 'text-green-500' : 'text-gray-500'}`} />
+          <Power className={`h-4 w-4 ${isOnline ? 'text-[#ff4000]' : 'text-gray-500'}`} />
           <Switch
             checked={isOnline}
             onCheckedChange={handleToggle}

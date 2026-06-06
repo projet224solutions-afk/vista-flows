@@ -116,10 +116,10 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
       case 'alert':
       case 'critical':
       case 'security':
-        return <AlertTriangle className="w-5 h-5 text-red-500" />;
+        return <AlertTriangle className="w-5 h-5 text-[#ff4000]" />;
       case 'success':
       case 'resolved':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+        return <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />;
       case 'info':
       case 'maintenance':
       default:
@@ -174,7 +174,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
                   notification.is_read
                     ? 'bg-background border-border'
                     : notification.is_critical
-                      ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900'
+                      ? 'bg-orange-50 border-orange-200 dark:bg-[#ff4000]/20 dark:border-[#ff4000]'
                       : 'bg-primary/5 border-primary/20'
                 }`}
               >

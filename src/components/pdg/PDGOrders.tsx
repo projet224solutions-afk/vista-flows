@@ -110,10 +110,10 @@ export default function PDGOrders() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
-      pending: { label: 'En attente', className: 'bg-yellow-500' },
+      pending: { label: 'En attente', className: 'bg-[#ff4000]' },
       confirmed: { label: 'En cours', className: 'bg-blue-500' },
-      delivered: { label: 'Livrée', className: 'bg-green-500' },
-      cancelled: { label: 'Annulée', className: 'bg-red-500' }
+      delivered: { label: 'Livrée', className: 'bg-[#ff4000]' },
+      cancelled: { label: 'Annulée', className: 'bg-[#ff4000]' }
     };
 
     const config = variants[status] || { label: status, className: 'bg-gray-500' };
@@ -142,7 +142,7 @@ export default function PDGOrders() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.pending}</span>
-              <Clock className="w-5 h-5 text-yellow-500" />
+              <Clock className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -166,7 +166,7 @@ export default function PDGOrders() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.completed}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -178,7 +178,7 @@ export default function PDGOrders() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.cancelled}</span>
-              <XCircle className="w-5 h-5 text-red-500" />
+              <XCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>

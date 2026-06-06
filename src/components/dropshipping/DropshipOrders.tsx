@@ -75,14 +75,14 @@ export function DropshipOrders({ orders, _loading, onUpdateStatus }: DropshipOrd
       awaiting_supplier: { label: 'Attente fournisseur', icon: Clock, color: 'text-orange-500' },
       ordered_from_supplier: { label: 'Commandé', icon: Package, color: 'text-blue-500' },
       supplier_confirmed: { label: 'Confirmé', icon: CheckCircle, color: 'text-blue-600' },
-      supplier_processing: { label: 'En préparation', icon: Package, color: 'text-indigo-500' },
-      shipped_by_supplier: { label: 'Expédié', icon: Truck, color: 'text-purple-500' },
-      in_transit: { label: 'En transit', icon: Truck, color: 'text-purple-600' },
-      delivered_to_customer: { label: 'Livré', icon: CheckCircle, color: 'text-green-500' },
-      completed: { label: 'Terminé', icon: CheckCircle, color: 'text-green-600' },
-      cancelled: { label: 'Annulé', icon: XCircle, color: 'text-red-500' },
-      refunded: { label: 'Remboursé', icon: XCircle, color: 'text-red-600' },
-      disputed: { label: 'Litige', icon: AlertTriangle, color: 'text-yellow-600' }
+      supplier_processing: { label: 'En préparation', icon: Package, color: 'text-[#04439e]' },
+      shipped_by_supplier: { label: 'Expédié', icon: Truck, color: 'text-[#04439e]' },
+      in_transit: { label: 'En transit', icon: Truck, color: 'text-[#04439e]' },
+      delivered_to_customer: { label: 'Livré', icon: CheckCircle, color: 'text-[#ff4000]' },
+      completed: { label: 'Terminé', icon: CheckCircle, color: 'text-[#ff4000]' },
+      cancelled: { label: 'Annulé', icon: XCircle, color: 'text-[#ff4000]' },
+      refunded: { label: 'Remboursé', icon: XCircle, color: 'text-[#ff4000]' },
+      disputed: { label: 'Litige', icon: AlertTriangle, color: 'text-[#ff4000]' }
     };
     return configs[status] || { label: status, icon: Clock, color: 'text-gray-500' };
   };
@@ -162,7 +162,7 @@ export function DropshipOrders({ orders, _loading, onUpdateStatus }: DropshipOrd
                           {formatCurrency(order.customer_total)}
                         </TableCell>
                         <TableCell>
-                          <span className="text-green-600 font-medium">
+                          <span className="text-[#ff4000] font-medium">
                             {formatCurrency(order.profit_amount || 0)}
                           </span>
                         </TableCell>

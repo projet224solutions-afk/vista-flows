@@ -21,12 +21,12 @@ interface PharmacySalesPanelProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  pending: { label: 'En attente', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
+  pending: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
   confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-  completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  delivered: { label: 'Livrée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-  processing: { label: 'En cours', color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400' },
+  completed: { label: 'Terminée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+  delivered: { label: 'Livrée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+  cancelled: { label: 'Annulée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+  processing: { label: 'En cours', color: 'bg-blue-100 text-[#04439e] dark:bg-[#04439e]/30 dark:text-[#04439e]' },
 };
 
 export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelProps) {

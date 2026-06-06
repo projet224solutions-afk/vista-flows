@@ -62,11 +62,11 @@ export default function VendorLocaleSettings() {
       <CardContent className="space-y-6">
         {/* Devise wallet verrouillée — information uniquement */}
         {wallet && (
-          <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
-            <Lock className="w-4 h-4 flex-shrink-0 text-amber-600" />
+          <div className="flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm">
+            <Lock className="w-4 h-4 flex-shrink-0 text-[#ff4000]" />
             <div>
-              <p className="font-medium text-amber-800">Devise wallet verrouillée : {wallet.currency}</p>
-              <p className="text-xs text-amber-700 mt-0.5">
+              <p className="font-medium text-[#ff4000]">Devise wallet verrouillée : {wallet.currency}</p>
+              <p className="text-xs text-[#ff4000] mt-0.5">
                 La devise de votre wallet est assignée selon votre pays de résidence.
                 Pour la modifier, contactez le support.
               </p>

@@ -125,8 +125,8 @@ export default function PDGWalletApiManagement() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending': return <Badge variant="outline" className="text-amber-500 border-amber-500/50"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
-      case 'approved': return <Badge className="bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />Approuvée</Badge>;
+      case 'pending': return <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/50"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
+      case 'approved': return <Badge className="bg-[#ff4000] text-white"><CheckCircle className="w-3 h-3 mr-1" />Approuvée</Badge>;
       case 'rejected': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Refusée</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
@@ -164,16 +164,16 @@ export default function PDGWalletApiManagement() {
             <p className="text-xl font-bold">{stats.totalRequests}</p>
           </CardContent>
         </Card>
-        <Card className="border-amber-500/30 bg-amber-500/5">
+        <Card className="border-[#ff4000]/30 bg-[#ff4000]/5">
           <CardContent className="p-3">
-            <p className="text-xs text-amber-500">En attente</p>
-            <p className="text-xl font-bold text-amber-500">{stats.pendingRequests}</p>
+            <p className="text-xs text-[#ff4000]">En attente</p>
+            <p className="text-xl font-bold text-[#ff4000]">{stats.pendingRequests}</p>
           </CardContent>
         </Card>
-        <Card className="border-green-500/30 bg-green-500/5">
+        <Card className="border-[#ff4000]/30 bg-[#ff4000]/5">
           <CardContent className="p-3">
-            <p className="text-xs text-green-500">Approuvées</p>
-            <p className="text-xl font-bold text-green-500">{stats.approvedRequests}</p>
+            <p className="text-xs text-[#ff4000]">Approuvées</p>
+            <p className="text-xl font-bold text-[#ff4000]">{stats.approvedRequests}</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
@@ -291,7 +291,7 @@ export default function PDGWalletApiManagement() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-green-600 hover:text-green-700 h-7"
+                                  className="text-[#ff4000] hover:text-[#ff4000] h-7"
                                   onClick={() => handleApprove(req)}
                                   disabled={submitting}
                                 >
@@ -360,11 +360,11 @@ export default function PDGWalletApiManagement() {
                           </TableCell>
                           <TableCell>
                             {key.is_test_mode ? (
-                              <Badge variant="outline" className="text-amber-500 border-amber-500/50 text-[10px]">
+                              <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/50 text-[10px]">
                                 <AlertTriangle className="w-3 h-3 mr-0.5" /> Test
                               </Badge>
                             ) : (
-                              <Badge className="bg-green-600 text-white text-[10px]">Production</Badge>
+                              <Badge className="bg-[#ff4000] text-white text-[10px]">Production</Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">{key.commission_rate}%</TableCell>
@@ -380,7 +380,7 @@ export default function PDGWalletApiManagement() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleToggleKey(key.id, !key.is_active)}
-                              className={key.is_active ? 'text-destructive' : 'text-green-600'}
+                              className={key.is_active ? 'text-destructive' : 'text-[#ff4000]'}
                             >
                               {key.is_active ? <Ban className="w-4 h-4 mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
                               {key.is_active ? 'Désactiver' : 'Activer'}

@@ -452,7 +452,7 @@ function BackupCodesDisplay({ codes }: { codes: string[] }) {
   };
 
   return (
-    <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+    <Card className="bg-orange-50 dark:bg-[#ff4000]/20 border-orange-200 dark:border-[#ff4000]">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Key className="h-4 w-4" />
@@ -635,7 +635,7 @@ export function MFASettingsPanel() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveFactor(factor.id)}
-                      className="text-red-500 hover:text-red-600"
+                      className="text-[#ff4000] hover:text-[#ff4000]"
                     >
                       Supprimer
                     </Button>

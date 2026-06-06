@@ -95,10 +95,10 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
 
   const getRiskColor = (risk: string) => {
     switch(risk) {
-      case 'low': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-orange-100 text-[#ff4000]';
+      case 'medium': return 'bg-orange-100 text-[#ff4000]';
       case 'high': return 'bg-orange-100 text-orange-800';
-      case 'critical': return 'bg-red-100 text-red-800';
+      case 'critical': return 'bg-orange-100 text-[#ff4000]';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -173,7 +173,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                             size="sm"
                             onClick={() => handleRevokePermission(perm.permission_key)}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-[#ff4000]" />
                           </Button>
                         </div>
                       </Card>

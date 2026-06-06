@@ -149,11 +149,11 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-100 text-green-700">Payé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">Payé</Badge>;
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700">En attente</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">En attente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">Annulé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">Annulé</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -171,10 +171,10 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
     <div className="space-y-6">
       {/* Header */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <DollarSign className="w-6 h-6 text-amber-600" />
+              <DollarSign className="w-6 h-6 text-[#ff4000]" />
               Finance & Revenus
             </CardTitle>
             <Button variant="outline" size="sm" onClick={loadFinancialData}>
@@ -186,45 +186,45 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         <CardContent className="p-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">Solde Wallet</span>
               </div>
-              <p className="text-2xl font-bold">{formatAmount(stats.walletBalance)}</p>
+              <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.walletBalance)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white">
+            <div className="bg-[#04439e] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-sm opacity-90">Total Commissions</span>
               </div>
-              <p className="text-2xl font-bold">{formatAmount(stats.totalCommissions)}</p>
+              <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.totalCommissions)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-[#ff4000] to-orange-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <PiggyBank className="w-5 h-5" />
                 <span className="text-sm opacity-90">En Attente</span>
               </div>
-              <p className="text-2xl font-bold">{formatAmount(stats.pendingCommissions)}</p>
+              <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.pendingCommissions)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
                 <span className="text-sm opacity-90">Payées</span>
               </div>
-              <p className="text-2xl font-bold">{formatAmount(stats.paidCommissions)}</p>
+              <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.paidCommissions)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
             </div>
           </div>
 
           {/* Activity Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="bg-muted/30 rounded-lg p-4 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Activity className="w-6 h-6 text-primary" />
@@ -235,8 +235,8 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               </div>
             </div>
             <div className="bg-muted/30 rounded-lg p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.transactionsThisMonth}</p>
@@ -277,12 +277,12 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            tx.amount >= 0 ? 'bg-green-100' : 'bg-red-100'
+                            tx.amount >= 0 ? 'bg-orange-100' : 'bg-orange-100'
                           }`}>
                             {tx.amount >= 0 ? (
-                              <ArrowDownLeft className="w-5 h-5 text-green-600" />
+                              <ArrowDownLeft className="w-5 h-5 text-[#ff4000]" />
                             ) : (
-                              <ArrowUpRight className="w-5 h-5 text-red-600" />
+                              <ArrowUpRight className="w-5 h-5 text-[#ff4000]" />
                             )}
                           </div>
                           <div>
@@ -293,7 +293,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`font-bold ${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <p className={`font-bold ${tx.amount >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                             {tx.amount >= 0 ? '+' : ''}{formatAmount(tx.amount)} {stats.walletCurrency}
                           </p>
                           <Badge variant="secondary" className="text-xs">{tx.type}</Badge>
@@ -336,7 +336,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">
+                          <p className="font-bold text-[#ff4000]">
                             +{formatAmount(comm.commission_amount)} {stats.walletCurrency}
                           </p>
                           {getStatusBadge(comm.status)}

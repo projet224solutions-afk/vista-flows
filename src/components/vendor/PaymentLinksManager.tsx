@@ -41,19 +41,19 @@ const LINK_TYPES: { value: LinkType; label: string; icon: React.ReactNode; desc:
 ];
 
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  pending: { icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', label: 'En attente' },
-  success: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Payé' },
-  paid: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Payé' },
-  failed: { icon: <XCircle className="w-3.5 h-3.5" />, color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Échoué' },
+  pending: { icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'En attente' },
+  success: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'Payé' },
+  paid: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'Payé' },
+  failed: { icon: <XCircle className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'Échoué' },
   expired: { icon: <AlertCircle className="w-3.5 h-3.5" />, color: 'bg-muted text-muted-foreground', label: 'Expiré' },
   cancelled: { icon: <Ban className="w-3.5 h-3.5" />, color: 'bg-muted text-muted-foreground', label: 'Annulé' },
 };
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   payment: { icon: <CreditCard className="w-3.5 h-3.5" />, color: 'bg-primary/10 text-primary', label: 'Paiement' },
-  invoice: { icon: <FileText className="w-3.5 h-3.5" />, color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', label: 'Facture' },
-  checkout: { icon: <ShoppingCart className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Checkout' },
-  service: { icon: <Wrench className="w-3.5 h-3.5" />, color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300', label: 'Service' },
+  invoice: { icon: <FileText className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'Facture' },
+  checkout: { icon: <ShoppingCart className="w-3.5 h-3.5" />, color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-orange-300', label: 'Checkout' },
+  service: { icon: <Wrench className="w-3.5 h-3.5" />, color: 'bg-blue-100 text-[#04439e] dark:bg-[#04439e]/30 dark:text-blue-300', label: 'Service' },
 };
 
 interface Product { id: string; name: string; price: number; description?: string; images?: string[] }
@@ -214,9 +214,9 @@ export default function PaymentLinksManager() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 shrink-0">
         {[
           { icon: <Link className="w-5 h-5 text-primary" />, label: 'Total', value: stats?.total_links || 0 },
-          { icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, label: 'Payés', value: stats?.successful_payments || 0, color: 'text-emerald-600' },
-          { icon: <Clock className="w-5 h-5 text-amber-600" />, label: 'En attente', value: stats?.pending_payments || 0, color: 'text-amber-600' },
-          { icon: <XCircle className="w-5 h-5 text-red-500" />, label: 'Échoués', value: stats?.failed_payments || 0, color: 'text-red-500' },
+          { icon: <CheckCircle className="w-5 h-5 text-[#ff4000]" />, label: 'Payés', value: stats?.successful_payments || 0, color: 'text-[#ff4000]' },
+          { icon: <Clock className="w-5 h-5 text-[#ff4000]" />, label: 'En attente', value: stats?.pending_payments || 0, color: 'text-[#ff4000]' },
+          { icon: <XCircle className="w-5 h-5 text-[#ff4000]" />, label: 'Échoués', value: stats?.failed_payments || 0, color: 'text-[#ff4000]' },
           { icon: <DollarSign className="w-5 h-5 text-primary" />, label: 'Revenus', value: formatCurrency(stats?.total_revenue || 0, 'GNF'), isRevenue: true },
         ].map((s, i) => (
           <Card key={i}>
@@ -454,7 +454,7 @@ export default function PaymentLinksManager() {
                         return (
                           <>
                             <p className="text-xs text-muted-foreground">Montant: {formatCurrency(m, formData.devise)}</p>
-                            {r > 0 && <p className="text-xs text-emerald-600">Remise: -{r}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}</p>}
+                            {r > 0 && <p className="text-xs text-[#ff4000]">Remise: -{r}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}</p>}
                             <p className="text-sm font-bold text-primary">À payer: {formatCurrency(net, formData.devise)}</p>
                           </>
                         );
@@ -571,10 +571,10 @@ export default function PaymentLinksManager() {
 
                               {/* Settlement info for paid links */}
                               {link.status === 'success' && link.net_amount && (
-                                <div className="flex items-center gap-3 text-xs mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
+                                <div className="flex items-center gap-3 text-xs mt-2 p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                                   <span>Brut: {formatCurrency(link.gross_amount || link.montant, link.devise)}</span>
                                   <span className="text-muted-foreground">Commission: {formatCurrency(link.platform_fee || 0, link.devise)}</span>
-                                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">Net: {formatCurrency(link.net_amount, link.devise)}</span>
+                                  <span className="font-semibold text-[#ff4000] dark:text-[#ff4000]">Net: {formatCurrency(link.net_amount, link.devise)}</span>
                                 </div>
                               )}
                             </div>

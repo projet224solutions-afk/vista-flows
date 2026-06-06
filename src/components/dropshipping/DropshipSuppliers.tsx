@@ -89,7 +89,7 @@ export function DropshipSuppliers({ suppliers }: DropshipSuppliersProps) {
 
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                     <span className="font-medium">
                       {supplier.reliability_score.toFixed(1)}
                     </span>

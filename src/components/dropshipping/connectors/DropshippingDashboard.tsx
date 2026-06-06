@@ -292,7 +292,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Zap className="w-8 h-8 text-yellow-500" />
+            <Zap className="w-8 h-8 text-[#ff4000]" />
             Dropshipping
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -315,14 +315,14 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
 
       {/* Alertes */}
       {stats.pendingOrders > 0 && (
-        <Alert className="bg-yellow-50 border-yellow-200">
-          <AlertTriangle className="w-4 h-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">Actions requises</AlertTitle>
-          <AlertDescription className="text-yellow-700">
+        <Alert className="bg-orange-50 border-orange-200">
+          <AlertTriangle className="w-4 h-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000]">Actions requises</AlertTitle>
+          <AlertDescription className="text-[#ff4000]">
             Vous avez {stats.pendingOrders} commande(s) en attente à passer auprès des fournisseurs.
             <Button
               variant="link"
-              className="text-yellow-800 p-0 h-auto ml-2"
+              className="text-[#ff4000] p-0 h-auto ml-2"
               onClick={() => setActiveTab('orders')}
             >
               Voir les commandes →
@@ -339,7 +339,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             {stats.syncErrors} produit(s) n'ont pas pu être synchronisés.
             <Button
               variant="link"
-              className="text-red-200 p-0 h-auto ml-2"
+              className="text-orange-200 p-0 h-auto ml-2"
               onClick={() => setActiveTab('products')}
             >
               Résoudre →
@@ -389,7 +389,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                   {formatCurrency(stats.totalRevenue, 'GNF')}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  <TrendingUp className="w-3 h-3 inline mr-1 text-green-500" />
+                  <TrendingUp className="w-3 h-3 inline mr-1 text-[#ff4000]" />
                   +12% vs mois dernier
                 </p>
               </CardContent>
@@ -402,7 +402,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-[#ff4000]">
                   {formatCurrency(stats.totalProfit, 'GNF')}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">

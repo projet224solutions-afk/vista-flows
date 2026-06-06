@@ -21,7 +21,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleRedirect } from '@/hooks/useRoleRedirect';
-import { UserTrackerButton } from '@/components/taxi-moto/UserTrackerButton';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -437,16 +436,6 @@ export default function VendeurDashboard() {
             role="main"
             aria-label="Contenu principal du dashboard vendeur"
           >
-            {/* Localiser un client : le client reçoit l'itinéraire pour venir à la boutique */}
-            <div className="mb-4 max-w-xs">
-              <UserTrackerButton
-                mode="merchant"
-                prominent
-                driverName={displayName}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-              />
-            </div>
-
             <VendorRoutes
               recentOrders={recentOrders}
               showAllOrders={showAllOrders}

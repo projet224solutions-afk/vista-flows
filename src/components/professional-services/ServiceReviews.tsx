@@ -34,7 +34,7 @@ function Stars({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
       {[1, 2, 3, 4, 5].map(i => (
         <Star
           key={i}
-          className={cn(sz, i <= value ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30')}
+          className={cn(sz, i <= value ? 'fill-[#ff4000] text-[#ff4000]' : 'text-muted-foreground/30')}
         />
       ))}
     </div>
@@ -46,9 +46,9 @@ function RatingBar({ count, total, label }: { count: number; total: number; labe
   return (
     <div className="flex items-center gap-2 text-xs">
       <span className="w-4 text-right text-muted-foreground">{label}</span>
-      <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+      <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000] flex-shrink-0" />
       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-        <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full bg-[#ff4000] rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <span className="w-6 text-muted-foreground">{count}</span>
     </div>

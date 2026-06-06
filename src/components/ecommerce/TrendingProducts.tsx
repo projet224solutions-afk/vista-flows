@@ -67,7 +67,7 @@ export const TrendingProducts = ({
           >
             <Card className="hover:shadow-lg transition-all hover:scale-105 cursor-pointer relative">
               {index < 3 && (
-                <Badge className="absolute top-2 left-2 z-10 bg-gradient-to-r from-yellow-400 to-orange-500">
+                <Badge className="absolute top-2 left-2 z-10 bg-gradient-to-r from-[#ff4000] to-orange-500">
                   #{index + 1}
                 </Badge>
               )}
@@ -99,7 +99,7 @@ export const TrendingProducts = ({
                   </div>
                   {item.avg_rating > 0 && (
                     <div className="flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
                       {item.avg_rating.toFixed(1)}
                     </div>
                   )}

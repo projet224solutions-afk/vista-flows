@@ -149,7 +149,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: `${(stats.revenueGrowth || 0) >= 0 ? '+' : ''}${stats.revenueGrowth || 0}%`,
       trend: (stats.revenueGrowth || 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
-      color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      color: 'text-[#ff4000] bg-[#ff4000]/10 border-[#ff4000]/20',
       description: 'vs mois dernier'
     },
     {
@@ -167,7 +167,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: '+0%',
       trend: 'up',
       icon: UserCheck,
-      color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      color: 'text-[#ff4000] bg-[#ff4000]/10 border-[#ff4000]/20',
       description: `${stats.totalAgents || 0} agents au total`
     },
     {
@@ -176,7 +176,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: `${(stats.ordersGrowth || 0) >= 0 ? '+' : ''}${stats.ordersGrowth || 0}%`,
       trend: (stats.ordersGrowth || 0) >= 0 ? 'up' : 'down',
       icon: Package,
-      color: 'text-purple-600 bg-purple-500/10 border-purple-500/20',
+      color: 'text-[#04439e] bg-[#04439e]/10 border-[#04439e]/20',
       description: `${stats.ordersThisMonth || 0} ce mois`
     },
     {
@@ -195,7 +195,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       type: 'warning',
       message: `${stats.pendingValidations || 0} commande(s) en attente de traitement`,
       icon: Clock,
-      color: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
+      color: 'text-[#ff4000] bg-[#ff4000]/10 border-[#ff4000]/20',
       action: 'orders',
       show: (stats.pendingValidations || 0) > 0
     },
@@ -203,7 +203,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       type: 'error',
       message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nécessitent votre attention`,
       icon: AlertCircle,
-      color: 'text-red-600 bg-red-500/10 border-red-500/20',
+      color: 'text-[#ff4000] bg-[#ff4000]/10 border-[#ff4000]/20',
       action: 'security',
       show: (stats.criticalAlerts || 0) > 0
     },
@@ -211,7 +211,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       type: 'success',
       message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
-      color: 'text-green-600 bg-green-500/10 border-green-500/20',
+      color: 'text-[#ff4000] bg-[#ff4000]/10 border-[#ff4000]/20',
       action: 'vendors',
       show: true
     },
@@ -256,7 +256,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                     variant="secondary"
                     className={cn(
                       "gap-0.5 sm:gap-1 text-[10px] sm:text-xs w-fit",
-                      kpi.trend === 'up' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                      kpi.trend === 'up' ? 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20' : 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20'
                     )}
                   >
                     <TrendIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -386,7 +386,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Utilisateurs',
                 labelFull: 'Valider Utilisateurs',
                 icon: Users,
-                color: 'from-blue-500 to-blue-600',
+                color: '',
                 action: 'users',
                 count: stats.totalUsers || 0,
               },
@@ -394,7 +394,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Certif',
                 labelFull: 'Certifier Vendeurs',
                 icon: Shield,
-                color: 'from-indigo-500 to-indigo-600',
+                color: '',
                 action: 'vendor-certification',
                 count: stats.totalVendors || 0,
               },
@@ -402,7 +402,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Finances',
                 labelFull: 'Gérer Finances',
                 icon: DollarSign,
-                color: 'from-green-500 to-green-600',
+                color: '',
                 action: 'finance',
                 count: stats.totalRevenue || '0 GNF',
               },
@@ -410,7 +410,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Sécurité',
                 labelFull: 'Vérifier Sécurité',
                 icon: AlertCircle,
-                color: 'from-red-500 to-red-600',
+                color: '',
                 action: 'security',
                 count: stats.criticalAlerts || 0,
               },
@@ -418,7 +418,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Rapports',
                 labelFull: 'Voir Rapports',
                 icon: Activity,
-                color: 'from-purple-500 to-purple-600',
+                color: '',
                 action: 'reports',
                 count: stats.totalOrders || 0,
               },
@@ -456,18 +456,18 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Gestion des Agents */}
         <Card
-          className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-50 dark:from-[#ff4000] dark:to-[#ff4000] hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('agents')}
         >
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-green-600 text-white group-hover:scale-110 transition-transform">
+                <div className="p-2 rounded-lg bg-[#ff4000] text-white group-hover:scale-110 transition-transform">
                   <UserCheck className="w-5 h-5" />
                 </div>
                 Gestion des Agents
               </CardTitle>
-              <Badge variant="secondary" className="bg-green-600 text-white">
+              <Badge variant="secondary" className="bg-[#ff4000] text-white">
                 Opérationnel
               </Badge>
             </div>
@@ -479,15 +479,15 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Total Agents</p>
-                <p className="text-lg font-bold text-green-600">{stats.totalAgents || 0}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{stats.totalAgents || 0}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Actifs</p>
-                <p className="text-lg font-bold text-green-600">{stats.activeAgents || 0}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{stats.activeAgents || 0}</p>
               </div>
             </div>
             <Button
-              className="w-full mt-4 bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform"
+              className="w-full mt-4 bg-[#ff4000] hover:bg-[#ff4000] group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
                 onNavigate?.('agents');
@@ -500,18 +500,18 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
 
         {/* Surveillance Logique Globale */}
         <Card
-          className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950 dark:to-violet-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50 dark:from-[#04439e] dark:to-[#04439e] hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('debug')}
         >
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-purple-600 text-white group-hover:scale-110 transition-transform">
+                <div className="p-2 rounded-lg bg-[#04439e] text-white group-hover:scale-110 transition-transform">
                   <Eye className="w-5 h-5" />
                 </div>
                 Surveillance Logique
               </CardTitle>
-              <Badge variant="secondary" className="bg-purple-600 text-white">
+              <Badge variant="secondary" className="bg-[#04439e] text-white">
                 Sécurité
               </Badge>
             </div>
@@ -523,15 +523,15 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Détection</p>
-                <p className="text-lg font-bold text-purple-600">1 min</p>
+                <p className="text-lg font-bold text-[#04439e]">1 min</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Couverture</p>
-                <p className="text-lg font-bold text-purple-600">100%</p>
+                <p className="text-lg font-bold text-[#04439e]">100%</p>
               </div>
             </div>
             <Button
-              className="w-full mt-4 bg-purple-600 hover:bg-purple-700 group-hover:scale-105 transition-transform"
+              className="w-full mt-4 bg-[#04439e] hover:bg-[#04439e] group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
                 onNavigate?.('debug');
@@ -544,7 +544,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
 
         {/* Gestion des Bureaux Syndicats */}
         <Card
-          className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-950 dark:to-[#04439e] hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('syndicat')}
         >
           <CardHeader className="pb-4">
@@ -588,18 +588,18 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
 
         {/* Supervision Core (visible sur Home PDG) */}
         <Card
-          className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-50 dark:from-[#ff4000] dark:to-[#ff4000] hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('api')}
         >
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-amber-600 text-white group-hover:scale-110 transition-transform">
+                <div className="p-2 rounded-lg bg-[#ff4000] text-white group-hover:scale-110 transition-transform">
                   <Eye className="w-5 h-5" />
                 </div>
                 Supervision Core
               </CardTitle>
-              <Badge variant="secondary" className="bg-amber-600 text-white">
+              <Badge variant="secondary" className="bg-[#ff4000] text-white">
                 Live
               </Badge>
             </div>
@@ -611,23 +611,23 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Features</p>
-                <p className="text-lg font-bold text-amber-700">{coreSummaryLoading ? '...' : coreSummary.totalFeatures}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.totalFeatures}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Événements 24h</p>
-                <p className="text-lg font-bold text-amber-700">{coreSummaryLoading ? '...' : coreSummary.totalEvents24h}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.totalEvents24h}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Failures</p>
-                <p className="text-lg font-bold text-red-600">{coreSummaryLoading ? '...' : coreSummary.failures24h}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.failures24h}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Degraded</p>
-                <p className="text-lg font-bold text-yellow-700">{coreSummaryLoading ? '...' : coreSummary.degraded24h}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.degraded24h}</p>
               </div>
             </div>
             <Button
-              className="w-full mt-4 bg-amber-600 hover:bg-amber-700 group-hover:scale-105 transition-transform"
+              className="w-full mt-4 bg-[#ff4000] hover:bg-[#ff4000] group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
                 onNavigate?.('api');

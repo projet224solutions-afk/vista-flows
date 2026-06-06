@@ -32,7 +32,7 @@ export function ClientKYCStatus({
     verified: {
       label: 'Client Vérifié',
       variant: 'default',
-      className: 'bg-green-500 hover:bg-green-600 text-white',
+      className: 'bg-[#ff4000] hover:bg-[#ff4000] text-white',
       icon: <CheckCircle className="w-3 h-3 mr-1" />
     },
     pending: {
@@ -44,7 +44,7 @@ export function ClientKYCStatus({
     rejected: {
       label: 'Vérification refusée',
       variant: 'destructive',
-      className: 'bg-red-500 hover:bg-red-600 text-white',
+      className: 'bg-[#ff4000] hover:bg-[#ff4000] text-white',
       icon: <XCircle className="w-3 h-3 mr-1" />
     },
     incomplete: {
@@ -76,9 +76,9 @@ export function ClientKYCStatusCompact({
   const status = kyc_status || 'incomplete';
 
   const iconMap: Record<ClientKYCStatus, React.ReactNode> = {
-    verified: <CheckCircle className="w-4 h-4 text-green-500" />,
+    verified: <CheckCircle className="w-4 h-4 text-[#ff4000]" />,
     pending: <Clock className="w-4 h-4 text-orange-500" />,
-    rejected: <XCircle className="w-4 h-4 text-red-500" />,
+    rejected: <XCircle className="w-4 h-4 text-[#ff4000]" />,
     incomplete: <AlertCircle className="w-4 h-4 text-gray-500" />
   };
 

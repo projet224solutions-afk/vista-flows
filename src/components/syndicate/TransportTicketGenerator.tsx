@@ -265,16 +265,16 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     <div className="space-y-6">
       {/* Formulaire de configuration */}
       <Card className="border-0 shadow-xl rounded-2xl">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-2xl">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-amber-600" />
+              <FileText className="w-5 h-5 text-[#ff4000]" />
               Générateur de Tickets de Transport
             </CardTitle>
             <Button
               variant="outline"
               onClick={() => setShowHistory(true)}
-              className="border-amber-300 hover:bg-amber-50"
+              className="border-orange-300 hover:bg-orange-50"
             >
               <History className="w-4 h-4 mr-2" />
               Historique
@@ -363,15 +363,15 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
           </div>
 
           {/* Upload du cachet */}
-          <div className="mt-6 p-4 border-2 border-dashed border-amber-300 rounded-xl bg-amber-50/50">
-            <Label className="text-sm font-semibold text-amber-800 flex items-center gap-2 mb-3">
+          <div className="mt-6 p-4 border-2 border-dashed border-orange-300 rounded-xl bg-orange-50/50">
+            <Label className="text-sm font-semibold text-[#ff4000] flex items-center gap-2 mb-3">
               <Stamp className="w-4 h-4" />
               Cachet du Bureau Syndicat (optionnel)
             </Label>
 
             {stampUrl ? (
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 border-2 border-amber-400 rounded-full overflow-hidden bg-white flex items-center justify-center">
+                <div className="w-20 h-20 border-2 border-[#ff4000] rounded-full overflow-hidden bg-white flex items-center justify-center">
                   <img
                     src={stampUrl}
                     alt="Cachet"
@@ -379,12 +379,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm text-green-600 font-medium">✓ Cachet téléchargé</span>
+                  <span className="text-sm text-[#ff4000] font-medium">✓ Cachet téléchargé</span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleRemoveStamp}
-                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    className="text-[#ff4000] border-orange-300 hover:bg-orange-50"
                   >
                     <X className="w-4 h-4 mr-1" />
                     Supprimer
@@ -405,7 +405,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                   variant="outline"
                   onClick={() => stampInputRef.current?.click()}
                   disabled={isUploadingStamp}
-                  className="border-amber-400 hover:bg-amber-100"
+                  className="border-[#ff4000] hover:bg-orange-100"
                 >
                   {isUploadingStamp ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -426,7 +426,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
             <Button
               onClick={handleGenerateTickets}
               disabled={isGenerating}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-8 py-3 text-lg font-bold shadow-lg"
+              className="bg-gradient-to-r from-[#ff4000] to-orange-600 hover:from-[#ff4000] hover:to-orange-700 text-white px-8 py-3 text-lg font-bold shadow-lg"
             >
               {isGenerating ? (
                 <>

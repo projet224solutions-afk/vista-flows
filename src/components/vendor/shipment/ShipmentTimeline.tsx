@@ -78,9 +78,9 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                 <div
                   className={cn(
                     "absolute left-5 top-11 w-0.5 h-full -ml-px transition-all duration-500",
-                    status === 'completed' ? "bg-gradient-to-b from-green-500 to-green-400" :
+                    status === 'completed' ? "bg-gradient-to-b from-[#ff4000] to-[#ff4000]" :
                     status === 'current' ? "bg-gradient-to-b from-orange-500 to-gray-200" :
-                    status === 'cancelled' ? "bg-red-200" :
+                    status === 'cancelled' ? "bg-orange-200" :
                     "bg-gray-200"
                   )}
                 />
@@ -92,9 +92,9 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                 <div
                   className={cn(
                     "relative z-10 flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-500",
-                    status === 'completed' ? "bg-green-100 border-green-500 text-green-600 shadow-lg shadow-green-200" :
+                    status === 'completed' ? "bg-orange-100 border-[#ff4000] text-[#ff4000] shadow-lg shadow-orange-200" :
                     status === 'current' ? "bg-orange-100 border-orange-500 text-orange-600 animate-pulse shadow-lg shadow-orange-200" :
-                    status === 'cancelled' ? "bg-red-100 border-red-300 text-red-400" :
+                    status === 'cancelled' ? "bg-orange-100 border-orange-300 text-[#ff4000]" :
                     "bg-gray-50 border-gray-200 text-gray-400"
                   )}
                 >
@@ -112,9 +112,9 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                   <div
                     className={cn(
                       "font-medium transition-colors duration-300",
-                      status === 'completed' ? "text-green-900" :
+                      status === 'completed' ? "text-[#ff4000]" :
                       status === 'current' ? "text-orange-900" :
-                      status === 'cancelled' ? "text-red-400" :
+                      status === 'cancelled' ? "text-[#ff4000]" :
                       "text-gray-400"
                     )}
                   >
@@ -163,9 +163,9 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
 
       {/* Message d'annulation */}
       {isCancelled && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
-          <p className="text-sm font-medium text-red-900">Expédition annulée</p>
-          <p className="text-xs text-red-600 mt-1">
+        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
+          <p className="text-sm font-medium text-[#ff4000]">Expédition annulée</p>
+          <p className="text-xs text-[#ff4000] mt-1">
             Cette expédition a été annulée et ne sera pas livrée.
           </p>
         </div>

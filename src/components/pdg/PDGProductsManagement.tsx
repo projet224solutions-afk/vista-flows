@@ -126,7 +126,7 @@ export default function PDGProductsManagement() {
   const getVendorDisplay = (product: any) => {
     if (!product.vendor_is_active) {
       return (
-        <span className="flex items-center gap-1 text-red-500">
+        <span className="flex items-center gap-1 text-[#ff4000]">
           <AlertCircle className="w-3 h-3" />
           {product.vendor_name} (Supprimée)
         </span>
@@ -174,10 +174,10 @@ export default function PDGProductsManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Actifs</CardTitle>
-            <TrendingUp className="w-4 h-4 text-green-500" />
+            <TrendingUp className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {stats.active}
             </div>
             <p className="text-xs text-muted-foreground mt-1">en vente</p>
@@ -187,10 +187,10 @@ export default function PDGProductsManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Inactifs</CardTitle>
-            <TrendingDown className="w-4 h-4 text-red-500" />
+            <TrendingDown className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {stats.inactive}
             </div>
             <p className="text-xs text-muted-foreground mt-1">suspendus</p>
@@ -200,10 +200,10 @@ export default function PDGProductsManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Stock Total</CardTitle>
-            <Box className="w-4 h-4 text-purple-500" />
+            <Box className="w-4 h-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
+            <div className="text-2xl font-bold text-[#04439e]">
               {stats.totalStock.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
@@ -237,13 +237,13 @@ export default function PDGProductsManagement() {
         </Card>
 
         {stats.orphanProducts > 0 && (
-          <Card className="border-2 border-red-500/20 bg-gradient-to-br from-red-500/5 to-red-500/10">
+          <Card className="border-2 border-[#ff4000]/20 bg-gradient-to-br from-[#ff4000]/5 to-[#ff4000]/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Orphelins</CardTitle>
-              <AlertCircle className="w-4 h-4 text-red-500" />
+              <AlertCircle className="w-4 h-4 text-[#ff4000]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-500">
+              <div className="text-2xl font-bold text-[#ff4000]">
                 {stats.orphanProducts}
               </div>
               <p className="text-xs text-muted-foreground mt-1">boutiques supprimées</p>
@@ -369,7 +369,7 @@ export default function PDGProductsManagement() {
                   variant={filterType === 'orphan' ? 'destructive' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('orphan')}
-                  className={filterType !== 'orphan' ? 'border-red-500 text-red-500 hover:bg-red-50' : ''}
+                  className={filterType !== 'orphan' ? 'border-[#ff4000] text-[#ff4000] hover:bg-orange-50' : ''}
                 >
                   <AlertCircle className="w-4 h-4 mr-1" />
                   Orphelins ({stats.orphanProducts})
@@ -391,7 +391,7 @@ export default function PDGProductsManagement() {
               <div
                 key={product.id}
                 className={`flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${
-                  !product.vendor_is_active ? 'border-red-500/50 bg-red-50/30 dark:bg-red-900/10' : ''
+                  !product.vendor_is_active ? 'border-[#ff4000]/50 bg-orange-50/30 dark:bg-[#ff4000]/10' : ''
                 }`}
               >
                 <div className="flex items-center gap-4 flex-1">
@@ -406,7 +406,7 @@ export default function PDGProductsManagement() {
                       <Package className="w-10 h-10 text-primary" />
                     )}
                     {!product.vendor_is_active && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff4000] rounded-full flex items-center justify-center">
                         <AlertCircle className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -440,9 +440,9 @@ export default function PDGProductsManagement() {
                       </Badge>
                     )}
                     {product.is_active ? (
-                      <Badge className="bg-green-500">Actif</Badge>
+                      <Badge className="bg-[#ff4000]">Actif</Badge>
                     ) : (
-                      <Badge className="bg-red-500">Inactif</Badge>
+                      <Badge className="bg-[#ff4000]">Inactif</Badge>
                     )}
                   </div>
                 </div>
@@ -473,7 +473,7 @@ export default function PDGProductsManagement() {
                     size="sm"
                     onClick={() => setShowDeleteConfirm(product.id)}
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 text-[#ff4000]" />
                   </Button>
                 </div>
               </div>
@@ -515,13 +515,13 @@ export default function PDGProductsManagement() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut Boutique</Label>
-                  <Badge className={viewProduct.vendor_is_active ? "bg-green-500" : "bg-red-500"}>
+                  <Badge className={viewProduct.vendor_is_active ? "bg-[#ff4000]" : "bg-[#ff4000]"}>
                     {viewProduct.vendor_is_active ? "Active" : "Supprimée"}
                   </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>
-                  <Badge className={viewProduct.is_active ? "bg-green-500" : "bg-red-500"}>
+                  <Badge className={viewProduct.is_active ? "bg-[#ff4000]" : "bg-[#ff4000]"}>
                     {viewProduct.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>

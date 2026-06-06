@@ -144,9 +144,9 @@ export const ProfessionalVirtualCard = () => {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      active: { color: 'bg-emerald-500', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
+      active: { color: 'bg-[#ff4000]', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
       frozen: { color: 'bg-blue-500', icon: <Snowflake className="w-3 h-3" />, label: 'Gelée' },
-      blocked: { color: 'bg-red-500', icon: <AlertTriangle className="w-3 h-3" />, label: 'Bloquée' }
+      blocked: { color: 'bg-[#ff4000]', icon: <AlertTriangle className="w-3 h-3" />, label: 'Bloquée' }
     };
     return configs[status] || configs.active;
   };
@@ -167,12 +167,12 @@ export const ProfessionalVirtualCard = () => {
           variant={card ? "default" : "outline"}
           className={cn(
             "gap-2 transition-all",
-            card && "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+            card && "bg-gradient-to-r from-[#04439e] to-[#04439e] hover:from-[#04439e] hover:to-[#04439e]"
           )}
         >
           <CreditCard className="w-4 h-4" />
           {card ? 'Ma Carte' : 'Créer une Carte'}
-          {card && <CheckCircle2 className="w-3 h-3 text-emerald-300" />}
+          {card && <CheckCircle2 className="w-3 h-3 text-orange-300" />}
         </Button>
       </DialogTrigger>
 
@@ -180,7 +180,7 @@ export const ProfessionalVirtualCard = () => {
         <div className="p-6 space-y-6">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-[#04439e] to-[#04439e] rounded-lg">
                 <CreditCard className="w-5 h-5 text-white" />
               </div>
               <span>Carte Virtuelle 224PAY</span>
@@ -209,7 +209,7 @@ export const ProfessionalVirtualCard = () => {
                     "absolute inset-0 backface-hidden",
                     isFlipped && "invisible"
                   )}>
-                    <div className="w-full h-full rounded-2xl bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-700 p-6 flex flex-col justify-between shadow-2xl overflow-hidden">
+                    <div className="w-full h-full rounded-2xl bg-gradient-to-br from-[#04439e] via-[#04439e] to-[#04439e] p-6 flex flex-col justify-between shadow-2xl overflow-hidden">
                       {/* Background Pattern */}
                       <div className="absolute inset-0 opacity-10">
                         <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-white/20" />
@@ -232,8 +232,8 @@ export const ProfessionalVirtualCard = () => {
 
                       {/* Chip */}
                       <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center">
-                          <div className="w-8 h-6 border-2 border-amber-600/50 rounded-sm" />
+                        <div className="w-12 h-9 rounded-md bg-gradient-to-br from-orange-300 to-[#ff4000] flex items-center justify-center">
+                          <div className="w-8 h-6 border-2 border-[#ff4000]/50 rounded-sm" />
                         </div>
                       </div>
 
@@ -285,8 +285,8 @@ export const ProfessionalVirtualCard = () => {
                         </div>
                         <div className="flex flex-col items-end">
                           <div className="flex">
-                            <div className="w-8 h-8 rounded-full bg-red-500 opacity-80" />
-                            <div className="w-8 h-8 rounded-full bg-yellow-500 opacity-80 -ml-3" />
+                            <div className="w-8 h-8 rounded-full bg-[#ff4000] opacity-80" />
+                            <div className="w-8 h-8 rounded-full bg-[#ff4000] opacity-80 -ml-3" />
                           </div>
                         </div>
                       </div>
@@ -346,8 +346,8 @@ export const ProfessionalVirtualCard = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-500/20 rounded-lg">
-                          <Zap className="w-5 h-5 text-emerald-400" />
+                        <div className="p-2 bg-[#ff4000]/20 rounded-lg">
+                          <Zap className="w-5 h-5 text-[#ff4000]" />
                         </div>
                         <div>
                           <p className="text-white/60 text-xs">Solde disponible</p>
@@ -356,7 +356,7 @@ export const ProfessionalVirtualCard = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">
+                      <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/30">
                         Lié
                       </Badge>
                     </div>
@@ -374,7 +374,7 @@ export const ProfessionalVirtualCard = () => {
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-violet-500"
+                        className="h-full bg-[#04439e]"
                         style={{
                           width: `${Math.min(100, ((stats?.daily_spent || 0) / (card.daily_limit || 1)) * 100)}%`
                         }}
@@ -393,7 +393,7 @@ export const ProfessionalVirtualCard = () => {
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500"
+                        className="h-full bg-[#04439e]"
                         style={{
                           width: `${Math.min(100, ((stats?.monthly_spent || 0) / (card.monthly_limit || 1)) * 100)}%`
                         }}
@@ -410,7 +410,7 @@ export const ProfessionalVirtualCard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={() => setPaymentDialogOpen(true)}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
+                  className="bg-gradient-to-r from-[#04439e] to-[#04439e] hover:from-[#04439e] hover:to-[#04439e]"
                   disabled={card.status !== 'active'}
                 >
                   <ShoppingBag className="w-4 h-4 mr-2" />
@@ -474,8 +474,8 @@ export const ProfessionalVirtualCard = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Statut</span>
                         <Badge className={cn(
-                          card.status === 'active' ? 'bg-emerald-500' :
-                          card.status === 'frozen' ? 'bg-blue-500' : 'bg-red-500'
+                          card.status === 'active' ? 'bg-[#ff4000]' :
+                          card.status === 'frozen' ? 'bg-blue-500' : 'bg-[#ff4000]'
                         )}>
                           {card.status === 'active' ? 'Active' :
                            card.status === 'frozen' ? 'Gelée' : 'Bloquée'}
@@ -514,31 +514,31 @@ export const ProfessionalVirtualCard = () => {
               {/* Features */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                   <span className="text-sm">Paiements en ligne sécurisés</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                   <span className="text-sm">Limite journalière : 1 000 000 GNF</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                   <span className="text-sm">Activation instantanée</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                   <span className="text-sm">Débit automatique du wallet</span>
                 </div>
               </div>
 
               {/* Wallet Requirement */}
               {!wallet ? (
-                <Card className="bg-amber-500/10 border-amber-500/30">
+                <Card className="bg-[#ff4000]/10 border-[#ff4000]/30">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-400" />
+                      <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                       <div>
-                        <p className="text-amber-400 font-medium text-sm">Wallet requis</p>
+                        <p className="text-[#ff4000] font-medium text-sm">Wallet requis</p>
                         <p className="text-white/60 text-xs">
                           Vous devez avoir un wallet actif pour créer une carte virtuelle.
                         </p>
@@ -550,7 +550,7 @@ export const ProfessionalVirtualCard = () => {
                 <Button
                   onClick={createCard}
                   disabled={creating}
-                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 h-12 text-base"
+                  className="w-full bg-gradient-to-r from-[#04439e] to-[#04439e] hover:from-[#04439e] hover:to-[#04439e] h-12 text-base"
                 >
                   {creating ? (
                     <>

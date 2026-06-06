@@ -153,7 +153,7 @@ export function ShareLocationButton({
                 onClick={() => shareId && copy(shareId, 'id')}
                 title="Copier l'ID"
               >
-                {copied === 'id' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copied === 'id' ? <Check className="w-4 h-4 text-[#ff4000]" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function ShareLocationButton({
                 onClick={() => shareLink && copy(shareLink, 'link')}
                 title="Copier le lien"
               >
-                {copied === 'link' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copied === 'link' ? <Check className="w-4 h-4 text-[#ff4000]" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
           </div>

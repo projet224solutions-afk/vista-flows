@@ -36,11 +36,11 @@ interface Product {
 }
 
 const adjustmentTypes = [
-  { value: 'breakage', label: 'Casse', icon: Trash2, color: 'bg-red-100 text-red-800' },
+  { value: 'breakage', label: 'Casse', icon: Trash2, color: 'bg-orange-100 text-[#ff4000]' },
   { value: 'theft', label: 'Vol', icon: AlertTriangle, color: 'bg-orange-100 text-orange-800' },
-  { value: 'expiration', label: 'Péremption', icon: Package, color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'expiration', label: 'Péremption', icon: Package, color: 'bg-orange-100 text-[#ff4000]' },
   { value: 'correction', label: 'Correction inventaire', icon: RefreshCw, color: 'bg-blue-100 text-blue-800' },
-  { value: 'return', label: 'Retour fournisseur', icon: RotateCcw, color: 'bg-purple-100 text-purple-800' },
+  { value: 'return', label: 'Retour fournisseur', icon: RotateCcw, color: 'bg-blue-100 text-[#04439e]' },
   { value: 'other', label: 'Autre', icon: ClipboardList, color: 'bg-gray-100 text-gray-800' }
 ];
 

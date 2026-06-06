@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { backendFetch, generateIdempotencyKey } from './backendApi';
 
 // ============================================
 // INTERFACES UNIFIÉES
@@ -170,25 +171,26 @@ export class UnifiedSubscriptionService {
     transactionId?: string;
     billingCycle?: 'monthly' | 'yearly';
   }): Promise<string | null> {
-    try {
-      const { data, error } = await (supabase.rpc as any)('subscribe_user', {
-        p_user_id: params.userId,
-        p_plan_id: params.planId,
-        p_payment_method: params.paymentMethod || 'wallet',
-        p_transaction_id: params.transactionId || null,
-        p_billing_cycle: params.billingCycle || 'monthly',
-      });
-
-      if (error) {
-        console.error('❌ Erreur souscription:', error);
-        throw error;
+    // Redirigé vers le backend Node.js (mêmes tables plans/subscriptions que le vendeur) :
+    // débit wallet tracé, déduction au changement de plan, période conservée.
+    // (Remplace l'ancienne RPC subscribe_user cassée.)
+    const response = await backendFetch<{ subscription_id: string }>(
+      '/api/subscriptions/purchase',
+      {
+        method: 'POST',
+        body: {
+          plan_id: params.planId,
+          billing_cycle: params.billingCycle || 'monthly',
+          payment_method: params.paymentMethod || 'wallet',
+        },
+        idempotencyKey: generateIdempotencyKey(),
       }
+    );
 
-      return data as unknown as string;
-    } catch (error) {
-      console.error('❌ Exception souscription:', error);
-      throw error;
+    if (!response.success) {
+      throw new Error(response.error || 'Erreur lors de la souscription');
     }
+    return response.data?.subscription_id ?? null;
   }
 
   /**

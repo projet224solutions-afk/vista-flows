@@ -100,7 +100,7 @@ export function DriverMainDashboard({
 
         {/* Accent glow when online */}
         {isOnline && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#ff4000]/10 rounded-full blur-3xl" />
         )}
       </div>
 
@@ -112,10 +112,10 @@ export function DriverMainDashboard({
         {/* Error Banner - compact */}
         {error && (
           <div className="px-2 pt-1">
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+              <AlertCircle className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-red-400 text-xs font-medium truncate">
+                <p className="text-[#ff4000] text-xs font-medium truncate">
                   {error.type === 'gps' ? 'GPS inactif' :
                    error.type === 'permission' ? 'Permission requise' :
                    'Erreur'}: {error.message}
@@ -123,7 +123,7 @@ export function DriverMainDashboard({
               </div>
               <button
                 onClick={onClearError}
-                className="text-red-400/70 hover:text-red-400 text-[10px] underline shrink-0"
+                className="text-[#ff4000]/70 hover:text-[#ff4000] text-[10px] underline shrink-0"
               >
                 Fermer
               </button>
@@ -154,8 +154,8 @@ export function DriverMainDashboard({
               {/* Header with count */}
               <div className="flex items-center justify-between w-full px-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                    <Car className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="w-7 h-7 rounded-lg bg-[#ff4000]/20 flex items-center justify-center">
+                    <Car className="w-3.5 h-3.5 text-[#ff4000]" />
                   </div>
                   <div>
                     <h2 className="text-white font-semibold text-xs">
@@ -164,9 +164,9 @@ export function DriverMainDashboard({
                     <p className="text-gray-500 text-[10px]">Nouvelles demandes</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <Zap className="w-2.5 h-2.5 text-emerald-400" />
-                  <span className="text-emerald-400 text-[10px] font-medium">En direct</span>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ff4000]/10 border border-[#ff4000]/20">
+                  <Zap className="w-2.5 h-2.5 text-[#ff4000]" />
+                  <span className="text-[#ff4000] text-[10px] font-medium">En direct</span>
                 </div>
               </div>
 
@@ -219,12 +219,12 @@ export function DriverMainDashboard({
                   "border border-gray-700/50"
                 )}>
                   {/* Subtle animated gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5 animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#ff4000]/5 via-transparent to-[#ff4000]/5 animate-pulse" />
 
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-emerald-400 animate-pulse" />
+                      <div className="w-10 h-10 rounded-lg bg-[#ff4000]/20 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-[#ff4000] animate-pulse" />
                       </div>
                       <div>
                         <p className="text-white font-medium text-xs">En attente de courses</p>

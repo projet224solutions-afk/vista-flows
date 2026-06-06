@@ -10,11 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Laptop, Plus, Eye, TrendingUp, DollarSign,
-  _Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
-  Users, Download, BarChart3, _Wallet
+  Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
+  Users, Download, BarChart3, Wallet
 } from 'lucide-react';
 import { useMerchantDigitalProducts } from '@/hooks/useDigitalProducts';
-import { useWallet } from '@/hooks/useWallet';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -45,8 +44,6 @@ interface MerchantStats {
 const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { wallet } = useWallet();
-  const walletCurrency = wallet?.currency || 'GNF';
   const { products, loading } = useMerchantDigitalProducts();
   const [stats, setStats] = useState<MerchantStats>({
     totalSales: 0, grossRevenue: 0, totalCommissions: 0,
@@ -109,7 +106,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
       value: statsLoading ? '...' : fmtNum(stats.totalSales),
       note: 'transactions finalisées',
       icon: ShoppingCart,
-      cardBg: 'bg-[linear-gradient(135deg,#04439e_0%,#0d5ed2_100%)]',
+      cardBg: 'bg-[#04439e]',
       valueTone: 'text-white',
       labelTone: 'text-white/60',
       noteTone: 'text-white/45',
@@ -118,10 +115,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: "Chiffre d'affaires brut",
-      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} ${walletCurrency}`,
+      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} GNF`,
       note: 'avant commissions',
       icon: DollarSign,
-      cardBg: 'bg-[linear-gradient(135deg,#ff4000_0%,#e53900_100%)]',
+      cardBg: 'bg-[#ff4000]',
       valueTone: 'text-white',
       labelTone: 'text-white/60',
       noteTone: 'text-white/45',
@@ -130,10 +127,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: 'Revenu net',
-      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} ${walletCurrency}`,
-      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} ${walletCurrency} de commissions` : 'aucune commission déduite',
+      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} GNF`,
+      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} GNF de commissions` : 'aucune commission déduite',
       icon: TrendingUp,
-      cardBg: 'bg-[linear-gradient(135deg,#04439e_0%,#041f87_100%)]',
+      cardBg: 'bg-[#04439e]',
       valueTone: 'text-white',
       labelTone: 'text-white/60',
       noteTone: 'text-white/45',
@@ -143,9 +140,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     {
       label: 'Abonnés actifs',
       value: statsLoading ? '...' : fmtNum(stats.activeSubscribers),
-      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} ${walletCurrency} par période` : 'aucun abonnement actif',
+      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} GNF par période` : 'aucun abonnement actif',
       icon: Users,
-      cardBg: 'bg-[linear-gradient(135deg,#ff4000_0%,#cc3300_100%)]',
+      cardBg: 'bg-[#ff4000]',
       valueTone: 'text-white',
       labelTone: 'text-white/60',
       noteTone: 'text-white/45',
@@ -299,7 +296,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   : product.status === 'draft'
                     ? 'bg-gray-100 text-gray-600'
                     : product.status === 'rejected'
-                      ? 'bg-red-100 text-red-600'
+                      ? 'bg-orange-100 text-[#ff4000]'
                       : 'bg-gray-100 text-gray-500';
 
                 return (

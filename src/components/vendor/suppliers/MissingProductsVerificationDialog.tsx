@@ -163,7 +163,7 @@ export function MissingProductsVerificationDialog({
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yes" id="verified-yes" />
                   <Label htmlFor="verified-yes" className="flex items-center gap-2 cursor-pointer">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                     Oui, j'ai vérifié
                   </Label>
                 </div>
@@ -207,7 +207,7 @@ export function MissingProductsVerificationDialog({
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="missing-no" />
                     <Label htmlFor="missing-no" className="flex items-center gap-2 cursor-pointer">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                       Non, tout est complet
                     </Label>
                   </div>
@@ -390,9 +390,9 @@ export function MissingProductsVerificationDialog({
 
           {/* Résumé avant confirmation */}
           {hasVerified === 'yes' && hasMissing === 'no' && (
-            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+            <Card className="bg-orange-50 dark:bg-[#ff4000]/20 border-orange-200 dark:border-[#ff4000]">
               <CardContent className="p-4">
-                <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>Parfait ! Tous les produits ont été vérifiés et sont complets.</span>
                 </p>
@@ -411,7 +411,7 @@ export function MissingProductsVerificationDialog({
           <Button
             onClick={handleConfirm}
             disabled={!canProceed}
-            className="bg-green-600 hover:bg-green-700 gap-2"
+            className="bg-[#ff4000] hover:bg-[#ff4000] gap-2"
           >
             <CheckCircle2 className="h-4 w-4" />
             Continuer la validation

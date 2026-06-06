@@ -269,7 +269,7 @@ function InstallDialog({
 
     if (isInstallable) {
       return (
-        <div className="flex items-center gap-2 text-green-600">
+        <div className="flex items-center gap-2 text-[#ff4000]">
           <CheckCircle2 className="w-5 h-5" />
           <span>Installation automatique disponible</span>
         </div>

@@ -112,7 +112,7 @@ export default function AgentWalletManagement({
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8 space-y-4">
-              <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+              <AlertCircle className="w-16 h-16 mx-auto text-[#ff4000] mb-4" />
               <div>
                 <p className="text-lg font-semibold mb-2">
                   {error || 'Impossible de charger le wallet agent'}
@@ -137,13 +137,13 @@ export default function AgentWalletManagement({
   return (
     <div className="space-y-4">
       {/* En-tête Agent */}
-      <Card className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200">
+      <Card className="bg-gradient-to-r from-[#ff4000]/10 to-[#ff4000]/10 border-orange-200">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Shield className="w-5 h-5 text-emerald-600" />
+            <Shield className="w-5 h-5 text-[#ff4000]" />
             <span>Portefeuille Agent</span>
             {agentUserCode && (
-              <Badge variant="outline" className="ml-auto bg-emerald-50 text-emerald-700 border-emerald-300">
+              <Badge variant="outline" className="ml-auto bg-orange-50 text-[#ff4000] border-orange-300">
                 {agentUserCode}
               </Badge>
             )}

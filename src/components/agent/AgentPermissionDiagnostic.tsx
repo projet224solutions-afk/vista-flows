@@ -201,9 +201,9 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
           <div className="p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               {diagnosticResult.canCreateUsers ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
               ) : (
-                <XCircle className="h-5 w-5 text-red-600" />
+                <XCircle className="h-5 w-5 text-[#ff4000]" />
               )}
               <span className="font-medium">Créer Utilisateurs</span>
             </div>
@@ -214,9 +214,9 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
           <div className="p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               {diagnosticResult.canCreateAgents ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
               ) : (
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
               )}
               <span className="font-medium">Créer Agents</span>
             </div>
@@ -231,9 +231,9 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
           <h4 className="font-semibold text-sm">Vérifications détaillées</h4>
           {diagnosticResult.checks.map((check: any, index: number) => (
             <div key={index} className="flex items-start gap-3 p-2 bg-muted/30 rounded">
-              {check.status === 'success' && <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />}
-              {check.status === 'error' && <XCircle className="h-4 w-4 text-red-600 mt-0.5" />}
-              {check.status === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />}
+              {check.status === 'success' && <CheckCircle2 className="h-4 w-4 text-[#ff4000] mt-0.5" />}
+              {check.status === 'error' && <XCircle className="h-4 w-4 text-[#ff4000] mt-0.5" />}
+              {check.status === 'warning' && <AlertTriangle className="h-4 w-4 text-[#ff4000] mt-0.5" />}
               <div className="flex-1">
                 <p className="text-sm font-medium">{check.name}</p>
                 <p className="text-xs text-muted-foreground">{check.message}</p>

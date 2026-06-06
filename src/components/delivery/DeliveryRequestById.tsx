@@ -200,7 +200,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
               Saisir le nom de la boutique, numéro de téléphone ou l'ID
             </p>
             {vendorLocation && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-[#ff4000]">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{vendorLocation.name} {vendorLocation.phone && `(${vendorLocation.phone})`}</span>
               </div>
@@ -210,7 +210,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
           {/* Client */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <User className="h-4 w-4 text-green-600" />
+              <User className="h-4 w-4 text-[#ff4000]" />
               Client (livraison)
             </Label>
             <Input
@@ -222,7 +222,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
               Saisir le nom du client, numéro de téléphone ou l'ID
             </p>
             {clientLocation && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-[#ff4000]">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{clientLocation.name} {clientLocation.phone && `(${clientLocation.phone})`}</span>
               </div>
@@ -251,8 +251,8 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
           {/* Prix estimé */}
           {estimatedPrice && (
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800 font-medium">
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-sm text-[#ff4000] font-medium">
                 Prix estimé: <span className="text-xl">{estimatedPrice.toLocaleString()} GNF</span>
               </p>
             </div>
@@ -286,7 +286,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             onClick={handleCreateDelivery}
             disabled={!vendorId || !clientId || loading || geolocating}
             style={{
-              background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))',
+              background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(15 100% 50%))',
               color: 'white'
             }}
           >

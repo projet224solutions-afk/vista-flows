@@ -85,9 +85,9 @@ export function MLFraudDetection() {
   };
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'high': return 'bg-red-500';
+      case 'high': return 'bg-[#ff4000]';
       case 'medium': return 'bg-orange-500';
-      case 'low': return 'bg-yellow-500';
+      case 'low': return 'bg-[#ff4000]';
     }
   };
 
@@ -123,17 +123,17 @@ export function MLFraudDetection() {
             <div className="text-xs text-muted-foreground">Transactions analysées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
+            <AlertTriangle className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{metrics.fraudDetected}</div>
             <div className="text-xs text-muted-foreground">Fraudes détectées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingDown className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingDown className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{metrics.falsePositives}</div>
             <div className="text-xs text-muted-foreground">Faux positifs</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Brain className="w-8 h-8 text-purple-500 mb-2" />
+            <Brain className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{metrics.accuracy}%</div>
             <div className="text-xs text-muted-foreground">Précision du modèle</div>
           </div>
@@ -143,7 +143,7 @@ export function MLFraudDetection() {
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-sm">Modèle ML actif</span>
-            <Badge className="bg-green-500">Prédictif activé</Badge>
+            <Badge className="bg-[#ff4000]">Prédictif activé</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             Version {metrics.modelVersion} • Analyse comportementale en temps réel • {metrics.transactionsAnalyzed.toLocaleString()} transactions analysées

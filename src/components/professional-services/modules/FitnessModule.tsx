@@ -240,7 +240,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
       duration: 'mensuel',
       features: ['Tout Standard', '4 séances coaching/mois', 'Nutrition', 'Serviettes'],
       activeMembers: 32,
-      color: 'bg-purple-500'
+      color: 'bg-[#04439e]'
     },
     {
       id: '4',
@@ -250,7 +250,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
       duration: 'annuel',
       features: ['Tout Premium', 'Coaching illimité', 'Invités gratuits', 'Parking'],
       activeMembers: 15,
-      color: 'bg-yellow-500'
+      color: 'bg-[#ff4000]'
     }
   ]);
 
@@ -258,9 +258,9 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
 
   const getMembershipBadge = (status: Member['membershipStatus']) => {
     const styles = {
-      actif: 'bg-green-100 text-green-800',
-      expire: 'bg-red-100 text-red-800',
-      suspendu: 'bg-yellow-100 text-yellow-800'
+      actif: 'bg-orange-100 text-[#ff4000]',
+      expire: 'bg-orange-100 text-[#ff4000]',
+      suspendu: 'bg-orange-100 text-[#ff4000]'
     };
     const labels = {
       actif: 'Actif',
@@ -272,21 +272,21 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
 
   const getCategoryBadge = (category: FitnessClass['category']) => {
     const styles = {
-      cardio: 'bg-red-100 text-red-800',
+      cardio: 'bg-orange-100 text-[#ff4000]',
       musculation: 'bg-blue-100 text-blue-800',
-      yoga: 'bg-green-100 text-green-800',
+      yoga: 'bg-orange-100 text-[#ff4000]',
       crossfit: 'bg-orange-100 text-orange-800',
-      danse: 'bg-pink-100 text-pink-800',
-      boxe: 'bg-purple-100 text-purple-800'
+      danse: 'bg-orange-100 text-[#ff4000]',
+      boxe: 'bg-blue-100 text-[#04439e]'
     };
     return <Badge className={styles[category]}>{category}</Badge>;
   };
 
   const getLevelBadge = (level: FitnessClass['level']) => {
     const styles = {
-      débutant: 'bg-green-100 text-green-800',
-      intermédiaire: 'bg-yellow-100 text-yellow-800',
-      avancé: 'bg-red-100 text-red-800'
+      débutant: 'bg-orange-100 text-[#ff4000]',
+      intermédiaire: 'bg-orange-100 text-[#ff4000]',
+      avancé: 'bg-orange-100 text-[#ff4000]'
     };
     return <Badge variant="outline" className={styles[level]}>{level}</Badge>;
   };
@@ -316,7 +316,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-orange-500 to-[#ff4000] rounded-xl">
             <Dumbbell className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -334,7 +334,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
 
       {/* Statistiques temps réel */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-[#04439e] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Users className="h-4 w-4" />
@@ -343,7 +343,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
             <p className="text-3xl font-bold mt-1">{activeMembers}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <CheckCircle className="h-4 w-4" />
@@ -352,7 +352,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
             <p className="text-3xl font-bold mt-1">{todayCheckIns}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Calendar className="h-4 w-4" />
@@ -370,7 +370,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
             <p className="text-3xl font-bold mt-1">12</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-pink-500 to-pink-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Flame className="h-4 w-4" />
@@ -379,7 +379,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
             <p className="text-3xl font-bold mt-1">45K</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />
@@ -613,7 +613,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
                         <p className="text-sm text-muted-foreground">{member.phone} • {member.email}</p>
                         <div className="flex items-center gap-3 mt-1 text-sm">
                           <span className="flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            <CheckCircle className="h-3 w-3 text-[#ff4000]" />
                             {member.checkIns} check-ins
                           </span>
                           <span className="flex items-center gap-1">
@@ -647,12 +647,12 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
             {['Cardio', 'Musculation', 'Yoga', 'CrossFit', 'Danse', 'Boxe'].map((category) => (
               <Card key={category} className="overflow-hidden">
                 <div className={`h-20 bg-gradient-to-br ${
-                  category === 'Cardio' ? 'from-red-500 to-red-600' :
-                  category === 'Musculation' ? 'from-blue-500 to-blue-600' :
-                  category === 'Yoga' ? 'from-green-500 to-green-600' :
-                  category === 'CrossFit' ? 'from-orange-500 to-orange-600' :
-                  category === 'Danse' ? 'from-pink-500 to-pink-600' :
-                  'from-purple-500 to-purple-600'
+                  category === 'Cardio' ? '' :
+                  category === 'Musculation' ? '' :
+                  category === 'Yoga' ? '' :
+                  category === 'CrossFit' ? '' :
+                  category === 'Danse' ? '' :
+                  ''
                 } flex items-center justify-center`}>
                   <span className="text-white text-2xl font-bold">{category}</span>
                 </div>
@@ -689,7 +689,7 @@ export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) 
                   <ul className="space-y-2 mb-4">
                     {sub.features.map((feature, i) => (
                       <li key={i} className="text-sm flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-4 w-4 text-[#ff4000]" />
                         {feature}
                       </li>
                     ))}

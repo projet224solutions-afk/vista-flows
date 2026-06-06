@@ -145,7 +145,7 @@ export function AgentWalletAudit() {
           </div>
           <div className="space-y-1">
             <p className="text-muted-foreground">OK</p>
-            <div className="flex items-center gap-2 font-semibold text-green-600"><CheckCircle className="w-3 h-3" /> {stats.ok}</div>
+            <div className="flex items-center gap-2 font-semibold text-[#ff4000]"><CheckCircle className="w-3 h-3" /> {stats.ok}</div>
           </div>
           <div className="space-y-1">
             <p className="text-muted-foreground">Divergents</p>
@@ -153,14 +153,14 @@ export function AgentWalletAudit() {
           </div>
             <div className="space-y-1">
             <p className="text-muted-foreground">Incomplets</p>
-            <div className="flex items-center gap-2 font-semibold text-red-600"><AlertTriangle className="w-3 h-3" /> {stats.incomplets}</div>
+            <div className="flex items-center gap-2 font-semibold text-[#ff4000]"><AlertTriangle className="w-3 h-3" /> {stats.incomplets}</div>
           </div>
         </CardContent>
       </Card>
 
       {error && (
-        <Card className="border-red-300 bg-red-50">
-          <CardContent className="p-4 flex items-center gap-3 text-sm text-red-700">
+        <Card className="border-orange-300 bg-orange-50">
+          <CardContent className="p-4 flex items-center gap-3 text-sm text-[#ff4000]">
             <AlertTriangle className="w-4 h-4" />
             {error}
           </CardContent>
@@ -194,9 +194,9 @@ export function AgentWalletAudit() {
                       <td className="px-4 py-2">{r.main_balance !== null && r.agent_balance !== null ? r.divergence : '—'}</td>
                       <td className="px-4 py-2">{r.currency}</td>
                       <td className="px-4 py-2">
-                        {status === 'OK' && <Badge className="bg-green-500/10 text-green-600 border-green-500/20">OK</Badge>}
+                        {status === 'OK' && <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">OK</Badge>}
                         {status === 'Divergent' && <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20">Divergence</Badge>}
-                        {status === 'Incomplet' && <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Incomplet</Badge>}
+                        {status === 'Incomplet' && <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Incomplet</Badge>}
                       </td>
                     </tr>
                   );

@@ -18,10 +18,10 @@ export default function BureauNetworkIndicator({ bureauId }: Props) {
 
     const getStatusColor = () => {
         if (isSyncing) return "bg-blue-500";
-        if (!isOnline) return "bg-red-500";
-        if (syncStats.pending > 0) return "bg-yellow-500";
+        if (!isOnline) return "bg-[#ff4000]";
+        if (syncStats.pending > 0) return "bg-[#ff4000]";
         if (syncStats.failed > 0) return "bg-orange-500";
-        return "bg-green-500";
+        return "bg-[#ff4000]";
     };
 
     const getStatusText = () => {

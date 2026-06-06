@@ -82,7 +82,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
         <PharmacyHeader businessName={businessName} onRefresh={refresh} />
 
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 md:p-8">
+          <div className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] p-6 md:p-8">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
                 <Pill className="w-7 h-7 text-white" />
@@ -102,8 +102,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                 onClick={() => navigate('/vendeur/products')}
                 className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Plus className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-[#ff4000]/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Plus className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-sm">Ajouter des produits</p>
@@ -128,8 +128,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                 onClick={() => navigate('/vendeur/settings')}
                 className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Settings className="w-5 h-5 text-violet-600" />
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-[#04439e]/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Settings className="w-5 h-5 text-[#04439e]" />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-sm">Configurer</p>
@@ -232,8 +232,8 @@ function PharmacyHeader({ businessName, onRefresh }: { businessName?: string; on
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-          <Stethoscope className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-[#ff4000]/30 flex items-center justify-center">
+          <Stethoscope className="w-5 h-5 text-[#ff4000] dark:text-[#ff4000]" />
         </div>
         <div>
           <h2 className="text-xl md:text-2xl font-bold leading-tight">{businessName || 'Ma Pharmacie'}</h2>

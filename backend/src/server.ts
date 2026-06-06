@@ -18,8 +18,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import { env } from './config/env.js';
+import { env, assertSecretsOnBoot } from './config/env.js';
 import { logger } from './config/logger.js';
+
+// Validation des secrets au démarrage (fail-fast en production sur secret faible)
+assertSecretsOnBoot();
 import { errorHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 import { closeRedis } from './config/redis.js';
@@ -37,8 +40,11 @@ import taxiRoutes from './routes/taxi.routes.js';
 import realtimeRoutes from './routes/realtime.routes.js';
 import shareholderRoutes from './routes/shareholders.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import identityRoutes from './routes/identity.routes.js';
 import pushRoutes from './routes/push.routes.js';
 import vendorRoutes from './routes/vendors.routes.js';
+import agentRoutes from './routes/agents.routes.js';
+import documentsRoutes from './routes/documents.routes.js';
 import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
 import posRoutes from './routes/pos.routes.js';
@@ -224,6 +230,7 @@ app.use('/api/v2/taxi', taxiRoutes);
 app.use('/api/v2/realtime', realtimeRoutes);
 app.use('/api/shareholders', shareholderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/identity', identityRoutes);
 app.use('/api/v2/push', pushRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
@@ -231,6 +238,8 @@ app.use('/api/payments', paymentRoutes);
 // ==================== V3 ROUTES (with per-route rate limits) ====================
 
 app.use('/api/vendors', vendorRoutes);
+app.use('/api/agents', agentRoutes);
+app.use('/api/documents', documentsRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/pos', posRoutes);

@@ -33,15 +33,15 @@ export function ChinaDashboard() {
       title: 'Commandes Chine',
       value: stats?.totalChinaOrders || 0,
       icon: Ship,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-50 dark:bg-emerald-950'
+      color: 'text-[#ff4000]',
+      bgColor: 'bg-orange-50 dark:bg-[#ff4000]'
     },
     {
       title: 'Marge moyenne',
       value: `${stats?.averageMargin || 0}%`,
       icon: TrendingUp,
-      color: 'text-green-500',
-      bgColor: 'bg-green-50 dark:bg-green-950'
+      color: 'text-[#ff4000]',
+      bgColor: 'bg-orange-50 dark:bg-[#ff4000]'
     },
     {
       title: 'Délai moyen',
@@ -54,21 +54,21 @@ export function ChinaDashboard() {
       title: 'Alertes prix',
       value: stats?.pendingAlerts || 0,
       icon: AlertTriangle,
-      color: 'text-red-500',
-      bgColor: 'bg-red-50 dark:bg-red-950'
+      color: 'text-[#ff4000]',
+      bgColor: 'bg-orange-50 dark:bg-[#ff4000]'
     },
     {
       title: 'Score fournisseurs',
       value: stats?.supplierScoreAverage || 0,
       icon: Star,
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-950'
+      color: 'text-[#ff4000]',
+      bgColor: 'bg-orange-50 dark:bg-[#ff4000]'
     }
   ];
 
   const platformColors: Record<string, string> = {
     ALIBABA: 'bg-orange-500',
-    ALIEXPRESS: 'bg-red-500',
+    ALIEXPRESS: 'bg-[#ff4000]',
     '1688': 'bg-blue-600',
     PRIVATE: 'bg-gray-500'
   };
@@ -78,8 +78,8 @@ export function ChinaDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900">
-            <Globe className="h-6 w-6 text-red-600" />
+          <div className="p-2 rounded-lg bg-orange-100 dark:bg-[#ff4000]">
+            <Globe className="h-6 w-6 text-[#ff4000]" />
           </div>
           <div>
             <h2 className="text-2xl font-bold">Dropshipping Chine</h2>
@@ -189,7 +189,7 @@ export function ChinaDashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Taux blocage douane</span>
-                <Badge variant="outline" className="text-green-600">
+                <Badge variant="outline" className="text-[#ff4000]">
                   {stats?.customsBlockedRate || 0}%
                 </Badge>
               </div>
@@ -208,7 +208,7 @@ export function ChinaDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-sm">Score fournisseurs moyen</span>
                 <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <Star className="h-4 w-4 text-[#ff4000] fill-[#ff4000]" />
                   <span className="font-medium">{stats?.supplierScoreAverage || 0}/5</span>
                 </div>
               </div>

@@ -24,13 +24,9 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { AFRICAN_BANK_SOURCE_URLS, isAfricanBankSourceUrl } from '../constants/africanBankSources.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
-import { getInternalFxRate as getTableFxRate } from '../services/marketplacePricing.service.js';
-import { countryToCurrency } from '../utils/countryToCurrency.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
-import { sendTransactionEmails } from '../services/transactionEmail.service.js';
-import { bcrgLastSnapshot, bcrgSseClients } from '../services/fxRates.service.js';
 
 const router = Router();
 
@@ -38,113 +34,19 @@ async function ignoreSupabaseError(operation: PromiseLike<unknown> | unknown): P
   await Promise.resolve(operation).catch(() => undefined);
 }
 
-async function readSupabaseData<T>(queryPromise: PromiseLike<{ data?: T; error?: { message?: string } | null }>, label: string, fallbackValue: T): Promise<T> {
-  try {
-    const result = await Promise.resolve(queryPromise);
-    if (result?.error) {
-      logger.warn(`[walletV2] ${label} query failed: ${result.error.message}`);
-      return fallbackValue;
-    }
-    return (result?.data ?? fallbackValue) as T;
-  } catch (error: any) {
-    logger.warn(`[walletV2] ${label} query threw: ${error?.message || error}`);
-    return fallbackValue;
-  }
-}
-
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Plages de valeurs GNF valides pour chaque devise (widget BCRG)
-const BCRG_GNF_RANGES: Record<string, { min: number; max: number }> = {
-  DTS: { min: 8_000, max: 20_000 },
-  USD: { min: 6_500, max: 14_000 },
-  EUR: { min: 7_500, max: 16_000 },
-  CNY: { min: 800,   max: 2_500 },
-  CAD: { min: 4_500, max: 12_000 },
-  GBP: { min: 8_000, max: 18_000 },
-  CHF: { min: 8_000, max: 18_000 },
-  JPY: { min: 30,    max: 200 },
-  DKK: { min: 900,   max: 2_500 },
-  NOK: { min: 500,   max: 2_000 },
-  SEK: { min: 500,   max: 2_000 },
-  SAR: { min: 1_500, max: 5_000 },
-  UCA: { min: 8_000, max: 18_000 },
-  XOF: { min: 8,     max: 30 },
-};
-
-const BCRG_SCRAPE_URLS = [
-  'https://www.bcrg-guinee.org',
-  'https://www.bcrg-guinee.org/cours-de-change',
-  'https://www.bcrg.gov.gn',
-  'https://www.bcrg.gov.gn/cours-de-change',
-];
-
 interface ResolvedRecipient {
   userId: string;
   query: string;
-  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone' | 'pdg_management.email' | 'pdg_management.phone' | 'agents_management.agent_code' | 'agents_management.email' | 'agents_management.phone' | 'vendors.vendor_code';
+  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone';
   displayName: string | null;
   email: string | null;
   phone: string | null;
   publicId: string | null;
   customId: string | null;
-}
-
-type WalletForTransfer = {
-  id: string;
-  balance: number;
-  currency: string | null;
-  user_id: string;
-  is_blocked?: boolean | null;
-};
-
-async function ensureTransferWallet(userId: string, fallbackCurrency = 'GNF'): Promise<WalletForTransfer | null> {
-  const { data: existingWallet, error: existingError } = await supabaseAdmin
-    .from('wallets')
-    .select('id, balance, currency, user_id, is_blocked')
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false })
-    .maybeSingle();
-
-  if (existingWallet) return existingWallet as WalletForTransfer;
-
-  if (existingError) {
-    logger.warn(`[WalletV2] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
-  }
-
-  // Déterminer la devise selon le pays du profil
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('detected_country, country, detected_currency')
-    .eq('id', userId)
-    .maybeSingle();
-
-  const userCountry = profile?.detected_country || profile?.country || 'GN';
-  const resolvedCurrency = (profile?.detected_currency && profile.detected_currency !== 'GNF')
-    ? profile.detected_currency
-    : countryToCurrency(userCountry) || fallbackCurrency;
-
-  const { data: createdWallet, error: createError } = await supabaseAdmin
-    .from('wallets')
-    .insert({
-      user_id: userId,
-      balance: 0,
-      currency: resolvedCurrency,
-      currency_locked: true,
-      currency_locked_at: new Date().toISOString(),
-      currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
-    })
-    .select('id, balance, currency, user_id, is_blocked')
-    .single();
-
-  if (createError || !createdWallet) {
-    logger.error(`[WalletV2] Wallet auto-create failed for ${userId}: ${createError?.message || 'no wallet returned'}`);
-    return null;
-  }
-
-  return createdWallet as WalletForTransfer;
 }
 
 function isFxSuccessStatus(status: string | null | undefined): boolean {
@@ -223,123 +125,6 @@ function smartRoundCurrencyAmount(amount: number, currency: string): number {
     : Math.round(amount * 100) / 100;
 }
 
-const FX_MAX_AGE_MINUTES_DEFAULT = 180;
-const FX_MAX_AGE_MINUTES_GNF = 90;
-
-interface StoredFxRow {
-  rate?: number | null;
-  final_rate_usd?: number | null;
-  final_rate_eur?: number | null;
-  margin?: number | null;
-  retrieved_at?: string | null;
-  source?: string | null;
-  source_type?: string | null;
-  source_url?: string | null;
-}
-
-interface PdgRecipient {
-  user_id: string;
-}
-
-interface InternalFxRateResult {
-  rate: number;
-  officialRate: number;
-  margin: number;
-  source: string;
-  fetchedAt: string;
-  sourceType: string | null;
-  sourceUrl: string | null;
-  official: boolean;
-  stale: boolean;
-  refreshAttempted?: boolean;
-  refreshStatus?: number | null;
-  refreshTimedOut?: boolean;
-}
-
-function getFxFreshnessThresholdMinutes(from: string, to: string): number {
-  const sourceCurrency = String(from || '').toUpperCase();
-  const targetCurrency = String(to || '').toUpperCase();
-  return sourceCurrency === 'GNF' || targetCurrency === 'GNF'
-    ? FX_MAX_AGE_MINUTES_GNF
-    : FX_MAX_AGE_MINUTES_DEFAULT;
-}
-
-function isOfficialAfricanFxRow(row: StoredFxRow | null | undefined): boolean {
-  if (!row) return false;
-  if (String(row.source_type || '').toLowerCase() === 'fallback_api') {
-    return false;
-  }
-  return isAfricanBankRow(row);
-}
-
-function isFxTimestampStale(retrievedAt: string | null | undefined, thresholdMinutes: number): boolean {
-  if (!retrievedAt) return true;
-  const timestamp = new Date(retrievedAt).getTime();
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return true;
-  return (Date.now() - timestamp) / 60000 > thresholdMinutes;
-}
-
-function buildInternalFxRateResult(rate: number, row: StoredFxRow | null | undefined, source: string, thresholdMinutes: number): InternalFxRateResult {
-  const rawRate = Number(row?.rate);
-  const margin = Number(row?.margin);
-  return {
-    rate,
-    officialRate: Number.isFinite(rawRate) && rawRate > 0 ? rawRate : rate,
-    margin: Number.isFinite(margin) ? margin : 0,
-    source,
-    fetchedAt: row?.retrieved_at || new Date().toISOString(),
-    sourceType: row?.source_type || null,
-    sourceUrl: resolveOfficialBankSourceUrl(row || null),
-    official: isOfficialAfricanFxRow(row),
-    stale: isFxTimestampStale(row?.retrieved_at, thresholdMinutes),
-  };
-}
-
-async function readLatestFxRows(from: string, to: string): Promise<StoredFxRow[]> {
-  const { data, error } = await supabaseAdmin
-    .from('currency_exchange_rates')
-    .select('rate, final_rate_usd, final_rate_eur, margin, retrieved_at, source, source_type, source_url')
-    .eq('from_currency', from)
-    .eq('to_currency', to)
-    .eq('is_active', true)
-    .order('retrieved_at', { ascending: false })
-    .limit(10);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data || []) as StoredFxRow[];
-}
-
-function filterFxRowsByMinimumRetrievedAt(rows: StoredFxRow[], minimumRetrievedAtIso?: string | null): StoredFxRow[] {
-  if (!minimumRetrievedAtIso) {
-    return rows;
-  }
-
-  const minimumTimestamp = new Date(minimumRetrievedAtIso).getTime();
-  if (!Number.isFinite(minimumTimestamp) || minimumTimestamp <= 0) {
-    return rows;
-  }
-
-  return rows.filter((row) => {
-    const rowTimestamp = row?.retrieved_at ? new Date(row.retrieved_at).getTime() : Number.NaN;
-    return Number.isFinite(rowTimestamp) && rowTimestamp >= minimumTimestamp;
-  });
-}
-
-function pickPreferredFxRow(rows: StoredFxRow[], thresholdMinutes: number): StoredFxRow | null {
-  if (!rows.length) return null;
-
-  const freshOfficial = rows.find((row) => isOfficialAfricanFxRow(row) && !isFxTimestampStale(row.retrieved_at, thresholdMinutes));
-  if (freshOfficial) return freshOfficial;
-
-  const latestOfficial = rows.find((row) => isOfficialAfricanFxRow(row));
-  if (latestOfficial) return latestOfficial;
-
-  return rows[0] || null;
-}
-
 function resolveStoredFxRate(
   row: { rate?: number | null; final_rate_usd?: number | null; final_rate_eur?: number | null; retrieved_at?: string | null } | null | undefined,
   baseCurrency: string,
@@ -372,266 +157,81 @@ function resolveStoredFxRate(
   return Number.NaN;
 }
 
-async function getInternalFxRateFromTable(from: string, to: string, minimumRetrievedAtIso?: string | null): Promise<InternalFxRateResult> {
+async function getInternalFxRateFromTable(from: string, to: string): Promise<{ rate: number; source: string; fetchedAt: string }> {
   const sourceCurrency = String(from || '').toUpperCase();
   const targetCurrency = String(to || '').toUpperCase();
-  const thresholdMinutes = getFxFreshnessThresholdMinutes(sourceCurrency, targetCurrency);
 
   if (sourceCurrency === targetCurrency) {
-    return {
-      rate: 1,
-      officialRate: 1,
-      margin: 0,
-      source: 'identity',
-      fetchedAt: new Date().toISOString(),
-      sourceType: 'identity',
-      sourceUrl: null,
-      official: true,
-      stale: false,
-    };
+    return { rate: 1, source: 'identity', fetchedAt: new Date().toISOString() };
   }
 
-  const direct = pickPreferredFxRow(
-    filterFxRowsByMinimumRetrievedAt(await readLatestFxRows(sourceCurrency, targetCurrency), minimumRetrievedAtIso),
-    thresholdMinutes,
-  );
+  const { data: direct } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
+    .eq('from_currency', sourceCurrency)
+    .eq('to_currency', targetCurrency)
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const directRate = resolveStoredFxRate(direct, sourceCurrency);
   if (Number.isFinite(directRate) && directRate > 0) {
-    return buildInternalFxRateResult(directRate, direct, 'table-direct', thresholdMinutes);
+    return { rate: directRate, source: 'table-direct', fetchedAt: direct?.retrieved_at || new Date().toISOString() };
   }
 
-  const inverse = pickPreferredFxRow(
-    filterFxRowsByMinimumRetrievedAt(await readLatestFxRows(targetCurrency, sourceCurrency), minimumRetrievedAtIso),
-    thresholdMinutes,
-  );
+  const { data: inverse } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
+    .eq('from_currency', targetCurrency)
+    .eq('to_currency', sourceCurrency)
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const inverseRate = resolveStoredFxRate(inverse, targetCurrency);
   if (Number.isFinite(inverseRate) && inverseRate > 0) {
-    const rawInverseRate = Number(inverse?.rate);
-    const result = buildInternalFxRateResult(1 / inverseRate, inverse, 'table-inverse', thresholdMinutes);
     return {
-      ...result,
-      officialRate: Number.isFinite(rawInverseRate) && rawInverseRate > 0 ? 1 / rawInverseRate : result.officialRate,
+      rate: 1 / inverseRate,
+      source: 'table-inverse',
+      fetchedAt: inverse?.retrieved_at || new Date().toISOString(),
     };
   }
 
-  const [usdToSource, usdToTarget] = await Promise.all([
-    readLatestFxRows('USD', sourceCurrency).then((rows) => pickPreferredFxRow(filterFxRowsByMinimumRetrievedAt(rows, minimumRetrievedAtIso), thresholdMinutes)),
-    readLatestFxRows('USD', targetCurrency).then((rows) => pickPreferredFxRow(filterFxRowsByMinimumRetrievedAt(rows, minimumRetrievedAtIso), thresholdMinutes)),
+  const [{ data: usdToSource }, { data: usdToTarget }] = await Promise.all([
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('rate, final_rate_usd, retrieved_at')
+      .eq('from_currency', 'USD')
+      .eq('to_currency', sourceCurrency)
+      .eq('is_active', true)
+      .order('retrieved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('rate, final_rate_usd, retrieved_at')
+      .eq('from_currency', 'USD')
+      .eq('to_currency', targetCurrency)
+      .eq('is_active', true)
+      .order('retrieved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const sourceViaUsd = resolveStoredFxRate(usdToSource, 'USD');
   const targetViaUsd = resolveStoredFxRate(usdToTarget, 'USD');
 
   if (Number.isFinite(sourceViaUsd) && sourceViaUsd > 0 && Number.isFinite(targetViaUsd) && targetViaUsd > 0) {
-    const pivotRow = [usdToTarget, usdToSource].find((row) => isOfficialAfricanFxRow(row)) || usdToTarget || usdToSource;
-    const sourceRaw = Number(usdToSource?.rate);
-    const targetRaw = Number(usdToTarget?.rate);
-    const officialRate = Number.isFinite(sourceRaw) && sourceRaw > 0 && Number.isFinite(targetRaw) && targetRaw > 0
-      ? targetRaw / sourceRaw
-      : targetViaUsd / sourceViaUsd;
-    const margin = Math.max(Number(usdToSource?.margin || 0), Number(usdToTarget?.margin || 0), 0);
     return {
       rate: targetViaUsd / sourceViaUsd,
-      officialRate,
-      margin,
       source: 'table-usd-pivot',
-      fetchedAt: pivotRow?.retrieved_at || new Date().toISOString(),
-      sourceType: pivotRow?.source_type || null,
-      sourceUrl: resolveOfficialBankSourceUrl(pivotRow || null),
-      official: Boolean(isOfficialAfricanFxRow(usdToSource) && isOfficialAfricanFxRow(usdToTarget)),
-      stale: Boolean(isFxTimestampStale(usdToSource?.retrieved_at, thresholdMinutes) || isFxTimestampStale(usdToTarget?.retrieved_at, thresholdMinutes)),
+      fetchedAt: usdToTarget?.retrieved_at || usdToSource?.retrieved_at || new Date().toISOString(),
     };
   }
 
   throw new Error(`Taux de change introuvable pour ${sourceCurrency}→${targetCurrency}`);
-}
-
-async function readActivePdgRecipients(): Promise<PdgRecipient[]> {
-  const { data, error } = await supabaseAdmin
-    .from('pdg_management')
-    .select('user_id')
-    .eq('is_active', true);
-
-  if (error) {
-    throw error;
-  }
-
-  return ((data || []) as PdgRecipient[]).filter((item) => Boolean(item.user_id));
-}
-
-async function notifyPdgOfFxVisitFailure(params: {
-  actorId: string | null;
-  triggerSource: string;
-  from: string;
-  to: string;
-  refreshStatus: number | null;
-  refreshTimedOut: boolean;
-  refreshPayload: any;
-  liveVisitAttempted: boolean;
-  refreshStartedAt: string;
-}) {
-  const dedupeCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-  const alertType = 'fx_live_visit_required_failed';
-  const title = 'Transfert international suspendu: taux officiel live indisponible';
-  const description = `Le backend n'a pas pu verifier en temps reel le taux officiel pour ${params.from}/${params.to}. Les transferts internationaux sur cette paire sont suspendus jusqu'a correction.`;
-
-  const { data: existingAlert } = await supabaseAdmin
-    .from('financial_security_alerts')
-    .select('id')
-    .eq('alert_type', alertType)
-    .eq('is_resolved', false)
-    .gte('created_at', dedupeCutoff)
-    .contains('metadata', { from_currency: params.from, to_currency: params.to, trigger_source: params.triggerSource })
-    .limit(1)
-    .maybeSingle();
-
-  if (!existingAlert) {
-    await ignoreSupabaseError(
-      supabaseAdmin.from('financial_security_alerts').insert({
-        user_id: params.actorId || SYSTEM_USER_ID,
-        alert_type: alertType,
-        severity: 'critical',
-        title,
-        description,
-        metadata: {
-          actor_id: params.actorId,
-          trigger_source: params.triggerSource,
-          from_currency: params.from,
-          to_currency: params.to,
-          refresh_status: params.refreshStatus,
-          refresh_timed_out: params.refreshTimedOut,
-          refresh_payload: params.refreshPayload,
-          live_visit_attempted: params.liveVisitAttempted,
-          refresh_started_at: params.refreshStartedAt,
-        },
-      }),
-    );
-  }
-
-  const pdgRecipients = await readActivePdgRecipients().catch(() => [] as PdgRecipient[]);
-  if (!pdgRecipients.length) {
-    return;
-  }
-
-  const notificationMessage = `Le backend n'a pas pu visiter une source officielle en temps reel pour ${params.from}/${params.to}. Les transferts internationaux ont ete suspendus automatiquement.`;
-
-  const notificationsToInsert: Array<{ user_id: string; title: string; message: string; type: string; read: boolean }> = [];
-
-  for (const recipient of pdgRecipients) {
-    const { data: existingNotification } = await supabaseAdmin
-      .from('notifications')
-      .select('id')
-      .eq('user_id', recipient.user_id)
-      .eq('title', title)
-      .eq('message', notificationMessage)
-      .gte('created_at', dedupeCutoff)
-      .limit(1)
-      .maybeSingle();
-
-    if (!existingNotification) {
-      notificationsToInsert.push({
-        user_id: recipient.user_id,
-        title,
-        message: notificationMessage,
-        type: 'security_alert',
-        read: false,
-      });
-    }
-  }
-
-  if (notificationsToInsert.length > 0) {
-    await ignoreSupabaseError(supabaseAdmin.from('notifications').insert(notificationsToInsert));
-  }
-}
-
-async function getFreshAfricanFxRateForTransaction(from: string, to: string, actorId: string | null, triggerSource: string): Promise<InternalFxRateResult> {
-  const sourceCurrency = String(from || '').toUpperCase();
-  const targetCurrency = String(to || '').toUpperCase();
-  const refreshStartedAt = new Date().toISOString();
-  let refreshStatus: number | null = null;
-  let refreshTimedOut = false;
-  let refreshPayload: any = null;
-  let liveVisitAttempted = false;
-  const configuredMargin = await getConfiguredFxMargin();
-
-  liveVisitAttempted = true;
-  const liveBcrgRate = await fetchLiveBcrgUsdGnf().catch(() => null);
-  const directOfficialRate = buildLiveBcrgFxRate(sourceCurrency, targetCurrency, liveBcrgRate, configuredMargin);
-  if (directOfficialRate) {
-    return directOfficialRate;
-  }
-
-  const refreshResult = await triggerAfricanFxCollection(triggerSource, actorId, 6500);
-  refreshStatus = refreshResult.status;
-  refreshTimedOut = refreshResult.timedOut;
-  refreshPayload = refreshResult.payload;
-
-  const refreshedRate = await getInternalFxRateFromTable(sourceCurrency, targetCurrency, refreshStartedAt).catch(() => null);
-
-  if (refreshedRate?.official && !refreshedRate.stale) {
-    return {
-      ...refreshedRate,
-      refreshAttempted: true,
-      refreshStatus: refreshResult.status,
-      refreshTimedOut: refreshResult.timedOut,
-    };
-  }
-
-  const refreshedLiveBcrgRate = await fetchLiveBcrgUsdGnf().catch(() => null);
-  const refreshedDirectOfficialRate = buildLiveBcrgFxRate(sourceCurrency, targetCurrency, refreshedLiveBcrgRate, configuredMargin);
-  if (refreshedDirectOfficialRate) {
-    return {
-      ...refreshedDirectOfficialRate,
-      refreshAttempted: true,
-      refreshStatus: refreshResult.status,
-      refreshTimedOut: refreshResult.timedOut,
-    };
-  }
-
-  await notifyPdgOfFxVisitFailure({
-    actorId,
-    triggerSource,
-    from: sourceCurrency,
-    to: targetCurrency,
-    refreshStatus,
-    refreshTimedOut,
-    refreshPayload,
-    liveVisitAttempted,
-    refreshStartedAt,
-  });
-
-  // Fallback final: taux depuis la table (direct/inverse/pivot USD/pont GNF)
-  // Permet aux transferts de continuer si le scraping BCRG échoue depuis Vercel
-  const tableFallback = await getTableFxRate(sourceCurrency, targetCurrency).catch(() => null);
-  if (tableFallback && Number.isFinite(tableFallback.rate) && tableFallback.rate > 0) {
-    const configuredMarginFallback = await getConfiguredFxMargin();
-    // Considérer le taux comme récent si collecté il y a moins de 4 heures
-    const fetchedMs = tableFallback.fetched_at ? new Date(tableFallback.fetched_at).getTime() : 0;
-    const ageHours = (Date.now() - fetchedMs) / 3_600_000;
-    const isTableRateStale = !Number.isFinite(ageHours) || ageHours > 2;
-    logger.info(`[FX] Fallback table pour ${sourceCurrency}->${targetCurrency}: rate=${tableFallback.rate} source=${tableFallback.source} ageH=${ageHours.toFixed(1)} stale=${isTableRateStale}`);
-    return {
-      rate: tableFallback.rate,
-      officialRate: tableFallback.rate / (1 + configuredMarginFallback),
-      margin: configuredMarginFallback,
-      source: tableFallback.source,
-      fetchedAt: tableFallback.fetched_at,
-      sourceType: 'table-collected',
-      sourceUrl: null,
-      official: false,
-      stale: isTableRateStale,
-      refreshAttempted: true,
-      refreshStatus,
-      refreshTimedOut,
-    };
-  }
-
-  const freshnessText = refreshedRate
-    ? `source=${refreshedRate.source}, official=${refreshedRate.official}, stale=${refreshedRate.stale}, fetchedAt=${refreshedRate.fetchedAt}`
-    : 'source=none, official=false, stale=true, fetchedAt=none';
-  throw new Error(`Aucun taux officiel africain recent n'est disponible pour ${sourceCurrency}->${targetCurrency} avant conversion (${freshnessText})`);
 }
 
 function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
@@ -667,91 +267,22 @@ function parseFxRateNumber(rawValue: string): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-function normalizeBcrgUrl(rawUrl: string): string {
-  try {
-    return new URL(rawUrl, BCRG_OFFICIAL_URL).toString();
-  } catch {
-    return rawUrl;
-  }
-}
-
-function extractBcrgFixingUrls(html: string): string[] {
-  const urls: string[] = [];
-  const pushUrl = (value: string) => {
-    const normalized = normalizeBcrgUrl(value);
-    if (!normalized.includes('/cours_des_devises/fixing-du-')) return;
-    if (!urls.includes(normalized)) {
-      urls.push(normalized);
-    }
-  };
-
-  for (const match of html.matchAll(/href=["']([^"']*\/cours_des_devises\/fixing-du-[^"']+)["']/gi)) {
-    pushUrl(match[1]);
-  }
-
-  for (const match of html.matchAll(/https?:\/\/www\.bcrg-guinee\.org\/cours_des_devises\/fixing-du-[^"'\s<]+/gi)) {
-    pushUrl(match[0]);
-  }
-
-  return urls.sort((left, right) => right.localeCompare(left));
-}
-
-/**
- * Extrait le taux USD/GNF ou EUR/GNF depuis le HTML de la page BCRG.
- *
- * Couvre tous les formats observés sur bcrg-guinee.org :
- *   1. Titres h1-h6 : "USD =</h2>…<h2>8 732,48</h2>"
- *   2. Tableau HTML : <td>USD</td><td>8 732,48</td>
- *   3. Texte inline : "1 USD = 8732.48" ou "USD/GNF : 8732"
- *   4. Widgets span/div avec classe : <span class="rate">8 732,48</span>
- *   5. JSON/script embarqué : "USD":8732.48 ou "usd_gnf":8732
- *   6. Format avec unité : "8 732 GNF" après "USD"
- *   7. Format avec balise strong/b : <strong>8 732,48</strong>
- */
-function extractBcrgWidgetRate(html: string, currency: string): number | null {
-  const code = currency.toUpperCase();
-  const label = code === 'USD' ? '(?:USD|Dollar\\s*(?:US|américain)?)' :
-                code === 'EUR' ? '(?:EUR|Euro)' :
-                code;
-  const numCapture = '([\\d\\s\\u00a0.,]+)';
-  const range = BCRG_GNF_RANGES[code] ?? { min: 0, max: 1_000_000 };
-
+function extractBcrgWidgetRate(html: string, currency: 'USD' | 'EUR'): number | null {
+  const labelPattern = currency === 'USD' ? '(?:USD|Dollar)' : '(?:EUR|Euro)';
+  // SOURCE OFFICIELLE = le widget « <h2>usd =</h2> … <h2>8725.1731</h2> » de bcrg-guinee.org.
+  // La table TablePress de la même page affiche d'AUTRES valeurs (à ne pas utiliser). On lit le widget.
+  const num = '([\\d\\s\\u00a0.,]+)';
   const patterns = [
-    // Format 1 : titre split — "USD =</h2>…<h2>8 732</h2>" — fenêtre 8000 car Elementor injecte du HTML entre le label et la valeur
-    new RegExp(`${label}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,8000}?<h\\d[^>]*>\\s*${numCapture}\\s*<\\/h\\d>`, 'gi'),
-    // Format 2 : tableau standard — <td>USD</td><td>8 732</td>
-    new RegExp(`<td[^>]*>\\s*${label}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*${numCapture}\\s*<\\/td>`, 'gi'),
-    // Format 3 : texte inline — "1 USD = 8732" ou "USD/GNF : 8732"
-    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*/\\s*GNF\\s*[:=]\\s*)${numCapture}`, 'gi'),
-    // Format 4a : label suivi d'un span de valeur (même ligne ou jusqu'à 300 chars)
-    new RegExp(`${label}[\\s\\S]{0,300}?<span[^>]*>\\s*${numCapture}\\s*<\\/span>`, 'gi'),
-    // Format 4b : div avec classe contenant le taux
-    new RegExp(`${label}[\\s\\S]{0,300}?<div[^>]*class="[^"]*(?:rate|taux|cours|value|prix)[^"]*"[^>]*>\\s*${numCapture}\\s*<\\/div>`, 'gi'),
-    // Format 5 : JSON embarqué dans <script> — "USD":8732 ou "usd_gnf":8732
-    new RegExp(`"(?:${currency}|${currency.toLowerCase()}_gnf|gnf_${currency.toLowerCase()})"\s*:\s*${numCapture}`, 'gi'),
-    // Format 6 : valeur suivie de "GNF" après le label
-    new RegExp(`${label}[\\s\\S]{0,200}?${numCapture}\\s*GNF`, 'gi'),
-    // Format 7 : strong/b — <strong>8 732</strong> précédé de USD
-    new RegExp(`${label}[\\s\\S]{0,300}?<(?:strong|b)[^>]*>\\s*${numCapture}\\s*<\\/(?:strong|b)>`, 'gi'),
-    // Format 8 : data-attribute — data-rate="8732" data-currency="USD"
-    new RegExp(`data-currency=["']${code}["'][^>]*data-rate=["']${numCapture}["']`, 'gi'),
-    new RegExp(`data-rate=["']${numCapture}["'][^>]*data-currency=["']${code}["']`, 'gi'),
-    // Format 9 : tableau inversé — <tr><th>Devise</th><th>Taux</th></tr><tr><td>USD</td><td>8732</td>
-    new RegExp(`<tr[^>]*>[\\s\\S]{0,200}?${label}[\\s\\S]{0,500}?<td[^>]*>\\s*${numCapture}\\s*<\\/td>`, 'gi'),
+    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,600}?<h\\d[^>]*>\\s*${num}\\s*<\\/h\\d>`, 'gi'),
+    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)${num}`, 'gi'),
   ];
 
   for (const pattern of patterns) {
     const matches = Array.from(html.matchAll(pattern));
-    // Lire de la fin vers le début pour prendre le dernier taux publié (le plus récent)
     for (let index = matches.length - 1; index >= 0; index -= 1) {
-      // Chercher dans tous les groupes capturés (certains patterns ont plusieurs groupes)
-      for (let g = 1; g < (matches[index]?.length ?? 0); g++) {
-        const raw = matches[index]?.[g];
-        if (!raw) continue;
-        const parsed = parseFxRateNumber(raw);
-        if (Number.isFinite(parsed) && parsed >= range.min && parsed <= range.max) {
-          return parsed;
-        }
+      const parsed = parseFxRateNumber(matches[index]?.[1] || '');
+      if (Number.isFinite(parsed) && parsed > 1000 && parsed < 25000) {
+        return parsed;
       }
     }
   }
@@ -759,205 +290,39 @@ function extractBcrgWidgetRate(html: string, currency: string): number | null {
   return null;
 }
 
-async function fetchBcrgHtml(url: string): Promise<string | null> {
+async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number | null; retrievedAt: string } | null> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(BCRG_OFFICIAL_URL, {
       headers: {
         'User-Agent': '224Solutions-FX-Monitor/2.0',
         Accept: 'text/html',
-        'Cache-Control': 'no-cache, no-store',
-        Pragma: 'no-cache',
       },
       signal: controller.signal,
     });
 
     if (!response.ok) {
-      logger.warn(`[walletV2] BCRG HTTP ${response.status} sur ${url}`);
       return null;
     }
 
-    return await response.text();
-  } catch (error: any) {
-    const message = error?.name === 'AbortError' ? 'timeout' : String(error?.message || error || 'unknown error');
-    logger.warn(`[walletV2] BCRG fetch echoue sur ${url}: ${message}`);
+    const html = await response.text();
+    const usdGnf = extractBcrgWidgetRate(html, 'USD');
+    if (!usdGnf) {
+      return null;
+    }
+
+    return {
+      usdGnf,
+      eurGnf: extractBcrgWidgetRate(html, 'EUR'),
+      retrievedAt: new Date().toISOString(),
+    };
+  } catch {
     return null;
   } finally {
     clearTimeout(timeout);
   }
-}
-
-interface BcrgLiveRates {
-  usdGnf: number;
-  eurGnf: number | null;
-  cadGnf: number | null;
-  gbpGnf: number | null;
-  chfGnf: number | null;
-  jpyGnf: number | null;
-  cnyGnf: number | null;
-  dkkGnf: number | null;
-  nokGnf: number | null;
-  sekGnf: number | null;
-  sarGnf: number | null;
-  xofGnf: number | null;
-  retrievedAt: string;
-  sourceUrl: string | null;
-}
-
-async function fetchLiveBcrgUsdGnf(): Promise<BcrgLiveRates | null> {
-  let homepageHtml: string | null = null;
-
-  try {
-    homepageHtml = await fetchBcrgHtml(BCRG_OFFICIAL_URL);
-  } catch {
-    homepageHtml = null;
-  }
-
-  const fixingUrls = homepageHtml ? extractBcrgFixingUrls(homepageHtml) : [];
-  const urlsToTry = Array.from(new Set([
-    BCRG_OFFICIAL_URL, // ← homepage en premier — widget Elementor toujours à jour
-    ...fixingUrls,
-    ...BCRG_SCRAPE_URLS,
-  ]));
-
-  for (const url of urlsToTry) {
-    const html = url === BCRG_OFFICIAL_URL && homepageHtml
-      ? homepageHtml
-      : await fetchBcrgHtml(url);
-
-    if (!html) {
-      continue;
-    }
-
-    const usdGnf = extractBcrgWidgetRate(html, 'USD');
-    if (!usdGnf) {
-      continue;
-    }
-
-    const extracted: BcrgLiveRates = {
-      usdGnf,
-      eurGnf: extractBcrgWidgetRate(html, 'EUR'),
-      cadGnf: extractBcrgWidgetRate(html, 'CAD'),
-      gbpGnf: extractBcrgWidgetRate(html, 'GBP'),
-      chfGnf: extractBcrgWidgetRate(html, 'CHF'),
-      jpyGnf: extractBcrgWidgetRate(html, 'JPY'),
-      cnyGnf: extractBcrgWidgetRate(html, 'CNY'),
-      dkkGnf: extractBcrgWidgetRate(html, 'DKK'),
-      nokGnf: extractBcrgWidgetRate(html, 'NOK'),
-      sekGnf: extractBcrgWidgetRate(html, 'SEK'),
-      sarGnf: extractBcrgWidgetRate(html, 'SAR'),
-      xofGnf: extractBcrgWidgetRate(html, 'XOF'),
-      retrievedAt: new Date().toISOString(),
-      sourceUrl: url,
-    };
-    const missing = (['EUR','GBP','CAD','CHF','JPY','CNY','DKK','NOK','SEK','SAR','XOF'] as const)
-      .filter(c => extracted[`${c.toLowerCase()}Gnf` as keyof BcrgLiveRates] === null);
-    logger.info(`[walletV2] BCRG extrait USD=${usdGnf} EUR=${extracted.eurGnf} GBP=${extracted.gbpGnf} CAD=${extracted.cadGnf} XOF=${extracted.xofGnf} (source: ${url})${missing.length ? ` | manquants: ${missing.join(',')}` : ''}`);
-    return extracted;
-  }
-
-  return null;
-}
-
-async function getConfiguredFxMargin(): Promise<number> {
-  const { data } = await supabaseAdmin
-    .from('margin_config')
-    .select('config_value')
-    .eq('config_key', 'default_margin')
-    .maybeSingle();
-
-  const margin = Number((data as any)?.config_value ?? 0.03);
-  return Number.isFinite(margin) && margin >= 0 ? margin : 0.03;
-}
-
-function buildLiveBcrgFxRate(
-  from: string,
-  to: string,
-  liveRate: BcrgLiveRates | null,
-  margin = 0,
-): InternalFxRateResult | null {
-  if (!liveRate) return null;
-
-  const sourceCurrency = String(from || '').toUpperCase();
-  const targetCurrency = String(to || '').toUpperCase();
-  const shared: Omit<InternalFxRateResult, 'rate'> = {
-    officialRate: 1,
-    margin,
-    source: 'bcrg-live-widget',
-    fetchedAt: liveRate.retrievedAt,
-    sourceType: 'official_html',
-    sourceUrl: liveRate.sourceUrl || BCRG_OFFICIAL_URL,
-    official: true,
-    stale: false,
-  };
-
-  // Paires directes USD/EUR ↔ GNF
-  // La marge réduit toujours le montant reçu : foreign→GNF divise par (1+margin),
-  // GNF→foreign divise le taux inverse par (1+margin). La plateforme garde la différence.
-  if (sourceCurrency === 'USD' && targetCurrency === 'GNF' && liveRate.usdGnf > 0) {
-    return { rate: liveRate.usdGnf / (1 + margin), ...shared, officialRate: liveRate.usdGnf };
-  }
-  if (sourceCurrency === 'GNF' && targetCurrency === 'USD' && liveRate.usdGnf > 0) {
-    return { rate: 1 / (liveRate.usdGnf * (1 + margin)), ...shared, officialRate: 1 / liveRate.usdGnf };
-  }
-  if (sourceCurrency === 'EUR' && targetCurrency === 'GNF' && liveRate.eurGnf && liveRate.eurGnf > 0) {
-    return { rate: liveRate.eurGnf / (1 + margin), ...shared, officialRate: liveRate.eurGnf };
-  }
-  if (sourceCurrency === 'GNF' && targetCurrency === 'EUR' && liveRate.eurGnf && liveRate.eurGnf > 0) {
-    return { rate: 1 / (liveRate.eurGnf * (1 + margin)), ...shared, officialRate: 1 / liveRate.eurGnf };
-  }
-
-  // Devises BCRG directes ↔ GNF (CAD, GBP, CHF, JPY, CNY, DKK, NOK, SEK, SAR, XOF)
-  const directPairs: Array<[string, number | null]> = [
-    ['CAD', liveRate.cadGnf],
-    ['GBP', liveRate.gbpGnf],
-    ['CHF', liveRate.chfGnf],
-    ['JPY', liveRate.jpyGnf],
-    ['CNY', liveRate.cnyGnf],
-    ['DKK', liveRate.dkkGnf],
-    ['NOK', liveRate.nokGnf],
-    ['SEK', liveRate.sekGnf],
-    ['SAR', liveRate.sarGnf],
-    ['XOF', liveRate.xofGnf],
-  ];
-  for (const [curr, crossGnf] of directPairs) {
-    if (!crossGnf || crossGnf <= 0) continue;
-    if (sourceCurrency === curr && targetCurrency === 'GNF') {
-      return { rate: crossGnf / (1 + margin), ...shared, officialRate: crossGnf };
-    }
-    if (sourceCurrency === 'GNF' && targetCurrency === curr) {
-      return { rate: 1 / (crossGnf * (1 + margin)), ...shared, officialRate: 1 / crossGnf };
-    }
-  }
-
-  // XAF ↔ GNF : parité fixe officielle (1 EUR = 655.957 XAF), croisé avec eurGnf live
-  const eurGnf = liveRate.eurGnf ?? null;
-  if (eurGnf && eurGnf > 0) {
-    const xofGnf = liveRate.xofGnf ?? (eurGnf / 655.957);
-    if (sourceCurrency === 'XAF' && targetCurrency === 'GNF') {
-      return { rate: xofGnf / (1 + margin), ...shared, officialRate: xofGnf };
-    }
-    if (sourceCurrency === 'GNF' && targetCurrency === 'XAF') {
-      return { rate: 1 / (xofGnf * (1 + margin)), ...shared, officialRate: 1 / xofGnf };
-    }
-  }
-
-  // SLL (Sierra Leone Leone) ↔ GNF : pivot via USD (BSL instable, taux de référence BSL 2025)
-  const SLL_PER_USD = 22_500;
-  if (liveRate.usdGnf > 0) {
-    if (sourceCurrency === 'SLL' && targetCurrency === 'GNF') {
-      const sllToGnf = liveRate.usdGnf / SLL_PER_USD;
-      return { rate: sllToGnf / (1 + margin), ...shared, officialRate: sllToGnf };
-    }
-    if (sourceCurrency === 'GNF' && targetCurrency === 'SLL') {
-      const gnfToSll = SLL_PER_USD / liveRate.usdGnf;
-      return { rate: gnfToSll / (1 + margin), ...shared, officialRate: gnfToSll };
-    }
-  }
-
-  return null;
 }
 
 function buildAfricanFxCollectPayload(source: string, actorId: string | null) {
@@ -971,7 +336,7 @@ function buildAfricanFxCollectPayload(source: string, actorId: string | null) {
       { from: 'USD', to: 'GNF' },
       { from: 'EUR', to: 'GNF' },
     ],
-    bcrg_source_urls: BCRG_SCRAPE_URLS,
+    bcrg_source_urls: [BCRG_OFFICIAL_URL],
     preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
   };
 }
@@ -1031,16 +396,6 @@ async function triggerAfricanFxCollection(source: string, actorId: string | null
   }
 }
 
-function buildProfileDisplayName(profile: Record<string, any> | null): string | null {
-  if (!profile) return null;
-  if (profile.company_name) return String(profile.company_name).trim() || null;
-  if (profile.full_name && profile.full_name !== 'Utilisateur') return String(profile.full_name).trim() || null;
-  const firstLast = [profile.first_name, profile.last_name].filter(Boolean).map(String).join(' ').trim();
-  if (firstLast) return firstLast;
-  if (profile.email) return String(profile.email).split('@')[0] || null;
-  return null;
-}
-
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -1048,15 +403,19 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (UUID_REGEX.test(candidate)) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
       .eq('id', candidate)
       .maybeSingle();
+
+    const displayName = profile
+      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
+      : null;
 
     return {
       userId: candidate,
       query: candidate,
       matchedBy: 'uuid',
-      displayName: buildProfileDisplayName(profile as any),
+      displayName,
       email: profile ? String((profile as any).email || '') || null : null,
       phone: profile ? String((profile as any).phone || '') || null : null,
       publicId: profile ? String((profile as any).public_id || '') || null : null,
@@ -1075,15 +434,19 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (fromUserIds?.user_id) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
       .eq('id', fromUserIds.user_id)
       .maybeSingle();
+
+    const displayName = profile
+      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
+      : null;
 
     return {
       userId: fromUserIds.user_id,
       query: candidate,
       matchedBy: 'user_ids.custom_id',
-      displayName: buildProfileDisplayName(profile as any),
+      displayName,
       email: profile ? String((profile as any).email || '') || null : null,
       phone: profile ? String((profile as any).phone || '') || null : null,
       publicId: profile ? String((profile as any).public_id || '') || null : null,
@@ -1093,7 +456,7 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
 
   const { data: fromProfileIds } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+    .select('id, email, phone, first_name, last_name, public_id, custom_id')
     .or(`public_id.eq.${normalizedId},custom_id.eq.${normalizedId}`)
     .maybeSingle();
 
@@ -1101,11 +464,12 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     const matchedBy = String((fromProfileIds as any).public_id || '').toUpperCase() === normalizedId
       ? 'profiles.public_id'
       : 'profiles.custom_id';
+    const displayName = `${String((fromProfileIds as any).first_name || '').trim()} ${String((fromProfileIds as any).last_name || '').trim()}`.trim() || null;
     return {
       userId: fromProfileIds.id,
       query: candidate,
       matchedBy,
-      displayName: buildProfileDisplayName(fromProfileIds as any),
+      displayName,
       email: String((fromProfileIds as any).email || '') || null,
       phone: String((fromProfileIds as any).phone || '') || null,
       publicId: String((fromProfileIds as any).public_id || '') || null,
@@ -1117,16 +481,17 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
   if (normalizedEmail.includes('@')) {
     const { data: fromEmail } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
       .eq('email', normalizedEmail)
       .maybeSingle();
 
     if (fromEmail?.id) {
+      const displayName = `${String((fromEmail as any).first_name || '').trim()} ${String((fromEmail as any).last_name || '').trim()}`.trim() || null;
       return {
         userId: fromEmail.id,
         query: candidate,
         matchedBy: 'profiles.email',
-        displayName: buildProfileDisplayName(fromEmail as any),
+        displayName,
         email: String((fromEmail as any).email || '') || null,
         phone: String((fromEmail as any).phone || '') || null,
         publicId: String((fromEmail as any).public_id || '') || null,
@@ -1160,17 +525,18 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
     const phoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
     const { data: fromPhone } = await supabaseAdmin
       .from('profiles')
-      .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
       .or(phoneFilter)
       .limit(1)
       .maybeSingle();
 
     if (fromPhone?.id) {
+      const displayName = `${String((fromPhone as any).first_name || '').trim()} ${String((fromPhone as any).last_name || '').trim()}`.trim() || null;
       return {
         userId: fromPhone.id,
         query: candidate,
         matchedBy: 'profiles.phone',
-        displayName: buildProfileDisplayName(fromPhone as any),
+        displayName,
         email: String((fromPhone as any).email || '') || null,
         phone: String((fromPhone as any).phone || '') || null,
         publicId: String((fromPhone as any).public_id || '') || null,
@@ -1196,146 +562,6 @@ async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient
         email: String((authPhone as any).email || '') || null,
         phone: String((authPhone as any).phone || '') || null,
         publicId: null,
-        customId: null,
-      };
-    }
-  }
-
-  if (normalizedEmail.includes('@')) {
-    const { data: pdgByEmail } = await supabaseAdmin
-      .from('pdg_management')
-      .select('user_id, name, email, phone')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
-
-    if (pdgByEmail?.user_id) {
-      return {
-        userId: String((pdgByEmail as any).user_id),
-        query: candidate,
-        matchedBy: 'pdg_management.email',
-        displayName: String((pdgByEmail as any).name || '') || null,
-        email: String((pdgByEmail as any).email || '') || null,
-        phone: String((pdgByEmail as any).phone || '') || null,
-        publicId: null,
-        customId: null,
-      };
-    }
-  }
-
-  if (phoneCandidates.length > 0) {
-    const pdgPhoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
-    const { data: pdgByPhone } = await supabaseAdmin
-      .from('pdg_management')
-      .select('user_id, name, email, phone')
-      .or(pdgPhoneFilter)
-      .limit(1)
-      .maybeSingle();
-
-    if (pdgByPhone?.user_id) {
-      return {
-        userId: String((pdgByPhone as any).user_id),
-        query: candidate,
-        matchedBy: 'pdg_management.phone',
-        displayName: String((pdgByPhone as any).name || '') || null,
-        email: String((pdgByPhone as any).email || '') || null,
-        phone: String((pdgByPhone as any).phone || '') || null,
-        publicId: null,
-        customId: null,
-      };
-    }
-  }
-
-  // Recherche dans agents_management par code agent (AGT...)
-  {
-    const { data: agentByCode } = await supabaseAdmin
-      .from('agents_management')
-      .select('user_id, name, email, phone, agent_code')
-      .eq('agent_code', normalizedId)
-      .maybeSingle();
-
-    if (agentByCode?.user_id) {
-      return {
-        userId: String((agentByCode as any).user_id),
-        query: candidate,
-        matchedBy: 'agents_management.agent_code',
-        displayName: String((agentByCode as any).name || '') || null,
-        email: String((agentByCode as any).email || '') || null,
-        phone: String((agentByCode as any).phone || '') || null,
-        publicId: String((agentByCode as any).agent_code || '') || null,
-        customId: null,
-      };
-    }
-  }
-
-  // Recherche dans agents_management par email
-  if (normalizedEmail.includes('@')) {
-    const { data: agentByEmail } = await supabaseAdmin
-      .from('agents_management')
-      .select('user_id, name, email, phone, agent_code')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
-
-    if (agentByEmail?.user_id) {
-      return {
-        userId: String((agentByEmail as any).user_id),
-        query: candidate,
-        matchedBy: 'agents_management.email',
-        displayName: String((agentByEmail as any).name || '') || null,
-        email: String((agentByEmail as any).email || '') || null,
-        phone: String((agentByEmail as any).phone || '') || null,
-        publicId: String((agentByEmail as any).agent_code || '') || null,
-        customId: null,
-      };
-    }
-  }
-
-  // Recherche dans agents_management par téléphone
-  if (phoneCandidates.length > 0) {
-    const agentPhoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
-    const { data: agentByPhone } = await supabaseAdmin
-      .from('agents_management')
-      .select('user_id, name, email, phone, agent_code')
-      .or(agentPhoneFilter)
-      .limit(1)
-      .maybeSingle();
-
-    if (agentByPhone?.user_id) {
-      return {
-        userId: String((agentByPhone as any).user_id),
-        query: candidate,
-        matchedBy: 'agents_management.phone',
-        displayName: String((agentByPhone as any).name || '') || null,
-        email: String((agentByPhone as any).email || '') || null,
-        phone: String((agentByPhone as any).phone || '') || null,
-        publicId: String((agentByPhone as any).agent_code || '') || null,
-        customId: null,
-      };
-    }
-  }
-
-  // Recherche dans vendors par vendor_code ou public_id (ex: VND0004)
-  {
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('user_id, business_name, vendor_code, public_id')
-      .or(`vendor_code.eq.${normalizedId},public_id.eq.${normalizedId}`)
-      .maybeSingle();
-
-    if ((vendor as any)?.user_id) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email, phone, first_name, last_name, full_name, public_id, custom_id')
-        .eq('id', (vendor as any).user_id)
-        .maybeSingle();
-
-      return {
-        userId: String((vendor as any).user_id),
-        query: candidate,
-        matchedBy: 'vendors.vendor_code',
-        displayName: buildProfileDisplayName(profile as any) || String((vendor as any).business_name || ''),
-        email: profile ? String((profile as any).email || '') || null : null,
-        phone: profile ? String((profile as any).phone || '') || null : null,
-        publicId: String((vendor as any).vendor_code || (vendor as any).public_id || '') || null,
         customId: null,
       };
     }
@@ -1405,27 +631,38 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
-    // Charger le nom de l'expéditeur pour la réponse preview
-    const { data: senderProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('full_name, first_name, last_name, email, custom_id, public_id')
-      .eq('id', senderId)
-      .maybeSingle();
-    const senderDisplayName = buildProfileDisplayName(senderProfile as any);
+    const [{ data: senderWallet, error: senderWalletError }, { data: receiverWallet, error: receiverWalletError }] = await Promise.all([
+      supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency, user_id')
+        .eq('user_id', senderId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency, user_id')
+        .eq('user_id', resolved.userId)
+        .maybeSingle(),
+    ]);
 
-    const senderWallet = await ensureTransferWallet(senderId);
-    const recipientWallet = senderWallet
-      ? await ensureTransferWallet(resolved.userId, 'GNF')
-      : null;
-
-    if (!senderWallet) {
-      res.status(500).json({ success: false, error: 'Wallet expéditeur indisponible' });
+    if (senderWalletError || !senderWallet) {
+      res.status(404).json({ success: false, error: 'Wallet expéditeur introuvable' });
       return;
     }
 
-    if (!recipientWallet) {
-      res.status(500).json({ success: false, error: 'Wallet destinataire indisponible' });
-      return;
+    let recipientWallet = receiverWallet;
+    if (receiverWalletError || !recipientWallet) {
+      const { data: createdWallet, error: createWalletError } = await supabaseAdmin
+        .from('wallets')
+        .insert({ user_id: resolved.userId })
+        .select('id, balance, currency, user_id')
+        .single();
+
+      if (createWalletError || !createdWallet) {
+        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
+        return;
+      }
+
+      recipientWallet = createdWallet as any;
     }
 
     const feePercentage = 0;
@@ -1443,32 +680,15 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
     const isInternational = senderCurrency !== receiverCurrency;
     const amountAfterFee = amount;
     let rateDisplayed = 1;
-    let officialRate = 1;
-    let fxMargin = 0;
     let amountReceived = amountAfterFee;
     let rateSource = 'identity';
     let rateFetchedAt = new Date().toISOString();
-    let rateSourceType: string | null = 'identity';
-    let rateSourceUrl: string | null = null;
-    let rateIsOfficial = true;
-    let rateIsStale = false;
 
     if (isInternational) {
-      const fxResult = await getFreshAfricanFxRateForTransaction(
-        senderCurrency,
-        receiverCurrency,
-        senderId,
-        'wallet_transfer_preview',
-      );
+      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
       rateDisplayed = fxResult.rate;
-      officialRate = fxResult.officialRate;
-      fxMargin = fxResult.margin;
       rateSource = fxResult.source;
       rateFetchedAt = fxResult.fetchedAt;
-      rateSourceType = fxResult.sourceType;
-      rateSourceUrl = fxResult.sourceUrl;
-      rateIsOfficial = fxResult.official;
-      rateIsStale = fxResult.stale;
       amountReceived = smartRoundCurrencyAmount(amountAfterFee * rateDisplayed, receiverCurrency);
     }
 
@@ -1477,10 +697,10 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       is_international: isInternational,
       sender: {
         id: senderId,
-        name: senderDisplayName,
+        name: null,
         email: req.user?.email || null,
-        phone: senderProfile ? String((senderProfile as any).phone || '') || null : null,
-        custom_id: senderProfile ? (String((senderProfile as any).custom_id || '') || String((senderProfile as any).public_id || '') || null) : null,
+        phone: null,
+        custom_id: null,
       },
       receiver: {
         id: resolved.userId,
@@ -1502,8 +722,6 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       amount_received: amountReceived,
       currency_received: receiverCurrency,
       rate_displayed: rateDisplayed,
-      official_rate: officialRate,
-      fx_margin: fxMargin,
       sender_balance: senderBalance,
       balance_after: senderBalance - totalDebit,
       sender_country: mapCurrencyToCountry(senderCurrency),
@@ -1512,20 +730,11 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       frais_international: 0,
       rate_source: rateSource,
       rate_fetched_at: rateFetchedAt,
-      rate_source_type: rateSourceType,
-      rate_source_url: rateSourceUrl,
-      rate_is_official: rateIsOfficial,
-      rate_is_stale: rateIsStale,
       rate_lock_seconds: 60,
     });
   } catch (error: any) {
     logger.error(`Wallet transfer preview error: ${error.message}`);
-    const message = String(error?.message || 'Erreur lors de la previsualisation du transfert');
-    const isFxError = /Aucun taux officiel africain recent|Taux de change introuvable/i.test(message);
-    res.status(isFxError ? 503 : 500).json({
-      success: false,
-      error: isFxError ? message : 'Erreur lors de la previsualisation du transfert',
-    });
+    res.status(500).json({ success: false, error: 'Erreur lors de la prévisualisation du transfert' });
   }
 });
 
@@ -1539,7 +748,6 @@ router.get('/balance', verifyJWT, async (req: AuthenticatedRequest, res: Respons
       .from('wallets')
       .select('id, balance, currency, wallet_status, is_blocked, daily_limit, monthly_limit, created_at')
       .eq('user_id', req.user!.id)
-      .order('updated_at', { ascending: false })
       .maybeSingle();
 
     if (error) throw error;
@@ -1573,33 +781,16 @@ router.post('/initialize', verifyJWT, async (req: AuthenticatedRequest, res: Res
       return;
     }
 
-    // Récupérer le pays du profil pour déterminer la devise
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('detected_country, country, detected_currency')
-      .eq('id', userId)
-      .maybeSingle();
-
-    const userCountry = profile?.detected_country || profile?.country || 'GN';
-    const walletCurrency = (profile?.detected_currency && profile.detected_currency !== 'GNF')
-      ? profile.detected_currency
-      : countryToCurrency(userCountry);
-
+    // Créer — la table utilise des defaults pour balance, currency, wallet_status, limits
     const { data: newWallet, error: insertError } = await supabaseAdmin
       .from('wallets')
-      .insert({
-        user_id: userId,
-        currency: walletCurrency,
-        currency_locked: true,
-        currency_locked_at: new Date().toISOString(),
-        currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
-      })
+      .insert({ user_id: userId })
       .select()
       .single();
 
     if (insertError) throw insertError;
 
-    logger.info(`Wallet created for user: ${userId}, currency: ${walletCurrency} (country: ${userCountry})`);
+    logger.info(`Wallet created for user: ${userId}`);
     res.status(201).json({ success: true, wallet: newWallet, created: true });
   } catch (error: any) {
     logger.error(`Wallet init error: ${error.message}`);
@@ -1797,10 +988,7 @@ router.post('/pin/reset', verifyJWT, async (req: AuthenticatedRequest, res: Resp
       return;
     }
 
-    await resetWalletPinWithPassword(req.user!.id, req.user?.email || null, accountPasswordValue, newPinValue, {
-      ipAddress: req.ip || req.headers['x-forwarded-for']?.toString() || null,
-      userAgent: req.headers['user-agent']?.toString() || null,
-    });
+    await resetWalletPinWithPassword(req.user!.id, req.user?.email || null, accountPasswordValue, newPinValue);
     res.json({ success: true, message: 'Code PIN réinitialisé avec succès' });
   } catch (error: any) {
     logger.error(`Wallet pin reset error: ${error.message}`);
@@ -1929,8 +1117,8 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       });
       const statusCode = result.error === 'Solde insuffisant' ? 402
         : result.error === 'Wallet bloqué' ? 403
-        : result.error?.includes('activité suspecte') ? 403
-        : 400;
+          : result.error?.includes('activité suspecte') ? 403
+            : 400;
       res.status(statusCode).json({ success: false, error: result.error });
       return;
     }
@@ -2021,57 +1209,53 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    const senderWallet = await ensureTransferWallet(senderId);
-    if (!senderWallet) {
-      res.status(500).json({ success: false, error: 'Wallet expéditeur indisponible' });
-      return;
+    // Vérifier que le destinataire existe
+    let { data: recipient } = await supabaseAdmin
+      .from('wallets')
+      .select('user_id')
+      .eq('user_id', resolvedRecipientId)
+      .maybeSingle();
+
+    if (!recipient) {
+      // Auto-initialiser le wallet destinataire pour éviter les échecs sur comptes PDG/agent nouvellement créés
+      const { error: initError } = await supabaseAdmin
+        .from('wallets')
+        .insert({ user_id: resolvedRecipientId })
+        .select('user_id')
+        .single();
+
+      if (initError) {
+        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
+        return;
+      }
+
+      recipient = { user_id: resolvedRecipientId } as any;
     }
 
-    // Toujours utiliser GNF comme fallback pour le wallet destinataire —
-    // la devise réelle est déterminée par le profil du destinataire dans ensureTransferWallet.
-    const recipientWallet = await ensureTransferWallet(resolvedRecipientId, 'GNF');
-    if (!recipientWallet) {
-      res.status(500).json({ success: false, error: 'Wallet destinataire indisponible' });
-      return;
-    }
+    const [{ data: senderWallet }, { data: recipientWallet }] = await Promise.all([
+      supabaseAdmin
+        .from('wallets')
+        .select('currency')
+        .eq('user_id', senderId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('wallets')
+        .select('currency')
+        .eq('user_id', resolvedRecipientId)
+        .maybeSingle(),
+    ]);
 
     const senderCurrency = String(senderWallet?.currency || 'GNF').toUpperCase();
     const receiverCurrency = String(recipientWallet?.currency || senderCurrency).toUpperCase();
     const isInternational = senderCurrency !== receiverCurrency;
     let rateUsed = 1;
-    let officialRate = 1;
-    let fxMargin = 0;
     let rateSource = 'identity';
-    let rateSourceType: string | null = 'identity';
-    let rateSourceUrl: string | null = null;
     let amountToCredit = amount;
 
     if (isInternational) {
-      const fxResult = await getFreshAfricanFxRateForTransaction(
-        senderCurrency,
-        receiverCurrency,
-        senderId,
-        'wallet_transfer_execute',
-      );
-
-      if (fxResult.stale) {
-        logger.warn(`[WalletV2] Transfert international refusé: taux périmé pour ${senderCurrency}->${receiverCurrency}, source=${fxResult.source}, fetchedAt=${fxResult.fetchedAt}`);
-        res.status(503).json({
-          success: false,
-          error: `Le taux de change ${senderCurrency}→${receiverCurrency} n'est pas disponible en temps réel. Veuillez réessayer dans quelques minutes.`,
-          fx_stale: true,
-          fx_source: fxResult.source,
-          fx_fetched_at: fxResult.fetchedAt,
-        });
-        return;
-      }
-
+      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
       rateUsed = fxResult.rate;
-      officialRate = fxResult.officialRate;
-      fxMargin = fxResult.margin;
       rateSource = fxResult.source;
-      rateSourceType = fxResult.sourceType;
-      rateSourceUrl = fxResult.sourceUrl;
       amountToCredit = smartRoundCurrencyAmount(amount * rateUsed, receiverCurrency);
     }
 
@@ -2091,9 +1275,6 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         rateUsed,
         rateSource,
         feeAmount: 0,
-        // Passer les IDs wallet validés pour éviter un double-fetch dans le service
-        senderWalletId: String(senderWallet.id),
-        receiverWalletId: String(recipientWallet.id),
       },
     );
 
@@ -2109,27 +1290,12 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       });
       const statusCode = result.error === 'Solde insuffisant' ? 402
         : result.error?.includes('bloqué') ? 403
-        : 400;
+          : 400;
       res.status(statusCode).json({ success: false, error: result.error });
       return;
     }
 
     logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}, credited=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
-
-    // Envoi des emails de confirmation (non-bloquant — en parallèle avec la réponse)
-    sendTransactionEmails({
-      senderId,
-      receiverId: resolvedRecipientId,
-      amountSent: amount,
-      amountReceived: amountToCredit,
-      senderCurrency,
-      receiverCurrency,
-      description: description || 'Transfert',
-      isInternational,
-      rateUsed,
-      transactionId: result.transactionId,
-    }).catch((err) => logger.warn(`[WalletV2] Email send error: ${err?.message}`));
-
     await emitCoreFeatureEvent({
       featureKey: 'wallet.transfer',
       coreEngine: 'payment',
@@ -2160,11 +1326,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       fee_amount: 0,
       fee_percentage: 0,
       rate_used: rateUsed,
-      official_rate: officialRate,
-      fx_margin: fxMargin,
       rate_source: rateSource,
-      rate_source_type: rateSourceType,
-      rate_source_url: rateSourceUrl,
     });
   } catch (error: any) {
     logger.error(`Wallet transfer error: ${error.message}`);
@@ -2177,12 +1339,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       userId: req.user?.id || null,
       payload: { error: error.message },
     });
-    const message = String(error?.message || 'Erreur lors du transfert');
-    const isFxError = /Aucun taux officiel africain recent|Taux de change introuvable/i.test(message);
-    res.status(isFxError ? 503 : 500).json({
-      success: false,
-      error: isFxError ? message : 'Erreur lors du transfert',
-    });
+    res.status(500).json({ success: false, error: 'Erreur lors du transfert' });
   }
 });
 
@@ -2202,39 +1359,39 @@ router.post(
     allowedRoles: ['admin', 'pdg', 'ceo'],
   }),
   async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const actorId = req.user!.id;
+    try {
+      const actorId = req.user!.id;
 
-    const { user_id, amount, description, reference, transaction_type = 'admin_credit' } = req.body || {};
+      const { user_id, amount, description, reference, transaction_type = 'admin_credit' } = req.body || {};
 
-    if (!user_id || !amount || typeof amount !== 'number' || amount <= 0) {
-      res.status(400).json({ success: false, error: 'user_id et amount (positif) requis' });
-      return;
+      if (!user_id || !amount || typeof amount !== 'number' || amount <= 0) {
+        res.status(400).json({ success: false, error: 'user_id et amount (positif) requis' });
+        return;
+      }
+
+      const ref = reference || `admin_${Date.now()}`;
+      const result = await creditWallet(user_id, amount, description || 'Crédit administrateur', ref, transaction_type);
+
+      if (!result.success) {
+        res.status(400).json({ success: false, error: result.error });
+        return;
+      }
+
+      // Audit log
+      await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
+        user_id: actorId,
+        action_type: 'admin_credit',
+        description: `Crédit admin: ${amount} GNF → user=${user_id}`,
+        request_data: { user_id, amount, description, reference: ref },
+      }));
+
+      logger.info(`[WalletV2] Admin credit: actor=${actorId}, target=${user_id}, amount=${amount}`);
+      res.json({ success: true, new_balance: result.newBalance, operation: 'admin_credit' });
+    } catch (error: any) {
+      logger.error(`Wallet credit error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du crédit' });
     }
-
-    const ref = reference || `admin_${Date.now()}`;
-    const result = await creditWallet(user_id, amount, description || 'Crédit administrateur', ref, transaction_type);
-
-    if (!result.success) {
-      res.status(400).json({ success: false, error: result.error });
-      return;
-    }
-
-    // Audit log
-    await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
-      user_id: actorId,
-      action_type: 'admin_credit',
-      description: `Crédit admin: ${amount} GNF → user=${user_id}`,
-      request_data: { user_id, amount, description, reference: ref },
-    }));
-
-    logger.info(`[WalletV2] Admin credit: actor=${actorId}, target=${user_id}, amount=${amount}`);
-    res.json({ success: true, new_balance: result.newBalance, operation: 'admin_credit' });
-  } catch (error: any) {
-    logger.error(`Wallet credit error: ${error.message}`);
-    res.status(500).json({ success: false, error: 'Erreur lors du crédit' });
-  }
-});
+  });
 
 /**
  * GET /api/v2/wallet/admin/fx-health
@@ -2255,57 +1412,47 @@ router.get(
       startOfDay.setUTCHours(0, 0, 0, 0);
       const startOfDayIso = startOfDay.toISOString();
 
-      const [latestAnyRate, latestUsdGnfRate, recentRuns, unresolvedAlerts, todayRates, marginConfig, keyRatesRaw] = await Promise.all([
-        readSupabaseData(supabaseAdmin
+      const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }, { data: marginConfig }] = await Promise.all([
+        supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .order('retrieved_at', { ascending: false })
           .limit(1)
-          .maybeSingle(), 'fx-health.latestAnyRate', null),
-        readSupabaseData(supabaseAdmin
+          .maybeSingle(),
+        supabaseAdmin
           .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
+          .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at, last_bcrg_scraped_at')
           .eq('is_active', true)
           .eq('from_currency', 'USD')
           .eq('to_currency', 'GNF')
           .order('retrieved_at', { ascending: false })
           .limit(1)
-          .maybeSingle(), 'fx-health.latestUsdGnfRate', null),
-        readSupabaseData(supabaseAdmin
+          .maybeSingle(),
+        supabaseAdmin
           .from('fx_collection_log')
           .select('currency_code, status, source, source_url, source_type, error_message, collected_at')
           .order('collected_at', { ascending: false })
-          .limit(30), 'fx-health.recentRuns', [] as any[]),
-        readSupabaseData(supabaseAdmin
+          .limit(30),
+        supabaseAdmin
           .from('financial_security_alerts')
           .select('id, alert_type, severity, title, description, created_at, metadata')
           .like('alert_type', 'fx_%')
           .eq('is_resolved', false)
           .order('created_at', { ascending: false })
-          .limit(20), 'fx-health.unresolvedAlerts', [] as any[]),
-        readSupabaseData(supabaseAdmin
+          .limit(20),
+        supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .gte('retrieved_at', startOfDayIso)
           .order('retrieved_at', { ascending: false })
-          .limit(200), 'fx-health.todayRates', [] as any[]),
-        readSupabaseData(supabaseAdmin
+          .limit(200),
+        supabaseAdmin
           .from('margin_config')
           .select('config_value')
           .eq('config_key', 'default_margin')
-          .maybeSingle(), 'fx-health.marginConfig', null),
-        // EUR→GNF existe (stocké par BCRG). GBP→USD et CAD→USD existent (stockés par BCEAO).
-        // XOF/XAF→GNF calculés depuis EUR/GNF via parité fixe (655.957).
-        readSupabaseData(supabaseAdmin
-          .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, margin, retrieved_at, source, source_type')
-          .eq('is_active', true)
-          .in('from_currency', ['EUR', 'GBP', 'CAD'])
-          .in('to_currency', ['GNF', 'USD'])
-          .order('retrieved_at', { ascending: false })
-          .limit(10), 'fx-health.keyRates', [] as any[]),
+          .maybeSingle(),
       ]);
 
       const liveBcrgRate = await fetchLiveBcrgUsdGnf();
@@ -2314,37 +1461,49 @@ router.get(
       const currentMargin = Number.isFinite(configuredMarginRaw) ? configuredMarginRaw : 0.03;
       const currentRateBase = fallbackRate
         ? {
-            ...fallbackRate,
-            margin: currentMargin,
-            configured_margin: currentMargin,
-            final_rate_usd: Number.isFinite(Number(fallbackRate?.rate))
-              ? Number(fallbackRate.rate) * (1 + currentMargin)
-              : fallbackRate?.final_rate_usd ?? null,
-            final_rate_eur:
-              Number.isFinite(Number(fallbackRate?.final_rate_eur)) && Number.isFinite(Number(fallbackRate?.margin))
-                ? (Number(fallbackRate.final_rate_eur) / (1 + Number(fallbackRate.margin))) * (1 + currentMargin)
-                : fallbackRate?.final_rate_eur ?? null,
-          }
+          ...fallbackRate,
+          margin: currentMargin,
+          configured_margin: currentMargin,
+          final_rate_usd: Number.isFinite(Number(fallbackRate?.rate))
+            ? Number(fallbackRate.rate) * (1 + currentMargin)
+            : fallbackRate?.final_rate_usd ?? null,
+          final_rate_eur:
+            Number.isFinite(Number(fallbackRate?.final_rate_eur)) && Number.isFinite(Number(fallbackRate?.margin))
+              ? (Number(fallbackRate.final_rate_eur) / (1 + Number(fallbackRate.margin))) * (1 + currentMargin)
+              : fallbackRate?.final_rate_eur ?? null,
+        }
         : null;
+      // ÂGE = fraîcheur du taux RÉELLEMENT STOCKÉ (celui utilisé pour les transactions, écrit par le
+      // job toutes les minutes). On préfère last_bcrg_scraped_at (n'avance qu'à un vrai scrape réussi)
+      // → si le job d'écriture meurt, l'âge grimpe même si le re-scrape d'affichage réussit.
+      // Avant : retrieved_at = horodatage du re-scrape d'affichage (NOW) → âge toujours ~00:00 (trompeur).
+      const storedRateAgeIso: string | null =
+        (latestUsdGnfRate as any)?.last_bcrg_scraped_at
+        || latestUsdGnfRate?.retrieved_at
+        || latestAnyRate?.retrieved_at
+        || null;
       const currentRate = liveBcrgRate
         ? {
-            ...(currentRateBase || {}),
-            from_currency: 'USD',
-            to_currency: 'GNF',
-            rate: liveBcrgRate.usdGnf,
-            margin: currentMargin,
-            configured_margin: currentMargin,
-            final_rate_usd: liveBcrgRate.usdGnf * (1 + currentMargin),
-            final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : currentRateBase?.final_rate_eur ?? null,
-            source: 'bcrg-live-widget',
-            source_type: 'official_html',
-            source_url: liveBcrgRate.sourceUrl || BCRG_OFFICIAL_URL,
-            retrieved_at: liveBcrgRate.retrievedAt,
-          }
+          ...(currentRateBase || {}),
+          from_currency: 'USD',
+          to_currency: 'GNF',
+          rate: liveBcrgRate.usdGnf,
+          margin: currentMargin,
+          configured_margin: currentMargin,
+          final_rate_usd: liveBcrgRate.usdGnf * (1 + currentMargin),
+          final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : currentRateBase?.final_rate_eur ?? null,
+          source: 'bcrg-live-widget',
+          source_type: 'official_html',
+          source_url: BCRG_OFFICIAL_URL,
+          // L'âge reflète le taux stocké ; on expose le moment du re-scrape d'affichage à part.
+          retrieved_at: storedRateAgeIso || liveBcrgRate.retrievedAt,
+          live_checked_at: liveBcrgRate.retrievedAt,
+        }
         : currentRateBase;
       const lastRetrievedAt = currentRate?.retrieved_at ? new Date(currentRate.retrieved_at).getTime() : null;
       const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : null;
-      const staleThresholdMinutes = 90;
+      // Cadence de scrape = 1 min → on tolère un cycle manqué et on marque « Stale » au-delà de 2 min.
+      const staleThresholdMinutes = 2;
       const stale = ageMinutes === null || ageMinutes > staleThresholdMinutes;
 
       const runRows = recentRuns || [];
@@ -2352,38 +1511,6 @@ router.get(
         .filter((row) => row.currency_code === 'GNF')
         .slice(0, 2);
       const twoConsecutiveFailures = recentGnfRuns.length >= 2 && recentGnfRuns.every((row) => !isFxSuccessStatus(row.status));
-      const shouldTriggerRefresh = !liveBcrgRate && (stale || !currentRate || twoConsecutiveFailures);
-
-      let refreshMeta = {
-        attempted: false,
-        reason: null as string | null,
-        ok: false,
-        status: null as number | null,
-        timed_out: false,
-        payload: null as any,
-      };
-
-      if (shouldTriggerRefresh) {
-        const refreshReason = !currentRate
-          ? 'missing_current_rate'
-          : twoConsecutiveFailures
-            ? 'two_consecutive_failures'
-            : 'stale_rates';
-
-        const refreshResult = await triggerAfricanFxCollection(`fx_health_${refreshReason}`, _req.user?.id || null, 4000);
-        refreshMeta = {
-          attempted: true,
-          reason: refreshReason,
-          ok: refreshResult.ok,
-          status: refreshResult.status,
-          timed_out: refreshResult.timedOut,
-          payload: refreshResult.payload,
-        };
-
-        if (!refreshResult.ok && !refreshResult.timedOut) {
-          logger.warn(`[walletV2] FX health auto-refresh not confirmed (status=${refreshResult.status ?? 'n/a'})`);
-        }
-      }
 
       const todaysHistory = (todayRates || [])
         .filter((rate: any) => isAfricanBankRow(rate))
@@ -2458,88 +1585,30 @@ router.get(
 
       const gnfTodayHistory = todaysHistory.filter((rate: any) => rate.from_currency === 'GNF' || rate.to_currency === 'GNF');
 
-      // Taux de base USD/GNF (depuis le taux courant, toujours disponible)
-      const usdGnfBase = currentRate?.rate ? Number(currentRate.rate) : null;
-      // EUR/GNF : d'abord depuis le scraping live BCRG, sinon depuis la DB (EUR→GNF stocké par BCRG)
-      const eurGnfRowFromDb = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'EUR' && r.to_currency === 'GNF');
-      const eurGnfBase: number | null = liveBcrgRate?.eurGnf
-        ? Number(liveBcrgRate.eurGnf)
-        : (eurGnfRowFromDb?.rate ? Number(eurGnfRowFromDb.rate) : null);
-      // GBP→USD et CAD→USD (stockés via BCEAO cross)
-      const gbpUsdRow = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'GBP' && r.to_currency === 'USD');
-      const cadUsdRow = (keyRatesRaw as any[] || []).find((r: any) => r.from_currency === 'CAD' && r.to_currency === 'USD');
-
-      const keyRatesMap: Record<string, any> = {};
-
-      // EUR → GNF (direct BCRG)
-      if (eurGnfBase && eurGnfBase > 0) {
-        keyRatesMap['EUR_GNF'] = {
-          from_currency: 'EUR', to_currency: 'GNF',
-          rate: eurGnfBase,
-          margin: currentMargin,
-          final_rate: eurGnfBase * (1 + currentMargin),
-          retrieved_at: eurGnfRowFromDb?.retrieved_at || currentRate?.retrieved_at || null,
-          source: eurGnfRowFromDb?.source || 'bcrg-live',
-          source_type: eurGnfRowFromDb?.source_type || 'official_html',
-        };
-        // XOF → GNF : taux direct BCRG si disponible, sinon parité fixe 1 EUR = 655.957 XOF
-        const xofGnfDirect = (liveBcrgRate?.xofGnf && liveBcrgRate.xofGnf > 0) ? Number(liveBcrgRate.xofGnf) : null;
-        const xofGnfBase = xofGnfDirect ?? (eurGnfBase / 655.957);
-        keyRatesMap['XOF_GNF'] = {
-          from_currency: 'XOF', to_currency: 'GNF',
-          rate: xofGnfBase,
-          margin: currentMargin,
-          final_rate: xofGnfBase * (1 + currentMargin),
-          retrieved_at: xofGnfDirect ? (liveBcrgRate?.retrievedAt || null) : (currentRate?.retrieved_at || null),
-          source: xofGnfDirect ? 'bcrg-live-widget' : 'bceao-parity',
-          source_type: xofGnfDirect ? 'official_html' : 'official_fixed_parity',
-        };
-        // XAF → GNF : parité fixe EUR/655.957 (XAF non coté par BCRG directement)
-        const xafGnfBase = eurGnfBase / 655.957;
-        keyRatesMap['XAF_GNF'] = {
-          from_currency: 'XAF', to_currency: 'GNF',
-          rate: xafGnfBase,
-          margin: currentMargin,
-          final_rate: xafGnfBase * (1 + currentMargin),
-          retrieved_at: currentRate?.retrieved_at || null,
-          source: 'beac-parity',
-          source_type: 'official_fixed_parity',
-        };
+      // key_rates : taux X→GNF affichés sur le tableau de bord (EUR/GBP/XOF/XAF/CAD).
+      // Source = derniers taux officiels en base (currency_exchange_rates), final recalculé avec la marge courante.
+      const latestByCurrency = new Map<string, any>();
+      for (const r of (todayRates || [])) {
+        if (r.to_currency !== 'GNF') continue;
+        const prev = latestByCurrency.get(r.from_currency);
+        if (!prev || new Date(r.retrieved_at).getTime() > new Date(prev.retrieved_at).getTime()) {
+          latestByCurrency.set(r.from_currency, r);
+        }
       }
-
-      // GBP → GNF : priorité au taux direct BCRG live, sinon cross BCEAO × BCRG
-      const gbpGnfDirect = liveBcrgRate?.gbpGnf ? Number(liveBcrgRate.gbpGnf) : null;
-      const gbpGnfFromCross = (gbpUsdRow && usdGnfBase && usdGnfBase > 0)
-        ? Number(gbpUsdRow.rate) * usdGnfBase
-        : null;
-      const gbpGnfBase = gbpGnfDirect ?? gbpGnfFromCross;
-      if (gbpGnfBase && gbpGnfBase > 0) {
-        keyRatesMap['GBP_GNF'] = {
-          from_currency: 'GBP', to_currency: 'GNF',
-          rate: gbpGnfBase,
-          margin: currentMargin,
-          final_rate: gbpGnfBase * (1 + currentMargin),
-          retrieved_at: liveBcrgRate?.retrievedAt || currentRate?.retrieved_at || null,
-          source: gbpGnfDirect ? 'bcrg-live-widget' : (gbpUsdRow?.source || 'bceao-cross'),
-          source_type: gbpGnfDirect ? 'official_html' : 'official_cross',
-        };
-      }
-
-      // CAD → GNF : priorité au taux direct BCRG live, sinon cross BCEAO × BCRG
-      const cadGnfDirect = liveBcrgRate?.cadGnf ? Number(liveBcrgRate.cadGnf) : null;
-      const cadGnfFromCross = (cadUsdRow && usdGnfBase && usdGnfBase > 0)
-        ? Number(cadUsdRow.rate) * usdGnfBase
-        : null;
-      const cadGnfBase = cadGnfDirect ?? cadGnfFromCross;
-      if (cadGnfBase && cadGnfBase > 0) {
-        keyRatesMap['CAD_GNF'] = {
-          from_currency: 'CAD', to_currency: 'GNF',
-          rate: cadGnfBase,
-          margin: currentMargin,
-          final_rate: cadGnfBase * (1 + currentMargin),
-          retrieved_at: liveBcrgRate?.retrievedAt || currentRate?.retrieved_at || null,
-          source: cadGnfDirect ? 'bcrg-live-widget' : (cadUsdRow?.source || 'bceao-cross'),
-          source_type: cadGnfDirect ? 'official_html' : 'official_cross',
+      // RÈGLE : n'afficher QUE les taux réellement publiés par le BCRG (widget officiel).
+      // Le BCRG ne publie PAS le XAF (CFA CEMAC) → on ne l'affiche pas. Aucune dérivation/fallback.
+      const keyRates: Record<string, any> = {};
+      for (const cur of ['EUR', 'GBP', 'XOF', 'CAD']) {
+        const row = latestByCurrency.get(cur);
+        const rate = Number(row?.rate);
+        const isBcrg = !!row && (String(row.source || '').toLowerCase().includes('bcrg') || isAfricanBankSourceUrl(row.source_url));
+        if (!row || !Number.isFinite(rate) || !isBcrg) continue;
+        keyRates[`${cur}_GNF`] = {
+          rate,
+          final_rate: rate * (1 + currentMargin),
+          retrieved_at: row.retrieved_at,
+          source: row.source,
+          source_url: row.source_url,
         };
       }
 
@@ -2555,8 +1624,7 @@ router.get(
           configured_margin: currentMargin,
           two_consecutive_failures: twoConsecutiveFailures,
           current_rate: currentRate || null,
-          key_rates: keyRatesMap,
-          refresh: refreshMeta,
+          key_rates: keyRates,
           recent_runs: runRows.slice(0, 10),
           today_history: todaysHistory,
           gnf_today_history: gnfTodayHistory,
@@ -2568,89 +1636,6 @@ router.get(
       logger.error(`FX health error: ${error.message}`);
       res.status(500).json({ success: false, error: 'Erreur lors du chargement du monitoring FX' });
     }
-  }
-);
-
-/**
- * GET /api/v2/wallet/admin/fx-rates-check
- * Endpoint léger (Node.js pur, sans scraping) pour détecter les changements de taux.
- * Le frontend poll ce endpoint toutes les 60 s. Si changedAt > lastKnown → loadFxHealth().
- * Alimenté par refreshBcrgOnly() en mémoire — réponse instantanée.
- */
-router.get(
-  '/admin/fx-rates-check',
-  verifyJWT,
-  requirePermissionOrRole({
-    permissionKey: 'manage_wallet_transactions',
-    allowedRoles: ['admin', 'pdg', 'ceo'],
-  }),
-  (_req: AuthenticatedRequest, res: Response) => {
-    res.json({
-      success: true,
-      data: bcrgLastSnapshot
-        ? {
-            changedAt: bcrgLastSnapshot.changedAt,
-            checkedAt: bcrgLastSnapshot.checkedAt,
-            usdGnf: bcrgLastSnapshot.usdGnf,
-            eurGnf: bcrgLastSnapshot.eurGnf,
-            cadGnf: bcrgLastSnapshot.cadGnf,
-            gbpGnf: bcrgLastSnapshot.gbpGnf,
-            chfGnf: bcrgLastSnapshot.chfGnf,
-            changedPairs: bcrgLastSnapshot.changedPairs,
-            sourceUrl: bcrgLastSnapshot.sourceUrl,
-          }
-        : null,
-    });
-  }
-);
-
-/**
- * GET /api/v2/wallet/admin/fx-rates-stream
- * SSE — flux temps réel des taux BCRG. Le backend pousse un événement dès qu'un taux change.
- * Le frontend n'a pas besoin de poller — il reçoit la notification à l'instant même.
- */
-router.get(
-  '/admin/fx-rates-stream',
-  verifyJWT,
-  requirePermissionOrRole({
-    permissionKey: 'manage_wallet_transactions',
-    allowedRoles: ['admin', 'pdg', 'ceo'],
-  }),
-  (req: AuthenticatedRequest, res: Response) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // Désactiver le buffering Nginx
-    res.flushHeaders();
-
-    // Envoyer le snapshot actuel immédiatement à la connexion
-    if (bcrgLastSnapshot) {
-      res.write(`data: ${JSON.stringify({
-        changedAt: bcrgLastSnapshot.changedAt,
-        checkedAt: bcrgLastSnapshot.checkedAt,
-        usdGnf: bcrgLastSnapshot.usdGnf,
-        eurGnf: bcrgLastSnapshot.eurGnf,
-        cadGnf: bcrgLastSnapshot.cadGnf,
-        gbpGnf: bcrgLastSnapshot.gbpGnf,
-        chfGnf: bcrgLastSnapshot.chfGnf,
-        changedPairs: bcrgLastSnapshot.changedPairs,
-        sourceUrl: bcrgLastSnapshot.sourceUrl,
-      })}\n\n`);
-    }
-
-    // Heartbeat toutes les 25s pour maintenir la connexion active
-    const heartbeat = setInterval(() => {
-      if (!res.writableEnded) res.write(': heartbeat\n\n');
-    }, 25_000);
-
-    bcrgSseClients.add(res);
-    logger.info(`[SSE] Client connecté (total: ${bcrgSseClients.size}) — userId: ${req.user?.id ?? 'unknown'}`);
-
-    req.on('close', () => {
-      bcrgSseClients.delete(res);
-      clearInterval(heartbeat);
-      logger.info(`[SSE] Client déconnecté (total: ${bcrgSseClients.size})`);
-    });
   }
 );
 
@@ -2667,204 +1652,135 @@ router.get(
   }),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      // Parse window hours safely — avoid NaN → Invalid Date throw
-      const hoursRaw = parseInt(String((req.query as any).hours || '168'), 10);
-      const windowHours = (isNaN(hoursRaw) || hoursRaw <= 0) ? 168 : Math.min(720, hoursRaw);
-      const since = new Date(Date.now() - windowHours * 3600 * 1000).toISOString();
+      // Fenêtre dynamique : le frontend envoie ?hours=24|72|168|720. Avant : forcé à 24h (bug).
+      const hoursRaw = Number((req.query.hours as string) ?? 24);
+      const windowHours = Number.isFinite(hoursRaw) && hoursRaw > 0 ? Math.min(hoursRaw, 24 * 366) : 24;
+      const sinceIso = new Date(Date.now() - windowHours * 3600000).toISOString();
 
-      // Requête 1 : wallet_transactions — transfer_out (enum valide)
-      // Requête 2 : enhanced_transactions — international_transfer et transfer (legacy + anciens)
-      const [wtResult, enhResult] = await Promise.all([
-        supabaseAdmin
-          .from('wallet_transactions')
-          .select('id, sender_user_id, receiver_user_id, sender_wallet_id, receiver_wallet_id, amount, currency, transaction_type, metadata, created_at')
-          .eq('transaction_type', 'transfer_out' as any)
-          .eq('status', 'completed')
-          .gte('created_at', since)
-          .order('created_at', { ascending: false })
-          .limit(2000),
+      // SOURCE = enhanced_transactions (1 ligne par transfert, avec metadata.is_international +
+      // sender_currency/receiver_currency). Avant : wallet_transactions filtré sur transaction_type
+      // ='transfer' QUI N'EXISTE PAS (types réels : transfer_out/transfer_in/payment…) → toujours 0.
+      const [{ data: txRows }, { data: profiles }] = await Promise.all([
         supabaseAdmin
           .from('enhanced_transactions')
-          .select('id, sender_id, receiver_id, amount, currency, method, metadata, created_at')
-          .in('method', ['international_transfer', 'transfer', 'transfer_out'])
+          .select('id, sender_id, receiver_id, amount, currency, method, status, metadata, created_at')
           .eq('status', 'completed')
-          .gte('created_at', since)
+          .gte('created_at', sinceIso)
           .order('created_at', { ascending: false })
-          .limit(2000),
-      ]);
-
-      if (wtResult.error) logger.warn(`[FX stats] wallet_transactions error: ${wtResult.error.message}`);
-      if (enhResult.error) logger.warn(`[FX stats] enhanced_transactions error: ${enhResult.error.message}`);
-
-      // Normaliser enhanced_transactions vers un format commun
-      const enhRows = (enhResult.data || []).map((tx: any) => ({
-        sender_user_id: tx.sender_id,
-        receiver_user_id: tx.receiver_id,
-        sender_wallet_id: null,
-        receiver_wallet_id: null,
-        amount: tx.amount,
-        currency: tx.currency,
-        transaction_type: tx.method,
-        metadata: tx.metadata,
-        created_at: tx.created_at,
-        _source: 'enhanced',
-      }));
-
-      // Dédupliquer par (sender_id, receiver_id, bucket_1min) : éviter doublon enhanced+wallet
-      const walletTxKeys = new Set<string>();
-      for (const tx of wtResult.data || []) {
-        const bucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
-        walletTxKeys.add(`${tx.sender_user_id}:${tx.receiver_user_id}:${bucket}`);
-      }
-      const dedupedEnh = enhRows.filter((tx) => {
-        const bucket = Math.floor(new Date(tx.created_at).getTime() / 60000);
-        return !walletTxKeys.has(`${tx.sender_user_id}:${tx.receiver_user_id}:${bucket}`);
-      });
-
-      // Fusionner : wallet_transactions (source principale) + enhanced (complément)
-      const outRows = [...(wtResult.data || []), ...dedupedEnh];
-
-      if (outRows.length === 0) {
-        return res.json({
-          success: true,
-          data: { window_hours: windowHours, total_conversions: 0, international_conversions: 0, by_user: [], by_country: [], country_corridors: [] },
-        });
-      }
-
-      // Collect unique user IDs and wallet IDs for targeted lookups
-      const userIds = new Set<string>();
-      const walletIds = new Set<number>();
-      for (const tx of outRows) {
-        if (tx.sender_user_id) userIds.add(String(tx.sender_user_id));
-        if (tx.receiver_user_id) userIds.add(String(tx.receiver_user_id));
-        if (tx.sender_wallet_id != null) walletIds.add(Number(tx.sender_wallet_id));
-        if (tx.receiver_wallet_id != null) walletIds.add(Number(tx.receiver_wallet_id));
-      }
-
-      const [profilesResult, walletsResult] = await Promise.all([
+          .limit(5000),
         supabaseAdmin
           .from('profiles')
-          .select('id, country, email, first_name, last_name, full_name')
-          .in('id', Array.from(userIds)),
-        walletIds.size > 0
-          ? supabaseAdmin.from('wallets').select('id, currency').in('id', Array.from(walletIds))
-          : Promise.resolve({ data: [] }),
+          .select('id, country, email, first_name, last_name'),
       ]);
 
-      const profileMap = new Map((profilesResult.data || []).map((p: any) => [String(p.id), p]));
-      const walletCurrencyMap = new Map((walletsResult.data || []).map((w: any) => [Number(w.id), w.currency as string]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
       const byUser = new Map<string, { user_id: string; user_label: string; country: string; conversions_count: number; total_amount: number }>();
       const byCountry = new Map<string, { country: string; conversions_count: number; total_amount: number }>();
       const countryCorridors = new Map<string, { from_country: string; to_country: string; conversions_count: number; total_amount: number }>();
+      const transactions: any[] = [];   // onglet « Transactions »
+      const rateHistory: any[] = [];    // onglet « Taux » (taux appliqués aux transferts internationaux)
 
       let totalConversions = 0;
       let internationalConversions = 0;
 
-      for (const tx of outRows) {
-        const senderUserId = tx.sender_user_id ? String(tx.sender_user_id) : null;
-        const receiverUserId = tx.receiver_user_id ? String(tx.receiver_user_id) : null;
-        if (!senderUserId) continue;
+      for (const tx of txRows || []) {
+        const meta: any = tx.metadata || {};
+        const senderProfile: any = tx.sender_id ? profileMap.get(tx.sender_id) : null;
+        const receiverProfile: any = tx.receiver_id ? profileMap.get(tx.receiver_id) : null;
 
-        const senderProfile = profileMap.get(senderUserId);
-        const receiverProfile = receiverUserId ? profileMap.get(receiverUserId) : null;
-
-        const meta = (tx.metadata || {}) as any;
-        const senderCurrency = walletCurrencyMap.get(Number(tx.sender_wallet_id)) || meta?.sender_currency || tx.currency || null;
-        const receiverCurrency = walletCurrencyMap.get(Number(tx.receiver_wallet_id)) || meta?.receiver_currency || meta?.to_currency || tx.currency || null;
-
-        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderCurrency));
-        const receiverCountry = receiverProfile?.country ? String(receiverProfile.country) : mapCurrencyToCountry(receiverCurrency);
-        const amount = Number(tx.amount || 0);
+        const senderCurrency = meta.sender_currency || tx.currency || null;
+        const receiverCurrency = meta.receiver_currency || tx.currency || null;
+        // Pays basé sur la devise (zone monétaire) — pertinent pour un tableau de conversions FX ;
+        // repli sur le pays du profil si la devise est absente.
+        const senderCountry = senderCurrency ? mapCurrencyToCountry(senderCurrency) : String(senderProfile?.country || 'Inconnu');
+        const receiverCountry = receiverCurrency ? mapCurrencyToCountry(receiverCurrency) : String(receiverProfile?.country || 'Inconnu');
+        // International : flag explicite du transfert, sinon devises différentes.
+        const isInternational = meta.is_international === true || (!!senderCurrency && !!receiverCurrency && senderCurrency !== receiverCurrency);
+        const amount = Number(meta.amount_sent ?? tx.amount ?? 0);
 
         totalConversions += 1;
-        if (senderCountry !== receiverCountry) internationalConversions += 1;
+        if (isInternational) internationalConversions += 1;
 
-        const firstLast = [String(senderProfile?.first_name || '').trim(), String(senderProfile?.last_name || '').trim()].filter(Boolean).join(' ');
-        const senderLabel = senderProfile?.full_name || firstLast || senderProfile?.email || meta?.sender_name || senderUserId;
+        if (tx.sender_id) {
+          const senderName = `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim();
+          const senderLabel = String(meta.sender_name || '').trim() || senderName || String(senderProfile?.email || tx.sender_id);
 
-        const currentUser = byUser.get(senderUserId) || { user_id: senderUserId, user_label: senderLabel, country: senderCountry, conversions_count: 0, total_amount: 0 };
-        currentUser.conversions_count += 1;
-        currentUser.total_amount += amount;
-        byUser.set(senderUserId, currentUser);
+          const currentUser = byUser.get(tx.sender_id) || {
+            user_id: tx.sender_id,
+            user_label: senderLabel,
+            country: senderCountry,
+            conversions_count: 0,
+            total_amount: 0,
+          };
+          currentUser.conversions_count += 1;
+          currentUser.total_amount += amount;
+          byUser.set(tx.sender_id, currentUser);
+        }
 
-        const countryStats = byCountry.get(senderCountry) || { country: senderCountry, conversions_count: 0, total_amount: 0 };
-        countryStats.conversions_count += 1;
-        countryStats.total_amount += amount;
-        byCountry.set(senderCountry, countryStats);
+        const senderCountryStats = byCountry.get(senderCountry) || {
+          country: senderCountry,
+          conversions_count: 0,
+          total_amount: 0,
+        };
+        senderCountryStats.conversions_count += 1;
+        senderCountryStats.total_amount += amount;
+        byCountry.set(senderCountry, senderCountryStats);
 
         const corridorKey = `${senderCountry}=>${receiverCountry}`;
-        const corridor = countryCorridors.get(corridorKey) || { from_country: senderCountry, to_country: receiverCountry, conversions_count: 0, total_amount: 0 };
-        corridor.conversions_count += 1;
-        corridor.total_amount += amount;
-        countryCorridors.set(corridorKey, corridor);
-      }
-
-      // ---- Transactions individuelles détaillées ----
-      const transactionsList = outRows.map((tx: any) => {
-        const senderUserId = tx.sender_user_id ? String(tx.sender_user_id) : null;
-        const receiverUserId = tx.receiver_user_id ? String(tx.receiver_user_id) : null;
-        const senderProfile = senderUserId ? profileMap.get(senderUserId) : null;
-        const receiverProfile = receiverUserId ? profileMap.get(receiverUserId) : null;
-        const meta = (tx.metadata || {}) as any;
-
-        const senderCurrency: string = walletCurrencyMap.get(Number(tx.sender_wallet_id)) || meta?.sender_currency || tx.currency || 'GNF';
-        const receiverCurrency: string = walletCurrencyMap.get(Number(tx.receiver_wallet_id)) || meta?.receiver_currency || meta?.to_currency || tx.currency || 'GNF';
-        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderCurrency));
-        const receiverCountry = receiverProfile?.country ? String(receiverProfile.country) : mapCurrencyToCountry(receiverCurrency);
-
-        const resolveName = (profile: any, metaKey: string) => {
-          if (!profile) return meta?.[metaKey] || 'Inconnu';
-          const fl = [String(profile.first_name || '').trim(), String(profile.last_name || '').trim()].filter(Boolean).join(' ');
-          return profile.full_name || fl || profile.email || meta?.[metaKey] || 'Inconnu';
+        const corridorStats = countryCorridors.get(corridorKey) || {
+          from_country: senderCountry,
+          to_country: receiverCountry,
+          conversions_count: 0,
+          total_amount: 0,
         };
+        corridorStats.conversions_count += 1;
+        corridorStats.total_amount += amount;
+        countryCorridors.set(corridorKey, corridorStats);
 
-        const amountSent = Number(meta?.amount_sent ?? tx.amount ?? 0);
-        const amountReceived = Number(meta?.amount_received ?? tx.amount ?? 0);
-        const rateUsed = Number(meta?.rate_used ?? 1);
-        const isInternational = Boolean(meta?.is_international || senderCurrency !== receiverCurrency);
-
-        return {
-          id: String(tx.transaction_id || tx.id || ''),
+        // Détail transaction (onglet « Transactions »)
+        const senderName = String(meta.sender_name || '').trim()
+          || `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim()
+          || String(senderProfile?.email || tx.sender_id || '—');
+        const receiverName = String(meta.receiver_name || '').trim()
+          || `${String(receiverProfile?.first_name || '').trim()} ${String(receiverProfile?.last_name || '').trim()}`.trim()
+          || String(receiverProfile?.email || tx.receiver_id || '—');
+        const amountSent = Number(meta.amount_sent ?? tx.amount ?? 0);
+        const amountReceived = Number(meta.amount_received ?? meta.amount_sent ?? tx.amount ?? 0);
+        const rateUsed = Number(meta.rate_used ?? 1);
+        transactions.push({
+          id: tx.id,
           created_at: tx.created_at,
-          sender_name: resolveName(senderProfile, 'sender_name'),
-          receiver_name: resolveName(receiverProfile, 'receiver_name'),
+          is_international: isInternational,
+          sender_name: senderName,
+          receiver_name: receiverName,
           sender_country: senderCountry,
           receiver_country: receiverCountry,
-          amount_sent: amountSent,
           sender_currency: senderCurrency,
-          amount_received: amountReceived,
           receiver_currency: receiverCurrency,
+          amount_sent: amountSent,
+          amount_received: amountReceived,
+          fee_amount: Number(meta.fee_amount ?? 0),
           rate_used: rateUsed,
-          rate_source: meta?.rate_source || null,
-          fee_amount: Number(tx.fee ?? meta?.fee_amount ?? 0),
-          is_international: isInternational,
-          source: (tx as any)._source || 'wallet',
-        };
-      }).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 200);
+          rate_source: meta.rate_source || null,
+        });
 
-      // ---- Historique des taux pour les paires actives dans cette fenêtre ----
-      const activePairs = new Set<string>();
-      transactionsList.filter((t: any) => t.is_international).forEach((t: any) => {
-        activePairs.add(`${t.sender_currency}:${t.receiver_currency}`);
-      });
-
-      let rateHistory: any[] = [];
-      if (activePairs.size > 0) {
-        const sinceDate = since.split('T')[0];
-        const { data: rates } = await supabaseAdmin
-          .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, effective_date, retrieved_at, source, status, margin, final_rate_usd')
-          .gte('effective_date', sinceDate)
-          .order('retrieved_at', { ascending: false })
-          .limit(500);
-
-        rateHistory = (rates || []).filter((r: any) =>
-          activePairs.has(`${r.from_currency}:${r.to_currency}`)
-        ).slice(0, 200);
+        // Historique des taux appliqués (uniquement transferts internationaux avec un taux ≠ identité)
+        if (isInternational && Number.isFinite(rateUsed) && rateUsed > 0 && senderCurrency && receiverCurrency) {
+          rateHistory.push({
+            retrieved_at: tx.created_at,
+            effective_date: tx.created_at,
+            from_currency: senderCurrency,
+            to_currency: receiverCurrency,
+            rate: rateUsed,
+            margin: null,
+            source: meta.rate_source || null,
+            status: 'OK',
+          });
+        }
       }
 
-      return res.json({
+      res.json({
         success: true,
         data: {
           window_hours: windowHours,
@@ -2873,13 +1789,13 @@ router.get(
           by_user: Array.from(byUser.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 50),
           by_country: Array.from(byCountry.values()).sort((a, b) => b.conversions_count - a.conversions_count),
           country_corridors: Array.from(countryCorridors.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 100),
-          transactions: transactionsList,
-          rate_history: rateHistory,
+          transactions: transactions.slice(0, 300),
+          rate_history: rateHistory.slice(0, 300),
         },
       });
     } catch (error: any) {
-      logger.error(`FX conversion stats error: ${error.message} — stack: ${error.stack}`);
-      res.status(500).json({ success: false, error: `Erreur stats: ${error.message}` });
+      logger.error(`FX conversion stats error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du chargement des stats de conversion' });
     }
   }
 );
@@ -2897,46 +1813,43 @@ router.post(
   }),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      // Utilise fx_collection_log (historique réel) au lieu de currency_exchange_rates
-      // (qui a une contrainte UNIQUE par paire — 1 seule ligne par paire, impossible de comparer)
-      const { data: gnfLogs, error: logsError } = await supabaseAdmin
-        .from('fx_collection_log')
-        .select('currency_code, rate_usd, rate_eur, collected_at, source, source_url, source_type')
-        .eq('currency_code', 'GNF')
-        .eq('status', 'OK')
-        .order('collected_at', { ascending: false })
-        .limit(20);
+      const { data: rateRows } = await supabaseAdmin
+        .from('currency_exchange_rates')
+        .select('from_currency, to_currency, rate, source_url, retrieved_at')
+        .eq('is_active', true)
+        .order('retrieved_at', { ascending: false })
+        .limit(100);
 
-      if (logsError) logger.warn(`[FX alert] fx_collection_log error: ${logsError.message}`);
-
-      const validLogs = (gnfLogs || []).filter((r: any) => Number(r.rate_usd) > 0);
-      if (validLogs.length < 2) {
-        res.json({ success: true, data: { alert_created: false, reason: 'not_enough_data', logs_count: validLogs.length } });
+      const validRates = (rateRows || []).filter((r: any) => isAfricanBankSourceUrl(r?.source_url));
+      if (validRates.length < 2) {
+        res.json({ success: true, data: { alert_created: false, reason: 'not_enough_data' } });
         return;
       }
 
-      const latest = validLogs[0] as any;
-      const previous = validLogs[1] as any;
+      const latest = validRates[0] as any;
+      const previous = validRates.find((r: any) => r.from_currency === latest.from_currency && r.to_currency === latest.to_currency && r.retrieved_at !== latest.retrieved_at) as any;
+      if (!previous) {
+        res.json({ success: true, data: { alert_created: false, reason: 'no_previous_same_pair' } });
+        return;
+      }
 
-      const latestTs = latest.collected_at ? new Date(latest.collected_at).getTime() : 0;
-      const previousTs = previous.collected_at ? new Date(previous.collected_at).getTime() : 0;
+      const latestTs = latest.retrieved_at ? new Date(latest.retrieved_at).getTime() : 0;
+      const previousTs = previous.retrieved_at ? new Date(previous.retrieved_at).getTime() : 0;
       const minutesBetween = Math.abs(latestTs - previousTs) / 60000;
 
-      const latestRate = Number(latest.rate_usd || 0);
-      const previousRate = Number(previous.rate_usd || 0);
+      const latestRate = Number(latest.rate || 0);
+      const previousRate = Number(previous.rate || 0);
       const changed = latestRate > 0 && previousRate > 0 && latestRate !== previousRate;
-      const changedUnderOneHour = changed && minutesBetween <= 60;
-
-      const latestFormatted = { ...latest, rate: latestRate, from_currency: 'GNF', to_currency: 'USD' };
-      const previousFormatted = { ...previous, rate: previousRate, from_currency: 'GNF', to_currency: 'USD' };
+      // Seuil d'alerte : 1 MINUTE (le BCRG est vérifié chaque minute).
+      const changedUnderOneHour = changed && minutesBetween <= 1;
 
       let alertCreated = false;
       if (changedUnderOneHour) {
-        const thresholdIso = new Date(Date.now() - 60 * 60000).toISOString();
+        const thresholdIso = new Date(Date.now() - 60000).toISOString();
         const { data: existing } = await supabaseAdmin
           .from('financial_security_alerts')
           .select('id')
-          .eq('alert_type', 'fx_rate_change_under_1h')
+          .eq('alert_type', 'fx_rate_change_under_1m')
           .eq('is_resolved', false)
           .gte('created_at', thresholdIso)
           .limit(1)
@@ -2945,14 +1858,14 @@ router.post(
         if (!existing) {
           await ignoreSupabaseError(supabaseAdmin.from('financial_security_alerts').insert({
             user_id: SYSTEM_USER_ID,
-            alert_type: 'fx_rate_change_under_1h',
+            alert_type: 'fx_rate_change_under_1m',
             severity: 'high',
-            title: 'Changement de taux detecte en moins d\'1 heure',
-            description: `GNF/USD a change de ${previousRate.toFixed(2)} a ${latestRate.toFixed(2)} en ${Math.round(minutesBetween)} minutes. Sources: ${previous.source || 'N/A'} -> ${latest.source || 'N/A'}`,
+            title: 'Changement de taux detecte en moins d\'1 minute',
+            description: `${latest.from_currency}/${latest.to_currency} a change de ${previousRate} a ${latestRate} en ${Math.round(minutesBetween)} minute(s).`,
             metadata: {
               actor_id: req.user!.id,
-              latest: latestFormatted,
-              previous: previousFormatted,
+              latest,
+              previous,
               minutes_between: Math.round(minutesBetween),
             },
           }));
@@ -2966,9 +1879,8 @@ router.post(
           alert_created: alertCreated,
           changed_under_one_hour: changedUnderOneHour,
           minutes_between: Math.round(minutesBetween),
-          latest: latestFormatted,
-          previous: previousFormatted,
-          logs_checked: validLogs.length,
+          latest,
+          previous,
         },
       });
     } catch (error: any) {

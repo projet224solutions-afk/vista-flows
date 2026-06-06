@@ -59,8 +59,8 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
   }, [driverId, isOnline]);
 
   const statusColor = {
-    'SUBSCRIBED': 'bg-green-500',
-    'CHANNEL_ERROR': 'bg-red-500',
+    'SUBSCRIBED': 'bg-[#ff4000]',
+    'CHANNEL_ERROR': 'bg-[#ff4000]',
     'TIMED_OUT': 'bg-orange-500',
     'CLOSED': 'bg-gray-500',
     'disconnected': 'bg-gray-400'
@@ -117,14 +117,14 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         </div>
 
         {lastNotification && (
-          <div className="mt-3 p-2 bg-green-50 dark:bg-green-950 rounded border border-green-200">
-            <div className="font-semibold text-green-700 dark:text-green-300">
+          <div className="mt-3 p-2 bg-orange-50 dark:bg-[#ff4000] rounded border border-orange-200">
+            <div className="font-semibold text-[#ff4000] dark:text-orange-300">
               ✅ Dernière notification:
             </div>
-            <div className="text-[10px] text-green-600 dark:text-green-400 mt-1">
+            <div className="text-[10px] text-[#ff4000] dark:text-[#ff4000] mt-1">
               {lastNotification.timestamp}
             </div>
-            <div className="text-[10px] text-green-600 dark:text-green-400">
+            <div className="text-[10px] text-[#ff4000] dark:text-[#ff4000]">
               Course: {lastNotification.data?.ride_code || 'N/A'}
             </div>
           </div>
@@ -137,7 +137,7 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         )}
 
         {realtimeStatus === 'CHANNEL_ERROR' && (
-          <div className="mt-3 p-2 bg-red-50 dark:bg-red-950 rounded border border-red-200 text-[10px] text-red-700 dark:text-red-300">
+          <div className="mt-3 p-2 bg-orange-50 dark:bg-[#ff4000] rounded border border-orange-200 text-[10px] text-[#ff4000] dark:text-orange-300">
             ❌ Erreur de connexion Realtime. Rechargez la page.
           </div>
         )}

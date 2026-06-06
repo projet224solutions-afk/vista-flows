@@ -245,8 +245,8 @@ export default function ResetPassword() {
     if (/[0-9]/.test(newPassword)) s++;
     if (/[^A-Za-z0-9]/.test(newPassword)) s++;
     if (s <= 2) return { score: s, label: "Faible", color: "bg-destructive" };
-    if (s <= 4) return { score: s, label: "Moyen", color: "bg-yellow-500" };
-    return { score: s, label: "Fort", color: "bg-green-500" };
+    if (s <= 4) return { score: s, label: "Moyen", color: "bg-[#ff4000]" };
+    return { score: s, label: "Fort", color: "bg-[#ff4000]" };
   })();
 
   return (
@@ -283,7 +283,7 @@ export default function ResetPassword() {
           {/* Success */}
           {state === "success" && (
             <div className="flex flex-col items-center py-8 gap-3">
-              <CheckCircle2 className="w-12 h-12 text-green-500" />
+              <CheckCircle2 className="w-12 h-12 text-[#ff4000]" />
               <p className="text-sm text-muted-foreground">Redirection vers la connexion...</p>
             </div>
           )}
@@ -368,16 +368,16 @@ export default function ResetPassword() {
                   </div>
                 )}
                 <ul className="text-xs text-muted-foreground space-y-0.5 mt-1">
-                  <li className={newPassword.length >= 8 ? "text-green-600" : ""}>
+                  <li className={newPassword.length >= 8 ? "text-[#ff4000]" : ""}>
                     • Au moins 8 caractères
                   </li>
-                  <li className={/[A-Z]/.test(newPassword) ? "text-green-600" : ""}>
+                  <li className={/[A-Z]/.test(newPassword) ? "text-[#ff4000]" : ""}>
                     • Une majuscule
                   </li>
-                  <li className={/[a-z]/.test(newPassword) ? "text-green-600" : ""}>
+                  <li className={/[a-z]/.test(newPassword) ? "text-[#ff4000]" : ""}>
                     • Une minuscule
                   </li>
-                  <li className={/[0-9]/.test(newPassword) ? "text-green-600" : ""}>
+                  <li className={/[0-9]/.test(newPassword) ? "text-[#ff4000]" : ""}>
                     • Un chiffre
                   </li>
                 </ul>

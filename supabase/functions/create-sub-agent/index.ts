@@ -317,12 +317,16 @@ serve(async (req) => {
       console.log('✅ Wallet général créé');
     }
 
-    // Créer agent_wallet pour les commissions
+    // Créer agent_wallet pour les commissions (CRITIQUE : un sous-agent doit avoir un wallet)
+    let agentWalletOk = false;
     const { error: agentWalletError } = await supabaseServiceClient.rpc('create_agent_wallet', {
       p_agent_id: newAgent.id
     });
 
-    if (agentWalletError) {
+    if (!agentWalletError) {
+      agentWalletOk = true;
+      console.log('✅ Agent wallet créé via RPC');
+    } else {
       console.warn('⚠️ Erreur création agent_wallet via RPC, tentative directe:', agentWalletError);
       // Fallback: insertion directe
       const { error: directWalletError } = await supabaseServiceClient
@@ -334,13 +338,27 @@ serve(async (req) => {
           currency_type: 'GNF',
           wallet_status: 'active'
         });
-      if (directWalletError) {
-        console.warn('⚠️ Erreur création agent_wallet directe:', directWalletError);
-      } else {
+      if (!directWalletError) {
+        agentWalletOk = true;
         console.log('✅ Agent wallet créé (directe)');
+      } else {
+        console.warn('⚠️ Erreur création agent_wallet directe:', directWalletError);
       }
-    } else {
-      console.log('✅ Agent wallet créé via RPC');
+    }
+
+    // DURCISSEMENT : si le wallet de commission n'a pas pu être créé (RPC ET fallback
+    // échoués) → ROLLBACK COMPLET. Un sous-agent sans wallet ne peut pas recevoir de
+    // commissions ; mieux vaut annuler que laisser un compte partiel/cassé.
+    if (!agentWalletOk) {
+      console.error('❌ Wallet sous-agent impossible → rollback complet');
+      try { await supabaseServiceClient.from('wallets').delete().eq('user_id', authUser.user.id); } catch (_e) { /* ignore */ }
+      try { await supabaseServiceClient.from('agents').delete().eq('id', authUser.user.id); } catch (_e) { /* ignore */ }
+      try { await supabaseServiceClient.from('agents_management').delete().eq('id', newAgent.id); } catch (_e) { /* ignore */ }
+      try { await supabaseServiceClient.auth.admin.deleteUser(authUser.user.id); } catch (_e) { /* ignore */ }
+      return new Response(
+        JSON.stringify({ error: "Échec de la création du wallet du sous-agent. Création annulée — veuillez réessayer." }),
+        { status: 500, headers: { ...securityHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Synchroniser permissions dans agent_permissions table

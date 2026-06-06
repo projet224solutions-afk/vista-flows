@@ -131,7 +131,7 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
           className={cn(
             'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors',
             isPlaying
-              ? 'bg-red-500 hover:bg-red-600'
+              ? 'bg-[#ff4000] hover:bg-[#ff4000]'
               : 'bg-blue-500 hover:bg-blue-600',
             (isLoading || isTranslating) && 'opacity-50 cursor-not-allowed'
           )}
@@ -163,7 +163,7 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
                 [&::-webkit-slider-thumb]:rounded-full
                 [&::-webkit-slider-thumb]:cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #3b82f6 ${(currentTime / (duration || 1)) * 100}%, #4b5563 ${(currentTime / (duration || 1)) * 100}%)`
+                background: `linear-gradient(to right, #04439e ${(currentTime / (duration || 1)) * 100}%, #4b5563 ${(currentTime / (duration || 1)) * 100}%)`
               }}
             />
           </div>
@@ -214,7 +214,7 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
 
       {/* Statut de traduction en cours */}
       {message.audio_translation_status === 'pending' && (
-        <div className="flex items-center gap-2 mt-2 text-xs text-yellow-400">
+        <div className="flex items-center gap-2 mt-2 text-xs text-[#ff4000]">
           <Loader2 className="w-3 h-3 animate-spin" />
           <span>Traduction en cours...</span>
         </div>

@@ -368,10 +368,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "p-1.5 rounded",
-                            loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                            loc.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
                           )}>
                             {loc.is_pos_enabled ? (
-                              <Store className="w-4 h-4 text-green-600" />
+                              <Store className="w-4 h-4 text-[#ff4000]" />
                             ) : (
                               <Warehouse className="w-4 h-4 text-blue-600" />
                             )}
@@ -394,10 +394,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "p-2 rounded-lg",
-                          fromLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                          fromLocation.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
                         )}>
                           {fromLocation.is_pos_enabled ? (
-                            <Store className="w-5 h-5 text-green-600" />
+                            <Store className="w-5 h-5 text-[#ff4000]" />
                           ) : (
                             <Warehouse className="w-5 h-5 text-blue-600" />
                           )}
@@ -464,10 +464,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                             <div className="flex items-center gap-3">
                               <div className={cn(
                                 "p-1.5 rounded",
-                                loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                                loc.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
                               )}>
                                 {loc.is_pos_enabled ? (
-                                  <Store className="w-4 h-4 text-green-600" />
+                                  <Store className="w-4 h-4 text-[#ff4000]" />
                                 ) : (
                                   <Warehouse className="w-4 h-4 text-blue-600" />
                                 )}
@@ -490,10 +490,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                           <div className="flex items-center gap-3">
                             <div className={cn(
                               "p-2 rounded-lg",
-                              toLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                              toLocation.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
                             )}>
                               {toLocation.is_pos_enabled ? (
-                                <Store className="w-5 h-5 text-green-600" />
+                                <Store className="w-5 h-5 text-[#ff4000]" />
                               ) : (
                                 <Warehouse className="w-5 h-5 text-blue-600" />
                               )}
@@ -624,7 +624,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                             {destinationType === 'shop' && (
                               <p className={cn(
                                 'text-[11px] mt-1 font-medium',
-                                mappedShopProduct ? 'text-green-600' : 'text-red-600'
+                                mappedShopProduct ? 'text-[#ff4000]' : 'text-[#ff4000]'
                               )}>
                                 {mappedShopProduct ? `Liaison boutique: ${mappedShopProduct.shop_product?.name || 'OK'}` : 'Liaison auto: même produit boutique'}
                               </p>
@@ -806,10 +806,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               <div className="flex-1 text-center">
                 <div className={cn(
                   "inline-flex p-3 rounded-lg mb-2",
-                  fromLocation?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                  fromLocation?.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
                 )}>
                   {fromLocation?.is_pos_enabled ? (
-                    <Store className="w-6 h-6 text-green-600" />
+                    <Store className="w-6 h-6 text-[#ff4000]" />
                   ) : (
                     <Warehouse className="w-6 h-6 text-blue-600" />
                   )}
@@ -826,13 +826,13 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                 <div className={cn(
                   "inline-flex p-3 rounded-lg mb-2",
                   destinationType === 'client'
-                    ? 'bg-amber-100'
-                    : toLocation?.is_pos_enabled ? 'bg-green-100' : 'bg-blue-100'
+                    ? 'bg-orange-100'
+                    : toLocation?.is_pos_enabled ? 'bg-orange-100' : 'bg-blue-100'
                 )}>
                   {destinationType === 'client' ? (
-                    <Package className="w-6 h-6 text-amber-600" />
+                    <Package className="w-6 h-6 text-[#ff4000]" />
                   ) : toLocation?.is_pos_enabled ? (
-                    <Store className="w-6 h-6 text-green-600" />
+                    <Store className="w-6 h-6 text-[#ff4000]" />
                   ) : (
                     <Warehouse className="w-6 h-6 text-blue-600" />
                   )}

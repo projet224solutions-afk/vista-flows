@@ -189,11 +189,11 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-[#ff4000]" />;
       case 'error':
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return <XCircle className="w-5 h-5 text-[#ff4000]" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-[#ff4000]" />;
       default:
         return null;
     }
@@ -202,11 +202,11 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       case 'error':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       case 'warning':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }

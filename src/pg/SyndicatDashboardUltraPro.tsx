@@ -124,9 +124,9 @@ export default function SyndicatDashboardUltraPro() {
      */
     const _getRoleColor = (role: string) => {
         switch (role) {
-            case 'president': return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'president': return 'bg-blue-100 text-[#04439e] border-blue-200';
             case 'secretary': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'member': return 'bg-green-100 text-green-800 border-green-200';
+            case 'member': return 'bg-orange-100 text-[#ff4000] border-orange-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -144,18 +144,18 @@ export default function SyndicatDashboardUltraPro() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
             {/* Header Ultra-Professionnel - Mobile Optimized */}
             <div className="bg-white shadow-xl border-b border-gray-100 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-3 py-3 sm:px-6 sm:py-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3 sm:gap-6">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#04439e] rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
                                 <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
-                                    <h1 className="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+                                    <h1 className="text-base sm:text-2xl font-bold bg-[#04439e] bg-clip-text text-transparent truncate">
                                         Bureau Syndicat
                                     </h1>
                                     <UserIdDisplay layout="horizontal" showBadge={true} />
@@ -190,7 +190,7 @@ export default function SyndicatDashboardUltraPro() {
                                 onClick={handleSignOut}
                                 variant="outline"
                                 size="sm"
-                                className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                                className="border-orange-200 text-[#ff4000] hover:bg-orange-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline">Déconnexion</span>
@@ -204,7 +204,7 @@ export default function SyndicatDashboardUltraPro() {
             <div className="max-w-7xl mx-auto p-3 sm:p-6 pb-20 sm:pb-6">
                 {/* Statistiques en temps réel - 2x2 grid on mobile */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <Card className="border-0 shadow-lg bg-[#04439e] text-white">
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -217,30 +217,30 @@ export default function SyndicatDashboardUltraPro() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-green-100 text-xs sm:text-sm font-medium">Motards</p>
+                                    <p className="text-orange-100 text-xs sm:text-sm font-medium">Motards</p>
                                     <p className="text-xl sm:text-3xl font-bold">{syndicateStats.active_taxi_motards}</p>
-                                    <p className="text-green-100 text-[10px] sm:text-xs">/{syndicateStats.total_taxi_motards}</p>
+                                    <p className="text-orange-100 text-[10px] sm:text-xs">/{syndicateStats.total_taxi_motards}</p>
                                 </div>
-                                <Bike className="w-8 h-8 sm:w-12 sm:h-12 text-green-200" />
+                                <Bike className="w-8 h-8 sm:w-12 sm:h-12 text-orange-200" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-purple-100 text-xs sm:text-sm font-medium">Solde</p>
+                                    <p className="text-blue-100 text-xs sm:text-sm font-medium">Solde</p>
                                     <p className="text-lg sm:text-2xl font-bold">
                                         {syndicateStats.total_balance.toLocaleString()}
                                     </p>
-                                    <p className="text-purple-100 text-[10px] sm:text-xs">FCFA</p>
+                                    <p className="text-blue-100 text-[10px] sm:text-xs">FCFA</p>
                                 </div>
-                                <Wallet className="w-8 h-8 sm:w-12 sm:h-12 text-purple-200" />
+                                <Wallet className="w-8 h-8 sm:w-12 sm:h-12 text-blue-200" />
                             </div>
                         </CardContent>
                     </Card>
@@ -267,7 +267,7 @@ export default function SyndicatDashboardUltraPro() {
                         <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-8 bg-white shadow-lg rounded-xl sm:rounded-2xl p-1.5 sm:p-2 border border-gray-100 mb-4 sm:mb-8 min-w-max sm:min-w-0">
                             <TabsTrigger
                                 value="dashboard"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Home className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline">Dashboard</span>
@@ -275,49 +275,49 @@ export default function SyndicatDashboardUltraPro() {
                             </TabsTrigger>
                             <TabsTrigger
                                 value="sos"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ff4000] data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Siren className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 SOS
                             </TabsTrigger>
                             <TabsTrigger
                                 value="members"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Membres
                             </TabsTrigger>
                             <TabsTrigger
                                 value="taxi-motards"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Bike className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Motards
                             </TabsTrigger>
                             <TabsTrigger
                                 value="tickets"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ff4000] data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Ticket className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Tickets
                             </TabsTrigger>
                             <TabsTrigger
                                 value="wallet"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Wallet className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Wallet
                             </TabsTrigger>
                             <TabsTrigger
                                 value="gestion"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Gestion
                             </TabsTrigger>
                             <TabsTrigger
                                 value="analytics"
-                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                                className="rounded-lg sm:rounded-xl data-[state=active]:bg-[#04439e] data-[state=active]: data-[state=active]: data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
                             >
                                 <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                 Stats
@@ -330,9 +330,9 @@ export default function SyndicatDashboardUltraPro() {
                         {bureauId ? (
                             <BureauSyndicatSOSDashboard bureauId={bureauId} />
                         ) : (
-                            <Card className="border-0 shadow-xl rounded-2xl border-red-200">
+                            <Card className="border-0 shadow-xl rounded-2xl border-orange-200">
                                 <CardContent className="p-12 text-center">
-                                    <Siren className="w-16 h-16 mx-auto mb-4 text-red-400" />
+                                    <Siren className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
                                     <p className="text-gray-600">Chargement du système SOS...</p>
                                 </CardContent>
                             </Card>
@@ -344,7 +344,7 @@ export default function SyndicatDashboardUltraPro() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Activite recente */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Activity className="w-5 h-5" />
                                         Activité récente
@@ -360,15 +360,15 @@ export default function SyndicatDashboardUltraPro() {
                                     ) : (
                                         <div className="space-y-4">
                                             {syndicateMembers.slice(0, 2).map((m) => (
-                                                <div key={m.id} className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                                                <div key={m.id} className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-200">
                                                     <div className="flex items-center gap-3">
-                                                        <UserPlus className="w-8 h-8 text-green-600" />
+                                                        <UserPlus className="w-8 h-8 text-[#ff4000]" />
                                                         <div>
                                                             <p className="font-semibold text-gray-800">{m.name}</p>
                                                             <p className="text-sm text-gray-600">{getRoleLabel(m.role)} - {m.badge_number || 'N/A'}</p>
                                                         </div>
                                                     </div>
-                                                    <Badge className={m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
+                                                    <Badge className={m.status === 'active' ? 'bg-orange-100 text-[#ff4000]' : 'bg-gray-100 text-gray-600'}>
                                                         {m.status === 'active' ? 'Actif' : 'Inactif'}
                                                     </Badge>
                                                 </div>
@@ -392,7 +392,7 @@ export default function SyndicatDashboardUltraPro() {
 
                             {/* Actions rapides */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-orange-50 to-blue-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Star className="w-5 h-5" />
                                         Actions Rapides
@@ -402,7 +402,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('taxi-motards')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
+                                        className="w-full rounded-xl border-orange-200 text-[#ff4000] hover:bg-orange-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Gérer les Taxi-Motards
@@ -420,7 +420,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('wallet')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
+                                        className="w-full rounded-xl border-blue-200 text-[#04439e] hover:bg-blue-50"
                                     >
                                         <Wallet className="w-4 h-4 mr-2" />
                                         Gérer la Trésorerie
@@ -459,7 +459,7 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Taxi-Motards */}
                     <TabsContent value="taxi-motards" className="space-y-6">
                         <Card className="border-0 shadow-xl rounded-2xl">
-                            <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-2xl">
+                            <CardHeader className="bg-gradient-to-r from-orange-50 to-blue-50 rounded-t-2xl">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Bike className="w-5 h-5" />
@@ -468,7 +468,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('members')}
                                         size="sm"
-                                        className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+                                        className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Ajouter
@@ -481,12 +481,12 @@ export default function SyndicatDashboardUltraPro() {
                                         <Card key={taxiMotard.id} className="border border-gray-200 hover:shadow-lg transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-[#ff4000] to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                                                         {taxiMotard.name.charAt(0)}
                                                     </div>
                                                     <div className="flex-1">
                                                         <h3 className="font-bold text-gray-800">{taxiMotard.name}</h3>
-                                                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+                                                        <Badge className="bg-orange-100 text-[#ff4000] border-orange-200 text-xs">
                                                             {taxiMotard.badge_number}
                                                         </Badge>
                                                     </div>
@@ -515,7 +515,7 @@ export default function SyndicatDashboardUltraPro() {
                                                     )}
                                                     <div className="flex items-center gap-2">
                                                         <Wallet className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-green-600 font-semibold">
+                                                        <span className="text-[#ff4000] font-semibold">
                                                             {taxiMotard.wallet_balance.toLocaleString()} FCFA
                                                         </span>
                                                     </div>
@@ -554,7 +554,7 @@ export default function SyndicatDashboardUltraPro() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Paramètres du Bureau */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Settings className="w-5 h-5" />
                                         Paramètres du Bureau
@@ -564,7 +564,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('members')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
+                                        className="w-full rounded-xl border-blue-200 text-[#04439e] hover:bg-blue-50"
                                     >
                                         <Shield className="w-4 h-4 mr-2" />
                                         Gérer les Membres & Permissions
@@ -573,7 +573,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('sos')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50"
+                                        className="w-full rounded-xl border-orange-200 text-[#ff4000] hover:bg-orange-50"
                                     >
                                         <Siren className="w-4 h-4 mr-2" />
                                         Alertes SOS
@@ -591,7 +591,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setShowDownloadDialog(true)}
                                         variant="outline"
-                                        className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
+                                        className="w-full rounded-xl border-orange-200 text-[#ff4000] hover:bg-orange-50"
                                     >
                                         <Download className="w-4 h-4 mr-2" />
                                         Télécharger Applications
@@ -601,7 +601,7 @@ export default function SyndicatDashboardUltraPro() {
 
                             {/* Outils de Gestion */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Activity className="w-5 h-5" />
                                         Outils de Gestion
@@ -631,7 +631,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('tickets')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-teal-200 text-teal-600 hover:bg-teal-50"
+                                        className="w-full rounded-xl border-orange-200 text-[#ff4000] hover:bg-orange-50"
                                     >
                                         <Ticket className="w-4 h-4 mr-2" />
                                         Tickets de Transport
@@ -667,13 +667,13 @@ export default function SyndicatDashboardUltraPro() {
                                                     : '0%'}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
+                                        <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Revenus mensuels</span>
-                                            <span className="font-bold text-green-600">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
+                                            <span className="font-bold text-[#ff4000]">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
+                                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Motards actifs</span>
-                                            <span className="font-bold text-purple-600">
+                                            <span className="font-bold text-[#04439e]">
                                                 {syndicateStats.active_taxi_motards}/{syndicateStats.total_taxi_motards}
                                             </span>
                                         </div>
@@ -723,7 +723,7 @@ export default function SyndicatDashboardUltraPro() {
             <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
                 <DialogContent className="max-w-6xl rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        <DialogTitle className="text-2xl font-bold bg-[#04439e] bg-clip-text text-transparent">
                             Télécharger 224Solutions
                         </DialogTitle>
                     </DialogHeader>

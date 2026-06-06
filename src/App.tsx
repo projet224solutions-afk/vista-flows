@@ -56,10 +56,6 @@ const ClientTrackingPage = lazyWithRetry(() => import("./pg/ClientTrackingPage")
 const MesCommandes = lazyWithRetry(() => import("./pg/MesCommandes"));
 const Profil = lazyWithRetry(() => import("./pg/Profil"));
 const MyPurchases = lazyWithRetry(() => import("./pg/MyPurchases"));
-const AgentLogin = lazyWithRetry(() => import("./pg/AgentLogin"));
-const BureauLogin = lazyWithRetry(() => import("./pg/BureauLogin"));
-const AgentChangePassword = lazyWithRetry(() => import("./pg/AgentChangePassword"));
-const BureauChangePassword = lazyWithRetry(() => import("./pg/BureauChangePassword"));
 const ClientDashboard = lazyWithRetry(() => import("./pg/ClientDashboard"));
 const VendeurDashboard = lazyWithRetry(() => import("./pg/VendeurDashboard"));
 const DigitalVendorDashboard = lazyWithRetry(() => import("./pg/DigitalVendorDashboard"));
@@ -126,7 +122,6 @@ const ClientContracts = lazyWithRetry(() => import("./pg/ClientContracts"));
 const ServiceDetail = lazyWithRetry(() => import("./pg/ServiceDetail"));
 const ServiceRedirect = lazyWithRetry(() => import("./pg/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pg/Dashboard"));
-const UniversalLoginPage = lazyWithRetry(() => import("./pg/UniversalLoginPage"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pg/SetPasswordAfterOAuth"));
 const ResetPassword = lazyWithRetry(() => import("./pg/ResetPassword"));
 const AgentCreation = lazyWithRetry(() => import("./pg/AgentCreation"));
@@ -155,10 +150,10 @@ const PageLoader = memo(() => {
         background: '#fff', fontFamily: 'system-ui, sans-serif'
       }}>
         <div style={{ textAlign: 'center', maxWidth: '400px', padding: '24px' }}>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: '#023288', marginBottom: '16px' }}>224Solutions</div>
+          <div style={{ fontSize: '24px', fontWeight: '700', color: '#04439e', marginBottom: '16px' }}>224Solutions</div>
           <p style={{ color: '#6b7280', marginBottom: '16px' }}>Le chargement prend trop de temps.</p>
           <button onClick={() => window.location.reload()} style={{
-            padding: '10px 24px', background: '#023288', color: '#fff', border: 'none',
+            padding: '10px 24px', background: '#04439e', color: '#fff', border: 'none',
             borderRadius: '8px', cursor: 'pointer', fontSize: '14px', marginBottom: '8px', width: '100%'
           }}>Recharger l'application</button>
           <button onClick={() => {
@@ -181,12 +176,12 @@ const PageLoader = memo(() => {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{
-          fontSize: '24px', fontWeight: '700', color: '#023288', marginBottom: '16px',
+          fontSize: '24px', fontWeight: '700', color: '#04439e', marginBottom: '16px',
           fontFamily: 'system-ui, sans-serif'
         }}>224Solutions</div>
         <div style={{
           width: '32px', height: '32px', border: '3px solid #f3f4f6',
-          borderTop: '3px solid #023288', borderRadius: '50%',
+          borderTop: '3px solid #04439e', borderRadius: '50%',
           margin: '0 auto', animation: 'spin 0.8s linear infinite'
         }} />
       </div>
@@ -327,7 +322,8 @@ function App() {
                               <Route path="/home" element={<Home />} />
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/login" element={<Navigate to="/auth" replace />} />
-                              <Route path="/universal-login" element={<UniversalLoginPage />} />
+                              {/* Login universel custom retiré : cassé/legacy → redirige vers Supabase Auth */}
+                              <Route path="/universal-login" element={<Navigate to="/auth" replace />} />
                               <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
                               <Route path="/reset-password" element={<ResetPassword />} />
                               <Route path="/agent/create" element={<AgentCreation />} />
@@ -604,12 +600,18 @@ function App() {
                               <Route path="/pdg/monitoring" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><MonitoringDashboard /></ProtectedRoute>} />
 
                               {/* Agent & Bureau Login with MFA */}
-                              <Route path="/agent/login" element={<AgentLogin />} />
-                              <Route path="/agent-login" element={<Navigate to="/agent/login" replace />} />
-                              <Route path="/bureau/login" element={<BureauLogin />} />
-                              <Route path="/bureau-login" element={<Navigate to="/bureau/login" replace />} />
-                              <Route path="/agent/change-password" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentChangePassword /></ProtectedRoute>} />
-                              <Route path="/bureau/change-password" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauChangePassword /></ProtectedRoute>} />
+                              {/* Login agent custom (OTP+password_hash) retiré : cassé/legacy (aucun
+                                  password_hash en base). Les agents se connectent via /auth (Supabase Auth). */}
+                              <Route path="/agent/login" element={<Navigate to="/auth" replace />} />
+                              <Route path="/agent-login" element={<Navigate to="/auth" replace />} />
+                              {/* Login bureau custom (OTP+password_hash) retiré : cassé/legacy (bureaux
+                                  sans compte Supabase ni password_hash). Accès bureau = lien token /bureau/:token. */}
+                              <Route path="/bureau/login" element={<Navigate to="/" replace />} />
+                              <Route path="/bureau-login" element={<Navigate to="/" replace />} />
+                              {/* Pages changement mdp custom (cassées : dépendent de la session OTP morte).
+                                  Le mdp agent se change dans les réglages du dashboard ; le bureau via son lien. */}
+                              <Route path="/agent/change-password" element={<Navigate to="/agent" replace />} />
+                              <Route path="/bureau/change-password" element={<Navigate to="/" replace />} />
 
                               {/* Agent & Bureau Dashboards */}
                               <Route path="/bureau/:token" element={<BureauDashboard />} />

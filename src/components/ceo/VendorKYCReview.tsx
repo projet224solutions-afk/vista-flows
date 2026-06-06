@@ -268,7 +268,7 @@ export function VendorKYCReview() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-green-500 text-white">✓ Vérifié</Badge>;
+        return <Badge className="bg-[#ff4000] text-white">✓ Vérifié</Badge>;
       case 'rejected':
         return <Badge variant="destructive">✗ Rejeté</Badge>;
       case 'under_review':
@@ -320,10 +320,10 @@ export function VendorKYCReview() {
             <CardTitle className="text-2xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
             <CardDescription>En attente</CardDescription>
-            <CardTitle className="text-2xl text-yellow-600">{stats.pending}</CardTitle>
+            <CardTitle className="text-2xl text-[#ff4000]">{stats.pending}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-blue-200 bg-blue-50">
@@ -332,16 +332,16 @@ export function VendorKYCReview() {
             <CardTitle className="text-2xl text-blue-600">{stats.under_review}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
             <CardDescription>Vérifiés</CardDescription>
-            <CardTitle className="text-2xl text-green-600">{stats.verified}</CardTitle>
+            <CardTitle className="text-2xl text-[#ff4000]">{stats.verified}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
             <CardDescription>Rejetés</CardDescription>
-            <CardTitle className="text-2xl text-red-600">{stats.rejected}</CardTitle>
+            <CardTitle className="text-2xl text-[#ff4000]">{stats.rejected}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -410,8 +410,8 @@ export function VendorKYCReview() {
 
                     {/* Rejection Reason */}
                     {kyc.rejection_reason && (
-                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
-                        <p className="text-sm text-red-800">
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                        <p className="text-sm text-[#ff4000]">
                           <span className="font-semibold">Raison du rejet: </span>
                           {kyc.rejection_reason}
                         </p>
@@ -441,7 +441,7 @@ export function VendorKYCReview() {
                           size="sm"
                           variant="default"
                           onClick={() => openDialog(kyc, 'APPROVE')}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-[#ff4000] hover:bg-[#ff4000]"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-1" />
                           Approuver
@@ -501,12 +501,12 @@ export function VendorKYCReview() {
             )}
 
             {dialogAction === 'APPROVE' && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-[#ff4000] mt-0.5" />
                   <div>
-                    <p className="font-medium text-green-900">Vérification KYC</p>
-                    <p className="text-sm text-green-700 mt-1">
+                    <p className="font-medium text-[#ff4000]">Vérification KYC</p>
+                    <p className="text-sm text-[#ff4000] mt-1">
                       En approuvant ce KYC, le vendeur pourra être certifié par le CEO.
                       Assurez-vous que le document est valide et lisible.
                     </p>
@@ -533,7 +533,7 @@ export function VendorKYCReview() {
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason.trim())}
               className={
                 dialogAction === 'APPROVE'
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'bg-[#ff4000] hover:bg-[#ff4000]'
                   : ''
               }
             >

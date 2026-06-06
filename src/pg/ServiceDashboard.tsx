@@ -175,17 +175,17 @@ export default function ServiceDashboard() {
 
   // Dashboard generique pour les autres types de services
   const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-500',
-    active: 'bg-green-500',
-    suspended: 'bg-red-500',
+    pending: 'bg-[#ff4000]',
+    active: 'bg-[#ff4000]',
+    suspended: 'bg-[#ff4000]',
     rejected: 'bg-gray-500',
   };
 
   const verificationColors: Record<string, string> = {
     unverified: 'bg-gray-500',
-    pending: 'bg-yellow-500',
-    verified: 'bg-green-500',
-    rejected: 'bg-red-500',
+    pending: 'bg-[#ff4000]',
+    verified: 'bg-[#ff4000]',
+    rejected: 'bg-[#ff4000]',
   };
 
   return (
@@ -275,7 +275,7 @@ export default function ServiceDashboard() {
             mode="merchant"
             prominent
             driverName={service.business_name}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+            className="w-full bg-[#04439e] text-white"
           />
         </div>
 

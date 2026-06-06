@@ -86,9 +86,9 @@ export function ManageCommissionsSection({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total Commissions</span>
-                <DollarSign className="w-4 h-4 text-green-500" />
+                <DollarSign className="w-4 h-4 text-[#ff4000]" />
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-[#ff4000]">
                 {totalCommissions.toLocaleString()} GNF
               </div>
               <p className="text-xs text-muted-foreground">Depuis le début</p>
@@ -114,9 +114,9 @@ export function ManageCommissionsSection({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Ce Mois</span>
-                <Calendar className="w-4 h-4 text-purple-500" />
+                <Calendar className="w-4 h-4 text-[#04439e]" />
               </div>
-              <div className="text-2xl font-bold text-purple-600">0 GNF</div>
+              <div className="text-2xl font-bold text-[#04439e]">0 GNF</div>
               <p className="text-xs text-muted-foreground">Commissions du mois</p>
             </div>
           </CardContent>

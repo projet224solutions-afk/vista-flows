@@ -269,7 +269,7 @@ export function VendorCertificationManager() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2 text-green-600">
+            <div className="text-2xl font-bold flex items-center gap-2 text-[#ff4000]">
               <CheckCircle2 className="w-5 h-5" />
               {stats.certified}
             </div>
@@ -283,7 +283,7 @@ export function VendorCertificationManager() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2 text-red-600">
+            <div className="text-2xl font-bold flex items-center gap-2 text-[#ff4000]">
               <AlertTriangle className="w-5 h-5" />
               {stats.suspended}
             </div>
@@ -399,7 +399,7 @@ export function VendorCertificationManager() {
 
                       {/* Raison rejet */}
                       {vendor.certification?.rejection_reason && (
-                        <div className="mt-2 p-2 bg-red-50 text-red-700 rounded text-xs">
+                        <div className="mt-2 p-2 bg-orange-50 text-[#ff4000] rounded text-xs">
                           <span className="font-semibold">Rejet: </span>
                           {vendor.certification.rejection_reason}
                         </div>
@@ -414,7 +414,7 @@ export function VendorCertificationManager() {
                         size="sm"
                         variant="default"
                         onClick={() => openDialog(vendor, 'CERTIFY')}
-                        className="bg-[#04439e] hover:bg-[#033580]"
+                        className="bg-[#04439e] hover:bg-[#04439e]"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />
                         Certifier
@@ -510,9 +510,9 @@ export function VendorCertificationManager() {
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason)}
               className={
                 dialogAction === 'CERTIFY'
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'bg-[#ff4000] hover:bg-[#ff4000]'
                   : dialogAction === 'SUSPEND'
-                  ? 'bg-red-600 hover:bg-red-700'
+                  ? 'bg-[#ff4000] hover:bg-[#ff4000]'
                   : ''
               }
             >

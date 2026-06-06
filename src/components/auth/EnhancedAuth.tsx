@@ -82,8 +82,8 @@ const accountTypeConfigs: AccountTypeOption[] = [
     labelKey: 'auth.accountType.merchant',
     descKey: 'auth.accountType.merchantDesc',
     icon: Store,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
+    color: 'text-[#ff4000]',
+    bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
   },
   {
     value: 'livreur',
@@ -98,16 +98,16 @@ const accountTypeConfigs: AccountTypeOption[] = [
     labelKey: 'auth.accountType.taxi',
     descKey: 'auth.accountType.taxiDesc',
     icon: Bike,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+    color: 'text-[#ff4000]',
+    bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200',
   },
   {
     value: 'transitaire',
     labelKey: 'auth.accountType.transit',
     descKey: 'auth.accountType.transitDesc',
     icon: Ship,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+    color: 'text-[#04439e]',
+    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
   }
 ];
 
@@ -157,9 +157,12 @@ export default function EnhancedAuth() {
 
   // Inscription par téléphone
   const [_signupMethod, _setSignupMethod] = useState<'email' | 'phone'>('email');
-  const [signupPhone, _setSignupPhone] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
   const [signupPhoneOtpSent, setSignupPhoneOtpSent] = useState(false);
   const [signupPhoneOtp, setSignupPhoneOtp] = useState('');
+  // Inscription EMAIL : téléphone obligatoire vérifié par OTP, puis email+mdp rattachés au même compte
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [pendingEmailPassword, setPendingEmailPassword] = useState<string | null>(null);
   const [signupFormattedPhone, setSignupFormattedPhone] = useState('');
 
   // Réinitialisation mot de passe par téléphone
@@ -614,11 +617,23 @@ export default function EnhancedAuth() {
 
         const { detectedCountry, detectedCurrency } = getGeoInfo();
 
-        const { error, data } = await supabase.auth.signUp({
-          email,
-          password,
+        // INSCRIPTION EMAIL : le téléphone est OBLIGATOIRE et vérifié par OTP.
+        // On crée le compte via le téléphone (OTP), PUIS on rattache email+mot de
+        // passe au MÊME compte → l'utilisateur pourra se connecter par email OU par
+        // téléphone (le numéro qu'il a fourni à l'inscription).
+        const cleanSignupPhone = (signupPhone || '').replace(/[\s\-().]/g, '');
+        if (cleanSignupPhone.replace(/\D/g, '').length < 8) {
+          throw new Error('Veuillez entrer un numéro de téléphone valide (obligatoire)');
+        }
+        if (!password || password.length < 8) {
+          throw new Error('Mot de passe : 8 caractères minimum');
+        }
+        const formattedSignupPhone = cleanSignupPhone.startsWith('+') ? cleanSignupPhone : `+224${cleanSignupPhone}`;
+
+        const { error: otpErr } = await supabase.auth.signInWithOtp({
+          phone: formattedSignupPhone,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            shouldCreateUser: true,
             data: {
               full_name: fullName,
               first_name: firstName,
@@ -626,6 +641,7 @@ export default function EnhancedAuth() {
               account_type: accountType,
               role: roleToUse,
               has_password: true,
+              pending_email: email,
               ...(accountType === 'taxi_moto' ? {
                 taxi_country: taxiCountry,
                 ...(taxiCategory ? { taxi_category: taxiCategory } : {}),
@@ -635,14 +651,15 @@ export default function EnhancedAuth() {
             }
           }
         });
+        if (otpErr) throw otpErr;
 
-        if (error) throw error;
-
-        if (data.user) {
-          localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
-        }
-
-        toast.success(t('auth.checkEmail'));
+        setSignupFormattedPhone(formattedSignupPhone);
+        setPendingEmail(email);
+        setPendingEmailPassword(password);
+        setSignupPhoneOtpSent(true);
+        toast.success('Code envoyé par SMS ! Saisissez-le pour finaliser votre compte.');
+        setLoading(false);
+        return;
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
@@ -857,7 +874,31 @@ export default function EnhancedAuth() {
         type: 'sms',
       });
       if (error) throw error;
-      toast.success('Compte créé avec succès !');
+
+      // INSCRIPTION EMAIL : rattacher email + mot de passe au compte (vérifié par tél)
+      // de façon ATOMIQUE côté backend (admin, email_confirm immédiat) → l'utilisateur
+      // peut se connecter par email OU par ce numéro, tout de suite.
+      if (pendingEmail && pendingEmailPassword && data.user) {
+        try {
+          const { backendFetch } = await import('@/services/backendApi');
+          const resp = await backendFetch('/auth/finalize-phone-signup', {
+            method: 'POST',
+            body: { email: pendingEmail, password: pendingEmailPassword },
+          });
+          if (!resp.success) {
+            toast.warning(`Compte créé (connexion par téléphone OK), mais l'email n'a pas pu être rattaché : ${resp.error || ''}`);
+          } else {
+            try { localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true'); } catch { /* ignore */ }
+            toast.success('Compte créé ! Connexion possible par email OU par téléphone.');
+          }
+        } catch (finErr: any) {
+          toast.warning(`Compte créé (connexion par téléphone OK), email non rattaché : ${finErr?.message || ''}`);
+        }
+        setPendingEmail(null);
+        setPendingEmailPassword(null);
+      } else {
+        toast.success('Compte créé avec succès !');
+      }
       if (data.user) {
         let profileData = null;
         let attempts = 0;
@@ -904,8 +945,20 @@ export default function EnhancedAuth() {
         const cleanForgot = forgotPhone.replace(/[\s\-().]/g, '');
         const formatted = cleanForgot.startsWith('+') ? cleanForgot : `+224${cleanForgot}`;
         setForgotFormattedPhone(formatted);
-        const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-        if (error) throw error;
+        // shouldCreateUser:false → ne PAS créer de compte lors d'un reset (sinon
+        // « réinitialiser » un numéro inconnu créerait un nouveau compte).
+        const { error } = await supabase.auth.signInWithOtp({ phone: formatted, options: { shouldCreateUser: false } });
+        if (error) {
+          const notFound =
+            (error as any).status === 404 ||
+            (error as any).code === 'user_not_found' ||
+            (error.message || '').toLowerCase().includes('user not found') ||
+            (error.message || '').toLowerCase().includes('signups not allowed');
+          if (notFound) {
+            throw new Error("Aucun compte n'est associé à ce numéro.");
+          }
+          throw error;
+        }
         setForgotMode('otp');
         toast.success('Code envoyé par SMS !');
       }
@@ -1030,7 +1083,7 @@ export default function EnhancedAuth() {
                 onClick={() => setShowSignupPanel(true)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
                   showSignupPanel
-                    ? 'bg-emerald-500 text-white shadow-sm'
+                    ? 'bg-[#ff4000] text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -1043,9 +1096,9 @@ export default function EnhancedAuth() {
           {/* Carte principale ultra compacte */}
           <Card className="shadow-lg border border-border/40 overflow-hidden bg-card">
             {/* Header minimal */}
-            <CardHeader className={`py-2.5 px-3 ${!showSignupPanel ? 'bg-primary/5' : 'bg-emerald-50 dark:bg-emerald-900/10'}`}>
+            <CardHeader className={`py-2.5 px-3 ${!showSignupPanel ? 'bg-primary/5' : 'bg-orange-50 dark:bg-[#ff4000]/10'}`}>
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!showSignupPanel ? 'bg-primary' : 'bg-emerald-500'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!showSignupPanel ? 'bg-primary' : 'bg-[#ff4000]'}`}>
                   {!showSignupPanel ? (
                     <LogIn className="h-4 w-4 text-white" />
                   ) : (
@@ -1053,7 +1106,7 @@ export default function EnhancedAuth() {
                   )}
                 </div>
                 <div>
-                  <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                  <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-[#ff4000] dark:text-[#ff4000]'}`}>
                     {!showSignupPanel ? t('auth.connectionTitle') : t('auth.signupTitle')}
                   </CardTitle>
                   <CardDescription className="text-[10px]">
@@ -1213,14 +1266,14 @@ export default function EnhancedAuth() {
 
                   {/* Numéro de téléphone inconnu */}
                   {phoneNotFound && (
-                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-md p-2.5 space-y-1.5">
-                      <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                    <div className="bg-orange-50 dark:bg-[#ff4000]/10 border border-orange-200 dark:border-[#ff4000] rounded-md p-2.5 space-y-1.5">
+                      <p className="text-[10px] font-medium text-[#ff4000] dark:text-[#ff4000] flex items-center gap-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         Ce numéro n'est lié à aucun compte 224Solutions.
                       </p>
                       <Button
                         type="button"
-                        className="w-full h-7 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-white rounded-md"
+                        className="w-full h-7 text-[10px] bg-[#ff4000] hover:bg-[#ff4000] text-white rounded-md"
                         onClick={() => { setShowSignupPanel(true); setPhoneNotFound(false); setMode('signup'); }}
                       >
                         <UserPlus className="h-3 w-3 mr-1" />
@@ -1306,7 +1359,7 @@ export default function EnhancedAuth() {
 
                       {forgotMode === 'password' && (
                         <form onSubmit={handleForgotSetPassword} className="space-y-1.5">
-                          <p className="text-[10px] text-green-600 font-medium">✓ Identité vérifiée — choisissez un nouveau mot de passe</p>
+                          <p className="text-[10px] text-[#ff4000] font-medium">✓ Identité vérifiée — choisissez un nouveau mot de passe</p>
                           <Input
                             type="password"
                             placeholder="Nouveau mot de passe (8 car. min)"
@@ -1319,7 +1372,7 @@ export default function EnhancedAuth() {
                             autoFocus
                           />
                           {error && <p className="text-[10px] text-destructive">{error}</p>}
-                          <Button type="submit" className="w-full h-8 text-xs rounded-md bg-green-600 hover:bg-green-700" disabled={forgotLoading || forgotNewPassword.length < 8}>
+                          <Button type="submit" className="w-full h-8 text-xs rounded-md bg-[#ff4000] hover:bg-[#ff4000]" disabled={forgotLoading || forgotNewPassword.length < 8}>
                             {forgotLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Enregistrer le nouveau mot de passe'}
                           </Button>
                         </form>
@@ -1482,8 +1535,8 @@ export default function EnhancedAuth() {
                   )}
 
                   {/* Note compact */}
-                  <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-1.5">
-                    <p className="text-[9px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                  <div className="bg-orange-50/50 dark:bg-[#ff4000]/10 rounded-md p-1.5">
+                    <p className="text-[9px] text-[#ff4000] dark:text-[#ff4000] flex items-center gap-1">
                       <AlertCircle className="h-2.5 w-2.5 shrink-0" />
                       <span>{t('auth.newUserNote')}</span>
                     </p>
@@ -1544,7 +1597,7 @@ export default function EnhancedAuth() {
                     <div className="space-y-1">
                       <Label className="text-[11px] font-medium text-foreground flex items-center gap-1">
                         <span className="text-[12px]">🌍</span>
-                        Votre pays <span className="text-red-500 text-[10px] ml-0.5">*</span>
+                        Votre pays <span className="text-[#ff4000] text-[10px] ml-0.5">*</span>
                       </Label>
                       <div className="grid grid-cols-4 gap-1">
                         {TAXI_COUNTRY_OPTIONS.map(country => (
@@ -1554,7 +1607,7 @@ export default function EnhancedAuth() {
                             onClick={() => { setTaxiCountry(country.code); setTaxiCategory(null); }}
                             className={`flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-md border text-[9px] font-medium transition-all leading-tight ${
                               taxiCountry === country.code
-                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 text-amber-700 dark:text-amber-400 shadow-sm'
+                                ? 'bg-orange-50 dark:bg-[#ff4000]/20 border-orange-300 text-[#ff4000] dark:text-[#ff4000] shadow-sm'
                                 : 'border-border/30 hover:bg-muted/50 text-muted-foreground'
                             }`}
                           >
@@ -1570,7 +1623,7 @@ export default function EnhancedAuth() {
                   {showMotoTaxiSelector && (
                     <div className="space-y-0.5">
                       <Label className="text-[11px] font-medium text-foreground">
-                        Type de taxi <span className="text-red-500">*</span>
+                        Type de taxi <span className="text-[#ff4000]">*</span>
                       </Label>
                       <div className="relative">
                         <button
@@ -1636,9 +1689,9 @@ export default function EnhancedAuth() {
                       {/* Vérification OTP téléphone */}
                       {signupPhoneOtpSent && (
                         <form onSubmit={handleVerifySignupPhoneOtp} className="space-y-1.5">
-                          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-md p-2 flex items-center gap-2">
-                            <Phone className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                            <p className="text-[10px] text-emerald-700 dark:text-emerald-400">Code envoyé au <strong>{signupFormattedPhone}</strong></p>
+                          <div className="bg-orange-50 dark:bg-[#ff4000]/20 rounded-md p-2 flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-[#ff4000] shrink-0" />
+                            <p className="text-[10px] text-[#ff4000] dark:text-[#ff4000]">Code envoyé au <strong>{signupFormattedPhone}</strong></p>
                           </div>
                           <Input
                             type="text"
@@ -1652,7 +1705,7 @@ export default function EnhancedAuth() {
                             autoFocus
                           />
                           {error && <p className="text-[10px] text-destructive">{error}</p>}
-                          <Button type="submit" className="w-full h-8 text-xs font-medium rounded-md bg-emerald-500 hover:bg-emerald-600" disabled={loading || signupPhoneOtp.length < 4}>
+                          <Button type="submit" className="w-full h-8 text-xs font-medium rounded-md bg-[#ff4000] hover:bg-[#ff4000]" disabled={loading || signupPhoneOtp.length < 4}>
                             {loading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</> : 'Créer mon compte'}
                           </Button>
                           <Button type="button" variant="ghost" className="w-full h-7 text-[10px]" onClick={() => setSignupPhoneOtpSent(false)}>
@@ -1699,6 +1752,26 @@ export default function EnhancedAuth() {
 
                         {!isPhoneInput(email) && (
                         <div className="space-y-0.5">
+                          <Label htmlFor="signup-phone" className="text-[11px] font-medium flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-muted-foreground" />
+                            Numéro de téléphone
+                          </Label>
+                          <Input
+                            id="signup-phone"
+                            type="tel"
+                            placeholder="+224 6XX XX XX XX"
+                            value={signupPhone}
+                            onChange={(e) => setSignupPhone(e.target.value)}
+                            disabled={loading}
+                            className="h-8 text-xs rounded-md"
+                            required
+                          />
+                          <p className="text-[9px] text-muted-foreground">Vérifié par SMS — vous pourrez vous connecter avec ce numéro.</p>
+                        </div>
+                        )}
+
+                        {!isPhoneInput(email) && (
+                        <div className="space-y-0.5">
                           <Label htmlFor="signup-password" className="text-[11px] font-medium flex items-center gap-1">
                             <Lock className="h-3 w-3 text-muted-foreground" />
                             {t('auth.password')}
@@ -1735,7 +1808,7 @@ export default function EnhancedAuth() {
 
                         <Button
                           type="submit"
-                          className="w-full h-8 text-xs font-medium rounded-md bg-emerald-500 hover:bg-emerald-600"
+                          className="w-full h-8 text-xs font-medium rounded-md bg-[#ff4000] hover:bg-[#ff4000]"
                           disabled={loading}
                         >
                           {loading && mode === 'signup' ? (
@@ -1844,7 +1917,7 @@ export default function EnhancedAuth() {
       <Dialog open={existingEmailModal.open} onOpenChange={(open) => setExistingEmailModal(prev => ({ ...prev, open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
+            <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
               <AlertCircle className="h-5 w-5" />
               {t('auth.emailAlreadyRegistered')}
             </DialogTitle>
@@ -1898,7 +1971,7 @@ export default function EnhancedAuth() {
       <Dialog open={oauthExistingAccountModal.open} onOpenChange={(open) => !open && handleContinueWithExistingAccount()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
+            <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
               <AlertCircle className="h-5 w-5" />
               {t('auth.existingAccountDetected')}
             </DialogTitle>
@@ -1906,12 +1979,12 @@ export default function EnhancedAuth() {
               <p>
                 {t('auth.emailAlreadyAssociated')} <strong className="text-foreground">{oauthExistingAccountModal.email}</strong>
               </p>
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-amber-800 dark:text-amber-300">
+              <div className="bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg p-3 text-[#ff4000] dark:text-orange-300">
                 <p className="text-sm font-medium">
                   {t('auth.connectedToExisting')}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50">
+                  <Badge variant="secondary" className="bg-orange-100 dark:bg-[#ff4000]/50">
                     {t(`auth.role.${oauthExistingAccountModal.role}`)}
                   </Badge>
                 </div>

@@ -163,8 +163,8 @@ export function JomyPaymentSelector({
       id: 'WALLET' as const,
       name: 'Wallet 224Solutions',
       description: `Solde: ${walletBalance !== null ? formatCurrency(walletBalance, walletCurrency) : '...'}`,
-      icon: <Wallet className="h-5 w-5 text-green-600" />,
-      iconBg: 'bg-green-100',
+      icon: <Wallet className="h-5 w-5 text-[#ff4000]" />,
+      iconBg: 'bg-orange-100',
       requiresPhone: false,
       provider: 'wallet' as const
     }] : []),
@@ -194,8 +194,8 @@ export function JomyPaymentSelector({
       id: 'CCP_MTN' as const,
       name: 'MTN Mobile Money',
       description: 'Paiement via MTN MoMo (ChapChapPay)',
-      icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
-      iconBg: 'bg-yellow-100',
+      icon: <Smartphone className="h-5 w-5 text-[#ff4000]" />,
+      iconBg: 'bg-orange-100',
       requiresPhone: true,
       phonePrefix: '660',
       phonePlaceholder: '660 XX XX XX',
@@ -206,8 +206,8 @@ export function JomyPaymentSelector({
       id: 'CASH_ON_DELIVERY' as const,
       name: 'Paiement à la livraison',
       description: 'Vous serez contacté pour confirmer l\'adresse de livraison',
-      icon: <Truck className="h-5 w-5 text-emerald-600" />,
-      iconBg: 'bg-emerald-100',
+      icon: <Truck className="h-5 w-5 text-[#ff4000]" />,
+      iconBg: 'bg-orange-100',
       requiresPhone: false,
       provider: undefined
     }] : [])
@@ -447,8 +447,8 @@ export function JomyPaymentSelector({
     return (
       <Card className="w-full max-w-lg mx-auto">
         <CardContent className="p-8 text-center">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-green-700 mb-2">Paiement réussi !</h3>
+          <CheckCircle className="h-16 w-16 text-[#ff4000] mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-[#ff4000] mb-2">Paiement réussi !</h3>
           <p className="text-muted-foreground mb-4">
             Votre paiement de {formattedAmount} a été effectué avec succès.
           </p>
@@ -563,15 +563,15 @@ export function JomyPaymentSelector({
 
           {/* Formulaire téléphone et ville pour COD */}
           {selectedMethod === 'CASH_ON_DELIVERY' && (
-            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
-              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-[#ff4000] flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" />
                 Informations de contact
               </h4>
 
               <div className="space-y-2">
                 <Label htmlFor="cod-phone" className="text-sm">
-                  Numéro à contacter <span className="text-red-500">*</span>
+                  Numéro à contacter <span className="text-[#ff4000]">*</span>
                 </Label>
                 <Input
                   id="cod-phone"
@@ -587,7 +587,7 @@ export function JomyPaymentSelector({
 
               <div className="space-y-2">
                 <Label htmlFor="cod-city" className="text-sm">
-                  Ville <span className="text-red-500">*</span>
+                  Ville <span className="text-[#ff4000]">*</span>
                 </Label>
                 <Input
                   id="cod-city"
@@ -599,9 +599,9 @@ export function JomyPaymentSelector({
                 />
               </div>
 
-              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
-                <Truck className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="text-emerald-700">
+              <Alert className="bg-orange-50 border-orange-200 mt-2">
+                <Truck className="h-4 w-4 text-[#ff4000]" />
+                <AlertDescription className="text-[#ff4000]">
                   <strong>Paiement à la livraison confirmé</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison.
                   Préparez {formattedAmount} en espèces.

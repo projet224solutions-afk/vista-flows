@@ -14,10 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
   prospection: 'bg-blue-100 text-blue-800',
-  proposition: 'bg-yellow-100 text-yellow-800',
+  proposition: 'bg-orange-100 text-[#ff4000]',
   négociation: 'bg-orange-100 text-orange-800',
-  conclusion: 'bg-green-100 text-green-800',
-  perdu: 'bg-red-100 text-red-800'
+  conclusion: 'bg-orange-100 text-[#ff4000]',
+  perdu: 'bg-orange-100 text-[#ff4000]'
 };
 
 const statusLabels = {
@@ -33,6 +33,7 @@ export default function ProspectManagement() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     contact_email: '',
@@ -60,6 +61,8 @@ export default function ProspectManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return; // anti double-soumission (évite un prospect en double)
+    setSubmitting(true);
     try {
       if (editingProspect) {
         await updateProspect(editingProspect.id, formData);
@@ -82,6 +85,8 @@ export default function ProspectManagement() {
         description: "Une erreur est survenue lors de l'enregistrement.",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -122,7 +127,7 @@ export default function ProspectManagement() {
     : 0;
 
   if (loading) return <div className="p-4">Chargement des prospects...</div>;
-  if (error) return <div className="p-4 text-red-600">Erreur: {error}</div>;
+  if (error) return <div className="p-4 text-[#ff4000]">Erreur: {error}</div>;
 
   return (
     <div className="space-y-6">
@@ -229,8 +234,8 @@ export default function ProspectManagement() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
-                  {editingProspect ? 'Mettre à jour' : 'Créer'}
+                <Button type="submit" className="flex-1" disabled={submitting}>
+                  {submitting ? 'Enregistrement…' : (editingProspect ? 'Mettre à jour' : 'Créer')}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Annuler
@@ -257,7 +262,7 @@ export default function ProspectManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
+              <TrendingUp className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Valeur pipeline</p>
                 <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
@@ -308,7 +313,7 @@ export default function ProspectManagement() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Valeur estimée</span>
-                <span className="font-semibold text-green-600">
+                <span className="font-semibold text-[#ff4000]">
                   {prospect.estimated_value.toLocaleString()} GNF
                 </span>
               </div>

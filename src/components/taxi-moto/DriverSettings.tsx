@@ -259,7 +259,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                 <span>{profile.total_rides} courses</span>
               </div>
               {profile.kyc_verified && (
-                <div className="flex items-center gap-1 text-green-600 text-sm mt-1">
+                <div className="flex items-center gap-1 text-[#ff4000] text-sm mt-1">
                   <Shield className="w-4 h-4" />
                   <span>Vérifié</span>
                 </div>
@@ -549,7 +549,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
           <Button
             onClick={saveSettings}
             disabled={saving}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold"
+            className="w-full bg-[#04439e] font-bold"
           >
             {saving ? (
               <>

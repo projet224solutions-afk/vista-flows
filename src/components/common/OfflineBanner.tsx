@@ -36,7 +36,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
     return (
       <div
         className={cn(
-          'bg-green-500 text-white py-2 px-4 text-center text-sm font-medium',
+          'bg-[#ff4000] text-white py-2 px-4 text-center text-sm font-medium',
           'animate-in fade-in slide-in-from-top duration-300',
           fixed && 'fixed top-0 left-0 right-0 z-50',
           className
@@ -53,7 +53,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
   return (
     <div
       className={cn(
-        'bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4',
+        'bg-gradient-to-r from-orange-500 to-[#ff4000] text-white py-3 px-4',
         'shadow-lg',
         fixed && 'fixed top-0 left-0 right-0 z-50',
         className

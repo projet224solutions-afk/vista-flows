@@ -46,13 +46,13 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
     const getUpdateIcon = (updateType: string) => {
         switch (updateType) {
             case 'member_added':
-                return <Users className="w-4 h-4 text-green-600" />;
+                return <Users className="w-4 h-4 text-[#ff4000]" />;
             case 'revenue_update':
                 return <DollarSign className="w-4 h-4 text-blue-600" />;
             case 'sos_alert':
-                return <AlertTriangle className="w-4 h-4 text-red-600" />;
+                return <AlertTriangle className="w-4 h-4 text-[#ff4000]" />;
             case 'status_change':
-                return <Building2 className="w-4 h-4 text-purple-600" />;
+                return <Building2 className="w-4 h-4 text-[#04439e]" />;
             default:
                 return <Activity className="w-4 h-4 text-gray-600" />;
         }
@@ -61,13 +61,13 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
     const getUpdateColor = (updateType: string) => {
         switch (updateType) {
             case 'member_added':
-                return 'bg-green-100 text-green-800';
+                return 'bg-orange-100 text-[#ff4000]';
             case 'revenue_update':
                 return 'bg-blue-100 text-blue-800';
             case 'sos_alert':
-                return 'bg-red-100 text-red-800';
+                return 'bg-orange-100 text-[#ff4000]';
             case 'status_change':
-                return 'bg-purple-100 text-purple-800';
+                return 'bg-blue-100 text-[#04439e]';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -98,7 +98,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                         Synchronisation Temps Réel
                         <Badge
                             variant={isConnected ? "default" : "destructive"}
-                            className={isConnected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                            className={isConnected ? "bg-orange-100 text-[#ff4000]" : "bg-orange-100 text-[#ff4000]"}
                         >
                             {isConnected ? (
                                 <>
@@ -121,11 +121,11 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                             <div className="text-sm text-gray-600">Total Bureaux</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">{stats.activeBureaus}</div>
+                            <div className="text-2xl font-bold text-[#ff4000]">{stats.activeBureaus}</div>
                             <div className="text-sm text-gray-600">Bureaux Actifs</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-purple-600">{stats.totalMembers}</div>
+                            <div className="text-2xl font-bold text-[#04439e]">{stats.totalMembers}</div>
                             <div className="text-sm text-gray-600">Total Membres</div>
                         </div>
                         <div className="text-center">
@@ -182,7 +182,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                                         onClick={clearUpdates}
                                         size="sm"
                                         variant="outline"
-                                        className="text-red-600 border-red-300 hover:bg-red-50"
+                                        className="text-[#ff4000] border-orange-300 hover:bg-orange-50"
                                     >
                                         <Trash2 className="w-4 h-4 mr-1" />
                                         Nettoyer
@@ -223,13 +223,13 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                                             </div>
                                             <div className="text-right">
                                                 {update.updateType === 'sos_alert' && (
-                                                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                                                    <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                                                 )}
                                                 {update.updateType === 'member_added' && (
-                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                                                 )}
                                                 {update.updateType === 'status_change' && (
-                                                    <Building2 className="w-5 h-5 text-purple-500" />
+                                                    <Building2 className="w-5 h-5 text-[#04439e]" />
                                                 )}
                                             </div>
                                         </div>

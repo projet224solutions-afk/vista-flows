@@ -67,7 +67,7 @@ class ResendEmailService {
       duration: 120000, // 2 minutes
       description: `Mode développement - Configurez le backend email pour envoyer de vrais emails\nDestination: ${email}`,
       style: {
-        background: '#3b82f6',
+        background: '#04439e',
         color: 'white',
         fontSize: '18px',
         fontWeight: 'bold'
@@ -92,27 +92,27 @@ class ResendEmailService {
   <title>Code MFA - 224Solutions</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
-  <div style="max-width: 600px; margin: 40px auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 2px;">
+  <div style="max-width: 600px; margin: 40px auto; background: linear-gradient(135deg, #04439e 0%, #04439e 100%); border-radius: 16px; padding: 2px;">
     <div style="background: white; border-radius: 14px; padding: 40px 30px;">
 
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #3b82f6; margin: 0; font-size: 28px;">224SOLUTIONS</h1>
+        <h1 style="color: #04439e; margin: 0; font-size: 28px;">224SOLUTIONS</h1>
         <p style="color: #64748b; margin: 8px 0 0 0; font-size: 14px;">Authentification Multi-Facteurs</p>
       </div>
 
       <!-- Code Box -->
       <div style="background: linear-gradient(to bottom, #f8fafc, #f1f5f9); padding: 35px 25px; border-radius: 12px; text-align: center; margin: 30px 0; border: 2px solid #e2e8f0;">
         <p style="color: #475569; font-size: 15px; margin: 0 0 15px 0; font-weight: 500;">Votre code de vérification PDG :</p>
-        <div style="font-size: 42px; font-weight: bold; color: #3b82f6; letter-spacing: 12px; font-family: 'Courier New', monospace; margin: 10px 0;">
+        <div style="font-size: 42px; font-weight: bold; color: #04439e; letter-spacing: 12px; font-family: 'Courier New', monospace; margin: 10px 0;">
           ${code}
         </div>
         <p style="color: #64748b; font-size: 13px; margin: 15px 0 0 0;">Valide pendant 10 minutes</p>
       </div>
 
       <!-- Warning Box -->
-      <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; border-radius: 6px; margin: 25px 0;">
-        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">
+      <div style="background: #fff4ee; border-left: 4px solid #ff4000; padding: 16px 20px; border-radius: 6px; margin: 25px 0;">
+        <p style="margin: 0; color: #ff4000; font-size: 14px; line-height: 1.5;">
           <strong style="display: block; margin-bottom: 5px;">⚠️ Important :</strong>
           Ce code expire dans 10 minutes. Ne le partagez jamais avec qui que ce soit, même avec le support 224Solutions.
         </p>

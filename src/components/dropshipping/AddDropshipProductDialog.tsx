@@ -201,12 +201,12 @@ export function AddDropshipProductDialog({
           {formData.supplier_price && formData.selling_price && (
             <div className={`p-3 rounded-lg ${
               parseFloat(marginValue) > 20
-                ? 'bg-green-50 border-green-200 dark:bg-green-950'
+                ? 'bg-orange-50 border-orange-200 dark:bg-[#ff4000]'
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950'
             } border`}>
               <p className="text-sm">
                 <strong>Marge estimée:</strong>{' '}
-                <span className={parseFloat(marginValue) > 20 ? 'text-green-600' : 'text-orange-600'}>
+                <span className={parseFloat(marginValue) > 20 ? 'text-[#ff4000]' : 'text-orange-600'}>
                   {marginValue}%
                 </span>
               </p>

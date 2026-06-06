@@ -7,6 +7,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { usePublicId } from '@/hooks/usePublicId';
+import { backendFetch } from '@/services/backendApi';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
@@ -246,7 +247,7 @@ export function useProductActions({
       return { success: false };
     }
 
-    if (!limitCheckUserId) {
+    if (!user?.id) {
       toast.error('Utilisateur non connecté');
       return { success: false };
     }
@@ -351,14 +352,24 @@ export function useProductActions({
 
       console.log('[ProductCreate] Data:', productData);
 
-      // Insérer produit
-      const { data, error } = await supabase.from('products').insert([productData]).select().single();
+      // Créer le produit via le BACKEND (limites de plan + troncature images + cohérence)
+      // vendor_id est résolu côté serveur depuis le JWT.
+      const { vendor_id: _omitVendorId, ...productPayload } = productData as any;
+      const resp = await backendFetch<any>('/api/products', {
+        method: 'POST',
+        body: { ...productPayload, images: imageUrls, promotional_videos: videoUrls },
+      });
 
-      if (error) throw error;
+      if (!resp.success || !resp.data) {
+        throw new Error(resp.error || (resp as any).message || 'Erreur lors de la création du produit');
+      }
+      const data = resp.data;
 
-      // Sync stock (inventory)
-      await syncInventoryQuantity(data.id, productData.stock_quantity);
-
+      // Inventaire synchronisé côté backend (atomique avec la création)
+      const warnings = (resp as any).warnings;
+      if (Array.isArray(warnings) && warnings.length > 0) {
+        toast.warning(warnings[0]);
+      }
       toast.success('✅ Produit créé avec succès');
       onProductCreated?.();
 
@@ -380,7 +391,7 @@ export function useProductActions({
       toast.error(errorMessage);
       return { success: false };
     }
-  }, [vendorId, limitCheckUserId, uploadImages, uploadPromotionalVideo, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
+  }, [vendorId, user, uploadImages, handleCategory, generatePublicId, onProductCreated, generateUniqueSKU, syncInventoryQuantity]);
 
   /**
    * Mettre à jour un produit
@@ -411,8 +422,8 @@ export function useProductActions({
         return { success: false };
       }
 
-      if (!existingProduct.is_active && formData.is_active && limitCheckUserId) {
-        const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId);
+      if (!existingProduct.is_active && formData.is_active && user?.id) {
+        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
 
         if (!limitCheck) {
           toast.error('Impossible de vérifier les limites d\'abonnement');
@@ -474,14 +485,20 @@ export function useProductActions({
 
       console.log('[ProductUpdate] Data:', updateData);
 
-      // Mettre à jour produit
-      const { data, error } = await supabase.from('products').update(updateData).eq('id', productId).select().single();
+      // Mettre à jour via le BACKEND (ownership + limites + troncature images server-side)
+      const resp = await backendFetch<any>(`/api/products/${productId}`, {
+        method: 'PATCH',
+        body: updateData,
+      });
 
-      if (error) throw error;
+      if (!resp.success || !resp.data) {
+        throw new Error(resp.error || (resp as any).message || 'Erreur lors de la mise à jour');
+      }
+      const data = resp.data;
 
-      // Sync stock (inventory)
-      await syncInventoryQuantity(productId, updateData.stock_quantity);
-
+      // Inventaire synchronisé côté backend (dans la même requête de mise à jour)
+      const warnings = (resp as any).warnings;
+      if (Array.isArray(warnings) && warnings.length > 0) toast.warning(warnings[0]);
       toast.success('✅ Produit mis à jour');
       onProductUpdated?.();
 
@@ -491,7 +508,7 @@ export function useProductActions({
       toast.error(`Erreur mise à jour: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, limitCheckUserId, uploadImages, uploadPromotionalVideo, handleCategory, onProductUpdated, syncInventoryQuantity]);
+  }, [vendorId, uploadImages, handleCategory, onProductUpdated, syncInventoryQuantity, user?.id]);
 
   /**
    * Supprimer un produit
@@ -503,20 +520,13 @@ export function useProductActions({
     }
 
     try {
-      // Vérifier si produit a des commandes
-      const { data: orders, error: ordersError } = await supabase.from('order_items').select('id').eq('product_id', productId).limit(1);
+      // Suppression via le BACKEND (soft-delete sûr + ownership server-side ;
+      // préserve l'historique des commandes/analytics).
+      const resp = await backendFetch(`/api/products/${productId}`, { method: 'DELETE' });
 
-      if (ordersError) throw ordersError;
-
-      if (orders && orders.length > 0) {
-        toast.error('Impossible de supprimer: produit utilisé dans des commandes');
-        return false;
+      if (!resp.success) {
+        throw new Error(resp.error || 'Erreur lors de la suppression');
       }
-
-      // Supprimer produit
-      const { error } = await supabase.from('products').delete().eq('id', productId);
-
-      if (error) throw error;
 
       toast.success('🗑️ Produit supprimé');
       onProductDeleted?.();
@@ -544,8 +554,8 @@ export function useProductActions({
 
       if (fetchError) throw fetchError;
 
-      if (original?.is_active && limitCheckUserId) {
-        const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId);
+      if (original?.is_active && user?.id) {
+        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
 
         if (!limitCheck) {
           toast.error('Impossible de vérifier les limites d\'abonnement');
@@ -568,7 +578,7 @@ export function useProductActions({
       // Générer un nouveau SKU unique pour la copie
       const newSKU = await generateUniqueSKU();
 
-      // Créer copie
+      // Créer copie — nouveau code-barres POS unique (ne pas recopier celui de l'original)
       const duplicateData = {
         ...original,
         id: undefined, // Laisser DB générer nouvel ID
@@ -576,6 +586,8 @@ export function useProductActions({
         name: `${original.name} (Copie)`,
         sku: newSKU,
         barcode: null, // Ne pas dupliquer barcode
+        barcode_value: generateEAN13Barcode(), // Nouveau code-barres EAN-13 unique
+        barcode_format: 'EAN13',
         created_at: undefined,
         updated_at: undefined,
       };
@@ -593,7 +605,7 @@ export function useProductActions({
       toast.error(`Erreur duplication: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, limitCheckUserId, generatePublicId, onProductCreated, generateUniqueSKU]);
+  }, [vendorId, generatePublicId, onProductCreated, generateUniqueSKU, user?.id]);
 
   /**
    * Mise à jour en masse du stock

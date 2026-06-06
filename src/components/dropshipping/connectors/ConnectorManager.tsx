@@ -86,7 +86,7 @@ function ConnectorCard({
 
   const getStatusBadge = () => {
     if (isActive) {
-      return <Badge className="bg-green-500">Actif</Badge>;
+      return <Badge className="bg-[#ff4000]">Actif</Badge>;
     }
     switch (connector.status) {
       case 'stable': return <Badge variant="outline">Disponible</Badge>;
@@ -96,7 +96,7 @@ function ConnectorCard({
   };
 
   return (
-    <Card className={`transition-all ${isActive ? 'ring-2 ring-green-500' : ''}`}>
+    <Card className={`transition-all ${isActive ? 'ring-2 ring-[#ff4000]' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Zap className="w-6 h-6 text-yellow-500" />
+            <Zap className="w-6 h-6 text-[#ff4000]" />
             Connecteurs Dropshipping
           </h2>
           <p className="text-muted-foreground">
@@ -253,10 +253,10 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
 
       {/* Résumé des connecteurs actifs */}
       {activeConnectors.length > 0 && (
-        <Alert className="bg-green-50 border-green-200">
-          <Check className="w-4 h-4 text-green-600" />
-          <AlertTitle className="text-green-800">Connecteurs actifs</AlertTitle>
-          <AlertDescription className="text-green-700">
+        <Alert className="bg-orange-50 border-orange-200">
+          <Check className="w-4 h-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000]">Connecteurs actifs</AlertTitle>
+          <AlertDescription className="text-[#ff4000]">
             {activeConnectors.map(c => {
               const info = availableConnectors.find(a => a.type === c);
               return info?.name;

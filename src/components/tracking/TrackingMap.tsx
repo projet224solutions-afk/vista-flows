@@ -25,10 +25,10 @@ export const TrackingMap = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      waiting: 'bg-yellow-100 text-yellow-800',
+      waiting: 'bg-orange-100 text-[#ff4000]',
       in_progress: 'bg-blue-100 text-blue-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
+      delivered: 'bg-orange-100 text-[#ff4000]',
+      cancelled: 'bg-orange-100 text-[#ff4000]'
     };
     return colors[status as keyof typeof colors] || colors.waiting;
   };

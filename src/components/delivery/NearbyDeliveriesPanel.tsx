@@ -201,7 +201,7 @@ export function NearbyDeliveriesPanel() {
           </div>
         ) : (
           deliveries.map((d) => (
-            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20 rounded-xl border border-orange-200/50 space-y-3">
+            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-[#ff4000]/20 rounded-xl border border-orange-200/50 space-y-3">
               {/* Vendeur */}
               <div className="flex items-start gap-3">
                 <Store className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -222,9 +222,9 @@ export function NearbyDeliveriesPanel() {
                   <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
                   <p className="font-bold text-orange-700">{d.distance_to_vendor} km</p>
                 </div>
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <div className="p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
                   <p className="text-xs text-muted-foreground">Vendeur → Client</p>
-                  <p className="font-bold text-green-700">{d.distance_vendor_to_client} km</p>
+                  <p className="font-bold text-[#ff4000]">{d.distance_vendor_to_client} km</p>
                 </div>
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <p className="text-xs text-muted-foreground">Total</p>
@@ -233,13 +233,13 @@ export function NearbyDeliveriesPanel() {
               </div>
 
               {/* Prix et infos */}
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#ff4000] to-[#ff4000] rounded-lg text-white">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
                   <span className="font-bold text-lg">{formatCurrency(d.estimated_earnings || 0)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className={d.payment_method === 'cod' ? 'bg-yellow-100 text-yellow-800' : 'bg-white/20 text-white'}>
+                  <Badge variant="secondary" className={d.payment_method === 'cod' ? 'bg-orange-100 text-[#ff4000]' : 'bg-white/20 text-white'}>
                     <CreditCard className="h-3 w-3 mr-1" />
                     {d.payment_method === 'cod' ? 'COD' : 'Prépayé'}
                   </Badge>
@@ -257,7 +257,7 @@ export function NearbyDeliveriesPanel() {
 
               {/* Bouton accepter */}
               <Button
-                className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+                className="w-full bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40"
                 onClick={() => handleAccept(d.id)}
                 disabled={acceptingId === d.id}
               >

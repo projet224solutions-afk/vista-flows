@@ -265,13 +265,13 @@ export default function SetPasswordAfterOAuth() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-slate-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl border-0">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-[#ff4000]" />
             </div>
-            <h2 className="text-xl font-bold text-green-700">{t('auth.setPassword.success')}</h2>
+            <h2 className="text-xl font-bold text-[#ff4000]">{t('auth.setPassword.success')}</h2>
             <p className="text-muted-foreground">
               {t('auth.setPassword.successDesc')}
             </p>
@@ -303,9 +303,9 @@ export default function SetPasswordAfterOAuth() {
 
         <CardContent className="p-6 space-y-6">
           {/* Message d'information - OBLIGATOIRE */}
-          <Alert className="bg-amber-50 border-amber-200">
-            <Shield className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
+          <Alert className="bg-orange-50 border-orange-200">
+            <Shield className="h-4 w-4 text-[#ff4000]" />
+            <AlertDescription className="text-[#ff4000]">
               <strong>{t('auth.setPassword.mandatory')}</strong><br />
               {t('auth.setPassword.mandatoryDesc')}
               <br /><br />
@@ -460,7 +460,7 @@ function PasswordCheck({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-        valid ? 'bg-green-100 text-green-600' : 'bg-muted text-muted-foreground'
+        valid ? 'bg-orange-100 text-[#ff4000]' : 'bg-muted text-muted-foreground'
       }`}>
         {valid ? (
           <CheckCircle2 className="h-3 w-3" />
@@ -468,7 +468,7 @@ function PasswordCheck({
           <div className="w-1.5 h-1.5 bg-current rounded-full" />
         )}
       </div>
-      <span className={valid ? 'text-green-700' : 'text-muted-foreground'}>
+      <span className={valid ? 'text-[#ff4000]' : 'text-muted-foreground'}>
         {label}
       </span>
     </div>

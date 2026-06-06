@@ -168,8 +168,8 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
       {/* Header stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-            <Shield className="w-5 h-5 text-amber-600" />
+          <div className="p-2 rounded-lg bg-orange-100 dark:bg-[#ff4000]/30">
+            <Shield className="w-5 h-5 text-[#ff4000]" />
           </div>
           <div>
             <h3 className="font-semibold">Services en attente de validation</h3>
@@ -184,7 +184,7 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+            <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
             <h3 className="font-semibold text-lg mb-1">Tout est à jour !</h3>
             <p className="text-muted-foreground">Aucun service en attente de validation</p>
           </CardContent>
@@ -192,7 +192,7 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
       ) : (
         <div className="grid gap-4">
           {filtered.map(service => (
-            <Card key={service.id} className="border-amber-200 dark:border-amber-800/50">
+            <Card key={service.id} className="border-orange-200 dark:border-[#ff4000]/50">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -201,7 +201,7 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
                       <Badge variant="outline" className="text-xs">
                         {service.service_type?.name || 'Non défini'}
                       </Badge>
-                      <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 gap-1">
+                      <Badge className="bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000] gap-1">
                         <Clock className="w-3 h-3" />En attente
                       </Badge>
                     </div>
@@ -230,7 +230,7 @@ export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefres
                   <div className="flex gap-2 shrink-0">
                     <Button
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white gap-1"
+                      className="bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1"
                       onClick={() => { setActionService(service); setActionType('approve'); }}
                     >
                       <CheckCircle className="w-4 h-4" />Approuver

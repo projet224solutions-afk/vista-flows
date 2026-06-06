@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
+import { z } from 'zod';
 import { logger } from '../config/logger.js';
 import { oauthConfig } from '../config/oauth.config.js';
 import {
@@ -14,9 +15,74 @@ import {
   getGoogleUserInfo,
 } from '../services/oauth.service.js';
 import { supabaseAdmin } from '../config/supabase.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
+
+/**
+ * POST /auth/finalize-phone-signup
+ * Finalise ATOMIQUEMENT une inscription email vérifiée par téléphone.
+ *
+ * Contexte : à l'inscription email, le compte est créé via OTP TÉLÉPHONE
+ * (Supabase Auth) puis l'email+mot de passe sont rattachés au MÊME compte.
+ * Faire ce rattachement côté CLIENT (updateUser) laisse une fenêtre : si ça
+ * échoue, on a un compte téléphone sans email/mdp. Ici on le fait côté serveur
+ * (admin), de façon idempotente et atomique pour le couple email+mot de passe,
+ * + email_confirm:true → l'utilisateur peut se connecter par email IMMÉDIATEMENT
+ * (sans attendre la confirmation), en plus du login par téléphone.
+ *
+ * Sécurité : verifyJWT → on ne modifie QUE le compte du user courant (req.user.id),
+ * qui vient de prouver qu'il contrôle le téléphone (OTP vérifié).
+ */
+const FinalizeSignupSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(8, 'Mot de passe : 8 caractères minimum'),
+});
+
+router.post('/finalize-phone-signup', verifyJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const parsed = FinalizeSignupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Données invalides' });
+      return;
+    }
+    const { email, password } = parsed.data;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Rattache email + mot de passe au compte (déjà vérifié par téléphone), email confirmé.
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      email: normalizedEmail,
+      password,
+      email_confirm: true,
+    });
+    if (updErr) {
+      const msg = (updErr.message || '').toLowerCase();
+      if (msg.includes('already') || msg.includes('registered') || msg.includes('exists') || msg.includes('duplicate')) {
+        res.status(409).json({ success: false, error: 'Cet email est déjà utilisé par un autre compte.' });
+        return;
+      }
+      logger.error(`[auth/finalize] updateUserById failed for ${userId}: ${updErr.message}`);
+      res.status(500).json({ success: false, error: "Impossible de rattacher l'email au compte" });
+      return;
+    }
+
+    // Refléter l'email dans le profil (best-effort, non bloquant)
+    const { error: profErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ email: normalizedEmail, has_password: true })
+      .eq('id', userId);
+    if (profErr) logger.warn(`[auth/finalize] profile email update: ${profErr.message}`);
+
+    logger.info(`[auth/finalize] email+password attached to ${userId}`);
+    res.json({ success: true, data: { email: normalizedEmail } });
+  } catch (err: any) {
+    logger.error(`[auth/finalize] ${err?.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la finalisation' });
+  }
+});
 
 /**
  * GET /auth/google

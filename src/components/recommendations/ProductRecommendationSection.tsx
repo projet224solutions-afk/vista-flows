@@ -292,8 +292,8 @@ function ProductCard({
 function ReasonBadge({ reason }: { reason: string }) {
   const labels: Record<string, { text: string; className: string }> = {
     category_affinity: { text: '🎯 Pour vous', className: 'bg-primary/10 text-primary' },
-    featured: { text: '⭐ En vedette', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-    trending: { text: '🔥 Tendance', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+    featured: { text: '⭐ En vedette', className: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+    trending: { text: '🔥 Tendance', className: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
     popular: { text: '📈 Populaire', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
   };
 

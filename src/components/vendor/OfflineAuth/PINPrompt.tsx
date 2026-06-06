@@ -196,7 +196,7 @@ export function PINPrompt({
                     'focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary',
                     'transition-all',
                     error
-                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                      ? 'border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/20'
                       : 'border-gray-300 dark:border-gray-600',
                     pin[index] && 'border-primary bg-primary/5'
                   )}
@@ -228,12 +228,12 @@ export function PINPrompt({
 
           {/* Message d'erreur */}
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
+              <AlertCircle className="w-4 h-4 text-[#ff4000] mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-700 dark:text-red-400">{error}</p>
+                <p className="text-sm font-medium text-[#ff4000] dark:text-[#ff4000]">{error}</p>
                 {remainingAttempts !== null && remainingAttempts > 0 && (
-                  <p className="text-xs text-red-600 dark:text-red-500 mt-1">
+                  <p className="text-xs text-[#ff4000] dark:text-[#ff4000] mt-1">
                     {remainingAttempts} tentative(s) restante(s)
                   </p>
                 )}
@@ -243,9 +243,9 @@ export function PINPrompt({
 
           {/* Message de succès (PIN complet) */}
           {pin.length === pinLength && !error && !isAuthenticating && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <p className="text-sm text-green-700 dark:text-green-400">Vérification en cours...</p>
+            <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
+              <CheckCircle className="w-4 h-4 text-[#ff4000]" />
+              <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">Vérification en cours...</p>
             </div>
           )}
 

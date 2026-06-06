@@ -1177,7 +1177,15 @@ export default function Payment() {
 
           if (purchaseError) {
             console.error('[Payment] Error creating purchase record:', purchaseError);
-          } else {
+          }
+
+          // Commande vendeur (mirror) : l'argent est DÉJÀ sécurisé en escrow (create_escrow_transaction
+          // = transaction atomique débit+escrow), donc on ne bloque pas l'accès acheteur. MAIS on ne
+          // l'avale plus en silence : création FIABLE (1 retry) puis, en cas d'échec persistant,
+          // avertissement VISIBLE — avant, l'erreur était masquée → le vendeur ne voyait jamais la
+          // commande (« wallet débité mais commande pas créée »).
+          let digitalVendorOrderOk = false;
+          for (let attempt = 1; attempt <= 2 && !digitalVendorOrderOk; attempt++) {
             try {
               await createDigitalOrderForVendor({
                 vendorId: productPaymentInfo.vendorId,
@@ -1191,9 +1199,18 @@ export default function Payment() {
                 pricingType: productPaymentInfo.pricingType,
                 subscriptionInterval: productPaymentInfo.subscriptionInterval,
               });
+              digitalVendorOrderOk = true;
             } catch (digitalOrderError) {
-              console.error('[Payment] Error creating digital vendor order:', digitalOrderError);
+              console.error(`[Payment] Échec création commande vendeur digital (tentative ${attempt}/2):`, digitalOrderError);
+              if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
             }
+          }
+          if (!digitalVendorOrderOk) {
+            toast({
+              title: '⚠️ Commande à synchroniser',
+              description: "Paiement et accès confirmés. L'enregistrement côté vendeur a échoué et devra être resynchronisé.",
+              variant: 'destructive',
+            });
           }
 
           // Si c'est un abonnement, créer l'enregistrement dans digital_subscriptions
@@ -1856,11 +1873,11 @@ export default function Payment() {
                       <span className="text-sm font-medium">💸 Frais de paiement ({paymentPreview?.fee_percent}%)</span>
                       <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
-                    <div className="flex justify-between items-center border-t pt-2 bg-red-50 dark:bg-red-950 -mx-4 px-4 py-2 rounded">
+                    <div className="flex justify-between items-center border-t pt-2 bg-orange-50 dark:bg-[#ff4000] -mx-4 px-4 py-2 rounded">
                       <span className="text-sm font-bold">💳 Total à débiter</span>
                       <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
-                    <div className="flex justify-between items-center border-t pt-2 bg-green-50 dark:bg-green-950 -mx-4 px-4 py-2 rounded">
+                    <div className="flex justify-between items-center border-t pt-2 bg-orange-50 dark:bg-[#ff4000] -mx-4 px-4 py-2 rounded">
                       <span className="text-sm font-medium">✓ Le destinataire recevra</span>
                       <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} {paymentPreview?.currency_received || paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>

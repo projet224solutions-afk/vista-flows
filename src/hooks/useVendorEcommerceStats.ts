@@ -126,8 +126,27 @@ export function useVendorEcommerceStats(vendorId: string | null) {
         console.error('❌ Erreur chargement orders:', ordersError);
       }
 
-      const allOrders = (ordersData || []) as any[];
-      console.log('📦 Orders trouvées:', allOrders.length);
+      // 1bis. Ventes POS hors-ligne (table pos_sales) — mappées en pseudo-commandes
+      // pour être incluses dans le CA et les stats (source='pos', payées).
+      const { data: posSalesData } = await supabase
+        .from('pos_sales')
+        .select('id, total_amount, sold_at, status')
+        .eq('vendor_id', vendorId);
+
+      const posAsOrders = (posSalesData || [])
+        .filter((s: any) => s.status !== 'cancelled')
+        .map((s: any) => ({
+          id: `pos:${s.id}`,
+          status: 'delivered',
+          total_amount: s.total_amount || 0,
+          created_at: s.sold_at,
+          payment_status: 'paid',
+          customer_id: null,
+          source: 'pos',
+        }));
+
+      const allOrders = ([...(ordersData || []), ...posAsOrders]) as any[];
+      console.log('📦 Orders trouvées:', (ordersData || []).length, '| ventes POS hors-ligne:', posAsOrders.length);
 
       // 2. Charger les produits
       const { data: productsData, error: productsError } = await supabase

@@ -47,8 +47,8 @@ export const useVendorAnalytics = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Récupérer les ventes d'aujourd'hui directement depuis orders
-      const { data: todayOrders, error: todayError } = await supabase
+      // Récupérer les ventes d'aujourd'hui depuis orders + pos_sales (POS hors-ligne)
+      const { data: todayOrdersRaw, error: todayError } = await supabase
         .from('orders')
         .select('id, total_amount, payment_status, source')
         .eq('vendor_id', vendorId)
@@ -57,45 +57,64 @@ export const useVendorAnalytics = () => {
 
       if (todayError) console.error('Error loading today orders:', todayError);
 
-      const todaySales = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
-      const paidOrders = todayOrders?.filter(o => o.payment_status === 'paid').length || 0;
-      const todayOrdersCount = todayOrders?.length || 0;
-      const posOrders = todayOrders?.filter(o => o.source === 'pos').length || 0;
-      const onlineOrders = todayOrders?.filter(o => o.source !== 'pos').length || 0;
+      const { data: todayPosRaw } = await supabase
+        .from('pos_sales')
+        .select('id, total_amount, status')
+        .eq('vendor_id', vendorId)
+        .gte('sold_at', `${today}T00:00:00`)
+        .lt('sold_at', `${today}T23:59:59`);
+
+      const todayPos = (todayPosRaw || [])
+        .filter((s: any) => s.status !== 'cancelled')
+        .map((s: any) => ({ total_amount: s.total_amount || 0, payment_status: 'paid', source: 'pos' }));
+      const todayOrders = [...(todayOrdersRaw || []), ...todayPos];
+
+      // CA = uniquement les ventes PAYÉES (les POS sont payées par nature)
+      const todaySales = todayOrders.filter(o => o.payment_status === 'paid').reduce((sum, o) => sum + (o.total_amount || 0), 0);
+      const paidOrders = todayOrders.filter(o => o.payment_status === 'paid').length;
+      const todayOrdersCount = todayOrders.length;
+      const posOrders = todayOrders.filter(o => o.source === 'pos').length;
+      const onlineOrders = todayOrders.filter(o => o.source !== 'pos').length;
       // Taux de conversion = commandes payées / commandes totales
       const conversionRate = todayOrdersCount > 0
         ? (paidOrders / todayOrdersCount) * 100
         : 0;
-      // Récupérer les ventes des 7 derniers jours groupées par jour
+      // Agrégateur jour → { ventes, nb } (crée l'entrée si absente)
+      const aggregate = (
+        map: Map<string, { total_sales: number; total_orders: number }>,
+        dateStr: string,
+        amount: number
+      ) => {
+        const e = map.get(dateStr) || { total_sales: 0, total_orders: 0 };
+        map.set(dateStr, { total_sales: e.total_sales + amount, total_orders: e.total_orders + 1 });
+      };
+
+      // Ventes PAYÉES des 7 derniers jours (orders payées + POS) groupées par jour
       const { data: weekOrders, error: weekError } = await supabase
         .from('orders')
         .select('created_at, total_amount')
         .eq('vendor_id', vendorId)
+        .eq('payment_status', 'paid')
         .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: true });
 
       if (weekError) console.error('Error loading week orders:', weekError);
 
-      // Grouper par jour pour les 7 derniers jours
-      const weekDataMap = new Map<string, { total_sales: number; total_orders: number }>();
+      const { data: weekPos } = await supabase
+        .from('pos_sales')
+        .select('sold_at, total_amount, status')
+        .eq('vendor_id', vendorId)
+        .gte('sold_at', sevenDaysAgo.toISOString());
 
-      // Initialiser tous les jours de la semaine
+      const weekDataMap = new Map<string, { total_sales: number; total_orders: number }>();
+      // Initialiser tous les jours de la semaine (pour afficher 0)
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        weekDataMap.set(dateStr, { total_sales: 0, total_orders: 0 });
+        weekDataMap.set(d.toISOString().split('T')[0], { total_sales: 0, total_orders: 0 });
       }
-
-      // Agréger les ventes par jour
-      weekOrders?.forEach(order => {
-        const dateStr = new Date(order.created_at).toISOString().split('T')[0];
-        const existing = weekDataMap.get(dateStr) || { total_sales: 0, total_orders: 0 };
-        weekDataMap.set(dateStr, {
-          total_sales: existing.total_sales + (order.total_amount || 0),
-          total_orders: existing.total_orders + 1
-        });
-      });
+      (weekOrders || []).forEach(o => aggregate(weekDataMap, new Date(o.created_at).toISOString().split('T')[0], o.total_amount || 0));
+      (weekPos || []).filter((s: any) => s.status !== 'cancelled').forEach((s: any) => aggregate(weekDataMap, new Date(s.sold_at).toISOString().split('T')[0], s.total_amount || 0));
 
       const weekData: DailySales[] = Array.from(weekDataMap.entries()).map(([date, data]) => ({
         date,
@@ -103,23 +122,24 @@ export const useVendorAnalytics = () => {
         total_orders: data.total_orders
       }));
 
-      // Récupérer les ventes des 30 derniers jours
+      // Ventes PAYÉES des 30 derniers jours (orders payées + POS)
       const { data: monthOrders } = await supabase
         .from('orders')
         .select('created_at, total_amount')
         .eq('vendor_id', vendorId)
+        .eq('payment_status', 'paid')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: true });
 
+      const { data: monthPos } = await supabase
+        .from('pos_sales')
+        .select('sold_at, total_amount, status')
+        .eq('vendor_id', vendorId)
+        .gte('sold_at', thirtyDaysAgo.toISOString());
+
       const monthDataMap = new Map<string, { total_sales: number; total_orders: number }>();
-      monthOrders?.forEach(order => {
-        const dateStr = new Date(order.created_at).toISOString().split('T')[0];
-        const existing = monthDataMap.get(dateStr) || { total_sales: 0, total_orders: 0 };
-        monthDataMap.set(dateStr, {
-          total_sales: existing.total_sales + (order.total_amount || 0),
-          total_orders: existing.total_orders + 1
-        });
-      });
+      (monthOrders || []).forEach(o => aggregate(monthDataMap, new Date(o.created_at).toISOString().split('T')[0], o.total_amount || 0));
+      (monthPos || []).filter((s: any) => s.status !== 'cancelled').forEach((s: any) => aggregate(monthDataMap, new Date(s.sold_at).toISOString().split('T')[0], s.total_amount || 0));
 
       const monthData: DailySales[] = Array.from(monthDataMap.entries()).map(([date, data]) => ({
         date,

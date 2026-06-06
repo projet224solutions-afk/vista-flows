@@ -421,16 +421,16 @@ export default function MessageItem({
                       {(attachment.type.startsWith('audio/') || attachment.type === 'voice' || attachment.name.includes('vocal')) && (
                         <div className={cn(
                           "flex items-center gap-2 p-3 bg-background/10 rounded-lg",
-                          audioErrors[`attachment-${index}`] && "border border-red-500/30"
+                          audioErrors[`attachment-${index}`] && "border border-[#ff4000]/30"
                         )}>
                           {audioErrors[`attachment-${index}`] ? (
                             // État d'erreur
                             <>
-                              <div className="h-10 w-10 rounded-full flex-shrink-0 bg-red-500/20 flex items-center justify-center">
-                                <AlertCircle className="w-4 h-4 text-red-500" />
+                              <div className="h-10 w-10 rounded-full flex-shrink-0 bg-[#ff4000]/20 flex items-center justify-center">
+                                <AlertCircle className="w-4 h-4 text-[#ff4000]" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span className="text-xs text-red-500 font-medium">Format non supporté</span>
+                                <span className="text-xs text-[#ff4000] font-medium">Format non supporté</span>
                               </div>
                               <a
                                 href={attachment.url}
@@ -606,23 +606,23 @@ export default function MessageItem({
                       message.isOwn
                         ? "bg-primary-foreground/10"
                         : "bg-muted/50",
-                      hasError && "border border-red-500/30"
+                      hasError && "border border-[#ff4000]/30"
                     )}>
                       {/* Affichage conditionnel selon l'état */}
                       {hasError ? (
                         // État d'erreur - format non supporté
                         <>
-                          <div className="h-11 w-11 rounded-full flex-shrink-0 bg-red-500/20 flex items-center justify-center">
+                          <div className="h-11 w-11 rounded-full flex-shrink-0 bg-[#ff4000]/20 flex items-center justify-center">
                             {platformInfo.isIOS ? (
-                              <Smartphone className="w-5 h-5 text-red-500" />
+                              <Smartphone className="w-5 h-5 text-[#ff4000]" />
                             ) : (
-                              <AlertCircle className="w-5 h-5 text-red-500" />
+                              <AlertCircle className="w-5 h-5 text-[#ff4000]" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center gap-2">
-                              <Mic className="w-3.5 h-3.5 flex-shrink-0 text-red-500" />
-                              <span className="text-xs font-medium text-red-500">
+                              <Mic className="w-3.5 h-3.5 flex-shrink-0 text-[#ff4000]" />
+                              <span className="text-xs font-medium text-[#ff4000]">
                                 {platformInfo.isIOS ? 'Non supporté sur iPhone' : 'Format non supporté'}
                               </span>
                             </div>

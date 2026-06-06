@@ -326,7 +326,7 @@ export function OfflinePOSInterface() {
                 <span>{subtotal.toLocaleString()} GNF</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
+                <div className="flex justify-between text-sm text-[#ff4000]">
                   <span>Remise:</span>
                   <span>-{discount.toLocaleString()} GNF</span>
                 </div>

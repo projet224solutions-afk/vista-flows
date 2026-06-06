@@ -35,24 +35,24 @@ export default function SyndicateElections({ _bureauId }: SyndicateElectionsProp
 
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                        <div className="text-2xl font-bold text-green-600">{electionStats.totalVoters}</div>
+                        <Users className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
+                        <div className="text-2xl font-bold text-[#ff4000]">{electionStats.totalVoters}</div>
                         <div className="text-sm text-gray-600">Électeurs Inscrits</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
-                        <div className="text-2xl font-bold text-yellow-600">{electionStats.completedElections}</div>
+                        <Trophy className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
+                        <div className="text-2xl font-bold text-[#ff4000]">{electionStats.completedElections}</div>
                         <div className="text-sm text-gray-600">Élections Terminées</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <Calendar className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                        <div className="text-2xl font-bold text-purple-600">{electionStats.upcomingElections}</div>
+                        <Calendar className="w-8 h-8 mx-auto mb-2 text-[#04439e]" />
+                        <div className="text-2xl font-bold text-[#04439e]">{electionStats.upcomingElections}</div>
                         <div className="text-sm text-gray-600">À Venir</div>
                     </CardContent>
                 </Card>
@@ -119,14 +119,14 @@ export default function SyndicateElections({ _bureauId }: SyndicateElectionsProp
                         </p>
                         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                             <div className="space-y-2">
-                                <CheckCircle className="w-6 h-6 mx-auto text-green-600" />
+                                <CheckCircle className="w-6 h-6 mx-auto text-[#ff4000]" />
                                 <div className="text-sm">
                                     <div className="font-medium">Votes Cryptés</div>
                                     <div className="text-xs text-gray-600">Sécurité maximale</div>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Trophy className="w-6 h-6 mx-auto text-yellow-600" />
+                                <Trophy className="w-6 h-6 mx-auto text-[#ff4000]" />
                                 <div className="text-sm">
                                     <div className="font-medium">Résultats Auto</div>
                                     <div className="text-xs text-gray-600">Transparence totale</div>

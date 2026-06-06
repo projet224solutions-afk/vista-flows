@@ -279,7 +279,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                 style={{ fontFamily: 'Arial, sans-serif' }}
               >
                 {/* Header avec dégradé bleu */}
-                <div className="relative h-[230px] bg-gradient-to-r from-[#1e3a8a] via-[#1e40af] to-[#2563eb] px-8 pt-6">
+                <div className="relative h-[230px] bg-gradient-to-r from-[#04439e] via-[#04439e] to-[#04439e] px-8 pt-6">
                   <div className="absolute top-6 right-8 text-white">
                     <div className="text-3xl font-bold tracking-widest">TAXI-MOTO DE {bureauName.toUpperCase()}</div>
                     <div className="text-xs text-right mt-1 opacity-80">224solutions</div>
@@ -290,11 +290,11 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                 <div className="relative -mt-28 px-8">
                   <div className="flex gap-6">
                     {/* Photo */}
-                    <div className="w-[280px] h-[320px] bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl border-8 border-white shadow-xl flex items-center justify-center overflow-hidden">
+                    <div className="w-[280px] h-[320px] bg-gradient-to-b from-blue-200 to-blue-100 rounded-2xl border-8 border-white shadow-xl flex items-center justify-center overflow-hidden">
                       {badgeData.photo ? (
                         <img loading="lazy" src={badgeData.photo} alt="Photo" className="w-full h-full object-cover" />
                       ) : (
-                        <Camera className="w-24 h-24 text-sky-400" />
+                        <Camera className="w-24 h-24 text-[#04439e]" />
                       )}
                     </div>
 
@@ -310,11 +310,11 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   {/* Informations détaillées et signature */}
                   <div className="grid grid-cols-3 gap-8 mt-8">
                     <div>
-                      <div className="text-xl font-semibold text-[#1e40af]">ID No</div>
+                      <div className="text-xl font-semibold text-[#04439e]">ID No</div>
                       <div className="text-3xl font-bold text-gray-900">{badgeData.idNumber}</div>
                     </div>
                     <div>
-                      <div className="text-xl font-semibold text-[#1e40af]">Joined Date</div>
+                      <div className="text-xl font-semibold text-[#04439e]">Joined Date</div>
                       <div className="text-2xl font-medium text-gray-900">{badgeData.joinedDate}</div>
                     </div>
                     <div className="row-span-2 flex flex-col items-end justify-center">
@@ -329,11 +329,11 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                       />
                     </div>
                     <div>
-                      <div className="text-xl font-semibold text-[#1e40af]">D.O.B</div>
+                      <div className="text-xl font-semibold text-[#04439e]">D.O.B</div>
                       <div className="text-2xl font-medium text-gray-900">{badgeData.dob || 'DD/MM/YEAR'}</div>
                     </div>
                     <div>
-                      <div className="text-xl font-semibold text-[#1e40af]">Expire Date</div>
+                      <div className="text-xl font-semibold text-[#04439e]">Expire Date</div>
                       <div className="text-2xl font-medium text-gray-900">{badgeData.expireDate}</div>
                     </div>
                   </div>

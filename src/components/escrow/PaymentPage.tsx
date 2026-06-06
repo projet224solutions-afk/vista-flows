@@ -114,7 +114,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-6 text-center">
-                        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <AlertCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Erreur</h2>
                         <p className="text-gray-600 mb-4">{error}</p>
                         <Button onClick={() => navigate('/')} variant="outline">
@@ -131,7 +131,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-6 text-center">
-                        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                        <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Paiement sécurisé !</h2>
                         <p className="text-gray-600 mb-4">
                             Votre paiement de <strong>{transaction.totalAmount} GNF</strong> est sécurisé par 224SECURE.
@@ -156,7 +156,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-6 text-center">
-                        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <AlertCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Facture non trouvée</h2>
                         <p className="text-gray-600 mb-4">Cette facture n'existe pas ou a expiré.</p>
                         <Button onClick={() => navigate('/')} variant="outline">
@@ -213,7 +213,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                             </div>
                             <div className="border-t pt-2 flex justify-between font-semibold">
                                 <span>Total à payer:</span>
-                                <span className="text-green-600">{totalAmount} GNF</span>
+                                <span className="text-[#ff4000]">{totalAmount} GNF</span>
                             </div>
                         </div>
 
@@ -244,7 +244,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                                         onChange={(e) => setSelectedPaymentMethod(e.target.value)}
                                         className="mr-3"
                                     />
-                                    <Smartphone className="w-5 h-5 text-green-600 mr-3" />
+                                    <Smartphone className="w-5 h-5 text-[#ff4000] mr-3" />
                                     <span>Mobile Money</span>
                                 </label>
 
@@ -257,7 +257,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                                         onChange={(e) => setSelectedPaymentMethod(e.target.value)}
                                         className="mr-3"
                                     />
-                                    <CreditCard className="w-5 h-5 text-purple-600 mr-3" />
+                                    <CreditCard className="w-5 h-5 text-[#04439e] mr-3" />
                                     <span>Carte bancaire</span>
                                 </label>
                             </div>

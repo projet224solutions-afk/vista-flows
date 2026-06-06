@@ -44,9 +44,9 @@ interface CoreFeatureRegistryRow {
 }
 
 const STATUS_COLORS = {
-  active: 'bg-green-500',
-  suspended: 'bg-yellow-500',
-  expired: 'bg-red-500',
+  active: 'bg-[#ff4000]',
+  suspended: 'bg-[#ff4000]',
+  expired: 'bg-[#ff4000]',
   error: 'bg-orange-500'
 };
 
@@ -57,7 +57,7 @@ const STATUS_LABELS = {
   error: 'Erreur'
 };
 
-const API_TYPE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+const API_TYPE_COLORS = ['#04439e', '#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export default function ApiSupervision() {
   const navigate = useNavigate();
@@ -231,10 +231,10 @@ export default function ApiSupervision() {
                 <Badge variant="outline">Backend: {backendConfig.baseUrl || 'relative / same-origin'}</Badge>
                 <Badge className={
                   backendHealth === 'ok'
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-[#ff4000] text-white'
                     : backendHealth === 'error'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-yellow-500 text-white'
+                    ? 'bg-[#ff4000] text-white'
+                    : 'bg-[#ff4000] text-white'
                 }>
                   Santé backend: {backendHealth}
                 </Badge>
@@ -280,7 +280,7 @@ export default function ApiSupervision() {
                 <Activity className="h-10 w-10 text-primary" />
               </div>
               <div className="mt-4 flex gap-2">
-                <span className="text-xs text-green-600">{stats.active} actives</span>
+                <span className="text-xs text-[#ff4000]">{stats.active} actives</span>
                 <span className="text-xs text-muted-foreground">•</span>
                 <span className="text-xs text-destructive">{stats.expired} expirées</span>
               </div>
@@ -296,7 +296,7 @@ export default function ApiSupervision() {
                     {stats.totalTokensUsed.toLocaleString()}
                   </p>
                 </div>
-                <Zap className="h-10 w-10 text-yellow-500" />
+                <Zap className="h-10 w-10 text-[#ff4000]" />
               </div>
               <Progress
                 value={stats.totalTokensLimit > 0 ? (stats.totalTokensUsed / stats.totalTokensLimit) * 100 : 0}
@@ -325,9 +325,9 @@ export default function ApiSupervision() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">224Guard</p>
-                  <p className="text-lg font-bold text-green-600 mt-1">Actif</p>
+                  <p className="text-lg font-bold text-[#ff4000] mt-1">Actif</p>
                 </div>
-                <Shield className="h-10 w-10 text-green-600" />
+                <Shield className="h-10 w-10 text-[#ff4000]" />
               </div>
               <p className="text-xs text-muted-foreground mt-4">
                 Surveillance en temps réel
@@ -363,7 +363,7 @@ export default function ApiSupervision() {
                         labelLine={false}
                         label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
-                        fill="#8884d8"
+                        fill="#04439e"
                         dataKey="value"
                       >
                         {apiTypeData.map((entry, index) => (
@@ -389,8 +389,8 @@ export default function ApiSupervision() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="utilises" fill="#3B82F6" />
-                      <Bar dataKey="restants" fill="#10B981" />
+                      <Bar dataKey="utilises" fill="#04439e" />
+                      <Bar dataKey="restants" fill="#ff4000" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -403,7 +403,7 @@ export default function ApiSupervision() {
             {/* API Fonctionnelles */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 <h3 className="text-lg font-semibold">API Fonctionnelles ({workingApis.length})</h3>
               </div>
 
@@ -416,7 +416,7 @@ export default function ApiSupervision() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {workingApis.map((api) => (
-                    <Card key={api.id} className="hover:border-green-500 transition-colors cursor-pointer border-green-200" onClick={() => {
+                    <Card key={api.id} className="hover:border-[#ff4000] transition-colors cursor-pointer border-orange-200" onClick={() => {
                       setSelectedApi(api);
                       setModalOpen(true);
                     }}>
@@ -428,7 +428,7 @@ export default function ApiSupervision() {
                               {api.api_provider}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-green-500 text-white">
+                          <Badge className="bg-[#ff4000] text-white">
                             Actif
                           </Badge>
                         </div>
@@ -478,23 +478,23 @@ export default function ApiSupervision() {
             {/* API défaillantes / non configurées */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <XCircle className="h-5 w-5 text-red-600" />
+                <XCircle className="h-5 w-5 text-[#ff4000]" />
                 <h3 className="text-lg font-semibold">API défaillantes ou non configurées ({brokenApis.length})</h3>
               </div>
 
               {brokenApis.length === 0 ? (
-                <Card className="border-green-200">
+                <Card className="border-orange-200">
                   <CardContent className="py-8">
                     <div className="text-center">
-                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                      <p className="text-green-600 font-medium">Toutes les API fonctionnent correctement !</p>
+                      <CheckCircle2 className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
+                      <p className="text-[#ff4000] font-medium">Toutes les API fonctionnent correctement !</p>
                     </div>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {brokenApis.map((api) => (
-                    <Card key={api.id} className="hover:border-red-500 transition-colors cursor-pointer border-red-200" onClick={() => {
+                    <Card key={api.id} className="hover:border-[#ff4000] transition-colors cursor-pointer border-orange-200" onClick={() => {
                       setSelectedApi(api);
                       setModalOpen(true);
                     }}>
@@ -520,7 +520,7 @@ export default function ApiSupervision() {
                         </div>
 
                         {/* Raison de l'erreur */}
-                        <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded text-xs text-red-600">
+                        <div className="p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded text-xs text-[#ff4000]">
                           {api.metadata?.key_configured === false ? (
                             <span>Clé API non configurée dans les variables d'environnement</span>
                           ) : api.status === 'error' ? (
@@ -576,7 +576,7 @@ export default function ApiSupervision() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-yellow-500" />
+                  <Bell className="h-5 w-5 text-[#ff4000]" />
                   Alertes actives ({alerts.length})
                 </CardTitle>
               </CardHeader>
@@ -584,7 +584,7 @@ export default function ApiSupervision() {
                 <div className="space-y-3">
                   {alerts.length === 0 ? (
                     <div className="text-center py-8">
-                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                      <CheckCircle2 className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
                       <p className="text-muted-foreground">Aucune alerte active</p>
                     </div>
                   ) : (
@@ -597,9 +597,9 @@ export default function ApiSupervision() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <Badge className={
-                                alert.severity === 'critical' ? 'bg-red-600' :
+                                alert.severity === 'critical' ? 'bg-[#ff4000]' :
                                 alert.severity === 'high' ? 'bg-orange-500' :
-                                alert.severity === 'medium' ? 'bg-yellow-500' :
+                                alert.severity === 'medium' ? 'bg-[#ff4000]' :
                                 'bg-blue-500'
                               }>
                                 {alert.severity.toUpperCase()}
@@ -614,7 +614,7 @@ export default function ApiSupervision() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-green-600 hover:text-green-500"
+                            className="text-[#ff4000] hover:text-[#ff4000]"
                             onClick={async () => {
                               try {
                                 const { data: { user } } = await supabase.auth.getUser();
@@ -673,11 +673,11 @@ export default function ApiSupervision() {
                       const lastStatus = feature.health24h?.lastStatus || null;
                       const statusBadgeClass =
                         lastStatus === 'success'
-                          ? 'bg-green-500 text-white'
+                          ? 'bg-[#ff4000] text-white'
                           : lastStatus === 'degraded'
-                          ? 'bg-yellow-500 text-white'
+                          ? 'bg-[#ff4000] text-white'
                           : lastStatus === 'failure'
-                          ? 'bg-red-600 text-white'
+                          ? 'bg-[#ff4000] text-white'
                           : 'bg-muted text-muted-foreground';
 
                       return (

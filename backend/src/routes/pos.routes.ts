@@ -1,6 +1,6 @@
 /**
  * 🏪 POS SYNC ROUTES - Phase 6 (P1 Optimized)
- *
+ * 
  * P1 Optimization:
  *   - Atomic RPC create_pos_sale_complete: 1 DB call per sale
  *   - Combines idempotence + insert sale + items + stock decrement
@@ -18,18 +18,23 @@ import Stripe from 'stripe';
 
 const router = Router();
 
-function hasVendorAgentPosPermission(permissions: unknown): boolean {
-  if (!permissions) return false;
+async function agentHasPosPermission(agentId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('check_agent_permission' as any, {
+      p_agent_id: agentId,
+      p_permission_key: 'access_pos',
+    });
 
-  if (Array.isArray(permissions)) {
-    return permissions.includes('access_pos');
+    if (error) {
+      logger.warn(`[POS] check_agent_permission failed: ${error.message}`);
+      return false;
+    }
+
+    return Boolean(data);
+  } catch (error: any) {
+    logger.warn(`[POS] check_agent_permission exception: ${error?.message || 'unknown'}`);
+    return false;
   }
-
-  if (typeof permissions === 'object') {
-    return Boolean((permissions as Record<string, unknown>).access_pos);
-  }
-
-  return false;
 }
 
 async function resolvePosVendorId(userId: string, requestedVendorId?: string | null): Promise<string | null> {
@@ -46,30 +51,27 @@ async function resolvePosVendorId(userId: string, requestedVendorId?: string | n
     return null;
   }
 
-  const { data: vendorAgent, error: vendorAgentError } = await supabaseAdmin
+  // Agent VENDEUR (vendor_agents), pas agent PDG (agents_management).
+  const { data: agent } = await supabaseAdmin
     .from('vendor_agents')
-    .select('id, vendor_id, is_active, permissions')
+    .select('id, vendor_id, is_active')
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (vendorAgentError) {
-    logger.warn(`[POS] vendor agent lookup failed: ${vendorAgentError.message}`);
+  if (!agent || !agent.is_active || !agent.vendor_id) {
     return null;
   }
 
-  if (!vendorAgent || !vendorAgent.is_active || !vendorAgent.vendor_id) {
+  if (requestedVendorId && requestedVendorId !== agent.vendor_id) {
     return null;
   }
 
-  if (requestedVendorId && requestedVendorId !== vendorAgent.vendor_id) {
+  const canAccessPos = await agentHasPosPermission(agent.id);
+  if (!canAccessPos) {
     return null;
   }
 
-  if (!hasVendorAgentPosPermission(vendorAgent.permissions)) {
-    return null;
-  }
-
-  return vendorAgent.vendor_id;
+  return agent.vendor_id;
 }
 
 async function getConfiguredStripeSecretKey(): Promise<string | null> {
@@ -290,7 +292,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.issues.map(e => ({
+        details: validation.error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -417,6 +419,122 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
     res.status(500).json({ success: false, error: 'Erreur de synchronisation POS' });
   }
 });
+/**
+ * POST /api/pos/order
+ * Création ATOMIQUE d'une commande POS en ligne (mobile money / crédit / carte)
+ * → orders(source='pos') + order_items + décrément stock (trigger) + TAXE server-side,
+ *   le tout dans une seule transaction (RPC create_pos_order_complete).
+ * Le cash passe par /sync (pos_sales) ; cet endpoint couvre les paiements qui ont
+ * besoin d'un order_id (passerelle ChapChapPay) ou d'un suivi de crédit.
+ */
+const PosOrderItemSchema = z.object({
+  product_id: z.string().uuid(),
+  quantity: z.number().int().min(1).max(9999),
+  unit_price: z.number().min(0),
+  discount: z.number().min(0).default(0),
+});
+
+const PosOrderSchema = z.object({
+  order_number: z.string().min(1).max(100),
+  customer_id: z.string().uuid().nullish(),
+  items: z.array(PosOrderItemSchema).min(1).max(100),
+  payment_method: z.enum(['mobile_money', 'card', 'credit', 'cash']),
+  payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).default('pending'),
+  status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).default('processing'),
+  discount_total: z.number().min(0).default(0),
+  notes: z.string().max(500).nullish(),
+  currency: z.string().max(8).default('GNF'),
+  shipping_address: z.record(z.any()).nullish(),
+  // Vente à crédit (utilisé uniquement si payment_method = 'credit')
+  credit_customer_name: z.string().max(200).nullish(),
+  credit_customer_phone: z.string().max(20).nullish(),
+  credit_due_date: z.string().datetime({ message: 'credit_due_date doit être ISO 8601' }).nullish(),
+  credit_notes: z.string().max(500).nullish(),
+  credit_items: z.array(z.record(z.any())).max(100).nullish(),
+});
+
+router.post('/order', verifyJWT, posSyncRateLimit, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const requestedVendorId = (req.headers['x-vendor-id'] as string | undefined)?.trim() || null;
+    const vendorId = await resolvePosVendorId(userId, requestedVendorId);
+
+    if (!vendorId) {
+      res.status(404).json({ success: false, error: 'Boutique non trouvée' });
+      return;
+    }
+
+    const validation = PosOrderSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        success: false,
+        error: 'Données invalides',
+        details: validation.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })),
+      });
+      return;
+    }
+
+    const order = validation.data;
+
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('create_pos_order_complete' as any, {
+      p_vendor_id: vendorId,
+      p_customer_id: order.customer_id || null,
+      p_order_number: order.order_number,
+      p_items: order.items,
+      p_payment_method: order.payment_method,
+      p_payment_status: order.payment_status,
+      p_status: order.status,
+      p_discount_total: order.discount_total,
+      p_notes: order.notes || null,
+      p_currency: order.currency,
+      ...(order.shipping_address ? { p_shipping_address: order.shipping_address } : {}),
+      p_credit_customer_name: order.credit_customer_name || null,
+      p_credit_customer_phone: order.credit_customer_phone || null,
+      p_credit_due_date: order.credit_due_date || null,
+      p_credit_notes: order.credit_notes || null,
+      p_credit_items: order.credit_items || null,
+    });
+
+    if (rpcError) {
+      logger.error(`POS order RPC error (${order.order_number}): ${rpcError.message}`);
+      res.status(500).json({ success: false, error: 'Erreur de création de la commande POS' });
+      return;
+    }
+
+    const result = rpcResult as {
+      status: 'created' | 'error';
+      order_id?: string;
+      order_number?: string;
+      subtotal?: number;
+      tax_amount?: number;
+      total?: number;
+      error?: string;
+    };
+
+    if (result.status === 'error') {
+      logger.error(`POS order error (${order.order_number}): ${result.error}`);
+      res.status(409).json({ success: false, error: result.error || 'Échec de création de la commande POS' });
+      return;
+    }
+
+    logger.info(`POS order created: vendor=${vendorId}, order=${result.order_id}, total=${result.total}`);
+
+    res.json({
+      success: true,
+      data: {
+        order_id: result.order_id,
+        order_number: result.order_number,
+        subtotal: result.subtotal,
+        tax_amount: result.tax_amount,
+        total: result.total,
+      },
+    });
+  } catch (error: any) {
+    logger.error(`POS order error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur de création de la commande POS' });
+  }
+});
+
 /**
  * GET /api/pos/sales
  */
@@ -619,8 +737,8 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
     // ── 5. CALCUL FINANCIER (colonne vertébrale — ne pas modifier sans audit) --
     // GNF est une devise sans décimales → on arrondit toujours à l'entier
     const commissionAmount = Math.round(amount * (commissionRate / 100));
-    const totalAmount      = amount + commissionAmount; // facturé au CLIENT
-    const sellerNetAmount  = amount;                   // reversé au VENDEUR
+    const totalAmount = amount + commissionAmount; // facturé au CLIENT
+    const sellerNetAmount = amount;                   // reversé au VENDEUR
 
     logger.info('[POS Stripe] Calcul commission', {
       buyerId,
@@ -634,23 +752,23 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
     });
 
     // ── 6. Créer le Payment Intent Stripe ────────────────────────────────────
-    const stripe = new Stripe(stripeKey, { apiVersion: '2026-03-25.dahlia' });
+    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount), // Stripe reçoit le total (GNF = entier)
       currency: currency.toLowerCase(),
       automatic_payment_methods: { enabled: true },
       metadata: {
-        order_id:           orderId,
-        buyer_id:           buyerId,
-        seller_id:          sellerId,
-        product_amount:     amount.toString(),
-        commission_rate:    commissionRate.toString(),
-        commission_amount:  commissionAmount.toString(),
-        total_amount:       totalAmount.toString(),
-        seller_net_amount:  sellerNetAmount.toString(),
-        source:             'pos',
-        description:        description || 'Paiement POS 224Solutions',
+        order_id: orderId,
+        buyer_id: buyerId,
+        seller_id: sellerId,
+        product_amount: amount.toString(),
+        commission_rate: commissionRate.toString(),
+        commission_amount: commissionAmount.toString(),
+        total_amount: totalAmount.toString(),
+        seller_net_amount: sellerNetAmount.toString(),
+        source: 'pos',
+        description: description || 'Paiement POS 224Solutions',
       },
     });
 
@@ -659,22 +777,22 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
       .from('stripe_transactions')
       .insert({
         stripe_payment_intent_id: paymentIntent.id,
-        buyer_id:          buyerId,
-        seller_id:         sellerId,
-        amount:            totalAmount,        // total facturé client
-        currency:          currency.toUpperCase(),
-        commission_rate:   commissionRate,
+        buyer_id: buyerId,
+        seller_id: sellerId,
+        amount: totalAmount,        // total facturé client
+        currency: currency.toUpperCase(),
+        commission_rate: commissionRate,
         commission_amount: commissionAmount,
         seller_net_amount: sellerNetAmount,    // net reversé vendeur
-        status:            'PENDING',
-        order_id:          orderId || null,
-        payment_method:    'card',
+        status: 'PENDING',
+        order_id: orderId || null,
+        payment_method: 'card',
         metadata: {
-          description:    description || 'Paiement POS',
-          source:         'pos',
-          created_by:     buyerId,
+          description: description || 'Paiement POS',
+          source: 'pos',
+          created_by: buyerId,
           product_amount: amount,
-          total_amount:   totalAmount,
+          total_amount: totalAmount,
         },
       })
       .select('id')
@@ -689,10 +807,10 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
 
     // ── 8. Réponse ────────────────────────────────────────────────────────────
     res.json({
-      success:        true,
-      clientSecret:   paymentIntent.client_secret,
+      success: true,
+      clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-      transactionId:  transaction?.id ?? null,
+      transactionId: transaction?.id ?? null,
       // Données de commissionnement pour affichage UI
       commissionRate,
       commissionAmount,

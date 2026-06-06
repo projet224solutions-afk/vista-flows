@@ -20,7 +20,7 @@ import {
   TrendingUp, Calendar, Shield, Hash, ChevronLeft, ChevronRight,
   Eye, XCircle, Info, Copy, Check, Wand2, Loader2, Layers
 } from 'lucide-react';
-import { generateUniqueId, type RoleType } from '@/lib/autoIdGenerator';
+import { type RoleType } from '@/lib/autoIdGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -81,27 +81,27 @@ const _SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR', 'USR'];
 
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
-  'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
-  'format_invalid': { label: 'Format invalide', color: '#F59E0B' },
-  'sequence_gap': { label: 'Gap de séquence', color: '#3B82F6' },
-  'counter_mismatch': { label: 'Compteur désynchronisé', color: '#8B5CF6' },
-  'manual_override': { label: 'Correction manuelle', color: '#10B981' },
-  'collision_resolved': { label: 'Collision résolue', color: '#EC4899' },
+  'duplicate_detected': { label: 'Doublon détecté', color: '#ff4000' },
+  'format_invalid': { label: 'Format invalide', color: '#ff4000' },
+  'sequence_gap': { label: 'Gap de séquence', color: '#04439e' },
+  'counter_mismatch': { label: 'Compteur désynchronisé', color: '#04439e' },
+  'manual_override': { label: 'Correction manuelle', color: '#ff4000' },
+  'collision_resolved': { label: 'Collision résolue', color: '#ff4000' },
   'prefix_mismatch': { label: 'Préfixe incorrect', color: '#F97316' },
-  'migration_fix': { label: 'Correction migration', color: '#06B6D4' },
+  'migration_fix': { label: 'Correction migration', color: '#04439e' },
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  'vendor': '#3B82F6',
-  'client': '#10B981',
-  'agent': '#F59E0B',
-  'driver': '#8B5CF6',
-  'bureau': '#EC4899',
-  'taxi': '#6366F1',
-  'livreur': '#14B8A6',
-  'pdg': '#EF4444',
+  'vendor': '#04439e',
+  'client': '#ff4000',
+  'agent': '#ff4000',
+  'driver': '#04439e',
+  'bureau': '#ff4000',
+  'taxi': '#04439e',
+  'livreur': '#ff4000',
+  'pdg': '#ff4000',
   'transitaire': '#F97316',
-  'worker': '#84CC16',
+  'worker': '#ff4000',
 };
 
 const PREFIX_TO_ROLE: Record<string, string> = {
@@ -124,7 +124,7 @@ const PREFIX_TO_ROLE: Record<string, string> = {
   'USR': 'Utilisateur',
 };
 
-const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
+const PIE_COLORS = ['#04439e', '#ff4000', '#ff4000', '#04439e', '#ff4000', '#ff4000'];
 
 export default function IdNormalizationAudit() {
   const [logs, setLogs] = useState<NormalizationLog[]>([]);
@@ -462,94 +462,24 @@ export default function IdNormalizationAudit() {
     setCorrectingId(item.id);
 
     try {
-      const originalId = item.custom_id;
+      // Normalisation server-side (PDG) : génération + sync user_ids/profiles/vendors + log
+      const { backendFetch } = await import('@/services/backendApi');
+      const res = await backendFetch<{ original_id: string | null; custom_id: string }>(
+        '/api/admin/ids/normalize',
+        { method: 'POST', body: { userId: item.user_id, reason: 'format_invalid' } }
+      );
 
-      // Retry loop to handle DB-level unique constraint races
-      let newId: string | null = null;
-      const maxAttempts = 5;
-      let attempt = 0;
-
-      while (attempt < maxAttempts) {
-        attempt++;
-        newId = await generateUniqueId(roleType);
-
-        console.log(`🔄 Correction ID (tentative ${attempt}/${maxAttempts}): ${originalId} → ${newId} (${roleType})`);
-
-        // 1. Mettre à jour user_ids.custom_id
-        const { error: updateError } = await supabase
-          .from('user_ids')
-          .update({ custom_id: newId })
-          .eq('id', item.id);
-
-        if (!updateError) {
-          // 2. CRITIQUE: Synchroniser profiles.public_id pour éviter les désynchronisations
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ public_id: newId })
-            .eq('id', item.user_id);
-
-          if (profileError) {
-            console.error('⚠️ Erreur sync profiles.public_id:', profileError);
-            // Continuer quand même, l'ID principal est corrigé
-          } else {
-            console.log(`✅ profiles.public_id synchronisé: ${newId}`);
-          }
-
-          // 3. Log the normalization (best effort)
-          const { error: logError } = await supabase
-            .from('id_normalization_logs')
-            .insert({
-              user_id: item.user_id,
-              role_type: roleType,
-              original_id: originalId,
-              corrected_id: newId,
-              reason: 'format_invalid',
-              reason_details: {
-                original_format: originalId,
-                corrected_format: newId,
-                correction_type: 'manual_pdg_correction',
-                profiles_synced: !profileError,
-                timestamp: new Date().toISOString()
-              },
-              metadata: {
-                corrected_by: 'pdg_audit_interface',
-                profile_email: item.profile?.email,
-                profile_name: item.profile?.full_name
-              }
-            });
-
-          if (logError) {
-            console.error('Erreur log normalisation:', logError);
-          }
-
-          toast.success(`ID corrigé: ${originalId} → ${newId}`);
-
-          // Force refresh the lists with a small delay to ensure DB is updated
-          setTimeout(async () => {
-            await loadNonStandardUsers();
-            await loadStats();
-            await loadAllUserIds();
-          }, 500);
-
-          return;
-        }
-
-        // If duplicate key, retry with a new ID
-        const isDuplicate =
-          (updateError as any)?.code === '23505' ||
-          String(updateError.message || '').includes('user_ids_custom_id_key') ||
-          String(updateError.message || '').includes('duplicate key value');
-
-        if (!isDuplicate) {
-          throw updateError;
-        }
-
-        console.warn(`⚠️ Conflit d'unicité sur ${newId}, nouvelle tentative...`, updateError);
-        await new Promise((resolve) => setTimeout(resolve, 150));
+      if (!res.success || !res.data) {
+        throw new Error(res.error || 'Échec de la correction');
       }
 
-      throw new Error(`Impossible de corriger: conflit d'unicité après ${maxAttempts} tentatives`);
+      toast.success(`ID corrigé: ${res.data.original_id || item.custom_id} → ${res.data.custom_id}`);
 
+      setTimeout(async () => {
+        await loadNonStandardUsers();
+        await loadStats();
+        await loadAllUserIds();
+      }, 500);
     } catch (error: any) {
       console.error('Erreur correction ID:', error);
       toast.error(`Erreur lors de la correction: ${error.message}`);
@@ -580,87 +510,16 @@ export default function IdNormalizationAudit() {
     let errorCount = 0;
     const errors: string[] = [];
 
-    // Process one by one with retries to avoid unique constraint races
+    // Normalisation server-side, une par une (PDG)
+    const { backendFetch } = await import('@/services/backendApi');
     for (const item of toCorrect) {
       try {
-        const roleType = mapRoleToRoleType(item.profile?.role)!;
-        const originalId = item.custom_id;
-
-        const maxAttempts = 5;
-        let attempt = 0;
-        let updated = false;
-        let lastError: any = null;
-
-        while (attempt < maxAttempts && !updated) {
-          attempt++;
-          const newId = await generateUniqueId(roleType);
-
-          // 1. Mettre à jour user_ids.custom_id
-          const { error: updateError } = await supabase
-            .from('user_ids')
-            .update({ custom_id: newId })
-            .eq('id', item.id);
-
-          if (!updateError) {
-            // 2. CRITIQUE: Synchroniser profiles.public_id
-            const { error: profileError } = await supabase
-              .from('profiles')
-              .update({ public_id: newId })
-              .eq('id', item.user_id);
-
-            if (profileError) {
-              console.error(`⚠️ Erreur sync profiles.public_id pour ${item.user_id}:`, profileError);
-            }
-
-            // 3. Log the normalization (best effort)
-            await supabase
-              .from('id_normalization_logs')
-              .insert({
-                user_id: item.user_id,
-                role_type: roleType,
-                original_id: originalId,
-                corrected_id: newId,
-                reason: 'format_invalid',
-                reason_details: {
-                  original_format: originalId,
-                  corrected_format: newId,
-                  correction_type: 'bulk_pdg_correction',
-                  profiles_synced: !profileError,
-                  timestamp: new Date().toISOString()
-                },
-                metadata: {
-                  corrected_by: 'pdg_audit_interface',
-                  profile_email: item.profile?.email,
-                  profile_name: item.profile?.full_name
-                }
-              });
-
-            successCount++;
-            updated = true;
-            break;
-          }
-
-          const isDuplicate =
-            (updateError as any)?.code === '23505' ||
-            String(updateError.message || '').includes('user_ids_custom_id_key') ||
-            String(updateError.message || '').includes('duplicate key value');
-
-          if (!isDuplicate) {
-            throw updateError;
-          }
-
-          lastError = updateError;
-          console.warn(`⚠️ Conflit d'unicité (bulk) sur tentative ${attempt}/${maxAttempts}`, updateError);
-          await new Promise((resolve) => setTimeout(resolve, 150));
-        }
-
-        if (!updated) {
-          throw lastError || new Error(`Conflit d'unicité après ${maxAttempts} tentatives`);
-        }
-
-        // Small delay between corrections to reduce contention
-        await new Promise((resolve) => setTimeout(resolve, 120));
-
+        const res = await backendFetch<{ original_id: string | null; custom_id: string }>(
+          '/api/admin/ids/normalize',
+          { method: 'POST', body: { userId: item.user_id, reason: 'format_invalid' } }
+        );
+        if (!res.success) throw new Error(res.error || 'Échec');
+        successCount++;
       } catch (error: any) {
         console.error(`Erreur correction ${item.custom_id}:`, error);
         errors.push(`${item.custom_id}: ${error.message}`);
@@ -808,19 +667,19 @@ export default function IdNormalizationAudit() {
     const colors: Record<string, string> = {
       'vendor': 'bg-blue-500',
       'vendeur': 'bg-blue-500',
-      'client': 'bg-green-500',
-      'agent': 'bg-yellow-500',
-      'driver': 'bg-purple-500',
-      'chauffeur': 'bg-purple-500',
-      'taxi': 'bg-indigo-500',
-      'livreur': 'bg-teal-500',
-      'bureau': 'bg-pink-500',
-      'syndicat': 'bg-pink-500',
-      'pdg': 'bg-red-500',
-      'admin': 'bg-red-500',
-      'ceo': 'bg-red-500',
+      'client': 'bg-[#ff4000]',
+      'agent': 'bg-[#ff4000]',
+      'driver': 'bg-[#04439e]',
+      'chauffeur': 'bg-[#04439e]',
+      'taxi': 'bg-[#04439e]',
+      'livreur': 'bg-[#ff4000]',
+      'bureau': 'bg-[#ff4000]',
+      'syndicat': 'bg-[#ff4000]',
+      'pdg': 'bg-[#ff4000]',
+      'admin': 'bg-[#ff4000]',
+      'ceo': 'bg-[#ff4000]',
       'transitaire': 'bg-orange-500',
-      'worker': 'bg-lime-500',
+      'worker': 'bg-[#ff4000]',
     };
 
     // Trouver le label à afficher
@@ -931,8 +790,8 @@ export default function IdNormalizationAudit() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+              <div className="p-2 bg-[#ff4000]/10 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.standardFormatCount || 0}</p>
@@ -945,8 +804,8 @@ export default function IdNormalizationAudit() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/10 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              <div className="p-2 bg-[#ff4000]/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.nonStandardFormatCount || 0}</p>
@@ -959,8 +818,8 @@ export default function IdNormalizationAudit() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                <Shield className="w-5 h-5 text-red-500" />
+              <div className="p-2 bg-[#ff4000]/10 rounded-lg">
+                <Shield className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.total || 0}</p>
@@ -1020,7 +879,7 @@ export default function IdNormalizationAudit() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                    <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                     Utilisateurs avec ID Non-Standard
                   </CardTitle>
                   <CardDescription>
@@ -1031,7 +890,7 @@ export default function IdNormalizationAudit() {
                   <Button
                     onClick={handleCorrectAllIds}
                     disabled={correctingAll}
-                    className="gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                    className="gap-2 bg-gradient-to-r from-[#ff4000] to-orange-500 hover:from-[#ff4000] hover:to-orange-600 text-white"
                   >
                     {correctingAll ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1051,8 +910,8 @@ export default function IdNormalizationAudit() {
                 </div>
               ) : nonStandardUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
-                  <h4 className="font-semibold text-green-700 dark:text-green-400">Parfait !</h4>
+                  <CheckCircle className="w-12 h-12 text-[#ff4000] mb-4" />
+                  <h4 className="font-semibold text-[#ff4000] dark:text-[#ff4000]">Parfait !</h4>
                   <p className="text-sm text-muted-foreground mt-1">
                     Tous les utilisateurs ont des IDs au format standard
                   </p>
@@ -1092,10 +951,10 @@ export default function IdNormalizationAudit() {
                         }
 
                         return (
-                          <TableRow key={item.id} className="bg-yellow-500/5">
+                          <TableRow key={item.id} className="bg-[#ff4000]/5">
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <code className="font-mono font-bold text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded">
+                                <code className="font-mono font-bold text-[#ff4000] dark:text-[#ff4000] bg-orange-100 dark:bg-[#ff4000]/30 px-2 py-1 rounded">
                                   {item.custom_id}
                                 </code>
                                 <Button
@@ -1105,7 +964,7 @@ export default function IdNormalizationAudit() {
                                   onClick={() => handleCopyId(item.custom_id)}
                                 >
                                   {copiedId === item.custom_id ? (
-                                    <Check className="w-3 h-3 text-green-500" />
+                                    <Check className="w-3 h-3 text-[#ff4000]" />
                                   ) : (
                                     <Copy className="w-3 h-3" />
                                   )}
@@ -1113,7 +972,7 @@ export default function IdNormalizationAudit() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="text-yellow-600 border-yellow-600 text-xs">
+                              <Badge variant="outline" className="text-[#ff4000] border-[#ff4000] text-xs">
                                 {problem}
                               </Badge>
                             </TableCell>
@@ -1138,7 +997,7 @@ export default function IdNormalizationAudit() {
                                   size="sm"
                                   onClick={() => handleCorrectId(item)}
                                   disabled={correctingId === item.id || !item.profile?.role}
-                                  className="gap-1 text-xs border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                  className="gap-1 text-xs border-[#ff4000] text-[#ff4000] hover:bg-orange-50 hover:text-[#ff4000]"
                                   title={!item.profile?.role ? 'Rôle non défini - impossible de corriger' : 'Corriger cet ID'}
                                 >
                                   {correctingId === item.id ? (
@@ -1173,7 +1032,7 @@ export default function IdNormalizationAudit() {
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex flex-wrap gap-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-[#ff4000]"></div>
                       <span className="text-sm text-muted-foreground">
                         {nonStandardUsers.length} utilisateur(s) avec ID non-standard
                       </span>
@@ -1231,10 +1090,10 @@ export default function IdNormalizationAudit() {
                       setSearchError(null);
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchId()}
-                    className={`font-mono uppercase ${searchError ? 'border-red-500' : ''}`}
+                    className={`font-mono uppercase ${searchError ? 'border-[#ff4000]' : ''}`}
                   />
                   {searchError && (
-                    <p className="text-sm text-red-500 flex items-center gap-1">
+                    <p className="text-sm text-[#ff4000] flex items-center gap-1">
                       <XCircle className="w-4 h-4" />
                       {searchError}
                     </p>
@@ -1260,19 +1119,19 @@ export default function IdNormalizationAudit() {
               {searchResult && (
                 <div className="mt-6">
                   {searchResult.found ? (
-                    <Card className="border-green-500/50 bg-green-500/5">
+                    <Card className="border-[#ff4000]/50 bg-[#ff4000]/5">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-500/20 rounded-full">
-                              <CheckCircle className="w-6 h-6 text-green-500" />
+                            <div className="p-2 bg-[#ff4000]/20 rounded-full">
+                              <CheckCircle className="w-6 h-6 text-[#ff4000]" />
                             </div>
                             <div>
-                              <h4 className="font-semibold text-green-700 dark:text-green-400">
+                              <h4 className="font-semibold text-[#ff4000] dark:text-[#ff4000]">
                                 ID Trouvé
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
-                                <code className="text-lg font-bold bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded">
+                                <code className="text-lg font-bold bg-orange-100 dark:bg-[#ff4000]/50 px-2 py-1 rounded">
                                   {searchResult.id}
                                 </code>
                                 <Button
@@ -1282,7 +1141,7 @@ export default function IdNormalizationAudit() {
                                   onClick={() => handleCopyId(searchResult.id)}
                                 >
                                   {copiedId === searchResult.id ? (
-                                    <Check className="w-4 h-4 text-green-500" />
+                                    <Check className="w-4 h-4 text-[#ff4000]" />
                                   ) : (
                                     <Copy className="w-4 h-4" />
                                   )}
@@ -1320,7 +1179,7 @@ export default function IdNormalizationAudit() {
                         {searchResult.normalization_history && searchResult.normalization_history.length > 0 && (
                           <div className="mt-4 pt-4 border-t">
                             <h5 className="font-semibold mb-3 flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                              <AlertTriangle className="w-4 h-4 text-[#ff4000]" />
                               Historique de normalisation ({searchResult.normalization_history.length})
                             </h5>
                             <div className="space-y-2">
@@ -1333,11 +1192,11 @@ export default function IdNormalizationAudit() {
                                     {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                                   </span>
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <code className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs line-through">
+                                    <code className="bg-orange-100 text-[#ff4000] px-1.5 py-0.5 rounded text-xs line-through">
                                       {log.original_id}
                                     </code>
                                     <span>→</span>
-                                    <code className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold">
+                                    <code className="bg-orange-100 text-[#ff4000] px-1.5 py-0.5 rounded text-xs font-bold">
                                       {log.corrected_id}
                                     </code>
                                     {getReasonBadge(log.reason)}
@@ -1350,14 +1209,14 @@ export default function IdNormalizationAudit() {
                       </CardContent>
                     </Card>
                   ) : (
-                    <Card className="border-red-500/50 bg-red-500/5">
+                    <Card className="border-[#ff4000]/50 bg-[#ff4000]/5">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-red-500/20 rounded-full">
-                            <XCircle className="w-6 h-6 text-red-500" />
+                          <div className="p-2 bg-[#ff4000]/20 rounded-full">
+                            <XCircle className="w-6 h-6 text-[#ff4000]" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-red-700 dark:text-red-400">
+                            <h4 className="font-semibold text-[#ff4000] dark:text-[#ff4000]">
                               ID Non Trouvé
                             </h4>
                             <p className="text-sm text-muted-foreground">
@@ -1429,11 +1288,11 @@ export default function IdNormalizationAudit() {
                               </TableCell>
                               <TableCell>
                                 {isStandardFormat(item.custom_id) ? (
-                                  <Badge variant="outline" className="text-green-600 border-green-600">
+                                  <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">
                                     Standard
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                                  <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">
                                     Non-standard
                                   </Badge>
                                 )}
@@ -1560,12 +1419,12 @@ export default function IdNormalizationAudit() {
                           </TableCell>
                           <TableCell>{getRoleBadge(log.role_type)}</TableCell>
                           <TableCell>
-                            <code className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded line-through dark:bg-red-900/50 dark:text-red-400">
+                            <code className="text-xs bg-orange-100 text-[#ff4000] px-2 py-1 rounded line-through dark:bg-[#ff4000]/50 dark:text-[#ff4000]">
                               {log.original_id}
                             </code>
                           </TableCell>
                           <TableCell>
-                            <code className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold dark:bg-green-900/50 dark:text-green-400">
+                            <code className="text-xs bg-orange-100 text-[#ff4000] px-2 py-1 rounded font-bold dark:bg-[#ff4000]/50 dark:text-[#ff4000]">
                               {log.corrected_id}
                             </code>
                           </TableCell>

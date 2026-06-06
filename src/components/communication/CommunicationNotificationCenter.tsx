@@ -46,9 +46,9 @@ export default function CommunicationNotificationCenter({
       case 'new_message':
         return 'bg-blue-500';
       case 'missed_call':
-        return 'bg-red-500';
+        return 'bg-[#ff4000]';
       case 'call_incoming':
-        return 'bg-green-500';
+        return 'bg-[#ff4000]';
       default:
         return 'bg-gray-500';
     }

@@ -28,10 +28,10 @@ interface BeautyModuleProps {
 // formatCurrency is now handled via useFormatCurrency hook inside the component
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
   confirmed: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  completed: 'bg-orange-100 text-[#ff4000]',
+  cancelled: 'bg-orange-100 text-[#ff4000]',
   no_show: 'bg-gray-100 text-gray-800',
 };
 
@@ -106,11 +106,11 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           </Button>
         </div>
 
-        <Card className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200">
+        <Card className="bg-gradient-to-r from-orange-50 to-blue-50 dark:from-[#ff4000]/20 dark:to-[#04439e]/20 border-orange-200">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Crown className="w-6 h-6 text-pink-600" />
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Crown className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace Beauté !</h3>
@@ -179,7 +179,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
             <div className="text-2xl font-bold">{stats?.appointments.total || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {stats?.todayAppointments > 0 && (
-                <Badge variant="secondary" className="text-xs bg-pink-100 text-pink-800">
+                <Badge variant="secondary" className="text-xs bg-orange-100 text-[#ff4000]">
                   {stats.todayAppointments} aujourd'hui
                 </Badge>
               )}
@@ -194,7 +194,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.services.total || 0}</div>
-            <span className="text-xs text-green-600">{stats?.services.active || 0} actifs</span>
+            <span className="text-xs text-[#ff4000]">{stats?.services.active || 0} actifs</span>
           </CardContent>
         </Card>
 
@@ -282,22 +282,22 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-pink-50 dark:bg-pink-900/20 border border-pink-200 rounded-lg text-center">
-                    <div className="text-xs font-medium text-pink-700">Aujourd'hui</div>
-                    <div className="text-xl font-bold text-pink-600">{stats?.todayAppointments || 0}</div>
+                  <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 rounded-lg text-center">
+                    <div className="text-xs font-medium text-[#ff4000]">Aujourd'hui</div>
+                    <div className="text-xl font-bold text-[#ff4000]">{stats?.todayAppointments || 0}</div>
                   </div>
-                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 rounded-lg text-center">
-                    <div className="text-xs font-medium text-purple-700">À venir</div>
-                    <div className="text-xl font-bold text-purple-600">{stats?.upcomingAppointments || 0}</div>
+                  <div className="p-3 bg-blue-50 dark:bg-[#04439e]/20 border border-blue-200 rounded-lg text-center">
+                    <div className="text-xs font-medium text-[#04439e]">À venir</div>
+                    <div className="text-xl font-bold text-[#04439e]">{stats?.upcomingAppointments || 0}</div>
                   </div>
                 </div>
 
                 <div className="space-y-2 pt-3 border-t">
-                  <div className="flex justify-between items-center p-2 rounded bg-yellow-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-orange-50">
                     <span className="text-sm flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-yellow-500" /> En attente
+                      <Clock className="w-4 h-4 text-[#ff4000]" /> En attente
                     </span>
-                    <span className="font-semibold text-yellow-700">{stats?.appointments.pending || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.appointments.pending || 0}</span>
                   </div>
                   <div className="flex justify-between items-center p-2 rounded bg-blue-50">
                     <span className="text-sm flex items-center gap-2">
@@ -305,17 +305,17 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                     </span>
                     <span className="font-semibold text-blue-700">{stats?.appointments.confirmed || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-green-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-orange-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" /> Terminés
+                      <CheckCircle className="w-4 h-4 text-[#ff4000]" /> Terminés
                     </span>
-                    <span className="font-semibold text-green-700">{stats?.appointments.completed || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.appointments.completed || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-red-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-orange-50">
                     <span className="text-sm flex items-center gap-2">
-                      <XCircle className="w-4 h-4 text-red-500" /> Annulés
+                      <XCircle className="w-4 h-4 text-[#ff4000]" /> Annulés
                     </span>
-                    <span className="font-semibold text-red-700">{stats?.appointments.cancelled || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.appointments.cancelled || 0}</span>
                   </div>
                 </div>
               </CardContent>

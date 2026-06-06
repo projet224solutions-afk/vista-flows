@@ -37,12 +37,12 @@ const notificationIcons: Record<string, React.ElementType> = {
 
 const notificationColors: Record<string, string> = {
   order: 'text-blue-600 bg-blue-100',
-  payment: 'text-green-600 bg-green-100',
-  message: 'text-purple-600 bg-purple-100',
-  security: 'text-red-600 bg-red-100',
+  payment: 'text-[#ff4000] bg-orange-100',
+  message: 'text-[#04439e] bg-blue-100',
+  security: 'text-[#ff4000] bg-orange-100',
   stock: 'text-orange-600 bg-orange-100',
-  promotion: 'text-pink-600 bg-pink-100',
-  recommendation: 'text-yellow-600 bg-yellow-100',
+  promotion: 'text-[#ff4000] bg-orange-100',
+  recommendation: 'text-[#ff4000] bg-orange-100',
   system: 'text-gray-600 bg-gray-100',
 };
 

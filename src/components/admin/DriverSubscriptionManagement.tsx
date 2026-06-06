@@ -245,7 +245,7 @@ export function DriverSubscriptionManagement() {
                             Taxi
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-yellow-500/10">
+                          <Badge variant="outline" className="bg-[#ff4000]/10">
                             <Truck className="h-3 w-3 mr-1" />
                             Livreur
                           </Badge>

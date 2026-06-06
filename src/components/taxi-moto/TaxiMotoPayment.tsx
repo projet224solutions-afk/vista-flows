@@ -239,7 +239,7 @@ export default function TaxiMotoPayment({
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Receipt className="w-5 h-5 text-green-600" />
+                            <Receipt className="w-5 h-5 text-[#ff4000]" />
                             Résumé du paiement
                         </CardTitle>
                     </CardHeader>
@@ -255,7 +255,7 @@ export default function TaxiMotoPayment({
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span className="text-green-600">
+                            <span className="text-[#ff4000]">
                                 {(paymentDetails?.amount || 0).toLocaleString()} {paymentDetails?.currency || 'GNF'}
                             </span>
                         </div>
@@ -431,7 +431,7 @@ export default function TaxiMotoPayment({
                         {/* Wallet 224Solutions */}
                         {method.type === 'wallet_224' && (
                             <div className="text-center py-4">
-                                <Wallet className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                                <Wallet className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
                                 <p className="text-lg font-semibold">
                                     Solde disponible: {(walletBalance || 0).toLocaleString()} GNF
                                 </p>
@@ -444,13 +444,13 @@ export default function TaxiMotoPayment({
                         {/* Espèces */}
                         {method.type === 'cash' && (
                             <div className="text-center py-4">
-                                <Banknote className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                                <Banknote className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
                                 <p className="text-lg font-semibold">Paiement en espèces</p>
                                 <p className="text-sm text-gray-600">
                                     Vous paierez {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF au conducteur
                                 </p>
-                                <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                                    <p className="text-xs text-yellow-800">
+                                <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+                                    <p className="text-xs text-[#ff4000]">
                                         💡 Préparez l'appoint pour faciliter la transaction
                                     </p>
                                 </div>
@@ -458,9 +458,9 @@ export default function TaxiMotoPayment({
                         )}
 
                         {/* Sécurité */}
-                        <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                            <Shield className="w-4 h-4 text-green-600" />
-                            <p className="text-xs text-green-800">
+                        <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                            <Shield className="w-4 h-4 text-[#ff4000]" />
+                            <p className="text-xs text-[#ff4000]">
                                 Paiement sécurisé par 224Solutions. Vos données sont protégées.
                             </p>
                         </div>
@@ -472,7 +472,7 @@ export default function TaxiMotoPayment({
                     <CardContent className="p-4">
                         <div className="flex justify-between items-center">
                             <span className="font-semibold">Total à payer</span>
-                            <span className="text-xl font-bold text-green-600">
+                            <span className="text-xl font-bold text-[#ff4000]">
                                 {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
                             </span>
                         </div>
@@ -525,15 +525,15 @@ export default function TaxiMotoPayment({
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
-                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-600" />
-                    <h3 className="text-xl font-semibold text-green-800 mb-2">
+                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
+                    <h3 className="text-xl font-semibold text-[#ff4000] mb-2">
                         Paiement réussi !
                     </h3>
                     <p className="text-gray-600 mb-4">
                         Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a été traité avec succès.
                     </p>
-                    <div className="bg-green-50 p-4 rounded-lg mb-4">
-                        <p className="text-sm text-green-800">
+                    <div className="bg-orange-50 p-4 rounded-lg mb-4">
+                        <p className="text-sm text-[#ff4000]">
                             Référence: {generatePaymentReference()}
                         </p>
                     </div>
@@ -551,8 +551,8 @@ export default function TaxiMotoPayment({
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
-                    <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-600" />
-                    <h3 className="text-xl font-semibold text-red-800 mb-2">
+                    <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
+                    <h3 className="text-xl font-semibold text-[#ff4000] mb-2">
                         Erreur de paiement
                     </h3>
                     <p className="text-gray-600 mb-4">{paymentError}</p>

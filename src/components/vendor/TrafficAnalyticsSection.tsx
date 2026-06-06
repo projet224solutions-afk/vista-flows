@@ -4,7 +4,7 @@ import { Eye, Users, MousePointer, Store, TrendingUp, Smartphone, Globe, MapPin 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export function TrafficAnalyticsSection() {
   const { stats, loading, error } = useTrafficAnalytics();
@@ -105,8 +105,8 @@ export function TrafficAnalyticsSection() {
         <Card>
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Users className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Visiteurs uniques</p>
@@ -120,8 +120,8 @@ export function TrafficAnalyticsSection() {
         <Card>
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Store className="w-5 h-5 text-purple-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Store className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Visites boutique</p>
@@ -189,8 +189,8 @@ export function TrafficAnalyticsSection() {
                   type="monotone"
                   dataKey="shopVisits"
                   name="Visites boutique"
-                  stroke="#22c55e"
-                  fill="#22c55e"
+                  stroke="#ff4000"
+                  fill="#ff4000"
                   fillOpacity={0.3}
                 />
               </AreaChart>

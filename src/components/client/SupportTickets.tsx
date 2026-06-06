@@ -39,8 +39,8 @@ interface TicketMessage {
 
 const statusColors = {
   open: 'bg-blue-500',
-  in_progress: 'bg-yellow-500',
-  resolved: 'bg-green-500',
+  in_progress: 'bg-[#ff4000]',
+  resolved: 'bg-[#ff4000]',
   closed: 'bg-gray-500',
 };
 
@@ -48,7 +48,7 @@ const priorityColors = {
   low: 'bg-gray-500',
   medium: 'bg-blue-500',
   high: 'bg-orange-500',
-  urgent: 'bg-red-500',
+  urgent: 'bg-[#ff4000]',
 };
 
 export function SupportTickets() {

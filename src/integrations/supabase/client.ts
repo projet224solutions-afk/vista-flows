@@ -3,7 +3,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { shouldAssumeOffline } from '@/lib/networkHealth';
-import { resolveBackendUrl } from '@/config/backend';
 
 // Configuration Supabase - variables d'environnement Vercel avec fallback hardcodé
 // Une fois VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY configurés sur Vercel,
@@ -60,10 +59,6 @@ const NODE_BACKEND_EDGE_EXACT = new Set([
   'geocode-address',
   'google-places-autocomplete',
   'gcs-signed-url',
-  'marketplace-escrow-payment',
-  'stripe-marketplace-payment',
-  'link-escrow-order',
-  'confirm-stripe-deposit',
 ]);
 
 const NODE_BACKEND_EDGE_PREFIXES = [
@@ -80,16 +75,6 @@ const NODE_BACKEND_EDGE_AI_NESTED = new Set([
   'ai-copilot',
 ]);
 
-const NODE_BACKEND_EDGE_ORDER_FUNCTIONS = new Set([
-  'marketplace-escrow-payment',
-  'stripe-marketplace-payment',
-  'link-escrow-order',
-]);
-
-const NODE_BACKEND_EDGE_PAYMENT_FUNCTIONS = new Set([
-  'confirm-stripe-deposit',
-]);
-
 function shouldRouteFunctionThroughNode(functionName: string): boolean {
   return NODE_BACKEND_EDGE_EXACT.has(functionName)
     || NODE_BACKEND_EDGE_PREFIXES.some((prefix) => functionName.startsWith(prefix));
@@ -98,14 +83,6 @@ function shouldRouteFunctionThroughNode(functionName: string): boolean {
 function getNodeEdgeFunctionCandidates(functionName: string): string[] {
   if (NODE_BACKEND_EDGE_AI_NESTED.has(functionName)) {
     return [`/edge-functions/ai/${functionName}`, `/edge-functions/${functionName}`];
-  }
-
-  if (NODE_BACKEND_EDGE_ORDER_FUNCTIONS.has(functionName)) {
-    return [`/edge-functions/orders/${functionName}`, `/edge-functions/${functionName}`];
-  }
-
-  if (NODE_BACKEND_EDGE_PAYMENT_FUNCTIONS.has(functionName)) {
-    return [`/edge-functions/payments/${functionName}`, `/edge-functions/${functionName}`];
   }
 
   if (
@@ -168,7 +145,7 @@ async function invokeNodeEdgeFunction(functionName: string, options: Record<stri
         }
       }
 
-      const response = await fetch(resolveBackendUrl(url), {
+      const response = await fetch(url, {
         method,
         headers,
         body,
@@ -242,7 +219,7 @@ export const refreshSession = async () => {
     console.log('⏸️ [Supabase] Rafraîchissement ignoré - mode hors ligne');
     return null;
   }
-
+  
   try {
     const { data, error } = await supabase.auth.refreshSession();
     if (error) {
@@ -272,17 +249,17 @@ let sessionCheckInterval: ReturnType<typeof setInterval> | null = null;
 
 export const startSessionMonitor = () => {
   if (sessionCheckInterval) return;
-
+  
   sessionCheckInterval = setInterval(async () => {
     // Ne pas vérifier la session si offline pour éviter erreurs et déconnexion
     if (isOffline()) {
       console.log('⏸️ [Supabase] Vérification session ignorée - mode hors ligne');
       return;
     }
-
+    
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
-
+      
       // Ignorer les erreurs réseau
       if (error) {
         if (error.message?.includes('network') || error.message?.includes('fetch')) {
@@ -291,13 +268,13 @@ export const startSessionMonitor = () => {
         console.warn('⚠️ [Supabase] Erreur getSession:', error.message);
         return;
       }
-
+      
       if (session) {
         // Vérifier si le token expire dans moins de 10 minutes
         const expiresAt = session.expires_at || 0;
         const now = Math.floor(Date.now() / 1000);
         const timeUntilExpiry = expiresAt - now;
-
+        
         if (timeUntilExpiry < 600 && timeUntilExpiry > 0) {
           console.log('⚠️ Session expire bientôt, rafraîchissement...');
           await refreshSession();

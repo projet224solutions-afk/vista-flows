@@ -265,7 +265,7 @@ export const ServiceSetupDialog = ({
                     </>
                   ) : coords ? (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="mr-2 h-4 w-4 text-[#ff4000]" />
                       Repositionner
                     </>
                   ) : (
@@ -277,7 +277,7 @@ export const ServiceSetupDialog = ({
                 </Button>
               </div>
               {coords && (
-                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 rounded-md px-3 py-2">
+                <div className="flex items-center gap-2 text-xs text-[#ff4000] dark:text-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30 rounded-md px-3 py-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   <span>Position enregistrée ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span>
                 </div>

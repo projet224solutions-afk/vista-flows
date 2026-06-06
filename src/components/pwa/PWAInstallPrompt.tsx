@@ -109,11 +109,11 @@ function PWAInstallPromptInner() {
                   <span>Accès instantané sans ouvrir le navigateur</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Monitor className="w-3 h-3 text-purple-600" />
+                  <Monitor className="w-3 h-3 text-[#04439e]" />
                   <span>Fonctionne hors ligne</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Chrome className="w-3 h-3 text-green-600" />
+                  <Chrome className="w-3 h-3 text-[#ff4000]" />
                   <span>0 Mo d'espace, léger et rapide</span>
                 </div>
               </div>

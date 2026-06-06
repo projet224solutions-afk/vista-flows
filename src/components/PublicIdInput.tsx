@@ -68,7 +68,7 @@ export function PublicIdInput({
           className={cn(
             'font-mono uppercase tracking-wider pr-10',
             showError && 'border-destructive focus-visible:ring-destructive',
-            showSuccess && 'border-green-500 focus-visible:ring-green-500'
+            showSuccess && 'border-[#ff4000] focus-visible:ring-[#ff4000]'
           )}
         />
 
@@ -78,7 +78,7 @@ export function PublicIdInput({
               <AlertCircle className="w-4 h-4 text-destructive" />
             )}
             {showSuccess && (
-              <Check className="w-4 h-4 text-green-600" />
+              <Check className="w-4 h-4 text-[#ff4000]" />
             )}
           </div>
         )}
@@ -91,7 +91,7 @@ export function PublicIdInput({
       )}
 
       {showValidation && showSuccess && (
-        <p className="text-xs text-green-600">
+        <p className="text-xs text-[#ff4000]">
           Format valide ✓
         </p>
       )}

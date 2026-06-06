@@ -119,7 +119,7 @@ export function CardPaymentDialog({
       <DialogContent className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-white/10 text-white sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-violet-400" />
+            <CreditCard className="w-5 h-5 text-[#04439e]" />
             Effectuer un paiement
           </DialogTitle>
           <DialogDescription className="text-white/60">
@@ -130,16 +130,16 @@ export function CardPaymentDialog({
         {result ? (
           <div className={cn(
             "p-6 rounded-lg text-center",
-            result.success ? "bg-green-500/20" : "bg-red-500/20"
+            result.success ? "bg-[#ff4000]/20" : "bg-[#ff4000]/20"
           )}>
             {result.success ? (
-              <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-3" />
+              <CheckCircle2 className="w-12 h-12 text-[#ff4000] mx-auto mb-3" />
             ) : (
-              <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+              <XCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-3" />
             )}
             <p className={cn(
               "font-medium",
-              result.success ? "text-green-400" : "text-red-400"
+              result.success ? "text-[#ff4000]" : "text-[#ff4000]"
             )}>
               {result.message}
             </p>
@@ -233,7 +233,7 @@ export function CardPaymentDialog({
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-violet-600 hover:bg-violet-700 shadow-lg shadow-violet-600/40"
+                className="flex-1 bg-[#04439e] hover:bg-[#04439e] shadow-lg shadow-[#04439e]/40"
                 disabled={loading}
               >
                 {loading ? (

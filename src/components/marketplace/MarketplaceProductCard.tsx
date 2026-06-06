@@ -118,9 +118,9 @@ export function MarketplaceProductCard({
             className={cn(
               starSize,
               i < fullStars 
-                ? 'fill-yellow-400 text-yellow-400' 
+                ? 'fill-[#ff4000] text-[#ff4000]' 
                 : i === fullStars && hasHalf
-                  ? 'fill-yellow-400/50 text-yellow-400'
+                  ? 'fill-[#ff4000]/50 text-[#ff4000]'
                   : 'text-muted-foreground/30'
             )} 
           />
@@ -258,7 +258,7 @@ export function MarketplaceProductCard({
           {stock !== undefined && (
             <span className={cn(
               "text-[10px] font-semibold",
-              stock === 0 ? "text-destructive" : "text-green-600"
+              stock === 0 ? "text-destructive" : "text-[#ff4000]"
             )}>
               {stock === 0 
                 ? (t('marketplace.outOfStock') || 'Rupture de stock') 

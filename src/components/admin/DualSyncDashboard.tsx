@@ -56,8 +56,8 @@ export default function DualSyncDashboard() {
   };
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
-      <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
+    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50">
+      <CardHeader className="bg-gradient-to-r from-[#04439e] to-[#04439e] text-white rounded-t-lg">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ArrowLeftRight className="w-5 h-5" />
@@ -68,13 +68,13 @@ export default function DualSyncDashboard() {
               <Database className="w-3 h-3 mr-1" />
               Firestore
             </Badge>
-            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-green-500">
+            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-[#ff4000]">
               <Cloud className="w-3 h-3 mr-1" />
               Supabase
             </Badge>
           </div>
         </CardTitle>
-        <CardDescription className="text-purple-100">
+        <CardDescription className="text-blue-100">
           Gestion de la synchronisation bidirectionnelle entre Firestore et Supabase
         </CardDescription>
       </CardHeader>
@@ -91,17 +91,17 @@ export default function DualSyncDashboard() {
           <TabsContent value="status" className="space-y-4">
             {/* État de connexion */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className={status.isFirestoreConnected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isFirestoreConnected ? 'bg-orange-50 border-orange-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Database className={`w-5 h-5 ${status.isFirestoreConnected ? 'text-green-600' : 'text-red-600'}`} />
+                      <Database className={`w-5 h-5 ${status.isFirestoreConnected ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
                       <span className="font-medium">Firestore</span>
                     </div>
                     {status.isFirestoreConnected ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                     ) : (
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                     )}
                   </div>
                   <p className="text-sm mt-2">
@@ -110,17 +110,17 @@ export default function DualSyncDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className={status.isSupabaseConnected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isSupabaseConnected ? 'bg-orange-50 border-orange-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Cloud className={`w-5 h-5 ${status.isSupabaseConnected ? 'text-green-600' : 'text-red-600'}`} />
+                      <Cloud className={`w-5 h-5 ${status.isSupabaseConnected ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
                       <span className="font-medium">Supabase</span>
                     </div>
                     {status.isSupabaseConnected ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                     ) : (
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                     )}
                   </div>
                   <p className="text-sm mt-2">
@@ -166,12 +166,12 @@ export default function DualSyncDashboard() {
 
             {/* Dernière synchronisation */}
             {status.lastSync && (
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2 text-green-800">
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 text-[#ff4000]">
                   <CheckCircle className="w-4 h-4" />
                   <span className="font-medium">Dernière synchronisation</span>
                 </div>
-                <div className="text-sm text-green-600 mt-1">
+                <div className="text-sm text-[#ff4000] mt-1">
                   {status.lastSync.toLocaleString('fr-FR')}
                 </div>
               </div>
@@ -236,7 +236,7 @@ export default function DualSyncDashboard() {
               <Card>
                 <CardContent className="p-4">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-green-600" />
+                    <Cloud className="w-4 h-4 text-[#ff4000]" />
                     Supabase → Firestore
                   </h4>
                   <p className="text-sm text-gray-600 mb-3">
@@ -278,7 +278,7 @@ export default function DualSyncDashboard() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <BarChart3 className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                  <BarChart3 className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
                   <div className="text-2xl font-bold">{status.stats.supabase}</div>
                   <div className="text-sm text-gray-600">Supabase</div>
                 </CardContent>
@@ -294,7 +294,7 @@ export default function DualSyncDashboard() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-600" />
+                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
                   <div className="text-2xl font-bold">{status.stats.failed}</div>
                   <div className="text-sm text-gray-600">Échecs</div>
                 </CardContent>

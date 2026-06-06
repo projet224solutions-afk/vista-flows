@@ -521,7 +521,7 @@ export default function ServicesProximite() {
                   {(service.rating !== null && service.rating !== undefined && service.rating > 0) && (
                     <div className="flex items-center gap-2 pt-1">
                       <div className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <Star className="w-3.5 h-3.5 text-[#ff4000] fill-[#ff4000]" />
                         <span className="text-xs font-semibold text-foreground">{service.rating.toFixed(1)}</span>
                       </div>
                       {service.total_reviews && service.total_reviews > 0 && (

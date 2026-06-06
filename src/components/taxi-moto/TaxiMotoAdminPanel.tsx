@@ -82,7 +82,7 @@ export function TaxiMotoAdminPanel() {
               <p className="text-sm text-muted-foreground">Chauffeurs en ligne</p>
               <p className="text-2xl font-bold">{stats.onlineDrivers}/{stats.totalDrivers}</p>
             </div>
-            <Users className="w-6 h-6 text-green-500" />
+            <Users className="w-6 h-6 text-[#ff4000]" />
           </div>
         </Card>
 

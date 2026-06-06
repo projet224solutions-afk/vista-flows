@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useToast } from "@/hooks/use-toast";
-import { listVendorClients, type VendorCustomerLink } from '@/services/campaignBackendService';
+import { listVendorClients, broadcastToClients, type VendorCustomerLink, type BroadcastResult } from '@/services/campaignBackendService';
 import {
   Users, Search, Filter, Eye, _Star, ShoppingCart,
   CreditCard, _Calendar, Mail, Phone, _MapPin,
-  TrendingUp, Award, Clock, MessageSquare
+  TrendingUp, Award, Clock, MessageSquare, Send, Loader2
 } from "lucide-react";
 
 interface Client {
@@ -69,6 +71,14 @@ export default function ClientManagement() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [showContactsDialog, setShowContactsDialog] = useState(false);
+  // Diffusion « Message à tous »
+  const [showBroadcastDialog, setShowBroadcastDialog] = useState(false);
+  const [bcChannel, setBcChannel] = useState<'email' | 'sms' | 'both'>('both');
+  const [bcSubject, setBcSubject] = useState('');
+  const [bcMessage, setBcMessage] = useState('');
+  const [bcSending, setBcSending] = useState(false);
+  const [bcResult, setBcResult] = useState<BroadcastResult | null>(null);
+  const [bcIdemKey, setBcIdemKey] = useState<string>('');
 
   useEffect(() => {
     if (!currentVendorId || vendorContextLoading) return;
@@ -178,8 +188,8 @@ export default function ClientManagement() {
 
   const getClientTypeColor = (type: string) => {
     switch (type) {
-      case 'vip': return 'bg-yellow-100 text-yellow-800';
-      case 'new': return 'bg-green-100 text-green-800';
+      case 'vip': return 'bg-orange-100 text-[#ff4000]';
+      case 'new': return 'bg-orange-100 text-[#ff4000]';
       case 'regular': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -247,14 +257,21 @@ export default function ClientManagement() {
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             <span>Contact client</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
-            toast({
-              title: "Newsletter",
-              description: "La fonctionnalité newsletter sera bientôt disponible."
-            });
+          <Button size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
+            if (clientsWithContacts.length === 0) {
+              toast({
+                title: "Aucun contact disponible",
+                description: "Aucun email ou numéro n'a encore été collecté.",
+              });
+              return;
+            }
+            setBcResult(null);
+            // Nouvelle clé d'idempotence par ouverture (anti double-envoi)
+            setBcIdemKey(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `bc-${Date.now()}-${Math.random()}`);
+            setShowBroadcastDialog(true);
           }}>
-            <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span>Newsletter</span>
+            <Send className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span>Envoyer un message</span>
           </Button>
         </div>
       </div>
@@ -275,10 +292,10 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000] shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Nouveaux (30j)</p>
-                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.newClientsThisMonth}</p>
+                <p className="text-lg sm:text-2xl font-bold text-[#ff4000]">{stats.newClientsThisMonth}</p>
               </div>
             </div>
           </CardContent>
@@ -286,10 +303,10 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
+              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000] shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Clients VIP</p>
-                <p className="text-lg sm:text-2xl font-bold text-yellow-600">{stats.vipClients}</p>
+                <p className="text-lg sm:text-2xl font-bold text-[#ff4000]">{stats.vipClients}</p>
               </div>
             </div>
           </CardContent>
@@ -297,10 +314,10 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-[#04439e] shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Actifs (30j)</p>
-                <p className="text-lg sm:text-2xl font-bold text-purple-600">{stats.activeClients}</p>
+                <p className="text-lg sm:text-2xl font-bold text-[#04439e]">{stats.activeClients}</p>
               </div>
             </div>
           </CardContent>
@@ -308,7 +325,7 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000] shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">CA total</p>
                 <p className="text-base sm:text-xl font-bold truncate">{stats.totalRevenue.toLocaleString()}</p>
@@ -554,7 +571,7 @@ export default function ClientManagement() {
                     <p className="text-sm text-muted-foreground">Commandes</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-[#ff4000]">
                       {selectedClient.total_spent.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">GNF dépensés</p>
@@ -685,6 +702,81 @@ export default function ClientManagement() {
                 );
               })}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diffusion : Envoyer un message à TOUS les contacts (email / SMS) */}
+      <Dialog open={showBroadcastDialog} onOpenChange={setShowBroadcastDialog}>
+        <DialogContent className="max-w-lg max-h-[88vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Send className="h-4 w-4 text-primary" /> Envoyer un message à tous</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="bc-msg">Votre message</Label>
+              <Textarea id="bc-msg" autoFocus rows={5} maxLength={2000}
+                value={bcMessage} onChange={(e) => setBcMessage(e.target.value)}
+                placeholder="Tapez le texte à envoyer à tous les clients…" />
+              <p className="text-xs text-muted-foreground">{bcMessage.length}/2000 — SMS tronqué à 140 caractères.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Envoyer à</Label>
+              <div className="flex gap-2">
+                {([
+                  ['email', 'Tous les emails', `${clientsWithEmails.length}`, <Mail key="m" className="h-4 w-4" />],
+                  ['sms', 'Tous les numéros', `${clientsWithPhones.length}`, <Phone key="p" className="h-4 w-4" />],
+                  ['both', 'Les deux', 'email + SMS', <Send key="s" className="h-4 w-4" />],
+                ] as const).map(([val, label, sub, icon]) => (
+                  <button key={val} type="button" onClick={() => setBcChannel(val as 'email' | 'sms' | 'both')}
+                    className={`flex-1 rounded-lg border p-2.5 text-left transition ${bcChannel === val ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-muted/50'}`}>
+                    <span className="flex items-center gap-1.5 text-sm font-medium">{icon}{label}</span>
+                    <span className="text-[11px] text-muted-foreground">{sub} contact(s)</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {(bcChannel === 'email' || bcChannel === 'both') && (
+              <div className="space-y-1.5">
+                <Label htmlFor="bc-subj">Objet de l'email</Label>
+                <Input id="bc-subj" value={bcSubject} onChange={(e) => setBcSubject(e.target.value)} placeholder="Ex : Nouvelle promotion !" maxLength={200} />
+              </div>
+            )}
+
+            <Button className="w-full gap-2" size="lg" disabled={bcSending || !bcMessage.trim()}
+              onClick={async () => {
+                const target = bcChannel === 'email' ? clientsWithEmails.length : bcChannel === 'sms' ? clientsWithPhones.length : Math.max(clientsWithEmails.length, clientsWithPhones.length);
+                if (!bcMessage.trim()) { toast({ title: 'Message vide', description: 'Écrivez un message.' }); return; }
+                if (target === 0) { toast({ title: 'Aucun contact', description: 'Aucun contact pour ce canal.' }); return; }
+                setBcSending(true); setBcResult(null);
+                try {
+                  const r = await broadcastToClients({ channel: bcChannel, subject: bcSubject.trim() || undefined, message: bcMessage.trim() }, bcIdemKey);
+                  setBcResult(r);
+                  if (r.already_sent) {
+                    toast({ title: 'Déjà envoyé', description: 'Cette diffusion a déjà été envoyée (doublon ignoré).' });
+                  } else {
+                    toast({ title: 'Diffusion envoyée', description: `${r.email_sent} email(s), ${r.sms_sent} SMS` });
+                  }
+                } catch (e: any) {
+                  toast({ title: 'Échec', description: e?.message || 'Diffusion impossible', variant: 'destructive' });
+                } finally {
+                  setBcSending(false);
+                }
+              }}>
+              {bcSending ? <><Loader2 className="h-4 w-4 animate-spin" /> Envoi en cours…</> : <><Send className="h-4 w-4" /> Envoyer à {bcChannel === 'email' ? clientsWithEmails.length : bcChannel === 'sms' ? clientsWithPhones.length : Math.max(clientsWithEmails.length, clientsWithPhones.length)} client(s)</>}
+            </Button>
+
+            {bcResult && (
+              <div className="rounded-md border p-3 text-sm space-y-1">
+                <p className="font-medium">Résultat</p>
+                <p>📧 Email : {bcResult.email_sent} envoyé(s){bcResult.email_failed ? `, ${bcResult.email_failed} échec(s)` : ''} / {bcResult.email_targeted}</p>
+                {bcResult.email_error && <p className="text-[11px] text-destructive">⚠️ {bcResult.email_error}</p>}
+                <p>📱 SMS : {bcResult.sms_sent} envoyé(s){bcResult.sms_failed ? `, ${bcResult.sms_failed} échec(s)` : ''} / {bcResult.sms_targeted}</p>
+                {bcResult.sms_error && <p className="text-[11px] text-destructive">⚠️ SMS : {bcResult.sms_error}</p>}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

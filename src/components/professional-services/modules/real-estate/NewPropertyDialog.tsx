@@ -245,7 +245,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
               </p>
             </div>
             <Button type="button" variant={coords ? 'outline' : 'default'} size="sm" onClick={handleGetLocation} disabled={geoLoading}>
-              {geoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : coords ? <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" /> : <MapPin className="h-4 w-4 mr-1" />}
+              {geoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : coords ? <CheckCircle2 className="h-4 w-4 mr-1 text-[#ff4000]" /> : <MapPin className="h-4 w-4 mr-1" />}
               {coords ? 'Repositionner' : 'Localiser'}
             </Button>
           </div>

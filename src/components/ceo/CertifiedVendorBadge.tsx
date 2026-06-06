@@ -24,7 +24,7 @@ const statusConfig: Record<VendorCertificationStatus, {
   CERTIFIE: {
     icon: CheckCircle2,
     variant: 'default',
-    className: 'bg-[#04439e] hover:bg-[#033580] text-white'
+    className: 'bg-[#04439e] hover:bg-[#04439e] text-white'
   },
   NON_CERTIFIE: {
     icon: Clock,
@@ -34,7 +34,7 @@ const statusConfig: Record<VendorCertificationStatus, {
   SUSPENDU: {
     icon: AlertTriangle,
     variant: 'destructive',
-    className: 'bg-red-500 hover:bg-red-600 text-white'
+    className: 'bg-[#ff4000] hover:bg-[#ff4000] text-white'
   }
 };
 

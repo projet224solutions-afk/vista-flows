@@ -140,15 +140,10 @@ class TaxiMotoSOSService {
         };
       }
 
-      // Obtenir position actuelle
+      // Obtenir position actuelle (ne pas bloquer si GPS indisponible)
       const currentPosition = await this.getCurrentPosition();
-
       if (!currentPosition) {
-        return {
-          success: false,
-          message: 'Impossible de récupérer votre position GPS',
-          error: 'NO_GPS'
-        };
+        console.warn('⚠️ SOS envoyé sans position GPS');
       }
 
       // Créer l'objet SOS dans Supabase
@@ -160,10 +155,10 @@ class TaxiMotoSOSService {
           taxi_driver_id: taxiId,
           driver_name: driverName,
           driver_phone: driverPhone,
-          latitude: currentPosition.latitude,
-          longitude: currentPosition.longitude,
-          accuracy: currentPosition.accuracy,
-          speed: currentPosition.speed,
+          latitude: currentPosition?.latitude ?? 0,
+          longitude: currentPosition?.longitude ?? 0,
+          accuracy: currentPosition?.accuracy ?? null,
+          speed: currentPosition?.speed ?? null,
           status: 'active',
           severity: 'critical',
           alert_type: 'emergency',

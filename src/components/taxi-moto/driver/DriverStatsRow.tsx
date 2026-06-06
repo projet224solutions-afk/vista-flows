@@ -3,7 +3,7 @@
  * Cards élégantes optimisées pour mobile
  */
 
-import { Wallet, Car, Star, Clock } from "lucide-react";
+import { Wallet, Car, Star, Clock, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DriverStatsRowProps {
@@ -12,6 +12,7 @@ interface DriverStatsRowProps {
   rating: number;
   onlineTime: string;
   onStatClick?: (statId: string) => void;
+  onGoToMarketplace?: () => void;
 }
 
 export function DriverStatsRow({
@@ -19,7 +20,8 @@ export function DriverStatsRow({
   todayRides,
   rating,
   onlineTime,
-  onStatClick
+  onStatClick,
+  onGoToMarketplace
 }: DriverStatsRowProps) {
   const stats = [
     {
@@ -27,9 +29,10 @@ export function DriverStatsRow({
       value: `${(todayEarnings || 0).toLocaleString()}`,
       suffix: "GNF",
       icon: Wallet,
-      iconBg: "bg-emerald-500/20",
-      iconColor: "text-emerald-400",
-      clickable: true
+      iconBg: "bg-[#ff4000]/20",
+      iconColor: "text-[#ff4000]",
+      clickable: true,
+      onClick: () => onStatClick?.('earnings')
     },
     {
       id: 'rides',
@@ -38,41 +41,54 @@ export function DriverStatsRow({
       icon: Car,
       iconBg: "bg-blue-500/20",
       iconColor: "text-blue-400",
-      clickable: false
+      clickable: true,
+      onClick: () => onStatClick?.('rides')
+    },
+    {
+      id: 'marketplace',
+      value: '🛍️',
+      suffix: "ACHATS",
+      icon: ShoppingBag,
+      iconBg: "bg-orange-500/20",
+      iconColor: "text-orange-400",
+      clickable: true,
+      onClick: onGoToMarketplace
     },
     {
       id: 'rating',
       value: rating > 0 ? rating.toFixed(1) : '—',
       suffix: "NOTE",
       icon: Star,
-      iconBg: "bg-amber-500/20",
-      iconColor: "text-amber-400",
-      clickable: true
+      iconBg: "bg-[#ff4000]/20",
+      iconColor: "text-[#ff4000]",
+      clickable: true,
+      onClick: () => onStatClick?.('rating')
     },
     {
       id: 'time',
       value: onlineTime || '0m',
       suffix: "EN LIGNE",
       icon: Clock,
-      iconBg: "bg-purple-500/20",
-      iconColor: "text-purple-400",
-      clickable: false
+      iconBg: "bg-[#04439e]/20",
+      iconColor: "text-[#04439e]",
+      clickable: false,
+      onClick: undefined
     }
   ];
 
   return (
     <div className="px-2 py-3 w-full overflow-x-auto scrollbar-hide">
-      <div className="grid grid-cols-4 gap-1.5 min-w-[300px]">
+      <div className="grid grid-cols-5 gap-1 min-w-[320px]">
         {stats.map((stat) => (
           <button
             key={stat.id}
-            onClick={() => stat.clickable && onStatClick?.(stat.id)}
+            onClick={() => stat.onClick?.()}
             disabled={!stat.clickable}
             className={cn(
               "relative overflow-hidden",
               "bg-gradient-to-br from-gray-800/80 to-gray-900/80",
               "backdrop-blur-sm",
-              "rounded-xl p-2",
+              "rounded-xl p-1.5",
               "border border-gray-700/50",
               "transition-all duration-200",
               stat.clickable && "active:scale-[0.97] cursor-pointer hover:border-gray-600/50",
@@ -80,22 +96,18 @@ export function DriverStatsRow({
               "group"
             )}
           >
-            {/* Content */}
-            <div className="flex flex-col items-center text-center gap-1">
-              {/* Icon - plus petit */}
+            <div className="flex flex-col items-center text-center gap-0.5">
               <div className={cn(
-                "w-7 h-7 rounded-lg flex items-center justify-center",
+                "w-6 h-6 rounded-lg flex items-center justify-center",
                 stat.iconBg
               )}>
-                <stat.icon className={cn("w-3.5 h-3.5", stat.iconColor)} />
+                <stat.icon className={cn("w-3 h-3", stat.iconColor)} />
               </div>
-
-              {/* Value - optimisé */}
               <div className="flex flex-col w-full">
-                <span className="text-white font-bold text-xs leading-tight truncate">
+                <span className="text-white font-bold text-[10px] leading-tight truncate">
                   {stat.value}
                 </span>
-                <span className="text-gray-500 text-[8px] font-medium uppercase tracking-wide truncate">
+                <span className="text-gray-500 text-[7px] font-medium uppercase tracking-wide truncate">
                   {stat.suffix}
                 </span>
               </div>

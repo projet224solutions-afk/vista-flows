@@ -7,7 +7,7 @@
  * - Anti-fraud helpers
  */
 
-import rateLimit from 'express-rate-limit';
+import { createRedisLimiter } from './rateLimiter.js';
 import { logger } from '../config/logger.js';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
@@ -27,11 +27,13 @@ const supabase = createClient(
  * More permissive since tracking happens frequently
  * 100 requests per minute per IP
  */
-export const trackingRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+export const trackingRateLimiter = createRedisLimiter({
   max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
+  windowSeconds: 60,
+  keyPrefix: 'track',
+  label: 'tracking',
+  message: 'Too many tracking requests, please slow down',
+  code: 'RATE_LIMIT_EXCEEDED',
   skip: (req) => {
     const ip = String(req.ip || '').trim();
     const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
@@ -42,14 +44,6 @@ export const trackingRateLimiter = rateLimit({
       || req.path === '/health'
       || (process.env.NODE_ENV !== 'production' && isLocalIp);
   },
-  handler: (req, res) => {
-    logger.warn(`Tracking rate limit exceeded for IP: ${req.ip}`);
-    res.status(429).json({
-      success: false,
-      error: 'Too many tracking requests, please slow down',
-      code: 'RATE_LIMIT_EXCEEDED'
-    });
-  }
 });
 
 /**
@@ -57,19 +51,13 @@ export const trackingRateLimiter = rateLimit({
  * More strict since these are heavier queries
  * 30 requests per minute
  */
-export const analyticsRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+export const analyticsRateLimiter = createRedisLimiter({
   max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn(`Analytics rate limit exceeded for user: ${req.user?.id || 'unknown'}`);
-    res.status(429).json({
-      success: false,
-      error: 'Too many analytics requests, please wait',
-      code: 'RATE_LIMIT_EXCEEDED'
-    });
-  }
+  windowSeconds: 60,
+  keyPrefix: 'analytics-read',
+  label: 'analytics',
+  message: 'Too many analytics requests, please wait',
+  code: 'RATE_LIMIT_EXCEEDED',
 });
 
 // ============================================================================

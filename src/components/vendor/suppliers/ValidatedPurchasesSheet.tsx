@@ -213,7 +213,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
         <SheetContent className="w-full sm:max-w-xl">
           <SheetHeader className="pb-4">
             <SheetTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-[#ff4000]" />
               Achats Validés
             </SheetTitle>
           </SheetHeader>
@@ -245,9 +245,9 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                   <p className="text-xs text-muted-foreground">Total investi</p>
                 </CardContent>
               </Card>
-              <Card className="bg-green-500/10 border-green-500/20">
+              <Card className="bg-[#ff4000]/10 border-[#ff4000]/20">
                 <CardContent className="p-3 text-center">
-                  <p className="text-lg font-bold text-green-600">{formatCurrency(currentStats.totalProfit)}</p>
+                  <p className="text-lg font-bold text-[#ff4000]">{formatCurrency(currentStats.totalProfit)}</p>
                   <p className="text-xs text-muted-foreground">Profit estimé</p>
                 </CardContent>
               </Card>
@@ -276,7 +276,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                           </div>
                           <div className="text-right mr-3">
                             <p className="font-semibold text-sm">{formatCurrency(purchase.total_purchase_amount)}</p>
-                            <div className="flex items-center gap-1 text-xs text-green-600">
+                            <div className="flex items-center gap-1 text-xs text-[#ff4000]">
                               <TrendingUp className="h-3 w-3" />
                               +{formatCurrency(purchase.estimated_total_profit)}
                             </div>

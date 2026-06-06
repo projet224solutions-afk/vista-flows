@@ -20,9 +20,9 @@ export default function SurveillancePage() {
   if (!user || user.role !== 'pdg') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-        <Card className="w-full max-w-md bg-red-900/20 border-red-500">
+        <Card className="w-full max-w-md bg-[#ff4000]/20 border-[#ff4000]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-[#ff4000]">
               <AlertCircle className="w-5 h-5" />
               Accès Refusé
             </CardTitle>
@@ -105,20 +105,20 @@ export default function SurveillancePage() {
                 <div>
                   <h3 className="font-semibold text-white mb-2">Sévérités des Anomalies</h3>
                   <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div className="p-3 bg-red-900/30 border border-red-500 rounded">
-                      <span className="font-semibold text-red-400">🔴 CRITICAL</span>
+                    <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
+                      <span className="font-semibold text-[#ff4000]">🔴 CRITICAL</span>
                       <p className="text-sm mt-1">Impact immédiat sur les données</p>
                     </div>
                     <div className="p-3 bg-orange-900/30 border border-orange-500 rounded">
                       <span className="font-semibold text-orange-400">🟠 HIGH</span>
                       <p className="text-sm mt-1">Impact important à court terme</p>
                     </div>
-                    <div className="p-3 bg-yellow-900/30 border border-yellow-500 rounded">
-                      <span className="font-semibold text-yellow-400">🟡 MEDIUM</span>
+                    <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
+                      <span className="font-semibold text-[#ff4000]">🟡 MEDIUM</span>
                       <p className="text-sm mt-1">Impact modéré, notification</p>
                     </div>
-                    <div className="p-3 bg-green-900/30 border border-green-500 rounded">
-                      <span className="font-semibold text-green-400">🟢 LOW</span>
+                    <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
+                      <span className="font-semibold text-[#ff4000]">🟢 LOW</span>
                       <p className="text-sm mt-1">Impact minimal, information</p>
                     </div>
                   </div>
@@ -132,15 +132,15 @@ export default function SurveillancePage() {
                       <span><strong>Détecter</strong> - Lancer une détection complète des anomalies</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-green-400">✓</span>
+                      <span className="text-[#ff4000]">✓</span>
                       <span><strong>Correction Auto</strong> - Appliquer automatiquement la correction</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-purple-400">🔧</span>
+                      <span className="text-[#04439e]">🔧</span>
                       <span><strong>Correction Manuelle</strong> - Approuver et corriger manuellement</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="text-yellow-400">📈</span>
+                      <span className="text-[#ff4000]">📈</span>
                       <span><strong>Exporter</strong> - Télécharger l'analyse en JSON</span>
                     </li>
                   </ul>
@@ -161,9 +161,9 @@ export default function SurveillancePage() {
                   <p className="mb-3">Le système utilise une architecture 4-couches:</p>
                   <div className="bg-slate-900 p-4 rounded border border-slate-700 text-sm space-y-2 font-mono">
                     <div><span className="text-blue-400">Layer 1:</span> PostgreSQL + RLS</div>
-                    <div><span className="text-green-400">Layer 2:</span> RPC Functions (SECURITY DEFINER)</div>
-                    <div><span className="text-purple-400">Layer 3:</span> Edge Functions + Cron</div>
-                    <div><span className="text-yellow-400">Layer 4:</span> React + Real-time Subscriptions</div>
+                    <div><span className="text-[#ff4000]">Layer 2:</span> RPC Functions (SECURITY DEFINER)</div>
+                    <div><span className="text-[#04439e]">Layer 3:</span> Edge Functions + Cron</div>
+                    <div><span className="text-[#ff4000]">Layer 4:</span> React + Real-time Subscriptions</div>
                   </div>
                 </div>
 

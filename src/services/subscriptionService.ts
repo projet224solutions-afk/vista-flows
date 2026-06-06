@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { formatCurrency } from '@/lib/formatters';
+import { backendFetch, generateIdempotencyKey } from './backendApi';
 
 export interface Plan {
   id: string;
@@ -143,52 +144,38 @@ export class SubscriptionService {
   }
 
   /**
-   * Enregistrer un paiement d'abonnement
+   * Souscrire / payer un abonnement.
+   * Toute la logique (prix, période, débit wallet, activation, commission) est
+   * gérée par le backend Node.js : POST /api/subscriptions/purchase.
+   * Le prix est (re)calculé côté serveur à partir du plan — la valeur client
+   * n'est plus utilisée (sécurité).
    */
   static async recordSubscriptionPayment(params: {
     userId: string;
     planId: string;
-    pricePaid: number;
+    pricePaid?: number;
     paymentMethod?: string;
     paymentTransactionId?: string;
     billingCycle?: string;
   }): Promise<string | null> {
-    try {
-      console.log('🔄 Appel RPC record_subscription_payment:', {
-        p_user_id: params.userId,
-        p_plan_id: params.planId,
-        p_price_paid: params.pricePaid,
-        p_payment_method: params.paymentMethod || 'wallet',
-        p_billing_cycle: params.billingCycle || 'monthly'
-      });
-
-      const { data, error } = await supabase.rpc('record_subscription_payment', {
-        p_user_id: params.userId,
-        p_plan_id: params.planId,
-        p_price_paid: params.pricePaid,
-        p_payment_method: params.paymentMethod || 'wallet',
-        p_payment_transaction_id: params.paymentTransactionId || null,
-        p_billing_cycle: params.billingCycle || 'monthly',
-      });
-
-      if (error) {
-        console.error('❌ Erreur RPC:', error);
-
-        // Propager l'erreur avec un message clair
-        if (error.message) {
-          throw new Error(error.message);
-        }
-        throw new Error('Erreur lors de l\'enregistrement du paiement');
+    const response = await backendFetch<{ subscription_id: string }>(
+      '/api/subscriptions/purchase',
+      {
+        method: 'POST',
+        body: {
+          plan_id: params.planId,
+          billing_cycle: params.billingCycle || 'monthly',
+          payment_method: params.paymentMethod || 'wallet',
+        },
+        idempotencyKey: generateIdempotencyKey(),
       }
+    );
 
-      console.log('✅ Abonnement créé avec succès:', data);
-      return data;
-    } catch (error: any) {
-      console.error('❌ Exception enregistrement paiement:', error);
-
-      // Propager l'erreur pour que le composant puisse l'afficher
-      throw error;
+    if (!response.success) {
+      throw new Error(response.error || 'Erreur lors de la souscription');
     }
+
+    return response.data?.subscription_id ?? null;
   }
 
   /**

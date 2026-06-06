@@ -513,13 +513,13 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                   : <User className="w-5 h-5 text-primary" />}
                 {clientProfile?.isShop ? 'Boutique à localiser' : 'Client à localiser'}
               </h3>
-              <Button variant="ghost" size="sm" onClick={stopTracking} className="text-red-600 hover:bg-red-50">
+              <Button variant="ghost" size="sm" onClick={stopTracking} className="text-[#ff4000] hover:bg-orange-50">
                 <X className="w-4 h-4" />
               </Button>
             </div>
 
             {clientDeclined ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center text-sm text-red-700">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center text-sm text-[#ff4000]">
                 ❌ Le client a refusé la demande de localisation.
               </div>
             ) : !clientProfile ? (
@@ -623,7 +623,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                 variant="ghost"
                 size="sm"
                 onClick={stopTracking}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-[#ff4000] hover:text-[#ff4000] hover:bg-orange-50"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -672,7 +672,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                   </div>
                 )}
                 {merchantArrived ? (
-                  <p className="text-sm text-center text-green-700 font-medium">🎉 Le client est arrivé à votre position.</p>
+                  <p className="text-sm text-center text-[#ff4000] font-medium">🎉 Le client est arrivé à votre position.</p>
                 ) : (
                   <div className="text-xs font-mono text-blue-800 bg-white/50 p-2 rounded border border-blue-100">
                     📍 Client : {displayLat.toFixed(6)}, {displayLng.toFixed(6)}
@@ -681,17 +681,17 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                 )}
               </div>
               ) : (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-900 flex items-center gap-2">
+                  <span className="text-sm font-medium text-[#ff4000] flex items-center gap-2">
                     📍 Position GPS
                     {isLive && (
-                      <Badge variant="default" className="bg-green-500 text-[10px] h-4 px-1.5">
+                      <Badge variant="default" className="bg-[#ff4000] text-[10px] h-4 px-1.5">
                         EN DIRECT
                       </Badge>
                     )}
                   </span>
-                  <div className="flex items-center gap-1 text-xs text-green-700">
+                  <div className="flex items-center gap-1 text-xs text-[#ff4000]">
                     <Clock className="w-3 h-3" />
                     {isLive ? formatElapsed(live.position?.ts) : formatLastSeen(trackedUser.lastSeen)}
                   </div>
@@ -699,7 +699,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
 
                 {/* Itinéraire : la navigation s'ouvre automatiquement dès la localisation */}
                 {embedSrc && (
-                  <div className="rounded-lg overflow-hidden border border-green-200 aspect-video bg-white">
+                  <div className="rounded-lg overflow-hidden border border-orange-200 aspect-video bg-white">
                     <iframe
                       title="Itinéraire vers le client"
                       width="100%"
@@ -711,7 +711,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                   </div>
                 )}
 
-                <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100 space-y-0.5">
+                <div className="text-xs font-mono text-[#ff4000] bg-white/50 p-2 rounded border border-orange-100 space-y-0.5">
                   <div>
                     📍 Client : {displayLat.toFixed(6)}, {displayLng.toFixed(6)}
                     {isLive && live.position?.accuracy ? ` (±${Math.round(live.position.accuracy)} m)` : ''}
@@ -722,11 +722,11 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                       {myLocation.accuracy ? ` (±${Math.round(myLocation.accuracy)} m)` : ''}
                     </div>
                   ) : (
-                    <div className="text-amber-600">Activez votre GPS pour afficher l'itinéraire complet</div>
+                    <div className="text-[#ff4000]">Activez votre GPS pour afficher l'itinéraire complet</div>
                   )}
                   {((live.position?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS
                     || (myLocation?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS) && (
-                    <div className="text-amber-600">⚠️ Signal GPS faible — la précision peut varier</div>
+                    <div className="text-[#ff4000]">⚠️ Signal GPS faible — la précision peut varier</div>
                   )}
                 </div>
 
@@ -741,20 +741,20 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
               </div>
               )
             ) : live.targetOnline === false ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                <p className="text-sm font-medium text-red-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                <p className="text-sm font-medium text-[#ff4000]">
                   📴 L'utilisateur n'est pas en ligne
                 </p>
-                <p className="text-xs text-red-600 mt-1">
+                <p className="text-xs text-[#ff4000] mt-1">
                   Il n'a pas de connexion Internet ou l'application est fermée. Réessayez quand il sera en ligne.
                 </p>
               </div>
             ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-                <p className="text-sm text-yellow-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                <p className="text-sm text-[#ff4000]">
                   ⏳ En attente de la position partagée
                 </p>
-                <p className="text-xs text-yellow-600 mt-1">
+                <p className="text-xs text-[#ff4000] mt-1">
                   {live.targetOnline === true
                     ? 'Utilisateur en ligne ✓ — en attente de sa confirmation de partage.'
                     : 'Vérification de la présence du client…'}
@@ -775,7 +775,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
             {driverId && (
               <Button
                 onClick={finishCourse}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white"
                 size="lg"
               >
                 <CheckCircle className="w-5 h-5 mr-2" />

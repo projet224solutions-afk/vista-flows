@@ -159,9 +159,9 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
-      'active': { label: 'Active', className: 'bg-red-500 text-white' },
-      'resolved': { label: 'Résolue', className: 'bg-green-500 text-white' },
-      'investigating': { label: 'En cours', className: 'bg-yellow-500 text-white' }
+      'active': { label: 'Active', className: 'bg-[#ff4000] text-white' },
+      'resolved': { label: 'Résolue', className: 'bg-[#ff4000] text-white' },
+      'investigating': { label: 'En cours', className: 'bg-[#ff4000] text-white' }
     };
 
     const config = variants[status] || { label: status, className: 'bg-gray-500 text-white' };
@@ -185,7 +185,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
             Alertes de Sécurité
           </CardTitle>
           <CardDescription>
@@ -195,13 +195,13 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         <CardContent>
           {alerts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-green-500" />
+              <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-[#ff4000]" />
               <p>Aucune alerte de sécurité active</p>
             </div>
           ) : (
             <div className="space-y-4">
               {alerts.map((alert) => (
-                <Alert key={alert.id} variant="destructive" className="bg-red-50 dark:bg-red-950">
+                <Alert key={alert.id} variant="destructive" className="bg-orange-50 dark:bg-[#ff4000]">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle className="flex items-center justify-between">
                     <span>MOTO VOLÉE DÉTECTÉE</span>

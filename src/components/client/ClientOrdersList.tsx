@@ -395,14 +395,14 @@ export default function ClientOrdersList() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-      pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      pending: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]', icon: Clock },
       confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-      preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800', icon: Package },
+      preparing: { label: 'En préparation', color: 'bg-blue-100 text-[#04439e]', icon: Package },
       ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
-      delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
-      cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
+      delivered: { label: 'Livrée', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle },
+      completed: { label: 'Terminée', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle },
+      cancelled: { label: 'Annulée', color: 'bg-orange-100 text-[#ff4000]', icon: XCircle }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -421,9 +421,9 @@ export default function ClientOrdersList() {
 
     const escrowConfig: Record<string, { label: string; color: string }> = {
       pending: { label: 'Fonds bloqués (Escrow)', color: 'bg-orange-100 text-orange-800' },
-      released: { label: 'Fonds libérés', color: 'bg-green-100 text-green-800' },
+      released: { label: 'Fonds libérés', color: 'bg-orange-100 text-[#ff4000]' },
       refunded: { label: 'Remboursé', color: 'bg-gray-100 text-gray-800' },
-      dispute: { label: 'Litige', color: 'bg-red-100 text-red-800' }
+      dispute: { label: 'Litige', color: 'bg-orange-100 text-[#ff4000]' }
     };
 
     const config = escrowConfig[escrowStatus];
@@ -589,7 +589,7 @@ export default function ClientOrdersList() {
                   {!isCODOrder && escrow && getEscrowBadge(escrow.status)}
                   {/* Badge paiement à la livraison */}
                   {isCODOrder && (
-                    <Badge className="bg-amber-100 text-amber-800">
+                    <Badge className="bg-orange-100 text-[#ff4000]">
                       <Banknote className="w-3 h-3 mr-1" />
                       Paiement à la livraison
                     </Badge>
@@ -598,13 +598,13 @@ export default function ClientOrdersList() {
 
                 {/* Info Paiement à la livraison */}
                 {isCODOrder && !['delivered', 'completed', 'cancelled'].includes(order.status) && (
-                  <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <Banknote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
+                    <Banknote className="w-5 h-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                      <p className="text-sm font-medium text-[#ff4000] dark:text-orange-200">
                         Paiement à la livraison
                       </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <p className="text-xs text-[#ff4000] dark:text-orange-300">
                         Vous paierez {order.total_amount.toLocaleString()} GNF à la réception de votre commande
                       </p>
                     </div>
@@ -613,13 +613,13 @@ export default function ClientOrdersList() {
 
                 {/* Protection Escrow */}
                 {!isCODOrder && escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
-                  <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                    <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
+                    <Shield className="w-5 h-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                      <p className="text-sm font-medium text-[#ff4000] dark:text-orange-200">
                         Paiement protégé
                       </p>
-                      <p className="text-xs text-green-700 dark:text-green-300">
+                      <p className="text-xs text-[#ff4000] dark:text-orange-300">
                         Vos {escrow.amount.toLocaleString()} GNF sont sécurisés en escrow jusqu'à confirmation de livraison
                       </p>
                     </div>
@@ -697,7 +697,7 @@ export default function ClientOrdersList() {
                 {/* Info si déjà livrée */}
                 {(order.status === 'delivered' || order.status === 'completed') && escrow?.status === 'released' && (
                   <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                     <span className="text-sm text-muted-foreground">
                       Commande terminée et {formatCurrency(getVendorReceivableAmount(order, escrow), getVendorReceivableCurrency(order, escrow))} transférés au vendeur
                     </span>

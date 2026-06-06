@@ -333,8 +333,8 @@ export default function ProductPaymentModal({
     { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantané depuis votre wallet', icon: Wallet, color: 'text-primary' },
     { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
     { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'Débit instantané sur votre téléphone', icon: Smartphone, color: 'text-orange-500' },
-    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
-    { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-green-600' },
+    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-[#ff4000]' },
+    { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-[#ff4000]' },
   ];
 
   const createOrderAfterPayment = async (paymentId: string, method: string) => {
@@ -742,8 +742,8 @@ export default function ProductPaymentModal({
   if (paymentStep === 'mobile_money_form') {
     const isMTN = paymentMethod === 'mtn_money';
     const providerName = isMTN ? 'MTN Mobile Money' : 'Orange Money';
-    const providerColor = isMTN ? 'text-yellow-600' : 'text-orange-500';
-    const providerBg = isMTN ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200';
+    const providerColor = isMTN ? 'text-[#ff4000]' : 'text-orange-500';
+    const providerBg = isMTN ? 'bg-orange-50 border-orange-200' : 'bg-orange-50 border-orange-200';
 
     return (
       <Dialog open={open} onOpenChange={onClose}>
@@ -772,7 +772,7 @@ export default function ProductPaymentModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobile-phone">Numéro de téléphone {providerName} <span className="text-red-500">*</span></Label>
+              <Label htmlFor="mobile-phone">Numéro de téléphone {providerName} <span className="text-[#ff4000]">*</span></Label>
               <Input
                 id="mobile-phone"
                 type="tel"
@@ -853,14 +853,14 @@ export default function ProductPaymentModal({
 
               {paymentMethod === 'wallet' && (
                 <>
-                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
-                    <Shield className="w-4 h-4 text-green-600" />
-                    <span className="text-xs text-green-800 dark:text-green-200">
+                  <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-[#ff4000] rounded-md border border-orange-200 dark:border-[#ff4000]">
+                    <Shield className="w-4 h-4 text-[#ff4000]" />
+                    <span className="text-xs text-[#ff4000] dark:text-orange-200">
                       Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
                     </span>
                   </div>
                   <div className="text-sm">
-                    Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
+                    Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-[#ff4000]'}`}>
                       {fc(walletBalance || 0, wCur)}
                     </span>
                   </div>
@@ -910,21 +910,21 @@ export default function ProductPaymentModal({
           </RadioGroup>
 
           {isCashOnDelivery && (
-            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
-              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-[#ff4000] flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" /> Informations de contact
               </h4>
               <div className="space-y-2">
-                <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-red-500">*</span></Label>
+                <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-[#ff4000]">*</span></Label>
                 <Input id="marketplace-cod-phone" type="tel" inputMode="tel" placeholder="Ex: 620 00 00 00" value={codPhone} onChange={(e) => setCodPhone(e.target.value)} className="bg-white" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="marketplace-cod-city" className="text-sm">Ville <span className="text-red-500">*</span></Label>
+                <Label htmlFor="marketplace-cod-city" className="text-sm">Ville <span className="text-[#ff4000]">*</span></Label>
                 <Input id="marketplace-cod-city" placeholder="Ex: Conakry, Kindia, Dakar..." value={codCity} onChange={(e) => setCodCity(e.target.value)} className="bg-white" required />
               </div>
-              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
-                <Truck className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="text-emerald-700">
+              <Alert className="bg-orange-50 border-orange-200 mt-2">
+                <Truck className="h-4 w-4 text-[#ff4000]" />
+                <AlertDescription className="text-[#ff4000]">
                   <strong>Paiement à la livraison confirmé</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(effectiveGrandTotal, cur)} en espèces.
                 </AlertDescription>
@@ -936,9 +936,9 @@ export default function ProductPaymentModal({
         {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
-            <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
-              <Shield className="w-4 h-4 text-green-600" />
-              <span className="text-xs text-green-800 dark:text-green-200">
+            <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-[#ff4000] rounded-md border border-orange-200 dark:border-[#ff4000]">
+              <Shield className="w-4 h-4 text-[#ff4000]" />
+              <span className="text-xs text-[#ff4000] dark:text-orange-200">
                 Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
               </span>
             </div>

@@ -180,7 +180,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     switch (status) {
       case 'approved':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-300 gap-1">
+          <Badge className="bg-orange-100 text-[#ff4000] border-orange-300 gap-1">
             <ShieldCheck className="w-3 h-3" />
             Vérifié
           </Badge>
@@ -188,7 +188,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
       case 'under_review':
       case 'pending':
         return (
-          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 gap-1">
+          <Badge className="bg-orange-100 text-[#ff4000] border-orange-300 gap-1">
             <Shield className="w-3 h-3" />
             En cours de vérification
           </Badge>
@@ -249,9 +249,9 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
   // Si le KYC est déjà approuvé
   if (kycData?.status === 'approved') {
     return (
-      <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+      <Card className="border-orange-200 bg-orange-50/50 dark:bg-[#ff4000]/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+          <CardTitle className="flex items-center gap-2 text-[#ff4000] dark:text-[#ff4000]">
             <ShieldCheck className="w-5 h-5" />
             Vérification KYC
           </CardTitle>
@@ -261,8 +261,8 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-            <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">Compte vérifié</h3>
+            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
+            <h3 className="text-lg font-semibold text-[#ff4000] dark:text-[#ff4000]">Compte vérifié</h3>
             <p className="text-sm text-muted-foreground mt-2">
               Votre vérification d'identité a été approuvée le{' '}
               {kycData.verified_at ? new Date(kycData.verified_at).toLocaleDateString('fr-FR') : 'N/A'}
@@ -292,11 +292,11 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
       <CardContent>
         {/* Message de rejet */}
         {kycData?.status === 'rejected' && kycData.rejection_reason && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+          <div className="mb-6 p-4 bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg">
+            <p className="text-sm font-medium text-[#ff4000] dark:text-orange-300">
               Raison du rejet:
             </p>
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+            <p className="text-sm text-[#ff4000] dark:text-[#ff4000] mt-1">
               {kycData.rejection_reason}
             </p>
           </div>
@@ -304,8 +304,8 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
         {/* Message en cours de vérification */}
         {(kycData?.status === 'under_review' || kycData?.status === 'pending') && (
-          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <p className="text-sm text-yellow-800 dark:text-yellow-300">
+          <div className="mb-6 p-4 bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg">
+            <p className="text-sm text-[#ff4000] dark:text-orange-300">
               Vos documents sont en cours de vérification. Nous vous notifierons dès que le processus sera terminé.
             </p>
           </div>

@@ -194,9 +194,9 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'completed':
-                return 'bg-green-100 text-green-800';
+                return 'bg-orange-100 text-[#ff4000]';
             case 'cancelled':
-                return 'bg-red-100 text-red-800';
+                return 'bg-orange-100 text-[#ff4000]';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -270,10 +270,10 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
-                    <div className="bg-red-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                        <Clock className="w-8 h-8 text-red-500" />
+                    <div className="bg-orange-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <Clock className="w-8 h-8 text-[#ff4000]" />
                     </div>
-                    <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
+                    <h3 className="text-lg font-semibold text-[#ff4000] mb-2">Erreur de chargement</h3>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <Button onClick={loadRideHistory} variant="outline" size="sm">
                         Réessayer
@@ -341,7 +341,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             <div className="text-xs text-gray-600">Terminées</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-lg font-bold text-green-600">
+                            <div className="text-lg font-bold text-[#ff4000]">
                                 {filteredRides
                                     .filter(r => r.status === 'completed')
                                     .reduce((sum, r) => sum + r.price, 0)
@@ -350,7 +350,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             <div className="text-xs text-gray-600">Total dépensé</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-lg font-bold text-yellow-600">
+                            <div className="text-lg font-bold text-[#ff4000]">
                                 {(filteredRides
                                     .filter(r => r.rating)
                                     .reduce((sum, r) => sum + (r.rating || 0), 0) /
@@ -396,12 +396,12 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                     </div>
 
                                     <div className="text-right">
-                                        <p className="text-lg font-bold text-green-600">
+                                        <p className="text-lg font-bold text-[#ff4000]">
                                             {ride.price.toLocaleString()} GNF
                                         </p>
                                         {ride.rating && (
                                             <div className="flex items-center gap-1 text-xs text-gray-600">
-                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
                                                 <span>{ride.rating}</span>
                                             </div>
                                         )}
@@ -411,11 +411,11 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                 {/* Trajet */}
                                 <div className="space-y-2 mb-3">
                                     <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <div className="w-2 h-2 bg-[#ff4000] rounded-full"></div>
                                         <span className="text-gray-700">{ride.pickupAddress}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        <div className="w-2 h-2 bg-[#ff4000] rounded-full"></div>
                                         <span className="text-gray-700">{ride.destinationAddress}</span>
                                     </div>
                                 </div>

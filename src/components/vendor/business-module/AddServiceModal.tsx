@@ -349,41 +349,41 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           {/* Première ligne - 4 boutons */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
             {DISPLAY_SERVICES.proximity.slice(0, 4).map(s =>
-              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+              renderDisplayServiceCard(s, '', 'border-slate-200 hover:border-primary')
             )}
           </div>
           {/* Deuxième ligne - 2 boutons centrés */}
           <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
             {DISPLAY_SERVICES.proximity.slice(4).map(s =>
-              renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
+              renderDisplayServiceCard(s, '', 'border-slate-200 hover:border-primary')
             )}
           </div>
         </div>
 
         {/* Section: Services Professionnels - Identique à Auth.tsx */}
         <div>
-          <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
-            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+          <h4 className="text-sm font-semibold text-[#04439e] mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
             Services Professionnels
-            <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
+            <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DISPLAY_SERVICES.professional.map(s =>
-              renderDisplayServiceCard(s, 'from-violet-50 to-white', 'border-violet-200 hover:border-violet-500')
+              renderDisplayServiceCard(s, '', 'border-blue-200 hover:border-[#04439e]')
             )}
           </div>
         </div>
 
         {/* Section: Autres Services - Identique à Auth.tsx */}
         <div>
-          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
-            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+          <h4 className="text-sm font-semibold text-[#04439e] mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
             Autres Services
-            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
+            <span className="w-8 h-0.5 bg-[#04439e] rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DISPLAY_SERVICES.other.map(s =>
-              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
+              renderDisplayServiceCard(s, '', 'border-blue-200 hover:border-[#04439e]')
             )}
           </div>
         </div>
@@ -405,7 +405,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <h4 className="font-semibold text-foreground">{selectedType?.name}</h4>
             <p className="text-xs text-muted-foreground">{selectedType?.category}</p>
           </div>
-          <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+          <CheckCircle className="w-5 h-5 text-[#ff4000] ml-auto" />
         </div>
 
         {/* Form fields */}
@@ -461,7 +461,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
                 {gpsLoading ? 'Localisation...' : 'Localiser mon service'}
               </Button>
               {latitude && longitude && (
-                <div className="flex items-center gap-2 text-sm text-green-600">
+                <div className="flex items-center gap-2 text-sm text-[#ff4000]">
                   <MapPin className="w-4 h-4" />
                   <span>Position enregistrée</span>
                 </div>

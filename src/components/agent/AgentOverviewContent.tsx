@@ -82,8 +82,8 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-green-50 rounded-lg">
-                    <Phone className="w-4 h-4 text-green-600" />
+                  <div className="p-2 bg-orange-50 rounded-lg">
+                    <Phone className="w-4 h-4 text-[#ff4000]" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Téléphone</p>
@@ -92,8 +92,8 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-50 rounded-lg">
-                    <Calendar className="w-4 h-4 text-purple-600" />
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Calendar className="w-4 h-4 text-[#04439e]" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Date d'inscription</p>
@@ -111,7 +111,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                 {agent.type_agent && (
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Type d'Agent</p>
-                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                    <Badge className="bg-[#04439e] text-white">
                       {agent.type_agent}
                     </Badge>
                   </div>
@@ -142,9 +142,9 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
 
         {/* Performance Card */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
             <CardTitle className="flex items-center gap-2 text-slate-800">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <TrendingUp className="w-5 h-5 text-[#ff4000]" />
               Performance
             </CardTitle>
           </CardHeader>
@@ -153,7 +153,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-slate-600">Objectif Mensuel</span>
-                <span className="text-sm font-bold text-emerald-600">
+                <span className="text-sm font-bold text-[#ff4000]">
                   {stats.usersThisMonth}/{monthlyGoal}
                 </span>
               </div>
@@ -177,7 +177,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-500" />
+                  <Clock className="w-4 h-4 text-[#ff4000]" />
                   <span className="text-sm text-slate-600">Ce Mois</span>
                 </div>
                 <span className="font-bold text-slate-800">+{stats.usersThisMonth}</span>
@@ -185,7 +185,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-purple-500" />
+                  <Shield className="w-4 h-4 text-[#04439e]" />
                   <span className="text-sm text-slate-600">Sous-Agents Actifs</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.activeSubAgentsCount}</span>
@@ -199,7 +199,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
               <span className="text-sm text-slate-600">Statut</span>
               <Badge
                 className={agent.is_active
-                  ? "bg-green-100 text-green-700 hover:bg-green-100"
+                  ? "bg-orange-100 text-[#ff4000] hover:bg-orange-100"
                   : "bg-slate-100 text-slate-600"
                 }
               >

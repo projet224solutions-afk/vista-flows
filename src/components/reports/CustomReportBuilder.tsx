@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 
 const reportTypes = [
-  { value: 'sales', label: 'Ventes', icon: ShoppingBag, color: 'text-green-500' },
+  { value: 'sales', label: 'Ventes', icon: ShoppingBag, color: 'text-[#ff4000]' },
   { value: 'inventory', label: 'Inventaire', icon: FileSpreadsheet, color: 'text-blue-500' },
-  { value: 'finance', label: 'Finance', icon: DollarSign, color: 'text-yellow-500' },
-  { value: 'customers', label: 'Clients', icon: Users, color: 'text-purple-500' },
+  { value: 'finance', label: 'Finance', icon: DollarSign, color: 'text-[#ff4000]' },
+  { value: 'customers', label: 'Clients', icon: Users, color: 'text-[#04439e]' },
   { value: 'performance', label: 'Performance', icon: TrendingUp, color: 'text-orange-500' },
   { value: 'custom', label: 'Personnalisé', icon: BarChart3, color: 'text-gray-500' }
 ];

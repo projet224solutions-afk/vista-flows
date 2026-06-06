@@ -135,7 +135,7 @@ class EmailService {
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
         .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .header { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 30px; text-align: center; }
+        .header { background: linear-gradient(135deg, #04439e, #04439e); color: white; padding: 30px; text-align: center; }
         .header h1 { margin: 0; font-size: 28px; font-weight: bold; }
         .header p { margin: 10px 0 0 0; opacity: 0.9; }
         .content { padding: 40px 30px; }
@@ -144,10 +144,10 @@ class EmailService {
         .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
         .info-label { font-weight: 600; color: #64748b; }
         .info-value { color: #1e293b; }
-        .access-section { background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center; }
-        .access-link { display: inline-block; background-color: white; color: #059669; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 15px 0; }
-        .access-link:hover { background-color: #f0fdf4; }
-        .token-info { background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
+        .access-section { background: linear-gradient(135deg, #ff4000, #ff4000); color: white; border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center; }
+        .access-link { display: inline-block; background-color: white; color: #ff4000; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 15px 0; }
+        .access-link:hover { background-color: #fff4ee; }
+        .token-info { background-color: #fff4ee; border: 1px solid #ff4000; border-radius: 6px; padding: 15px; margin: 20px 0; }
         .token-code { font-family: 'Courier New', monospace; background-color: #374151; color: #f3f4f6; padding: 8px 12px; border-radius: 4px; font-size: 14px; letter-spacing: 1px; }
         .footer { background-color: #1e293b; color: white; padding: 25px; text-align: center; }
         .footer p { margin: 5px 0; }
@@ -273,22 +273,22 @@ Pour toute question: support@224solution.net
       to,
       subject: '🔐 Code de vérification PDG - 224Solutions',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #04439e 0%, #04439e 100%); border-radius: 12px;">
           <div style="background: white; padding: 30px; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #3b82f6; margin: 0;">224SOLUTIONS</h1>
+              <h1 style="color: #04439e; margin: 0;">224SOLUTIONS</h1>
               <p style="color: #64748b; margin: 5px 0;">Authentification Multi-Facteurs</p>
             </div>
 
             <div style="background: #f8fafc; padding: 25px; border-radius: 8px; text-align: center; margin: 20px 0;">
               <p style="color: #475569; font-size: 14px; margin: 0 0 10px 0;">Votre code de vérification PDG :</p>
-              <div style="font-size: 36px; font-weight: bold; color: #3b82f6; letter-spacing: 8px; font-family: monospace;">
+              <div style="font-size: 36px; font-weight: bold; color: #04439e; letter-spacing: 8px; font-family: monospace;">
                 ${code}
               </div>
             </div>
 
-            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
-              <p style="margin: 0; color: #92400e; font-size: 13px;">
+            <div style="background: #fff4ee; border-left: 4px solid #ff4000; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 0; color: #ff4000; font-size: 13px;">
                 <strong>⚠️ Important :</strong> Ce code expire dans 10 minutes. Ne le partagez avec personne.
               </p>
             </div>
@@ -337,7 +337,7 @@ Pour toute question: support@224solution.net
         duration: 120000, // 2 minutes
         description: `Mode développement - Backend email indisponible\nDestination: ${to}`,
         style: {
-          background: '#3b82f6',
+          background: '#04439e',
           color: 'white',
           fontSize: '18px',
           fontWeight: 'bold'
@@ -362,7 +362,7 @@ Pour toute question: support@224solution.net
       subject: '🧪 Test Email - 224Solutions',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #3b82f6;">Test Email - 224Solutions</h2>
+          <h2 style="color: #04439e;">Test Email - 224Solutions</h2>
           <p>Ceci est un email de test pour vérifier le bon fonctionnement du système d'envoi d'emails.</p>
           <p><strong>Date:</strong> ${new Date().toLocaleString('fr-FR')}</p>
           <p>Si vous recevez cet email, le système fonctionne correctement ! ✅</p>

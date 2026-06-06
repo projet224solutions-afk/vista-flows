@@ -137,7 +137,7 @@ export default function VendorRatingsPanel() {
             key={star}
             className={`${sizeClass} ${
               star <= rating
-                ? 'fill-yellow-400 text-yellow-400'
+                ? 'fill-[#ff4000] text-[#ff4000]'
                 : 'text-gray-300'
             }`}
           />
@@ -208,7 +208,7 @@ export default function VendorRatingsPanel() {
                   <span className="text-sm w-8">{stars} ★</span>
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-yellow-400"
+                      className="h-full bg-[#ff4000]"
                       style={{
                         width: `${(stats.distribution[stars] / stats.totalRatings) * 100}%`
                       }}

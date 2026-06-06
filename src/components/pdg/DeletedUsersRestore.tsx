@@ -153,7 +153,7 @@ function DataStatusBadge({
   }
 
   const bgClass = status.exists
-    ? 'bg-green-500/10 text-green-700'
+    ? 'bg-[#ff4000]/10 text-[#ff4000]'
     : 'bg-muted text-muted-foreground';
 
   return (
@@ -321,17 +321,17 @@ export default function DeletedUsersRestore() {
     switch (role?.toLowerCase()) {
       case 'admin':
       case 'pdg':
-        return 'bg-purple-500';
+        return 'bg-[#04439e]';
       case 'vendor':
         return 'bg-blue-500';
       case 'client':
-        return 'bg-green-500';
+        return 'bg-[#ff4000]';
       case 'driver':
       case 'taxi':
       case 'livreur':
         return 'bg-orange-500';
       case 'agent':
-        return 'bg-pink-500';
+        return 'bg-[#ff4000]';
       default:
         return 'bg-gray-500';
     }
@@ -343,7 +343,7 @@ export default function DeletedUsersRestore() {
     const now = new Date();
     const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (daysLeft <= 0) return { status: 'expired', text: 'Expiré', color: 'text-red-500' };
+    if (daysLeft <= 0) return { status: 'expired', text: 'Expiré', color: 'text-[#ff4000]' };
     if (daysLeft <= 7) return { status: 'warning', text: `${daysLeft}j restants`, color: 'text-orange-500' };
     return { status: 'ok', text: `${daysLeft}j restants`, color: 'text-muted-foreground' };
   };
@@ -408,7 +408,7 @@ export default function DeletedUsersRestore() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <UserX className="h-5 w-5 text-red-500" />
+              <UserX className="h-5 w-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{deletedUsers.filter(u => !u.is_restored).length}</p>
                 <p className="text-xs text-muted-foreground">À restaurer</p>
@@ -419,7 +419,7 @@ export default function DeletedUsersRestore() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{deletedUsers.filter(u => u.is_restored).length}</p>
                 <p className="text-xs text-muted-foreground">Restaurés</p>
@@ -536,7 +536,7 @@ export default function DeletedUsersRestore() {
                         <div className="flex items-center gap-2">
                           {profile.data_analysis.summary && (
                             <>
-                              <Badge className="bg-green-600/20 text-green-700 text-xs">
+                              <Badge className="bg-[#ff4000]/20 text-[#ff4000] text-xs">
                                 {profile.data_analysis.summary.existing_count} existant(s)
                               </Badge>
                               {profile.data_analysis.summary.missing_count > 0 && (
@@ -557,13 +557,13 @@ export default function DeletedUsersRestore() {
                       {/* Données existantes */}
                       {profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs font-medium text-green-700 mb-2 flex items-center gap-1">
+                          <p className="text-xs font-medium text-[#ff4000] mb-2 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             Données existantes:
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {profile.data_analysis.existing_data.map((item, idx) => (
-                              <span key={idx} className="text-xs bg-green-500/10 text-green-700 px-2 py-0.5 rounded">
+                              <span key={idx} className="text-xs bg-[#ff4000]/10 text-[#ff4000] px-2 py-0.5 rounded">
                                 {item}
                               </span>
                             ))}
@@ -684,14 +684,14 @@ export default function DeletedUsersRestore() {
 
                       {/* Données supprimées */}
                       {profile.data_analysis.deleted_data && profile.data_analysis.deleted_data.length > 0 && (
-                        <div className="mt-3 p-2 border border-red-500/30 rounded bg-red-500/5">
-                          <p className="text-xs text-red-700 flex items-center gap-1 mb-1">
+                        <div className="mt-3 p-2 border border-[#ff4000]/30 rounded bg-[#ff4000]/5">
+                          <p className="text-xs text-[#ff4000] flex items-center gap-1 mb-1">
                             <XCircle className="h-3 w-3" />
                             Données supprimées (restaurables):
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {profile.data_analysis.deleted_data.map((item, idx) => (
-                              <span key={idx} className="text-xs bg-red-500/10 text-red-700 px-2 py-0.5 rounded">
+                              <span key={idx} className="text-xs bg-[#ff4000]/10 text-[#ff4000] px-2 py-0.5 rounded">
                                 {item}
                               </span>
                             ))}
@@ -728,8 +728,8 @@ export default function DeletedUsersRestore() {
 
                       {/* Message si tout est OK */}
                       {!profile.data_analysis.has_issues && profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
-                        <div className="mt-3 p-2 border border-green-500/30 rounded bg-green-500/5">
-                          <p className="text-xs text-green-700 flex items-center gap-1">
+                        <div className="mt-3 p-2 border border-[#ff4000]/30 rounded bg-[#ff4000]/5">
+                          <p className="text-xs text-[#ff4000] flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             Toutes les données essentielles sont intactes. Aucune restauration nécessaire.
                           </p>
@@ -747,7 +747,7 @@ export default function DeletedUsersRestore() {
                           <span className="text-sm">Données archivées disponibles pour restauration</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-green-600">
+                        <div className="flex items-center gap-2 text-[#ff4000]">
                           <CheckCircle2 className="h-4 w-4" />
                           <span className="text-sm">Aucune donnée supprimée détectée</span>
                         </div>
@@ -768,7 +768,7 @@ export default function DeletedUsersRestore() {
             {searched ? 'Données archivées à restaurer' : 'Utilisateurs supprimés'} ({deletedUsers.length})
           </CardTitle>
           {searched && deletedUsers.length === 0 && activeProfiles.length > 0 && (
-            <CardDescription className="text-green-600">
+            <CardDescription className="text-[#ff4000]">
               ✓ Aucune donnée de cet utilisateur n'a été supprimée
             </CardDescription>
           )}
@@ -850,7 +850,7 @@ export default function DeletedUsersRestore() {
                         </TableCell>
                         <TableCell>
                           {user.is_restored ? (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
+                            <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">
                               ✓ Restauré
                             </Badge>
                           ) : (
@@ -957,14 +957,14 @@ export default function DeletedUsersRestore() {
                     {/* Profil */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.profile.exists
-                        ? 'border-green-500/30 bg-green-500/5'
-                        : 'border-red-500/30 bg-red-500/5'
+                        ? 'border-[#ff4000]/30 bg-[#ff4000]/5'
+                        : 'border-[#ff4000]/30 bg-[#ff4000]/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.profile.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-600" />
+                          <XCircle className="h-4 w-4 text-[#ff4000]" />
                         )}
                         <span className="font-medium">Profil utilisateur</span>
                       </div>
@@ -978,12 +978,12 @@ export default function DeletedUsersRestore() {
                     {/* Wallet */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.wallet.exists
-                        ? 'border-green-500/30 bg-green-500/5'
+                        ? 'border-[#ff4000]/30 bg-[#ff4000]/5'
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.wallet.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         ) : (
                           <XCircle className="h-4 w-4 text-orange-600" />
                         )}
@@ -1000,12 +1000,12 @@ export default function DeletedUsersRestore() {
                     {/* User IDs */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.user_ids.exists
-                        ? 'border-green-500/30 bg-green-500/5'
+                        ? 'border-[#ff4000]/30 bg-[#ff4000]/5'
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.user_ids.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         ) : (
                           <XCircle className="h-4 w-4 text-orange-600" />
                         )}
@@ -1050,9 +1050,9 @@ export default function DeletedUsersRestore() {
 
                     {/* Agent */}
                     {selectedProfile.data_analysis.analysis.agent.exists && (
-                      <div className="p-3 rounded-lg border border-purple-500/30 bg-purple-500/5">
+                      <div className="p-3 rounded-lg border border-[#04439e]/30 bg-[#04439e]/5">
                         <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-purple-600" />
+                          <Shield className="h-4 w-4 text-[#04439e]" />
                           <span className="font-medium">Compte Agent</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -1063,9 +1063,9 @@ export default function DeletedUsersRestore() {
 
                     {/* Vendor */}
                     {selectedProfile.data_analysis.analysis.vendor.exists && (
-                      <div className="p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/5">
+                      <div className="p-3 rounded-lg border border-[#04439e]/30 bg-[#04439e]/5">
                         <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-indigo-600" />
+                          <Package className="h-4 w-4 text-[#04439e]" />
                           <span className="font-medium">Boutique Vendeur</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -1104,8 +1104,8 @@ export default function DeletedUsersRestore() {
 
                   {/* Données manquantes */}
                   {selectedProfile.data_analysis.missing_data.length > 0 && (
-                    <div className="p-4 border border-red-500/30 rounded-lg bg-red-500/5">
-                      <div className="flex items-center gap-2 text-red-600 font-medium">
+                    <div className="p-4 border border-[#ff4000]/30 rounded-lg bg-[#ff4000]/5">
+                      <div className="flex items-center gap-2 text-[#ff4000] font-medium">
                         <XCircle className="h-4 w-4" />
                         Données manquantes détectées
                       </div>
@@ -1122,8 +1122,8 @@ export default function DeletedUsersRestore() {
 
                   {/* Tout OK */}
                   {!selectedProfile.data_analysis.has_issues && (
-                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <div className="p-4 border border-[#ff4000]/30 rounded-lg bg-[#ff4000]/5">
+                      <div className="flex items-center gap-2 text-[#ff4000] font-medium">
                         <CheckCircle2 className="h-4 w-4" />
                         Toutes les données sont intactes
                       </div>
@@ -1149,8 +1149,8 @@ export default function DeletedUsersRestore() {
                       </p>
                     </div>
                   ) : (
-                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
-                      <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <div className="p-4 border border-[#ff4000]/30 rounded-lg bg-[#ff4000]/5">
+                      <div className="flex items-center gap-2 text-[#ff4000] font-medium">
                         <CheckCircle2 className="h-4 w-4" />
                         Aucune donnée supprimée
                       </div>
@@ -1290,8 +1290,8 @@ export default function DeletedUsersRestore() {
 
               {/* Statut de restauration */}
               {selectedUser.is_restored && (
-                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
-                  <h4 className="font-medium text-green-600 mb-3 flex items-center gap-2">
+                <div className="p-4 border border-[#ff4000]/30 rounded-lg bg-[#ff4000]/5">
+                  <h4 className="font-medium text-[#ff4000] mb-3 flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
                     Restauré avec succès
                   </h4>

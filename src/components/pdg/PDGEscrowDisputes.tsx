@@ -196,7 +196,7 @@ export default function PDGEscrowDisputes() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-[#ff4000] hover:bg-[#ff4000]"
                         onClick={() => setResolveDialog({ disputeId: dispute.id, resolution: 'release_to_seller' })}
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
@@ -325,7 +325,7 @@ export default function PDGEscrowDisputes() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               {resolveDialog?.resolution === 'release_to_seller'
-                ? <><CheckCircle className="w-5 h-5 text-green-600" />Libérer les fonds au vendeur</>
+                ? <><CheckCircle className="w-5 h-5 text-[#ff4000]" />Libérer les fonds au vendeur</>
                 : <><XCircle className="w-5 h-5 text-blue-600" />Rembourser l'acheteur</>
               }
             </AlertDialogTitle>
@@ -347,7 +347,7 @@ export default function PDGEscrowDisputes() {
             <AlertDialogAction
               onClick={handleResolve}
               disabled={resolving}
-              className={resolveDialog?.resolution === 'release_to_seller' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}
+              className={resolveDialog?.resolution === 'release_to_seller' ? 'bg-[#ff4000] hover:bg-[#ff4000]' : 'bg-blue-600 hover:bg-blue-700'}
             >
               {resolving ? 'Traitement...' : 'Confirmer'}
             </AlertDialogAction>

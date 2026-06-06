@@ -29,7 +29,7 @@ const PDGCopilotDashboard: React.FC = () => {
   // Vérifier que l'utilisateur est PDG/OWNER
   if (user?.role !== 'pdg' && user?.role !== 'owner') {
     return (
-      <Alert className="m-4 border-red-500">
+      <Alert className="m-4 border-[#ff4000]">
         <AlertDescription>
           ❌ Accès refusé. Cette interface est réservée au PDG/Propriétaire.
         </AlertDescription>
@@ -131,7 +131,7 @@ const PDGCopilotDashboard: React.FC = () => {
 
               {/* Erreur */}
               {error && (
-                <Alert className="border-red-500">
+                <Alert className="border-[#ff4000]">
                   <AlertDescription>❌ {error}</AlertDescription>
                 </Alert>
               )}
@@ -182,7 +182,7 @@ const PDGCopilotDashboard: React.FC = () => {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <DollarSign className="w-5 h-5 text-green-600" />
+                      <DollarSign className="w-5 h-5 text-[#ff4000]" />
                       Finances
                     </CardTitle>
                   </CardHeader>
@@ -254,7 +254,7 @@ const PDGCopilotDashboard: React.FC = () => {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Users className="w-5 h-5 text-red-600" />
+                      <Users className="w-5 h-5 text-[#ff4000]" />
                       Risques & Alertes
                     </CardTitle>
                   </CardHeader>
@@ -290,7 +290,7 @@ const PDGCopilotDashboard: React.FC = () => {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Users className="w-5 h-5 text-purple-600" />
+                      <Users className="w-5 h-5 text-[#04439e]" />
                       Clients
                     </CardTitle>
                   </CardHeader>

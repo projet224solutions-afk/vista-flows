@@ -39,8 +39,8 @@ interface NavCategory {
 const categories: NavCategory[] = [
   {
     title: 'Finance',
-    color: 'from-emerald-500 to-emerald-600',
-    bgColor: 'bg-emerald-500',
+    color: '',
+    bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign, permission: 'view_finance' },
       { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true, permission: 'view_banking' },
@@ -48,7 +48,7 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Gestion',
-    color: 'from-blue-500 to-blue-600',
+    color: '',
     bgColor: 'bg-blue-500',
     items: [
       { value: 'users', label: 'Utilisateurs', icon: Users, permission: 'view_users' },
@@ -62,8 +62,8 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Opérations',
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-500',
+    color: '',
+    bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck, permission: 'view_agents' },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2, permission: 'view_syndicat' },
@@ -85,8 +85,8 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Système',
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-500',
+    color: '',
+    bgColor: 'bg-[#04439e]',
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield, permission: 'view_security' },
       { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true, permission: 'view_debug' },
@@ -103,8 +103,8 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Intelligence',
-    color: 'from-pink-500 to-pink-600',
-    bgColor: 'bg-pink-500',
+    color: '',
+    bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true, permission: 'access_ai_assistant' },
       { value: 'copilot', label: 'Copilote IA', icon: MessageSquare, permission: 'access_copilot' },
@@ -276,7 +276,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                                   <Icon className="w-4 h-4" />
                                   <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
                                   {item.badge && aiActive && (
-                                    <Zap className="w-3 h-3 text-yellow-500" />
+                                    <Zap className="w-3 h-3 text-[#ff4000]" />
                                   )}
                                   {isActive && (
                                     <ChevronRight className="w-4 h-4" />
@@ -413,7 +413,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                           )} />
                           <span className="font-medium text-sm relative z-10">{item.label}</span>
                           {item.badge && aiActive && (
-                            <Zap className="w-3 h-3 ml-auto text-yellow-500 animate-pulse relative z-10" />
+                            <Zap className="w-3 h-3 ml-auto text-[#ff4000] animate-pulse relative z-10" />
                           )}
                           {isActive && (
                             <div className="ml-auto w-2 h-2 rounded-full bg-current animate-pulse relative z-10" />

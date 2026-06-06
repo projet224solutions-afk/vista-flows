@@ -384,10 +384,10 @@ export default function PDGSyndicatManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Membres</CardTitle>
-            <Users className="w-4 h-4 text-green-500" />
+            <Users className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {bureaus.reduce((acc, b) => acc + b.total_members, 0)}
             </div>
           </CardContent>
@@ -396,10 +396,10 @@ export default function PDGSyndicatManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Véhicules</CardTitle>
-            <Bike className="w-4 h-4 text-purple-500" />
+            <Bike className="w-4 h-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-500">
+            <div className="text-2xl font-bold text-[#04439e]">
               {bureaus.reduce((acc, b) => acc + b.total_vehicles, 0)}
             </div>
           </CardContent>
@@ -408,10 +408,10 @@ export default function PDGSyndicatManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Alertes Critiques</CardTitle>
-            <AlertCircle className="w-4 h-4 text-red-500" />
+            <AlertCircle className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats.criticalAlerts}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.criticalAlerts}</div>
           </CardContent>
         </Card>
       </div>
@@ -486,11 +486,11 @@ export default function PDGSyndicatManagement() {
                           <div className="flex items-center gap-3">
                             <h3 className="font-semibold text-lg">{bureau.bureau_code}</h3>
                             {bureau.status === 'active' ? (
-                              <Badge variant="default" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                              <Badge variant="default" className="bg-[#ff4000]/10 text-[#ff4000] dark:text-[#ff4000] border-[#ff4000]/20">
                                 Actif
                               </Badge>
                             ) : (
-                              <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20">
+                              <Badge variant="secondary" className="bg-[#ff4000]/10 text-[#ff4000] dark:text-[#ff4000] border-[#ff4000]/20">
                                 En attente
                               </Badge>
                             )}
@@ -548,7 +548,7 @@ export default function PDGSyndicatManagement() {
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteBureau(bureau.id)}>
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4 text-[#ff4000]" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSelectedBureau(bureau)}>
                         <Eye className="w-4 h-4" />
@@ -587,7 +587,7 @@ export default function PDGSyndicatManagement() {
                           size="sm"
                           onClick={() => handleValidate(bureau.id)}
                         >
-                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                         </Button>
                       )}
                     </div>
@@ -625,7 +625,7 @@ export default function PDGSyndicatManagement() {
                       </div>
                       <div className="flex items-center gap-2">
                         {worker.is_active ? (
-                          <Badge className="bg-green-500">Actif</Badge>
+                          <Badge className="bg-[#ff4000]">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -641,7 +641,7 @@ export default function PDGSyndicatManagement() {
                           size="sm"
                           onClick={() => handleDeleteWorker(worker.id)}
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-[#ff4000]" />
                         </Button>
                       </div>
                     </div>
@@ -743,7 +743,7 @@ export default function PDGSyndicatManagement() {
                       </div>
                       <div className="flex items-center gap-2">
                         {member.status === 'active' ? (
-                          <Badge className="bg-green-500">Actif</Badge>
+                          <Badge className="bg-[#ff4000]">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -759,7 +759,7 @@ export default function PDGSyndicatManagement() {
                           size="sm"
                           onClick={() => handleDeleteMember(member.id)}
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                          <Trash2 className="w-4 h-4 text-[#ff4000]" />
                         </Button>
                       </div>
                     </div>
@@ -844,16 +844,16 @@ export default function PDGSyndicatManagement() {
                 {alerts.filter(a => a.is_critical).map((alert) => {
                   const bureau = bureaus.find(b => b.id === alert.bureau_id);
                   return (
-                    <div key={alert.id} className="flex items-start gap-4 p-4 rounded-lg border border-red-200 bg-red-50">
-                      <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div key={alert.id} className="flex items-start gap-4 p-4 rounded-lg border border-orange-200 bg-orange-50">
+                      <AlertCircle className="w-5 h-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <h3 className="font-medium text-red-900">{alert.title}</h3>
-                        <p className="text-sm text-red-700 mt-1">{alert.message}</p>
-                        <p className="text-xs text-red-600 mt-2">
+                        <h3 className="font-medium text-[#ff4000]">{alert.title}</h3>
+                        <p className="text-sm text-[#ff4000] mt-1">{alert.message}</p>
+                        <p className="text-xs text-[#ff4000] mt-2">
                           Bureau: {bureau?.bureau_code || 'N/A'} • {new Date(alert.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
-                      <Badge className="bg-red-500">{alert.severity}</Badge>
+                      <Badge className="bg-[#ff4000]">{alert.severity}</Badge>
                     </div>
                   );
                 })}
@@ -884,7 +884,7 @@ export default function PDGSyndicatManagement() {
                       </p>
                     </div>
                     {feature.is_active ? (
-                      <Badge className="bg-green-500">Active</Badge>
+                      <Badge className="bg-[#ff4000]">Active</Badge>
                     ) : (
                       <Badge className="bg-gray-500">Inactive</Badge>
                     )}

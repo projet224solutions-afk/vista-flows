@@ -84,10 +84,10 @@ export default function OfflineSyncPanel() {
     // Couleur du badge de statut
     const getStatusColor = () => {
         if (isSyncing) return "bg-blue-500";
-        if (!isOnline) return "bg-red-500";
+        if (!isOnline) return "bg-[#ff4000]";
         if (hasFailedEvents) return "bg-orange-500";
-        if (hasPendingEvents) return "bg-yellow-500";
-        return "bg-green-500";
+        if (hasPendingEvents) return "bg-[#ff4000]";
+        return "bg-[#ff4000]";
     };
 
     // Texte du statut
@@ -114,16 +114,16 @@ export default function OfflineSyncPanel() {
     // Couleur par statut
     const getStatusBadgeColor = (status) => {
         switch (status) {
-            case 'synced': return 'bg-green-100 text-green-800';
-            case 'pending': return 'bg-yellow-100 text-yellow-800';
-            case 'failed': return 'bg-red-100 text-red-800';
+            case 'synced': return 'bg-orange-100 text-[#ff4000]';
+            case 'pending': return 'bg-orange-100 text-[#ff4000]';
+            case 'failed': return 'bg-orange-100 text-[#ff4000]';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
 
     return (
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50 shadow-lg">
+            <CardHeader className="bg-[#04439e] text-white rounded-t-lg">
                 <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {getConnectionIcon()}
@@ -152,15 +152,15 @@ export default function OfflineSyncPanel() {
                                 <div className="text-sm text-gray-600">Total</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-yellow-600">{syncStats.pending}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.pending}</div>
                                 <div className="text-sm text-gray-600">En attente</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-green-600">{syncStats.synced}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.synced}</div>
                                 <div className="text-sm text-gray-600">Synchronisés</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-red-600">{syncStats.failed}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.failed}</div>
                                 <div className="text-sm text-gray-600">Échoués</div>
                             </div>
                         </div>
@@ -181,12 +181,12 @@ export default function OfflineSyncPanel() {
 
                         {/* Dernière synchronisation */}
                         {lastSyncTime && (
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="flex items-center gap-2 text-green-800">
+                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <div className="flex items-center gap-2 text-[#ff4000]">
                                     <CheckCircle className="w-4 h-4" />
                                     <span className="font-medium">Dernière synchronisation</span>
                                 </div>
-                                <div className="text-sm text-green-600 mt-1">
+                                <div className="text-sm text-[#ff4000] mt-1">
                                     {new Date(lastSyncTime).toLocaleString()}
                                 </div>
                             </div>
@@ -194,9 +194,9 @@ export default function OfflineSyncPanel() {
 
                         {/* Erreurs de synchronisation */}
                         {syncErrors.length > 0 && (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-red-800">
+                                    <div className="flex items-center gap-2 text-[#ff4000]">
                                         <AlertTriangle className="w-4 h-4" />
                                         <span className="font-medium">Erreurs de synchronisation</span>
                                     </div>
@@ -205,7 +205,7 @@ export default function OfflineSyncPanel() {
                                         Effacer
                                     </Button>
                                 </div>
-                                <div className="text-sm text-red-600 mt-2">
+                                <div className="text-sm text-[#ff4000] mt-2">
                                     {syncErrors.slice(0, 3).map((error, index) => (
                                         <div key={index}>• {error}</div>
                                     ))}
@@ -289,13 +289,13 @@ export default function OfflineSyncPanel() {
                                 <div className="flex items-center gap-2 mb-2">
                                     {isOnline ? (
                                         <>
-                                            <Wifi className="w-4 h-4 text-green-600" />
-                                            <span className="font-medium text-green-800">Connexion active</span>
+                                            <Wifi className="w-4 h-4 text-[#ff4000]" />
+                                            <span className="font-medium text-[#ff4000]">Connexion active</span>
                                         </>
                                     ) : (
                                         <>
-                                            <WifiOff className="w-4 h-4 text-red-600" />
-                                            <span className="font-medium text-red-800">Mode hors-ligne</span>
+                                            <WifiOff className="w-4 h-4 text-[#ff4000]" />
+                                            <span className="font-medium text-[#ff4000]">Mode hors-ligne</span>
                                         </>
                                     )}
                                 </div>
@@ -318,9 +318,9 @@ export default function OfflineSyncPanel() {
                                                 <span className="capitalize">{type}</span>
                                             </div>
                                             <div className="flex gap-2 text-sm">
-                                                <span className="text-yellow-600">{(stats as unknown)?.pending || 0}</span>
-                                                <span className="text-green-600">{(stats as unknown)?.synced || 0}</span>
-                                                <span className="text-red-600">{(stats as unknown)?.failed || 0}</span>
+                                                <span className="text-[#ff4000]">{(stats as unknown)?.pending || 0}</span>
+                                                <span className="text-[#ff4000]">{(stats as unknown)?.synced || 0}</span>
+                                                <span className="text-[#ff4000]">{(stats as unknown)?.failed || 0}</span>
                                             </div>
                                         </div>
                                     ))}

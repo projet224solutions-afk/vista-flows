@@ -460,7 +460,7 @@ export function ProductImportDialog({
                   <BarChart className="w-8 h-8 text-muted-foreground" />
                   <div className="text-right">
                     <p className="text-sm font-medium">Prix de vente</p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-2xl font-bold text-[#ff4000]">
                       {formatCurrency(calculateSellingPrice(productCost, priceConfig), 'GNF')}
                     </p>
                   </div>
@@ -521,8 +521,8 @@ export function ProductImportDialog({
                 </div>
 
                 {/* Profit estimé */}
-                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                  <p className="text-sm text-green-800">
+                <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                  <p className="text-sm text-[#ff4000]">
                     Profit estimé par vente:{' '}
                     <strong>
                       {formatCurrency(
@@ -581,7 +581,7 @@ export function ProductImportDialog({
               <Button
                 onClick={handleSaveProduct}
                 disabled={importing}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-[#ff4000] hover:bg-[#ff4000]"
               >
                 {importing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>

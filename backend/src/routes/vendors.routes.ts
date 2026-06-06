@@ -9,12 +9,182 @@
  */
 
 import { Router, Response } from 'express';
+import crypto from 'crypto';
+import { z } from 'zod';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 
 const router = Router();
+
+/**
+ * POST /api/vendors/agents
+ * Crée un agent vendeur AVEC compte auth (email + mot de passe), ATOMIQUEMENT.
+ * Migre l'Edge Function create-vendor-agent vers le backend Node (« tout en backend »)
+ * + SÉCURITÉ : le vendor_id n'est plus pris du body mais résolu depuis l'utilisateur
+ * courant (verifyJWT) → on ne peut créer un agent que pour SA propre boutique.
+ *
+ * Atomicité : crée le compte auth, puis insère vendor_agents ; si l'insert échoue,
+ * ROLLBACK (supprime le compte auth) → pas de compte orphelin. Dédup email
+ * (vendor_agents + auth.users).
+ */
+const CreateAgentSchema = z.object({
+  name: z.string().trim().min(1, 'Nom requis').max(200),
+  email: z.string().email('Email invalide'),
+  phone: z.string().trim().min(6, 'Téléphone invalide').max(20),
+  password: z.string().min(8, 'Mot de passe : 8 caractères minimum'),
+  agent_type: z.enum(['commercial', 'logistique', 'support', 'administratif', 'manager', 'technique']).default('commercial'),
+  permissions: z.record(z.any()).optional(),
+  can_create_sub_agent: z.boolean().optional(),
+});
+
+router.post('/agents', verifyJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    // Sécurité : résoudre la boutique de l'utilisateur courant (pas de vendor_id du body)
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+    if (!vendor) { res.status(403).json({ success: false, error: 'Boutique non trouvée' }); return; }
+
+    const parsed = CreateAgentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Données invalides' });
+      return;
+    }
+    const { name, email, phone, password, agent_type, permissions, can_create_sub_agent } = parsed.data;
+    const emailLc = email.toLowerCase();
+
+    // Dédup : email déjà agent ?
+    const { data: existingAgent } = await supabaseAdmin
+      .from('vendor_agents').select('id').eq('email', emailLc).maybeSingle();
+    if (existingAgent) { res.status(409).json({ success: false, error: 'Cet email est déjà utilisé par un autre agent' }); return; }
+
+    // Dédup : email déjà un compte auth ?
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+    if (authList?.users?.some((u: any) => u.email === emailLc)) {
+      res.status(409).json({ success: false, error: 'Cet email est déjà utilisé par un autre compte' });
+      return;
+    }
+
+    // 1) Créer le compte auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: emailLc,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: name, phone, role: 'vendor_agent' },
+    });
+    if (authError || !authData.user) {
+      res.status(500).json({ success: false, error: authError?.message || 'Erreur création compte' });
+      return;
+    }
+
+    // 2) Insérer l'agent ; ROLLBACK du compte auth si échec
+    const agentCode = `VAG${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const accessToken = crypto.randomUUID();
+    const { data: agentRow, error: agentError } = await supabaseAdmin
+      .from('vendor_agents')
+      .insert({
+        vendor_id: vendor.id,
+        user_id: authData.user.id,
+        agent_code: agentCode,
+        access_token: accessToken,
+        name,
+        email: emailLc,
+        phone,
+        agent_type: agent_type || 'commercial',
+        permissions: permissions || { view_dashboard: true, access_communication: true },
+        can_create_sub_agent: can_create_sub_agent || false,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (agentError) {
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id); // rollback → pas de compte orphelin
+      logger.error(`[vendors/agents] insert échoué (rollback auth): ${agentError.message}`);
+      res.status(500).json({ success: false, error: agentError.message });
+      return;
+    }
+
+    // 3) Profil (best-effort, non bloquant)
+    const { error: profErr } = await supabaseAdmin.from('profiles').upsert({
+      id: authData.user.id,
+      email: emailLc,
+      first_name: name.split(' ')[0] || name,
+      last_name: name.split(' ').slice(1).join(' ') || '',
+      phone,
+      role: 'vendor_agent',
+    });
+    if (profErr) logger.warn(`[vendors/agents] profile upsert: ${profErr.message}`);
+
+    logger.info(`[vendors/agents] agent ${agentRow.id} créé pour vendor ${vendor.id}`);
+    res.json({ success: true, data: { agent: { id: agentRow.id, agent_code: agentCode, access_token: accessToken, email: emailLc } } });
+  } catch (err: any) {
+    logger.error(`[vendors/agents] ${err?.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur interne' });
+  }
+});
+
+/**
+ * POST /api/vendors/agents/update-email
+ * Change l'email d'un agent vendeur (Supabase Auth + vendor_agents + profiles).
+ * Migre l'Edge Function update-vendor-agent-email. SÉCURITÉ : la boutique est résolue
+ * depuis l'utilisateur courant (verifyJWT) → un vendeur ne modifie QUE ses propres agents.
+ * Atomicité : si la maj vendor_agents échoue après la maj Auth, on remet l'ancien email.
+ */
+const UpdateAgentEmailSchema = z.object({
+  agent_id: z.string().uuid('agent_id invalide'),
+  new_email: z.string().email('Format email invalide'),
+});
+
+router.post('/agents/update-email', verifyJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const parsed = UpdateAgentEmailSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Données invalides' }); return; }
+    const agent_id = parsed.data.agent_id;
+    const newEmail = parsed.data.new_email.toLowerCase().trim();
+
+    // Sécurité : boutique de l'utilisateur courant
+    const { data: vendor } = await supabaseAdmin.from('vendors').select('id').eq('user_id', req.user!.id).maybeSingle();
+    if (!vendor) { res.status(403).json({ success: false, error: 'Boutique non trouvée' }); return; }
+
+    const { data: agent } = await supabaseAdmin.from('vendor_agents').select('id, user_id, email, vendor_id, name').eq('id', agent_id).maybeSingle();
+    if (!agent) { res.status(404).json({ success: false, error: 'Agent non trouvé' }); return; }
+    if (agent.vendor_id !== vendor.id) { res.status(403).json({ success: false, error: 'Vous ne pouvez pas modifier cet agent' }); return; }
+
+    // Dédup
+    const { data: taken } = await supabaseAdmin.from('vendor_agents').select('id').eq('email', newEmail).neq('id', agent_id).maybeSingle();
+    if (taken) { res.status(409).json({ success: false, error: 'Cet email est déjà utilisé par un autre agent' }); return; }
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+    if (authList?.users?.some((u: any) => u.email?.toLowerCase() === newEmail && u.id !== agent.user_id)) {
+      res.status(409).json({ success: false, error: 'Cet email est déjà utilisé par un autre compte' });
+      return;
+    }
+
+    const oldEmail = agent.email;
+    let authUpdated = false;
+    if (agent.user_id) {
+      const { error: authUpdErr } = await supabaseAdmin.auth.admin.updateUserById(agent.user_id, { email: newEmail, email_confirm: true });
+      if (authUpdErr) { res.status(500).json({ success: false, error: 'Erreur mise à jour email du compte: ' + authUpdErr.message }); return; }
+      authUpdated = true;
+      try { await supabaseAdmin.from('profiles').update({ email: newEmail }).eq('id', agent.user_id); } catch { /* ignore */ }
+    }
+    const { error: vaErr } = await supabaseAdmin.from('vendor_agents').update({ email: newEmail, updated_at: new Date().toISOString() }).eq('id', agent_id);
+    if (vaErr) {
+      if (authUpdated && agent.user_id && oldEmail) { try { await supabaseAdmin.auth.admin.updateUserById(agent.user_id, { email: oldEmail }); } catch { /* ignore */ } }
+      res.status(500).json({ success: false, error: 'Erreur mise à jour vendor_agents (annulé): ' + vaErr.message });
+      return;
+    }
+
+    logger.info(`[vendors/agents/update-email] agent ${agent_id} email → ${newEmail}`);
+    res.json({ success: true, message: 'Email modifié et synchronisé', new_email: newEmail });
+  } catch (err: any) {
+    logger.error(`[vendors/agents/update-email] ${err?.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur interne' });
+  }
+});
 
 // ─────────────────────────────────────────────────────────
 // BCRG LIVE RATE — Banque Centrale de la République de Guinée

@@ -88,7 +88,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs text-gray-600">GNF Aujourd'hui</div>
@@ -112,7 +112,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
 
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-[#04439e]">
               {Math.round(stats.month.earnings).toLocaleString()}
             </div>
             <div className="text-xs text-gray-600">GNF Ce mois</div>
@@ -138,7 +138,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                 <span className="text-xs text-gray-600 w-16">{date}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full flex items-center justify-end px-2"
+                    className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] h-full rounded-full flex items-center justify-end px-2"
                     style={{ width: `${Math.min((data.earnings / (stats.week.earnings / 7)) * 100, 100)}%` }}
                   >
                     <span className="text-xs font-bold text-white">{data.rides}</span>
@@ -192,17 +192,17 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                         </div>
                         <div className="text-xs text-gray-600 space-y-1">
                           <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 bg-[#ff4000] rounded-full flex-shrink-0"></div>
                             <span className="truncate">{ride.pickup_address}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 bg-[#ff4000] rounded-full flex-shrink-0"></div>
                             <span className="truncate">{ride.dropoff_address}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right ml-2">
-                        <div className="text-lg font-bold text-green-600">
+                        <div className="text-lg font-bold text-[#ff4000]">
                           +{earnings.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">GNF</div>

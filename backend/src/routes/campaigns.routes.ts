@@ -1,7 +1,7 @@
 /**
  * 📢 CAMPAIGNS ROUTES - Système de diffusion multicanal vendeur
  * 224Solutions - Broadcast Campaign System
- *
+ * 
  * Endpoints:
  *   POST   /api/campaigns              — Créer une campagne
  *   GET    /api/campaigns              — Lister mes campagnes (vendeur)
@@ -20,7 +20,10 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { resolveVendorId } from '../services/vendorContext.service.js';
 import { z } from 'zod';
+import { sendEmail as sendResendEmail } from '../services/transactionEmail.service.js';
+import { sendSms } from '../services/sms.service.js';
 
 type CampaignRequest = AuthenticatedRequest & {
   body: Record<string, any>;
@@ -93,24 +96,8 @@ const createCampaignSchema = z.object({
 // ==================== HELPERS ====================
 
 async function getVendorId(userId: string): Promise<string | null> {
-  const { data: vendor } = await supabaseAdmin
-    .from('vendors')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (vendor?.id) {
-    return vendor.id;
-  }
-
-  const { data: agent } = await supabaseAdmin
-    .from('vendor_agents')
-    .select('vendor_id')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  return agent?.vendor_id || null;
+  // Agent-aware : vendeur direct OU agent vendeur actif → le vendeur de l'agent.
+  return resolveVendorId(userId);
 }
 
 async function isAdminUser(userId: string): Promise<boolean> {
@@ -191,18 +178,46 @@ function buildAudienceDedupKey(contact: VendorCustomerLinkRecord): string {
 }
 
 function mergeAudienceContacts(contacts: VendorCustomerLinkRecord[]): VendorCustomerLinkRecord[] {
-  const merged = new Map<string, VendorCustomerLinkRecord>();
+  // DÉDUP ROBUSTE (union-find multi-identifiants) : deux contacts représentent le même client dès
+  // qu'ils partagent AU MOINS UN identifiant (user_id, email normalisé OU téléphone normalisé).
+  // Avant : une seule clé par contact (user_id > email > phone) → un client présent par email dans
+  // vendor_customer_links et par téléphone dans vendor_marketing_contacts n'était JAMAIS fusionné
+  // → la liste affichait le même client plusieurs fois.
+  const identifiersOf = (c: VendorCustomerLinkRecord): string[] => {
+    const ids: string[] = [];
+    if (c.customer_user_id) ids.push(`user:${c.customer_user_id}`);
+    if (c.email) ids.push(`email:${c.email.trim().toLowerCase()}`);
+    if (c.phone) { const p = c.phone.replace(/\D/g, ''); if (p.length >= 6) ids.push(`phone:${p}`); }
+    if (ids.length === 0) ids.push(`record:${c.external_contact_id || c.id || crypto.randomUUID()}`);
+    return ids;
+  };
 
-  for (const contact of contacts) {
-    const key = buildAudienceDedupKey(contact);
-    const current = merged.get(key);
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    if (!parent.has(x)) { parent.set(x, x); return x; }
+    let root = x;
+    while (parent.get(root)! !== root) root = parent.get(root)!;
+    while (parent.get(x)! !== root) { const nxt = parent.get(x)!; parent.set(x, root); x = nxt; }
+    return root;
+  };
+  const union = (a: string, b: string) => { parent.set(find(a), find(b)); };
 
-    if (!current) {
-      merged.set(key, contact);
-      continue;
-    }
+  const contactIds = contacts.map(identifiersOf);
+  for (const ids of contactIds) {
+    ids.forEach((id) => find(id));
+    for (let i = 1; i < ids.length; i++) union(ids[0], ids[i]);
+  }
 
-    merged.set(key, {
+  const groups = new Map<string, VendorCustomerLinkRecord[]>();
+  contacts.forEach((contact, i) => {
+    const rep = find(contactIds[i][0]);
+    const arr = groups.get(rep) || [];
+    arr.push(contact);
+    groups.set(rep, arr);
+  });
+
+  return Array.from(groups.values()).map((group) =>
+    group.reduce((current, contact) => ({
       ...current,
       customer_user_id: current.customer_user_id || contact.customer_user_id || null,
       external_contact_id: current.external_contact_id || contact.external_contact_id || null,
@@ -210,9 +225,9 @@ function mergeAudienceContacts(contacts: VendorCustomerLinkRecord[]): VendorCust
       phone: current.phone || contact.phone || null,
       full_name: current.full_name || contact.full_name || null,
       preferred_language: current.preferred_language || contact.preferred_language || 'fr',
-      source_type: current.source_type === contact.source_type
-        ? current.source_type
-        : 'both',
+      source_type: !current.source_type
+        ? contact.source_type
+        : current.source_type === contact.source_type ? current.source_type : 'both',
       marketing_email_opt_in: current.marketing_email_opt_in ?? contact.marketing_email_opt_in ?? true,
       marketing_sms_opt_in: current.marketing_sms_opt_in ?? contact.marketing_sms_opt_in ?? true,
       marketing_push_opt_in: current.marketing_push_opt_in ?? contact.marketing_push_opt_in ?? false,
@@ -226,10 +241,8 @@ function mergeAudienceContacts(contacts: VendorCustomerLinkRecord[]): VendorCust
       is_active: current.is_active ?? contact.is_active ?? true,
       store_id: current.store_id || contact.store_id || null,
       created_at: current.created_at || contact.created_at || null,
-    });
-  }
-
-  return Array.from(merged.values());
+    })),
+  );
 }
 
 async function loadAudienceContacts(vendorId: string): Promise<VendorCustomerLinkRecord[]> {
@@ -328,6 +341,119 @@ router.post('/preview-audience', verifyJWT, async (req: CampaignRequest, res: Ca
   } catch (err: any) {
     logger.error('POST /campaigns/preview-audience error:', err);
     res.status(500).json({ success: false, error: 'Erreur interne' });
+  }
+});
+
+/**
+ * POST /api/campaigns/broadcast — Envoi DIRECT et IMMÉDIAT d'un message à TOUS
+ * les contacts collectés, par EMAIL et/ou SMS. Pas de wizard : on choisit le
+ * canal + le message, et ça part tout de suite. Réutilise Resend (email) et
+ * Twilio backend (SMS). Renvoie le détail (ciblés / envoyés / échoués).
+ */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const BroadcastSchema = z.object({
+  channel: z.enum(['email', 'sms', 'both']),
+  subject: z.string().trim().max(200).optional(),
+  message: z.string().trim().min(1, 'Message requis').max(2000),
+});
+
+router.post('/broadcast', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
+  try {
+    const userId = req.user!.id;
+    const vendorId = await getVendorId(userId);
+    if (!vendorId) { res.status(403).json({ success: false, error: 'Non vendeur' }); return; }
+
+    const quota = await checkQuota(vendorId);
+    if (!quota.allowed) { res.status(429).json({ success: false, error: quota.reason }); return; }
+
+    const parsed = BroadcastSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Données invalides' });
+      return;
+    }
+    const { channel, subject, message } = parsed.data;
+
+    // IDEMPOTENCE ATOMIQUE : réserve la clé (UNIQUE) AVANT d'envoyer → un re-clic
+    // ou un retry réseau avec la même clé n'enverra PAS une 2e fois à tous les clients.
+    const idemKey = (req.headers['idempotency-key'] as string | undefined)?.trim();
+    if (idemKey) {
+      const { error: claimErr } = await supabaseAdmin.from('wallet_idempotency_keys').insert({
+        idempotency_key: idemKey,
+        user_id: userId,
+        operation: 'campaign_broadcast',
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+      if (claimErr) {
+        if (claimErr.code === '23505' || /duplicate|unique/i.test(claimErr.message || '')) {
+          logger.info(`[broadcast] doublon ignoré (idempotency=${idemKey})`);
+          res.json({ success: true, data: { already_sent: true, total_contacts: 0, email_targeted: 0, email_sent: 0, email_failed: 0, sms_targeted: 0, sms_sent: 0, sms_failed: 0 } });
+          return;
+        }
+        logger.warn(`[broadcast] claim idempotency échoué (on continue): ${claimErr.message}`);
+      }
+    }
+
+    const doEmail = channel === 'email' || channel === 'both';
+    const doSms = channel === 'sms' || channel === 'both';
+
+    const contacts = await loadAudienceContacts(vendorId);
+    const emails = doEmail ? contacts.filter(c => c.email && c.marketing_email_opt_in !== false) : [];
+    const phones = doSms ? contacts.filter(c => c.phone && c.marketing_sms_opt_in !== false) : [];
+
+    if (emails.length === 0 && phones.length === 0) {
+      res.status(400).json({ success: false, error: 'Aucun contact joignable pour ce canal.' });
+      return;
+    }
+
+    const html = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+      <p style="color:#4a5568;line-height:1.6;white-space:pre-wrap;">${escapeHtml(message)}</p>
+      <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
+      <p style="color:#a0aec0;font-size:12px;">Message envoyé par votre commerçant via 224Solutions.</p>
+    </div>`;
+
+    let emailSent = 0, emailFailed = 0, smsSent = 0, smsFailed = 0;
+    let smsError: string | undefined;
+    let emailError: string | undefined;
+    const tasks: Array<() => Promise<void>> = [];
+    for (const c of emails) {
+      tasks.push(async () => {
+        const ok = await sendResendEmail(c.email as string, subject || 'Message de votre commerçant', html);
+        if (ok) emailSent++; else { emailFailed++; if (!emailError) emailError = 'Échec envoi email (vérifier RESEND_API_KEY / domaine vérifié)'; }
+      });
+    }
+    for (const c of phones) {
+      tasks.push(async () => {
+        const r = await sendSms(c.phone as string, message);
+        if (r.ok) smsSent++; else { smsFailed++; if (!smsError) smsError = r.error; }
+      });
+    }
+
+    // Pool de concurrence (5 envois en parallèle)
+    let idx = 0;
+    const worker = async () => { while (idx < tasks.length) { const i = idx++; await tasks[i](); } };
+    await Promise.all(Array.from({ length: Math.min(5, tasks.length) }, () => worker()));
+
+    await supabaseAdmin.rpc('increment_campaign_quota', { p_vendor_id: vendorId }).then(() => {}, () => {});
+    await auditLog(vendorId, 'broadcast_sent', undefined, { channel, email_sent: emailSent, sms_sent: smsSent });
+
+    logger.info(`📢 Broadcast vendor=${vendorId} channel=${channel}: email ${emailSent}/${emails.length}, sms ${smsSent}/${phones.length}`);
+    res.json({
+      success: true,
+      data: {
+        total_contacts: contacts.length,
+        email_targeted: emails.length, email_sent: emailSent, email_failed: emailFailed,
+        sms_targeted: phones.length, sms_sent: smsSent, sms_failed: smsFailed,
+        ...(smsError ? { sms_error: smsError } : {}),
+        ...(emailError ? { email_error: emailError } : {}),
+      },
+    });
+  } catch (err: any) {
+    logger.error('POST /campaigns/broadcast error:', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la diffusion' });
   }
 });
 
@@ -437,7 +563,7 @@ router.get('/', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) =
 });
 
 /**
- * GET /api/campaigns/:id — Détail d'une campagne
+ * GET /api/campaigns/:id — Détail d'une campagne  
  */
 router.get('/:id', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
@@ -507,7 +633,7 @@ router.get('/:id/analytics', verifyJWT, async (req: CampaignRequest, res: Campai
       res.status(403).json({ success: false, error: 'Forbidden' }); return;
     }
 
-    // Get all deliveries
+    // Get all deliveries  
     const { data: deliveries } = await supabaseAdmin
       .from('vendor_campaign_deliveries')
       .select('channel, status, sent_at, delivered_at, read_at, clicked_at, failure_reason')
@@ -1069,28 +1195,20 @@ async function sendPush(recipient: any, campaign: any): Promise<boolean> {
  */
 async function sendEmail(recipient: any, campaign: any): Promise<boolean> {
   if (!recipient.email) return false;
-  try {
-    const { error } = await supabaseAdmin.functions.invoke('send-otp-email', {
-      body: {
-        email: recipient.email,
-        subject: campaign.subject || campaign.title,
-        html: campaign.message_html || `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #1a365d;">${campaign.title}</h2>
-            <p style="color: #4a5568; line-height: 1.6;">${campaign.message_body}</p>
-            ${campaign.image_url ? `<img src="${campaign.image_url}" alt="" style="max-width: 100%; border-radius: 8px; margin: 16px 0;" />` : ''}
-            ${campaign.link_url ? `<a href="${campaign.link_url}" style="display: inline-block; background: #3182ce; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin-top: 16px;">${campaign.link_text || 'En savoir plus'}</a>` : ''}
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-            <p style="color: #a0aec0; font-size: 12px;">Vous recevez cet email car vous êtes client chez 224Solutions.</p>
-          </div>
-        `,
-        type: 'campaign',
-      },
-    });
-    return !error;
-  } catch {
-    return false;
-  }
+  // FIX : on n'utilise PLUS l'Edge Function send-otp-email (OTP-only : elle exige
+  // un code à 4-8 chiffres et rejetait les emails de campagne). Envoi direct via
+  // Resend backend (RESEND_API_KEY), cohérent avec « tout en backend Node.js ».
+  const html = campaign.message_html || `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #1a365d;">${campaign.title}</h2>
+      <p style="color: #4a5568; line-height: 1.6;">${campaign.message_body}</p>
+      ${campaign.image_url ? `<img src="${campaign.image_url}" alt="" style="max-width: 100%; border-radius: 8px; margin: 16px 0;" />` : ''}
+      ${campaign.link_url ? `<a href="${campaign.link_url}" style="display: inline-block; background: #3182ce; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin-top: 16px;">${campaign.link_text || 'En savoir plus'}</a>` : ''}
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      <p style="color: #a0aec0; font-size: 12px;">Vous recevez cet email car vous êtes client chez 224Solutions.</p>
+    </div>
+  `;
+  return sendResendEmail(recipient.email, campaign.subject || campaign.title, html);
 }
 
 /**
@@ -1098,23 +1216,20 @@ async function sendEmail(recipient: any, campaign: any): Promise<boolean> {
  */
 async function sendSMS(recipient: any, campaign: any): Promise<boolean> {
   if (!recipient.phone) return false;
-  try {
-    const { error } = await supabaseAdmin.functions.invoke('send-sms', {
-      body: {
-        to: recipient.phone,
-        message: `${campaign.title}\n${campaign.message_body.substring(0, 140)}`,
-      },
-    });
+  // FIX : envoi via le service SMS backend (Twilio) au lieu de l'Edge Function.
+  const { ok, error } = await sendSms(
+    recipient.phone,
+    `${campaign.title}\n${String(campaign.message_body || '').substring(0, 140)}`,
+  );
+  if (!ok && error) logger.warn(`[campaigns] SMS échec ${recipient.phone}: ${error}`);
 
-    // Update SMS quota
-    if (!error) {
-      await supabaseAdmin.rpc('increment_sms_quota', { p_vendor_id: campaign.vendor_id });
-    }
-
-    return !error;
-  } catch {
-    return false;
+  // Incrémente le quota SMS uniquement si l'envoi a réussi
+  if (ok) {
+    const { error: qErr } = await supabaseAdmin.rpc('increment_sms_quota', { p_vendor_id: campaign.vendor_id });
+    if (qErr) logger.warn(`[campaigns] increment_sms_quota: ${qErr.message}`);
   }
+
+  return ok;
 }
 
 export default router;

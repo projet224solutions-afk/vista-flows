@@ -162,9 +162,9 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Total</p>
                 <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.total_amount)}</p>
               </div>
-              <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+              <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Payé</p>
-                <p className="text-sm sm:text-lg font-bold text-green-600 dark:text-green-400 break-all">{formatAmount(debt.paid_amount)}</p>
+                <p className="text-sm sm:text-lg font-bold text-[#ff4000] dark:text-[#ff4000] break-all">{formatAmount(debt.paid_amount)}</p>
               </div>
               <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Restant</p>
@@ -186,7 +186,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-500 transition-all duration-300"
+                  className="h-full bg-[#ff4000] transition-all duration-300"
                   style={{ width: `${(debt.paid_amount / debt.total_amount) * 100}%` }}
                 />
               </div>
@@ -220,7 +220,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-muted-foreground">{formatDate(payment.created_at)}</p>
-                        <p className="font-semibold text-sm text-green-600 mt-0.5">
+                        <p className="font-semibold text-sm text-[#ff4000] mt-0.5">
                           {formatAmount(payment.amount)}
                         </p>
                         {payment.comment && (

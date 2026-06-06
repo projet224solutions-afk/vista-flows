@@ -675,8 +675,8 @@ export default function UniversalCommunicationHub({
                         {/* Indicateur de présence */}
                         <span className={cn(
                           "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
-                          isOnline ? "bg-green-500" :
-                          presenceStatus?.status === 'away' ? "bg-yellow-500" : "bg-gray-400"
+                          isOnline ? "bg-[#ff4000]" :
+                          presenceStatus?.status === 'away' ? "bg-[#ff4000]" : "bg-gray-400"
                         )} />
                       </div>
 
@@ -690,7 +690,7 @@ export default function UniversalCommunicationHub({
                               </span>
                             )}
                             {isOnline && (
-                              <span className="text-[10px] text-green-500 font-medium flex-shrink-0">En ligne</span>
+                              <span className="text-[10px] text-[#ff4000] font-medium flex-shrink-0">En ligne</span>
                             )}
                           </div>
                           {conv.last_message_at && (
@@ -738,7 +738,7 @@ export default function UniversalCommunicationHub({
                 </Avatar>
                 <span className={cn(
                   "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
-                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-green-500" : "bg-gray-400"
+                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-[#ff4000]" : "bg-gray-400"
                 )} />
               </div>
 

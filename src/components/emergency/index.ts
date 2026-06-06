@@ -139,11 +139,11 @@ export function formatTimeSinceAlert(seconds: number): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
-      return 'bg-red-500';
+      return 'bg-[#ff4000]';
     case 'in_progress':
       return 'bg-orange-500';
     case 'resolved':
-      return 'bg-green-500';
+      return 'bg-[#ff4000]';
     case 'false_alert':
       return 'bg-gray-500';
     default:

@@ -38,18 +38,18 @@ export const CompareWithCompetitors = () => {
   const globalScores = [
     { name: '224SOLUTIONS', score: 95, color: 'text-primary', highlight: true },
     { name: 'Amazon', score: 88, color: 'text-orange-500', highlight: false },
-    { name: 'Alibaba', score: 75, color: 'text-red-500', highlight: false },
+    { name: 'Alibaba', score: 75, color: 'text-[#ff4000]', highlight: false },
     { name: 'AliExpress', score: 72, color: 'text-orange-600', highlight: false },
-    { name: 'Jumia', score: 68, color: 'text-yellow-600', highlight: false },
-    { name: 'Odoo', score: 70, color: 'text-purple-500', highlight: false },
+    { name: 'Jumia', score: 68, color: 'text-[#ff4000]', highlight: false },
+    { name: 'Odoo', score: 70, color: 'text-[#04439e]', highlight: false },
   ];
 
   const renderValue = (value: boolean | string) => {
     if (typeof value === 'boolean') {
       return value ? (
-        <CheckCircle2 className="w-4 h-4 mx-auto text-green-600" />
+        <CheckCircle2 className="w-4 h-4 mx-auto text-[#ff4000]" />
       ) : (
-        <XCircle className="w-4 h-4 mx-auto text-red-500" />
+        <XCircle className="w-4 h-4 mx-auto text-[#ff4000]" />
       );
     }
     return <span className="text-xs font-medium">{value}</span>;
@@ -90,7 +90,7 @@ export const CompareWithCompetitors = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5 text-green-600" />
+                <Lock className="w-5 h-5 text-[#ff4000]" />
                 Comparaison Sécurité
               </CardTitle>
             </CardHeader>
@@ -172,7 +172,7 @@ export const CompareWithCompetitors = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-purple-600" />
+                <Smartphone className="w-5 h-5 text-[#04439e]" />
                 Performance Mobile & PWA
               </CardTitle>
             </CardHeader>
@@ -230,12 +230,12 @@ export const CompareWithCompetitors = () => {
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <h4 className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
+          <div className="mt-6 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
+            <h4 className="font-semibold text-[#ff4000] dark:text-[#ff4000] flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Avantages 224SOLUTIONS
             </h4>
-            <ul className="mt-2 space-y-1 text-sm text-green-600 dark:text-green-300">
+            <ul className="mt-2 space-y-1 text-sm text-[#ff4000] dark:text-orange-300">
               <li>• <strong>3.5x plus rapide</strong> qu'Amazon en chargement</li>
               <li>• <strong>PWA Score 98/100</strong> vs 72/100 pour Amazon</li>
               <li>• <strong>Chiffrement E2E natif</strong> (non disponible chez Alibaba/AliExpress/Jumia)</li>

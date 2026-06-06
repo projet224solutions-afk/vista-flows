@@ -87,10 +87,10 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Profit Net</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {formatCurrency(stats?.totalProfit || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -127,7 +127,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       {order.status === 'completed' ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                       ) : order.has_issue ? (
                         <AlertTriangle className="w-5 h-5 text-destructive" />
                       ) : (
@@ -144,7 +144,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-medium">{formatCurrency(order.customer_total)}</p>
-                      <p className="text-xs text-green-600">
+                      <p className="text-xs text-[#ff4000]">
                         Profit: {formatCurrency(order.profit_amount || 0)}
                       </p>
                     </div>
@@ -173,11 +173,11 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-[#ff4000] dark:to-[#ff4000] border-orange-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 rounded-full bg-[#ff4000]/20 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Commandes Réussies</p>
@@ -187,11 +187,11 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-[#04439e] dark:to-[#04439e] border-blue-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 rounded-full bg-[#04439e]/20 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Marge Moyenne</p>

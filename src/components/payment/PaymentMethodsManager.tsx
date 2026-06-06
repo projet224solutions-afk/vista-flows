@@ -195,9 +195,9 @@ export function PaymentMethodsManager() {
       case 'orange_money':
         return <Smartphone className="h-5 w-5" style={{ color: '#FF6B00' }} />;
       case 'mtn_money':
-        return <Smartphone className="h-5 w-5" style={{ color: '#FFCC00' }} />;
+        return <Smartphone className="h-5 w-5" style={{ color: '#ff4000' }} />;
       case 'cash':
-        return <Banknote className="h-5 w-5 text-green-600" />;
+        return <Banknote className="h-5 w-5 text-[#ff4000]" />;
       case 'bank_card':
         return <CreditCard className="h-5 w-5 text-blue-600" />;
       default:
@@ -361,10 +361,10 @@ export function PaymentMethodsManager() {
   if (error) {
     return (
       <div className="text-center py-8">
-        <div className="bg-red-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <CreditCard className="h-8 w-8 text-red-500" />
+        <div className="bg-orange-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <CreditCard className="h-8 w-8 text-[#ff4000]" />
         </div>
-        <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
+        <h3 className="text-lg font-semibold text-[#ff4000] mb-2">Erreur de chargement</h3>
         <p className="text-sm text-gray-600 mb-4">
           {error}
         </p>
@@ -498,7 +498,7 @@ export function PaymentMethodsManager() {
                   className="justify-start"
                   onClick={() => setNewMethodType('mtn_money')}
                 >
-                  <Smartphone className="h-4 w-4 mr-2" style={{ color: newMethodType === 'mtn_money' ? 'white' : '#FFCC00' }} />
+                  <Smartphone className="h-4 w-4 mr-2" style={{ color: newMethodType === 'mtn_money' ? 'white' : '#ff4000' }} />
                   MTN Mobile Money
                 </Button>
                 <Button

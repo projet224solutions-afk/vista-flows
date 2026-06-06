@@ -210,20 +210,20 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
 
   const getStatusBadge = (status: Appointment['status']) => {
     const styles = {
-      confirmé: 'bg-green-100 text-green-800',
-      en_attente: 'bg-yellow-100 text-yellow-800',
+      confirmé: 'bg-orange-100 text-[#ff4000]',
+      en_attente: 'bg-orange-100 text-[#ff4000]',
       en_cours: 'bg-blue-100 text-blue-800',
       terminé: 'bg-gray-100 text-gray-800',
-      annulé: 'bg-red-100 text-red-800'
+      annulé: 'bg-orange-100 text-[#ff4000]'
     };
     return <Badge className={styles[status]}>{status.replace('_', ' ')}</Badge>;
   };
 
   const getTierBadge = (tier: LoyaltyClient['tier']) => {
     const styles = {
-      bronze: 'bg-amber-700 text-white',
+      bronze: 'bg-[#ff4000] text-white',
       silver: 'bg-gray-400 text-white',
-      gold: 'bg-yellow-500 text-white',
+      gold: 'bg-[#ff4000] text-white',
       platinum: 'bg-gradient-to-r from-gray-300 to-gray-500 text-white'
     };
     return <Badge className={styles[tier]}><Crown className="h-3 w-3 mr-1" />{tier}</Badge>;
@@ -232,11 +232,11 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
   const getCategoryBadge = (category: Service['category']) => {
     const colors = {
       coupe: 'bg-blue-100 text-blue-800',
-      coloration: 'bg-purple-100 text-purple-800',
-      coiffure: 'bg-pink-100 text-pink-800',
-      soin: 'bg-green-100 text-green-800',
+      coloration: 'bg-blue-100 text-[#04439e]',
+      coiffure: 'bg-orange-100 text-[#ff4000]',
+      soin: 'bg-orange-100 text-[#ff4000]',
       barbe: 'bg-orange-100 text-orange-800',
-      enfant: 'bg-cyan-100 text-cyan-800'
+      enfant: 'bg-blue-100 text-[#04439e]'
     };
     return <Badge className={colors[category]}>{category}</Badge>;
   };
@@ -262,7 +262,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl">
             <Scissors className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -272,7 +272,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
         </div>
         <Dialog open={showNewAppointmentDialog} onOpenChange={setShowNewAppointmentDialog}>
           <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-600/40">
+            <Button className="bg-[#ff4000] hover:bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40">
               <Plus className="h-4 w-4 mr-2" />
               Nouveau RDV
             </Button>
@@ -329,7 +329,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewAppointmentDialog(false)}>Annuler</Button>
-              <Button onClick={handleAddAppointment} className="bg-pink-600 hover:bg-pink-700 shadow-lg shadow-pink-600/40">Confirmer</Button>
+              <Button onClick={handleAddAppointment} className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">Confirmer</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -337,7 +337,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
 
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-pink-500 to-rose-500 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Calendar className="h-4 w-4" />
@@ -346,7 +346,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
             <p className="text-3xl font-bold mt-1">{todayAppointments}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
             <p className="text-xl font-bold mt-1">{formatPrice(todayRevenue)}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Users className="h-4 w-4" />
@@ -364,7 +364,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
             <p className="text-3xl font-bold mt-1">{availableStylists}/{stylists.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-orange-500 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Star className="h-4 w-4" />
@@ -397,7 +397,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
                         <p className="text-xl font-bold">{apt.time}</p>
                         <p className="text-xs text-muted-foreground">{apt.duration} min</p>
                       </div>
-                      <div className="h-12 w-0.5 bg-gradient-to-b from-pink-500 to-rose-500" />
+                      <div className="h-12 w-0.5 bg-gradient-to-b from-[#ff4000] to-[#ff4000]" />
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-semibold">{apt.clientName}</h4>
@@ -439,7 +439,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
-                      <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-500 text-white text-xl">
+                      <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white text-xl">
                         {stylist.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
@@ -453,7 +453,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
                       <p className="text-sm text-muted-foreground">{stylist.specialty}</p>
                       <div className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1 text-sm">
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-4 w-4 text-[#ff4000] fill-[#ff4000]" />
                           {stylist.rating} ({stylist.reviews} avis)
                         </span>
                         <span className="text-sm text-muted-foreground">
@@ -534,14 +534,14 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
               <Card key={service.id}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-pink-100 to-rose-100 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-pink-500" />
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-100 to-orange-100 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-[#ff4000]" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">{service.name}</h4>
                         {getCategoryBadge(service.category)}
-                        {service.popular && <Badge variant="outline" className="text-yellow-600 border-yellow-600">⭐ Populaire</Badge>}
+                        {service.popular && <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">⭐ Populaire</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground">{service.description}</p>
                     </div>
@@ -564,17 +564,17 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Programme Fidélité</h3>
             <div className="flex gap-2">
-              <Badge variant="outline" className="text-amber-700">🥉 Bronze: 0-1000 pts</Badge>
+              <Badge variant="outline" className="text-[#ff4000]">🥉 Bronze: 0-1000 pts</Badge>
               <Badge variant="outline" className="text-gray-500">🥈 Silver: 1000-2000 pts</Badge>
-              <Badge variant="outline" className="text-yellow-600">🥇 Gold: 2000-3000 pts</Badge>
+              <Badge variant="outline" className="text-[#ff4000]">🥇 Gold: 2000-3000 pts</Badge>
               <Badge variant="outline" className="bg-gradient-to-r from-gray-300 to-gray-400 text-white">💎 Platinum: 3000+ pts</Badge>
             </div>
           </div>
 
-          <Card className="bg-gradient-to-r from-pink-50 to-rose-50">
+          <Card className="bg-gradient-to-r from-orange-50 to-orange-50">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
-                <Gift className="h-8 w-8 text-pink-500" />
+                <Gift className="h-8 w-8 text-[#ff4000]" />
                 <div>
                   <h4 className="font-semibold">Comment ça marche ?</h4>
                   <p className="text-sm text-muted-foreground">
@@ -592,7 +592,7 @@ export function HairdresserModule({ _serviceId, businessName }: HairdresserModul
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-500 text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
                           {client.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>

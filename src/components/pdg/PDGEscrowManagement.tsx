@@ -31,9 +31,9 @@ import { useToast } from '@/hooks/use-toast';
 const statusConfig = {
   pending: {
     label: 'En attente',
-    className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+    className: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
     icon: Clock,
-    color: 'text-yellow-600'
+    color: 'text-[#ff4000]'
   },
   held: {
     label: 'Bloqué',
@@ -43,9 +43,9 @@ const statusConfig = {
   },
   released: {
     label: 'Libéré',
-    className: 'bg-green-500/10 text-green-600 border-green-500/20',
+    className: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
     icon: CheckCircle,
-    color: 'text-green-600'
+    color: 'text-[#ff4000]'
   },
   refunded: {
     label: 'Remboursé',
@@ -55,9 +55,9 @@ const statusConfig = {
   },
   dispute: {
     label: 'Litige',
-    className: 'bg-red-500/10 text-red-600 border-red-500/20',
+    className: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
     icon: AlertCircle,
-    color: 'text-red-600'
+    color: 'text-[#ff4000]'
   }
 };
 
@@ -197,33 +197,33 @@ export default function PDGEscrowManagement() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-500/20">
+          <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">En attente</p>
-                <Clock className="w-4 h-4 text-yellow-600" />
+                <Clock className="w-4 h-4 text-[#ff4000]" />
               </div>
-              <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
+              <p className="text-3xl font-bold text-[#ff4000]">{stats.pending}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+          <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Libérées</p>
-                <CheckCircle className="w-4 h-4 text-green-600" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
               </div>
-              <p className="text-3xl font-bold text-green-600">{stats.released}</p>
+              <p className="text-3xl font-bold text-[#ff4000]">{stats.released}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-[#04439e]/10 to-[#04439e]/10 border-[#04439e]/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Commission totale</p>
-                <TrendingUp className="w-4 h-4 text-purple-600" />
+                <TrendingUp className="w-4 h-4 text-[#04439e]" />
               </div>
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-2xl font-bold text-[#04439e]">
                 {stats.commission.toLocaleString()} GNF
               </p>
             </CardContent>
@@ -256,7 +256,7 @@ export default function PDGEscrowManagement() {
                   variant={statusFilter === 'pending' ? 'default' : 'outline'}
                   onClick={() => setStatusFilter('pending')}
                   size="sm"
-                  className="border-yellow-500/30"
+                  className="border-[#ff4000]/30"
                 >
                   En attente ({stats.pending})
                 </Button>
@@ -264,7 +264,7 @@ export default function PDGEscrowManagement() {
                   variant={statusFilter === 'released' ? 'default' : 'outline'}
                   onClick={() => setStatusFilter('released')}
                   size="sm"
-                  className="border-green-500/30"
+                  className="border-[#ff4000]/30"
                 >
                   Libérées ({stats.released})
                 </Button>
@@ -392,7 +392,7 @@ export default function PDGEscrowManagement() {
                                 size="sm"
                                 variant="default"
                                 onClick={() => openActionDialog(transaction.id, 'release')}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-[#ff4000] hover:bg-[#ff4000]"
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Libérer
@@ -439,9 +439,9 @@ export default function PDGEscrowManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-green-600" />Libérer les fonds (Admin)</>}
+              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-[#ff4000]" />Libérer les fonds (Admin)</>}
               {actionType === 'refund' && <><XCircle className="w-5 h-5 text-blue-600" />Rembourser la transaction</>}
-              {actionType === 'dispute' && <><AlertCircle className="w-5 h-5 text-red-600" />Ouvrir un litige</>}
+              {actionType === 'dispute' && <><AlertCircle className="w-5 h-5 text-[#ff4000]" />Ouvrir un litige</>}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === 'release' && '⚠️ Les fonds seront transférés au vendeur avec une commission de 2.5%. Cette action est irréversible.'}
@@ -452,9 +452,9 @@ export default function PDGEscrowManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction} className={
-              actionType === 'release' ? 'bg-green-600 hover:bg-green-700' :
+              actionType === 'release' ? 'bg-[#ff4000] hover:bg-[#ff4000]' :
               actionType === 'refund' ? 'bg-blue-600 hover:bg-blue-700' :
-              'bg-red-600 hover:bg-red-700'
+              'bg-[#ff4000] hover:bg-[#ff4000]'
             }>
               Confirmer l'action
             </AlertDialogAction>

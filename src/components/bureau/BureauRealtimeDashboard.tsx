@@ -76,7 +76,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+            <Activity className="h-4 w-4 text-[#ff4000] animate-pulse" />
             <span>Mise à jour: {formatDistanceToNow(lastUpdate, { addSuffix: true, locale: fr })}</span>
           </div>
           <Button onClick={refresh} variant="outline" size="sm">
@@ -98,33 +98,33 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           title="En Ligne"
           value={stats.online_drivers}
           icon={<Wifi className="h-5 w-5" />}
-          color="bg-green-500/10 text-green-500"
+          color="bg-[#ff4000]/10 text-[#ff4000]"
           badge={stats.online_drivers > 0 ? 'live' : undefined}
         />
         <StatCard
           title="En Course"
           value={stats.on_trip_drivers}
           icon={<Car className="h-5 w-5" />}
-          color="bg-amber-500/10 text-amber-500"
+          color="bg-[#ff4000]/10 text-[#ff4000]"
         />
         <StatCard
           title="Courses Aujourd'hui"
           value={stats.today_rides}
           icon={<MapPin className="h-5 w-5" />}
-          color="bg-purple-500/10 text-purple-500"
+          color="bg-[#04439e]/10 text-[#04439e]"
         />
         <StatCard
           title="Revenus Aujourd'hui"
           value={formatCurrency(stats.today_earnings)}
           icon={<DollarSign className="h-5 w-5" />}
-          color="bg-emerald-500/10 text-emerald-500"
+          color="bg-[#ff4000]/10 text-[#ff4000]"
           isText
         />
         <StatCard
           title="Alertes SOS"
           value={stats.active_sos}
           icon={<AlertTriangle className="h-5 w-5" />}
-          color={stats.active_sos > 0 ? "bg-red-500/10 text-red-500" : "bg-gray-500/10 text-gray-500"}
+          color={stats.active_sos > 0 ? "bg-[#ff4000]/10 text-[#ff4000]" : "bg-gray-500/10 text-gray-500"}
           urgent={stats.active_sos > 0}
         />
       </div>
@@ -135,7 +135,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Wifi className="h-5 w-5 text-green-500" />
+              <Wifi className="h-5 w-5 text-[#ff4000]" />
               Chauffeurs en Ligne ({onlineDrivers.length})
             </CardTitle>
           </CardHeader>
@@ -186,13 +186,13 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
 
       {/* SOS Alert Banner */}
       {stats.active_sos > 0 && (
-        <Card className="border-red-500 bg-red-500/5 animate-pulse">
+        <Card className="border-[#ff4000] bg-[#ff4000]/5 animate-pulse">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="h-6 w-6 text-red-500" />
+                <AlertTriangle className="h-6 w-6 text-[#ff4000]" />
                 <div>
-                  <p className="font-bold text-red-500">
+                  <p className="font-bold text-[#ff4000]">
                     {stats.active_sos} Alerte(s) SOS Active(s)
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -224,14 +224,14 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCardProps) {
   return (
-    <Card className={urgent ? 'border-red-500 animate-pulse' : ''}>
+    <Card className={urgent ? 'border-[#ff4000] animate-pulse' : ''}>
       <CardContent className="pt-4 pb-3">
         <div className="flex items-center justify-between mb-2">
           <div className={`p-2 rounded-lg ${color}`}>
             {icon}
           </div>
           {badge && (
-            <Badge variant="secondary" className="bg-green-500 text-white text-xs">
+            <Badge variant="secondary" className="bg-[#ff4000] text-white text-xs">
               {badge}
             </Badge>
           )}
@@ -245,8 +245,8 @@ function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCard
 
 function DriverCard({ driver }: { driver: OnlineDriver }) {
   const statusColors = {
-    available: 'bg-green-500',
-    on_trip: 'bg-amber-500',
+    available: 'bg-[#ff4000]',
+    on_trip: 'bg-[#ff4000]',
     offline: 'bg-gray-500'
   };
 
@@ -272,7 +272,7 @@ function DriverCard({ driver }: { driver: OnlineDriver }) {
             )}
             {driver.rating && (
               <span className="flex items-center gap-1">
-                <Star className="h-3 w-3 text-amber-500" />
+                <Star className="h-3 w-3 text-[#ff4000]" />
                 {driver.rating.toFixed(1)}
               </span>
             )}
@@ -296,8 +296,8 @@ function DriverCard({ driver }: { driver: OnlineDriver }) {
 function ActivityItem({ activity }: { activity: RecentActivity }) {
   const typeIcons = {
     trip: <Car className="h-4 w-4" />,
-    sos: <AlertTriangle className="h-4 w-4 text-red-500" />,
-    driver_online: <Wifi className="h-4 w-4 text-green-500" />,
+    sos: <AlertTriangle className="h-4 w-4 text-[#ff4000]" />,
+    driver_online: <Wifi className="h-4 w-4 text-[#ff4000]" />,
     driver_offline: <WifiOff className="h-4 w-4 text-gray-500" />
   };
 

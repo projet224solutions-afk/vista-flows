@@ -53,7 +53,7 @@ export default function ServiceCard({
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
               <div className="flex items-center">
-                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
+                <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000] mr-1" />
                 <span>{rating} ({reviewCount})</span>
               </div>
 

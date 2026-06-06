@@ -28,7 +28,7 @@ const modes = [
     title: 'API de Réservation',
     description: 'Recherche en temps réel avec APIs (Amadeus, Booking)',
     icon: <Search className="w-6 h-6" />,
-    gradient: 'from-blue-600 to-cyan-500',
+    gradient: '',
     features: [
       'Recherche vols/hôtels en direct',
       'Disponibilité temps réel',
@@ -43,7 +43,7 @@ const modes = [
     title: 'Affiliation Avancée',
     description: 'Système complet pour affiliés avec suivi commissions',
     icon: <Users className="w-6 h-6" />,
-    gradient: 'from-purple-600 to-pink-500',
+    gradient: '',
     features: [
       'Inscription affiliés',
       'Catalogue partenaires',
@@ -58,7 +58,7 @@ const modes = [
     title: 'Affiliation Simple',
     description: 'Structure catégorisée avec liens affiliés',
     icon: <Briefcase className="w-6 h-6" />,
-    gradient: 'from-green-600 to-emerald-500',
+    gradient: '',
     features: [
       'Catégories structurées',
       'Liens affiliés directs',
@@ -122,7 +122,7 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
                   <div className="grid grid-cols-2 gap-1.5">
                     {mode.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Check className="w-3 h-3 text-green-500 shrink-0" />
+                        <Check className="w-3 h-3 text-[#ff4000] shrink-0" />
                         <span className="truncate">{feature}</span>
                       </div>
                     ))}

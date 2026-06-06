@@ -195,7 +195,8 @@ export default function AgentDashboard() {
     setIsChangingPassword(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('change-agent-password', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/change-password', {
         body: {
           agent_id: agent.id,
           current_password: passwordData.currentPassword,
@@ -203,14 +204,12 @@ export default function AgentDashboard() {
         }
       });
 
-      if (error) throw error;
-
-      if (data?.success) {
+      if (resp.success) {
         toast.success('Mot de passe modifié avec succès');
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
-        toast.error(data?.error || 'Erreur lors du changement de mot de passe');
+        toast.error(resp.error || 'Erreur lors du changement de mot de passe');
       }
     } catch (error) {
       console.error('Erreur changement mot de passe:', error);
@@ -243,7 +242,8 @@ export default function AgentDashboard() {
     setIsChangingEmail(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('change-agent-email', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/change-email', {
         body: {
           agent_id: agent.id,
           new_email: emailData.newEmail,
@@ -251,16 +251,14 @@ export default function AgentDashboard() {
         }
       });
 
-      if (error) throw error;
-
-      if (data?.success) {
+      if (resp.success) {
         toast.success('Email modifié avec succès');
         setIsEmailDialogOpen(false);
         setEmailData({ newEmail: '', currentPassword: '' });
         // Reload agent data to reflect new email
         loadAgentData();
       } else {
-        toast.error(data?.error || 'Erreur lors du changement d\'email');
+        toast.error(resp.error || 'Erreur lors du changement d\'email');
       }
     } catch (error) {
       console.error('Erreur changement email:', error);
@@ -272,7 +270,7 @@ export default function AgentDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-slate-600">{t('agent.loadingInterface')}</p>
@@ -283,11 +281,11 @@ export default function AgentDashboard() {
 
   if (!agent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50">
         <Card className="w-full max-w-md border-0 shadow-xl">
           <CardContent className="pt-6">
             <div className="text-center">
-              <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <AlertTriangle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
               <h2 className="text-xl font-bold text-slate-800 mb-2">{t('agent.profileNotFound')}</h2>
               <p className="text-slate-600 mb-4">
                 {t('agent.noProfileAssociated')}
@@ -352,7 +350,7 @@ export default function AgentDashboard() {
       case 'create-user':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
               <CardTitle className="text-slate-800">{t('agent.createNewUser')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -474,7 +472,7 @@ export default function AgentDashboard() {
                         </Button>
                         <Button
                           type="submit"
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600"
+                          className="flex-1 bg-[#04439e]"
                           disabled={isChangingEmail}
                         >
                           {isChangingEmail ? 'Modification...' : 'Modifier'}
@@ -490,7 +488,7 @@ export default function AgentDashboard() {
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
                 <CardTitle className="flex items-center gap-2 text-slate-800">
-                  <Lock className="w-5 h-5 text-green-600" />
+                  <Lock className="w-5 h-5 text-[#ff4000]" />
                   Mot de passe
                 </CardTitle>
               </CardHeader>
@@ -558,7 +556,7 @@ export default function AgentDashboard() {
                         </Button>
                         <Button
                           type="submit"
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600"
+                          className="flex-1 bg-[#04439e]"
                           disabled={isChangingPassword}
                         >
                           {isChangingPassword ? 'Modification...' : 'Modifier'}

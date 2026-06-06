@@ -74,7 +74,7 @@ export function StandardIdBadge({
         'font-mono font-semibold tracking-wider',
         sizeClasses[size],
         copyable && 'cursor-pointer hover:opacity-80 transition-opacity',
-        is224Format && 'bg-gradient-to-r from-orange-500/10 to-green-600/10 border-orange-500/30',
+        is224Format && 'bg-gradient-to-r from-orange-500/10 to-[#ff4000]/10 border-orange-500/30',
         className
       )}
       onClick={handleCopy}
@@ -84,7 +84,7 @@ export function StandardIdBadge({
         <>
           <span className="font-bold" style={{ color: 'hsl(25 98% 55%)' }}>224</span>
           <span className="text-muted-foreground">-</span>
-          <span className="font-bold" style={{ color: 'hsl(145 65% 35%)' }}>{formattedId.substring(4, 7)}</span>
+          <span className="font-bold" style={{ color: 'hsl(15 100% 50%)' }}>{formattedId.substring(4, 7)}</span>
           <span className="text-muted-foreground">-</span>
           <span className="font-bold" style={{ color: 'hsl(25 98% 55%)' }}>{formattedId.substring(8)}</span>
         </>
@@ -96,7 +96,7 @@ export function StandardIdBadge({
       )}
       {copyable && (
         copied ? (
-          <Check className="w-3 h-3 ml-1.5 text-green-500" />
+          <Check className="w-3 h-3 ml-1.5 text-[#ff4000]" />
         ) : (
           <Copy className="w-3 h-3 ml-1.5 opacity-50" />
         )

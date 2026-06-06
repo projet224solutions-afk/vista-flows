@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 text-sm text-[#ff4000] bg-orange-50 border border-orange-200 rounded-lg">
           Une erreur est survenue lors du chargement de cet onglet.
         </div>
       );

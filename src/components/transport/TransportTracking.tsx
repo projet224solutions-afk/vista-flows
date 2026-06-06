@@ -234,11 +234,11 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'pending': return 'text-[#ff4000] bg-orange-100';
       case 'accepted': return 'text-blue-600 bg-blue-100';
-      case 'picked_up': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-green-600 bg-green-100';
-      case 'cancelled': return 'text-red-600 bg-red-100';
+      case 'picked_up': return 'text-[#04439e] bg-blue-100';
+      case 'delivered': return 'text-[#ff4000] bg-orange-100';
+      case 'cancelled': return 'text-[#ff4000] bg-orange-100';
       case 'disputed': return 'text-orange-600 bg-orange-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -305,12 +305,12 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
             <p className="text-sm text-blue-700">{request.pickupAddress}</p>
           </div>
 
-          <div className="p-4 bg-green-50 rounded-lg">
+          <div className="p-4 bg-orange-50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Destination</span>
+              <MapPin className="w-4 h-4 text-[#ff4000]" />
+              <span className="text-sm font-medium text-[#ff4000]">Destination</span>
             </div>
-            <p className="text-sm text-green-700">{request.deliveryAddress}</p>
+            <p className="text-sm text-[#ff4000]">{request.deliveryAddress}</p>
           </div>
         </div>
 
@@ -341,7 +341,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 <button className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
                   <Phone className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors">
+                <button className="p-2 text-[#ff4000] hover:bg-orange-100 rounded-lg transition-colors">
                   <MessageSquare className="w-4 h-4" />
                 </button>
               </div>
@@ -370,15 +370,15 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         </div>
 
         {/* Prix */}
-        <div className="p-4 bg-green-50 rounded-lg">
+        <div className="p-4 bg-orange-50 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-800">Prix de la course</p>
-              <p className="text-xs text-green-600">Frais 1% inclus</p>
+              <p className="text-sm font-medium text-[#ff4000]">Prix de la course</p>
+              <p className="text-xs text-[#ff4000]">Frais 1% inclus</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-green-600">{request.totalPrice} GNF</p>
-              <p className="text-xs text-green-500">Net: {request.price} GNF</p>
+              <p className="text-lg font-bold text-[#ff4000]">{request.totalPrice} GNF</p>
+              <p className="text-xs text-[#ff4000]">Net: {request.price} GNF</p>
             </div>
           </div>
         </div>
@@ -400,7 +400,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <div className="space-y-2">
                 <button
                   onClick={() => setShowProofModal(true)}
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  className="w-full bg-[#ff4000] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#ff4000] transition-colors"
                 >
                   <Camera className="w-4 h-4 inline mr-2" />
                   Prendre une photo de livraison
@@ -408,7 +408,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 <button
                   onClick={handleMarkAsDelivered}
                   disabled={isLoading || !proofPhoto}
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                  className="w-full bg-[#04439e] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#04439e] disabled:opacity-50 transition-colors"
                 >
                   {isLoading ? 'Livraison...' : 'Marquer comme livré'}
                 </button>
@@ -420,12 +420,12 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         {userType === 'client' && (
           <div className="space-y-3">
             {request.status === 'delivered' && (
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Livraison confirmée</span>
+                  <CheckCircle className="w-5 h-5 text-[#ff4000]" />
+                  <span className="text-sm font-medium text-[#ff4000]">Livraison confirmée</span>
                 </div>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-[#ff4000] mt-1">
                   Paiement libéré au transporteur
                 </p>
               </div>
@@ -435,14 +435,14 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleMarkAsDelivered}
-                  className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  className="flex-1 bg-[#ff4000] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#ff4000] transition-colors"
                 >
                   <CheckCircle className="w-4 h-4 inline mr-2" />
                   Course terminée
                 </button>
                 <button
                   onClick={handleOpenDispute}
-                  className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                  className="flex-1 bg-[#ff4000] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#ff4000] transition-colors"
                 >
                   <AlertTriangle className="w-4 h-4 inline mr-2" />
                   Signaler un problème
@@ -454,8 +454,8 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
         {/* Message d'erreur */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-[#ff4000]">{error}</p>
           </div>
         )}
       </div>

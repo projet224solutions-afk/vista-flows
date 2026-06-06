@@ -178,10 +178,10 @@ export default function CurrencyConversionMonitor() {
   }, [realtimeActive]);
 
   const statusIcon = stats.errors === 0
-    ? <CheckCircle2 className="h-5 w-5 text-green-500" />
+    ? <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
     : stats.successRate < 80
-      ? <XCircle className="h-5 w-5 text-red-500 animate-pulse" />
-      : <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      ? <XCircle className="h-5 w-5 text-[#ff4000] animate-pulse" />
+      : <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
 
   const statusLabel = stats.errors === 0 ? 'Opérationnel' : stats.successRate < 80 ? 'Dégradé' : 'Avertissement';
   const statusVariant: 'default' | 'secondary' | 'destructive' =
@@ -196,8 +196,8 @@ export default function CurrencyConversionMonitor() {
           <span className="font-semibold">Système de conversion</span>
           <Badge variant={statusVariant}>{statusLabel}</Badge>
           {realtimeActive && (
-            <Badge variant="outline" className="text-xs text-green-600 border-green-400">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
+            <Badge variant="outline" className="text-xs text-[#ff4000] border-[#ff4000]">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff4000] mr-1 animate-pulse" />
               Temps réel
             </Badge>
           )}
@@ -225,17 +225,17 @@ export default function CurrencyConversionMonitor() {
 
       {/* Alerte crash visible si erreurs récentes */}
       {stats.errors > 0 && stats.lastError && (
-        <Card className="border-red-300 bg-red-50 dark:bg-red-950/20">
+        <Card className="border-orange-300 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="p-3 flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+              <p className="text-sm font-semibold text-[#ff4000] dark:text-[#ff4000]">
                 Dernière erreur de conversion
                 {stats.lastErrorAt && (
-                  <span className="font-normal ml-1 text-red-500">— {timeAgo(stats.lastErrorAt)}</span>
+                  <span className="font-normal ml-1 text-[#ff4000]">— {timeAgo(stats.lastErrorAt)}</span>
                 )}
               </p>
-              <p className="text-xs text-red-600 dark:text-red-300 mt-0.5 truncate">
+              <p className="text-xs text-[#ff4000] dark:text-orange-300 mt-0.5 truncate">
                 {stats.lastError}
               </p>
             </div>
@@ -254,7 +254,7 @@ export default function CurrencyConversionMonitor() {
         <Card>
           <CardContent className="p-3">
             <p className="text-xs text-muted-foreground">Taux de succès</p>
-            <p className={`text-2xl font-bold ${stats.successRate >= 95 ? 'text-green-600' : stats.successRate >= 80 ? 'text-yellow-600' : 'text-red-600'}`}>
+            <p className={`text-2xl font-bold ${stats.successRate >= 95 ? 'text-[#ff4000]' : stats.successRate >= 80 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
               {stats.successRate}%
             </p>
           </CardContent>
@@ -262,7 +262,7 @@ export default function CurrencyConversionMonitor() {
         <Card>
           <CardContent className="p-3">
             <p className="text-xs text-muted-foreground">Erreurs</p>
-            <p className={`text-2xl font-bold ${stats.errors === 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-2xl font-bold ${stats.errors === 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
               {stats.errors}
             </p>
           </CardContent>
@@ -312,8 +312,8 @@ export default function CurrencyConversionMonitor() {
                 <div key={log.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
                   {/* Icône statut */}
                   <div className="mt-0.5 shrink-0">
-                    {log.status === 'success' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                    {log.status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                    {log.status === 'success' && <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />}
+                    {log.status === 'error' && <XCircle className="h-4 w-4 text-[#ff4000]" />}
                     {log.status === 'skipped' && <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />}
                   </div>
 
@@ -358,7 +358,7 @@ export default function CurrencyConversionMonitor() {
 
                     {/* Erreur */}
                     {log.status === 'error' && log.error_message && (
-                      <p className="text-xs text-red-600 mt-0.5 line-clamp-2">{log.error_message}</p>
+                      <p className="text-xs text-[#ff4000] mt-0.5 line-clamp-2">{log.error_message}</p>
                     )}
                   </div>
 

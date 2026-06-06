@@ -630,9 +630,9 @@ export default function SubscriptionManagement() {
                       {sub.source === 'service' ? (
                         <Badge variant="secondary">🏪 Service</Badge>
                       ) : sub.vendor_business_type === 'digital' ? (
-                        <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">Vendeur digital</Badge>
+                        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-[#04439e]">Vendeur digital</Badge>
                       ) : sub.vendor_business_type === 'hybrid' ? (
-                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Vendeur hybride</Badge>
+                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-[#ff4000]">Vendeur hybride</Badge>
                       ) : (
                         <Badge variant="outline">🛒 Boutique</Badge>
                       )}
@@ -911,7 +911,6 @@ export default function SubscriptionManagement() {
                             {plan.analytics_access && <Badge variant="outline">Analytics</Badge>}
                             {plan.priority_support && <Badge variant="outline">Support Pro</Badge>}
                             {plan.featured_products && <Badge variant="outline">Vedette</Badge>}
-                            {plan.api_access && <Badge variant="outline">API</Badge>}
                           </div>
                         </TableCell>
                         <TableCell>

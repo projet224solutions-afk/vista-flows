@@ -11,19 +11,19 @@ export default function PDGSecurity() {
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      case 'critical': return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
       case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      default: return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'medium': return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
+      default: return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
     }
   };
 
   const getActionColor = (action: string) => {
     if (action.includes('SUSPENDED') || action.includes('DELETED')) {
-      return 'bg-red-500/10 text-red-500 border-red-500/20';
+      return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
     }
     if (action.includes('ACTIVATED') || action.includes('CREATED')) {
-      return 'bg-green-500/10 text-green-500 border-green-500/20';
+      return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
     }
     return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
   };
@@ -83,11 +83,11 @@ export default function PDGSecurity() {
         </Card>
 
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#ff4000]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-500" />
+              <div className="w-12 h-12 rounded-xl bg-[#ff4000]/10 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.critical_alerts + stats.high_alerts}</p>
@@ -98,11 +98,11 @@ export default function PDGSecurity() {
         </Card>
 
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#ff4000]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 rounded-xl bg-[#ff4000]/10 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.reviewed_alerts}</p>
@@ -119,13 +119,13 @@ export default function PDGSecurity() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                 Détection de Fraude
               </CardTitle>
               <CardDescription>Alertes de sécurité et transactions suspectes</CardDescription>
             </div>
             {stats.pending_alerts > 0 && (
-              <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+              <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
                 {stats.pending_alerts} en attente
               </Badge>
             )}
@@ -134,7 +134,7 @@ export default function PDGSecurity() {
         <CardContent>
           {fraudLogs.length === 0 ? (
             <div className="text-center py-12">
-              <Shield className="w-16 h-16 mx-auto mb-4 text-green-500 opacity-50" />
+              <Shield className="w-16 h-16 mx-auto mb-4 text-[#ff4000] opacity-50" />
               <h3 className="text-lg font-semibold text-muted-foreground mb-2">
                 Aucune alerte de fraude
               </h3>
@@ -153,14 +153,14 @@ export default function PDGSecurity() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        fraud.risk_level === 'critical' ? 'bg-red-500/10' :
+                        fraud.risk_level === 'critical' ? 'bg-[#ff4000]/10' :
                         fraud.risk_level === 'high' ? 'bg-orange-500/10' :
-                        'bg-yellow-500/10'
+                        'bg-[#ff4000]/10'
                       }`}>
                         <AlertTriangle className={`w-6 h-6 ${
-                          fraud.risk_level === 'critical' ? 'text-red-500' :
+                          fraud.risk_level === 'critical' ? 'text-[#ff4000]' :
                           fraud.risk_level === 'high' ? 'text-orange-500' :
-                          'text-yellow-500'
+                          'text-[#ff4000]'
                         }`} />
                       </div>
                       <div>
@@ -170,7 +170,7 @@ export default function PDGSecurity() {
                           </Badge>
                           <span className="text-sm font-semibold">Score: {fraud.risk_score}/100</span>
                           {fraud.reviewed && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                            <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
                               <CheckCircle className="w-3 h-3 mr-1" />
                               Traité
                             </Badge>

@@ -150,7 +150,7 @@ export function DeliveryStatusTracker({ deliveryId, _userRole }: DeliveryStatusT
   return (
     <div className="space-y-4">
       {/* Statut actuel */}
-      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20">
+      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-[#ff4000]/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Suivi de livraison</CardTitle>
@@ -226,14 +226,14 @@ export function DeliveryStatusTracker({ deliveryId, _userRole }: DeliveryStatusT
                     <div className={`
                       w-8 h-8 rounded-full flex items-center justify-center
                       ${isCompleted
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-[#ff4000] text-white'
                         : 'bg-muted text-muted-foreground'}
-                      ${isCurrent ? 'ring-2 ring-green-500 ring-offset-2' : ''}
+                      ${isCurrent ? 'ring-2 ring-[#ff4000] ring-offset-2' : ''}
                     `}>
                       <Icon className="h-4 w-4" />
                     </div>
                     {index < STATUS_STEPS.length - 1 && (
-                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />
+                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-[#ff4000]' : 'bg-muted'}`} />
                     )}
                   </div>
 
@@ -268,7 +268,7 @@ export function DeliveryStatusTracker({ deliveryId, _userRole }: DeliveryStatusT
           </div>
           <div className="border-l-2 border-dashed ml-2 h-4" />
           <div className="flex items-start gap-3">
-            <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <MapPin className="h-5 w-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-muted-foreground">Destination</p>
               <p className="font-medium">{delivery.delivery_address}</p>

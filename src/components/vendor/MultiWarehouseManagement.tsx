@@ -74,11 +74,11 @@ function LocationStatsCard({ stats }: { stats: any }) {
         <p className="text-xs text-muted-foreground">Unités</p>
       </div>
       <div className="text-center p-2 bg-muted/50 rounded-lg">
-        <p className="text-2xl font-bold text-amber-600">{stats.low_stock_count || 0}</p>
+        <p className="text-2xl font-bold text-[#ff4000]">{stats.low_stock_count || 0}</p>
         <p className="text-xs text-muted-foreground">Stock bas</p>
       </div>
       <div className="text-center p-2 bg-muted/50 rounded-lg">
-        <p className="text-2xl font-bold text-red-600">{stats.out_of_stock_count || 0}</p>
+        <p className="text-2xl font-bold text-[#ff4000]">{stats.out_of_stock_count || 0}</p>
         <p className="text-xs text-muted-foreground">Rupture</p>
       </div>
     </div>
@@ -206,10 +206,10 @@ function TransferStatusBadge({ status }: { status: string }) {
   const config = {
     pending: { label: 'En attente', color: 'bg-gray-100 text-gray-700', icon: Clock },
     in_transit: { label: 'En transit', color: 'bg-blue-100 text-blue-700', icon: Truck },
-    delivered: { label: 'Livré', color: 'bg-purple-100 text-purple-700', icon: Package },
-    completed: { label: 'Complété', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-    partial: { label: 'Partiel', color: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
-    cancelled: { label: 'Annulé', color: 'bg-red-100 text-red-700', icon: XCircle },
+    delivered: { label: 'Livré', color: 'bg-blue-100 text-[#04439e]', icon: Package },
+    completed: { label: 'Complété', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle2 },
+    partial: { label: 'Partiel', color: 'bg-orange-100 text-[#ff4000]', icon: AlertTriangle },
+    cancelled: { label: 'Annulé', color: 'bg-orange-100 text-[#ff4000]', icon: XCircle },
   }[status] || { label: status, color: 'bg-gray-100 text-gray-700', icon: Clock };
 
   const Icon = config.icon;
@@ -390,7 +390,7 @@ export default function MultiWarehouseManagement() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+            <div className="p-3 rounded-xl bg-[#04439e] shadow-lg">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -455,7 +455,7 @@ export default function MultiWarehouseManagement() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Transferts à traiter</p>
                 <p className="text-2xl font-bold">{pendingTransfers.length + inTransitTransfers.length}</p>
               </div>
-              <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+              <div className="p-2 rounded-lg bg-blue-100 text-[#04439e]">
                 <ArrowRightLeft className="w-5 h-5" />
               </div>
             </div>
@@ -469,7 +469,7 @@ export default function MultiWarehouseManagement() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Écarts signalés</p>
                 <p className="text-2xl font-bold">{losses.length}</p>
               </div>
-              <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+              <div className="p-2 rounded-lg bg-orange-100 text-[#ff4000]">
                 <AlertTriangle className="w-5 h-5" />
               </div>
             </div>
@@ -497,10 +497,10 @@ export default function MultiWarehouseManagement() {
       )}
 
       {inTransitTransfers.length > 0 && (
-        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-          <Truck className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800 dark:text-amber-200">Transferts en transit</AlertTitle>
-          <AlertDescription className="text-amber-700 dark:text-amber-300">
+        <Alert className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
+          <Truck className="h-4 w-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000] dark:text-orange-200">Transferts en transit</AlertTitle>
+          <AlertDescription className="text-[#ff4000] dark:text-orange-300">
             {inTransitTransfers.length} transfert(s) en cours de livraison - À confirmer à la réception
           </AlertDescription>
         </Alert>
@@ -725,7 +725,7 @@ export default function MultiWarehouseManagement() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingDown className="w-5 h-5 text-red-600" />
+                    <TrendingDown className="w-5 h-5 text-[#ff4000]" />
                     Audit, pertes et écarts
                   </CardTitle>
                   <CardDescription>
@@ -733,7 +733,7 @@ export default function MultiWarehouseManagement() {
                   </CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-2xl font-bold text-[#ff4000]">
                     {totalLossValue.toLocaleString()} GNF
                   </p>
                   <p className="text-xs text-muted-foreground">Valeur totale des pertes</p>
@@ -743,7 +743,7 @@ export default function MultiWarehouseManagement() {
             <CardContent>
               {losses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-[#ff4000]" />
                   <p>Aucune perte enregistrée</p>
                 </div>
               ) : (
@@ -769,7 +769,7 @@ export default function MultiWarehouseManagement() {
                           <Badge variant="outline">{loss.source_type}</Badge>
                         </TableCell>
                         <TableCell>{loss.quantity}</TableCell>
-                        <TableCell className="text-red-600 font-medium">
+                        <TableCell className="text-[#ff4000] font-medium">
                           {loss.total_loss_value?.toLocaleString()} GNF
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
@@ -983,7 +983,7 @@ export default function MultiWarehouseManagement() {
                       <TableCell className="text-right text-muted-foreground">
                         {stock.reserved_quantity || 0}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-green-600">
+                      <TableCell className="text-right font-medium text-[#ff4000]">
                         {stock.available_quantity}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
@@ -993,11 +993,11 @@ export default function MultiWarehouseManagement() {
                         {stock.quantity === 0 ? (
                           <Badge variant="destructive">Rupture</Badge>
                         ) : stock.quantity <= stock.minimum_stock ? (
-                          <Badge variant="outline" className="text-amber-600 border-amber-300">
+                          <Badge variant="outline" className="text-[#ff4000] border-orange-300">
                             Stock bas
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-green-600 border-green-300">
+                          <Badge variant="outline" className="text-[#ff4000] border-orange-300">
                             OK
                           </Badge>
                         )}

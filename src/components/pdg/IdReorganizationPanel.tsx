@@ -200,7 +200,7 @@ export function IdReorganizationPanel() {
       <CardContent>
         {!hasIssues && !loading ? (
           <Alert>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
             <AlertDescription>
               Tous les IDs actifs sont cohérents. Aucun numéro libre ou ancien format détecté.
             </AlertDescription>
@@ -208,15 +208,15 @@ export function IdReorganizationPanel() {
         ) : (
           <>
             <Alert className="mb-4">
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
               <AlertDescription>
                 Les écarts affichés représentent des numéros libres dans la séquence active, pas des utilisateurs perdus.
               </AlertDescription>
             </Alert>
 
             {hasLegacyPrefixDrift && (
-              <Alert className="mb-4 border-amber-500/40 bg-amber-500/5">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <Alert className="mb-4 border-[#ff4000]/40 bg-[#ff4000]/5">
+                <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
                 <AlertDescription>
                   Des IDs utilisent encore un ancien préfixe (`CLI` / `SYN`). Le correctif d’alignement `CLT` / `BST` doit être appliqué côté base pour que <strong>Tout réorganiser</strong> les corrige définitivement.
                 </AlertDescription>
@@ -238,16 +238,16 @@ export function IdReorganizationPanel() {
                     const hasRoleIssues = stat.gapCount > 0 || stat.legacyCount > 0 || stat.invalidCount > 0;
 
                     return (
-                      <Card key={stat.roleType} className={hasRoleIssues ? 'border-yellow-500/50' : ''}>
+                      <Card key={stat.roleType} className={hasRoleIssues ? 'border-[#ff4000]/50' : ''}>
                         <CardContent className="pt-4">
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-medium">{stat.label}</span>
                             {hasRoleIssues ? (
-                              <Badge variant="destructive" className="bg-yellow-500">
+                              <Badge variant="destructive" className="bg-[#ff4000]">
                                 {stat.gapCount > 0 ? `${stat.gapCount} n° libres` : 'À revoir'}
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-green-600 border-green-600">
+                              <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]">
                                 <CheckCircle2 className="h-3 w-3 mr-1" />
                                 OK
                               </Badge>
@@ -257,13 +257,13 @@ export function IdReorganizationPanel() {
                             <p>Total: {stat.total} IDs actifs</p>
                             <p>Max: {getIdConfig(stat.roleType).prefix}{stat.maxNumber.toString().padStart(4, '0')}</p>
                             {stat.legacyCount > 0 && (
-                              <p className="text-amber-600">Anciens formats: {stat.legacyCount}</p>
+                              <p className="text-[#ff4000]">Anciens formats: {stat.legacyCount}</p>
                             )}
                             {stat.invalidCount > 0 && (
                               <p className="text-destructive">Formats à normaliser: {stat.invalidCount}</p>
                             )}
                             {stat.gapCount > 0 && (
-                              <p className="text-yellow-600">
+                              <p className="text-[#ff4000]">
                                 Numéros libres: {stat.gaps.slice(0, 5).join(', ')}
                                 {stat.gaps.length > 5 && '...'}
                               </p>
@@ -297,7 +297,7 @@ export function IdReorganizationPanel() {
                   {stats.filter((s) => s.gapCount > 0 || s.legacyCount > 0 || s.invalidCount > 0).map((stat) => (
                     <div key={stat.roleType} className="mb-6">
                       <h3 className="font-semibold mb-2 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
                         {stat.label}
                       </h3>
                       <div className="pl-6 space-y-1">
@@ -308,7 +308,7 @@ export function IdReorganizationPanel() {
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {stat.gaps.slice(0, 24).map((gap) => (
-                                <Badge key={gap} variant="outline" className="text-yellow-600">
+                                <Badge key={gap} variant="outline" className="text-[#ff4000]">
                                   {getIdConfig(stat.roleType).prefix}{gap.toString().padStart(4, '0')}
                                 </Badge>
                               ))}
@@ -319,7 +319,7 @@ export function IdReorganizationPanel() {
                           </>
                         )}
                         {stat.legacyCount > 0 && (
-                          <p className="text-xs text-amber-600 mt-2">
+                          <p className="text-xs text-[#ff4000] mt-2">
                             {stat.legacyCount} ID(s) utilisent encore un ancien préfixe pour ce rôle.
                           </p>
                         )}
@@ -336,7 +336,7 @@ export function IdReorganizationPanel() {
                   ))}
                   {stats.filter((s) => s.gapCount > 0 || s.legacyCount > 0 || s.invalidCount > 0).length === 0 && (
                     <Alert>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                       <AlertDescription>
                         Aucun écart à afficher. Tous les IDs sont déjà propres.
                       </AlertDescription>
@@ -358,7 +358,7 @@ export function IdReorganizationPanel() {
                             {result.oldId}
                           </Badge>
                           <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          <Badge className="font-mono bg-green-500">
+                          <Badge className="font-mono bg-[#ff4000]">
                             {result.newId}
                           </Badge>
                         </div>

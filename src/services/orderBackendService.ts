@@ -25,12 +25,6 @@ export interface CreateOrderPayload {
     country: string;
     postal_code?: string | null;
     notes?: string | null;
-    is_cod?: boolean;
-    cod_phone?: string | null;
-    cod_city?: string | null;
-    neighborhood?: string | null;
-    landmark?: string | null;
-    instructions?: string | null;
   };
   payment_intent_id?: string | null;
   payment_confirmed?: boolean | null;
@@ -74,9 +68,7 @@ export interface OrderEscrowSummary {
   id: string;
   status: string;
   amount?: number;
-  commission_amount?: number | null;
   currency?: string;
-  metadata?: Record<string, any> | null;
   auto_release_at?: string | null;
   released_at?: string | null;
   seller_confirmed_at?: string | null;
@@ -196,21 +188,13 @@ export async function cancelOrder(orderId: string, reason: string, signal?: Abor
   });
 }
 
-export async function confirmCashOnDeliveryOrder(orderId: string, signal?: AbortSignal) {
-  return backendFetch<OrderSummary>(`/api/orders/${orderId}/confirm-cod-delivery`, {
-    method: 'POST',
-    idempotencyKey: generateIdempotencyKey(),
-    signal,
-  });
-}
-
 /**
  * Mettre à jour le statut d'une commande (vendeur)
  */
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatusTransition,
-  options: { tracking_number?: string; cancellation_reason?: string; estimated_delivery_days?: number } = {},
+  options: { tracking_number?: string; cancellation_reason?: string } = {},
   signal?: AbortSignal
 ) {
   return backendFetch<OrderSummary>(`/api/orders/${orderId}/status`, {

@@ -192,10 +192,10 @@ export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModul
 
   const getStatusBadge = (status: PhotoSession['status']) => {
     const styles = {
-      confirmee: 'bg-green-100 text-green-800',
-      en_attente: 'bg-yellow-100 text-yellow-800',
+      confirmee: 'bg-orange-100 text-[#ff4000]',
+      en_attente: 'bg-orange-100 text-[#ff4000]',
       terminee: 'bg-blue-100 text-blue-800',
-      annulee: 'bg-red-100 text-red-800'
+      annulee: 'bg-orange-100 text-[#ff4000]'
     };
     const labels = {
       confirmee: 'Confirmée',
@@ -262,7 +262,7 @@ export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModul
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-purple-500" />
+              <FolderOpen className="h-4 w-4 text-[#04439e]" />
               <span className="text-sm text-muted-foreground">Galeries</span>
             </div>
             <p className="text-2xl font-bold mt-1">{totalGalleries}</p>
@@ -280,7 +280,7 @@ export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModul
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-lg font-bold mt-1">{formatPrice(monthlyRevenue)}</p>
@@ -507,7 +507,7 @@ export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModul
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{service.name}</CardTitle>
                     {service.isPopular && (
-                      <Badge className="bg-yellow-100 text-yellow-800">
+                      <Badge className="bg-orange-100 text-[#ff4000]">
                         <Star className="h-3 w-3 mr-1" />
                         Populaire
                       </Badge>
@@ -523,7 +523,7 @@ export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModul
                   <ul className="text-sm space-y-1 mb-4">
                     {service.includes.map((item, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span className="text-green-500">✓</span>
+                        <span className="text-[#ff4000]">✓</span>
                         {item}
                       </li>
                     ))}

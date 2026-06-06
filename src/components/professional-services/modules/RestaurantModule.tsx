@@ -35,12 +35,12 @@ interface RestaurantModuleProps {
 // formatCurrency importé depuis @/lib/formatters
 
 const _statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
   preparing: 'bg-blue-100 text-blue-800',
-  ready: 'bg-cyan-100 text-cyan-800',
-  delivered: 'bg-green-100 text-green-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+  ready: 'bg-blue-100 text-[#04439e]',
+  delivered: 'bg-orange-100 text-[#ff4000]',
+  completed: 'bg-orange-100 text-[#ff4000]',
+  cancelled: 'bg-orange-100 text-[#ff4000]',
 };
 
 const _statusLabels: Record<string, string> = {
@@ -116,7 +116,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
   // Onboarding card (shown on overview when no data)
   const OnboardingCard = () => (
-    <Card className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border-orange-200">
+    <Card className="bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-[#ff4000]/20 border-orange-200">
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -187,7 +187,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             <div className="text-2xl font-bold">{stats?.orders.total || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {(stats?.orders.pending || 0) + (stats?.orders.preparing || 0) > 0 && (
-                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800">
+                <Badge variant="secondary" className="text-xs bg-orange-100 text-[#ff4000]">
                   <Clock className="w-3 h-3 mr-1" />
                   {(stats?.orders.pending || 0) + (stats?.orders.preparing || 0)} actives
                 </Badge>
@@ -203,7 +203,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.menuItems.total || 0}</div>
-            <span className="text-xs text-green-600">{stats?.menuItems.active || 0} plats actifs</span>
+            <span className="text-xs text-[#ff4000]">{stats?.menuItems.active || 0} plats actifs</span>
           </CardContent>
         </Card>
 
@@ -290,20 +290,20 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
                 {/* Par type */}
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center">
-                    <MapPin className="w-4 h-4 text-amber-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-amber-700">Sur place</div>
-                    <div className="text-lg font-bold text-amber-600">{formatCurrency(stats?.salesDineIn.totalRevenue || 0)}</div>
+                  <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg text-center">
+                    <MapPin className="w-4 h-4 text-[#ff4000] mx-auto mb-1" />
+                    <div className="text-xs font-medium text-[#ff4000]">Sur place</div>
+                    <div className="text-lg font-bold text-[#ff4000]">{formatCurrency(stats?.salesDineIn.totalRevenue || 0)}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <Truck className="w-4 h-4 text-blue-600 mx-auto mb-1" />
                     <div className="text-xs font-medium text-blue-700">Livraison</div>
                     <div className="text-lg font-bold text-blue-600">{formatCurrency(stats?.salesDelivery.totalRevenue || 0)}</div>
                   </div>
-                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg text-center">
-                    <ShoppingBag className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-purple-700">À emporter</div>
-                    <div className="text-lg font-bold text-purple-600">{formatCurrency(stats?.salesTakeaway.totalRevenue || 0)}</div>
+                  <div className="p-3 bg-blue-50 dark:bg-[#04439e]/20 border border-blue-200 dark:border-[#04439e] rounded-lg text-center">
+                    <ShoppingBag className="w-4 h-4 text-[#04439e] mx-auto mb-1" />
+                    <div className="text-xs font-medium text-[#04439e]">À emporter</div>
+                    <div className="text-lg font-bold text-[#04439e]">{formatCurrency(stats?.salesTakeaway.totalRevenue || 0)}</div>
                   </div>
                 </div>
 
@@ -328,30 +328,30 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg text-center">
-                    <MapPin className="w-4 h-4 text-amber-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-amber-700">Sur place</div>
-                    <div className="text-xl font-bold text-amber-600">{stats?.ordersDineIn.total || 0}</div>
+                  <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 rounded-lg text-center">
+                    <MapPin className="w-4 h-4 text-[#ff4000] mx-auto mb-1" />
+                    <div className="text-xs font-medium text-[#ff4000]">Sur place</div>
+                    <div className="text-xl font-bold text-[#ff4000]">{stats?.ordersDineIn.total || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg text-center">
                     <Truck className="w-4 h-4 text-blue-600 mx-auto mb-1" />
                     <div className="text-xs font-medium text-blue-700">Livraison</div>
                     <div className="text-xl font-bold text-blue-600">{stats?.ordersDelivery.total || 0}</div>
                   </div>
-                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 rounded-lg text-center">
-                    <ShoppingBag className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-purple-700">À emporter</div>
-                    <div className="text-xl font-bold text-purple-600">{stats?.ordersTakeaway.total || 0}</div>
+                  <div className="p-3 bg-blue-50 dark:bg-[#04439e]/20 border border-blue-200 rounded-lg text-center">
+                    <ShoppingBag className="w-4 h-4 text-[#04439e] mx-auto mb-1" />
+                    <div className="text-xs font-medium text-[#04439e]">À emporter</div>
+                    <div className="text-xl font-bold text-[#04439e]">{stats?.ordersTakeaway.total || 0}</div>
                   </div>
                 </div>
 
                 {/* Statuts */}
                 <div className="space-y-2 pt-3 border-t">
-                  <div className="flex justify-between items-center p-2 rounded bg-yellow-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-orange-50">
                     <span className="text-sm flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-yellow-500" /> En attente
+                      <Clock className="w-4 h-4 text-[#ff4000]" /> En attente
                     </span>
-                    <span className="font-semibold text-yellow-700">{stats?.orders.pending || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.orders.pending || 0}</span>
                   </div>
                   <div className="flex justify-between items-center p-2 rounded bg-blue-50">
                     <span className="text-sm flex items-center gap-2">
@@ -359,17 +359,17 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                     </span>
                     <span className="font-semibold text-blue-700">{stats?.orders.preparing || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-cyan-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-blue-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-cyan-500" /> Prêtes
+                      <CheckCircle className="w-4 h-4 text-[#04439e]" /> Prêtes
                     </span>
-                    <span className="font-semibold text-cyan-700">{stats?.orders.ready || 0}</span>
+                    <span className="font-semibold text-[#04439e]">{stats?.orders.ready || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-green-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-orange-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" /> Terminées
+                      <CheckCircle className="w-4 h-4 text-[#ff4000]" /> Terminées
                     </span>
-                    <span className="font-semibold text-green-700">{stats?.orders.delivered || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.orders.delivered || 0}</span>
                   </div>
                 </div>
               </CardContent>

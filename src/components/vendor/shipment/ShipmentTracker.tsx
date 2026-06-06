@@ -149,10 +149,10 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'created': return 'bg-blue-100 text-blue-800';
-      case 'picked_up': return 'bg-purple-100 text-purple-800';
+      case 'picked_up': return 'bg-blue-100 text-[#04439e]';
       case 'in_transit': return 'bg-orange-100 text-orange-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivered': return 'bg-orange-100 text-[#ff4000]';
+      case 'cancelled': return 'bg-orange-100 text-[#ff4000]';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

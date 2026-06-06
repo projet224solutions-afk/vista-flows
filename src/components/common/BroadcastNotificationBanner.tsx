@@ -72,7 +72,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-4 w-4 text-[#ff4000]" />;
       case 'high':
         return <Bell className="h-4 w-4 text-orange-500" />;
       default:
@@ -83,7 +83,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return 'border-red-500 bg-red-50 dark:bg-red-950/30';
+        return 'border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30';
       case 'high':
         return 'border-orange-500 bg-orange-50 dark:bg-orange-950/30';
       default:
@@ -108,12 +108,12 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-1">
-                <AlertTriangle className="h-5 w-5 text-red-500 animate-pulse" />
+                <AlertTriangle className="h-5 w-5 text-[#ff4000] animate-pulse" />
                 <div className="flex-1">
-                  <p className="font-semibold text-red-700 dark:text-red-300">
+                  <p className="font-semibold text-[#ff4000] dark:text-orange-300">
                     {urgentBroadcast.title}
                   </p>
-                  <p className="text-sm text-red-600 dark:text-red-400 line-clamp-1">
+                  <p className="text-sm text-[#ff4000] dark:text-[#ff4000] line-clamp-1">
                     {urgentBroadcast.content}
                   </p>
                 </div>
@@ -122,7 +122,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-red-500 text-red-600 hover:bg-red-100"
+                  className="border-[#ff4000] text-[#ff4000] hover:bg-orange-100"
                   onClick={() => handleOpenBroadcast(urgentBroadcast)}
                 >
                   Voir
@@ -154,7 +154,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
               <Badge
                 className={cn(
                   "absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs",
-                  stats.urgent > 0 ? "bg-red-500" : "bg-primary"
+                  stats.urgent > 0 ? "bg-[#ff4000]" : "bg-primary"
                 )}
               >
                 {stats.unread > 9 ? '9+' : stats.unread}
@@ -202,7 +202,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         "mt-1 p-1 rounded-full",
-                        broadcast.priority === 'urgent' ? 'bg-red-100' :
+                        broadcast.priority === 'urgent' ? 'bg-orange-100' :
                         broadcast.priority === 'high' ? 'bg-orange-100' : 'bg-blue-100'
                       )}>
                         {getPriorityIcon(broadcast.priority)}

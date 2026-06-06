@@ -125,10 +125,10 @@ export default function VendorServiceModule() {
 
       {/* Status Alerts pour le service sélectionné */}
       {selectedService?.status === 'pending' && (
-        <Alert variant="default" className="bg-amber-50 border-amber-200 dark:bg-amber-900/20">
-          <Clock className="w-4 h-4 text-amber-600" />
-          <AlertTitle className="text-amber-900 dark:text-amber-100">Service en cours de validation</AlertTitle>
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
+        <Alert variant="default" className="bg-orange-50 border-orange-200 dark:bg-[#ff4000]/20">
+          <Clock className="w-4 h-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000] dark:text-orange-100">Service en cours de validation</AlertTitle>
+          <AlertDescription className="text-[#ff4000] dark:text-orange-200">
             Votre service "{selectedService.business_name}" est en attente de validation.
           </AlertDescription>
         </Alert>

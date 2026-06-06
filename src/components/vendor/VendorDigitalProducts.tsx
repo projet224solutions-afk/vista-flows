@@ -194,7 +194,7 @@ export default function VendorDigitalProducts() {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="overflow-hidden rounded-[28px] border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_60%,#0b1b33_100%)] p-5 shadow-[0_24px_60px_rgba(4,67,158,0.30)] sm:p-7">
+      <div className="overflow-hidden rounded-[28px] border-0 bg-[#04439e] p-5 shadow-[0_24px_60px_rgba(4,67,158,0.30)] sm:p-7">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
@@ -214,7 +214,7 @@ export default function VendorDigitalProducts() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#04439e,#0d5ed2)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
+        <Card className="rounded-[24px] border-0 bg-[#04439e] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -228,7 +228,7 @@ export default function VendorDigitalProducts() {
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#ff4000,#e53900)] shadow-[0_18px_45px_rgba(255,64,0,0.20)]">
+        <Card className="rounded-[24px] border-0 bg-[#ff4000] shadow-[0_18px_45px_rgba(255,64,0,0.20)]">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -244,7 +244,7 @@ export default function VendorDigitalProducts() {
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#0b1b33,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
+        <Card className="rounded-[24px] border-0 bg-[#04439e] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -260,7 +260,7 @@ export default function VendorDigitalProducts() {
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#063589,#0536a8)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
+        <Card className="rounded-[24px] border-0 bg-[#04439e] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -370,7 +370,7 @@ export default function VendorDigitalProducts() {
                           )}
                         </div>
                       ) : (
-                          <span className="font-semibold text-lg sm:text-xl text-emerald-300">Gratuit</span>
+                          <span className="font-semibold text-lg sm:text-xl text-orange-300">Gratuit</span>
                       )}
                     </div>
                     {product.product_mode === 'affiliate' && product.commission_rate > 0 && (

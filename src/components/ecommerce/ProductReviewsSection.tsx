@@ -109,7 +109,7 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
           <Star
             key={i}
             className={`w-4 h-4 ${
-              i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+              i < rating ? 'fill-[#ff4000] text-[#ff4000]' : 'text-gray-300'
             }`}
           />
         ))}
@@ -146,7 +146,7 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
                     <span className="text-sm w-12">{star} ⭐</span>
                     <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-yellow-400 transition-all"
+                        className="h-full bg-[#ff4000] transition-all"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

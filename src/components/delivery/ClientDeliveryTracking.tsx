@@ -63,7 +63,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       ? delivery.delivery_address
       : delivery.delivery_address?.address || 'Destination';
 
-    new mapboxgl.Marker({ color: '#22c55e' })
+    new mapboxgl.Marker({ color: '#ff4000' })
       .setLngLat([delivery.delivery_lng || -13.7122, delivery.delivery_lat || 9.5091])
       .setPopup(new mapboxgl.Popup().setHTML(`<strong>Destination</strong><br/>${deliveryAddr}`))
       .addTo(map.current);
@@ -94,7 +94,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     if (driverMarker.current) {
       driverMarker.current.setLngLat([driverPosition.lng, driverPosition.lat]);
     } else {
-      driverMarker.current = new mapboxgl.Marker({ color: '#3b82f6' })
+      driverMarker.current = new mapboxgl.Marker({ color: '#04439e' })
         .setLngLat([driverPosition.lng, driverPosition.lat])
         .setPopup(new mapboxgl.Popup().setHTML('<strong>🚴 Livreur</strong>'))
         .addTo(map.current);
@@ -234,9 +234,9 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       case 'picked_up':
         return <Badge className="bg-blue-500">Colis récupéré</Badge>;
       case 'in_transit':
-        return <Badge className="bg-purple-500">En livraison</Badge>;
+        return <Badge className="bg-[#04439e]">En livraison</Badge>;
       case 'delivered':
-        return <Badge className="bg-green-500">Livré</Badge>;
+        return <Badge className="bg-[#ff4000]">Livré</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -266,7 +266,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
         <CardContent className="space-y-4">
           {/* Temps estimé */}
           {estimatedTime !== null && driverPosition && delivery.status === 'in_transit' && (
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center gap-3">
                 <Clock className="h-8 w-8 text-blue-600" />
                 <div>
@@ -312,7 +312,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <MapPin className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">Livraison</p>
                 <p className="text-muted-foreground">

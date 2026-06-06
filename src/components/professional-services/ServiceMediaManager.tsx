@@ -310,7 +310,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
               size="sm"
               variant="outline"
               className={`gap-1.5 ${isPremium
-                ? 'border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950/30'
+                ? 'border-blue-300 text-[#04439e] hover:bg-blue-50 dark:border-[#04439e] dark:text-[#04439e] dark:hover:bg-[#04439e]/30'
                 : 'border-muted-foreground/30 text-muted-foreground/60'
               }`}
               onClick={() => {
@@ -329,7 +329,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
             >
               {isPremium ? <Video className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               Vidéo
-              {!isPremium && <span className="text-[9px] font-bold ml-0.5 uppercase tracking-wide text-amber-500">Premium</span>}
+              {!isPremium && <span className="text-[9px] font-bold ml-0.5 uppercase tracking-wide text-[#ff4000]">Premium</span>}
             </Button>
             <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden"
               onChange={async e => {
@@ -351,13 +351,13 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
 
       {/* ─── Bandeau Premium vidéo ──────────────────────────── */}
       {!readonly && !isPremium && (
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-          <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+        <div className="flex items-start gap-3 p-3 rounded-xl bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000]">
+          <Lock className="w-4 h-4 shrink-0 mt-0.5 text-[#ff4000] dark:text-[#ff4000]" />
           <div className="text-sm">
-            <span className="font-semibold text-amber-700 dark:text-amber-400">Vidéos verrouillées</span>
-            <span className="text-amber-600 dark:text-amber-500"> — L'ajout de vidéos est disponible avec l'abonnement </span>
-            <span className="font-bold text-amber-700 dark:text-amber-400">Premium à 150 000 GNF/mois</span>
-            <span className="text-amber-600 dark:text-amber-500">. Les photos sont disponibles gratuitement.</span>
+            <span className="font-semibold text-[#ff4000] dark:text-[#ff4000]">Vidéos verrouillées</span>
+            <span className="text-[#ff4000] dark:text-[#ff4000]"> — L'ajout de vidéos est disponible avec l'abonnement </span>
+            <span className="font-bold text-[#ff4000] dark:text-[#ff4000]">Premium à 150 000 GNF/mois</span>
+            <span className="text-[#ff4000] dark:text-[#ff4000]">. Les photos sont disponibles gratuitement.</span>
           </div>
         </div>
       )}
@@ -422,7 +422,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 {/* Badge couverture */}
                 {item.is_cover && (
                   <div className="absolute top-2 left-2 z-10">
-                    <Badge className="bg-amber-500 text-white text-[10px] gap-1 shadow-lg">
+                    <Badge className="bg-[#ff4000] text-white text-[10px] gap-1 shadow-lg">
                       <Star className="w-2.5 h-2.5 fill-white" />
                       Couverture
                     </Badge>
@@ -442,7 +442,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                     {!item.is_cover && (
                       <button
                         onClick={e => { e.stopPropagation(); handleSetCover(item); }}
-                        className="w-8 h-8 rounded-full bg-amber-500/90 text-white flex items-center justify-center shadow-lg hover:bg-amber-500 transition-colors"
+                        className="w-8 h-8 rounded-full bg-[#ff4000]/90 text-white flex items-center justify-center shadow-lg hover:bg-[#ff4000] transition-colors"
                         title="Définir comme couverture"
                       >
                         <Star className="w-3.5 h-3.5" />
@@ -508,7 +508,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 )}
                 {/* Badge vidéo */}
                 <div className="absolute top-2 left-2">
-                  <Badge className="bg-purple-600 text-white text-[10px] gap-1">
+                  <Badge className="bg-[#04439e] text-white text-[10px] gap-1">
                     <Play className="w-2.5 h-2.5 fill-white" />
                     Vidéo {idx + 1}
                   </Badge>
@@ -520,7 +520,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
             {canAdd && isPremium && videos.length > 0 && (
               <button
                 onClick={() => videoInputRef.current?.click()}
-                className="rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-800 hover:border-purple-400 h-40 flex flex-col items-center justify-center gap-2 text-purple-400 hover:text-purple-600 transition-all duration-200 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+                className="rounded-2xl border-2 border-dashed border-blue-200 dark:border-[#04439e] hover:border-[#04439e] h-40 flex flex-col items-center justify-center gap-2 text-[#04439e] hover:text-[#04439e] transition-all duration-200 hover:bg-blue-50 dark:hover:bg-[#04439e]/20"
               >
                 <Video className="w-6 h-6" />
                 <span className="text-xs font-medium">Ajouter une vidéo</span>
@@ -632,8 +632,8 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                     className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${idx === lightbox.index ? 'border-primary scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
                     {item.media_type === 'video' ? (
-                      <div className="w-full h-full bg-purple-900 flex items-center justify-center">
-                        <Play className="w-4 h-4 text-purple-300 fill-purple-300" />
+                      <div className="w-full h-full bg-[#04439e] flex items-center justify-center">
+                        <Play className="w-4 h-4 text-blue-300 fill-blue-300" />
                       </div>
                     ) : (
                       <img src={item.image_url!} alt="" className="w-full h-full object-cover" />

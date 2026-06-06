@@ -233,7 +233,7 @@ export default function VendorAgentInterface() {
             <p className="text-xs text-muted-foreground truncate">{agent.agent_code}</p>
           </div>
         </div>
-        <Badge variant="outline" className="mt-2 bg-green-50 text-green-700 border-green-200 text-xs">
+        <Badge variant="outline" className="mt-2 bg-orange-50 text-[#ff4000] border-orange-200 text-xs">
           Agent Actif
         </Badge>
       </div>
@@ -473,7 +473,7 @@ export default function VendorAgentInterface() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
                       Actif
                     </Badge>
                     <Button onClick={handleSignOut} variant="outline" size="sm">
@@ -560,7 +560,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
         <Card className="border-0 shadow-sm">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="w-4 h-4 text-[#ff4000]" />
               <span className="text-xs text-muted-foreground">Statut</span>
             </div>
             <p className="text-xl md:text-2xl font-bold">Actif</p>

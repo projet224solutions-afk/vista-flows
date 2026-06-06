@@ -96,10 +96,10 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
   processing: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+  completed: 'bg-orange-100 text-[#ff4000]',
+  failed: 'bg-orange-100 text-[#ff4000]',
   refunded: 'bg-gray-100 text-gray-800'
 };
 
@@ -397,10 +397,10 @@ export default function PaymentProcessor() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Réussies</p>
-                <p className="text-2xl font-bold text-green-600">{completedTransactions}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{completedTransactions}</p>
               </div>
             </div>
           </CardContent>
@@ -408,7 +408,7 @@ export default function PaymentProcessor() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-green-600 rounded-full" />
+              <div className="w-5 h-5 bg-[#ff4000] rounded-full" />
               <div>
                 <p className="text-sm text-muted-foreground">Montant total</p>
                 <p className="text-2xl font-bold">{totalAmount.toLocaleString()} GNF</p>

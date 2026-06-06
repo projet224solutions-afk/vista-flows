@@ -70,9 +70,9 @@ interface VendorInfo {
 
 const statusColors: Record<string, string> = {
   open: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  in_progress: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+  in_progress: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
   waiting_response: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  resolved: 'bg-green-500/10 text-green-600 border-green-500/20',
+  resolved: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
   closed: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
 };
 
@@ -80,7 +80,7 @@ const priorityColors: Record<string, string> = {
   low: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
   medium: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   high: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  urgent: 'bg-red-500/10 text-red-600 border-red-500/20',
+  urgent: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
 };
 
 const statusLabels: Record<string, string> = {
@@ -108,8 +108,8 @@ const categoryLabels: Record<string, string> = {
 
 const StatusIcon = ({ status }: { status: string }) => {
   if (status === 'open') return <AlertTriangle className="w-4 h-4 text-blue-500" />;
-  if (status === 'in_progress') return <Clock className="w-4 h-4 text-yellow-500" />;
-  if (status === 'resolved') return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+  if (status === 'in_progress') return <Clock className="w-4 h-4 text-[#ff4000]" />;
+  if (status === 'resolved') return <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />;
   if (status === 'closed') return <XCircle className="w-4 h-4 text-gray-400" />;
   return <Clock className="w-4 h-4 text-orange-500" />;
 };
@@ -272,7 +272,7 @@ export default function PDGSupportTechnique() {
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <Card className="border-orange-500/20 bg-gradient-to-r from-orange-500/5 to-red-500/5">
+      <Card className="border-orange-500/20 bg-gradient-to-r from-orange-500/5 to-[#ff4000]/5">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-3 text-xl">
@@ -293,17 +293,17 @@ export default function PDGSupportTechnique() {
               <p className="text-2xl font-bold text-blue-600">{counts.open}</p>
               <p className="text-xs text-blue-600/70 font-medium">Ouverts</p>
             </div>
-            <div className="bg-yellow-500/10 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-yellow-600">{counts.in_progress}</p>
-              <p className="text-xs text-yellow-600/70 font-medium">En cours</p>
+            <div className="bg-[#ff4000]/10 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-[#ff4000]">{counts.in_progress}</p>
+              <p className="text-xs text-[#ff4000]/70 font-medium">En cours</p>
             </div>
             <div className="bg-orange-500/10 rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-orange-600">{counts.waiting}</p>
               <p className="text-xs text-orange-600/70 font-medium">En attente</p>
             </div>
-            <div className="bg-red-500/10 rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-red-600">{counts.urgent}</p>
-              <p className="text-xs text-red-600/70 font-medium">Urgents</p>
+            <div className="bg-[#ff4000]/10 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-[#ff4000]">{counts.urgent}</p>
+              <p className="text-xs text-[#ff4000]/70 font-medium">Urgents</p>
             </div>
           </div>
 
@@ -357,7 +357,7 @@ export default function PDGSupportTechnique() {
               className={cn(
                 'cursor-pointer hover:shadow-md transition-all duration-200 border',
                 ticket.priority === 'urgent' && ticket.status !== 'closed' && ticket.status !== 'resolved'
-                  ? 'border-red-500/40 bg-red-500/5' : 'hover:border-primary/30'
+                  ? 'border-[#ff4000]/40 bg-[#ff4000]/5' : 'hover:border-primary/30'
               )}
               onClick={() => openTicket(ticket)}
             >
@@ -470,7 +470,7 @@ export default function PDGSupportTechnique() {
                             )}
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               {vendor.is_verified && (
-                                <Badge className="text-xs bg-green-500/10 text-green-600 border-green-500/20" variant="outline">
+                                <Badge className="text-xs bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20" variant="outline">
                                   <ShieldCheck className="w-3 h-3 mr-1" /> Vérifié
                                 </Badge>
                               )}

@@ -421,7 +421,6 @@ router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
     await safeDelete('agent_created_users', 'user_id', userId);
     await safeDelete('agents', 'user_id', userId);
     await safeDelete('agents_management', 'user_id', userId);
-    await safeDelete('api_keys', 'user_id', userId);
     await safeDelete('revenus_pdg', 'user_id', userId);
     await safeDelete('pdg_management', 'user_id', userId);
     await safeDelete('broadcast_recipients', 'user_id', userId);
@@ -481,6 +480,213 @@ router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
   } catch (error: any) {
     logger.error(`[admin/delete-user] Erreur: ${error.message}`);
     res.status(200).json({ success: false, error: error.message || 'Erreur inconnue' });
+  }
+});
+
+// =====================================================================
+// AUDIT & CORRECTION DES IDENTIFIANTS (PDG uniquement, server-side)
+// Source de vérité : profiles.public_id. Synchronise user_ids.custom_id
+// et vendors.vendor_code. Remplace les écritures client de IdAuditManager.
+// =====================================================================
+
+type IdDiscrepancyStatus =
+  | 'desync_user_ids' | 'desync_vendor' | 'desync_both' | 'missing_user_id' | 'conflict';
+
+interface IdDiscrepancy {
+  userId: string;
+  email: string;
+  fullName: string;
+  profilesPublicId: string;
+  userIdsCustomId: string | null;
+  vendorCode: string | null;
+  status: IdDiscrepancyStatus;
+  canAutoFix: boolean;
+  conflictWith?: string;
+}
+
+async function computeIdAudit() {
+  const [profilesRes, userIdsRes, vendorsRes] = await Promise.all([
+    supabaseAdmin.from('profiles').select('id, email, first_name, last_name, public_id, role'),
+    supabaseAdmin.from('user_ids').select('user_id, custom_id'),
+    supabaseAdmin.from('vendors').select('user_id, vendor_code'),
+  ]);
+
+  const profiles = profilesRes.data || [];
+  const userIdsData = userIdsRes.data || [];
+  const vendorsData = vendorsRes.data || [];
+
+  const userIdsByUserId = new Map(userIdsData.map((u: any) => [u.user_id, u.custom_id]));
+  const userIdsByCustomId = new Map(userIdsData.map((u: any) => [u.custom_id, u.user_id]));
+  const vendorsByUserId = new Map(vendorsData.map((v: any) => [v.user_id, v.vendor_code]));
+
+  // Doublons public_id
+  const publicIdCounts = new Map<string, string[]>();
+  for (const p of profiles) {
+    if (p.public_id) publicIdCounts.set(p.public_id, [...(publicIdCounts.get(p.public_id) || []), p.id]);
+  }
+  const duplicates = Array.from(publicIdCounts.entries())
+    .filter(([, users]) => users.length > 1)
+    .map(([id, users]) => ({ id, users, count: users.length }));
+
+  const discrepancies: IdDiscrepancy[] = [];
+  for (const p of profiles) {
+    if (!p.public_id) continue;
+    const customId = userIdsByUserId.get(p.id);
+    const vendorCode = vendorsByUserId.get(p.id);
+    const existingOwner = userIdsByCustomId.get(p.public_id);
+    const hasConflict = existingOwner && existingOwner !== p.id;
+    const isUserIdDesync = customId && customId !== p.public_id;
+    const isVendorDesync = vendorCode && vendorCode !== p.public_id;
+    const isMissing = !customId;
+
+    let status: IdDiscrepancyStatus | 'ok' = 'ok';
+    let canAutoFix = true;
+    if (hasConflict) { status = 'conflict'; canAutoFix = false; }
+    else if (isUserIdDesync && isVendorDesync) status = 'desync_both';
+    else if (isUserIdDesync) status = 'desync_user_ids';
+    else if (isVendorDesync) status = 'desync_vendor';
+    else if (isMissing) status = 'missing_user_id';
+
+    if (status !== 'ok') {
+      discrepancies.push({
+        userId: p.id,
+        email: p.email || '',
+        fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'N/A',
+        profilesPublicId: p.public_id,
+        userIdsCustomId: customId || null,
+        vendorCode: vendorCode || null,
+        status,
+        canAutoFix,
+        conflictWith: hasConflict ? (existingOwner as string) : undefined,
+      });
+    }
+  }
+
+  return {
+    discrepancies,
+    duplicates,
+    stats: {
+      total: discrepancies.length,
+      desyncUserIds: discrepancies.filter(d => d.status === 'desync_user_ids').length,
+      desyncVendor: discrepancies.filter(d => d.status === 'desync_vendor').length,
+      desyncBoth: discrepancies.filter(d => d.status === 'desync_both').length,
+      conflicts: discrepancies.filter(d => d.status === 'conflict').length,
+      missing: discrepancies.filter(d => d.status === 'missing_user_id').length,
+    },
+  };
+}
+
+/** GET /api/admin/ids/audit — état des IDs (PDG) */
+router.get('/ids/audit', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await computeIdAudit();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    logger.error(`[admin/ids/audit] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'audit des IDs' });
+  }
+});
+
+/** POST /api/admin/ids/fix — corrige les désyncs (PDG). Body: { userIds?: string[], all?: boolean } */
+router.post('/ids/fix', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { userIds, all } = req.body || {};
+    const { discrepancies } = await computeIdAudit();
+
+    const targets = all
+      ? discrepancies.filter(d => d.canAutoFix)
+      : discrepancies.filter(d => Array.isArray(userIds) && userIds.includes(d.userId) && d.canAutoFix);
+
+    let fixed = 0, errors = 0, skipped = 0;
+    for (const d of targets) {
+      if (d.status === 'conflict') { skipped++; continue; }
+      try {
+        if (d.status === 'missing_user_id') {
+          const { error } = await supabaseAdmin.from('user_ids').upsert(
+            { user_id: d.userId, custom_id: d.profilesPublicId },
+            { onConflict: 'user_id' }
+          );
+          if (error) { errors++; continue; }
+        }
+        if (d.status === 'desync_user_ids' || d.status === 'desync_both') {
+          const { error } = await supabaseAdmin.from('user_ids').update({ custom_id: d.profilesPublicId }).eq('user_id', d.userId);
+          if (error) { errors++; continue; }
+        }
+        if (d.status === 'desync_vendor' || d.status === 'desync_both') {
+          const { error } = await supabaseAdmin.from('vendors').update({ vendor_code: d.profilesPublicId }).eq('user_id', d.userId);
+          if (error) { errors++; continue; }
+        }
+        fixed++;
+      } catch {
+        errors++;
+      }
+    }
+
+    const conflicts = discrepancies.filter(d => d.status === 'conflict').length;
+    logger.info(`[admin/ids/fix] by=${req.user!.id} fixed=${fixed} errors=${errors} skipped=${skipped}`);
+    res.json({ success: true, data: { fixed, errors, skipped, conflicts } });
+  } catch (error: any) {
+    logger.error(`[admin/ids/fix] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la correction des IDs' });
+  }
+});
+
+/**
+ * POST /api/admin/ids/normalize — régénère un ID au format standard pour un utilisateur (PDG).
+ * Génération server-side (RPC generate_custom_id_with_role) + sync user_ids/profiles/vendors + log.
+ * Body: { userId: string, reason?: string }
+ */
+router.post('/ids/normalize', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { userId, reason } = req.body || {};
+    if (!userId) {
+      res.status(400).json({ success: false, error: 'userId requis' });
+      return;
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('role, public_id, email, full_name')
+      .eq('id', userId)
+      .maybeSingle();
+    if (!profile) {
+      res.status(404).json({ success: false, error: 'Utilisateur introuvable' });
+      return;
+    }
+
+    const { data: uid } = await supabaseAdmin.from('user_ids').select('custom_id').eq('user_id', userId).maybeSingle();
+    const originalId = uid?.custom_id || profile.public_id || null;
+
+    const { data: newId, error: genErr } = await supabaseAdmin.rpc('generate_custom_id_with_role', { p_role: profile.role || 'client' });
+    if (genErr || !newId) {
+      logger.error(`[admin/ids/normalize] génération échouée: ${genErr?.message || 'no data'}`);
+      res.status(500).json({ success: false, error: 'Génération d\'identifiant impossible' });
+      return;
+    }
+
+    const { error: upErr } = await supabaseAdmin.from('user_ids').upsert({ user_id: userId, custom_id: newId }, { onConflict: 'user_id' });
+    if (upErr) {
+      res.status(500).json({ success: false, error: upErr.message });
+      return;
+    }
+    await supabaseAdmin.from('profiles').update({ public_id: newId }).eq('id', userId);
+    await supabaseAdmin.from('vendors').update({ vendor_code: newId }).eq('user_id', userId);
+
+    // Log best-effort
+    await supabaseAdmin.from('id_normalization_logs').insert({
+      user_id: userId,
+      original_id: originalId,
+      corrected_id: newId,
+      reason: reason || 'format_invalid',
+      reason_details: { correction_type: 'backend_pdg_correction', timestamp: new Date().toISOString() },
+      metadata: { corrected_by: req.user!.id, profile_email: profile.email, profile_name: profile.full_name },
+    });
+
+    logger.info(`[admin/ids/normalize] by=${req.user!.id} user=${userId} ${originalId} → ${newId}`);
+    res.json({ success: true, data: { original_id: originalId, custom_id: newId } });
+  } catch (error: any) {
+    logger.error(`[admin/ids/normalize] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la normalisation de l\'ID' });
   }
 });
 

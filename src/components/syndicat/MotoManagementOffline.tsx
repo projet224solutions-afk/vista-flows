@@ -20,14 +20,14 @@ export default function MotoManagementOffline({ moto, bureauName, bureauLocation
   const getSyncBadge = () => {
     if (moto.synced_from_firestore || moto.synced_from_supabase) {
       return (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
           <CheckCircle className="w-3 h-3 mr-1" />
           Synchronisé
         </Badge>
       );
     }
     return (
-      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+      <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
         <Clock className="w-3 h-3 mr-1" />
         En attente de sync
       </Badge>

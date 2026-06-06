@@ -247,10 +247,10 @@ export default function CommissionsManagement() {
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Gagné</CardTitle>
-            <DollarSign className="w-4 h-4 text-green-600" />
+            <DollarSign className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {formatCurrency(stats.totalEarned)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -277,10 +277,10 @@ export default function CommissionsManagement() {
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Taux Actuel</CardTitle>
-            <Percent className="w-4 h-4 text-purple-600" />
+            <Percent className="w-4 h-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-[#04439e]">
               {stats.currentRate.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -348,7 +348,7 @@ export default function CommissionsManagement() {
                         <TableCell className="text-muted-foreground">
                           {log.description || 'Commission sur achat'}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-green-600">
+                        <TableCell className="text-right font-bold text-[#ff4000]">
                           +{formatCurrency(log.amount)}
                         </TableCell>
                       </TableRow>
@@ -468,7 +468,7 @@ export default function CommissionsManagement() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Commission Agent</p>
-                      <p className="font-bold text-green-600">
+                      <p className="font-bold text-[#ff4000]">
                         {formatCurrency(100000 * (Number(settings.find(s => s.setting_key === 'base_user_commission')?.setting_value) || 0.2))}
                       </p>
                     </div>

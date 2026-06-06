@@ -192,13 +192,13 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
         ) : (
           <div className="space-y-4">
             {/* Lien généré */}
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 text-green-800 mb-2">
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="flex items-center gap-2 text-[#ff4000] mb-2">
                 <Check className="w-5 h-5" />
                 <span className="font-medium">Lien généré avec succès !</span>
               </div>
 
-              <div className="mt-3 p-3 bg-white rounded border border-green-300">
+              <div className="mt-3 p-3 bg-white rounded border border-orange-300">
                 <p className="text-sm break-all font-mono text-gray-700">
                   {generatedLink}
                 </p>
@@ -211,7 +211,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
               >
                 {copied ? (
                   <>
-                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                    <Check className="w-4 h-4 mr-2 text-[#ff4000]" />
                     Copié !
                   </>
                 ) : (
@@ -236,11 +236,11 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
             </div>
 
             {/* Instructions */}
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm font-medium text-purple-900 mb-2">
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm font-medium text-[#04439e] mb-2">
                 📱 Instructions pour le président :
               </p>
-              <ol className="text-sm text-purple-700 space-y-1 list-decimal list-inside">
+              <ol className="text-sm text-[#04439e] space-y-1 list-decimal list-inside">
                 <li>Cliquer sur le lien</li>
                 <li>Accepter l'installation de l'application</li>
                 <li>L'application sera disponible sur l'écran d'accueil</li>

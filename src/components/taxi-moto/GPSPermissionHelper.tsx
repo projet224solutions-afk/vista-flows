@@ -117,15 +117,15 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
 
   if (permissionState === 'unavailable') {
     return (
-      <Card className="bg-white/95 backdrop-blur-sm border-red-200">
+      <Card className="bg-white/95 backdrop-blur-sm border-orange-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardTitle className="flex items-center gap-2 text-[#ff4000]">
             <AlertTriangle className="w-5 h-5" />
             GPS non disponible
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="bg-red-50 border-red-200">
+          <Alert className="bg-orange-50 border-orange-200">
             <AlertDescription>
               Votre appareil ne supporte pas la géolocalisation ou celle-ci n'est pas disponible.
             </AlertDescription>
@@ -193,13 +193,13 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
   if (permissionState === 'granted') {
     // Afficher un loader pendant que le parent charge la position
     return (
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+      <Card className="bg-gradient-to-r from-orange-50 to-orange-50 border-orange-200">
         <CardContent className="pt-6 pb-6">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+            <Loader2 className="w-10 h-10 text-[#ff4000] animate-spin" />
             <div className="text-center">
-              <p className="font-semibold text-green-900">GPS activé</p>
-              <p className="text-sm text-green-700">Chargement de la carte...</p>
+              <p className="font-semibold text-[#ff4000]">GPS activé</p>
+              <p className="text-sm text-[#ff4000]">Chargement de la carte...</p>
             </div>
           </div>
         </CardContent>
@@ -217,9 +217,9 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
       </CardHeader>
       <CardContent className="space-y-4">
         {currentError && (
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
+          <Alert className="bg-orange-50 border-orange-200">
+            <AlertTriangle className="w-4 h-4 text-[#ff4000]" />
+            <AlertDescription className="text-[#ff4000]">
               {currentError}
             </AlertDescription>
           </Alert>

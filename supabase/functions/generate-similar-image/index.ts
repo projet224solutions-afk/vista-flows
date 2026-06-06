@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, productName } = await req.json();
-    
+    const { imageUrl, productName, description } = await req.json();
+
     if (!imageUrl) {
       return new Response(
         JSON.stringify({ error: 'Image URL is required' }),
@@ -33,7 +33,11 @@ serve(async (req) => {
     if (productName) {
       prompt += `This is for the product: "${productName}". `;
     }
-    
+
+    if (description && String(description).trim()) {
+      prompt += `Product details to respect: ${String(description).trim().slice(0, 600)}. `;
+    }
+
     prompt += 'Maintain the professional e-commerce quality with clean background, good lighting, and product centered. Create a variation that looks like it belongs to the same product photo set.';
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

@@ -56,9 +56,9 @@ interface OwnerInfo {
 
 const linkTypeConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
   payment: { icon: <CreditCard className="w-5 h-5" />, label: 'Paiement', color: 'bg-primary/10 text-primary' },
-  invoice: { icon: <FileText className="w-5 h-5" />, label: 'Facture', color: 'bg-amber-100 text-amber-800' },
-  checkout: { icon: <ShoppingCart className="w-5 h-5" />, label: 'Checkout', color: 'bg-emerald-100 text-emerald-800' },
-  service: { icon: <Wrench className="w-5 h-5" />, label: 'Service', color: 'bg-violet-100 text-violet-800' },
+  invoice: { icon: <FileText className="w-5 h-5" />, label: 'Facture', color: 'bg-orange-100 text-[#ff4000]' },
+  checkout: { icon: <ShoppingCart className="w-5 h-5" />, label: 'Checkout', color: 'bg-orange-100 text-[#ff4000]' },
+  service: { icon: <Wrench className="w-5 h-5" />, label: 'Service', color: 'bg-blue-100 text-[#04439e]' },
 };
 
 
@@ -409,8 +409,8 @@ export default function PaymentLinkPage() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-[#ff4000]" />
             </div>
             <h2 className="text-xl font-bold mb-2">Paiement confirmé !</h2>
             <p className="text-muted-foreground mb-2">
@@ -500,7 +500,7 @@ export default function PaymentLinkPage() {
                 <span>{formatCurrency(linkData.grossAmount || linkData.amount, linkData.currency)}</span>
               </div>
               {linkData.remise && linkData.remise > 0 && (
-                <div className="flex justify-between text-sm text-emerald-600">
+                <div className="flex justify-between text-sm text-[#ff4000]">
                   <span>Remise</span>
                   <span>-{linkData.remise}{linkData.typeRemise === 'percentage' ? '%' : ` ${linkData.currency}`}</span>
                 </div>
@@ -625,8 +625,8 @@ export default function PaymentLinkPage() {
                   paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
                 }`}
               >
-                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-sm">Wallet 224SOLUTIONS</p>
@@ -667,9 +667,9 @@ export default function PaymentLinkPage() {
             )}
 
             {/* Security badge */}
-            <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg mt-3">
-              <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
-              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg mt-3">
+              <Shield className="w-4 h-4 text-[#ff4000] shrink-0" />
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">
                 Paiement sécurisé et chiffré SSL
               </p>
             </div>

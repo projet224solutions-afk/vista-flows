@@ -290,7 +290,7 @@ export default function PDGVendors() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.active}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -302,7 +302,7 @@ export default function PDGVendors() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.inactive}</span>
-              <XCircle className="w-5 h-5 text-red-500" />
+              <XCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -459,7 +459,7 @@ export default function PDGVendors() {
             </div>
 
             {currencyDialog.selectedCountry && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800 space-y-1">
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-[#ff4000] space-y-1">
                 <p className="font-semibold">Effets du changement :</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
                   <li>La devise de la boutique devient <strong>{COUNTRY_OPTIONS.find(c => c.code === currencyDialog.selectedCountry)?.currency}</strong></li>
@@ -471,12 +471,12 @@ export default function PDGVendors() {
             )}
 
             {currencyDialog.bcrgError && (
-              <div className="p-3 bg-red-50 border border-red-300 rounded-md text-sm text-red-800 flex gap-2">
+              <div className="p-3 bg-orange-50 border border-orange-300 rounded-md text-sm text-[#ff4000] flex gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold">Taux BCRG indisponible</p>
                   <p className="text-xs mt-1">{currencyDialog.bcrgError}</p>
-                  <p className="text-xs mt-1 text-red-600">Le changement de devise est bloqué tant que la BCRG n'est pas accessible. Réessayez dans quelques minutes.</p>
+                  <p className="text-xs mt-1 text-[#ff4000]">Le changement de devise est bloqué tant que la BCRG n'est pas accessible. Réessayez dans quelques minutes.</p>
                 </div>
               </div>
             )}

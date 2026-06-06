@@ -45,7 +45,7 @@ export const paymentMethods: PaymentMethodOption[] = [
         name: 'Wallet 224Solutions',
         icon: Wallet,
         description: 'Payez avec votre portefeuille',
-        color: 'bg-emerald-500'
+        color: 'bg-[#ff4000]'
     },
     {
         id: 'card',
@@ -164,7 +164,7 @@ export default function PaymentMethodStep({
                                                         Solde: {walletBalance.toLocaleString()} GNF
                                                     </span>
                                                     {isWalletSufficient ? (
-                                                        <Badge variant="default" className="bg-emerald-500 text-xs">
+                                                        <Badge variant="default" className="bg-[#ff4000] text-xs">
                                                             Suffisant
                                                         </Badge>
                                                     ) : (
@@ -204,8 +204,8 @@ export default function PaymentMethodStep({
 
                 {/* Info Cash */}
                 {selectedMethod === 'cash' && (
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                        <p className="text-sm text-amber-700 dark:text-amber-400">
+                    <div className="p-3 bg-[#ff4000]/10 border border-[#ff4000]/30 rounded-lg">
+                        <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">
                             💵 Vous paierez directement au chauffeur à la fin de la course.
                         </p>
                     </div>

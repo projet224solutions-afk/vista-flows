@@ -92,16 +92,16 @@ interface DashboardData {
 
 const SEGMENTS = [
   { value: 'all', label: 'Tous les utilisateurs', icon: Users, color: 'bg-blue-500' },
-  { value: 'agents', label: 'Agents uniquement', icon: Target, color: 'bg-purple-500' },
-  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-green-500' },
+  { value: 'agents', label: 'Agents uniquement', icon: Target, color: 'bg-[#04439e]' },
+  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-[#ff4000]' },
   { value: 'clients', label: 'Clients uniquement', icon: Users, color: 'bg-orange-500' },
-  { value: 'drivers', label: 'Livreurs/Chauffeurs', icon: Zap, color: 'bg-cyan-500' },
+  { value: 'drivers', label: 'Livreurs/Chauffeurs', icon: Zap, color: 'bg-[#04439e]' },
 ];
 
 const PRIORITIES = [
   { value: 'normal', label: 'Normal', color: 'bg-gray-500' },
   { value: 'high', label: 'Important', color: 'bg-orange-500' },
-  { value: 'urgent', label: 'Urgent', color: 'bg-red-500' },
+  { value: 'urgent', label: 'Urgent', color: 'bg-[#ff4000]' },
 ];
 
 const MESSAGE_TYPES = [
@@ -240,9 +240,9 @@ const BroadcastMessageCenter: React.FC = () => {
 
   if (!isPDG) {
     return (
-      <Card className="border-red-500">
+      <Card className="border-[#ff4000]">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-red-500">
+          <div className="flex items-center gap-3 text-[#ff4000]">
             <AlertTriangle className="h-6 w-6" />
             <p>Accès réservé aux administrateurs et PDG</p>
           </div>
@@ -288,12 +288,12 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Bell className="h-4 w-4 text-green-500" />
+                <Bell className="h-4 w-4 text-[#ff4000]" />
                 Envoyés aujourd'hui
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{dashboardData.sent_today}</div>
+              <div className="text-2xl font-bold text-[#ff4000]">{dashboardData.sent_today}</div>
             </CardContent>
           </Card>
 
@@ -312,7 +312,7 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Eye className="h-4 w-4 text-purple-500" />
+                <Eye className="h-4 w-4 text-[#04439e]" />
                 Taux d'ouverture
               </CardTitle>
             </CardHeader>
@@ -325,7 +325,7 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4 text-cyan-500" />
+                <Users className="h-4 w-4 text-[#04439e]" />
                 Destinataires (24h)
               </CardTitle>
             </CardHeader>

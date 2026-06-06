@@ -115,9 +115,9 @@ export function BugBountyProgram() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-500';
+      case 'critical': return 'bg-[#ff4000]';
       case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-yellow-500';
+      case 'medium': return 'bg-[#ff4000]';
       case 'low': return 'bg-blue-500';
       default: return 'bg-gray-500';
     }
@@ -125,9 +125,9 @@ export function BugBountyProgram() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved': return <Badge className="bg-green-500">Résolu</Badge>;
+      case 'resolved': return <Badge className="bg-[#ff4000]">Résolu</Badge>;
       case 'in_review': return <Badge className="bg-blue-500">En revue</Badge>;
-      case 'confirmed': return <Badge className="bg-purple-500">Confirmé</Badge>;
+      case 'confirmed': return <Badge className="bg-[#04439e]">Confirmé</Badge>;
       case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
       default: return <Badge variant="outline">En attente</Badge>;
     }
@@ -193,12 +193,12 @@ export function BugBountyProgram() {
             <div className="text-xs text-muted-foreground">Rapports totaux</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingUp className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingUp className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.resolvedVulnerabilities}</div>
             <div className="text-xs text-muted-foreground">Vulnérabilités corrigées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <DollarSign className="w-8 h-8 text-yellow-500 mb-2" />
+            <DollarSign className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.totalRewards.toLocaleString()} GNF</div>
             <div className="text-xs text-muted-foreground">Récompenses versées</div>
           </div>
@@ -211,8 +211,8 @@ export function BugBountyProgram() {
 
         {/* Alerte rapports en attente */}
         {stats.pendingReports > 0 && (
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+          <div className="p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
+            <div className="flex items-center gap-2 text-[#ff4000] dark:text-orange-300">
               <Bug className="w-5 h-5" />
               <span className="font-medium">{stats.pendingReports} rapport(s) en attente de revue</span>
             </div>
@@ -245,7 +245,7 @@ export function BugBountyProgram() {
                   </div>
                   {report.reward_amount && report.reward_amount > 0 && (
                     <div className="text-right">
-                      <div className="font-bold text-green-600">{report.reward_amount.toLocaleString()} GNF</div>
+                      <div className="font-bold text-[#ff4000]">{report.reward_amount.toLocaleString()} GNF</div>
                     </div>
                   )}
                 </div>

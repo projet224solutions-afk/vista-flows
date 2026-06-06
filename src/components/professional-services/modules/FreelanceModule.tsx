@@ -57,24 +57,24 @@ interface Client {
 
 const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   secretariat: { label: 'Secrétariat', icon: '📋', color: 'bg-blue-100 text-blue-800' },
-  comptabilite: { label: 'Comptabilité', icon: '🧮', color: 'bg-green-100 text-green-800' },
-  rh: { label: 'Ressources Humaines', icon: '👥', color: 'bg-purple-100 text-purple-800' },
-  traduction: { label: 'Traduction', icon: '🌍', color: 'bg-amber-100 text-amber-800' },
-  conseil: { label: 'Conseil', icon: '💡', color: 'bg-cyan-100 text-cyan-800' },
-  juridique: { label: 'Juridique', icon: '⚖️', color: 'bg-red-100 text-red-800' },
+  comptabilite: { label: 'Comptabilité', icon: '🧮', color: 'bg-orange-100 text-[#ff4000]' },
+  rh: { label: 'Ressources Humaines', icon: '👥', color: 'bg-blue-100 text-[#04439e]' },
+  traduction: { label: 'Traduction', icon: '🌍', color: 'bg-orange-100 text-[#ff4000]' },
+  conseil: { label: 'Conseil', icon: '💡', color: 'bg-blue-100 text-[#04439e]' },
+  juridique: { label: 'Juridique', icon: '⚖️', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   en_cours: { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
-  termine: { label: 'Terminé', color: 'bg-green-100 text-green-800' },
-  en_attente: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  facture: { label: 'Facturé', color: 'bg-purple-100 text-purple-800' },
+  termine: { label: 'Terminé', color: 'bg-orange-100 text-[#ff4000]' },
+  en_attente: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]' },
+  facture: { label: 'Facturé', color: 'bg-blue-100 text-[#04439e]' },
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  haute: 'bg-red-500',
-  moyenne: 'bg-yellow-500',
-  basse: 'bg-green-500',
+  haute: 'bg-[#ff4000]',
+  moyenne: 'bg-[#ff4000]',
+  basse: 'bg-[#ff4000]',
 };
 
 export function FreelanceModule({ _serviceId, businessName }: FreelanceModuleProps) {
@@ -124,7 +124,7 @@ export function FreelanceModule({ _serviceId, businessName }: FreelanceModulePro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
+          <div className="p-3 bg-[#04439e] rounded-xl">
             <Briefcase className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -170,42 +170,42 @@ export function FreelanceModule({ _serviceId, businessName }: FreelanceModulePro
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-[#04439e] text-white">
           <CardContent className="p-4">
             <Briefcase className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{activeMissions}</p>
             <p className="text-xs opacity-80">Missions actives</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-500 to-amber-500 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Clock className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{pendingMissions}</p>
             <p className="text-xs opacity-80">En attente</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalRevenue / 1e6).toFixed(1)}M</p>
             <p className="text-xs opacity-80">Revenus GNF</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white">
+        <Card className="bg-gradient-to-br from-orange-500 to-[#ff4000] text-white">
           <CardContent className="p-4">
             <AlertCircle className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(pendingPayments / 1e6).toFixed(1)}M</p>
             <p className="text-xs opacity-80">Impayés GNF</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
           <CardContent className="p-4">
             <Timer className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalHours}h</p>
             <p className="text-xs opacity-80">Heures facturées</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
           <CardContent className="p-4">
             <TrendingUp className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{avgHourlyRate.toLocaleString()}</p>
@@ -284,7 +284,7 @@ export function FreelanceModule({ _serviceId, businessName }: FreelanceModulePro
                       <h4 className="font-bold text-sm truncate">{client.name}</h4>
                       <p className="text-xs text-muted-foreground">{client.company}</p>
                       <div className="flex items-center gap-1 mt-1">
-                        <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                        <Star className="h-3 w-3 text-[#ff4000] fill-[#ff4000]" />
                         <span className="text-xs font-medium">{client.rating}</span>
                         <span className="text-xs text-muted-foreground ml-2">{client.totalMissions} missions</span>
                       </div>

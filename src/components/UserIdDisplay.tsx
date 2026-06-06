@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useStandardId } from '@/hooks/useStandardId';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 
 interface UserIdDisplayProps {
   className?: string;
@@ -20,81 +18,42 @@ export const UserIdDisplay = ({
   size = 'sm'
 }: UserIdDisplayProps) => {
   const { user, profile } = useAuth();
-  const { generateStandardId, validateStandardId } = useStandardId();
   const [standardId, setStandardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrCreateStandardId = async () => {
+    // Lecture seule : l'ID est créé côté serveur (trigger d'inscription) ou
+    // réparé par l'outil PDG d'audit des IDs. Aucune génération/écriture client.
+    const fetchStandardId = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
       try {
-        // Déterminer le préfixe selon le rôle
-        let scope = 'users';
-        const userRole = profile?.role;
-
-        if (userRole === 'vendeur') scope = 'vendors';
-        else if (userRole === 'livreur') scope = 'drivers';
-        else if (userRole === 'taxi') scope = 'drivers';
-        else if (userRole === 'admin') scope = 'pdg';
-        else if (userRole === 'syndicat') scope = 'syndicats';
-        else if (userRole === 'transitaire') scope = 'agents';
-
-        // 1. Vérifier dans user_ids (custom_id) en priorité
-        const { data: userIdData, error: userIdError } = await supabase
+        // 1. Priorité à user_ids.custom_id
+        const { data: userIdData } = await supabase
           .from('user_ids')
           .select('custom_id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (!userIdError && userIdData?.custom_id) {
+        if (userIdData?.custom_id) {
           setStandardId(userIdData.custom_id);
-          console.log('✅ Custom ID trouvé:', userIdData.custom_id);
-          setLoading(false);
           return;
         }
 
-        // 2. Sinon vérifier si l'utilisateur a un public_id
+        // 2. Sinon, public_id du profil (sans le modifier)
         const existingId = (profile as any)?.public_id;
-
-        if (existingId && validateStandardId(existingId)) {
-          setStandardId(existingId);
-          console.log('✅ ID standardisé trouvé:', existingId);
-        } else {
-          // Générer un nouvel ID standardisé
-          console.log('🔄 Génération ID standardisé...');
-          const newId = await generateStandardId(scope, false);
-
-          if (newId) {
-            // Mettre à jour le profil avec le nouvel ID
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ public_id: newId })
-              .eq('id', user.id);
-
-            if (!updateError) {
-              setStandardId(newId);
-              console.log('✅ ID standardisé créé:', newId);
-              toast.success('ID utilisateur généré', {
-                description: `Votre identifiant: ${newId}`
-              });
-            } else {
-              console.error('Erreur mise à jour ID:', updateError);
-            }
-          }
-        }
-
+        if (existingId) setStandardId(existingId);
       } catch (error) {
-        console.error('Erreur ID standardisé:', error);
+        console.error('Erreur lecture ID:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrCreateStandardId();
+    fetchStandardId();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
 

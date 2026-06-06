@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function AgentAffiliateRedirect() {
@@ -39,22 +38,14 @@ export default function AgentAffiliateRedirect() {
         throw new Error('Token d\'affiliation manquant');
       }
 
-      // Valider le token auprès de la Edge Function
-      // CORRECT: utiliser le chemin avec query params dans l'URL de invoke
-      const { data, error } = await supabase.functions.invoke(
-        'agent-affiliate-link',
-        {
-          body: {
-            action: 'validate-token',
-            token: affiliateToken
-          }
-        }
-      );
-
-      if (error) {
-        console.error('Erreur Edge Function:', error);
-        throw error;
-      }
+      // Valider le token auprès du backend Node (endpoint public, sans auth)
+      const { resolveBackendUrl } = await import('@/config/backend');
+      const res = await fetch(resolveBackendUrl('/api/agents/affiliate-links/validate'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: affiliateToken }),
+      });
+      const data = await res.json();
 
       if (data?.valid) {
         setStatus('valid');
@@ -67,17 +58,13 @@ export default function AgentAffiliateRedirect() {
         localStorage.setItem('affiliate_target_role', data.target_role || 'all');
         localStorage.setItem('affiliate_timestamp', Date.now().toString());
 
-        // Enregistrer le clic
+        // Enregistrer le clic (endpoint public backend, non bloquant)
         try {
-          await supabase.functions.invoke(
-            'agent-affiliate-link',
-            {
-              body: {
-                action: 'track-click',
-                token: affiliateToken
-              }
-            }
-          );
+          await fetch(resolveBackendUrl('/api/agents/affiliate-links/track-click'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: affiliateToken, referrer: document.referrer || null }),
+          });
         } catch (e) {
           console.warn('Erreur tracking clic:', e);
         }
@@ -118,7 +105,7 @@ export default function AgentAffiliateRedirect() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4">
       <Card className="w-full max-w-md shadow-xl border-0">
         <CardContent className="pt-8 pb-8 text-center">
           {status === 'loading' && (
@@ -131,10 +118,10 @@ export default function AgentAffiliateRedirect() {
 
           {status === 'valid' && (
             <>
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-[#ff4000]" />
               </div>
-              <h2 className="text-xl font-semibold mb-2 text-green-700">Lien vérifié !</h2>
+              <h2 className="text-xl font-semibold mb-2 text-[#ff4000]">Lien vérifié !</h2>
               <p className="text-muted-foreground mb-4">
                 Invitation de <span className="font-semibold text-primary">{agentName}</span>
               </p>
@@ -146,10 +133,10 @@ export default function AgentAffiliateRedirect() {
 
           {status === 'invalid' && (
             <>
-              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-[#ff4000]" />
               </div>
-              <h2 className="text-xl font-semibold mb-2 text-red-700">Lien invalide</h2>
+              <h2 className="text-xl font-semibold mb-2 text-[#ff4000]">Lien invalide</h2>
               <p className="text-muted-foreground mb-4">
                 Ce lien d'affiliation n'existe pas ou a expiré.
               </p>

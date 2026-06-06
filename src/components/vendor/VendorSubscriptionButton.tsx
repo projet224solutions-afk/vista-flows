@@ -39,7 +39,7 @@ export function VendorSubscriptionButton() {
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="flex flex-col">
           <span className="text-muted-foreground">Statut</span>
-          <span className={`font-medium ${isActive ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`font-medium ${isActive ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
             {isActive ? 'Actif' : 'Inactif'}
           </span>
         </div>

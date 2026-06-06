@@ -58,7 +58,7 @@ export function SecurityCertifications() {
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" />Certifié</Badge>;
+        return <Badge className="bg-[#ff4000]"><CheckCircle2 className="w-3 h-3 mr-1" />Certifié</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':

@@ -114,10 +114,10 @@ export function VendorBusinessDashboard({
 
       {/* Status Alerts */}
       {professionalService?.status === 'pending' && (
-        <Alert variant="default" className="bg-amber-50 border-amber-200 dark:bg-amber-900/20">
-          <Clock className="w-4 h-4 text-amber-600" />
-          <AlertTitle className="text-amber-900 dark:text-amber-100">Service en cours de validation</AlertTitle>
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
+        <Alert variant="default" className="bg-orange-50 border-orange-200 dark:bg-[#ff4000]/20">
+          <Clock className="w-4 h-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000] dark:text-orange-100">Service en cours de validation</AlertTitle>
+          <AlertDescription className="text-[#ff4000] dark:text-orange-200">
             Votre service est en attente de validation par notre équipe.
           </AlertDescription>
         </Alert>
@@ -179,8 +179,8 @@ export function VendorBusinessDashboard({
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.ordersCount || 0}</div>
             {(stats?.pendingCount || 0) > 0 && (
               <div className="flex items-center gap-1 mt-1">
-                <Clock className="w-3 h-3 text-amber-500" />
-                <span className="text-xs text-amber-600">{stats?.pendingCount} en attente</span>
+                <Clock className="w-3 h-3 text-[#ff4000]" />
+                <span className="text-xs text-[#ff4000]">{stats?.pendingCount} en attente</span>
               </div>
             )}
           </CardContent>
@@ -193,7 +193,7 @@ export function VendorBusinessDashboard({
               <Package className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.productsCount || 0}</div>
-            <span className="text-xs text-green-600">{stats?.productsCount || 0} actifs</span>
+            <span className="text-xs text-[#ff4000]">{stats?.productsCount || 0} actifs</span>
           </CardContent>
         </Card>
 
@@ -206,8 +206,8 @@ export function VendorBusinessDashboard({
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.customersCount || 0}</div>
             {(stats?.newCustomersThisMonth || 0) > 0 && (
               <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-600">+{stats?.newCustomersThisMonth} ce mois</span>
+                <ArrowUpRight className="w-3 h-3 text-[#ff4000]" />
+                <span className="text-xs text-[#ff4000]">+{stats?.newCustomersThisMonth} ce mois</span>
               </div>
             )}
           </CardContent>
@@ -258,16 +258,16 @@ export function VendorBusinessDashboard({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <Store className="w-3 h-3 text-amber-600" />
-                      <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Sur place</span>
+                      <Store className="w-3 h-3 text-[#ff4000]" />
+                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Sur place</span>
                     </div>
-                    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{formatCurrency(stats?.revenuePos || 0)}</div>
+                    <div className="text-lg font-bold text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(stats?.revenuePos || 0)}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <div className="w-2 h-2 rounded-full bg-[#ff4000]" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.revenueOnline || 0)}</div>
@@ -294,16 +294,16 @@ export function VendorBusinessDashboard({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 pb-4 border-b">
-                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center">
+                  <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <Store className="w-3 h-3 text-amber-600" />
-                      <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Sur place</span>
+                      <Store className="w-3 h-3 text-[#ff4000]" />
+                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Sur place</span>
                     </div>
-                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats?.ordersPos || 0}</div>
+                    <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">{stats?.ordersPos || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <div className="w-2 h-2 rounded-full bg-[#ff4000]" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.ordersOnline || 0}</div>
@@ -315,11 +315,11 @@ export function VendorBusinessDashboard({
                     <span className="text-sm">Total commandes</span>
                     <span className="font-semibold">{stats?.ordersCount || 0}</span>
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded bg-amber-50 dark:bg-amber-900/10">
+                  <div className="flex items-center justify-between p-2 rounded bg-orange-50 dark:bg-[#ff4000]/10">
                     <span className="text-sm flex items-center gap-2">
-                      <Clock className="w-3 h-3 text-amber-500" /> En attente
+                      <Clock className="w-3 h-3 text-[#ff4000]" /> En attente
                     </span>
-                    <span className="font-semibold text-amber-600">{stats?.pendingCount || 0}</span>
+                    <span className="font-semibold text-[#ff4000]">{stats?.pendingCount || 0}</span>
                   </div>
                 </div>
               </CardContent>

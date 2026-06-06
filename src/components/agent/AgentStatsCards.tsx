@@ -39,7 +39,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
       subtitle: `+${stats.usersThisMonth} ce mois`,
       icon: <Users className="w-5 h-5" />,
       trend: stats.usersThisMonth > 0 ? { value: stats.usersThisMonth, positive: true } : undefined,
-      gradient: 'from-blue-500 to-cyan-500',
+      gradient: '',
       iconBg: 'bg-blue-500/10',
       textColor: 'text-blue-600'
     },
@@ -48,25 +48,25 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
       value: formatAmount(walletBalance),
       subtitle: currency,
       icon: <Wallet className="w-5 h-5" />,
-      gradient: 'from-emerald-500 to-teal-500',
-      iconBg: 'bg-emerald-500/10',
-      textColor: 'text-emerald-600'
+      gradient: '',
+      iconBg: 'bg-[#ff4000]/10',
+      textColor: 'text-[#ff4000]'
     },
     {
       title: 'Taux Commission',
       value: `${commissionRate}%`,
       subtitle: 'Par transaction',
       icon: <DollarSign className="w-5 h-5" />,
-      gradient: 'from-violet-500 to-purple-500',
-      iconBg: 'bg-violet-500/10',
-      textColor: 'text-violet-600'
+      gradient: '',
+      iconBg: 'bg-[#04439e]/10',
+      textColor: 'text-[#04439e]'
     },
     {
       title: 'Sous-Agents',
       value: stats.subAgentsCount,
       subtitle: `${stats.activeSubAgentsCount} actif(s)`,
       icon: <UserPlus className="w-5 h-5" />,
-      gradient: 'from-orange-500 to-amber-500',
+      gradient: '',
       iconBg: 'bg-orange-500/10',
       textColor: 'text-orange-600'
     },
@@ -75,16 +75,16 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
       value: '100%',
       subtitle: 'Objectif atteint',
       icon: <TrendingUp className="w-5 h-5" />,
-      gradient: 'from-pink-500 to-rose-500',
-      iconBg: 'bg-pink-500/10',
-      textColor: 'text-pink-600'
+      gradient: '',
+      iconBg: 'bg-[#ff4000]/10',
+      textColor: 'text-[#ff4000]'
     },
     {
       title: 'Objectif Mensuel',
       value: stats.usersThisMonth,
       subtitle: 'Utilisateurs créés',
       icon: <Target className="w-5 h-5" />,
-      gradient: 'from-slate-600 to-slate-700',
+      gradient: '',
       iconBg: 'bg-slate-500/10',
       textColor: 'text-slate-600'
     }
@@ -108,7 +108,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
                 </span>
               </div>
               {stat.trend && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-50 text-[#ff4000]">
                   <ArrowUpRight className="w-3 h-3" />
                   <span className="text-xs font-semibold">+{stat.trend.value}</span>
                 </div>

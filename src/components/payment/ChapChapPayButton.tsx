@@ -75,8 +75,8 @@ const paymentMethodOptions: PaymentMethodOption[] = [
     id: 'mtn_momo',
     name: 'MTN Mobile Money',
     description: 'Paiement via MTN MoMo',
-    icon: <Smartphone className="h-5 w-5 text-yellow-600" />,
-    iconBg: 'bg-yellow-100',
+    icon: <Smartphone className="h-5 w-5 text-[#ff4000]" />,
+    iconBg: 'bg-orange-100',
     phonePrefix: '660',
     phonePlaceholder: '660 XX XX XX'
   },
@@ -91,8 +91,8 @@ const paymentMethodOptions: PaymentMethodOption[] = [
     id: 'card',
     name: 'Carte Bancaire',
     description: 'VISA / Mastercard',
-    icon: <CreditCard className="h-5 w-5 text-purple-600" />,
-    iconBg: 'bg-purple-100'
+    icon: <CreditCard className="h-5 w-5 text-[#04439e]" />,
+    iconBg: 'bg-blue-100'
   }
 ];
 
@@ -235,10 +235,10 @@ export function ChapChapPayButton({
   // Affichage succès
   if (paymentStatus === 'success') {
     return (
-      <div className="p-6 text-center bg-green-50 rounded-lg border border-green-200">
-        <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-green-700 mb-2">Paiement réussi !</h3>
-        <p className="text-sm text-green-600">
+      <div className="p-6 text-center bg-orange-50 rounded-lg border border-orange-200">
+        <CheckCircle className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
+        <h3 className="text-lg font-bold text-[#ff4000] mb-2">Paiement réussi !</h3>
+        <p className="text-sm text-[#ff4000]">
           {amount.toLocaleString()} {currency}
         </p>
       </div>
@@ -360,8 +360,8 @@ export function ChapChapPayButton({
 
           {/* Champ OTP si requis */}
           {requiresOtp && (
-            <div className="space-y-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <Label htmlFor="ccp-otp" className="flex items-center gap-2 text-sm text-yellow-800">
+            <div className="space-y-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <Label htmlFor="ccp-otp" className="flex items-center gap-2 text-sm text-[#ff4000]">
                 <Shield className="h-4 w-4" />
                 Code OTP reçu par SMS
               </Label>

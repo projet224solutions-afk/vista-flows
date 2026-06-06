@@ -53,20 +53,20 @@ interface AgriOrder {
 }
 
 const CATEGORIES = [
-  { id: 'fruits', name: 'Fruits & Légumes', icon: Apple, emoji: '🍎', color: 'from-green-500 to-emerald-600' },
-  { id: 'cereals', name: 'Céréales & Grains', icon: Sprout, emoji: '🌾', color: 'from-amber-500 to-yellow-600' },
-  { id: 'dairy', name: 'Produits Laitiers', icon: Egg, emoji: '🥛', color: 'from-blue-400 to-cyan-500' },
-  { id: 'meat', name: 'Viandes & Volaille', icon: Fish, emoji: '🥩', color: 'from-red-500 to-rose-600' },
-  { id: 'fish', name: 'Poissons', icon: Fish, emoji: '🐟', color: 'from-cyan-500 to-blue-600' },
-  { id: 'spices', name: 'Épices & Condiments', icon: Leaf, emoji: '🌿', color: 'from-orange-500 to-red-500' },
+  { id: 'fruits', name: 'Fruits & Légumes', icon: Apple, emoji: '🍎', color: '' },
+  { id: 'cereals', name: 'Céréales & Grains', icon: Sprout, emoji: '🌾', color: '' },
+  { id: 'dairy', name: 'Produits Laitiers', icon: Egg, emoji: '🥛', color: '' },
+  { id: 'meat', name: 'Viandes & Volaille', icon: Fish, emoji: '🥩', color: '' },
+  { id: 'fish', name: 'Poissons', icon: Fish, emoji: '🐟', color: '' },
+  { id: 'spices', name: 'Épices & Condiments', icon: Leaf, emoji: '🌿', color: '' },
 ];
 
 const SEASONS = ['Toute l\'année', 'Saison sèche (Nov-Avr)', 'Saison des pluies (Mai-Oct)', 'Été', 'Hiver'];
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   nouveau: { label: 'Nouveau', color: 'bg-blue-100 text-blue-800' },
-  prepare: { label: 'Préparé', color: 'bg-yellow-100 text-yellow-800' },
-  livre: { label: 'Livré', color: 'bg-green-100 text-green-800' },
+  prepare: { label: 'Préparé', color: 'bg-orange-100 text-[#ff4000]' },
+  livre: { label: 'Livré', color: 'bg-orange-100 text-[#ff4000]' },
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
@@ -102,7 +102,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl">
             <Sprout className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -112,7 +112,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
         </div>
         <div className="flex gap-2">
           {organicCount > 0 && (
-            <Badge className="bg-green-100 text-green-800 gap-1">
+            <Badge className="bg-orange-100 text-[#ff4000] gap-1">
               <Leaf className="w-3 h-3" /> {organicCount} Bio
             </Badge>
           )}
@@ -121,42 +121,42 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Package className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalProducts}</p>
             <p className="text-xs opacity-80">Produits</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Apple className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{availableProducts}</p>
             <p className="text-xs opacity-80">Disponibles</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-500 to-yellow-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <ShoppingCart className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{pendingOrders}</p>
             <p className="text-xs opacity-80">Commandes en cours</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+        <Card className="bg-[#04439e] text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalOrderValue / 1e6).toFixed(1)}M</p>
             <p className="text-xs opacity-80">Ventes GNF</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-red-500 to-orange-500 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-orange-500 text-white">
           <CardContent className="p-4">
             <TrendingUp className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{lowStock}</p>
             <p className="text-xs opacity-80">Alertes stock</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
           <CardContent className="p-4">
             <Leaf className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{organicCount}</p>
@@ -241,10 +241,10 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
             {products.map(product => {
               const cat = CATEGORIES.find(c => c.id === product.category);
               const stockBadge = product.status === 'disponible'
-                ? <Badge className="bg-green-100 text-green-800 text-xs">{product.stockQuantity} {product.unit}</Badge>
+                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">{product.stockQuantity} {product.unit}</Badge>
                 : product.status === 'stock_bas'
-                ? <Badge className="bg-yellow-100 text-yellow-800 text-xs">Stock bas ({product.stockQuantity})</Badge>
-                : <Badge className="bg-red-100 text-red-800 text-xs">Rupture</Badge>;
+                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">Stock bas ({product.stockQuantity})</Badge>
+                : <Badge className="bg-orange-100 text-[#ff4000] text-xs">Rupture</Badge>;
               return (
                 <Card key={product.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4">
@@ -255,7 +255,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-sm">{product.name}</h4>
                             {stockBadge}
-                            {product.organic && <Badge className="bg-green-50 text-green-700 text-[10px] border-green-200">🌿 Bio</Badge>}
+                            {product.organic && <Badge className="bg-orange-50 text-[#ff4000] text-[10px] border-orange-200">🌿 Bio</Badge>}
                           </div>
                           <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
                             <span><MapPin className="w-3 h-3 inline" /> {product.origin}</span>
@@ -324,8 +324,8 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
                 {[
                   { type: 'Particuliers', icon: '👤', count: 45, color: 'bg-blue-100' },
                   { type: 'Restaurants', icon: '🍽️', count: 12, color: 'bg-orange-100' },
-                  { type: 'Grossistes', icon: '📦', count: 8, color: 'bg-purple-100' },
-                  { type: 'Marchés', icon: '🏪', count: 5, color: 'bg-green-100' },
+                  { type: 'Grossistes', icon: '📦', count: 8, color: 'bg-blue-100' },
+                  { type: 'Marchés', icon: '🏪', count: 5, color: 'bg-orange-100' },
                 ].map(seg => (
                   <Card key={seg.type} className={`${seg.color} border-none`}>
                     <CardContent className="p-4 text-center">
@@ -344,7 +344,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
         <TabsContent value="saisons" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Sun className="w-5 h-5 text-amber-500" /> Calendrier de production</CardTitle>
+              <CardTitle className="flex items-center gap-2"><Sun className="w-5 h-5 text-[#ff4000]" /> Calendrier de production</CardTitle>
               <CardDescription>Disponibilité saisonnière de vos produits</CardDescription>
             </CardHeader>
             <CardContent>
@@ -354,9 +354,9 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
                   return (
                     <div key={season} className="p-4 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        {season.includes('sèche') ? <Sun className="w-4 h-4 text-amber-500" /> :
+                        {season.includes('sèche') ? <Sun className="w-4 h-4 text-[#ff4000]" /> :
                          season.includes('pluie') ? <CloudRain className="w-4 h-4 text-blue-500" /> :
-                         <Calendar className="w-4 h-4 text-green-500" />}
+                         <Calendar className="w-4 h-4 text-[#ff4000]" />}
                         <h4 className="font-semibold text-sm">{season}</h4>
                         <Badge variant="outline" className="text-xs">{seasonProducts.length} produits</Badge>
                       </div>

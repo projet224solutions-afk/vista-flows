@@ -48,12 +48,12 @@ export function SyncProgressIndicator({
             </>
           ) : failed > 0 ? (
             <>
-              <XCircle className="w-4 h-4 text-red-500" />
+              <XCircle className="w-4 h-4 text-[#ff4000]" />
               <span className="font-medium text-sm">Synchronisation terminée (avec erreurs)</span>
             </>
           ) : (
             <>
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
+              <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />
               <span className="font-medium text-sm">Synchronisation terminée</span>
             </>
           )}
@@ -70,7 +70,7 @@ export function SyncProgressIndicator({
       {/* Détails */}
       {showDetails && (
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-1.5 text-[#ff4000] dark:text-[#ff4000]">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{synced} Synchronisé{synced > 1 ? 's' : ''}</span>
           </div>
@@ -83,7 +83,7 @@ export function SyncProgressIndicator({
           )}
 
           {failed > 0 && (
-            <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-1.5 text-[#ff4000] dark:text-[#ff4000]">
               <XCircle className="w-3.5 h-3.5" />
               <span>{failed} Échoué{failed > 1 ? 's' : ''}</span>
             </div>
@@ -109,7 +109,7 @@ export function CompactSyncIndicator({
       <div
         className={cn(
           'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
-          'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+          'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]',
           className
         )}
       >
@@ -153,8 +153,8 @@ export function SyncToast({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         {status === 'syncing' && <Loader2 className="w-4 h-4 animate-spin" />}
-        {status === 'success' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-        {status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+        {status === 'success' && <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />}
+        {status === 'error' && <XCircle className="w-4 h-4 text-[#ff4000]" />}
 
         <span className="font-medium">
           {status === 'syncing' && `Synchronisation ${entity}...`}
@@ -193,7 +193,7 @@ export function SyncDetailsList({
   if (items.length === 0) {
     return (
       <div className={cn('text-center py-8 text-gray-500', className)}>
-        <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+        <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-[#ff4000]" />
         <p>Aucune synchronisation en attente</p>
       </div>
     );
@@ -209,8 +209,8 @@ export function SyncDetailsList({
           <div className="flex items-center gap-3">
             {item.status === 'pending' && <Clock className="w-4 h-4 text-gray-400" />}
             {item.status === 'syncing' && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
-            {item.status === 'success' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-            {item.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}
+            {item.status === 'success' && <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />}
+            {item.status === 'error' && <XCircle className="w-4 h-4 text-[#ff4000]" />}
 
             <div>
               <p className="text-sm font-medium">{item.entity}</p>
@@ -236,8 +236,8 @@ function StatusBadge({ status }: { status: 'pending' | 'syncing' | 'success' | '
   const variants = {
     pending: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
     syncing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    error: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    success: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]',
+    error: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
   };
 
   const labels = {

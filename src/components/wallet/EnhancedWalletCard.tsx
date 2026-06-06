@@ -60,7 +60,7 @@ export function EnhancedWalletCard({
       );
     }
     return (
-      <Badge variant="default" className="gap-1 bg-green-600">
+      <Badge variant="default" className="gap-1 bg-[#ff4000]">
         <CheckCircle className="w-3 h-3" />
         {t('wallet.active')}
       </Badge>
@@ -167,7 +167,7 @@ export function EnhancedWalletCard({
 
         {/* Message si bloqué */}
         {wallet.is_blocked && (
-          <div className="bg-red-500/20 border border-red-300/30 rounded-lg p-3">
+          <div className="bg-[#ff4000]/20 border border-orange-300/30 rounded-lg p-3">
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>

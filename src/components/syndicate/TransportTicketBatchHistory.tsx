@@ -141,7 +141,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#ff4000]" />
       </div>
     );
   }
@@ -161,8 +161,8 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-amber-800">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <p className="text-sm text-[#ff4000]">
             <strong>{batches.length}</strong> lot(s) de tickets générés au total •
             <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)}</strong> tickets
           </p>
@@ -193,7 +193,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
               <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAllBatches}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-[#ff4000] hover:bg-[#ff4000]"
               >
                 {isDeleting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -237,7 +237,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                 <span className="text-sm">
                   {batch.start_number} → {batch.end_number}
                 </span>
-                <Badge className="ml-2 bg-green-100 text-green-800">
+                <Badge className="ml-2 bg-orange-100 text-[#ff4000]">
                   {batch.tickets_count}
                 </Badge>
               </TableCell>
@@ -250,7 +250,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                     size="sm"
                     variant="outline"
                     onClick={() => handleViewBatch(batch)}
-                    className="border-amber-300 hover:bg-amber-50"
+                    className="border-orange-300 hover:bg-orange-50"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     Voir
@@ -261,7 +261,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-300 hover:bg-red-50 text-red-600"
+                        className="border-orange-300 hover:bg-orange-50 text-[#ff4000]"
                         disabled={isDeleting && deletingBatchId === batch.id}
                       >
                         {isDeleting && deletingBatchId === batch.id ? (
@@ -283,7 +283,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteBatch(batch.id)}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-[#ff4000] hover:bg-[#ff4000]"
                         >
                           Supprimer
                         </AlertDialogAction>

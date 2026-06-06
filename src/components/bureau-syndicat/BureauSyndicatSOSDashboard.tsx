@@ -197,7 +197,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     // Normaliser les statuts pour l'affichage
     if (['DANGER', 'active', 'pending'].includes(status)) {
       return (
-        <Badge className="bg-red-600 text-white animate-pulse">
+        <Badge className="bg-[#ff4000] text-white animate-pulse">
           🚨 DANGER ACTIF
         </Badge>
       );
@@ -211,7 +211,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     }
     if (['RESOLU', 'resolved'].includes(status)) {
       return (
-        <Badge className="bg-green-600 text-white">
+        <Badge className="bg-[#ff4000] text-white">
           ✅ RÉSOLU
         </Badge>
       );
@@ -240,7 +240,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-3">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4000] mx-auto" />
           <p className="text-muted-foreground">Chargement des alertes SOS...</p>
         </div>
       </div>
@@ -253,7 +253,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+            <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
             Alertes SOS
           </h2>
           <p className="text-muted-foreground mt-1">
@@ -277,10 +277,10 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-red-600">
+              <div className="text-4xl font-bold text-[#ff4000]">
                 {sosAlerts.filter(a => ['DANGER', 'active', 'pending'].includes(a.status)).length}
               </div>
               <div className="text-sm text-muted-foreground mt-1">SOS Actifs</div>
@@ -299,11 +299,11 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Statut Realtime</div>
-              <div className="text-2xl font-bold text-green-600 mt-1">
+              <div className="text-2xl font-bold text-[#ff4000] mt-1">
                 🟢 CONNECTÉ
               </div>
             </div>
@@ -316,7 +316,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         <Card>
           <CardContent className="py-12">
             <div className="text-center text-muted-foreground">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
               <p className="text-lg font-medium">Aucune alerte SOS active</p>
               <p className="text-sm mt-2">Tous les conducteurs sont en sécurité</p>
             </div>
@@ -325,12 +325,12 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       ) : (
         <div className="grid gap-4">
           {sosAlerts.map((sos) => (
-            <Card key={sos.id} className="border-2 border-red-200 hover:shadow-lg transition-shadow">
+            <Card key={sos.id} className="border-2 border-orange-200 hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                       {sos.driver_name}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
@@ -382,7 +382,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
                 {/* Description */}
                 {sos.description && (
-                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200">
+                  <div className="bg-orange-50 dark:bg-[#ff4000]/20 p-3 rounded-lg border border-orange-200">
                     <p className="text-sm text-foreground">{sos.description}</p>
                   </div>
                 )}
@@ -413,7 +413,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     variant="secondary"
                     size="sm"
                     onClick={() => handleNavigateToDriver(sos.latitude, sos.longitude, sos.driver_name)}
-                    className="flex-1 min-w-[160px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+                    className="flex-1 min-w-[160px] bg-[#04439e] text-white shadow-lg"
                   >
                     <Navigation className="w-4 h-4 mr-2 animate-pulse" />
                     🧭 Naviguer GPS
@@ -436,7 +436,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                       variant="default"
                       size="sm"
                       onClick={() => handleResolveSOS(sos.id)}
-                      className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700"
+                      className="flex-1 min-w-[140px] bg-[#ff4000] hover:bg-[#ff4000]"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Résoudre

@@ -108,7 +108,7 @@ export function HomeServiceCard({
 
       {/* Trending indicator */}
       {trending && count > 0 && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-full shadow-lg shadow-amber-500/40">
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-[#ff4000] text-white text-[10px] font-bold rounded-full shadow-lg shadow-[#ff4000]/40">
           <TrendingUp className="w-3 h-3" />
           Populaire
         </div>

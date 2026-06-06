@@ -536,7 +536,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
+            <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
               <Check className="w-5 h-5" />
               Commande enregistrée !
             </DialogTitle>

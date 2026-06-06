@@ -68,7 +68,7 @@ export function AgentOverviewProfessional({
       icon: <UserPlus className="w-5 h-5" />,
       label: 'Créer Utilisateur',
       description: 'Ajouter un nouveau client',
-      gradient: 'from-blue-500 to-cyan-500',
+      gradient: '',
       shadowColor: 'shadow-blue-500/25',
       tab: 'create-user'
     },
@@ -76,31 +76,31 @@ export function AgentOverviewProfessional({
       icon: <Link2 className="w-5 h-5" />,
       label: 'Affiliation',
       description: 'Gérer vos liens',
-      gradient: 'from-fuchsia-500 to-pink-500',
-      shadowColor: 'shadow-fuchsia-500/25',
+      gradient: '',
+      shadowColor: 'shadow-[#ff4000]/25',
       tab: 'affiliate'
     },
     {
       icon: <Wallet className="w-5 h-5" />,
       label: 'Portefeuille',
       description: 'Gérer vos fonds',
-      gradient: 'from-emerald-500 to-teal-500',
-      shadowColor: 'shadow-emerald-500/25',
+      gradient: '',
+      shadowColor: 'shadow-[#ff4000]/25',
       tab: 'wallet'
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
       label: 'Analytics',
       description: 'Voir les rapports',
-      gradient: 'from-violet-500 to-purple-500',
-      shadowColor: 'shadow-violet-500/25',
+      gradient: '',
+      shadowColor: 'shadow-[#04439e]/25',
       tab: 'reports'
     },
     {
       icon: <Users className="w-5 h-5" />,
       label: 'Équipe',
       description: 'Gérer sous-agents',
-      gradient: 'from-orange-500 to-amber-500',
+      gradient: '',
       shadowColor: 'shadow-orange-500/25',
       tab: 'sub-agents'
     }
@@ -122,7 +122,7 @@ export function AgentOverviewProfessional({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Crown className="w-5 h-5 text-amber-500" />
+            <Crown className="w-5 h-5 text-[#ff4000]" />
             <span className="text-sm font-medium text-slate-500">Bienvenue,</span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">
@@ -141,7 +141,7 @@ export function AgentOverviewProfessional({
               month: 'short'
             })}
           </Badge>
-          <Badge className="bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 px-3 py-1.5">
+          <Badge className="bg-[#04439e] text-white border-0 px-3 py-1.5">
             <Zap className="w-3.5 h-3.5 mr-1.5" />
             {agent.agent_code}
           </Badge>
@@ -151,15 +151,15 @@ export function AgentOverviewProfessional({
       {/* Main Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Wallet Balance */}
-        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-emerald-100 text-sm font-medium">Solde Total</p>
+                <p className="text-orange-100 text-sm font-medium">Solde Total</p>
                 <h3 className="text-2xl lg:text-3xl font-bold mt-1">
                   {formatCurrency(walletBalance)}
                 </h3>
-                <p className="text-emerald-200 text-sm mt-1">{wallet?.currency || 'GNF'}</p>
+                <p className="text-orange-200 text-sm mt-1">{wallet?.currency || 'GNF'}</p>
               </div>
               <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                 <CreditCard className="w-6 h-6" />
@@ -184,7 +184,7 @@ export function AgentOverviewProfessional({
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               {(stats.usersThisMonth || 0) > 0 && (
-                <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">
+                <Badge className="bg-orange-100 text-[#ff4000] border-0 text-xs">
                   +{stats.usersThisMonth}
                 </Badge>
               )}
@@ -200,10 +200,10 @@ export function AgentOverviewProfessional({
         <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
           <CardContent className="p-5">
             <div className="flex items-start justify-between mb-3">
-              <div className="p-2.5 bg-violet-50 rounded-xl">
-                <DollarSign className="w-5 h-5 text-violet-600" />
+              <div className="p-2.5 bg-blue-50 rounded-xl">
+                <DollarSign className="w-5 h-5 text-[#04439e]" />
               </div>
-              <Badge className="bg-violet-100 text-violet-700 border-0 text-xs">
+              <Badge className="bg-blue-100 text-[#04439e] border-0 text-xs">
                 {agent.commission_rate}%
               </Badge>
             </div>
@@ -238,7 +238,7 @@ export function AgentOverviewProfessional({
       {/* Quick Actions */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-blue-500 to-violet-500 rounded-lg">
+          <div className="p-1.5 bg-[#04439e] rounded-lg">
             <Zap className="w-4 h-4 text-white" />
           </div>
           <h2 className="font-semibold text-slate-900">Actions Rapides</h2>
@@ -284,7 +284,7 @@ export function AgentOverviewProfessional({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg">
+              <div className="p-1.5 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-lg">
                 <Target className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -320,7 +320,7 @@ export function AgentOverviewProfessional({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-emerald-500" />
+                <DollarSign className="w-4 h-4 text-[#ff4000]" />
                 <span className="text-sm font-medium text-slate-700">Commissions</span>
               </div>
               <span className="text-sm font-bold text-slate-900">
@@ -340,7 +340,7 @@ export function AgentOverviewProfessional({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-violet-500" />
+                <Activity className="w-4 h-4 text-[#04439e]" />
                 <span className="text-sm font-medium text-slate-700">Taux d'Activité</span>
               </div>
               <span className="text-sm font-bold text-slate-900">
@@ -359,7 +359,7 @@ export function AgentOverviewProfessional({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-                <Award className="w-8 h-8 text-amber-400" />
+                <Award className="w-8 h-8 text-[#ff4000]" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">

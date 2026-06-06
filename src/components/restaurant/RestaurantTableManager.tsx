@@ -24,10 +24,10 @@ interface RestaurantTableManagerProps {
 }
 
 const STATUS_CONFIG = {
-  available: { label: 'Libre', color: 'bg-green-500', icon: Check },
-  occupied: { label: 'Occupée', color: 'bg-red-500', icon: Users },
+  available: { label: 'Libre', color: 'bg-[#ff4000]', icon: Check },
+  occupied: { label: 'Occupée', color: 'bg-[#ff4000]', icon: Users },
   reserved: { label: 'Réservée', color: 'bg-blue-500', icon: Clock },
-  cleaning: { label: 'Nettoyage', color: 'bg-yellow-500', icon: Sparkles },
+  cleaning: { label: 'Nettoyage', color: 'bg-[#ff4000]', icon: Sparkles },
 };
 
 const LOCATIONS = [
@@ -153,16 +153,16 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
     <div className="space-y-6">
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20 border-orange-200">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.available}</div>
-            <div className="text-sm text-green-700">Tables libres</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.available}</div>
+            <div className="text-sm text-[#ff4000]">Tables libres</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20 border-orange-200">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{stats.occupied}</div>
-            <div className="text-sm text-red-700">Occupées</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.occupied}</div>
+            <div className="text-sm text-[#ff4000]">Occupées</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200">
@@ -290,7 +290,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
               <Card
                 key={table.id}
                 className={`relative cursor-pointer transition-all hover:shadow-md ${
-                  table.status === 'occupied' ? 'ring-2 ring-red-400' : ''
+                  table.status === 'occupied' ? 'ring-2 ring-[#ff4000]' : ''
                 }`}
               >
                 <div className={`absolute top-0 left-0 right-0 h-1 ${statusConfig.color}`} />
@@ -318,9 +318,9 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
 
                   <div className="flex items-center gap-1 mb-3">
                     <StatusIcon className={`w-3 h-3 ${
-                      table.status === 'available' ? 'text-green-600' :
-                      table.status === 'occupied' ? 'text-red-600' :
-                      table.status === 'reserved' ? 'text-blue-600' : 'text-yellow-600'
+                      table.status === 'available' ? 'text-[#ff4000]' :
+                      table.status === 'occupied' ? 'text-[#ff4000]' :
+                      table.status === 'reserved' ? 'text-blue-600' : 'text-[#ff4000]'
                     }`} />
                     <span className="text-xs">{statusConfig.label}</span>
                   </div>

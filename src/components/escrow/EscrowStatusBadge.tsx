@@ -40,21 +40,21 @@ export function EscrowStatusBadge({
           label: 'Payé',
           icon: CheckCircle2,
           variant: 'default' as const,
-          color: 'text-green-600'
+          color: 'text-[#ff4000]'
         };
       case 'refunded':
         return {
           label: 'Remboursé',
           icon: XCircle,
           variant: 'destructive' as const,
-          color: 'text-red-600'
+          color: 'text-[#ff4000]'
         };
       case 'disputed':
         return {
           label: 'Litige',
           icon: AlertTriangle,
           variant: 'destructive' as const,
-          color: 'text-yellow-600'
+          color: 'text-[#ff4000]'
         };
       default:
         return {

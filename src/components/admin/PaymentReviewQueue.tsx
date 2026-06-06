@@ -199,9 +199,9 @@ export function PaymentReviewQueue() {
   };
 
   const getTrustScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 80) return 'text-[#ff4000]';
+    if (score >= 60) return 'text-[#ff4000]';
+    return 'text-[#ff4000]';
   };
 
   if (loading) {

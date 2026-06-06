@@ -108,7 +108,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: ${user.isAvailable ? '#10B981' : '#EF4444'};
+        background: ${user.isAvailable ? '#ff4000' : '#ff4000'};
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         cursor: pointer;
@@ -134,7 +134,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             <p class="text-sm text-gray-600">${user.vehicleType.toUpperCase()}</p>
             <p class="text-sm text-gray-600">Note: ${user.rating}/5</p>
             <p class="text-sm text-gray-600">${user.totalDeliveries} livraisons</p>
-            <p class="text-sm ${user.isAvailable ? 'text-green-600' : 'text-red-600'}">
+            <p class="text-sm ${user.isAvailable ? 'text-[#ff4000]' : 'text-[#ff4000]'}">
               ${user.isAvailable ? 'Disponible' : 'Occupé'}
             </p>
             <button
@@ -180,7 +180,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: #3B82F6;
+      background: #04439e;
       border: 3px solid white;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;
@@ -209,7 +209,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: #10B981;
+      background: #ff4000;
       border: 3px solid white;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;
@@ -290,7 +290,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                                 'line-cap': 'round'
                             },
                             paint: {
-                                'line-color': '#3B82F6',
+                                'line-color': '#04439e',
                                 'line-width': 4
                             }
                         });

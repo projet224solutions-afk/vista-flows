@@ -219,13 +219,13 @@ export function SubscriptionRenewalPage() {
           </div>
 
           {!isExpired && daysRemaining <= 7 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-[#ff4000] mt-0.5" />
               <div>
-                <p className="font-medium text-yellow-900">
+                <p className="font-medium text-[#ff4000]">
                   Votre abonnement expire bientôt
                 </p>
-                <p className="text-sm text-yellow-700">
+                <p className="text-sm text-[#ff4000]">
                   Plus que {daysRemaining} jour(s) avant l'expiration
                 </p>
               </div>
@@ -258,7 +258,7 @@ export function SubscriptionRenewalPage() {
                     </div>
                   </div>
                   {walletBalance >= subscription.plans.price_gnf && (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                   )}
                 </div>
               </Label>

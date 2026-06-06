@@ -231,7 +231,7 @@ export function MediaAutoCarousel({
           <div className={cn(
             "flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
             isPlayingVideo
-              ? "bg-red-500 text-white"
+              ? "bg-[#ff4000] text-white"
               : "bg-black/60 backdrop-blur-sm text-white"
           )}>
             <Play className="w-3 h-3" />
@@ -297,8 +297,8 @@ export function MediaAutoCarousel({
               className={cn(
                 'transition-all duration-300 rounded-full',
                 isPlayingVideo && index === currentVideoIndex
-                  ? 'w-6 h-1.5 bg-red-500 shadow-lg'
-                  : 'w-1.5 h-1.5 bg-red-500/50 hover:bg-red-500/80'
+                  ? 'w-6 h-1.5 bg-[#ff4000] shadow-lg'
+                  : 'w-1.5 h-1.5 bg-[#ff4000]/50 hover:bg-[#ff4000]/80'
               )}
               aria-label={`Video ${index + 1}`}
             />

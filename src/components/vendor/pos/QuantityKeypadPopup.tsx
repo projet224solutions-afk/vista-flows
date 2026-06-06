@@ -83,7 +83,7 @@ export function QuantityKeypadPopup({
                 <p className="text-xs text-muted-foreground">Saisir le nombre d'articles</p>
               </div>
             </div>
-            <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ff4000] animate-pulse shadow-lg shadow-[#ff4000]/50" />
           </div>
         </div>
 
@@ -116,8 +116,8 @@ export function QuantityKeypadPopup({
             {quantityNum > 0 && (
               <div className={`text-sm font-medium px-3 py-2 rounded-lg text-center ${
                 isValidQuantity
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  ? 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
+                  : 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
               }`}>
                 {isValidQuantity ? (
                   <>Total: {totalPrice.toLocaleString()} {currency}</>

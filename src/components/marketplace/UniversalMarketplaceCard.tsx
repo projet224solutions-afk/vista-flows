@@ -59,14 +59,14 @@ export function UniversalMarketplaceCard({
       // Distinction affiliation vs vente directe
       if (item.license_type === 'Affiliation') {
         return (
-          <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0">
+          <Badge className="absolute top-2 left-2 bg-gradient-to-r from-[#04439e] to-[#ff4000] text-white border-0">
             <ExternalLink className="w-3 h-3 mr-1" />
             Affiliation
           </Badge>
         );
       }
       return (
-        <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
+        <Badge className="absolute top-2 left-2 bg-[#04439e] text-white">
           <Download className="w-3 h-3 mr-1" />
           {t('marketplace.card.badge.digital') || 'Numérique'}
         </Badge>
@@ -74,7 +74,7 @@ export function UniversalMarketplaceCard({
     }
     // Produit e-commerce
     return item.free_shipping ? (
-      <Badge className="absolute top-2 left-2 bg-green-500 text-white">
+      <Badge className="absolute top-2 left-2 bg-[#ff4000] text-white">
         {t('marketplace.card.badge.freeShipping') || 'Livraison gratuite'}
       </Badge>
     ) : null;
@@ -135,7 +135,7 @@ export function UniversalMarketplaceCard({
 
         {/* Badge Sponsorisé */}
         {item.is_sponsored && (
-          <Badge className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 z-20 shadow-lg">
+          <Badge className="absolute top-2 right-2 bg-gradient-to-r from-[#ff4000] to-orange-500 text-white border-0 z-20 shadow-lg">
             <Crown className="w-3 h-3 mr-1" />
             Sponsorisé
           </Badge>
@@ -144,7 +144,7 @@ export function UniversalMarketplaceCard({
         {/* Rating badge (si présent et pas sponsorisé pour éviter le chevauchement) */}
         {item.rating > 0 && !item.is_sponsored && (
           <Badge className="absolute top-2 right-2 bg-white/90 text-gray-900 z-20">
-            <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+            <Star className="w-3 h-3 mr-1 fill-[#ff4000] text-[#ff4000]" />
             {item.rating.toFixed(1)}
           </Badge>
         )}
@@ -152,14 +152,14 @@ export function UniversalMarketplaceCard({
         {/* Rating en bas si produit sponsorisé */}
         {item.rating > 0 && item.is_sponsored && (
           <Badge className="absolute top-10 right-2 bg-white/90 text-gray-900 z-20">
-            <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+            <Star className="w-3 h-3 mr-1 fill-[#ff4000] text-[#ff4000]" />
             {item.rating.toFixed(1)}
           </Badge>
         )}
 
         {/* Prix barré (si promotion) */}
         {item.originalPrice && item.originalPrice > item.price && (
-          <Badge className="absolute bottom-10 right-2 bg-red-500 text-white z-20">
+          <Badge className="absolute bottom-10 right-2 bg-[#ff4000] text-white z-20">
             -{Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}%
           </Badge>
         )}

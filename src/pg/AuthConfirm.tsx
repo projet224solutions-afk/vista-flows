@@ -132,15 +132,15 @@ export default function AuthConfirm() {
         {/* Succès */}
         {status === 'success' && (
           <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full bg-green-50 flex items-center justify-center">
-              <CheckCircle2 className="w-9 h-9 text-green-500" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-orange-50 flex items-center justify-center">
+              <CheckCircle2 className="w-9 h-9 text-[#ff4000]" />
             </div>
             <h1 className="text-xl font-semibold text-foreground">Email confirmé !</h1>
             <p className="text-muted-foreground text-sm">
               Votre compte est activé. Vous allez être redirigé vers l'accueil…
             </p>
             <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
-              <div className="bg-green-500 h-1 animate-[progress_2s_linear_forwards]" style={{ width: '100%', animationName: 'none', transition: 'width 2s linear' }} />
+              <div className="bg-[#ff4000] h-1 animate-[progress_2s_linear_forwards]" style={{ width: '100%', animationName: 'none', transition: 'width 2s linear' }} />
             </div>
           </div>
         )}
@@ -148,8 +148,8 @@ export default function AuthConfirm() {
         {/* Erreur */}
         {status === 'error' && (
           <div className="space-y-5">
-            <div className="w-16 h-16 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-              <XCircle className="w-9 h-9 text-red-500" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-orange-50 flex items-center justify-center">
+              <XCircle className="w-9 h-9 text-[#ff4000]" />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-foreground mb-2">Lien invalide</h1>

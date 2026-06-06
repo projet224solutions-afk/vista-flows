@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { formatCurrency } from '@/lib/formatters';
+import { backendFetch, generateIdempotencyKey } from './backendApi';
 
 export interface ServicePlan {
   id: string;
@@ -162,32 +163,31 @@ export class ServiceSubscriptionService {
     userId: string;
     serviceId: string;
     planId: string;
-    pricePaid: number;
+    pricePaid?: number;
     paymentMethod?: string;
     paymentTransactionId?: string;
     billingCycle?: string;
   }): Promise<string | null> {
-    try {
-      const { data, error } = await supabase.rpc('record_service_subscription_payment', {
-        p_user_id: params.userId,
-        p_service_id: params.serviceId,
-        p_plan_id: params.planId,
-        p_price_paid: params.pricePaid,
-        p_payment_method: params.paymentMethod || 'wallet',
-        p_payment_transaction_id: params.paymentTransactionId || null,
-        p_billing_cycle: params.billingCycle || 'monthly',
-      });
-
-      if (error) {
-        console.error('❌ Erreur enregistrement paiement service:', error);
-        throw new Error(error.message);
+    // Tout est géré par le backend Node.js (prix recalculé serveur, débit wallet tracé,
+    // déduction au changement de plan, période conservée).
+    const response = await backendFetch<{ subscription_id: string }>(
+      '/api/subscriptions/service/purchase',
+      {
+        method: 'POST',
+        body: {
+          service_id: params.serviceId,
+          plan_id: params.planId,
+          billing_cycle: params.billingCycle || 'monthly',
+          payment_method: params.paymentMethod || 'wallet',
+        },
+        idempotencyKey: generateIdempotencyKey(),
       }
+    );
 
-      return data;
-    } catch (error: any) {
-      console.error('❌ Exception enregistrement paiement service:', error);
-      throw error;
+    if (!response.success) {
+      throw new Error(response.error || 'Erreur lors de la souscription au service');
     }
+    return response.data?.subscription_id ?? null;
   }
 
   /**

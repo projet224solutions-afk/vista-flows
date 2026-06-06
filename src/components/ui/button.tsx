@@ -24,9 +24,9 @@ const buttonVariants = cva(
         premium:
           "bg-primary text-primary-foreground shadow-xl shadow-primary/50 hover:bg-primary/85 hover:shadow-2xl hover:shadow-primary/60",
         success:
-          "bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-700/50",
+          "bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40 hover:bg-[#ff4000] hover:shadow-xl hover:shadow-[#ff4000]/50",
         warning:
-          "bg-amber-500 text-white shadow-lg shadow-amber-500/40 hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-600/50",
+          "bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40 hover:bg-[#ff4000] hover:shadow-xl hover:shadow-[#ff4000]/50",
         dark:
           "bg-slate-900 text-white shadow-lg shadow-slate-900/50 hover:bg-primary hover:shadow-xl hover:shadow-primary/50",
       },

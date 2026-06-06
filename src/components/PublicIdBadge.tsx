@@ -72,7 +72,7 @@ export function PublicIdBadge({
       <span>{formattedId}</span>
       {copyable && (
         copied ? (
-          <Check className="w-3 h-3 text-green-600" />
+          <Check className="w-3 h-3 text-[#ff4000]" />
         ) : (
           <Copy className="w-3 h-3 opacity-60" />
         )

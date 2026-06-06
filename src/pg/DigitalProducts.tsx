@@ -90,7 +90,7 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
     gradient: 'bg-[#135d3b]',
-    iconColor: 'text-[#22c55e]',
+    iconColor: 'text-[#ff4000]',
     coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
     iconImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=200&q=80',
     category: 'formation'
@@ -101,7 +101,7 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.books',
     descriptionKey: 'digital.modules.booksDesc',
     gradient: 'bg-[#6a4a12]',
-    iconColor: 'text-[#f59e0b]',
+    iconColor: 'text-[#ff4000]',
     coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80',
     iconImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=200&q=80',
     category: 'livre'
@@ -112,7 +112,7 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.ai',
     descriptionKey: 'digital.modules.aiDesc',
     gradient: 'bg-[#3c2b7a]',
-    iconColor: 'text-[#8b5cf6]',
+    iconColor: 'text-[#04439e]',
     coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80',
     iconImage: 'https://images.unsplash.com/photo-1655720828018-edd2daec9349?auto=format&fit=crop&w=200&q=80',
     category: 'ai'
@@ -370,7 +370,7 @@ export default function DigitalProducts() {
                         </Badge>
                       )}
                       {product.is_featured && (
-                        <Badge className="text-[10px] px-1.5 py-0.5 bg-yellow-500">
+                        <Badge className="text-[10px] px-1.5 py-0.5 bg-[#ff4000]">
                           <Star className="w-3 h-3 mr-1" />
                           Featured
                         </Badge>

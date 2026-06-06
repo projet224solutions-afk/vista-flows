@@ -31,14 +31,14 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
 
       <div className="space-y-3">
         {alerts.map((alert) => (
-          <Card key={alert.id} className={!alert.acknowledged ? 'border-yellow-500' : ''}>
+          <Card key={alert.id} className={!alert.acknowledged ? 'border-[#ff4000]' : ''}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   {alert.acknowledged ? (
-                    <Check className="h-5 w-5 text-green-500" />
+                    <Check className="h-5 w-5 text-[#ff4000]" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-yellow-500 animate-pulse" />
+                    <AlertCircle className="h-5 w-5 text-[#ff4000] animate-pulse" />
                   )}
                   <div>
                     <CardTitle className="text-base">{alert.description}</CardTitle>

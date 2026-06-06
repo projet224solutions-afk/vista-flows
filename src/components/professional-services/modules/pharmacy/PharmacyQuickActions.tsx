@@ -15,14 +15,14 @@ interface PharmacyQuickActionsProps {
 }
 
 const actions = [
-  { icon: Plus, label: 'Nouveau produit', route: '/vendeur/products', color: 'bg-emerald-500' },
+  { icon: Plus, label: 'Nouveau produit', route: '/vendeur/products', color: 'bg-[#ff4000]' },
   { icon: Pill, label: 'Ordonnance', tab: 'prescriptions', color: 'bg-blue-500' },
-  { icon: ShoppingCart, label: 'Commandes', route: '/vendeur/orders', color: 'bg-violet-500' },
-  { icon: Users, label: 'Patients', tab: 'clients', color: 'bg-amber-500' },
-  { icon: Package, label: 'Inventaire', tab: 'inventory', color: 'bg-rose-500' },
+  { icon: ShoppingCart, label: 'Commandes', route: '/vendeur/orders', color: 'bg-[#04439e]' },
+  { icon: Users, label: 'Patients', tab: 'clients', color: 'bg-[#ff4000]' },
+  { icon: Package, label: 'Inventaire', tab: 'inventory', color: 'bg-[#ff4000]' },
   { icon: ClipboardList, label: 'Alertes stock', tab: 'inventory', color: 'bg-orange-500' },
-  { icon: FileText, label: 'Rapports', tab: 'reports', color: 'bg-cyan-500' },
-  { icon: BarChart3, label: 'Analytics', tab: 'overview', color: 'bg-indigo-500' },
+  { icon: FileText, label: 'Rapports', tab: 'reports', color: 'bg-[#04439e]' },
+  { icon: BarChart3, label: 'Analytics', tab: 'overview', color: 'bg-[#04439e]' },
 ];
 
 export function PharmacyQuickActions({ onTabChange }: PharmacyQuickActionsProps) {

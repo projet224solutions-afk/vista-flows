@@ -114,10 +114,10 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-green-500 bg-green-50">
+      <Card className="w-full max-w-md mx-auto border-[#ff4000] bg-orange-50">
         <CardContent className="flex flex-col items-center justify-center py-8">
-          <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-          <p className="text-green-700 font-semibold">Vérification réussie !</p>
+          <CheckCircle className="w-16 h-16 text-[#ff4000] mb-4" />
+          <p className="text-[#ff4000] font-semibold">Vérification réussie !</p>
         </CardContent>
       </Card>
     );
@@ -125,11 +125,11 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
   if (status === 'failed') {
     return (
-      <Card className="w-full max-w-md mx-auto border-red-500 bg-red-50">
+      <Card className="w-full max-w-md mx-auto border-[#ff4000] bg-orange-50">
         <CardContent className="flex flex-col items-center justify-center py-8">
-          <XCircle className="w-16 h-16 text-red-500 mb-4" />
-          <p className="text-red-700 font-semibold">Trop de tentatives échouées</p>
-          <p className="text-red-600 text-sm mt-2">Veuillez réessayer plus tard</p>
+          <XCircle className="w-16 h-16 text-[#ff4000] mb-4" />
+          <p className="text-[#ff4000] font-semibold">Trop de tentatives échouées</p>
+          <p className="text-[#ff4000] text-sm mt-2">Veuillez réessayer plus tard</p>
         </CardContent>
       </Card>
     );

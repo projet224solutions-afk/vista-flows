@@ -336,10 +336,10 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       {step === 'details' && vendorInfo && (
         <div className="space-y-4">
           {/* Vendeur confirmé */}
-          <Card className="border-green-500">
+          <Card className="border-[#ff4000]">
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <CheckCircle2 className="h-6 w-6 text-[#ff4000]" />
                 <div>
                   <p className="font-semibold">{vendorInfo.business_name}</p>
                   <p className="text-sm text-muted-foreground">{vendorInfo.address}</p>
@@ -357,7 +357,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-green-600" />
+                <MapPin className="h-4 w-4 text-[#ff4000]" />
                 Adresse de livraison
               </CardTitle>
             </CardHeader>
@@ -382,7 +382,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 </Button>
               </div>
               {clientCoords && (
-                <p className="text-xs text-green-600 flex items-center gap-1">
+                <p className="text-xs text-[#ff4000] flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
                   Position GPS enregistrée
                 </p>
@@ -437,7 +437,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                   className="rounded"
                 />
                 <Label htmlFor="fragile" className="flex items-center gap-1 cursor-pointer">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
                   Colis fragile
                 </Label>
               </div>
@@ -467,14 +467,14 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="prepaid" id="prepaid" />
                   <Label htmlFor="prepaid" className="flex items-center gap-2 cursor-pointer">
-                    <CreditCard className="h-4 w-4 text-green-600" />
+                    <CreditCard className="h-4 w-4 text-[#ff4000]" />
                     Prépayé (paiement maintenant)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="cod" id="cod" />
                   <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
-                    <Banknote className="h-4 w-4 text-yellow-600" />
+                    <Banknote className="h-4 w-4 text-[#ff4000]" />
                     Paiement à la livraison (COD)
                   </Label>
                 </div>
@@ -522,7 +522,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       {/* Étape 3: Confirmation */}
       {step === 'confirm' && vendorInfo && priceEstimate && (
         <div className="space-y-4">
-          <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+          <Card className="border-2 border-[#ff4000] bg-gradient-to-br from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20">
             <CardHeader>
               <CardTitle className="text-center">Récapitulatif de la commande</CardTitle>
             </CardHeader>
@@ -539,7 +539,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-green-600" />
+                  <MapPin className="h-4 w-4 text-[#ff4000]" />
                   <span className="font-medium">{deliveryAddress}</span>
                 </div>
               </div>
@@ -565,7 +565,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
               </div>
 
               {/* Prix total */}
-              <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white text-center">
+              <div className="p-4 bg-gradient-to-r from-[#ff4000] to-[#ff4000] rounded-lg text-white text-center">
                 <p className="text-sm opacity-90">Prix total</p>
                 <p className="text-3xl font-bold">{formatCurrency(priceEstimate.estimatedPrice)}</p>
               </div>
@@ -578,7 +578,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 <Button
                   onClick={submitOrder}
                   disabled={submitting}
-                  className="bg-gradient-to-r from-orange-500 to-green-500"
+                  className="bg-gradient-to-r from-orange-500 to-[#ff4000]"
                 >
                   {submitting ? (
                     <>

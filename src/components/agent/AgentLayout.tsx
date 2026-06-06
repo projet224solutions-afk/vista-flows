@@ -107,7 +107,7 @@ export function AgentLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-blue-50">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-4 py-3">
@@ -120,7 +120,7 @@ export function AgentLayout({
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg">
+              <div className="p-1.5 bg-[#04439e] rounded-lg">
                 <Shield className="w-4 h-4 text-white" />
               </div>
               <span className="font-semibold text-slate-800">Agent</span>
@@ -129,18 +129,18 @@ export function AgentLayout({
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#ff4000] rounded-full" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={onSignOut}
-              className="text-red-600 hover:bg-red-50"
+              className="text-[#ff4000] hover:bg-orange-50"
             >
               <LogOut className="w-5 h-5" />
             </Button>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xs">
+              <AvatarFallback className="bg-[#04439e] text-white text-xs">
                 {getInitials(agent.name)}
               </AvatarFallback>
             </Avatar>
@@ -173,7 +173,7 @@ export function AgentLayout({
           )}>
             {!sidebarCollapsed && (
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+                <div className="p-2 bg-[#04439e] rounded-xl shadow-lg">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -183,7 +183,7 @@ export function AgentLayout({
               </div>
             )}
             {sidebarCollapsed && (
-              <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl">
+              <div className="p-2 bg-[#04439e] rounded-xl">
                 <Shield className="w-5 h-5 text-white" />
               </div>
             )}
@@ -203,10 +203,10 @@ export function AgentLayout({
 
           {/* Agent Info */}
           {!sidebarCollapsed && (
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 mx-3 mt-3 rounded-xl">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 mx-3 mt-3 rounded-xl">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12 ring-2 ring-white shadow">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-semibold">
+                  <AvatarFallback className="bg-[#04439e] text-white font-semibold">
                     {getInitials(agent.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -243,7 +243,7 @@ export function AgentLayout({
                   className={cn(
                     "w-full justify-start gap-3 h-11 transition-all",
                     activeTab === item.id
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                      ? "bg-[#04439e] text-white shadow-md"
                       : "text-slate-600 hover:bg-slate-100",
                     sidebarCollapsed && "justify-center px-2"
                   )}
@@ -272,7 +272,7 @@ export function AgentLayout({
               {!sidebarCollapsed && (
                 <div className="flex items-center justify-between px-2 py-1.5 bg-slate-50 rounded-lg">
                   <span className="text-xs text-slate-500">Commission</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
                     {agent.commission_rate}%
                   </Badge>
                 </div>
@@ -280,7 +280,7 @@ export function AgentLayout({
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start gap-3 text-red-600 hover:bg-red-50 hover:text-red-700",
+                  "w-full justify-start gap-3 text-[#ff4000] hover:bg-orange-50 hover:text-[#ff4000]",
                   sidebarCollapsed && "justify-center"
                 )}
                 onClick={onSignOut}
@@ -314,19 +314,19 @@ export function AgentLayout({
             <Badge variant={agent.is_active ? "default" : "secondary"} className={cn(
               "px-3 py-1",
               agent.is_active
-                ? "bg-green-100 text-green-700 hover:bg-green-100"
+                ? "bg-orange-100 text-[#ff4000] hover:bg-orange-100"
                 : "bg-slate-100 text-slate-600"
             )}>
               {agent.is_active ? '● Actif' : '○ Inactif'}
             </Badge>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#ff4000] rounded-full" />
             </Button>
             <Separator orientation="vertical" className="h-8" />
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 ring-2 ring-slate-100">
-                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+                <AvatarFallback className="bg-[#04439e] text-white">
                   {getInitials(agent.name)}
                 </AvatarFallback>
               </Avatar>

@@ -21,11 +21,11 @@ export default function PDGSystemMaintenance() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'operational':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-[#ff4000]" />;
       case 'degraded':
-        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+        return <AlertTriangle className="w-5 h-5 text-[#ff4000]" />;
       case 'down':
-        return <AlertTriangle className="w-5 h-5 text-red-500" />;
+        return <AlertTriangle className="w-5 h-5 text-[#ff4000]" />;
       default:
         return <Activity className="w-5 h-5 text-gray-500" />;
     }
@@ -34,11 +34,11 @@ export default function PDGSystemMaintenance() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'operational':
-        return <Badge className="bg-green-500">Opérationnel</Badge>;
+        return <Badge className="bg-[#ff4000]">Opérationnel</Badge>;
       case 'degraded':
-        return <Badge className="bg-yellow-500">Dégradé</Badge>;
+        return <Badge className="bg-[#ff4000]">Dégradé</Badge>;
       case 'down':
-        return <Badge className="bg-red-500">Hors ligne</Badge>;
+        return <Badge className="bg-[#ff4000]">Hors ligne</Badge>;
       default:
         return <Badge>Inconnu</Badge>;
     }
@@ -275,7 +275,7 @@ export default function PDGSystemMaintenance() {
                       <p className="text-xs text-muted-foreground">{log.timestamp}</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500">Succès</Badge>
+                  <Badge className="bg-[#ff4000]">Succès</Badge>
                 </div>
               ))}
             </div>

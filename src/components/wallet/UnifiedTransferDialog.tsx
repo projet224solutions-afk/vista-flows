@@ -462,9 +462,9 @@ export function UnifiedTransferDialog({
                   </div>
                   <div className="border-t pt-3 flex justify-between items-center">
                     <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                    <span className="text-xl font-bold text-red-600 dark:text-red-400">{preview?.total_debit?.toLocaleString()} {walletCurrency}</span>
+                    <span className="text-xl font-bold text-[#ff4000] dark:text-[#ff4000]">{preview?.total_debit?.toLocaleString()} {walletCurrency}</span>
                   </div>
-                  <div className="flex justify-between items-center text-green-600 dark:text-green-400">
+                  <div className="flex justify-between items-center text-[#ff4000] dark:text-[#ff4000]">
                     <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
                     <span className="text-lg font-bold">{preview?.amount_received?.toLocaleString()} {walletCurrency}</span>
                   </div>

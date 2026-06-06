@@ -55,7 +55,7 @@ function createDriverMarkerEl(): HTMLElement {
     "></div>
     <div style="
       position:absolute;inset:4px;
-      background:#3b82f6;
+      background:#04439e;
       border:3px solid white;
       border-radius:50%;
       box-shadow:0 3px 10px rgba(59,130,246,0.55);
@@ -127,7 +127,7 @@ export function GoogleMapsNavigation({
         source: 'route',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#1e3a8a',
+          'line-color': '#04439e',
           'line-width': 10,
           'line-opacity': 0.25,
           'line-blur': 4,
@@ -141,7 +141,7 @@ export function GoogleMapsNavigation({
         source: 'route',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#3b82f6',
+          'line-color': '#04439e',
           'line-width': 5,
           'line-opacity': 0.9,
           'line-dasharray': [1, 0],
@@ -276,7 +276,7 @@ export function GoogleMapsNavigation({
 
     // Marqueur départ (vert)
     if (!pickupMarker.current) {
-      pickupMarker.current = new mapboxgl.Marker({ element: createDotMarker('#22c55e'), anchor: 'center' })
+      pickupMarker.current = new mapboxgl.Marker({ element: createDotMarker('#ff4000'), anchor: 'center' })
         .setLngLat(pickupLng)
         .setPopup(new mapboxgl.Popup({ offset: 20, closeButton: false }).setText('Départ'))
         .addTo(map.current);
@@ -286,7 +286,7 @@ export function GoogleMapsNavigation({
 
     // Marqueur destination (rouge)
     if (!destMarker.current) {
-      destMarker.current = new mapboxgl.Marker({ element: createDotMarker('#ef4444'), anchor: 'center' })
+      destMarker.current = new mapboxgl.Marker({ element: createDotMarker('#ff4000'), anchor: 'center' })
         .setLngLat(destLng)
         .setPopup(new mapboxgl.Popup({ offset: 20, closeButton: false }).setText('Destination'))
         .addTo(map.current);
@@ -396,7 +396,7 @@ export function GoogleMapsNavigation({
 
       {/* Carte Mapbox GL */}
       <Card className="overflow-hidden shadow-lg">
-        <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-blue-50">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Navigation className="w-5 h-5 text-blue-600" />
@@ -447,7 +447,7 @@ export function GoogleMapsNavigation({
 
       {/* Infos de route */}
       {hasActiveRide && routeInfo && (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-50 shadow-sm">
           <CardContent className="pt-4 pb-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl p-3 text-center shadow-sm">
@@ -474,11 +474,11 @@ export function GoogleMapsNavigation({
 
       {/* Position actuelle sans course */}
       {currentLocation && !hasActiveRide && (
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 shadow-sm">
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-50 shadow-sm">
           <CardContent className="pt-4 pb-4 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="bg-green-100 rounded-full p-2.5">
-                <MapPin className="w-5 h-5 text-green-600" />
+              <div className="bg-orange-100 rounded-full p-2.5">
+                <MapPin className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700">Position GPS active</p>
@@ -487,7 +487,7 @@ export function GoogleMapsNavigation({
             </div>
             <Button
               onClick={openExternalNavigation}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+              className="w-full bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000] text-white"
             >
               <Navigation className="w-4 h-4 mr-2" />
               Ouvrir Google Maps
@@ -520,11 +520,11 @@ export function GoogleMapsNavigation({
 
             {/* Itinéraire */}
             <div className="space-y-2">
-              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full mt-1.5 flex-shrink-0" />
+                  <div className="w-2.5 h-2.5 bg-[#ff4000] rounded-full mt-1.5 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] font-bold text-green-700 uppercase tracking-wider mb-0.5">
+                    <p className="text-[10px] font-bold text-[#ff4000] uppercase tracking-wider mb-0.5">
                       Départ
                     </p>
                     <p className="text-sm text-gray-800">{activeRide.pickup.address}</p>
@@ -534,11 +534,11 @@ export function GoogleMapsNavigation({
               <div className="flex justify-center">
                 <ArrowRight className="w-5 h-5 text-blue-400" />
               </div>
-              <div className="bg-red-50 rounded-xl p-3 border border-red-100">
+              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                 <div className="flex items-start gap-2.5">
-                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 flex-shrink-0" />
+                  <div className="w-2.5 h-2.5 bg-[#ff4000] rounded-full mt-1.5 flex-shrink-0" />
                   <div>
-                    <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-0.5">
+                    <p className="text-[10px] font-bold text-[#ff4000] uppercase tracking-wider mb-0.5">
                       Destination
                     </p>
                     <p className="text-sm text-gray-800">{activeRide.destination.address}</p>
@@ -550,7 +550,7 @@ export function GoogleMapsNavigation({
             {/* Navigation externe */}
             <Button
               onClick={openExternalNavigation}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+              className="w-full bg-[#04439e] text-white"
             >
               <Navigation className="w-4 h-4 mr-2" />
               Navigation précise Google Maps
@@ -560,7 +560,7 @@ export function GoogleMapsNavigation({
             <Button
               onClick={cancelRide}
               variant="outline"
-              className="w-full border-red-200 text-red-600 hover:bg-red-50"
+              className="w-full border-orange-200 text-[#ff4000] hover:bg-orange-50"
             >
               Annuler la course
             </Button>
@@ -569,7 +569,7 @@ export function GoogleMapsNavigation({
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-1">Prix course</p>
-                <p className="text-lg font-bold text-green-600">
+                <p className="text-lg font-bold text-[#ff4000]">
                   {(activeRide.estimatedPrice || 0).toLocaleString()} GNF
                 </p>
               </div>

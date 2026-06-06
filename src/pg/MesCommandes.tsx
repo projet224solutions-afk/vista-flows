@@ -16,21 +16,21 @@ import QuickFooter from '@/components/QuickFooter';
 
 // Status configs
 const restaurantStatusConfig: Record<string, { label: string; color: string; icon: any; step: number }> = {
-  pending: { label: 'En attente', color: 'bg-yellow-500', icon: Clock, step: 1 },
+  pending: { label: 'En attente', color: 'bg-[#ff4000]', icon: Clock, step: 1 },
   confirmed: { label: 'Confirmée', color: 'bg-blue-500', icon: CheckCircle2, step: 2 },
   preparing: { label: 'En préparation', color: 'bg-orange-500', icon: ChefHat, step: 3 },
-  ready: { label: 'Prête', color: 'bg-green-500', icon: Package, step: 4 },
-  delivered: { label: 'Livrée', color: 'bg-emerald-600', icon: CheckCircle2, step: 5 },
+  ready: { label: 'Prête', color: 'bg-[#ff4000]', icon: Package, step: 4 },
+  delivered: { label: 'Livrée', color: 'bg-[#ff4000]', icon: CheckCircle2, step: 5 },
   completed: { label: 'Terminée', color: 'bg-primary', icon: CheckCircle2, step: 6 },
   cancelled: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
 };
 
 const taxiStatusConfig: Record<string, { label: string; color: string; icon: any; step: number }> = {
-  requested: { label: 'Recherche chauffeur', color: 'bg-yellow-500', icon: Clock, step: 1 },
+  requested: { label: 'Recherche chauffeur', color: 'bg-[#ff4000]', icon: Clock, step: 1 },
   accepted: { label: 'Chauffeur en route', color: 'bg-blue-500', icon: Bike, step: 2 },
-  arrived: { label: 'Chauffeur arrivé', color: 'bg-indigo-500', icon: MapPin, step: 3 },
+  arrived: { label: 'Chauffeur arrivé', color: 'bg-[#04439e]', icon: MapPin, step: 3 },
   picked_up: { label: 'En course', color: 'bg-orange-500', icon: Bike, step: 4 },
-  completed: { label: 'Terminée', color: 'bg-green-500', icon: CheckCircle2, step: 5 },
+  completed: { label: 'Terminée', color: 'bg-[#ff4000]', icon: CheckCircle2, step: 5 },
   cancelled: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
   cancelled_by_customer: { label: 'Annulée', color: 'bg-destructive', icon: XCircle, step: 0 },
   cancelled_by_driver: { label: 'Annulée par chauffeur', color: 'bg-destructive', icon: XCircle, step: 0 },
@@ -214,13 +214,13 @@ function TaxiTripCard({ trip }: { trip: TaxiTripTracking }) {
         <div className="space-y-1.5 mt-2 pt-2 border-t border-border">
           {trip.pickup_address && (
             <div className="flex items-start gap-2 text-xs">
-              <div className="w-2 h-2 rounded-full bg-green-500 mt-1 shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-[#ff4000] mt-1 shrink-0" />
               <span className="text-muted-foreground">{trip.pickup_address}</span>
             </div>
           )}
           {trip.dropoff_address && (
             <div className="flex items-start gap-2 text-xs">
-              <div className="w-2 h-2 rounded-full bg-red-500 mt-1 shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-[#ff4000] mt-1 shrink-0" />
               <span className="text-muted-foreground">{trip.dropoff_address}</span>
             </div>
           )}

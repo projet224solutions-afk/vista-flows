@@ -47,9 +47,9 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
 
   const getStatusConfig = (status: string) => {
     const config: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; icon: typeof Clock; className: string }> = {
-      pending: { label: t('invoice.status.pending'), variant: 'secondary', icon: Clock, className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400' },
-      accepted: { label: t('invoice.status.accepted'), variant: 'default', icon: CheckCircle, className: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' },
-      rejected: { label: t('invoice.status.rejected'), variant: 'destructive', icon: XCircle, className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400' },
+      pending: { label: t('invoice.status.pending'), variant: 'secondary', icon: Clock, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+      accepted: { label: t('invoice.status.accepted'), variant: 'default', icon: CheckCircle, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+      rejected: { label: t('invoice.status.rejected'), variant: 'destructive', icon: XCircle, className: 'bg-orange-100 text-[#ff4000] border-orange-200 dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
       expired: { label: t('invoice.status.expired'), variant: 'outline', icon: Clock, className: 'bg-muted text-muted-foreground border-border' }
     };
     return config[status] || config.pending;
@@ -95,31 +95,18 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
 
       if (fetchError) throw fetchError;
 
-      const { data, error } = await supabase.functions.invoke('generate-quote-pdf', {
-        body: {
-          quote_id: freshQuote.id,
-          ref: freshQuote.ref,
-          vendor_id: freshQuote.vendor_id,
-          client_name: freshQuote.client_name,
-          client_email: freshQuote.client_email,
-          client_phone: freshQuote.client_phone,
-          client_address: freshQuote.client_address,
-          items: freshQuote.items,
-          subtotal: freshQuote.subtotal,
-          discount: freshQuote.discount,
-          tax: freshQuote.tax,
-          total: freshQuote.total,
-          valid_until: freshQuote.valid_until,
-          notes: freshQuote.notes
-        }
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/documents/quote-pdf', {
+        body: { quote_id: freshQuote.id, ref: freshQuote.ref }
       });
 
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur génération PDF');
 
       toast.success(t('invoice.pdfGenerated'));
 
-      if (data?.pdf_url) {
-        await downloadPDF(data.pdf_url, freshQuote.ref);
+      const pdf_url = resp.data?.pdf_url || (resp as any).pdf_url;
+      if (pdf_url) {
+        await downloadPDF(pdf_url, freshQuote.ref);
       }
     } catch (error: any) {
       console.error('Erreur génération PDF:', error);
@@ -255,7 +242,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
                 <span className="font-medium">{fc(quote.subtotal || 0)}</span>
               </div>
               {(quote.discount || 0) > 0 && (
-                <div className="flex justify-between py-1 text-red-600">
+                <div className="flex justify-between py-1 text-[#ff4000]">
                   <span>{t('invoice.discount')}:</span>
                   <span>-{fc(quote.discount || 0)}</span>
                 </div>

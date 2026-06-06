@@ -48,15 +48,15 @@ const priorityConfig = {
   low: { label: 'Faible', color: 'bg-gray-500' },
   normal: { label: 'Normal', color: 'bg-blue-500' },
   high: { label: 'Élevée', color: 'bg-orange-500' },
-  urgent: { label: 'Urgent', color: 'bg-red-500' },
-  critical: { label: 'Critique', color: 'bg-red-700' }
+  urgent: { label: 'Urgent', color: 'bg-[#ff4000]' },
+  critical: { label: 'Critique', color: 'bg-[#ff4000]' }
 };
 
 const statusConfig = {
   open: { label: 'Ouvert', color: 'bg-blue-500' },
-  in_progress: { label: 'En cours', color: 'bg-yellow-500' },
-  waiting_response: { label: 'En attente', color: 'bg-purple-500' },
-  resolved: { label: 'Résolu', color: 'bg-green-500' },
+  in_progress: { label: 'En cours', color: 'bg-[#ff4000]' },
+  waiting_response: { label: 'En attente', color: 'bg-[#04439e]' },
+  resolved: { label: 'Résolu', color: 'bg-[#ff4000]' },
   closed: { label: 'Fermé', color: 'bg-gray-500' }
 };
 
@@ -371,7 +371,7 @@ export function SupportTicketSystem() {
                 <CardTitle className="text-sm">Tickets résolus</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-600">
+                <div className="text-3xl font-bold text-[#ff4000]">
                   {tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length}
                 </div>
               </CardContent>

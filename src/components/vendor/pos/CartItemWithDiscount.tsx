@@ -148,7 +148,7 @@ export function CartItemWithDiscount({
                   <span className="text-xs text-muted-foreground line-through">
                     {formatCurrency(item.unitPrice)}
                   </span>
-                  <span className="text-xs font-medium text-green-600">
+                  <span className="text-xs font-medium text-[#ff4000]">
                     {formatCurrency(item.finalUnitPrice)}
                   </span>
                 </div>
@@ -161,7 +161,7 @@ export function CartItemWithDiscount({
                     Perte: {formatCurrency(Math.abs(item.profitAfterDiscount))}
                   </span>
                 ) : (
-                  <span className="text-green-600">
+                  <span className="text-[#ff4000]">
                     Profit: +{formatCurrency(item.profitAfterDiscount)}
                   </span>
                 )}

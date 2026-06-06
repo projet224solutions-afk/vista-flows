@@ -22,23 +22,23 @@ export function DriverSubscriptionBanner() {
       <div className="mx-2 mt-2 mb-3">
         <div className={cn(
           "relative overflow-hidden rounded-xl",
-          "bg-gradient-to-r from-red-500/20 via-red-500/10 to-red-500/20",
-          "border border-red-500/30",
+          "bg-gradient-to-r from-[#ff4000]/20 via-[#ff4000]/10 to-[#ff4000]/20",
+          "border border-[#ff4000]/30",
           "p-3"
         )}>
           <div className="flex items-start gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-              <Ban className="w-4 h-4 text-red-400" />
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-[#ff4000]/20 flex items-center justify-center">
+              <Ban className="w-4 h-4 text-[#ff4000]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-red-400 font-bold text-sm">Abonnement Expiré</h4>
-              <p className="text-red-400/80 text-xs mt-0.5 leading-relaxed">
+              <h4 className="text-[#ff4000] font-bold text-sm">Abonnement Expiré</h4>
+              <p className="text-[#ff4000]/80 text-xs mt-0.5 leading-relaxed">
                 Vous ne pouvez plus recevoir de courses. Veuillez renouveler pour continuer.
               </p>
               <Button
                 onClick={handleSubscribe}
                 size="sm"
-                className="mt-2 h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
+                className="mt-2 h-7 px-3 text-xs bg-[#ff4000] hover:bg-[#ff4000] text-white"
               >
                 Renouveler maintenant
               </Button>
@@ -54,27 +54,27 @@ export function DriverSubscriptionBanner() {
       <div className="mx-2 mt-2 mb-3">
         <div className={cn(
           "relative overflow-hidden rounded-xl",
-          "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20",
-          "border border-amber-500/30",
+          "bg-gradient-to-r from-[#ff4000]/20 via-[#ff4000]/10 to-[#ff4000]/20",
+          "border border-[#ff4000]/30",
           "p-3"
         )}>
           <div className="flex items-start gap-3">
-            <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <Clock className="w-4 h-4 text-amber-400" />
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-[#ff4000]/20 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-[#ff4000]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-amber-400 font-bold text-sm flex items-center gap-1">
+              <h4 className="text-[#ff4000] font-bold text-sm flex items-center gap-1">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 Expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
               </h4>
-              <p className="text-amber-400/80 text-xs mt-0.5">
+              <p className="text-[#ff4000]/80 text-xs mt-0.5">
                 Pensez à renouveler pour éviter toute interruption.
               </p>
               <Button
                 onClick={handleSubscribe}
                 size="sm"
                 variant="outline"
-                className="mt-2 h-7 px-3 text-xs border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+                className="mt-2 h-7 px-3 text-xs border-[#ff4000]/50 text-[#ff4000] hover:bg-[#ff4000]/20"
               >
                 Renouveler
               </Button>

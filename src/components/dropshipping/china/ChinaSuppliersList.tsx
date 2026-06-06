@@ -49,7 +49,7 @@ export function ChinaSuppliersList() {
   const getPlatformColor = (platform: ChinaPlatformType) => {
     const colors: Record<ChinaPlatformType, string> = {
       ALIBABA: 'bg-orange-500',
-      ALIEXPRESS: 'bg-red-500',
+      ALIEXPRESS: 'bg-[#ff4000]',
       '1688': 'bg-blue-600',
       PRIVATE: 'bg-gray-500'
     };
@@ -57,11 +57,11 @@ export function ChinaSuppliersList() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 4.5) return 'text-green-500';
-    if (score >= 4) return 'text-emerald-500';
-    if (score >= 3.5) return 'text-yellow-500';
+    if (score >= 4.5) return 'text-[#ff4000]';
+    if (score >= 4) return 'text-[#ff4000]';
+    if (score >= 3.5) return 'text-[#ff4000]';
     if (score >= 3) return 'text-orange-500';
-    return 'text-red-500';
+    return 'text-[#ff4000]';
   };
 
   return (
@@ -124,8 +124,8 @@ export function ChinaSuppliersList() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <div className="p-2 bg-orange-100 dark:bg-[#ff4000] rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
             </div>
             <div>
               <p className="text-2xl font-bold">
@@ -137,8 +137,8 @@ export function ChinaSuppliersList() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-600" />
+            <div className="p-2 bg-orange-100 dark:bg-[#ff4000] rounded-lg">
+              <Star className="h-5 w-5 text-[#ff4000]" />
             </div>
             <div>
               <p className="text-2xl font-bold">
@@ -152,8 +152,8 @@ export function ChinaSuppliersList() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <Package className="h-5 w-5 text-purple-600" />
+            <div className="p-2 bg-blue-100 dark:bg-[#04439e] rounded-lg">
+              <Package className="h-5 w-5 text-[#04439e]" />
             </div>
             <div>
               <p className="text-2xl font-bold">
@@ -179,7 +179,7 @@ export function ChinaSuppliersList() {
                     </Badge>
                     <h3 className="font-semibold text-lg">{supplier.name}</h3>
                     {supplier.is_verified && (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -208,7 +208,7 @@ export function ChinaSuppliersList() {
                         key={star}
                         className={`h-3 w-3 ${
                           star <= (supplier.quality_score || 0)
-                            ? 'text-yellow-500 fill-yellow-500'
+                            ? 'text-[#ff4000] fill-[#ff4000]'
                             : 'text-gray-300'
                         }`}
                       />
@@ -254,7 +254,7 @@ export function ChinaSuppliersList() {
                   <Badge variant="secondary">🇨🇳 Support chinois</Badge>
                 )}
                 {supplier.on_time_rate >= 95 && (
-                  <Badge variant="secondary" className="text-green-600">
+                  <Badge variant="secondary" className="text-[#ff4000]">
                     ⏰ Ponctuel ({supplier.on_time_rate}%)
                   </Badge>
                 )}

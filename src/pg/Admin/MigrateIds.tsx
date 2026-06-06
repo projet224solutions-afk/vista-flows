@@ -181,7 +181,7 @@ export default function MigrateIds() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               Résultats de la migration
             </CardTitle>
             <CardDescription>
@@ -206,7 +206,7 @@ export default function MigrateIds() {
                         {result.new_id}
                       </span>
                     </div>
-                    <Badge variant="default" className="bg-green-500">
+                    <Badge variant="default" className="bg-[#ff4000]">
                       {result.status}
                     </Badge>
                   </div>

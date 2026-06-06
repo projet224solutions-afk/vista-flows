@@ -96,31 +96,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       let customId = '';
 
-      // Créer ID utilisateur si manquant avec le format basé sur le rôle
+      // Créer ID utilisateur si manquant — généré et écrit côté serveur
+      // (les colonnes d'identité ne sont jamais écrites depuis le navigateur)
       if (needsUserId) {
-        const userRole = p?.role || 'client';
-
-        const { data: generatedId, error: generateError } = await supabase
-          .rpc('generate_custom_id_with_role', { p_role: userRole });
-
-        if (generateError) {
-          console.error('❌ Erreur génération ID:', generateError);
-          customId = 'TMP' + Math.random().toString(36).substring(2, 6).toUpperCase();
-        } else {
-          customId = generatedId as string;
-        }
-
-        const { error: idError } = await supabase
-          .from('user_ids')
-          .upsert({
-            user_id: user.id,
-            custom_id: customId,
-          });
-
-        if (idError) {
-          console.error('❌ Erreur création ID:', idError);
-        } else {
-          console.log('✅ ID utilisateur créé:', customId);
+        try {
+          const { backendFetch } = await import('@/services/backendApi');
+          const res = await backendFetch<{ custom_id: string }>('/api/identity/ensure', { method: 'POST' });
+          if (res.success && res.data?.custom_id) {
+            customId = res.data.custom_id;
+            console.log('✅ ID utilisateur assuré (backend):', customId);
+          } else {
+            console.error('❌ Erreur génération ID (backend):', res.error);
+          }
+        } catch (e) {
+          console.error('❌ Erreur appel /api/identity/ensure:', e);
         }
       } else {
         customId = userIdCheck.data?.custom_id || 'ABC0000';
@@ -709,8 +698,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
+      // Au retour dans l'onglet/app, Supabase ré-émet SIGNED_IN / INITIAL_SESSION avec le MÊME
+      // utilisateur. Si on remplaçait `user`/`session` par de nouveaux objets, useCurrentVendor
+      // (qui dépend de auth.user) se relancerait → refetch → l'interface vendeur « s'actualise ».
+      // On préserve donc les références tant que l'ID utilisateur et le token n'ont pas changé.
+      const nextUser = nextSession?.user ?? null;
+      setSession(prev => (prev?.access_token && prev.access_token === nextSession?.access_token ? prev : nextSession));
+      setUser(prev => (prev?.id && prev.id === nextUser?.id ? prev : nextUser));
 
       if (event === 'SIGNED_OUT') {
         setProfile(null);

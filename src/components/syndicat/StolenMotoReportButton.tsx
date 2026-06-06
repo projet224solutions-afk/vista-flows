@@ -121,7 +121,7 @@ export default function StolenMotoReportButton({ moto, _bureauName, bureauLocati
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
+          <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
             <Shield className="w-5 h-5" />
             Déclaration de vol de moto
           </DialogTitle>
@@ -132,20 +132,20 @@ export default function StolenMotoReportButton({ moto, _bureauName, bureauLocati
 
         <div className="space-y-4">
           {/* Informations de la moto */}
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h4 className="font-semibold text-red-900 mb-2">Moto concernée</h4>
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <h4 className="font-semibold text-[#ff4000] mb-2">Moto concernée</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="text-red-700 font-medium">Plaque:</span> {moto.plate_number}
+                <span className="text-[#ff4000] font-medium">Plaque:</span> {moto.plate_number}
               </div>
               <div>
-                <span className="text-red-700 font-medium">Châssis:</span> {moto.serial_number}
+                <span className="text-[#ff4000] font-medium">Châssis:</span> {moto.serial_number}
               </div>
               <div>
-                <span className="text-red-700 font-medium">Marque:</span> {moto.brand} {moto.model}
+                <span className="text-[#ff4000] font-medium">Marque:</span> {moto.brand} {moto.model}
               </div>
               <div>
-                <span className="text-red-700 font-medium">Propriétaire:</span> {moto.owner_name}
+                <span className="text-[#ff4000] font-medium">Propriétaire:</span> {moto.owner_name}
               </div>
             </div>
           </div>
@@ -166,8 +166,8 @@ export default function StolenMotoReportButton({ moto, _bureauName, bureauLocati
           </div>
 
           {/* Avertissement */}
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-[#ff4000]">
               ⚠️ Cette déclaration sera visible par tous les bureaux.
               Assurez-vous que les informations sont exactes.
             </p>

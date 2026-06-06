@@ -96,8 +96,8 @@ function PercentageAvailability({
     <div className={cn(
       'flex items-start gap-2 p-2.5 rounded-lg text-xs mt-1.5',
       checking                  && 'bg-muted/50 text-muted-foreground',
-      !checking && info?.valid  && 'bg-green-50 text-green-800',
-      !checking && info && !info.valid && 'bg-red-50 text-red-800',
+      !checking && info?.valid  && 'bg-orange-50 text-[#ff4000]',
+      !checking && info && !info.valid && 'bg-orange-50 text-[#ff4000]',
     )}>
       {checking ? (
         <RefreshCw className="w-3.5 h-3.5 animate-spin mt-0.5 shrink-0" />
@@ -134,11 +134,11 @@ function Field({
   return (
     <div className="space-y-1">
       <Label className="text-sm font-medium">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-[#ff4000] ml-0.5">*</span>}
       </Label>
       {children}
       {error && (
-        <p className="text-xs text-red-600 flex items-center gap-1">
+        <p className="text-xs text-[#ff4000] flex items-center gap-1">
           <AlertCircle className="w-3 h-3" />{error}
         </p>
       )}
@@ -237,7 +237,7 @@ export default function AddShareholderForm({
               value={fullName}
               onChange={e => setFullName(e.target.value)}
               placeholder="Jean Dupont"
-              className={cn(errors.fullName && 'border-red-400')}
+              className={cn(errors.fullName && 'border-[#ff4000]')}
             />
           </Field>
           <Field label="Téléphone" error={errors.phone}>
@@ -254,7 +254,7 @@ export default function AddShareholderForm({
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="actionnaire@exemple.com"
-            className={cn(errors.email && 'border-red-400')}
+            className={cn(errors.email && 'border-[#ff4000]')}
           />
         </Field>
         <Field label="Pays de résidence" error={errors.residenceCountry}>
@@ -280,7 +280,7 @@ export default function AddShareholderForm({
                 value={tempPwd}
                 onChange={e => setTempPwd(e.target.value)}
                 placeholder="Mot de passe provisoire"
-                className={cn('pr-9', errors.tempPwd && 'border-red-400')}
+                className={cn('pr-9', errors.tempPwd && 'border-[#ff4000]')}
               />
               <button
                 type="button"
@@ -308,7 +308,7 @@ export default function AddShareholderForm({
               value={category}
               onValueChange={v => setCategory(v as ShareholderCategory)}
             >
-              <SelectTrigger className={cn(errors.category && 'border-red-400')}>
+              <SelectTrigger className={cn(errors.category && 'border-[#ff4000]')}>
                 <SelectValue placeholder="Choisir…" />
               </SelectTrigger>
               <SelectContent>
@@ -325,7 +325,7 @@ export default function AddShareholderForm({
               value={scope}
               onValueChange={v => setScope(v as ActionScope)}
             >
-              <SelectTrigger className={cn(errors.scope && 'border-red-400')}>
+              <SelectTrigger className={cn(errors.scope && 'border-[#ff4000]')}>
                 <SelectValue placeholder="Choisir…" />
               </SelectTrigger>
               <SelectContent>
@@ -342,7 +342,7 @@ export default function AddShareholderForm({
         {scope === 'country' && (
           <Field label="Pays" error={errors.country} required>
             <Select value={country} onValueChange={setCountry}>
-              <SelectTrigger className={cn(errors.country && 'border-red-400')}>
+              <SelectTrigger className={cn(errors.country && 'border-[#ff4000]')}>
                 <SelectValue placeholder="Sélectionner le pays…" />
               </SelectTrigger>
               <SelectContent>
@@ -364,7 +364,7 @@ export default function AddShareholderForm({
               value={percentage}
               onChange={e => setPercentage(e.target.value)}
               placeholder="ex: 5.00"
-              className={cn('max-w-[140px]', errors.percentage && 'border-red-400')}
+              className={cn('max-w-[140px]', errors.percentage && 'border-[#ff4000]')}
             />
             {percentage && !isNaN(parseFloat(percentage)) && (
               <Badge variant="outline" className="text-sm font-bold">

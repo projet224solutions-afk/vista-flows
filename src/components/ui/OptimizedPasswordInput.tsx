@@ -195,7 +195,7 @@ const OptimizedPasswordInput = memo(({
             <div
               className={cn(
                 "h-full transition-all duration-300",
-                strength.score <= 2 ? "bg-red-500" : strength.score <= 4 ? "bg-yellow-500" : "bg-green-500"
+                strength.score <= 2 ? "bg-[#ff4000]" : strength.score <= 4 ? "bg-[#ff4000]" : "bg-[#ff4000]"
               )}
               style={{ width: `${(strength.score / 6) * 100}%` }}
             />

@@ -61,16 +61,16 @@ const orderSteps = [
 ];
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  pending: 'bg-orange-100 text-[#ff4000] border-orange-300',
   confirmed: 'bg-blue-100 text-blue-800 border-blue-300',
-  processing: 'bg-purple-100 text-purple-800 border-purple-300',
-  preparing: 'bg-purple-100 text-purple-800 border-purple-300',
-  ready: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+  processing: 'bg-blue-100 text-[#04439e] border-blue-300',
+  preparing: 'bg-blue-100 text-[#04439e] border-blue-300',
+  ready: 'bg-blue-100 text-[#04439e] border-blue-300',
   shipped: 'bg-orange-100 text-orange-800 border-orange-300',
   in_transit: 'bg-orange-100 text-orange-800 border-orange-300',
-  delivered: 'bg-green-100 text-green-800 border-green-300',
-  completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  cancelled: 'bg-red-100 text-red-800 border-red-300'
+  delivered: 'bg-orange-100 text-[#ff4000] border-orange-300',
+  completed: 'bg-orange-100 text-[#ff4000] border-orange-300',
+  cancelled: 'bg-orange-100 text-[#ff4000] border-orange-300'
 };
 
 const statusLabels: Record<string, string> = {
@@ -101,9 +101,9 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 const escrowStatusColors: Record<string, string> = {
   pending: 'bg-blue-100 text-blue-800 border-blue-300',
-  held: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  released: 'bg-green-100 text-green-800 border-green-300',
-  refunded: 'bg-red-100 text-red-800 border-red-300',
+  held: 'bg-orange-100 text-[#ff4000] border-orange-300',
+  released: 'bg-orange-100 text-[#ff4000] border-orange-300',
+  refunded: 'bg-orange-100 text-[#ff4000] border-orange-300',
   disputed: 'bg-orange-100 text-orange-800 border-orange-300'
 };
 
@@ -116,9 +116,9 @@ const escrowStatusLabels: Record<string, string> = {
 };
 
 const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  paid: 'bg-green-50 text-green-700 border-green-200',
-  failed: 'bg-red-50 text-red-700 border-red-200',
+  pending: 'bg-orange-50 text-[#ff4000] border-orange-200',
+  paid: 'bg-orange-50 text-[#ff4000] border-orange-200',
+  failed: 'bg-orange-50 text-[#ff4000] border-orange-200',
   refunded: 'bg-gray-50 text-gray-700 border-gray-200'
 };
 
@@ -152,9 +152,9 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
 
   if (isCancelled) {
     return (
-      <div className="flex items-center justify-center p-4 bg-red-50 rounded-xl border border-red-200">
-        <XCircle className="w-6 h-6 text-red-500 mr-2" />
-        <span className="font-medium text-red-700">Commande annulée</span>
+      <div className="flex items-center justify-center p-4 bg-orange-50 rounded-xl border border-orange-200">
+        <XCircle className="w-6 h-6 text-[#ff4000] mr-2" />
+        <span className="font-medium text-[#ff4000]">Commande annulée</span>
       </div>
     );
   }
@@ -165,7 +165,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
         {/* Ligne de progression */}
         <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full mx-8" />
         <div
-          className="absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full mx-8 transition-all duration-500"
+          className="absolute top-5 left-0 h-1 bg-[#04439e] rounded-full mx-8 transition-all duration-500"
           style={{ width: `calc(${(currentStep / (orderSteps.length - 1)) * 100}% - 4rem)` }}
         />
 
@@ -180,7 +180,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                   isCompleted
-                    ? "bg-gradient-to-br from-blue-500 to-green-500 text-white shadow-lg"
+                    ? "bg-[#04439e] text-white shadow-lg"
                     : "bg-slate-100 text-slate-400 border-2 border-slate-200",
                   isCurrent && "ring-4 ring-blue-100 scale-110"
                 )}
@@ -476,56 +476,56 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-yellow-50 to-yellow-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-yellow-600 font-medium">En attente</p>
-                <p className="text-2xl font-bold text-yellow-900">{stats.pending}</p>
+                <p className="text-xs text-[#ff4000] font-medium">En attente</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{stats.pending}</p>
               </div>
-              <div className="p-3 bg-yellow-500 rounded-xl">
+              <div className="p-3 bg-[#ff4000] rounded-xl">
                 <Clock className="w-5 h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-purple-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-purple-600 font-medium">En cours</p>
-                <p className="text-2xl font-bold text-purple-900">{stats.processing}</p>
+                <p className="text-xs text-[#04439e] font-medium">En cours</p>
+                <p className="text-2xl font-bold text-[#04439e]">{stats.processing}</p>
               </div>
-              <div className="p-3 bg-purple-500 rounded-xl">
+              <div className="p-3 bg-[#04439e] rounded-xl">
                 <Package className="w-5 h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-green-600 font-medium">Livrées</p>
-                <p className="text-2xl font-bold text-green-900">{stats.completed}</p>
+                <p className="text-xs text-[#ff4000] font-medium">Livrées</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{stats.completed}</p>
               </div>
-              <div className="p-3 bg-green-500 rounded-xl">
+              <div className="p-3 bg-[#ff4000] rounded-xl">
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-cyan-50 to-cyan-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-cyan-600 font-medium">Escrow actif</p>
-                <p className="text-2xl font-bold text-cyan-900">{stats.escrowPending}</p>
+                <p className="text-xs text-[#04439e] font-medium">Escrow actif</p>
+                <p className="text-2xl font-bold text-[#04439e]">{stats.escrowPending}</p>
               </div>
-              <div className="p-3 bg-cyan-500 rounded-xl">
+              <div className="p-3 bg-[#04439e] rounded-xl">
                 <Shield className="w-5 h-5 text-white" />
               </div>
             </div>
@@ -534,14 +534,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       </div>
 
       {/* Revenue Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Revenus générés par mes utilisateurs</p>
+              <p className="text-orange-100 text-sm">Revenus générés par mes utilisateurs</p>
               <p className="text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
             </div>
-            <TrendingUp className="w-12 h-12 text-emerald-200" />
+            <TrendingUp className="w-12 h-12 text-orange-200" />
           </div>
         </CardContent>
       </Card>
@@ -610,9 +610,9 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                     key={order.id}
                     className="overflow-hidden hover:shadow-md transition-all cursor-pointer border-l-4"
                     style={{
-                      borderLeftColor: order.escrow?.status === 'pending' ? '#3b82f6' :
-                                       order.escrow?.status === 'released' ? '#22c55e' :
-                                       order.status === 'cancelled' ? '#ef4444' : '#e2e8f0'
+                      borderLeftColor: order.escrow?.status === 'pending' ? '#04439e' :
+                                       order.escrow?.status === 'released' ? '#ff4000' :
+                                       order.status === 'cancelled' ? '#ff4000' : '#e2e8f0'
                     }}
                     onClick={() => loadOrderDetails(order)}
                   >
@@ -686,9 +686,9 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                           order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? "bg-blue-50 border-blue-200"
                             : order.escrow.status === 'released'
-                            ? "bg-green-50 border-green-200"
+                            ? "bg-orange-50 border-orange-200"
                             : order.escrow.status === 'refunded'
-                            ? "bg-red-50 border-red-200"
+                            ? "bg-orange-50 border-orange-200"
                             : "bg-gray-50 border-gray-200"
                         )}>
                           <div className="flex items-start gap-2">
@@ -697,7 +697,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                               order.escrow.status === 'pending' || order.escrow.status === 'held'
                                 ? "text-blue-600"
                                 : order.escrow.status === 'released'
-                                ? "text-green-600"
+                                ? "text-[#ff4000]"
                                 : "text-gray-600"
                             )} />
                             <div className="flex-1">
@@ -706,7 +706,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                                 order.escrow.status === 'pending' || order.escrow.status === 'held'
                                   ? "text-blue-800"
                                   : order.escrow.status === 'released'
-                                  ? "text-green-800"
+                                  ? "text-[#ff4000]"
                                   : "text-gray-800"
                               )}>
                                 {order.escrow.status === 'pending' && "🔒 Fonds sécurisés - En attente de livraison"}
@@ -719,7 +719,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                                 order.escrow.status === 'pending' || order.escrow.status === 'held'
                                   ? "text-blue-700"
                                   : order.escrow.status === 'released'
-                                  ? "text-green-700"
+                                  ? "text-[#ff4000]"
                                   : "text-gray-700"
                               )}>
                                 {formatCurrency(order.escrow.amount)} •
@@ -830,7 +830,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               {orderDetails.shipping_address && (
                 <div className="p-4 rounded-xl border">
                   <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-green-600" />
+                    <MapPin className="w-4 h-4 text-[#ff4000]" />
                     Adresse de livraison
                   </h4>
                   <p className="text-sm text-slate-600">
@@ -845,7 +845,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               {/* Order Items */}
               <div className="p-4 rounded-xl border">
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-purple-600" />
+                  <Package className="w-4 h-4 text-[#04439e]" />
                   Articles ({orderDetails.order_items?.length || 0})
                 </h4>
                 <div className="space-y-3">
@@ -873,7 +873,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               </div>
 
               {/* Total */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-100">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-slate-700">Total</span>
                   <span className="text-2xl font-bold text-blue-900">

@@ -276,7 +276,7 @@ export function POSCartSection({
                           )}
                         </div>
                         {/* Profit/Loss indicator */}
-                        <p className={`text-[8px] ${financials.isLoss ? 'text-destructive' : 'text-green-600'}`}>
+                        <p className={`text-[8px] ${financials.isLoss ? 'text-destructive' : 'text-[#ff4000]'}`}>
                           {financials.isLoss
                             ? `Perte: ${formatCurrency(Math.abs(financials.totalProfit))}`
                             : `Profit: +${formatCurrency(financials.totalProfit)}`

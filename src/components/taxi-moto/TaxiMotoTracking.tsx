@@ -254,13 +254,13 @@ export default function TaxiMotoTracking({
         const statusMap: Record<string, { label: string; color: string; icon: any; description: string }> = {
             requested: {
                 label: 'Recherche de conducteur',
-                color: 'bg-yellow-100 text-yellow-800',
+                color: 'bg-orange-100 text-[#ff4000]',
                 icon: Clock,
                 description: 'Nous recherchons un conducteur proche de vous'
             },
             pending: {
                 label: 'En attente',
-                color: 'bg-yellow-100 text-yellow-800',
+                color: 'bg-orange-100 text-[#ff4000]',
                 icon: Clock,
                 description: 'Nous recherchons un conducteur proche de vous'
             },
@@ -278,13 +278,13 @@ export default function TaxiMotoTracking({
             },
             picked_up: {
                 label: 'À bord',
-                color: 'bg-purple-100 text-purple-800',
+                color: 'bg-blue-100 text-[#04439e]',
                 icon: Car,
                 description: 'Vous êtes à bord, en route vers la destination'
             },
             in_progress: {
                 label: 'Course en cours',
-                color: 'bg-green-100 text-green-800',
+                color: 'bg-orange-100 text-[#ff4000]',
                 icon: Car,
                 description: 'Vous êtes en route vers votre destination'
             },
@@ -296,7 +296,7 @@ export default function TaxiMotoTracking({
             },
             cancelled: {
                 label: 'Course annulée',
-                color: 'bg-red-100 text-red-800',
+                color: 'bg-orange-100 text-[#ff4000]',
                 icon: AlertTriangle,
                 description: 'Cette course a été annulée'
             }
@@ -346,7 +346,7 @@ export default function TaxiMotoTracking({
                             {statusInfo.label}
                         </Badge>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Wifi className="w-3 h-3 text-green-500" />
+                            <Wifi className="w-3 h-3 text-[#ff4000]" />
                             <span>Temps réel</span>
                         </div>
                     </div>
@@ -356,7 +356,7 @@ export default function TaxiMotoTracking({
                     {/* Barre de progression */}
                     <div className="w-full bg-secondary rounded-full h-2 mb-4">
                         <div
-                            className="bg-gradient-to-r from-primary to-green-500 h-2 rounded-full transition-all duration-700"
+                            className="bg-gradient-to-r from-primary to-[#ff4000] h-2 rounded-full transition-all duration-700"
                             style={{ width: `${rideProgress}%` }}
                         />
                     </div>
@@ -384,8 +384,8 @@ export default function TaxiMotoTracking({
                         <Navigation className="w-4 h-4 text-primary" />
                         Position en temps réel
                         {driverPosition && (
-                            <span className="ml-auto flex items-center gap-1 text-xs font-normal text-green-600">
-                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                            <span className="ml-auto flex items-center gap-1 text-xs font-normal text-[#ff4000]">
+                                <span className="w-1.5 h-1.5 bg-[#ff4000] rounded-full animate-pulse" />
                                 Actif
                             </span>
                         )}
@@ -393,7 +393,7 @@ export default function TaxiMotoTracking({
                 </CardHeader>
                 <CardContent className="p-0">
                     {/* Zone de carte visuelle */}
-                    <div className="relative h-52 bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-950/30 dark:to-green-950/30 flex items-center justify-center overflow-hidden">
+                    <div className="relative h-52 bg-gradient-to-br from-blue-50 to-orange-50 dark:from-blue-950/30 dark:to-[#ff4000]/30 flex items-center justify-center overflow-hidden">
 
                         {/* Fond grille style carte */}
                         <div className="absolute inset-0 opacity-10"
@@ -419,8 +419,8 @@ export default function TaxiMotoTracking({
                                         </div>
                                         {isMoving && (
                                             <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4000] opacity-75" />
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ff4000]" />
                                             </span>
                                         )}
                                     </div>
@@ -466,7 +466,7 @@ export default function TaxiMotoTracking({
                             </div>
                             <div className="text-center border-l">
                                 <p className="text-xs text-muted-foreground mb-0.5">Arrive dans</p>
-                                <p className="text-base font-bold text-green-600">
+                                <p className="text-base font-bold text-[#ff4000]">
                                     {displayEta !== null ? `${displayEta} min` : '–'}
                                 </p>
                             </div>
@@ -493,7 +493,7 @@ export default function TaxiMotoTracking({
                             <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-base truncate">{driver.name}</h3>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                    <Star className="w-3.5 h-3.5 fill-[#ff4000] text-[#ff4000]" />
                                     <span>{driver.rating?.toFixed(1)}</span>
                                     <span>•</span>
                                     <span className="capitalize">{driver.vehicleType?.replace('_', ' ')}</span>
@@ -503,7 +503,7 @@ export default function TaxiMotoTracking({
                                 )}
                             </div>
                             {isMoving && (
-                                <Badge className="bg-green-100 text-green-700 text-xs flex-shrink-0">
+                                <Badge className="bg-orange-100 text-[#ff4000] text-xs flex-shrink-0">
                                     En mouvement
                                 </Badge>
                             )}
@@ -537,7 +537,7 @@ export default function TaxiMotoTracking({
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
-                        <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5 flex-shrink-0" />
+                        <div className="w-3 h-3 bg-[#ff4000] rounded-full mt-1.5 flex-shrink-0" />
                         <div>
                             <p className="text-xs text-muted-foreground">Départ</p>
                             <p className="text-sm font-medium">{currentRide.pickupAddress}</p>
@@ -545,7 +545,7 @@ export default function TaxiMotoTracking({
                     </div>
                     <div className="ml-1.5 border-l-2 border-dashed border-muted-foreground/30 h-3" />
                     <div className="flex items-start gap-3">
-                        <div className="w-3 h-3 bg-red-500 rounded-full mt-1.5 flex-shrink-0" />
+                        <div className="w-3 h-3 bg-[#ff4000] rounded-full mt-1.5 flex-shrink-0" />
                         <div>
                             <p className="text-xs text-muted-foreground">Destination</p>
                             <p className="text-sm font-medium">{currentRide.destinationAddress}</p>

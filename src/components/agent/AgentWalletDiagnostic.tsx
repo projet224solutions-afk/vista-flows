@@ -124,7 +124,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
   }, [agentId]);
 
   return (
-    <Card className="border-yellow-200 bg-yellow-50">
+    <Card className="border-orange-200 bg-orange-50">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Wrench className="w-4 h-4" />
@@ -143,12 +143,12 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
               <div className="flex items-center gap-2">
                 {diagnosticStatus.agentExists ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                     <span>Agent trouvé ✓</span>
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <AlertCircle className="w-4 h-4 text-[#ff4000]" />
                     <span>Agent introuvable ✗</span>
                   </>
                 )}
@@ -157,12 +157,12 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
               <div className="flex items-center gap-2">
                 {diagnosticStatus.walletExists ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                     <span>Wallet trouvé ✓ (Balance: {diagnosticStatus.balance} GNF)</span>
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <AlertCircle className="w-4 h-4 text-[#ff4000]" />
                     <span className="font-medium">Wallet manquant ✗</span>
                   </>
                 )}
@@ -193,7 +193,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
             </div>
 
             {!diagnosticStatus.walletExists && (
-              <p className="text-xs text-red-600 mt-2">
+              <p className="text-xs text-[#ff4000] mt-2">
                 ⚠️ Le wallet n'existe pas. Cliquez sur "Créer le Wallet" pour le créer avec un solde initial de 10,000 GNF.
               </p>
             )}

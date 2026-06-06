@@ -56,7 +56,7 @@ interface SecurityEvent {
   created_at: string;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const COLORS = ['#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export const RealTimeSecurityDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SecurityMetrics>({
@@ -144,23 +144,23 @@ export const RealTimeSecurityDashboard: React.FC = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
+    if (score >= 90) return 'text-[#ff4000]';
+    if (score >= 70) return 'text-[#ff4000]';
     if (score >= 50) return 'text-orange-600';
-    return 'text-red-600';
+    return 'text-[#ff4000]';
   };
 
   const getScoreStatus = (score: number) => {
-    if (score >= 90) return { label: 'Excellent', icon: ShieldCheck, color: 'bg-green-100 text-green-800' };
-    if (score >= 70) return { label: 'Bon', icon: Shield, color: 'bg-yellow-100 text-yellow-800' };
+    if (score >= 90) return { label: 'Excellent', icon: ShieldCheck, color: 'bg-orange-100 text-[#ff4000]' };
+    if (score >= 70) return { label: 'Bon', icon: Shield, color: 'bg-orange-100 text-[#ff4000]' };
     if (score >= 50) return { label: 'Attention', icon: ShieldAlert, color: 'bg-orange-100 text-orange-800' };
-    return { label: 'Critique', icon: XCircle, color: 'bg-red-100 text-red-800' };
+    return { label: 'Critique', icon: XCircle, color: 'bg-orange-100 text-[#ff4000]' };
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
+      case 'critical': return 'bg-orange-100 text-[#ff4000]';
+      case 'warning': return 'bg-orange-100 text-[#ff4000]';
       case 'info': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -268,7 +268,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
 
             <div className="grid grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{metrics.rlsPolicies}</div>
+                <div className="text-2xl font-bold text-[#ff4000]">{metrics.rlsPolicies}</div>
                 <div className="text-xs text-muted-foreground">Politiques RLS</div>
               </div>
               <div className="text-center">
@@ -295,11 +295,11 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Connexions réussies (24h)</p>
-                <p className="text-2xl font-bold text-green-600">{metrics.successfulLogins24h}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{metrics.successfulLogins24h}</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <CheckCircle2 className="h-8 w-8 text-[#ff4000]" />
             </div>
-            <div className="mt-2 flex items-center text-xs text-green-600">
+            <div className="mt-2 flex items-center text-xs text-[#ff4000]">
               <TrendingUp className="h-3 w-3 mr-1" />
               Authentifications valides
             </div>
@@ -311,11 +311,11 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Échecs de connexion (24h)</p>
-                <p className="text-2xl font-bold text-red-600">{metrics.failedLogins24h}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{metrics.failedLogins24h}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600" />
+              <XCircle className="h-8 w-8 text-[#ff4000]" />
             </div>
-            <div className="mt-2 flex items-center text-xs text-red-600">
+            <div className="mt-2 flex items-center text-xs text-[#ff4000]">
               <AlertTriangle className="h-3 w-3 mr-1" />
               Tentatives suspectes
             </div>
@@ -343,9 +343,9 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Incidents ouverts</p>
-                <p className="text-2xl font-bold text-yellow-600">{metrics.activeThreats}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{metrics.activeThreats}</p>
               </div>
-              <ShieldAlert className="h-8 w-8 text-yellow-600" />
+              <ShieldAlert className="h-8 w-8 text-[#ff4000]" />
             </div>
             <div className="mt-2 flex items-center text-xs text-muted-foreground">
               <Eye className="h-3 w-3 mr-1" />
@@ -369,8 +369,8 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="threats" stroke="#ef4444" fill="#fecaca" name="Détectées" />
-                <Area type="monotone" dataKey="blocked" stroke="#10b981" fill="#d1fae5" name="Bloquées" />
+                <Area type="monotone" dataKey="threats" stroke="#ff4000" fill="#ffd9cc" name="Détectées" />
+                <Area type="monotone" dataKey="blocked" stroke="#ff4000" fill="#d1fae5" name="Bloquées" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -390,7 +390,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="#04439e"
                   paddingAngle={5}
                   dataKey="value"
                   label
@@ -428,8 +428,8 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                 events.map((event) => (
                   <div key={event.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <AlertTriangle className={`h-4 w-4 mt-0.5 ${
-                      event.severity_level === 'critical' ? 'text-red-600' :
-                      event.severity_level === 'warning' ? 'text-yellow-600' : 'text-blue-600'
+                      event.severity_level === 'critical' ? 'text-[#ff4000]' :
+                      event.severity_level === 'warning' ? 'text-[#ff4000]' : 'text-blue-600'
                     }`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

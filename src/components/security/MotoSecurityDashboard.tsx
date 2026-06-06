@@ -111,26 +111,26 @@ export default function MotoSecurityDashboard({
             {/* Statistiques rapides */}
             {stats && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="border-red-200">
+                    <Card className="border-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-red-600">Alertes actives</p>
-                                    <p className="text-2xl font-bold text-red-800">{stats.alertes_en_cours}</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">Alertes actives</p>
+                                    <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_en_cours}</p>
                                 </div>
-                                <AlertTriangle className="w-8 h-8 text-red-600" />
+                                <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-green-200">
+                    <Card className="border-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-green-600">Résolues</p>
-                                    <p className="text-2xl font-bold text-green-800">{stats.alertes_resolues}</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">Résolues</p>
+                                    <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_resolues}</p>
                                 </div>
-                                <CheckCircle className="w-8 h-8 text-green-600" />
+                                <CheckCircle className="w-8 h-8 text-[#ff4000]" />
                             </div>
                         </CardContent>
                     </Card>
@@ -147,14 +147,14 @@ export default function MotoSecurityDashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="border-purple-200">
+                    <Card className="border-blue-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalées}</p>
+                                    <p className="text-sm font-medium text-[#04439e]">Motos uniques</p>
+                                    <p className="text-2xl font-bold text-[#04439e]">{stats.motos_uniques_signalées}</p>
                                 </div>
-                                <Activity className="w-8 h-8 text-purple-600" />
+                                <Activity className="w-8 h-8 text-[#04439e]" />
                             </div>
                         </CardContent>
                     </Card>
@@ -177,33 +177,33 @@ export default function MotoSecurityDashboard({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                                    <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                                     Alertes récentes
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
                                     {stats && stats.alertes_en_cours > 0 ? (
-                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <AlertTriangle className="w-5 h-5 text-red-600" />
-                                                <span className="font-medium text-red-800">
+                                                <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
+                                                <span className="font-medium text-[#ff4000]">
                                                     {stats.alertes_en_cours} alertes en cours
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-red-700">
+                                            <p className="text-sm text-[#ff4000]">
                                                 Des motos signalées volées nécessitent votre attention
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <CheckCircle className="w-5 h-5 text-green-600" />
-                                                <span className="font-medium text-green-800">
+                                                <CheckCircle className="w-5 h-5 text-[#ff4000]" />
+                                                <span className="font-medium text-[#ff4000]">
                                                     Aucune alerte active
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-green-700">
+                                            <p className="text-sm text-[#ff4000]">
                                                 Toutes les alertes sont résolues
                                             </p>
                                         </div>

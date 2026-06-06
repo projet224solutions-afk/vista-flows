@@ -38,7 +38,7 @@ export function PermissionGuard({
           <AlertDescription>
             Vous n'avez pas la permission d'accéder à cette fonctionnalité.
             {permissions.length === 1 && (
-              <div className="mt-2 text-sm">Permission requise: <code className="bg-red-50 px-2 py-1">{permissions[0]}</code></div>
+              <div className="mt-2 text-sm">Permission requise: <code className="bg-orange-50 px-2 py-1">{permissions[0]}</code></div>
             )}
             Veuillez contacter le PDG pour demander l'accès.
           </AlertDescription>
@@ -87,7 +87,7 @@ export function ProtectedAction({
       <div title="Vous n'avez pas accès à cette action">
         {React.cloneElement(children, { disabled: true, opacity: 0.5 } as any)}
         {showWarning && (
-          <p className="text-xs text-red-500 mt-1">Permission requise</p>
+          <p className="text-xs text-[#ff4000] mt-1">Permission requise</p>
         )}
       </div>
     );

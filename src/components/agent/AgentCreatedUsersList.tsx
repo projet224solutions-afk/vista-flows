@@ -47,10 +47,10 @@ interface AgentCreatedUsersListProps {
 
 const roleConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   client: { label: 'Client', icon: <User className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700' },
-  vendeur: { label: 'Vendeur', icon: <ShoppingBag className="w-3 h-3" />, color: 'bg-emerald-100 text-emerald-700' },
-  livreur: { label: 'Livreur', icon: <Truck className="w-3 h-3" />, color: 'bg-amber-100 text-amber-700' },
-  taxi: { label: 'Taxi', icon: <Car className="w-3 h-3" />, color: 'bg-purple-100 text-purple-700' },
-  syndicat: { label: 'Syndicat', icon: <Building2 className="w-3 h-3" />, color: 'bg-rose-100 text-rose-700' },
+  vendeur: { label: 'Vendeur', icon: <ShoppingBag className="w-3 h-3" />, color: 'bg-orange-100 text-[#ff4000]' },
+  livreur: { label: 'Livreur', icon: <Truck className="w-3 h-3" />, color: 'bg-orange-100 text-[#ff4000]' },
+  taxi: { label: 'Taxi', icon: <Car className="w-3 h-3" />, color: 'bg-blue-100 text-[#04439e]' },
+  syndicat: { label: 'Syndicat', icon: <Building2 className="w-3 h-3" />, color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
@@ -63,23 +63,17 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
     try {
       setLoading(true);
 
-      // Appeler l'edge function pour récupérer les utilisateurs
-      const { data, error } = await supabase.functions.invoke('get-agent-users', {
-        body: {}
-      });
+      // Backend Node (agent connecté → résolu par JWT)
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/users/list', { method: 'POST', body: {} });
 
-      if (error) {
-        console.error('Erreur chargement utilisateurs:', error);
-        toast.error('Erreur lors du chargement des utilisateurs');
+      if (!resp.success) {
+        console.error('Erreur chargement utilisateurs:', resp.error);
+        toast.error(resp.error || 'Erreur lors du chargement des utilisateurs');
         return;
       }
 
-      if (data?.success && data.users) {
-        setUsers(data.users);
-      } else if (data?.error) {
-        console.error('Erreur API:', data.error);
-        toast.error(data.error);
-      }
+      setUsers(resp.data?.users || []);
     } catch (err) {
       console.error('Exception:', err);
       toast.error('Erreur de connexion au serveur');
@@ -132,7 +126,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
   if (loading) {
     return (
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <Users className="w-5 h-5 text-blue-600" />
             Mes Utilisateurs
@@ -155,7 +149,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
 
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-slate-800">
             <Users className="w-5 h-5 text-blue-600" />
@@ -213,7 +207,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
                     className="flex items-start gap-4 p-4 rounded-xl border bg-white hover:shadow-md transition-all duration-200"
                   >
                     <Avatar className="h-12 w-12 border-2 border-white shadow">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-medium">
+                      <AvatarFallback className="bg-[#04439e] text-white font-medium">
                         {getInitials(user.first_name, user.last_name)}
                       </AvatarFallback>
                     </Avatar>
@@ -229,12 +223,12 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
                           </Badge>
                         )}
                         {user.is_active ? (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                          <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200 text-xs">
                             <UserCheck className="w-3 h-3 mr-1" />
                             Actif
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                          <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200 text-xs">
                             <UserX className="w-3 h-3 mr-1" />
                             Inactif
                           </Badge>

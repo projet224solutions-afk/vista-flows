@@ -59,7 +59,7 @@ const EscrowDisputeForm: React.FC<EscrowDisputeFormProps> = ({ escrowId, onSubmi
           required
         />
       </div>
-      {error && <div className="text-red-600">{error}</div>}
+      {error && <div className="text-[#ff4000]">{error}</div>}
       <button
         type="submit"
         className="bg-blue-600 text-white px-4 py-2 rounded"

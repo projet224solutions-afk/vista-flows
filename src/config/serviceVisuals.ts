@@ -37,25 +37,25 @@ const BRAND_ORANGE = '#ff4000';
 export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
   agriculture: {
     image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80',
-    accent: '#15803d',
+    accent: '#ff4000',
     icon: Tractor,
     logoImage: '/service-icons/icon-agriculture.png',
   },
   beaute: {
     image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
-    accent: '#d63384',
+    accent: '#ff4000',
     icon: Scissors,
     logoImage: '/service-icons/icon-beaute.png',
   },
   construction: {
     image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
-    accent: '#b45309',
+    accent: '#ff4000',
     icon: HardHat,
     logoImage: '/service-icons/logo-construction-btp.jpeg',
   },
   education: {
     image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
-    accent: '#1d4ed8',
+    accent: '#04439e',
     icon: GraduationCap,
   },
   ecommerce: {
@@ -66,13 +66,13 @@ export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
   },
   freelance: {
     image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
-    accent: '#1d4ed8',
+    accent: '#04439e',
     icon: Briefcase,
     logoImage: '/service-icons/icon-administratif.png',
   },
   informatique: {
     image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
-    accent: '#7c3aed',
+    accent: '#04439e',
     icon: Laptop,
     logoImage: '/service-icons/icon-informatique.png',
   },
@@ -84,7 +84,7 @@ export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
   },
   location: {
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
-    accent: '#0369a1',
+    accent: '#04439e',
     icon: Building2,
     logoImage: '/service-icons/logo-immobilier.jpeg',
   },
@@ -96,19 +96,19 @@ export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
   },
   media: {
     image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80',
-    accent: '#9333ea',
+    accent: '#04439e',
     icon: Camera,
     logoImage: '/service-icons/icon-photo-video.png',
   },
   menage: {
     image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
-    accent: '#0891b2',
+    accent: '#04439e',
     icon: Sparkles,
     logoImage: '/service-icons/icon-nettoyage.png',
   },
   reparation: {
     image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80',
-    accent: '#b45309',
+    accent: '#ff4000',
     icon: Wrench,
     logoImage: '/service-icons/icon-reparation.png',
   },
@@ -120,35 +120,35 @@ export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
   },
   sante: {
     image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
-    accent: '#dc2626',
+    accent: '#ff4000',
     icon: Stethoscope,
     logoImage: '/service-icons/icon-sante.png',
   },
   sport: {
     image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-    accent: '#16a34a',
+    accent: '#ff4000',
     icon: Dumbbell,
     logoImage: '/service-icons/icon-sport-fitness.png',
   },
   vtc: {
     image: 'https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80',
-    accent: '#1d4ed8',
+    accent: '#04439e',
     icon: Car,
     logoImage: '/service-icons/icon-taxi-moto.png',
   },
   voyage: {
     image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=800&q=80',
-    accent: '#0284c7',
+    accent: '#04439e',
     icon: Plane,
   },
   digital_livre: {
     image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80',
-    accent: '#7c3aed',
+    accent: '#04439e',
     icon: BookOpen,
   },
   digital_logiciel: {
     image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
-    accent: '#2563eb',
+    accent: '#04439e',
     icon: Laptop,
   },
   dropshipping: {

@@ -117,7 +117,7 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
           {/* Rating - seulement si disponible (données réelles) */}
           {vendor.rating !== null && vendor.rating !== undefined && vendor.rating > 0 && (
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <Star className="w-3.5 h-3.5 text-[#ff4000] fill-[#ff4000]" />
               <span className="text-xs font-semibold text-foreground">{vendor.rating.toFixed(1)}</span>
             </div>
           )}

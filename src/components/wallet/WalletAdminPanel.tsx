@@ -422,8 +422,8 @@ export function WalletAdminPanel() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-green-600" />
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-[#ff4000]" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.agent_wallets}</p>
@@ -450,8 +450,8 @@ export function WalletAdminPanel() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-[#04439e]" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">
@@ -654,7 +654,7 @@ export function WalletAdminPanel() {
                   <div className="space-y-2">
                     {fxHealth.active_alerts.slice(0, 5).map((alert) => (
                       <div key={alert.id} className="flex items-start gap-2 text-xs">
-                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-amber-500" />
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-[#ff4000]" />
                         <div>
                           <p className="font-medium">{alert.title}</p>
                           <p className="text-muted-foreground">{alert.description}</p>
@@ -765,7 +765,7 @@ export function WalletAdminPanel() {
                         Bloqué
                       </Badge>
                     ) : (
-                      <Badge variant="default" className="gap-1 w-full justify-center bg-green-600">
+                      <Badge variant="default" className="gap-1 w-full justify-center bg-[#ff4000]">
                         Actif
                       </Badge>
                     )}

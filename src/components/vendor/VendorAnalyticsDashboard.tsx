@@ -31,13 +31,13 @@ export function VendorAnalyticsDashboard() {
       value: `${Math.round(convert(analytics.today.totalSales)).toLocaleString('fr-FR')} ${currency}`,
       subtitle: `POS: ${analytics.today.posOrders} • En ligne: ${analytics.today.onlineOrders}`,
       icon: TrendingUp,
-      color: 'text-green-600'
+      color: 'text-[#ff4000]'
     },
     {
       title: "Taux de Conversion",
       value: `${analytics.today.conversionRate.toFixed(1)}%`,
       icon: Target,
-      color: 'text-purple-600'
+      color: 'text-[#04439e]'
     },
     {
       title: "Produits Actifs",
@@ -52,13 +52,13 @@ export function VendorAnalyticsDashboard() {
       {/* KPIs - grille responsive */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="p-4">
+          <Card key={stat.title} className="p-4 border-2 border-[#ff4000]">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground truncate">{stat.title}</p>
-                <p className="text-lg font-bold mt-1 truncate">{stat.value}</p>
+                <p className="text-xs text-black font-medium truncate">{stat.title}</p>
+                <p className="text-lg font-bold mt-1 truncate text-black">{stat.value}</p>
                 {'subtitle' in stat && stat.subtitle && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{stat.subtitle}</p>
+                  <p className="text-[10px] text-black/70 mt-0.5">{stat.subtitle}</p>
                 )}
               </div>
               <stat.icon className={`h-6 w-6 flex-shrink-0 ml-2 ${stat.color}`} />

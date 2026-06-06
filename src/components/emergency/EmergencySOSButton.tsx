@@ -213,7 +213,7 @@ export const EmergencySOSButton: React.FC<EmergencySOSButtonProps> = ({
         <Button
           onClick={handleActivateEmergency}
           disabled={isLoading || cooldownSeconds > 0}
-          className={`${buttonClasses} bg-red-600 hover:bg-red-700 text-white font-bold transition-all ${
+          className={`${buttonClasses} bg-[#ff4000] hover:bg-[#ff4000] text-white font-bold transition-all ${
             isLoading || cooldownSeconds > 0 ? 'opacity-50 cursor-not-allowed' : 'animate-pulse hover:scale-110'
           }`}
           style={{
@@ -239,7 +239,7 @@ export const EmergencySOSButton: React.FC<EmergencySOSButtonProps> = ({
         </Button>
       ) : (
         <div className={variant === 'floating' ? 'flex flex-col items-end gap-2' : 'flex flex-col gap-2'}>
-          <div className="bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg animate-pulse flex items-center gap-3">
+          <div className="bg-[#ff4000] text-white px-4 py-3 rounded-lg shadow-lg animate-pulse flex items-center gap-3">
             <div className="h-3 w-3 bg-white rounded-full animate-ping" />
             <div>
               <p className="font-bold">🚨 ALERTE ACTIVE</p>

@@ -86,13 +86,13 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
 
         {/* Carte Achats cliquable */}
         <Card
-          className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:border-green-500/40 hover:shadow-md transition-all active:scale-95"
+          className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/5 border-[#ff4000]/20 cursor-pointer hover:border-[#ff4000]/40 hover:shadow-md transition-all active:scale-95"
           onClick={() => setIsValidatedSheetOpen(true)}
         >
           <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 md:p-2 rounded-lg bg-green-500/20">
-                <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-green-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-[#ff4000]/20">
+                <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.validatedPurchasesCount || 0}</p>
@@ -120,11 +120,11 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-[#04439e]/10 to-[#04439e]/5 border-[#04439e]/20">
           <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 md:p-2 rounded-lg bg-purple-500/20">
-                <TrendingUp className="h-6 w-6 md:h-5 md:w-5 text-purple-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-[#04439e]/20">
+                <TrendingUp className="h-6 w-6 md:h-5 md:w-5 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">ERP</p>

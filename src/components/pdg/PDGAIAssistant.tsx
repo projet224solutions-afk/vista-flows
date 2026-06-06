@@ -59,9 +59,9 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
   const getInsightIcon = (type: string) => {
     switch (type) {
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+        return <AlertTriangle className="w-5 h-5 text-[#ff4000]" />;
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-[#ff4000]" />;
       default:
         return <TrendingUp className="w-5 h-5 text-blue-500" />;
     }
@@ -70,9 +70,9 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
   const getInsightBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <Badge className="bg-red-500">Priorité Haute</Badge>;
+        return <Badge className="bg-[#ff4000]">Priorité Haute</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500">Priorité Moyenne</Badge>;
+        return <Badge className="bg-[#ff4000]">Priorité Moyenne</Badge>;
       default:
         return <Badge className="bg-blue-500">Priorité Basse</Badge>;
     }
@@ -84,8 +84,8 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 blur-xl opacity-50" />
-            <div className="relative bg-gradient-to-br from-purple-500 to-pink-500 p-3 rounded-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#04439e] to-[#ff4000] blur-xl opacity-50" />
+            <div className="relative bg-gradient-to-br from-[#04439e] to-[#ff4000] p-3 rounded-2xl">
               <Brain className="w-8 h-8 text-white" />
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
         <CardContent>
           <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
             <div className="flex items-center gap-4">
-              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-[#ff4000] animate-pulse' : 'bg-[#ff4000]'}`} />
               <div>
                 <h3 className="font-medium">
                   {aiActive ? 'IA Activée' : 'IA Désactivée'}
@@ -129,7 +129,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               </div>
             </div>
             {aiActive && (
-              <Badge className="bg-purple-500">
+              <Badge className="bg-[#04439e]">
                 <Brain className="w-3 h-3 mr-1" />
                 En ligne
               </Badge>
@@ -170,7 +170,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                 ))}
                 {insights.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
                     <p>Aucun problème détecté</p>
                     <p className="text-sm mt-2">La plateforme fonctionne normalement</p>
                   </div>
@@ -270,7 +270,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               Surveillance en temps réel des transactions suspectes
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-[#ff4000]">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -284,7 +284,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               Prévision des tendances et comportements utilisateurs
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-[#ff4000]">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -298,7 +298,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               Recommandations d'amélioration des performances
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-[#ff4000]">Actif</Badge>
             </div>
           </CardContent>
         </Card>

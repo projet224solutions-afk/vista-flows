@@ -159,14 +159,14 @@ export function ActiveDeliveryPanel({
     : { location: delivery.clientLocation, label: delivery.clientName, address: delivery.clientAddress, phone: delivery.clientPhone };
 
   return (
-    <Card className="border-green-500 shadow-lg">
+    <Card className="border-[#ff4000] shadow-lg">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Package className="h-5 w-5 text-green-600" />
+            <Package className="h-5 w-5 text-[#ff4000]" />
             Livraison en cours
           </CardTitle>
-          <Badge variant="default" className="bg-green-500">
+          <Badge variant="default" className="bg-[#ff4000]">
             {STATUS_STEPS[currentStepIndex]?.label || delivery.status}
           </Badge>
         </div>
@@ -175,13 +175,13 @@ export function ActiveDeliveryPanel({
 
       <CardContent className="space-y-4">
         {/* Destination actuelle */}
-        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200">
+        <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-[#ff4000]/30 dark:to-[#ff4000]/30 rounded-lg border border-orange-200">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               {isAtVendorPhase ? (
                 <Store className="h-6 w-6 text-orange-600 flex-shrink-0" />
               ) : (
-                <User className="h-6 w-6 text-green-600 flex-shrink-0" />
+                <User className="h-6 w-6 text-[#ff4000] flex-shrink-0" />
               )}
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -219,7 +219,7 @@ export function ActiveDeliveryPanel({
               {delivery.paymentMethod === 'cod' ? 'Paiement à la livraison' : 'Déjà payé'}
             </span>
           </div>
-          <span className="font-bold text-green-600">
+          <span className="font-bold text-[#ff4000]">
             {formatCurrency(delivery.estimatedEarnings)}
           </span>
         </div>
@@ -229,7 +229,7 @@ export function ActiveDeliveryPanel({
           {/* Bouton action principale */}
           {getNextStatus() && (
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+              className="w-full bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40"
               onClick={handleNextStep}
               disabled={loading}
             >
@@ -268,7 +268,7 @@ export function ActiveDeliveryPanel({
           {!['delivered', 'paid'].includes(delivery.status) && (
             <Button
               variant="ghost"
-              className="w-full text-red-600 hover:bg-red-50"
+              className="w-full text-[#ff4000] hover:bg-orange-50"
               onClick={() => setShowCancelDialog(true)}
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
@@ -290,11 +290,11 @@ export function ActiveDeliveryPanel({
                 <div
                   key={step.status}
                   className={`flex flex-col items-center ${
-                    isCompleted ? 'text-green-600' : isCurrent ? 'text-orange-600' : 'text-muted-foreground'
+                    isCompleted ? 'text-[#ff4000]' : isCurrent ? 'text-orange-600' : 'text-muted-foreground'
                   }`}
                 >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    isCompleted ? 'bg-green-100' : isCurrent ? 'bg-orange-100' : 'bg-muted'
+                    isCompleted ? 'bg-orange-100' : isCurrent ? 'bg-orange-100' : 'bg-muted'
                   }`}>
                     {isCompleted ? (
                       <Check className="h-3 w-3" />

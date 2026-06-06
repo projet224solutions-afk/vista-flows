@@ -46,7 +46,7 @@ const userTypes = {
   agent: {
     label: "Agent",
     description: "Agent commercial",
-    color: "bg-purple-500"
+    color: "bg-[#04439e]"
   },
   service: {
     label: "Service Pro",
@@ -645,7 +645,7 @@ export default function Profil() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                           {tx.amount > 0 ? '+' : ''}{tx.amount ? tx.amount.toLocaleString() : '0'} {tx.currency || 'GNF'}
                         </p>
                         <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>

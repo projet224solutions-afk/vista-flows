@@ -144,7 +144,7 @@ export default function DigitalVendorDashboard() {
               void checkConnection();
               window.location.reload();
             }}
-            className="mt-6 w-full rounded-2xl bg-[#04439e] font-semibold text-white hover:bg-[#0536a8]"
+            className="mt-6 w-full rounded-2xl bg-[#04439e] font-semibold text-white hover:bg-[#04439e]"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             {t('common.retry')}

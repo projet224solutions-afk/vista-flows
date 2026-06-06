@@ -143,14 +143,14 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
       </div>
 
       {/* Statut des transporteurs */}
-      <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+      <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-green-600" />
-          <span className="text-sm font-medium text-green-800">
+          <Users className="w-5 h-5 text-[#ff4000]" />
+          <span className="text-sm font-medium text-[#ff4000]">
             {availableTransportUsers} transporteur{availableTransportUsers > 1 ? 's' : ''} disponible{availableTransportUsers > 1 ? 's' : ''}
           </span>
         </div>
-        <p className="text-xs text-green-600 mt-1">
+        <p className="text-xs text-[#ff4000] mt-1">
           Recherche automatique du transporteur le plus proche
         </p>
       </div>
@@ -215,10 +215,10 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         {(estimatedPrice > 0 || estimatedTime > 0) && (
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm font-medium text-gray-700">Prix estimé</p>
-                <p className="text-lg font-bold text-green-600">{estimatedPrice} GNF</p>
+                <p className="text-lg font-bold text-[#ff4000]">{estimatedPrice} GNF</p>
                 <p className="text-xs text-gray-500">+ 1% de frais = {Math.round(estimatedPrice * 1.01)} GNF</p>
               </div>
             </div>
@@ -235,8 +235,8 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
 
         {/* Message d'erreur */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-[#ff4000]">{error}</p>
           </div>
         )}
 

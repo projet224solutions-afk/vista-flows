@@ -34,12 +34,12 @@ export default function LiveLocationTrack() {
             {/* État de connexion */}
             <div
               className={`rounded-lg border p-3 flex items-center gap-3 ${
-                hasPosition ? 'bg-green-50 border-green-200' : 'bg-muted/40 border-border'
+                hasPosition ? 'bg-orange-50 border-orange-200' : 'bg-muted/40 border-border'
               }`}
             >
               <Radio
                 className={`w-4 h-4 flex-shrink-0 ${
-                  hasPosition ? 'text-green-500 animate-pulse' : 'text-muted-foreground'
+                  hasPosition ? 'text-[#ff4000] animate-pulse' : 'text-muted-foreground'
                 }`}
               />
               <div className="flex-1 min-w-0">
@@ -57,7 +57,7 @@ export default function LiveLocationTrack() {
                 )}
               </div>
               {hasPosition && !sharerStopped && (
-                <Badge variant="default" className="bg-green-500 text-xs">
+                <Badge variant="default" className="bg-[#ff4000] text-xs">
                   EN DIRECT
                 </Badge>
               )}
@@ -100,13 +100,13 @@ export default function LiveLocationTrack() {
                 </Button>
               </>
             ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                <p className="text-sm text-yellow-800">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                <p className="text-sm text-[#ff4000]">
                   {sharerStopped
                     ? 'Le client a arrêté le partage de sa position.'
                     : 'En attente que le client démarre le partage de sa position.'}
                 </p>
-                <p className="text-xs text-yellow-600 mt-1">
+                <p className="text-xs text-[#ff4000] mt-1">
                   La position s'affichera automatiquement dès qu'elle sera disponible.
                 </p>
               </div>

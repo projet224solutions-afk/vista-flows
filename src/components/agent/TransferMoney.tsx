@@ -539,7 +539,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
                       <div className="flex items-center gap-2 text-foreground font-medium">
                         <span>{transferAmount.toLocaleString()} {preview.currency_sent}</span>
                         <ArrowRight className="w-4 h-4 text-blue-500" />
-                        <span className="text-green-700 dark:text-green-400">
+                        <span className="text-[#ff4000] dark:text-[#ff4000]">
                           {preview.amount_received.toLocaleString()} {preview.currency_received}
                         </span>
                       </div>

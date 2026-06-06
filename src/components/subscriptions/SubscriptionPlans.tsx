@@ -49,7 +49,7 @@ function getPlanFeatureHighlights(plan: Plan): string[] {
     if (normalized.includes('analytic')) return 'analytics';
     if (normalized.includes('support')) return 'support prioritaire';
     if (normalized.includes('avant') || normalized.includes('featured')) return 'mise en avant';
-    if (normalized.includes('api')) return 'acces API';
+    if (normalized.includes('api')) return ''; // Accès API retiré (aucun système API)
     if (normalized.includes('branding') || normalized.includes('marque')) return 'branding personnalise';
     return normalized;
   };
@@ -57,7 +57,6 @@ function getPlanFeatureHighlights(plan: Plan): string[] {
   if (plan.analytics_access) featureSet.add('analytics');
   if (plan.priority_support) featureSet.add('support prioritaire');
   if (plan.featured_products) featureSet.add('mise en avant');
-  if (plan.api_access) featureSet.add('acces API');
   if (plan.custom_branding) featureSet.add('branding personnalise');
 
   if (Array.isArray(plan.features)) {
@@ -73,7 +72,6 @@ function getPlanFeatureHighlights(plan: Plan): string[] {
     'analytics',
     'support prioritaire',
     'mise en avant',
-    'acces API',
     'branding personnalise',
   ];
 

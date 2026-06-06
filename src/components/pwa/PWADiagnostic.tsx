@@ -345,18 +345,18 @@ export default function PWADiagnostic() {
 
   const getStatusIcon = (status: DiagnosticItem['status']) => {
     switch (status) {
-      case 'success': return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
-      case 'warning': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      case 'success': return <CheckCircle className="w-5 h-5 text-[#ff4000]" />;
+      case 'error': return <XCircle className="w-5 h-5 text-[#ff4000]" />;
+      case 'warning': return <AlertCircle className="w-5 h-5 text-[#ff4000]" />;
       case 'loading': return <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />;
     }
   };
 
   const getStatusColor = (status: DiagnosticItem['status']) => {
     switch (status) {
-      case 'success': return 'bg-green-100 text-green-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
+      case 'success': return 'bg-orange-100 text-[#ff4000]';
+      case 'error': return 'bg-orange-100 text-[#ff4000]';
+      case 'warning': return 'bg-orange-100 text-[#ff4000]';
       case 'loading': return 'bg-blue-100 text-blue-800';
     }
   };
@@ -367,15 +367,15 @@ export default function PWADiagnostic() {
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+      <CardHeader className="bg-[#04439e] text-white rounded-t-lg">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Smartphone className="w-5 h-5" />
             Diagnostic PWA
           </span>
           <Badge className={`${
-            overallStatus === 'success' ? 'bg-green-500' :
-            overallStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+            overallStatus === 'success' ? 'bg-[#ff4000]' :
+            overallStatus === 'error' ? 'bg-[#ff4000]' : 'bg-[#ff4000]'
           } text-white`}>
             {successCount}/{diagnostics.length} OK
           </Badge>
@@ -416,7 +416,7 @@ export default function PWADiagnostic() {
           </Button>
 
           {isInstallable && (
-            <Button onClick={handleInstall} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={handleInstall} className="bg-[#ff4000] hover:bg-[#ff4000]">
               <Download className="w-4 h-4 mr-2" />
               Installer l'app
             </Button>
@@ -435,11 +435,11 @@ export default function PWADiagnostic() {
 
         {/* Instructions */}
         {errorCount > 0 && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="font-semibold text-yellow-800 mb-2">
+          <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <h4 className="font-semibold text-[#ff4000] mb-2">
               ⚠️ Actions recommandées
             </h4>
-            <ul className="text-sm text-yellow-700 space-y-1">
+            <ul className="text-sm text-[#ff4000] space-y-1">
               {diagnostics.find(d => d.label === 'Service Worker' && d.status !== 'success') && (
                 <li>• Rechargez la page pour activer le Service Worker</li>
               )}

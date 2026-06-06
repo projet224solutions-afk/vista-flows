@@ -82,9 +82,9 @@ interface Provider {
 }
 
 const statusConfig: Record<string, { label: string; icon: any; className: string }> = {
-  active: { label: 'Actif', icon: CheckCircle, className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  pending: { label: 'En attente', icon: Clock, className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
-  suspended: { label: 'Suspendu', icon: AlertTriangle, className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  active: { label: 'Actif', icon: CheckCircle, className: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+  pending: { label: 'En attente', icon: Clock, className: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
+  suspended: { label: 'Suspendu', icon: AlertTriangle, className: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]' },
   rejected: { label: 'Rejeté', icon: XCircle, className: 'bg-destructive/10 text-destructive' },
 };
 
@@ -256,15 +256,15 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
-            <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <CheckCircle className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.active}</div>
             <p className="text-xs text-muted-foreground">Actifs</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
-            <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-amber-600">{stats.pending}</div>
+            <Clock className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">En attente</p>
           </CardContent>
         </Card>
@@ -363,7 +363,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                          <Star className="w-3.5 h-3.5 text-[#ff4000] fill-[#ff4000]" />
                           <span className="font-medium">{p.rating?.toFixed(1) || '0.0'}</span>
                           <span className="text-xs text-muted-foreground">({p.total_reviews || 0})</span>
                         </div>
@@ -388,7 +388,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                             size="sm"
                             variant="outline"
                             onClick={() => openOfferDialog(p)}
-                            className="border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-600"
+                            className="border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]"
                           >
                             <Gift className="w-3.5 h-3.5 mr-1" />
                             Offrir
@@ -410,7 +410,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5 text-amber-500" />
+              <Gift className="w-5 h-5 text-[#ff4000]" />
               Offrir un abonnement
             </DialogTitle>
             <DialogDescription>
@@ -509,8 +509,8 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
 
             {/* Récapitulatif */}
             {offerDialog.selectedPlanId && offerDialog.days && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm space-y-1">
-                <p className="font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+              <div className="rounded-lg border border-[#ff4000]/30 bg-[#ff4000]/5 px-4 py-3 text-sm space-y-1">
+                <p className="font-medium text-[#ff4000] dark:text-[#ff4000] flex items-center gap-1.5">
                   <Gift className="w-4 h-4" />
                   Récapitulatif de l'offre
                 </p>
@@ -547,7 +547,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
             <Button
               onClick={handleOfferSubscription}
               disabled={offerDialog.saving || !offerDialog.selectedPlanId || offerDialog.plans.length === 0}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
+              className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
             >
               {offerDialog.saving
                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Attribution...</>

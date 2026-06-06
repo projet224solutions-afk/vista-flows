@@ -717,18 +717,18 @@ export function NewPurchaseDialog({
                               <button
                                 type="button"
                                 onClick={() => openKeypadFor(product, 'price')}
-                                className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/30 hover:border-emerald-500/50 active:scale-[0.98] transition-all"
+                                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#ff4000]/10 border-2 border-[#ff4000]/30 hover:border-[#ff4000]/50 active:scale-[0.98] transition-all"
                               >
                                 <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                                  <div className="w-8 h-8 rounded-lg bg-[#ff4000]/20 flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4 text-[#ff4000]" />
                                   </div>
                                   <span className="text-sm font-medium text-muted-foreground">Prix d'achat</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
                                     "text-lg font-bold tabular-nums",
-                                    product.unitCost > 0 ? "text-emerald-600" : "text-muted-foreground"
+                                    product.unitCost > 0 ? "text-[#ff4000]" : "text-muted-foreground"
                                   )}>
                                     {product.unitCost > 0 ? product.unitCost.toLocaleString() : '0'}
                                   </span>
@@ -767,11 +767,11 @@ export function NewPurchaseDialog({
                                 <button
                                   type="button"
                                   onClick={() => openKeypadFor(product, 'carton')}
-                                  className="w-full flex items-center justify-between p-3 rounded-xl bg-purple-500/10 border-2 border-purple-500/30 hover:border-purple-500/50 active:scale-[0.98] transition-all"
+                                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#04439e]/10 border-2 border-[#04439e]/30 hover:border-[#04439e]/50 active:scale-[0.98] transition-all"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                                      <Box className="h-4 w-4 text-purple-600" />
+                                    <div className="w-8 h-8 rounded-lg bg-[#04439e]/20 flex items-center justify-center">
+                                      <Box className="h-4 w-4 text-[#04439e]" />
                                     </div>
                                     <div className="text-left">
                                       <span className="text-sm font-medium text-muted-foreground block">Cartons</span>
@@ -781,7 +781,7 @@ export function NewPurchaseDialog({
                                   <div className="flex items-center gap-2">
                                     <span className={cn(
                                       "text-lg font-bold tabular-nums",
-                                      product.cartonQuantity > 0 ? "text-purple-600" : "text-muted-foreground"
+                                      product.cartonQuantity > 0 ? "text-[#04439e]" : "text-muted-foreground"
                                     )}>
                                       {product.cartonQuantity}
                                     </span>

@@ -207,9 +207,9 @@ export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
 
   const getLevelBadge = (level: 'débutant' | 'intermédiaire' | 'avancé') => {
     const styles = {
-      débutant: 'bg-green-100 text-green-800',
-      intermédiaire: 'bg-yellow-100 text-yellow-800',
-      avancé: 'bg-red-100 text-red-800'
+      débutant: 'bg-orange-100 text-[#ff4000]',
+      intermédiaire: 'bg-orange-100 text-[#ff4000]',
+      avancé: 'bg-orange-100 text-[#ff4000]'
     };
     return <Badge className={styles[level]}>{level}</Badge>;
   };
@@ -217,9 +217,9 @@ export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
   const getSessionStatusBadge = (status: Session['status']) => {
     const styles = {
       planifiée: 'bg-blue-100 text-blue-800',
-      en_cours: 'bg-yellow-100 text-yellow-800',
-      terminée: 'bg-green-100 text-green-800',
-      annulée: 'bg-red-100 text-red-800'
+      en_cours: 'bg-orange-100 text-[#ff4000]',
+      terminée: 'bg-orange-100 text-[#ff4000]',
+      annulée: 'bg-orange-100 text-[#ff4000]'
     };
     const labels = {
       planifiée: 'Planifiée',
@@ -280,7 +280,7 @@ export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-green-500" />
+              <Calendar className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm text-muted-foreground">Séances aujourd'hui</span>
             </div>
             <p className="text-2xl font-bold mt-1">{todaySessions}</p>
@@ -289,7 +289,7 @@ export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-purple-500" />
+              <Target className="h-4 w-4 text-[#04439e]" />
               <span className="text-sm text-muted-foreground">Programmes actifs</span>
             </div>
             <p className="text-2xl font-bold mt-1">{activePrograms}</p>

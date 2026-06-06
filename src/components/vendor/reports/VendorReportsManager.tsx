@@ -23,7 +23,7 @@ interface ReportData {
   returns: number;
 }
 
-const _COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+const _COLORS = ['#ff4000', '#04439e', '#ff4000', '#ff4000', '#04439e'];
 
 export default function VendorReportsManager() {
   const { vendorId, _userId } = useCurrentVendor();
@@ -274,10 +274,10 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-xs text-muted-foreground">Ventes</p>
-                <p className="text-lg font-bold text-green-600">{reportData.sales.toLocaleString()}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{reportData.sales.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -296,10 +296,10 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-red-600" />
+              <TrendingDown className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-xs text-muted-foreground">Dépenses</p>
-                <p className="text-lg font-bold text-red-600">{reportData.expenses.toLocaleString()}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{reportData.expenses.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -318,21 +318,21 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-600" />
+              <Package className="w-5 h-5 text-[#04439e]" />
               <div>
                 <p className="text-xs text-muted-foreground">Retours</p>
-                <p className="text-lg font-bold text-purple-600">{reportData.returns.toLocaleString()}</p>
+                <p className="text-lg font-bold text-[#04439e]">{reportData.returns.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className={reportData.profit >= 0 ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}>
+        <Card className={reportData.profit >= 0 ? 'bg-orange-50 dark:bg-[#ff4000]' : 'bg-orange-50 dark:bg-[#ff4000]'}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+              <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
               <div>
                 <p className="text-xs text-muted-foreground">Bénéfice net</p>
-                <p className={`text-lg font-bold ${reportData.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-lg font-bold ${reportData.profit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                   {reportData.profit.toLocaleString()}
                 </p>
               </div>

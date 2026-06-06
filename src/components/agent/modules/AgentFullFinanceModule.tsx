@@ -186,11 +186,11 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-green-100 text-green-700">Payé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">Payé</Badge>;
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700">En attente</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">En attente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">Annulé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">Annulé</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -210,10 +210,10 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
     <div className="space-y-6">
       {/* Header avec stats agent */}
       <Card className="border-0 shadow-lg overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-b">
+        <CardHeader className="bg-gradient-to-r from-[#ff4000]/10 via-orange-500/10 to-[#ff4000]/10 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#ff4000] to-orange-600 shadow-lg">
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -230,7 +230,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         <CardContent className="p-6">
           {/* Stats Cards Agent */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">Mon Solde</span>
@@ -238,7 +238,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.walletBalance)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-[#04439e] rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-sm opacity-90">Total Commissions</span>
@@ -246,7 +246,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.totalCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-[#ff4000] to-orange-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <PiggyBank className="w-5 h-5" />
                 <span className="text-sm opacity-90">En Attente</span>
@@ -254,7 +254,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.pendingCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
                 <span className="text-sm opacity-90">Payées</span>
@@ -406,7 +406,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">
+                          <p className="font-bold text-[#ff4000]">
                             +{formatAmount(comm.commission_amount)} GNF
                           </p>
                           {getStatusBadge(comm.status)}

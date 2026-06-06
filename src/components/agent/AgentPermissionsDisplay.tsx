@@ -148,7 +148,7 @@ export function AgentPermissionsDisplay({
                         variant="outline"
                         className={cn(
                           "text-xs",
-                          activeCount > 0 ? "bg-green-100 text-green-700 border-green-300" : "bg-slate-100 text-slate-500"
+                          activeCount > 0 ? "bg-orange-100 text-[#ff4000] border-orange-300" : "bg-slate-100 text-slate-500"
                         )}
                       >
                         {activeCount} / {category.permissions.length}
@@ -173,12 +173,12 @@ export function AgentPermissionsDisplay({
                           className={cn(
                             "flex items-center gap-2 p-2 rounded-md text-sm transition-all",
                             isActive
-                              ? "bg-green-50 text-green-800 border border-green-200"
+                              ? "bg-orange-50 text-[#ff4000] border border-orange-200"
                               : "bg-slate-50 text-slate-400 border border-slate-100"
                           )}
                         >
                           {isActive ? (
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <Check className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
                           ) : (
                             <X className="w-4 h-4 text-slate-300 flex-shrink-0" />
                           )}

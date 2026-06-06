@@ -140,7 +140,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
             key={star}
             className={`${sizeClass} ${
               star <= rating
-                ? 'fill-yellow-400 text-yellow-400'
+                ? 'fill-[#ff4000] text-[#ff4000]'
                 : 'text-muted-foreground/30'
             }`}
           />
@@ -196,7 +196,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                 <span className="text-sm w-8">{stars} ★</span>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-yellow-400"
+                    className="h-full bg-[#ff4000]"
                     style={{
                       width: stats.totalReviews > 0
                         ? `${(stats.distribution[stars] / stats.totalReviews) * 100}%`
@@ -240,7 +240,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                         year: 'numeric'
                       })}
                       {review.verified_purchase && (
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                        <Badge variant="secondary" className="text-xs bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-300">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Achat vérifié
                         </Badge>

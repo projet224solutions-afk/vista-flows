@@ -160,7 +160,7 @@ export function ActiveRideNavigationPanel({
       case 'accepted':
         return {
           label: 'En route vers client',
-          color: 'bg-amber-500',
+          color: 'bg-[#ff4000]',
           nextAction: 'arriving',
           nextLabel: "Je suis arrivé",
           nextIcon: CheckCircle
@@ -177,7 +177,7 @@ export function ActiveRideNavigationPanel({
       case 'in_progress':
         return {
           label: 'Course en cours',
-          color: 'bg-emerald-500',
+          color: 'bg-[#ff4000]',
           nextAction: 'completed',
           nextLabel: "Terminer course",
           nextIcon: CheckCircle
@@ -230,7 +230,7 @@ export function ActiveRideNavigationPanel({
         </Button>
         <Button
           onClick={openWaze}
-          className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
+          className="flex-1 bg-[#04439e] hover:bg-[#04439e] text-white gap-2"
           size="lg"
         >
           <Route className="w-5 h-5" />
@@ -242,7 +242,7 @@ export function ActiveRideNavigationPanel({
       <div className="px-4 grid grid-cols-2 gap-3 py-3">
         <div className="bg-gray-800 rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <Route className="w-4 h-4 text-emerald-400" />
+            <Route className="w-4 h-4 text-[#ff4000]" />
             <span className="text-gray-400 text-xs">Distance</span>
           </div>
           <p className="text-3xl font-bold text-white">
@@ -267,7 +267,7 @@ export function ActiveRideNavigationPanel({
         <div className="bg-gray-800 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff4000] to-[#ff4000] flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -277,7 +277,7 @@ export function ActiveRideNavigationPanel({
             </div>
             <Button
               onClick={() => onContactCustomer(activeRide.customerPhone)}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-12 h-12"
+              className="bg-[#ff4000] hover:bg-[#ff4000] text-white rounded-full w-12 h-12"
               size="icon"
             >
               <Phone className="w-5 h-5" />
@@ -292,25 +292,25 @@ export function ActiveRideNavigationPanel({
           {/* Point de départ */}
           <div className={cn(
             "p-4 border-l-4 flex items-start gap-3",
-            currentTarget === 'pickup' ? 'border-emerald-500 bg-emerald-500/10' : 'border-gray-600'
+            currentTarget === 'pickup' ? 'border-[#ff4000] bg-[#ff4000]/10' : 'border-gray-600'
           )}>
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-              currentTarget === 'pickup' ? 'bg-emerald-500' : 'bg-gray-600'
+              currentTarget === 'pickup' ? 'bg-[#ff4000]' : 'bg-gray-600'
             )}>
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className={cn(
                 "text-xs font-semibold mb-1",
-                currentTarget === 'pickup' ? 'text-emerald-400' : 'text-gray-500'
+                currentTarget === 'pickup' ? 'text-[#ff4000]' : 'text-gray-500'
               )}>
                 POINT DE DÉPART
               </p>
               <p className="text-white text-sm truncate">{activeRide.pickup.address}</p>
             </div>
             {currentTarget === 'pickup' && (
-              <Zap className="w-5 h-5 text-emerald-400 animate-pulse flex-shrink-0" />
+              <Zap className="w-5 h-5 text-[#ff4000] animate-pulse flex-shrink-0" />
             )}
           </div>
 
@@ -324,25 +324,25 @@ export function ActiveRideNavigationPanel({
           {/* Destination */}
           <div className={cn(
             "p-4 border-l-4 flex items-start gap-3",
-            currentTarget === 'destination' ? 'border-red-500 bg-red-500/10' : 'border-gray-600'
+            currentTarget === 'destination' ? 'border-[#ff4000] bg-[#ff4000]/10' : 'border-gray-600'
           )}>
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-              currentTarget === 'destination' ? 'bg-red-500' : 'bg-gray-600'
+              currentTarget === 'destination' ? 'bg-[#ff4000]' : 'bg-gray-600'
             )}>
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className={cn(
                 "text-xs font-semibold mb-1",
-                currentTarget === 'destination' ? 'text-red-400' : 'text-gray-500'
+                currentTarget === 'destination' ? 'text-[#ff4000]' : 'text-gray-500'
               )}>
                 DESTINATION
               </p>
               <p className="text-white text-sm truncate">{activeRide.destination.address}</p>
             </div>
             {currentTarget === 'destination' && (
-              <Zap className="w-5 h-5 text-red-400 animate-pulse flex-shrink-0" />
+              <Zap className="w-5 h-5 text-[#ff4000] animate-pulse flex-shrink-0" />
             )}
           </div>
         </div>
@@ -350,10 +350,10 @@ export function ActiveRideNavigationPanel({
 
       {/* Gains estimés */}
       <div className="px-4 py-2">
-        <div className="bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 rounded-xl p-4 border border-emerald-700/50">
+        <div className="bg-gradient-to-r from-[#ff4000]/50 to-[#ff4000]/30 rounded-xl p-4 border border-[#ff4000]/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-400 text-xs font-medium mb-1">VOS GAINS</p>
+              <p className="text-[#ff4000] text-xs font-medium mb-1">VOS GAINS</p>
               <p className="text-2xl font-bold text-white">
                 {activeRide.estimatedEarnings.toLocaleString()} <span className="text-sm text-gray-400">GNF</span>
               </p>
@@ -382,7 +382,7 @@ export function ActiveRideNavigationPanel({
             className={cn(
               "w-full h-14 text-lg font-semibold gap-3",
               statusConfig.nextAction === 'completed'
-                ? 'bg-emerald-500 hover:bg-emerald-600'
+                ? 'bg-[#ff4000] hover:bg-[#ff4000]'
                 : 'bg-blue-600 hover:bg-blue-700'
             )}
           >
@@ -399,7 +399,7 @@ export function ActiveRideNavigationPanel({
           onClick={onCancelRide}
           disabled={isLoading}
           variant="outline"
-          className="w-full h-12 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+          className="w-full h-12 border-[#ff4000]/50 text-[#ff4000] hover:bg-[#ff4000]/10 hover:text-orange-300"
         >
           <X className="w-5 h-5 mr-2" />
           Annuler la course

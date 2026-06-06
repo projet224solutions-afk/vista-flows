@@ -446,7 +446,7 @@ export default function DriverSubscriptionManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
+        return <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
       case 'expired':
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Expiré</Badge>;
       case 'suspended':
@@ -497,7 +497,7 @@ export default function DriverSubscriptionManagement() {
               <CardTitle className="text-xs font-medium text-muted-foreground">Actifs</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.total_active}</div>
+              <div className="text-2xl font-bold text-[#ff4000]">{stats.total_active}</div>
             </CardContent>
           </Card>
 
@@ -507,7 +507,7 @@ export default function DriverSubscriptionManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-center gap-2">
-                <Car className="w-5 h-5 text-yellow-600" />
+                <Car className="w-5 h-5 text-[#ff4000]" />
                 {stats.total_taxi}
               </div>
             </CardContent>
@@ -539,7 +539,7 @@ export default function DriverSubscriptionManagement() {
               <CardTitle className="text-xs font-medium text-muted-foreground">Revenus Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold text-green-600">{formatAmount(stats.total_revenue)}</div>
+              <div className="text-lg font-bold text-[#ff4000]">{formatAmount(stats.total_revenue)}</div>
             </CardContent>
           </Card>
 
@@ -666,7 +666,7 @@ export default function DriverSubscriptionManagement() {
                       <TableCell>{getStatusBadge(sub.status)}</TableCell>
                       <TableCell>
                         {sub.price === 0 ? (
-                          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">
+                          <Badge className="bg-[#04439e]/10 text-[#04439e] border-[#04439e]/20">
                             <Gift className="w-3 h-3 mr-1" /> Gratuit
                           </Badge>
                         ) : (

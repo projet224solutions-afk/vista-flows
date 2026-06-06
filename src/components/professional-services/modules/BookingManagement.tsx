@@ -80,10 +80,10 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
 
   const getStatusColor = (status: Booking['status']) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
+      case 'pending': return 'bg-[#ff4000]';
       case 'confirmed': return 'bg-blue-500';
-      case 'completed': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
+      case 'completed': return 'bg-[#ff4000]';
+      case 'cancelled': return 'bg-[#ff4000]';
       default: return 'bg-gray-500';
     }
   };

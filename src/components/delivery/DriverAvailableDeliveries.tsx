@@ -259,7 +259,7 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
       {deliveries.map((delivery) => (
         <Card
           key={delivery.id}
-          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-green-50/50 dark:from-orange-950/20 dark:to-green-950/20"
+          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-orange-50/50 dark:from-orange-950/20 dark:to-[#ff4000]/20"
         >
           <CardContent className="pt-4 space-y-4">
             {/* Vendeur */}
@@ -286,10 +286,10 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
                   {(delivery.distance_to_vendor || 2).toFixed(1)} km
                 </p>
               </div>
-              <div className="text-center p-2 bg-green-100/50 dark:bg-green-900/20 rounded">
-                <Navigation className="h-4 w-4 mx-auto text-green-600 mb-1" />
+              <div className="text-center p-2 bg-orange-100/50 dark:bg-[#ff4000]/20 rounded">
+                <Navigation className="h-4 w-4 mx-auto text-[#ff4000] mb-1" />
                 <p className="text-xs text-muted-foreground">Vers client</p>
-                <p className="font-bold text-sm text-green-700 dark:text-green-400">
+                <p className="font-bold text-sm text-[#ff4000] dark:text-[#ff4000]">
                   {(delivery.distance_vendor_to_client || delivery.distance_km || 5).toFixed(1)} km
                 </p>
               </div>
@@ -303,10 +303,10 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
             </div>
 
             {/* Détail tarification vendeur */}
-            <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 rounded-lg border border-green-200/50">
+            <div className="p-3 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20 rounded-lg border border-orange-200/50">
               <div className="flex items-center gap-2 mb-2">
-                <Calculator className="h-4 w-4 text-green-600" />
-                <span className="text-xs font-medium text-green-700 dark:text-green-400">Tarification vendeur</span>
+                <Calculator className="h-4 w-4 text-[#ff4000]" />
+                <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Tarification vendeur</span>
               </div>
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
@@ -319,15 +319,15 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
                   </span>
                   <span>{formatCurrency(delivery.distance_price || 0)}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-green-200/50 font-medium">
+                <div className="flex justify-between pt-1 border-t border-orange-200/50 font-medium">
                   <span>Total livraison</span>
-                  <span className="text-green-700 dark:text-green-400">{formatCurrency(delivery.delivery_fee)}</span>
+                  <span className="text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(delivery.delivery_fee)}</span>
                 </div>
               </div>
             </div>
 
             {/* Vos gains */}
-            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-[#ff4000] to-[#ff4000] rounded-lg text-white">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 <div>
@@ -338,7 +338,7 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
               <Badge
                 variant="secondary"
                 className={delivery.payment_method === 'cod'
-                  ? 'bg-yellow-100 text-yellow-800'
+                  ? 'bg-orange-100 text-[#ff4000]'
                   : 'bg-white/20 text-white'
                 }
               >
@@ -363,7 +363,7 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
               <Button
                 variant="outline"
                 size="sm"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-orange-300 text-[#ff4000] hover:bg-orange-50"
                 onClick={() => handleRefuse(delivery.id)}
                 disabled={acceptingId === delivery.id}
               >
@@ -372,7 +372,7 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
               </Button>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000]"
                 onClick={() => handleAccept(delivery)}
                 disabled={acceptingId === delivery.id}
               >

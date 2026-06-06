@@ -145,6 +145,32 @@ export async function listVendorClients(): Promise<VendorCustomerLink[]> {
   return requireBackendData(res, 'Impossible de charger les clients');
 }
 
+export interface BroadcastResult {
+  total_contacts: number;
+  email_targeted: number; email_sent: number; email_failed: number;
+  sms_targeted: number; sms_sent: number; sms_failed: number;
+  sms_error?: string;
+  email_error?: string;
+  already_sent?: boolean;
+}
+
+/**
+ * Envoi DIRECT d'un message à TOUS les contacts collectés (email et/ou SMS).
+ * `idempotencyKey` : empêche un double-envoi (re-clic / retry) → la 2e fois ne renvoie rien.
+ */
+export async function broadcastToClients(payload: {
+  channel: 'email' | 'sms' | 'both';
+  subject?: string;
+  message: string;
+}, idempotencyKey?: string): Promise<BroadcastResult> {
+  const res = await backendFetch<BroadcastResult>('/api/campaigns/broadcast', {
+    method: 'POST',
+    body: payload,
+    idempotencyKey,
+  });
+  return requireBackendData(res, 'Échec de la diffusion');
+}
+
 export async function previewAudience(targetType: CampaignTargetType, targetFilters?: Record<string, any>): Promise<AudiencePreview> {
   const res = await backendFetch<AudiencePreview>('/api/campaigns/preview-audience', {
     method: 'POST',

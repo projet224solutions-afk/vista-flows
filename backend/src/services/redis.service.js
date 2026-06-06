@@ -20,6 +20,12 @@ import { logger } from '../config/logger.js';
 // CONFIGURATION
 // ============================================================================
 
+// URL d'un Redis managé (prioritaire sur host/port). Même variable que config/redis.ts.
+const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || '';
+// Activé si explicitement, OU URL fournie, OU production.
+const REDIS_ENABLED =
+  (process.env.REDIS_ENABLED ?? ((REDIS_URL || process.env.NODE_ENV === 'production') ? 'true' : 'false')) === 'true';
+
 const REDIS_CONFIG = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT) || 6379,
@@ -90,6 +96,10 @@ const MAX_CONNECTION_ATTEMPTS = 5;
  * @returns {Promise<Redis|null>}
  */
 async function getRedisClient() {
+  if (!REDIS_ENABLED) {
+    return null; // Désactivé (dev sans Redis) → fallback PostgreSQL
+  }
+
   if (redisClient && isRedisConnected) {
     return redisClient;
   }
@@ -102,7 +112,7 @@ async function getRedisClient() {
     connectionAttempts++;
 
     if (!redisClient) {
-      redisClient = new Redis(REDIS_CONFIG);
+      redisClient = REDIS_URL ? new Redis(REDIS_URL, { lazyConnect: true }) : new Redis(REDIS_CONFIG);
 
       redisClient.on('connect', () => {
         isRedisConnected = true;

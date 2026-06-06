@@ -117,22 +117,22 @@ export const TwoFactorSetup: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Shield className="h-6 w-6 text-green-600" />
+              <Shield className="h-6 w-6 text-[#ff4000]" />
               <div>
                 <CardTitle>Authentification à Deux Facteurs</CardTitle>
                 <CardDescription>Votre compte est protégé</CardDescription>
               </div>
             </div>
-            <Badge variant="default" className="bg-green-600">
+            <Badge variant="default" className="bg-[#ff4000]">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Activée
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+          <Alert className="border-orange-200 bg-orange-50">
+            <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
+            <AlertDescription className="text-[#ff4000]">
               Votre compte est sécurisé avec l'authentification à deux facteurs.
               {settings.lastUsedAt && (
                 <span className="block text-sm mt-1">
@@ -356,9 +356,9 @@ export const TwoFactorSetup: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="backup" className="space-y-4 mt-4">
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-orange-200 bg-orange-50">
+              <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
+              <AlertDescription className="text-[#ff4000]">
                 2FA activée avec succès ! Sauvegardez vos codes de récupération.
               </AlertDescription>
             </Alert>

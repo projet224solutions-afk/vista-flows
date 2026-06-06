@@ -27,7 +27,7 @@ export function TransitaireKYCStatus({
   // verified - Transitaire vérifié
   if (status === 'verified') {
     return (
-      <Badge className={`bg-green-500 hover:bg-green-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1 ${className}`}>
         <ShieldCheck className="w-3 h-3" />
         Transitaire certifié
       </Badge>
@@ -37,7 +37,7 @@ export function TransitaireKYCStatus({
   // pending - Vérification en cours
   if (status === 'pending') {
     return (
-      <Badge className={`bg-yellow-500 hover:bg-yellow-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1 ${className}`}>
         <Shield className="w-3 h-3" />
         Certification en cours...
       </Badge>
@@ -48,7 +48,7 @@ export function TransitaireKYCStatus({
   if (status === 'rejected') {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <Badge className="bg-red-500 hover:bg-red-600 text-white gap-1">
+        <Badge className="bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1">
           <ShieldAlert className="w-3 h-3" />
           Certification rejetée
         </Badge>

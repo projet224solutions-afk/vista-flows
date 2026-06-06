@@ -30,9 +30,9 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
 const PLAN_COLORS: Record<string, string> = {
   'free': 'bg-gray-100 text-gray-700',
   'basic': 'bg-blue-100 text-blue-700',
-  'pro': 'bg-purple-100 text-purple-700',
+  'pro': 'bg-blue-100 text-[#04439e]',
   'business': 'bg-orange-100 text-orange-700',
-  'premium': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
+  'premium': 'bg-gradient-to-r from-[#ff4000] to-orange-500 text-white',
 };
 
 const _PLAN_DESCRIPTIONS: Record<string, string> = {
@@ -103,7 +103,7 @@ export function UpgradeDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="p-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500">
+              <div className="p-2 rounded-full bg-gradient-to-br from-[#ff4000] to-orange-500">
                 <Crown className="w-5 h-5 text-white" />
               </div>
               <span>Fonctionnalité Premium</span>
@@ -142,13 +142,13 @@ export function UpgradeDialog({
             {minPlan !== 'free' && (
               <div className="space-y-2">
                 <p className="text-sm font-medium flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-yellow-500" />
+                  <Crown className="w-4 h-4 text-[#ff4000]" />
                   Ce que vous obtiendrez avec {minPlanDisplay}
                 </p>
                 <ul className="space-y-1.5">
                   {PLAN_FEATURES_PREVIEW[minPlan]?.slice(0, 5).map((feat, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
                       {feat}
                     </li>
                   ))}
@@ -167,7 +167,7 @@ export function UpgradeDialog({
             </Button>
             <Button
               onClick={handleUpgrade}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
+              className="flex-1 bg-[#ff4000] hover:bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40"
             >
               <Crown className="w-4 h-4 mr-2" />
               Mettre à niveau

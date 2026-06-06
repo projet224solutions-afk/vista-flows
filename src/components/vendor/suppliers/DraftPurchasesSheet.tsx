@@ -77,7 +77,7 @@ const STATUS_CONFIG = {
   validated: {
     label: 'Validé',
     icon: Clock,
-    color: 'bg-green-500/10 text-green-600 border-green-500/30',
+    color: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/30',
   },
 };
 
@@ -171,8 +171,9 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
         throw new Error('Aucun article trouvé pour cet achat');
       }
 
-      // 2. Appeler la fonction avec tous les paramètres requis
-      const { data, error } = await supabase.functions.invoke('validate-purchase', {
+      // 2. Valider via le backend Node (atomique, RPC validate_stock_purchase)
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/inventory/validate-purchase', {
         body: {
           purchase_id: purchase.id,
           vendor_id: vendorId,
@@ -182,8 +183,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
         }
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (!resp.success) throw new Error(resp.error || 'Erreur de validation');
 
       toast.success('Achat validé avec succès! Stock mis à jour.');
       refetch();
@@ -250,9 +250,9 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
           {/* Message d'alerte */}
           {purchases.length > 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-700">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+              <AlertTriangle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
+              <p className="text-xs text-[#ff4000]">
                 Ces achats n'ont pas encore été validés. Le stock ne sera mis à jour qu'après validation.
               </p>
             </div>

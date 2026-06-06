@@ -81,8 +81,8 @@ function StatCard({
       </div>
       {trend && (
         <div>
-          {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
-          {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
+          {trend === 'up' && <TrendingUp className="h-4 w-4 text-[#ff4000]" />}
+          {trend === 'down' && <TrendingDown className="h-4 w-4 text-[#ff4000]" />}
         </div>
       )}
     </div>
@@ -123,7 +123,7 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Direction:</span>
-              <Badge className={`ml-2 ${message.direction === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+              <Badge className={`ml-2 ${message.direction === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-[#ff4000]'}`}>
                 {message.direction === 'sent' ? 'Envoyé' : 'Reçu'}
               </Badge>
             </div>
@@ -227,9 +227,9 @@ function _TimelineEvent({
   status?: 'success' | 'warning' | 'error' | 'info';
 }) {
   const statusColors = {
-    success: 'text-green-500',
-    warning: 'text-yellow-500',
-    error: 'text-red-500',
+    success: 'text-[#ff4000]',
+    warning: 'text-[#ff4000]',
+    error: 'text-[#ff4000]',
     info: 'text-blue-500'
   };
 
@@ -287,16 +287,16 @@ export function UserActivitySearch() {
 
   const getRoleBadge = (roleType: string | null) => {
     const roleColors: Record<string, string> = {
-      vendor: 'bg-purple-100 text-purple-800',
+      vendor: 'bg-blue-100 text-[#04439e]',
       client: 'bg-blue-100 text-blue-800',
-      driver: 'bg-green-100 text-green-800',
-      taxi: 'bg-yellow-100 text-yellow-800',
-      livreur: 'bg-teal-100 text-teal-800',
+      driver: 'bg-orange-100 text-[#ff4000]',
+      taxi: 'bg-orange-100 text-[#ff4000]',
+      livreur: 'bg-orange-100 text-[#ff4000]',
       agent: 'bg-orange-100 text-orange-800',
-      pdg: 'bg-red-100 text-red-800',
-      transitaire: 'bg-cyan-100 text-cyan-800',
-      worker: 'bg-indigo-100 text-indigo-800',
-      bureau: 'bg-pink-100 text-pink-800'
+      pdg: 'bg-orange-100 text-[#ff4000]',
+      transitaire: 'bg-blue-100 text-[#04439e]',
+      worker: 'bg-blue-100 text-[#04439e]',
+      bureau: 'bg-orange-100 text-[#ff4000]'
     };
     return roleColors[roleType || ''] || 'bg-gray-100 text-gray-800';
   };
@@ -629,14 +629,14 @@ export function UserActivitySearch() {
 
               {/* Résumé financier */}
               <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
-                  <ArrowDownLeft className="h-5 w-5 mx-auto text-green-600 mb-1" />
-                  <p className="text-lg font-bold text-green-600">{formatAmount(activityData.totalReceived)}</p>
+                <div className="p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg text-center">
+                  <ArrowDownLeft className="h-5 w-5 mx-auto text-[#ff4000] mb-1" />
+                  <p className="text-lg font-bold text-[#ff4000]">{formatAmount(activityData.totalReceived)}</p>
                   <p className="text-xs text-muted-foreground">Total reçu</p>
                 </div>
-                <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
-                  <ArrowUpRight className="h-5 w-5 mx-auto text-red-600 mb-1" />
-                  <p className="text-lg font-bold text-red-600">{formatAmount(activityData.totalSpent)}</p>
+                <div className="p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg text-center">
+                  <ArrowUpRight className="h-5 w-5 mx-auto text-[#ff4000] mb-1" />
+                  <p className="text-lg font-bold text-[#ff4000]">{formatAmount(activityData.totalSpent)}</p>
                   <p className="text-xs text-muted-foreground">Total dépensé</p>
                 </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
@@ -703,10 +703,10 @@ export function UserActivitySearch() {
                       ) : (
                         activityData.messages.map((msg) => (
                           <div key={msg.id} className={`flex items-start gap-3 p-3 rounded-lg ${
-                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-green-50 dark:bg-green-950/30'
+                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-orange-50 dark:bg-[#ff4000]/30'
                           }`}>
                             <div className={`p-2 rounded-full ${
-                              msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                              msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-[#ff4000]'
                             }`}>
                               {msg.direction === 'sent' ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
                             </div>
@@ -785,8 +785,8 @@ export function UserActivitySearch() {
                           <div key={tx.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
                               tx.direction === 'sent'
-                                ? 'bg-red-100 text-red-600'
-                                : 'bg-green-100 text-green-600'
+                                ? 'bg-orange-100 text-[#ff4000]'
+                                : 'bg-orange-100 text-[#ff4000]'
                             }`}>
                               {tx.direction === 'sent' ? (
                                 <TrendingDown className="h-4 w-4" />
@@ -803,8 +803,8 @@ export function UserActivitySearch() {
                             <div className="text-right">
                               <p className={`font-bold ${
                                 tx.direction === 'sent'
-                                  ? 'text-red-600'
-                                  : 'text-green-600'
+                                  ? 'text-[#ff4000]'
+                                  : 'text-[#ff4000]'
                               }`}>
                                 {tx.direction === 'sent' ? '-' : '+'}
                                 {formatAmount(tx.amount, tx.currency)}
@@ -910,7 +910,7 @@ export function UserActivitySearch() {
                         activityData.loginHistory.map((login) => (
                           <div key={login.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
-                              login.success ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                              login.success ? 'bg-orange-100 text-[#ff4000]' : 'bg-orange-100 text-[#ff4000]'
                             }`}>
                               {login.success ? (
                                 <CheckCircle className="h-4 w-4" />
@@ -1082,7 +1082,7 @@ export function UserActivitySearch() {
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-3 w-3 ${i < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                  className={`h-3 w-3 ${i < r.rating ? 'fill-[#ff4000] text-[#ff4000]' : 'text-gray-300'}`}
                                 />
                               ))}
                             </div>

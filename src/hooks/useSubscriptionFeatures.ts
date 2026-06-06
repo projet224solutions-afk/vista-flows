@@ -43,8 +43,6 @@ export type SubscriptionFeature =
   | 'multi_warehouse'      // Entrepôts multiples
   | 'expense_management'   // Gestion dépenses
   | 'data_export'          // Export données
-  | 'api_access'           // Accès API
-  | 'api_premium'          // API Premium
   | 'prospect_management'  // Gestion prospects
   | 'advanced_integrations'// Intégrations avancées
   | 'multi_user'           // Multi-utilisateurs
@@ -103,7 +101,7 @@ export const MODULE_FEATURE_MAP: Record<string, SubscriptionFeature> = {
 
 /**
  * Mapping des fonctionnalités par plan
- *
+ * 
  * GRATUIT: Fonctionnalités actuelles sans modification
  * BASIC: POS, Inventaire, Produits (restriction), Livraison, Avis, Support, Messages, Copilot, Clients, Wallet (restriction)
  * PRO: BASIC + Clients avancé + Marketing (restriction produits)
@@ -215,7 +213,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'supplier_management',
     'multi_warehouse',
     'data_export',
-    'api_access',
     'prospect_management',
     'advanced_integrations',
     'multi_user',
@@ -265,8 +262,6 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
     'supplier_management',
     'multi_warehouse',
     'data_export',
-    'api_access',
-    'api_premium',
     'prospect_management',
     'advanced_integrations',
     'multi_user',
@@ -338,14 +333,12 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
   'supplier_management': 'business',
   'multi_warehouse': 'business',
   'data_export': 'business',
-  'api_access': 'business',
   'prospect_management': 'business',
   'advanced_integrations': 'business',
   'multi_user': 'business',
 
   // Premium
   'analytics_realtime': 'premium',
-  'api_premium': 'premium',
   'gemini_ai': 'business', // ✅ Changé de premium à business
   'advanced_security': 'premium',
   'dedicated_manager': 'premium',

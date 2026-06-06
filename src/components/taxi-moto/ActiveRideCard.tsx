@@ -49,7 +49,7 @@ export function ActiveRideCard({
       case 'accepted':
         return {
           label: 'En route vers le client',
-          color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+          color: 'bg-orange-100 text-[#ff4000] border-orange-300',
           nextAction: 'arriving',
           nextLabel: 'Je suis arrivé',
           icon: '🚕'
@@ -65,7 +65,7 @@ export function ActiveRideCard({
       case 'picked_up':
         return {
           label: 'Client à bord',
-          color: 'bg-green-100 text-green-800 border-green-300',
+          color: 'bg-orange-100 text-[#ff4000] border-orange-300',
           nextAction: 'in_progress',
           nextLabel: 'Arrivé à destination',
           icon: '🚗'
@@ -73,7 +73,7 @@ export function ActiveRideCard({
       default:
         return {
           label: 'En cours',
-          color: 'bg-purple-100 text-purple-800 border-purple-300',
+          color: 'bg-blue-100 text-[#04439e] border-blue-300',
           nextAction: 'in_progress',
           nextLabel: 'Terminer',
           icon: '🏁'
@@ -108,8 +108,8 @@ export function ActiveRideCard({
           <div className="flex-1">
             <h3 className="font-bold text-lg text-gray-900">{ride.customer.name}</h3>
             <div className="flex items-center gap-1 mt-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm font-semibold text-yellow-600">{ride.customer.rating}</span>
+              <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
+              <span className="text-sm font-semibold text-[#ff4000]">{ride.customer.rating}</span>
             </div>
           </div>
           <div className="flex gap-2">
@@ -117,9 +117,9 @@ export function ActiveRideCard({
               onClick={() => onContactCustomer(ride.customer.phone)}
               size="sm"
               variant="outline"
-              className="bg-green-50 hover:bg-green-100 border-green-300"
+              className="bg-orange-50 hover:bg-orange-100 border-orange-300"
             >
-              <Phone className="w-4 h-4 text-green-600" />
+              <Phone className="w-4 h-4 text-[#ff4000]" />
             </Button>
             <Button
               onClick={() => window.open(`sms:${ride.customer.phone}`)}
@@ -134,34 +134,34 @@ export function ActiveRideCard({
 
         {/* Itinéraire */}
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-            <div className="p-2 bg-green-500 rounded-full mt-1">
+          <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border-l-4 border-[#ff4000]">
+            <div className="p-2 bg-[#ff4000] rounded-full mt-1">
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-semibold text-green-700 uppercase">Départ</p>
+              <p className="text-xs font-semibold text-[#ff4000] uppercase">Départ</p>
               <p className="text-sm font-medium text-gray-900 mt-1">{ride.pickup.address}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
-            <div className="p-2 bg-red-500 rounded-full mt-1">
+          <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border-l-4 border-[#ff4000]">
+            <div className="p-2 bg-[#ff4000] rounded-full mt-1">
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-semibold text-red-700 uppercase">Destination</p>
+              <p className="text-xs font-semibold text-[#ff4000] uppercase">Destination</p>
               <p className="text-sm font-medium text-gray-900 mt-1">{ride.destination.address}</p>
             </div>
           </div>
         </div>
 
         {/* Informations de gain */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-50 rounded-lg border border-orange-200">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-green-600" />
+            <DollarSign className="w-5 h-5 text-[#ff4000]" />
             <span className="text-sm text-gray-600">Gain estimé</span>
           </div>
-          <span className="text-2xl font-bold text-green-600">
+          <span className="text-2xl font-bold text-[#ff4000]">
             {(ride?.estimatedEarnings || 0).toLocaleString()} GNF
           </span>
         </div>
@@ -190,7 +190,7 @@ export function ActiveRideCard({
             <Button
               onClick={onCancelRide}
               variant="outline"
-              className="w-full h-12 bg-red-50 hover:bg-red-100 border-red-300 text-red-700 font-semibold"
+              className="w-full h-12 bg-orange-50 hover:bg-orange-100 border-orange-300 text-[#ff4000] font-semibold"
             >
               ❌ Annuler la course
             </Button>

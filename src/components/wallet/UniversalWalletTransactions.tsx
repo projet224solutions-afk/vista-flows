@@ -1592,9 +1592,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
   const getTransactionColor = (tx: Transaction) => {
     if (tx.sender_id === effectiveUserId && tx.receiver_id === effectiveUserId) {
-      return tx.method === 'deposit' ? 'text-green-600' : 'text-orange-600';
+      return tx.method === 'deposit' ? 'text-[#ff4000]' : 'text-orange-600';
     }
-    return tx.sender_id === effectiveUserId ? 'text-red-600' : 'text-green-600';
+    return tx.sender_id === effectiveUserId ? 'text-[#ff4000]' : 'text-[#ff4000]';
   };
 
   if (loading) {
@@ -1701,7 +1701,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
-                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000]" />
                 <span className="text-[10px] sm:text-xs">Dépôt</span>
               </Button>
             </DialogTrigger>
@@ -1768,7 +1768,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                         </SelectItem>
                         <SelectItem value="mtn">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                            <div className="w-3 h-3 rounded-full bg-[#ff4000]" />
                             MTN MoMo
                           </div>
                         </SelectItem>
@@ -1812,7 +1812,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   <Button
                     onClick={handleDeposit}
                     disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
                   >
                     {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
                   </Button>
@@ -1887,7 +1887,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                         </SelectItem>
                         <SelectItem value="mtn">
                           <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                            <div className="w-3 h-3 rounded-full bg-[#ff4000]" />
                             MTN MoMo
                           </div>
                         </SelectItem>
@@ -2232,7 +2232,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
                       <span className="text-xl font-bold text-destructive">{formatWalletBalance(transferPreview?.total_debit || 0)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-green-600">
+                    <div className="flex justify-between items-center text-[#ff4000]">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount_received || 0)}</span>
                     </div>

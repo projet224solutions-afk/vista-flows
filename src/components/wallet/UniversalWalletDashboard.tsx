@@ -347,7 +347,7 @@ export default function UniversalWalletDashboard({
   return (
     <div className="space-y-6">
       {/* Carte solde */}
-      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-0">
+      <Card className="bg-[#04439e] text-white border-0">
         <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -413,7 +413,7 @@ export default function UniversalWalletDashboard({
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <ArrowDownCircle className="w-5 h-5 text-green-600" />
+                <ArrowDownCircle className="w-5 h-5 text-[#ff4000]" />
                 {t('wallet.rechargeMyWallet')}
               </CardTitle>
             </CardHeader>
@@ -446,7 +446,7 @@ export default function UniversalWalletDashboard({
                     onClick={() => setDepositMethod('momo')}
                     className="flex flex-col items-center gap-1 h-auto py-3 col-span-2 sm:col-span-1"
                   >
-                    <Smartphone className="w-5 h-5 text-yellow-500" />
+                    <Smartphone className="w-5 h-5 text-[#ff4000]" />
                     <span className="text-xs">MTN MoMo</span>
                   </Button>
                 </div>
@@ -529,7 +529,7 @@ export default function UniversalWalletDashboard({
                       }, 1500);
                     }}
                     disabled={busy || !depositAmount || !phoneNumber}
-                    className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'}`}
+                    className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-[#ff4000] hover:bg-[#ff4000]'}`}
                   >
                     <Smartphone className="w-4 h-4 mr-2" />
                     {t('wallet.recharge')} {convert(parseFloat(depositAmount || '0'), 'GNF').formatted}
@@ -569,7 +569,7 @@ export default function UniversalWalletDashboard({
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <ArrowUpCircle className="w-5 h-5 text-red-600" />
+                <ArrowUpCircle className="w-5 h-5 text-[#ff4000]" />
                 {t('wallet.withdrawFunds')}
               </CardTitle>
             </CardHeader>
@@ -593,7 +593,7 @@ export default function UniversalWalletDashboard({
                     onClick={() => setWithdrawMethod('momo')}
                     className="flex flex-col items-center gap-1 h-auto py-3"
                   >
-                    <Smartphone className="w-5 h-5 text-yellow-500" />
+                    <Smartphone className="w-5 h-5 text-[#ff4000]" />
                     <span className="text-xs">MTN MoMo</span>
                   </Button>
                 </div>

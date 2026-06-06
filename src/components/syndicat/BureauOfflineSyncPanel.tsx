@@ -65,10 +65,10 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
 
     const getStatusColor = () => {
         if (isSyncing) return "bg-blue-500";
-        if (!isOnline) return "bg-red-500";
+        if (!isOnline) return "bg-[#ff4000]";
         if (hasFailedEvents) return "bg-orange-500";
-        if (hasPendingEvents) return "bg-yellow-500";
-        return "bg-green-500";
+        if (hasPendingEvents) return "bg-[#ff4000]";
+        return "bg-[#ff4000]";
     };
 
     const getStatusText = () => {
@@ -89,8 +89,8 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
     };
 
     return (
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-50 shadow-lg">
+            <CardHeader className="bg-[#04439e] text-white rounded-t-lg">
                 <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {isSyncing ? (
@@ -124,15 +124,15 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                 <div className="text-sm text-gray-600">Total</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-yellow-600">{syncStats.pending}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.pending}</div>
                                 <div className="text-sm text-gray-600">En attente</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-green-600">{syncStats.synced}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.synced}</div>
                                 <div className="text-sm text-gray-600">Synchronisés</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-red-600">{syncStats.failed}</div>
+                                <div className="text-2xl font-bold text-[#ff4000]">{syncStats.failed}</div>
                                 <div className="text-sm text-gray-600">Échoués</div>
                             </div>
                         </div>
@@ -153,12 +153,12 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
 
                         {/* Dernière sync */}
                         {lastSyncTime && (
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="flex items-center gap-2 text-green-800">
+                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <div className="flex items-center gap-2 text-[#ff4000]">
                                     <CheckCircle className="w-4 h-4" />
                                     <span className="font-medium">Dernière synchronisation</span>
                                 </div>
-                                <div className="text-sm text-green-600 mt-1">
+                                <div className="text-sm text-[#ff4000] mt-1">
                                     {lastSyncTime.toLocaleString('fr-FR')}
                                 </div>
                             </div>
@@ -166,9 +166,9 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
 
                         {/* Erreurs */}
                         {syncErrors.length > 0 && (
-                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-red-800">
+                                    <div className="flex items-center gap-2 text-[#ff4000]">
                                         <AlertTriangle className="w-4 h-4" />
                                         <span className="font-medium">Erreurs ({syncErrors.length})</span>
                                     </div>
@@ -177,7 +177,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                         Effacer
                                     </Button>
                                 </div>
-                                <div className="text-sm text-red-600 mt-2 space-y-1">
+                                <div className="text-sm text-[#ff4000] mt-2 space-y-1">
                                     {syncErrors.slice(0, 3).map((error, index) => (
                                         <div key={index}>• {error}</div>
                                     ))}
@@ -200,9 +200,9 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                             <span className="capitalize font-medium">{type.replace('_', ' ')}</span>
                                         </div>
                                         <div className="flex gap-3 text-sm">
-                                            <span className="text-yellow-600">⏳ {stats.pending || 0}</span>
-                                            <span className="text-green-600">✅ {stats.synced || 0}</span>
-                                            <span className="text-red-600">❌ {stats.failed || 0}</span>
+                                            <span className="text-[#ff4000]">⏳ {stats.pending || 0}</span>
+                                            <span className="text-[#ff4000]">✅ {stats.synced || 0}</span>
+                                            <span className="text-[#ff4000]">❌ {stats.failed || 0}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -238,13 +238,13 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             <div className="flex items-center gap-2">
                                 {isOnline ? (
                                     <>
-                                        <Wifi className="w-5 h-5 text-green-600" />
-                                        <span className="font-medium text-green-800">Mode en ligne</span>
+                                        <Wifi className="w-5 h-5 text-[#ff4000]" />
+                                        <span className="font-medium text-[#ff4000]">Mode en ligne</span>
                                     </>
                                 ) : (
                                     <>
-                                        <WifiOff className="w-5 h-5 text-red-600" />
-                                        <span className="font-medium text-red-800">Mode hors ligne</span>
+                                        <WifiOff className="w-5 h-5 text-[#ff4000]" />
+                                        <span className="font-medium text-[#ff4000]">Mode hors ligne</span>
                                     </>
                                 )}
                             </div>

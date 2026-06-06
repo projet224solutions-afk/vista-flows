@@ -65,7 +65,7 @@ export function PharmacyOverviewPanel({ stats, _recentSales }: PharmacyOverviewP
             </div>
             {stats.sales.totalOrders > 0 && (
               <div className="flex items-center gap-1.5 text-sm">
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <TrendingUp className="w-4 h-4 text-[#ff4000]" />
                 <span className="text-muted-foreground">
                   Panier moyen: {formatCurrency(stats.sales.totalRevenue / stats.sales.totalOrders)}
                 </span>
@@ -87,12 +87,12 @@ export function PharmacyOverviewPanel({ stats, _recentSales }: PharmacyOverviewP
           {/* Circular score indicator */}
           <div className="flex items-center gap-4">
             <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
-              stockPercent >= 80 ? 'border-emerald-500' :
-              stockPercent >= 50 ? 'border-orange-500' : 'border-red-500'
+              stockPercent >= 80 ? 'border-[#ff4000]' :
+              stockPercent >= 50 ? 'border-orange-500' : 'border-[#ff4000]'
             }`}>
               <span className={`text-lg font-bold ${
-                stockPercent >= 80 ? 'text-emerald-600' :
-                stockPercent >= 50 ? 'text-orange-600' : 'text-red-600'
+                stockPercent >= 80 ? 'text-[#ff4000]' :
+                stockPercent >= 50 ? 'text-orange-600' : 'text-[#ff4000]'
               }`}>
                 {stockPercent}%
               </span>
@@ -112,7 +112,7 @@ export function PharmacyOverviewPanel({ stats, _recentSales }: PharmacyOverviewP
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCircle className="w-3.5 h-3.5 text-[#ff4000]" />
                 <span className="text-muted-foreground">Normal</span>
               </span>
               <span className="font-semibold">{inStock}</span>
@@ -126,10 +126,10 @@ export function PharmacyOverviewPanel({ stats, _recentSales }: PharmacyOverviewP
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-red-500" />
+                <Clock className="w-3.5 h-3.5 text-[#ff4000]" />
                 <span className="text-muted-foreground">Rupture</span>
               </span>
-              <span className="font-semibold text-red-600">{stats.stock.outOfStockCount}</span>
+              <span className="font-semibold text-[#ff4000]">{stats.stock.outOfStockCount}</span>
             </div>
           </div>
         </CardContent>

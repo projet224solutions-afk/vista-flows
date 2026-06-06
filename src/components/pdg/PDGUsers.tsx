@@ -292,13 +292,13 @@ export default function PDGUsers() {
 
   const getRoleBadge = (role: string) => {
     const colors = {
-      admin: 'bg-red-500/10 text-red-500 border-red-500/20',
+      admin: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
       vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      client: 'bg-green-500/10 text-green-500 border-green-500/20',
-      livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-      taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+      client: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
+      livreur: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
+      taxi: 'bg-[#04439e]/10 text-[#04439e] border-[#04439e]/20',
       transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-      syndicat: 'bg-pink-500/10 text-pink-500 border-pink-500/20'
+      syndicat: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20'
     };
     return colors[role as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
@@ -412,7 +412,7 @@ export default function PDGUsers() {
                       <Shield className="w-7 h-7 text-primary-foreground" />
                     </div>
                     {user.is_active && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card" />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#ff4000] rounded-full border-2 border-card" />
                     )}
                   </div>
                   <div className="flex-1">
@@ -443,7 +443,7 @@ export default function PDGUsers() {
                       <Badge variant="outline" className={getRoleBadge(user.role)}>
                         {user.role}
                       </Badge>
-                      <Badge variant="outline" className={user.is_active ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                      <Badge variant="outline" className={user.is_active ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]' : 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]'}>
                         {user.is_active ? 'Actif' : 'Suspendu'}
                       </Badge>
                     </div>
@@ -483,7 +483,7 @@ export default function PDGUsers() {
                     variant="outline"
                     size="sm"
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
-                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
+                    className={user.is_active ? 'border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]' : 'border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]'}
                   >
                     {user.is_active ? (
                       <>
@@ -503,7 +503,7 @@ export default function PDGUsers() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+                        className="border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]"
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Supprimer
@@ -521,7 +521,7 @@ export default function PDGUsers() {
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteUser(user.id, user.email)}
-                          className="bg-red-500 hover:bg-red-600"
+                          className="bg-[#ff4000] hover:bg-[#ff4000]"
                         >
                           Supprimer définitivement
                         </AlertDialogAction>
@@ -552,10 +552,10 @@ export default function PDGUsers() {
                                 variant="outline"
                                 className={
                                   service.status === 'active'
-                                    ? 'border-green-500/50 bg-green-500/10 text-green-500 text-xs'
+                                    ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000] text-xs'
                                     : service.status === 'pending'
-                                    ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs'
-                                    : 'border-red-500/50 bg-red-500/10 text-red-500 text-xs'
+                                    ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000] text-xs'
+                                    : 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000] text-xs'
                                 }
                               >
                                 {service.status}

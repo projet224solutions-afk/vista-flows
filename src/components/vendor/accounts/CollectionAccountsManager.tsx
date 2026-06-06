@@ -36,9 +36,9 @@ interface AccountTransaction {
 }
 
 const accountTypeConfig = {
-  cash: { icon: Banknote, label: 'Caisse', color: 'bg-green-100 text-green-800' },
+  cash: { icon: Banknote, label: 'Caisse', color: 'bg-orange-100 text-[#ff4000]' },
   orange_money: { icon: Smartphone, label: 'Orange Money', color: 'bg-orange-100 text-orange-800' },
-  mtn_money: { icon: Smartphone, label: 'MTN Money', color: 'bg-yellow-100 text-yellow-800' },
+  mtn_money: { icon: Smartphone, label: 'MTN Money', color: 'bg-orange-100 text-[#ff4000]' },
   bank: { icon: Building, label: 'Banque', color: 'bg-blue-100 text-blue-800' },
   other: { icon: Wallet, label: 'Autre', color: 'bg-gray-100 text-gray-800' }
 };
@@ -315,7 +315,7 @@ export default function CollectionAccountsManager() {
                       loadTransactions(account.id);
                     }}
                   >
-                    <ArrowDownLeft className="w-3 h-3 mr-1 text-green-600" />
+                    <ArrowDownLeft className="w-3 h-3 mr-1 text-[#ff4000]" />
                     Entrée
                   </Button>
                   <Button
@@ -329,7 +329,7 @@ export default function CollectionAccountsManager() {
                       loadTransactions(account.id);
                     }}
                   >
-                    <ArrowUpRight className="w-3 h-3 mr-1 text-red-600" />
+                    <ArrowUpRight className="w-3 h-3 mr-1 text-[#ff4000]" />
                     Sortie
                   </Button>
                 </div>
@@ -424,15 +424,15 @@ export default function CollectionAccountsManager() {
                       <div key={tx.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">
                         <div className="flex items-center gap-2">
                           {tx.transaction_type === 'deposit' ? (
-                            <TrendingUp className="w-3 h-3 text-green-600" />
+                            <TrendingUp className="w-3 h-3 text-[#ff4000]" />
                           ) : (
-                            <TrendingDown className="w-3 h-3 text-red-600" />
+                            <TrendingDown className="w-3 h-3 text-[#ff4000]" />
                           )}
                           <span className="text-muted-foreground truncate max-w-[120px]">
                             {tx.description || tx.transaction_type}
                           </span>
                         </div>
-                        <span className={tx.transaction_type === 'deposit' ? 'text-green-600' : 'text-red-600'}>
+                        <span className={tx.transaction_type === 'deposit' ? 'text-[#ff4000]' : 'text-[#ff4000]'}>
                           {tx.transaction_type === 'deposit' ? '+' : '-'}{tx.amount.toLocaleString()}
                         </span>
                       </div>

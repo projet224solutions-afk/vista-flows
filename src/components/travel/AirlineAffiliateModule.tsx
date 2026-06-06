@@ -35,7 +35,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
   const [showActivationDialog, setShowActivationDialog] = useState(false);
 
   const isMerchant = profile?.role === 'vendeur';
-  const gradient = 'from-blue-500 to-cyan-500';
+  const gradient = '';
 
   useEffect(() => {
     loadProducts();
@@ -204,7 +204,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
                       Affilié
                     </Badge>
                     {product.is_featured && (
-                      <Badge className="text-[10px] px-1.5 py-0.5 bg-yellow-500">
+                      <Badge className="text-[10px] px-1.5 py-0.5 bg-[#ff4000]">
                         <Star className="w-3 h-3 mr-1" />
                         Featured
                       </Badge>

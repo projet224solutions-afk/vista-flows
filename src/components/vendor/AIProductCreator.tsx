@@ -169,7 +169,7 @@ export function AIProductCreator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-500" />
+            <Zap className="w-5 h-5 text-[#ff4000]" />
             Créer un produit avec l'IA
           </CardTitle>
           <CardDescription>
@@ -247,7 +247,7 @@ export function AIProductCreator() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-500" />
+                <Check className="w-5 h-5 text-[#ff4000]" />
                 Catégorie détectée
               </CardTitle>
             </CardHeader>
@@ -313,7 +313,7 @@ export function AIProductCreator() {
                 <ul className="space-y-1">
                   {analysis.enrichedDescription.keyPoints.map((point, idx) => (
                     <li key={idx} className="text-sm flex items-start gap-2">
-                      <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#ff4000] mt-0.5 flex-shrink-0" />
                       {point}
                     </li>
                   ))}

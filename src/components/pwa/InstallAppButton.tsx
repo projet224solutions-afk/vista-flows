@@ -191,7 +191,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       return null;
     }
     return (
-      <div className={`flex items-center gap-2 text-green-600 ${className}`}>
+      <div className={`flex items-center gap-2 text-[#ff4000] ${className}`}>
         <CheckCircle2 className="w-5 h-5" />
         <span className="text-sm font-medium">Application installée</span>
       </div>

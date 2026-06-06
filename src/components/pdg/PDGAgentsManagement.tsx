@@ -123,8 +123,9 @@ export default function PDGAgentsManagement() {
     });
     setCurrencyDialog(d => ({ ...d, saving: false }));
     if (!result.success) { setCurrencyDialog(d => ({ ...d, error: result.error || 'Erreur inconnue' })); return; }
-    if (!result.changed) { toast.info(result.message); setCurrencyDialog(d => ({ ...d, open: false })); return; }
-    toast.success(`Devise agent changée : ${result.old_currency} → ${result.new_currency}`, { duration: 6000 });
+    const cr = result as any;
+    if (!cr.changed) { toast.info(cr.message); setCurrencyDialog(d => ({ ...d, open: false })); return; }
+    toast.success(`Devise agent changée : ${cr.old_currency} → ${cr.new_currency}`, { duration: 6000 });
     setCurrencyDialog(d => ({ ...d, open: false }));
     refetch();
   };
@@ -422,14 +423,13 @@ export default function PDGAgentsManagement() {
     try {
       setIsResettingPassword(true);
 
-      const { data, error } = await supabase.functions.invoke('reset-agent-password', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const data = await backendFetch<any>('/api/agents/reset-password', {
         body: {
           agent_id: resetPasswordAgent.id,
           new_password: newPassword
         }
       });
-
-      if (error) throw error;
 
       if (data?.success) {
         toast.success(`Mot de passe de ${resetPasswordAgent.name} réinitialisé avec succès`);
@@ -473,15 +473,13 @@ export default function PDGAgentsManagement() {
     try {
       setIsChangingEmail(true);
 
-      const { data, error } = await supabase.functions.invoke('pdg-update-agent-email', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const data = await backendFetch<any>('/api/agents/pdg-update-email', {
         body: {
           agent_id: changeEmailAgent.id,
           new_email: nextEmail,
-          pdg_id: pdgProfile.id,
         },
       });
-
-      if (error) throw error;
 
       if (data?.success) {
         toast.success(`Email de ${changeEmailAgent.name} modifié et synchronisé`);
@@ -559,14 +557,15 @@ export default function PDGAgentsManagement() {
         setLoadingUsersMap({ ...loadingUsersMap, [agent.id]: true });
 
         try {
-          const { data, error } = await supabase.functions.invoke('get-agent-users', {
-            body: { agent_access_token: agent.access_token }
+          const { backendFetch } = await import('@/services/backendApi');
+          const resp = await backendFetch<any>('/api/agents/users/list', {
+            method: 'POST', body: { agent_access_token: agent.access_token }
           });
 
-          if (error) throw error;
+          if (!resp.success) throw new Error(resp.error || 'Erreur');
 
-          if (data?.users) {
-            setAgentUsersMap({ ...agentUsersMap, [agent.id]: data.users });
+          if (resp.data?.users) {
+            setAgentUsersMap({ ...agentUsersMap, [agent.id]: resp.data.users });
           }
         } catch (error: any) {
           console.error('Erreur chargement utilisateurs:', error);
@@ -1124,10 +1123,10 @@ export default function PDGAgentsManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Agents Actifs
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
+            <UserCheck className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.activeAgents}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.inactiveAgents} inactifs
             </p>
@@ -1291,11 +1290,11 @@ export default function PDGAgentsManagement() {
                             {agentSubAgentsMap[agent.id].map((subAgent) => (
                               <div
                                 key={subAgent.id}
-                                className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 text-xs space-y-1"
+                                className="p-3 bg-blue-50 dark:bg-[#04439e]/20 rounded-lg border border-blue-200 dark:border-[#04439e] text-xs space-y-1"
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="font-medium flex items-center gap-2">
-                                    <UserCog className="w-3.5 h-3.5 text-purple-600" />
+                                    <UserCog className="w-3.5 h-3.5 text-[#04439e]" />
                                     {subAgent.name}
                                   </span>
                                   <Badge variant={subAgent.is_active ? 'default' : 'secondary'} className="text-xs">

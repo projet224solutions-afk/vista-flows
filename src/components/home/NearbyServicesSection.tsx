@@ -47,7 +47,7 @@ export function NearbyServicesSection({
       title: t('home.restaurant'),
       subtitle: t('home.orderFood'),
       count: stats.restaurants,
-      gradient: 'from-orange-500/25 to-red-500/15',
+      gradient: '',
       iconBg: 'bg-white/80',
       trending: stats.restaurants > 0,
     },
@@ -91,12 +91,12 @@ export function NearbyServicesSection({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200/60">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200/60">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff4000] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff4000]"></span>
           </span>
-          <span className="text-[11px] font-medium text-green-600 dark:text-green-400">
+          <span className="text-[11px] font-medium text-[#ff4000] dark:text-[#ff4000]">
             {t('home.live')}
           </span>
         </div>

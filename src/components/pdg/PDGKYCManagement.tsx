@@ -171,7 +171,7 @@ export default function PDGKYCManagement() {
             key={key}
             className={`transition-all duration-200 ${
               settings[key as keyof KYCSettings]
-                ? 'border-green-500/50 bg-green-500/5'
+                ? 'border-[#ff4000]/50 bg-[#ff4000]/5'
                 : 'border-muted'
             }`}
           >
@@ -180,7 +180,7 @@ export default function PDGKYCManagement() {
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${
                     settings[key as keyof KYCSettings]
-                      ? 'bg-green-500/20 text-green-600'
+                      ? 'bg-[#ff4000]/20 text-[#ff4000]'
                       : 'bg-muted text-muted-foreground'
                   }`}>
                     <Icon className="w-5 h-5" />
@@ -194,7 +194,7 @@ export default function PDGKYCManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                   {settings[key as keyof KYCSettings] && (
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
+                    <ShieldCheck className="w-4 h-4 text-[#ff4000]" />
                   )}
                   <Switch
                     id={key}

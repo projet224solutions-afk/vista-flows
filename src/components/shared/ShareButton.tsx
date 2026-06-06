@@ -177,7 +177,7 @@ export function ShareButton({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
-          {copied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Link2 className="w-4 h-4 mr-2" />}
+          {copied ? <Check className="w-4 h-4 mr-2 text-[#ff4000]" /> : <Link2 className="w-4 h-4 mr-2" />}
           Copier le lien
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleWhatsAppShare} className="cursor-pointer">

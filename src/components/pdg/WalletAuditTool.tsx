@@ -423,16 +423,16 @@ export function WalletAuditTool() {
   const getIssueIcon = (type: string) => {
     switch (type) {
       case 'critical': return <XCircle className="h-4 w-4 text-destructive" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-[#ff4000]" />;
       default: return <AlertCircle className="h-4 w-4 text-blue-500" />;
     }
   };
 
   const getSignatureStatusColor = (status: string) => {
     switch (status) {
-      case 'valid': return 'bg-green-100 text-green-800';
-      case 'invalid': return 'bg-red-100 text-red-800';
-      case 'expired': return 'bg-yellow-100 text-yellow-800';
+      case 'valid': return 'bg-orange-100 text-[#ff4000]';
+      case 'invalid': return 'bg-orange-100 text-[#ff4000]';
+      case 'expired': return 'bg-orange-100 text-[#ff4000]';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -492,19 +492,19 @@ export function WalletAuditTool() {
                 <div className="space-y-4">
                   {/* Score de santé */}
                   <Card className={`border-2 ${
-                    auditResult.summary.healthScore >= 80 ? 'border-green-500' :
-                    auditResult.summary.healthScore >= 50 ? 'border-yellow-500' : 'border-red-500'
+                    auditResult.summary.healthScore >= 80 ? 'border-[#ff4000]' :
+                    auditResult.summary.healthScore >= 50 ? 'border-[#ff4000]' : 'border-[#ff4000]'
                   }`}>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className={`p-3 rounded-full ${
-                            auditResult.summary.healthScore >= 80 ? 'bg-green-100' :
-                            auditResult.summary.healthScore >= 50 ? 'bg-yellow-100' : 'bg-red-100'
+                            auditResult.summary.healthScore >= 80 ? 'bg-orange-100' :
+                            auditResult.summary.healthScore >= 50 ? 'bg-orange-100' : 'bg-orange-100'
                           }`}>
                             <Wallet className={`h-6 w-6 ${
-                              auditResult.summary.healthScore >= 80 ? 'text-green-600' :
-                              auditResult.summary.healthScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                              auditResult.summary.healthScore >= 80 ? 'text-[#ff4000]' :
+                              auditResult.summary.healthScore >= 50 ? 'text-[#ff4000]' : 'text-[#ff4000]'
                             }`} />
                           </div>
                           <div>
@@ -520,7 +520,7 @@ export function WalletAuditTool() {
                       {/* Stats rapides */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="text-center p-3 bg-muted rounded-lg">
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-[#ff4000]">
                             {formatAmount(auditResult.storedBalance)}
                           </p>
                           <p className="text-xs text-muted-foreground">Solde actuel</p>
@@ -533,7 +533,7 @@ export function WalletAuditTool() {
                         </div>
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <p className={`text-2xl font-bold ${
-                            auditResult.isBalanceCorrect ? 'text-green-600' : 'text-red-600'
+                            auditResult.isBalanceCorrect ? 'text-[#ff4000]' : 'text-[#ff4000]'
                           }`}>
                             {auditResult.isBalanceCorrect ? '✓' : formatAmount(auditResult.balanceDifference)}
                           </p>
@@ -554,7 +554,7 @@ export function WalletAuditTool() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                          <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
                           Problèmes Détectés ({auditResult.issues.length})
                         </CardTitle>
                       </CardHeader>
@@ -659,13 +659,13 @@ export function WalletAuditTool() {
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-full ${
                                 auditResult.wallet?.wallet_status === 'blocked'
-                                  ? 'bg-red-100'
-                                  : 'bg-green-100'
+                                  ? 'bg-orange-100'
+                                  : 'bg-orange-100'
                               }`}>
                                 {auditResult.wallet?.wallet_status === 'blocked' ? (
-                                  <Lock className="h-5 w-5 text-red-600" />
+                                  <Lock className="h-5 w-5 text-[#ff4000]" />
                                 ) : (
-                                  <Unlock className="h-5 w-5 text-green-600" />
+                                  <Unlock className="h-5 w-5 text-[#ff4000]" />
                                 )}
                               </div>
                               <div>
@@ -685,7 +685,7 @@ export function WalletAuditTool() {
                                 onClick={unblockWallet}
                                 disabled={actionLoading === 'unblock'}
                                 variant="outline"
-                                className="border-green-500 text-green-600 hover:bg-green-50"
+                                className="border-[#ff4000] text-[#ff4000] hover:bg-orange-50"
                               >
                                 {actionLoading === 'unblock' ? (
                                   <RefreshCw className="h-4 w-4 animate-spin mr-2" />
@@ -759,8 +759,8 @@ export function WalletAuditTool() {
                         {/* Gestion des abonnements */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-purple-100">
-                              <CreditCard className="h-5 w-5 text-purple-600" />
+                            <div className="p-2 rounded-full bg-blue-100">
+                              <CreditCard className="h-5 w-5 text-[#04439e]" />
                             </div>
                             <div>
                               <p className="font-medium">Abonnements</p>
@@ -804,7 +804,7 @@ export function WalletAuditTool() {
 
                             <div className="grid grid-cols-3 gap-3">
                               <div className="text-center p-2 bg-background rounded">
-                                <p className="text-xl font-bold text-green-600">
+                                <p className="text-xl font-bold text-[#ff4000]">
                                   {userSubscriptions.stats?.active || 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">Actifs</p>
@@ -865,7 +865,7 @@ export function WalletAuditTool() {
                                         <div className="flex items-center gap-1 text-muted-foreground">
                                           <Clock className="h-3 w-3" />
                                           <span>Expire:</span>
-                                          <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-green-600 font-medium' : 'font-medium')}>
+                                          <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-[#ff4000] font-medium' : 'font-medium')}>
                                             {sub._is_unlimited
                                               ? '∞ Illimité'
                                               : (sub._end_date
@@ -919,12 +919,12 @@ export function WalletAuditTool() {
                             {auditResult.transactions.slice(0, 50).map((tx, idx) => (
                               <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                                 <div className={`p-2 rounded-full ${
-                                  tx._direction === 'received' ? 'bg-green-100' : 'bg-red-100'
+                                  tx._direction === 'received' ? 'bg-orange-100' : 'bg-orange-100'
                                 }`}>
                                   {tx._direction === 'received' ? (
-                                    <TrendingUp className="h-4 w-4 text-green-600" />
+                                    <TrendingUp className="h-4 w-4 text-[#ff4000]" />
                                   ) : (
-                                    <TrendingDown className="h-4 w-4 text-red-600" />
+                                    <TrendingDown className="h-4 w-4 text-[#ff4000]" />
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -942,7 +942,7 @@ export function WalletAuditTool() {
                                 </div>
                                 <div className="text-right">
                                   <p className={`font-bold ${
-                                    tx._direction === 'received' ? 'text-green-600' : 'text-red-600'
+                                    tx._direction === 'received' ? 'text-[#ff4000]' : 'text-[#ff4000]'
                                   }`}>
                                     {tx._direction === 'received' ? '+' : '-'}
                                     {formatAmount(Number(tx.amount) || 0)}
@@ -995,9 +995,9 @@ export function WalletAuditTool() {
 
                   {/* Activités suspectes */}
                   {auditResult.suspiciousActivities.length > 0 && (
-                    <Card className="border-red-200">
+                    <Card className="border-orange-200">
                       <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2 text-red-600">
+                        <CardTitle className="text-lg flex items-center gap-2 text-[#ff4000]">
                           <AlertTriangle className="h-5 w-5" />
                           Activités Suspectes ({auditResult.suspiciousActivities.length})
                         </CardTitle>
@@ -1045,28 +1045,28 @@ export function WalletAuditTool() {
                     </Card>
                     <Card>
                       <CardContent className="pt-6 text-center">
-                        <Wallet className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                        <Wallet className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
                         <p className="text-2xl font-bold">{globalStats.totalWallets}</p>
                         <p className="text-xs text-muted-foreground">Wallets créés</p>
                       </CardContent>
                     </Card>
-                    <Card className={globalStats.usersWithoutWalletCount > 0 ? 'border-yellow-500' : ''}>
+                    <Card className={globalStats.usersWithoutWalletCount > 0 ? 'border-[#ff4000]' : ''}>
                       <CardContent className="pt-6 text-center">
-                        <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
+                        <AlertTriangle className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
                         <p className="text-2xl font-bold">{globalStats.usersWithoutWalletCount}</p>
                         <p className="text-xs text-muted-foreground">Sans wallet</p>
                       </CardContent>
                     </Card>
-                    <Card className={globalStats.problematicWalletsCount > 0 ? 'border-red-500' : ''}>
+                    <Card className={globalStats.problematicWalletsCount > 0 ? 'border-[#ff4000]' : ''}>
                       <CardContent className="pt-6 text-center">
-                        <XCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                        <XCircle className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
                         <p className="text-2xl font-bold">{globalStats.problematicWalletsCount}</p>
                         <p className="text-xs text-muted-foreground">Wallets problématiques</p>
                       </CardContent>
                     </Card>
-                    <Card className={globalStats.unresolvedSuspiciousCount > 0 ? 'border-red-500' : ''}>
+                    <Card className={globalStats.unresolvedSuspiciousCount > 0 ? 'border-[#ff4000]' : ''}>
                       <CardContent className="pt-6 text-center">
-                        <Shield className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                        <Shield className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
                         <p className="text-2xl font-bold">{globalStats.unresolvedSuspiciousCount}</p>
                         <p className="text-xs text-muted-foreground">Activités suspectes</p>
                       </CardContent>
@@ -1118,10 +1118,10 @@ export function WalletAuditTool() {
                         <ScrollArea className="h-[250px]">
                           <div className="space-y-2">
                             {problematicWallets.map((wallet, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+                              <div key={idx} className="flex items-center justify-between p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    {wallet.is_blocked && <Lock className="h-4 w-4 text-red-500" />}
+                                    {wallet.is_blocked && <Lock className="h-4 w-4 text-[#ff4000]" />}
                                     <Badge variant={wallet.wallet_status === 'active' ? 'default' : 'destructive'}>
                                       {wallet.wallet_status}
                                     </Badge>
@@ -1172,24 +1172,24 @@ export function WalletAuditTool() {
                         <p className="text-xs text-muted-foreground">Total APIs</p>
                       </CardContent>
                     </Card>
-                    <Card className="border-green-500">
+                    <Card className="border-[#ff4000]">
                       <CardContent className="pt-6 text-center">
-                        <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-1" />
-                        <p className="text-2xl font-bold text-green-600">{apiSignatures.stats.valid}</p>
+                        <CheckCircle className="h-6 w-6 mx-auto text-[#ff4000] mb-1" />
+                        <p className="text-2xl font-bold text-[#ff4000]">{apiSignatures.stats.valid}</p>
                         <p className="text-xs text-muted-foreground">Valides</p>
                       </CardContent>
                     </Card>
-                    <Card className={apiSignatures.stats.invalid > 0 ? 'border-red-500' : ''}>
+                    <Card className={apiSignatures.stats.invalid > 0 ? 'border-[#ff4000]' : ''}>
                       <CardContent className="pt-6 text-center">
-                        <XCircle className="h-6 w-6 mx-auto text-red-600 mb-1" />
-                        <p className="text-2xl font-bold text-red-600">{apiSignatures.stats.invalid}</p>
+                        <XCircle className="h-6 w-6 mx-auto text-[#ff4000] mb-1" />
+                        <p className="text-2xl font-bold text-[#ff4000]">{apiSignatures.stats.invalid}</p>
                         <p className="text-xs text-muted-foreground">Invalides</p>
                       </CardContent>
                     </Card>
-                    <Card className={apiSignatures.stats.expired > 0 ? 'border-yellow-500' : ''}>
+                    <Card className={apiSignatures.stats.expired > 0 ? 'border-[#ff4000]' : ''}>
                       <CardContent className="pt-6 text-center">
-                        <Clock className="h-6 w-6 mx-auto text-yellow-600 mb-1" />
-                        <p className="text-2xl font-bold text-yellow-600">{apiSignatures.stats.expired}</p>
+                        <Clock className="h-6 w-6 mx-auto text-[#ff4000] mb-1" />
+                        <p className="text-2xl font-bold text-[#ff4000]">{apiSignatures.stats.expired}</p>
                         <p className="text-xs text-muted-foreground">Expirées</p>
                       </CardContent>
                     </Card>
@@ -1312,7 +1312,7 @@ export function WalletAuditTool() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-yellow-500" />
+                      <Zap className="h-5 w-5 text-[#ff4000]" />
                       Actions Rapides
                     </CardTitle>
                   </CardHeader>
@@ -1365,19 +1365,19 @@ export function WalletAuditTool() {
                         <p className="text-xs text-muted-foreground">Utilisateurs</p>
                       </div>
                       <div className="text-center p-3 bg-muted rounded-lg">
-                        <p className="text-xl font-bold text-green-600">{globalStats.totalWallets}</p>
+                        <p className="text-xl font-bold text-[#ff4000]">{globalStats.totalWallets}</p>
                         <p className="text-xs text-muted-foreground">Wallets créés</p>
                       </div>
-                      <div className="text-center p-3 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
-                        <p className="text-xl font-bold text-yellow-600">{globalStats.usersWithoutWalletCount}</p>
+                      <div className="text-center p-3 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-xl font-bold text-[#ff4000]">{globalStats.usersWithoutWalletCount}</p>
                         <p className="text-xs text-muted-foreground">Sans wallet</p>
                       </div>
-                      <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
-                        <p className="text-xl font-bold text-red-600">{globalStats.problematicWalletsCount}</p>
+                      <div className="text-center p-3 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-xl font-bold text-[#ff4000]">{globalStats.problematicWalletsCount}</p>
                         <p className="text-xs text-muted-foreground">Problématiques</p>
                       </div>
-                      <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
-                        <p className="text-xl font-bold text-red-600">{globalStats.unresolvedSuspiciousCount}</p>
+                      <div className="text-center p-3 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-xl font-bold text-[#ff4000]">{globalStats.unresolvedSuspiciousCount}</p>
                         <p className="text-xs text-muted-foreground">Suspects</p>
                       </div>
                     </div>
@@ -1387,10 +1387,10 @@ export function WalletAuditTool() {
 
               {/* Résultats des actions batch */}
               {batchResult && (
-                <Card className="border-green-500">
+                <Card className="border-[#ff4000]">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <CheckCircle className="h-5 w-5 text-[#ff4000]" />
                       Résultat de l'Action
                     </CardTitle>
                   </CardHeader>
@@ -1407,16 +1407,16 @@ export function WalletAuditTool() {
                             <span>Manquants: <strong>{batchResult.stats.totalMissing}</strong></span>
                           )}
                           {batchResult.stats.reconciled !== undefined && (
-                            <span className="text-green-600">Réconciliés: <strong>{batchResult.stats.reconciled}</strong></span>
+                            <span className="text-[#ff4000]">Réconciliés: <strong>{batchResult.stats.reconciled}</strong></span>
                           )}
                           {batchResult.stats.created !== undefined && (
-                            <span className="text-green-600">Créés: <strong>{batchResult.stats.created}</strong></span>
+                            <span className="text-[#ff4000]">Créés: <strong>{batchResult.stats.created}</strong></span>
                           )}
                           {batchResult.stats.skipped !== undefined && (
                             <span className="text-muted-foreground">Ignorés: <strong>{batchResult.stats.skipped}</strong></span>
                           )}
                           {batchResult.stats.errors !== undefined && batchResult.stats.errors > 0 && (
-                            <span className="text-red-600">Erreurs: <strong>{batchResult.stats.errors}</strong></span>
+                            <span className="text-[#ff4000]">Erreurs: <strong>{batchResult.stats.errors}</strong></span>
                           )}
                         </div>
                       </AlertDescription>
@@ -1429,9 +1429,9 @@ export function WalletAuditTool() {
                             <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg text-sm">
                               <div className="flex items-center gap-2">
                                 {result.status === 'reconciled' || result.status === 'created' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <CheckCircle className="h-4 w-4 text-[#ff4000]" />
                                 ) : (
-                                  <XCircle className="h-4 w-4 text-red-500" />
+                                  <XCircle className="h-4 w-4 text-[#ff4000]" />
                                 )}
                                 <Badge variant="outline" className="font-mono text-xs">
                                   {result.customId || result.userId?.slice(0, 8)}
@@ -1443,7 +1443,7 @@ export function WalletAuditTool() {
                                     {formatAmount(result.oldBalance)}
                                   </span>
                                   <span>→</span>
-                                  <span className="text-green-600 font-medium">
+                                  <span className="text-[#ff4000] font-medium">
                                     {formatAmount(result.newBalance)}
                                   </span>
                                   {result.difference !== 0 && (
@@ -1454,7 +1454,7 @@ export function WalletAuditTool() {
                                 </div>
                               )}
                               {result.walletId && (
-                                <Badge variant="outline" className="text-xs text-green-600">
+                                <Badge variant="outline" className="text-xs text-[#ff4000]">
                                   Wallet créé
                                 </Badge>
                               )}
@@ -1482,16 +1482,16 @@ export function WalletAuditTool() {
                         <p className="text-lg font-bold">{apiSignatures.stats.total}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                       </div>
-                      <div className="text-center p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
-                        <p className="text-lg font-bold text-green-600">{apiSignatures.stats.valid}</p>
+                      <div className="text-center p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-lg font-bold text-[#ff4000]">{apiSignatures.stats.valid}</p>
                         <p className="text-xs text-muted-foreground">Valides</p>
                       </div>
-                      <div className="text-center p-2 bg-red-100 dark:bg-red-950/30 rounded-lg">
-                        <p className="text-lg font-bold text-red-600">{apiSignatures.stats.invalid}</p>
+                      <div className="text-center p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-lg font-bold text-[#ff4000]">{apiSignatures.stats.invalid}</p>
                         <p className="text-xs text-muted-foreground">Invalides</p>
                       </div>
-                      <div className="text-center p-2 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
-                        <p className="text-lg font-bold text-yellow-600">{apiSignatures.stats.expired}</p>
+                      <div className="text-center p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
+                        <p className="text-lg font-bold text-[#ff4000]">{apiSignatures.stats.expired}</p>
                         <p className="text-xs text-muted-foreground">Expirées</p>
                       </div>
                     </div>

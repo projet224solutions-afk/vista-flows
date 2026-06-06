@@ -100,23 +100,23 @@ export function OfflineSyncIndicator({
     }
 
     if (hasIssues) {
-      return <AlertCircle className="w-4 h-4 text-red-500" />;
+      return <AlertCircle className="w-4 h-4 text-[#ff4000]" />;
     }
 
     if (hasPending) {
-      return <Cloud className="w-4 h-4 text-yellow-500" />;
+      return <Cloud className="w-4 h-4 text-[#ff4000]" />;
     }
 
-    return <Wifi className="w-4 h-4 text-green-500" />;
+    return <Wifi className="w-4 h-4 text-[#ff4000]" />;
   };
 
   // Couleur du badge
   const getBadgeColor = () => {
     if (isSyncing) return 'bg-blue-500';
     if (isOffline) return 'bg-orange-500';
-    if (hasIssues) return 'bg-red-500';
-    if (hasPending) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (hasIssues) return 'bg-[#ff4000]';
+    if (hasPending) return 'bg-[#ff4000]';
+    return 'bg-[#ff4000]';
   };
 
   // Texte du statut
@@ -186,9 +186,9 @@ export function OfflineSyncIndicator({
           className={cn(
             'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors',
             isOffline ? 'bg-orange-100 dark:bg-orange-900/30' :
-            hasIssues ? 'bg-red-100 dark:bg-red-900/30' :
-            hasPending ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-            'bg-green-100 dark:bg-green-900/30',
+            hasIssues ? 'bg-orange-100 dark:bg-[#ff4000]/30' :
+            hasPending ? 'bg-orange-100 dark:bg-[#ff4000]/30' :
+            'bg-orange-100 dark:bg-[#ff4000]/30',
             'hover:opacity-80',
             className
           )}
@@ -197,9 +197,9 @@ export function OfflineSyncIndicator({
           <span className={cn(
             'font-medium',
             isOffline ? 'text-orange-700 dark:text-orange-300' :
-            hasIssues ? 'text-red-700 dark:text-red-300' :
-            hasPending ? 'text-yellow-700 dark:text-yellow-300' :
-            'text-green-700 dark:text-green-300'
+            hasIssues ? 'text-[#ff4000] dark:text-orange-300' :
+            hasPending ? 'text-[#ff4000] dark:text-orange-300' :
+            'text-[#ff4000] dark:text-orange-300'
           )}>
             {getStatusText()}
           </span>
@@ -265,7 +265,7 @@ function SyncPopoverContent({
         <h4 className="font-semibold">État de la synchronisation</h4>
         <div className={cn(
           'px-2 py-0.5 rounded-full text-xs font-medium',
-          isOffline ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+          isOffline ? 'bg-orange-100 text-orange-700' : 'bg-orange-100 text-[#ff4000]'
         )}>
           {isOffline ? 'Hors ligne' : 'En ligne'}
         </div>
@@ -288,7 +288,7 @@ function SyncPopoverContent({
           </span>
           <span className={cn(
             'font-medium',
-            pendingCount > 0 ? 'text-yellow-600' : 'text-gray-600'
+            pendingCount > 0 ? 'text-[#ff4000]' : 'text-gray-600'
           )}>
             {pendingCount} élément(s)
           </span>
@@ -300,7 +300,7 @@ function SyncPopoverContent({
               <AlertCircle className="w-3 h-3" />
               En échec
             </span>
-            <span className="font-medium text-red-600">
+            <span className="font-medium text-[#ff4000]">
               {failedCount} élément(s)
             </span>
           </div>

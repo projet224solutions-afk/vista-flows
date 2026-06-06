@@ -40,24 +40,31 @@ export function useVendorStats() {
       setError(null);
 
       // 🚀 Parallel with targeted selects
-      const [revenueResult, ordersResult, customersResult, productsResult, pendingResult, lowStockResult] = await Promise.allSettled([
+      const [revenueResult, ordersResult, customersResult, productsResult, pendingResult, lowStockResult, posSalesResult] = await Promise.allSettled([
         supabase.from('orders').select('total_amount').eq('vendor_id', vendorId).eq('payment_status', 'paid'),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('vendor_id', vendorId),
         supabase.from('customers').select('id', { count: 'exact', head: true }),
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('vendor_id', vendorId).eq('is_active', true),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('vendor_id', vendorId).eq('status', 'pending'),
         supabase.from('products').select('id, stock_quantity, low_stock_threshold').eq('vendor_id', vendorId).eq('is_active', true),
+        supabase.from('pos_sales').select('total_amount, status').eq('vendor_id', vendorId),
       ]);
 
-      const revenue = revenueResult.status === 'fulfilled' && revenueResult.value.data
+      // Ventes POS hors-ligne (pos_sales) — payées par nature, à inclure dans le CA + nb de ventes
+      const posSales = posSalesResult.status === 'fulfilled' && posSalesResult.value.data
+        ? (posSalesResult.value.data as any[]).filter((s) => s.status !== 'cancelled') : [];
+      const posRevenue = posSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+
+      const ordersPaidRevenue = revenueResult.status === 'fulfilled' && revenueResult.value.data
         ? revenueResult.value.data.reduce((sum, order) => sum + (order.total_amount || 0), 0) : 0;
+      const revenue = ordersPaidRevenue + posRevenue;
       const lowStockCount = lowStockResult.status === 'fulfilled' && lowStockResult.value.data
         ? lowStockResult.value.data.filter((p) => p.stock_quantity <= (p.low_stock_threshold || 0)).length : 0;
 
       const newStats: VendorStats = {
         vendorId,
         revenue,
-        orders_count: ordersResult.status === 'fulfilled' ? (ordersResult.value.count || 0) : 0,
+        orders_count: (ordersResult.status === 'fulfilled' ? (ordersResult.value.count || 0) : 0) + posSales.length,
         customers_count: customersResult.status === 'fulfilled' ? (customersResult.value.count || 0) : 0,
         products_count: productsResult.status === 'fulfilled' ? (productsResult.value.count || 0) : 0,
         pending_orders: pendingResult.status === 'fulfilled' ? (pendingResult.value.count || 0) : 0,

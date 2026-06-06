@@ -526,11 +526,11 @@ export default function StripeDiagnostic() {
   const getStatusIcon = (status: DiagnosticResult['status']) => {
     switch (status) {
       case 'success':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />;
       case 'error':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-[#ff4000]" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="w-4 h-4 text-[#ff4000]" />;
       case 'pending':
         return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
     }
@@ -539,11 +539,11 @@ export default function StripeDiagnostic() {
   const getStatusColor = (status: DiagnosticResult['status']) => {
     switch (status) {
       case 'success':
-        return 'bg-green-50 border-green-200 dark:bg-green-900/10';
+        return 'bg-orange-50 border-orange-200 dark:bg-[#ff4000]/10';
       case 'error':
-        return 'bg-red-50 border-red-200 dark:bg-red-900/10';
+        return 'bg-orange-50 border-orange-200 dark:bg-[#ff4000]/10';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10';
+        return 'bg-orange-50 border-orange-200 dark:bg-[#ff4000]/10';
       case 'pending':
         return 'bg-blue-50 border-blue-200 dark:bg-blue-900/10';
     }
@@ -646,45 +646,45 @@ export default function StripeDiagnostic() {
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
+          <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/10">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400">
+              <CardTitle className="text-sm font-medium text-[#ff4000] dark:text-[#ff4000]">
                 Succès
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-700 dark:text-green-400">
+              <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.success}
               </div>
-              <p className="text-xs text-green-600 dark:text-green-500">Tests réussis</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">Tests réussis</p>
             </CardContent>
           </Card>
 
-          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10">
+          <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/10">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+              <CardTitle className="text-sm font-medium text-[#ff4000] dark:text-[#ff4000]">
                 Avertissements
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+              <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.warning}
               </div>
-              <p className="text-xs text-yellow-600 dark:text-yellow-500">À vérifier</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">À vérifier</p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
+          <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/10">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-400">
+              <CardTitle className="text-sm font-medium text-[#ff4000] dark:text-[#ff4000]">
                 Erreurs
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-700 dark:text-red-400">
+              <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.error}
               </div>
-              <p className="text-xs text-red-600 dark:text-red-500">À corriger</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">À corriger</p>
             </CardContent>
           </Card>
         </div>
@@ -748,9 +748,9 @@ export default function StripeDiagnostic() {
 
       {results.length > 0 && summary.error === 0 && summary.warning === 0 && (
         <Alert>
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
           <AlertDescription>
-            <strong className="text-green-700">Système opérationnel !</strong>
+            <strong className="text-[#ff4000]">Système opérationnel !</strong>
             <p className="mt-2">Tous les tests sont passés avec succès. Le système de paiement Stripe est prêt à être utilisé.</p>
             <div className="mt-4 flex space-x-2">
               <Button size="sm" onClick={() => navigate('/test-stripe-payment')}>

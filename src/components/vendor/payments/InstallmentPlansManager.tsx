@@ -333,10 +333,10 @@ export default function InstallmentPlansManager() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-xs text-muted-foreground">Reçu</p>
-                <p className="text-lg font-bold text-green-600">{totalReceived.toLocaleString()}</p>
+                <p className="text-lg font-bold text-[#ff4000]">{totalReceived.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -382,8 +382,8 @@ export default function InstallmentPlansManager() {
                   onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${plan.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-primary/10'}`}>
-                      <User className={`w-4 h-4 ${plan.status === 'completed' ? 'text-green-600' : 'text-primary'}`} />
+                    <div className={`p-2 rounded-lg ${plan.status === 'completed' ? 'bg-orange-100 dark:bg-[#ff4000]/30' : 'bg-primary/10'}`}>
+                      <User className={`w-4 h-4 ${plan.status === 'completed' ? 'text-[#ff4000]' : 'text-primary'}`} />
                     </div>
                     <div>
                       <p className="font-semibold">{plan.customer_name}</p>
@@ -422,7 +422,7 @@ export default function InstallmentPlansManager() {
                           key={payment.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
                             payment.status === 'paid'
-                              ? 'bg-green-50 dark:bg-green-900/20'
+                              ? 'bg-orange-50 dark:bg-[#ff4000]/20'
                               : isOverdue
                                 ? 'bg-destructive/10'
                                 : 'bg-muted/50'
@@ -430,7 +430,7 @@ export default function InstallmentPlansManager() {
                         >
                           <div className="flex items-center gap-3">
                             {payment.status === 'paid' ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-600" />
+                              <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                             ) : isOverdue ? (
                               <AlertCircle className="w-5 h-5 text-destructive" />
                             ) : (

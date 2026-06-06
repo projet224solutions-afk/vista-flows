@@ -96,15 +96,15 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
   const getStatusConfig = (status: RestaurantReservation['status']) => {
     switch (status) {
       case 'pending':
-        return { label: 'En attente', color: 'bg-yellow-500', icon: Clock };
+        return { label: 'En attente', color: 'bg-[#ff4000]', icon: Clock };
       case 'confirmed':
         return { label: 'Confirmée', color: 'bg-blue-500', icon: CheckCircle };
       case 'seated':
-        return { label: 'À table', color: 'bg-purple-500', icon: Users };
+        return { label: 'À table', color: 'bg-[#04439e]', icon: Users };
       case 'completed':
-        return { label: 'Terminée', color: 'bg-green-500', icon: CheckCircle };
+        return { label: 'Terminée', color: 'bg-[#ff4000]', icon: CheckCircle };
       case 'cancelled':
-        return { label: 'Annulée', color: 'bg-red-500', icon: XCircle };
+        return { label: 'Annulée', color: 'bg-[#ff4000]', icon: XCircle };
       case 'no_show':
         return { label: 'Absent', color: 'bg-gray-500', icon: XCircle };
       default:
@@ -323,22 +323,22 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
             <div className="text-xs text-blue-600/80">Aujourd'hui</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-900/10">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/10">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            <div className="text-xs text-yellow-600/80">En attente</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.pending}</div>
+            <div className="text-xs text-[#ff4000]/80">En attente</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-900/10">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-[#04439e]/20 dark:to-[#04439e]/10">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.todayGuests}</div>
-            <div className="text-xs text-purple-600/80">Couverts</div>
+            <div className="text-2xl font-bold text-[#04439e]">{stats.todayGuests}</div>
+            <div className="text-xs text-[#04439e]/80">Couverts</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/10">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
-            <div className="text-xs text-green-600/80">Confirmées</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.confirmed}</div>
+            <div className="text-xs text-[#ff4000]/80">Confirmées</div>
           </CardContent>
         </Card>
       </div>
@@ -469,8 +469,8 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
 
               {/* Notes */}
               {selectedReservation.special_requests && (
-                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
-                  <div className="text-xs font-medium text-amber-700 mb-1 flex items-center gap-1">
+                <div className="p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border border-orange-200">
+                  <div className="text-xs font-medium text-[#ff4000] mb-1 flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" />
                     Demandes spéciales
                   </div>
@@ -480,9 +480,9 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
 
               {/* Table assignée */}
               {selectedReservation.table_number && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                  <span className="text-sm text-green-700">Table assignée: </span>
-                  <span className="font-bold text-green-700">{selectedReservation.table_number}</span>
+                <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg text-center">
+                  <span className="text-sm text-[#ff4000]">Table assignée: </span>
+                  <span className="font-bold text-[#ff4000]">{selectedReservation.table_number}</span>
                 </div>
               )}
             </div>

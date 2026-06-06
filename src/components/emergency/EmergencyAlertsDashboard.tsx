@@ -214,7 +214,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
     <div className="space-y-6">
       {/* En-tête avec statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -229,12 +229,12 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-[#ff4000]" />
               Résolues Aujourd'hui
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-green-600">{stats?.resolved_alerts || 0}</p>
+            <p className="text-3xl font-bold text-[#ff4000]">{stats?.resolved_alerts || 0}</p>
           </CardContent>
         </Card>
 
@@ -271,7 +271,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
       {activeAlerts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <CheckCircle className="h-16 w-16 text-[#ff4000] mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Aucune Alerte Active</h3>
             <p className="text-muted-foreground">
               Tous les conducteurs sont en sécurité. Le système surveille en temps réel.
@@ -285,7 +285,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
                   Alertes en Cours ({activeAlerts.length})
                 </CardTitle>
               </CardHeader>
@@ -366,7 +366,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
 
                       <div className="border-t pt-4">
                         <label className="text-sm font-medium text-muted-foreground">Temps écoulé</label>
-                        <p className="text-xl font-semibold text-red-600">
+                        <p className="text-xl font-semibold text-[#ff4000]">
                           {Math.floor((selectedAlert.seconds_since_alert || 0) / 60)} min {Math.floor((selectedAlert.seconds_since_alert || 0) % 60)} sec
                         </p>
                       </div>

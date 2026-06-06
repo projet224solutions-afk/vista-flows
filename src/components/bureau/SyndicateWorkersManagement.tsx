@@ -127,7 +127,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
   const getAccessLevelBadge = (level: string) => {
     switch (level) {
       case 'president':
-        return <Badge className="bg-amber-500 text-white"><Crown className="w-3 h-3 mr-1" />Président</Badge>;
+        return <Badge className="bg-[#ff4000] text-white"><Crown className="w-3 h-3 mr-1" />Président</Badge>;
       case 'secretary':
         return <Badge className="bg-blue-500 text-white">Secrétaire</Badge>;
       default:
@@ -155,8 +155,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <UserCheck className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                <UserCheck className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.activeWorkers}</p>
@@ -168,8 +168,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Crown className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                <Crown className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.presidentCount}</p>
@@ -181,8 +181,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <Key className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Key className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.secretaryCount}</p>

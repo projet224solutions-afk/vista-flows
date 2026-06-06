@@ -88,16 +88,16 @@ interface Order {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
   confirmed: 'bg-blue-100 text-blue-800',
-  processing: 'bg-purple-100 text-purple-800',
-  preparing: 'bg-purple-100 text-purple-800',
+  processing: 'bg-blue-100 text-[#04439e]',
+  preparing: 'bg-blue-100 text-[#04439e]',
   ready: 'bg-blue-100 text-blue-800',
   shipped: 'bg-orange-100 text-orange-800',
   in_transit: 'bg-orange-100 text-orange-800',
-  delivered: 'bg-green-100 text-green-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800'
+  delivered: 'bg-orange-100 text-[#ff4000]',
+  completed: 'bg-orange-100 text-[#ff4000]',
+  cancelled: 'bg-orange-100 text-[#ff4000]'
 };
 
 const statusLabels: Record<string, string> = {
@@ -114,9 +114,9 @@ const statusLabels: Record<string, string> = {
 };
 
 const paymentStatusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
+  paid: 'bg-orange-100 text-[#ff4000]',
+  failed: 'bg-orange-100 text-[#ff4000]',
   refunded: 'bg-gray-100 text-gray-800'
 };
 
@@ -545,7 +545,7 @@ export default function OrderManagement() {
           key="confirm"
           size="sm"
           disabled={updatingOrderId === order.id}
-          className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+          className="bg-[#ff4000] hover:bg-[#ff4000] text-white disabled:opacity-50"
           onClick={(e) => {
             e.stopPropagation();
             console.log('✅ Confirming order:', order.id);
@@ -618,7 +618,7 @@ export default function OrderManagement() {
         <Button
           key="deliver"
           size="sm"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
           onClick={(e) => {
             e.stopPropagation();
             console.log('✅ Delivering order:', order.id);
@@ -660,7 +660,7 @@ export default function OrderManagement() {
       <Button
         key="refund"
         size="sm"
-        className="bg-red-600 hover:bg-red-700 text-white"
+        className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
         onClick={async (e) => {
           e.stopPropagation();
           if (confirm(`Êtes-vous sûr de vouloir rembourser la commande ${order.order_number} ?`)) {
@@ -881,13 +881,13 @@ export default function OrderManagement() {
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">En attente</p>
-                <p className="text-lg md:text-2xl font-bold text-yellow-600">
+                <p className="text-lg md:text-2xl font-bold text-[#ff4000]">
                   {pendingOnlineOrders}
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
                 <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Livrées</p>
-                <p className="text-lg md:text-2xl font-bold text-green-600">
+                <p className="text-lg md:text-2xl font-bold text-[#ff4000]">
                   {deliveredOnlineOrders}
                 </p>
               </div>
@@ -1044,8 +1044,8 @@ export default function OrderManagement() {
                     <Card className="bg-white/80 dark:bg-card">
                       <CardContent className="p-3 md:p-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <div className="w-8 h-8 rounded-lg bg-[#ff4000]/10 flex items-center justify-center">
+                            <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                           </div>
                           <div>
                             <p className="text-[10px] md:text-xs text-muted-foreground">Payées</p>
@@ -1165,7 +1165,7 @@ export default function OrderManagement() {
                         {fmtAmount(order.total_amount)}
                       </p>
                       {order.discount_amount > 0 && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-[#ff4000]">
                           Remise: -{fmtAmount(order.discount_amount)}
                         </p>
                       )}
@@ -1235,12 +1235,12 @@ export default function OrderManagement() {
               </CardContent>
             </Card>
             <Card
-              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'pending' ? 'ring-2 ring-yellow-500' : ''}`}
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'pending' ? 'ring-2 ring-[#ff4000]' : ''}`}
               onClick={() => setOnlineStatusFilter('pending')}
             >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">En attente</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-2xl font-bold text-[#ff4000]">
                   {pendingOnlineOrders}
                 </p>
               </CardContent>
@@ -1257,12 +1257,12 @@ export default function OrderManagement() {
               </CardContent>
             </Card>
             <Card
-              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'delivered' ? 'ring-2 ring-green-500' : ''}`}
+              className={`bg-white/80 cursor-pointer transition-all hover:shadow-md ${onlineStatusFilter === 'delivered' ? 'ring-2 ring-[#ff4000]' : ''}`}
               onClick={() => setOnlineStatusFilter('delivered')}
             >
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">Livrées</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-[#ff4000]">
                   {deliveredOnlineOrders}
                 </p>
               </CardContent>
@@ -1322,10 +1322,10 @@ export default function OrderManagement() {
                           order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? 'bg-orange-100 text-orange-800 border-orange-300 border-2' :
                           order.escrow.status === 'released'
-                            ? 'bg-green-100 text-green-800 border-green-300 border-2' :
+                            ? 'bg-orange-100 text-[#ff4000] border-orange-300 border-2' :
                           order.escrow.status === 'refunded'
                             ? 'bg-gray-100 text-gray-800' :
-                          'bg-red-100 text-red-800'
+                          'bg-orange-100 text-[#ff4000]'
                         }`}>
                           <Shield className="w-3 h-3 mr-1" />
                           {(order.escrow.status === 'pending' || order.escrow.status === 'held') && '🔒 Escrow'}
@@ -1336,7 +1336,7 @@ export default function OrderManagement() {
                       )}
                       {/* Badge Paiement à la livraison */}
                       {isCashOnDeliveryOrder(order) && (
-                        <Badge className="bg-amber-100 text-amber-800 border-amber-300 border-2 text-[10px] sm:text-xs shrink-0">
+                        <Badge className="bg-orange-100 text-[#ff4000] border-orange-300 border-2 text-[10px] sm:text-xs shrink-0">
                           💵 Paiement à la livraison
                         </Badge>
                       )}
@@ -1443,7 +1443,7 @@ export default function OrderManagement() {
                         {fmtAmount(order.total_amount)}
                       </p>
                       {order.discount_amount > 0 && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-[#ff4000]">
                           Remise: -{fmtAmount(order.discount_amount)}
                         </p>
                       )}
@@ -1463,7 +1463,7 @@ export default function OrderManagement() {
                       order.escrow.status === 'pending' || order.escrow.status === 'held'
                         ? 'bg-blue-50 border-blue-200'
                         : order.escrow.status === 'released'
-                        ? 'bg-green-50 border-green-200'
+                        ? 'bg-orange-50 border-orange-200'
                         : 'bg-gray-50 border-gray-200'
                     }`}>
                       <div className="flex items-start gap-2">
@@ -1471,7 +1471,7 @@ export default function OrderManagement() {
                           order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? 'text-blue-600'
                             : order.escrow.status === 'released'
-                            ? 'text-green-600'
+                            ? 'text-[#ff4000]'
                             : 'text-gray-600'
                         }`} />
                         <div className="flex-1">
@@ -1479,7 +1479,7 @@ export default function OrderManagement() {
                             order.escrow.status === 'pending' || order.escrow.status === 'held'
                               ? 'text-blue-800'
                               : order.escrow.status === 'released'
-                              ? 'text-green-800'
+                              ? 'text-[#ff4000]'
                               : 'text-gray-800'
                           }`}>
                             {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
@@ -1494,7 +1494,7 @@ export default function OrderManagement() {
                             order.escrow.status === 'pending' || order.escrow.status === 'held'
                               ? 'text-blue-700'
                               : order.escrow.status === 'released'
-                              ? 'text-green-700'
+                              ? 'text-[#ff4000]'
                               : 'text-gray-700'
                           }`}>
                             {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
@@ -1573,7 +1573,7 @@ export default function OrderManagement() {
             <Button
               onClick={() => void confirmOrderWithDeliveryDelay()}
               disabled={deliveryDialogOrder ? updatingOrderId === deliveryDialogOrder.id : false}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
             >
               <CheckCircle className="w-4 h-4 mr-1" />
               Confirmer
@@ -1621,7 +1621,7 @@ export default function OrderManagement() {
                       </div>
                     )}
                     {selectedOrder.discount_amount > 0 && (
-                      <div className="flex justify-between text-green-600">
+                      <div className="flex justify-between text-[#ff4000]">
                         <span>Remise:</span>
                         <span>-{fmtAmount(selectedOrder.discount_amount)}</span>
                       </div>
@@ -1721,9 +1721,9 @@ export default function OrderManagement() {
   .field { font-size: 11pt; font-weight: 600; color: #111; padding: 1.5mm 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 2mm; }
   .field .icon { font-size: 9pt; color: #666; min-width: 12mm; }
   .field .value { flex: 1; }
-  .cod-badge { background: #dc2626; color: #fff; font-size: 8pt; font-weight: 800; text-transform: uppercase; padding: 2mm 4mm; border-radius: 2mm; text-align: center; margin-top: 3mm; letter-spacing: 1px; }
-  .cod-phone { background: #fef2f2; border: 1.5px solid #dc2626; border-radius: 2mm; padding: 2mm 3mm; margin-top: 2mm; }
-  .cod-phone .value { color: #dc2626; font-weight: 800; font-size: 12pt; }
+  .cod-badge { background: #ff4000; color: #fff; font-size: 8pt; font-weight: 800; text-transform: uppercase; padding: 2mm 4mm; border-radius: 2mm; text-align: center; margin-top: 3mm; letter-spacing: 1px; }
+  .cod-phone { background: #fff4ee; border: 1.5px solid #ff4000; border-radius: 2mm; padding: 2mm 3mm; margin-top: 2mm; }
+  .cod-phone .value { color: #ff4000; font-weight: 800; font-size: 12pt; }
   .footer { margin-top: auto; text-align: center; border-top: 2px dashed #333; padding-top: 3mm; }
   .footer .date { font-size: 8pt; color: #888; }
   .address-block { background: #f8f8f8; border-radius: 2mm; padding: 2.5mm 3mm; margin-top: 2mm; }
@@ -1768,7 +1768,7 @@ export default function OrderManagement() {
       <span class="icon">📱</span>
       <span class="value">${codPhone}</span>
     </div>` : ''}
-    <div class="field" style="font-size:12pt;font-weight:800;color:#dc2626;justify-content:center;border:none;margin-top:2mm;">
+    <div class="field" style="font-size:12pt;font-weight:800;color:#ff4000;justify-content:center;border:none;margin-top:2mm;">
       Montant à collecter: ${fmtAmount(selectedOrder.total_amount)}
     </div>
   </div>` : ''}

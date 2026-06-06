@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
 import type { RecentOrder } from '@/types/vendor-dashboard';
-import { useTranslation } from '@/hooks/useTranslation';
 
 // ============================================================================
 // Lazy Imports - Groupés par catégorie pour un meilleur chunking
@@ -102,22 +101,21 @@ interface VendorRoutesProps {
  */
 const POSLockedPage = memo(function POSLockedPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('vendor.posLocked')}</CardTitle>
+        <CardTitle>POS verrouillé</CardTitle>
         <CardDescription>
-          {t('vendor.posLockedDesc')}
+          Votre boutique est configurée en "En ligne uniquement". Le POS est désactivé.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex gap-2">
         <Button variant="outline" onClick={() => navigate('/vendeur/settings')}>
-          {t('common.settings')}
+          Paramètres
         </Button>
         <Button onClick={() => navigate('/vendeur/dashboard')}>
-          {t('common.back')}
+          Retour
         </Button>
       </CardContent>
     </Card>
@@ -128,14 +126,12 @@ const POSLockedPage = memo(function POSLockedPage() {
  * Wrapper pour la carte virtuelle
  */
 const VirtualCardPage = memo(function VirtualCardPage() {
-  const { t } = useTranslation();
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('vendor.virtualCard224Pay')}</CardTitle>
+        <CardTitle>Carte Virtuelle 224PAY</CardTitle>
         <CardDescription>
-          {t('vendor.virtualCardDesc')}
+          Gérez votre carte virtuelle pour les paiements en ligne
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -149,18 +145,16 @@ const VirtualCardPage = memo(function VirtualCardPage() {
  * Wrapper pour le copilote IA
  */
 const CopilotePage = memo(function CopilotePage() {
-  const { t } = useTranslation();
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('vendor.aiCopilotTitle')}</CardTitle>
+        <CardTitle>Copilote IA Vendeur</CardTitle>
         <CardDescription>
-          {t('vendor.aiCopilotDesc')}
+          Votre assistant intelligent pour gérer votre boutique
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CopiloteChat userRole="vendeur" height="calc(100vh - 180px)" />
+        <CopiloteChat userRole="vendeur" height="500px" />
       </CardContent>
     </Card>
   );
@@ -177,10 +171,8 @@ const VendorRoutes = memo(function VendorRoutes({
   canAccessPOS,
   vendorId,
 }: VendorRoutesProps) {
-  const { t } = useTranslation();
-
   return (
-    <Suspense fallback={<SectionLoader text={t('common.loading')} />}>
+    <Suspense fallback={<SectionLoader text="Chargement..." />}>
       <Routes>
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* CORE ROUTES - Toujours accessibles */}
@@ -273,6 +265,7 @@ const VendorRoutes = memo(function VendorRoutes({
           </ProtectedRoute>
         } />
 
+
         <Route path="agents" element={
           <ProtectedRoute feature="sales_agents">
             <AgentManagement />
@@ -364,8 +357,8 @@ const VendorRoutes = memo(function VendorRoutes({
 
         <Route path="my-purchases" element={
           <MyPurchasesOrdersList
-            title={t('vendor.myPersonalPurchases')}
-            emptyMessage={t('vendor.noMarketplacePurchases')}
+            title="Mes Achats Personnels"
+            emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"
           />
         } />
 

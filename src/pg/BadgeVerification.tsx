@@ -146,11 +146,11 @@ export default function BadgeVerification() {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'active':
-        return { label: 'Actif', color: 'bg-green-100 text-green-800', icon: CheckCircle };
+        return { label: 'Actif', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle };
       case 'suspended':
-        return { label: 'Suspendu', color: 'bg-red-100 text-red-800', icon: XCircle };
+        return { label: 'Suspendu', color: 'bg-orange-100 text-[#ff4000]', icon: XCircle };
       case 'maintenance':
-        return { label: 'En maintenance', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle };
+        return { label: 'En maintenance', color: 'bg-orange-100 text-[#ff4000]', icon: AlertTriangle };
       default:
         return { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertTriangle };
     }
@@ -189,11 +189,11 @@ export default function BadgeVerification() {
 
   if (error || !badgeData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900 to-slate-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-red-200">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#ff4000] to-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-orange-200">
           <CardContent className="p-8 text-center">
-            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-red-600 mb-2">Badge Non Valide</h2>
+            <XCircle className="w-16 h-16 text-[#ff4000] mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-[#ff4000] mb-2">Badge Non Valide</h2>
             <p className="text-gray-600">{error || 'Ce badge n\'existe pas ou a été révoqué.'}</p>
           </CardContent>
         </Card>
@@ -224,15 +224,15 @@ export default function BadgeVerification() {
         </div>
 
         {/* Statut du badge */}
-        <Card className={`border-2 ${badgeData.status === 'active' && !isExpired ? 'border-green-400' : 'border-red-400'}`}>
+        <Card className={`border-2 ${badgeData.status === 'active' && !isExpired ? 'border-[#ff4000]' : 'border-[#ff4000]'}`}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${badgeData.status === 'active' && !isExpired ? 'bg-green-100' : 'bg-red-100'}`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${badgeData.status === 'active' && !isExpired ? 'bg-orange-100' : 'bg-orange-100'}`}>
                   {badgeData.status === 'active' && !isExpired ? (
-                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    <CheckCircle className="w-6 h-6 text-[#ff4000]" />
                   ) : (
-                    <XCircle className="w-6 h-6 text-red-600" />
+                    <XCircle className="w-6 h-6 text-[#ff4000]" />
                   )}
                 </div>
                 <div>
@@ -285,7 +285,7 @@ export default function BadgeVerification() {
                   </div>
                   {badgeData.driver_date_of_birth && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4 text-amber-600" />
+                      <Calendar className="w-4 h-4 text-[#ff4000]" />
                       <span>Né(e) le: {formatDate(badgeData.driver_date_of_birth)}</span>
                     </div>
                   )}
@@ -309,8 +309,8 @@ export default function BadgeVerification() {
                 <div className="text-xs text-blue-600 font-medium mb-1">Immatriculation</div>
                 <div className="text-lg font-bold text-slate-900">{badgeData.license_plate}</div>
               </div>
-              <div className="bg-purple-50 rounded-lg p-3">
-                <div className="text-xs text-purple-600 font-medium mb-1">N° Série</div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="text-xs text-[#04439e] font-medium mb-1">N° Série</div>
                 <div className="text-lg font-bold text-slate-900">{badgeData.serial_number || 'N/A'}</div>
               </div>
             </div>
@@ -361,12 +361,12 @@ export default function BadgeVerification() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="text-xs text-green-600 font-medium mb-1">Émis le</div>
+              <div className="bg-orange-50 rounded-lg p-3">
+                <div className="text-xs text-[#ff4000] font-medium mb-1">Émis le</div>
                 <div className="font-semibold text-slate-900">{formatDate(generatedDate)}</div>
               </div>
-              <div className={`rounded-lg p-3 ${isExpired ? 'bg-red-50' : 'bg-amber-50'}`}>
-                <div className={`text-xs font-medium mb-1 ${isExpired ? 'text-red-600' : 'text-amber-600'}`}>
+              <div className={`rounded-lg p-3 ${isExpired ? 'bg-orange-50' : 'bg-orange-50'}`}>
+                <div className={`text-xs font-medium mb-1 ${isExpired ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                   Expire le
                 </div>
                 <div className="font-semibold text-slate-900">{formatDate(expireDate.toISOString())}</div>

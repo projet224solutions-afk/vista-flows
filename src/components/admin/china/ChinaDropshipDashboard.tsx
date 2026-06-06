@@ -155,12 +155,12 @@ interface RiskProduct {
 
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'delivered': return 'bg-green-500';
+    case 'delivered': return 'bg-[#ff4000]';
     case 'shipped_international':
     case 'last_mile_delivery': return 'bg-blue-500';
-    case 'customs_clearance': return 'bg-yellow-500';
+    case 'customs_clearance': return 'bg-[#ff4000]';
     case 'disputed':
-    case 'cancelled': return 'bg-red-500';
+    case 'cancelled': return 'bg-[#ff4000]';
     default: return 'bg-gray-500';
   }
 };
@@ -197,17 +197,17 @@ const getScoreBadgeVariant = (level: SupplierScoreLevel): "default" | "secondary
 const getPlatformIcon = (platform: ChinaPlatformType): React.ReactNode => {
   switch (platform) {
     case 'ALIBABA': return <Globe className="h-4 w-4 text-orange-500" />;
-    case 'ALIEXPRESS': return <Globe className="h-4 w-4 text-red-500" />;
-    case '1688': return <Globe className="h-4 w-4 text-yellow-500" />;
+    case 'ALIEXPRESS': return <Globe className="h-4 w-4 text-[#ff4000]" />;
+    case '1688': return <Globe className="h-4 w-4 text-[#ff4000]" />;
     default: return <Globe className="h-4 w-4" />;
   }
 };
 
 const getRiskBadgeColor = (level: string): string => {
   switch (level) {
-    case 'critical': return 'bg-red-500 text-white';
+    case 'critical': return 'bg-[#ff4000] text-white';
     case 'high': return 'bg-orange-500 text-white';
-    case 'medium': return 'bg-yellow-500 text-black';
+    case 'medium': return 'bg-[#ff4000] text-black';
     default: return 'bg-gray-500 text-white';
   }
 };
@@ -497,7 +497,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Globe className="h-8 w-8 text-red-500" />
+            <Globe className="h-8 w-8 text-[#ff4000]" />
             China Dropship Admin
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -528,7 +528,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalSuppliers}</div>
             <div className="flex items-center gap-2 mt-2 text-sm">
-              <Badge variant="default" className="bg-yellow-500">
+              <Badge variant="default" className="bg-[#ff4000]">
                 {stats?.goldSuppliers} Gold
               </Badge>
               <Badge variant="secondary">
@@ -536,7 +536,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
               </Badge>
             </div>
             {(stats?.blacklistedSuppliers || 0) > 0 && (
-              <div className="text-xs text-red-500 mt-1">
+              <div className="text-xs text-[#ff4000] mt-1">
                 {stats?.blacklistedSuppliers} blacklistés
               </div>
             )}
@@ -559,13 +559,13 @@ export const ChinaDropshipDashboard: React.FC = () => {
                 <Truck className="h-3 w-3 mr-1" />
                 {stats?.inTransitOrders} en transit
               </span>
-              <span className="flex items-center text-green-500">
+              <span className="flex items-center text-[#ff4000]">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {stats?.deliveredOrders} livrés
               </span>
             </div>
             {(stats?.disputedOrders || 0) > 0 && (
-              <div className="text-xs text-red-500 mt-1">
+              <div className="text-xs text-[#ff4000] mt-1">
                 ⚠️ {stats?.disputedOrders} litiges
               </div>
             )}
@@ -580,7 +580,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-[#ff4000]">
               +{stats?.profitMarginMonth}%
             </div>
             <Progress value={stats?.profitMarginMonth} className="mt-2" />
@@ -602,11 +602,11 @@ export const ChinaDropshipDashboard: React.FC = () => {
               {stats?.avgDeliveryDays}j moy.
             </div>
             <div className="flex items-center gap-2 mt-2 text-sm">
-              <span className="text-green-500">
+              <span className="text-[#ff4000]">
                 {stats?.onTimeRate}% à temps
               </span>
             </div>
-            <div className="text-xs text-yellow-600 mt-1">
+            <div className="text-xs text-[#ff4000] mt-1">
               {stats?.customsBlockedRate}% bloqués douane
             </div>
           </CardContent>
@@ -680,7 +680,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  <ShieldCheck className="h-5 w-5 text-[#ff4000]" />
                   Top Fournisseurs
                 </CardTitle>
               </CardHeader>
@@ -732,7 +732,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                   <div className="text-sm text-muted-foreground">Aérien</div>
                 </div>
                 <div className="text-center p-4 border rounded">
-                  <Ship className="h-8 w-8 mx-auto text-teal-500 mb-2" />
+                  <Ship className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
                   <div className="text-xl font-bold">30%</div>
                   <div className="text-sm text-muted-foreground">Maritime</div>
                 </div>
@@ -742,7 +742,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                   <div className="text-sm text-muted-foreground">Express</div>
                 </div>
                 <div className="text-center p-4 border rounded">
-                  <Container className="h-8 w-8 mx-auto text-purple-500 mb-2" />
+                  <Container className="h-8 w-8 mx-auto text-[#04439e] mb-2" />
                   <div className="text-xl font-bold">5%</div>
                   <div className="text-sm text-muted-foreground">Rail</div>
                 </div>
@@ -840,7 +840,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         {supplier.verified_by_admin ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                         ) : (
                           <XCircle className="h-5 w-5 text-gray-400" />
                         )}
@@ -906,7 +906,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                                   <AlertDialogCancel>Annuler</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleBlacklistSupplier(supplier.id)}
-                                    className="bg-red-500 hover:bg-red-600"
+                                    className="bg-[#ff4000] hover:bg-[#ff4000]"
                                   >
                                     Blacklister
                                   </AlertDialogAction>
@@ -1030,7 +1030,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
           {riskProducts.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+                <CheckCircle2 className="h-12 w-12 mx-auto text-[#ff4000] mb-4" />
                 <h3 className="text-lg font-semibold">Aucun risque détecté</h3>
                 <p className="text-muted-foreground mt-2">
                   Tous les produits et fournisseurs fonctionnent normalement.
@@ -1041,7 +1041,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
                   Produits à risque ({riskProducts.length})
                 </CardTitle>
                 <CardDescription>
@@ -1067,7 +1067,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                         <TableCell>
                           {risk.risk_type === 'price_spike' && (
                             <span className="flex items-center gap-1">
-                              <TrendingUp className="h-4 w-4 text-red-500" />
+                              <TrendingUp className="h-4 w-4 text-[#ff4000]" />
                               Hausse prix
                             </span>
                           )}
@@ -1085,7 +1085,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                           )}
                           {risk.risk_type === 'customs_risk' && (
                             <span className="flex items-center gap-1">
-                              <AlertCircle className="h-4 w-4 text-yellow-500" />
+                              <AlertCircle className="h-4 w-4 text-[#ff4000]" />
                               Douane
                             </span>
                           )}

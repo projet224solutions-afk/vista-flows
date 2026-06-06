@@ -102,10 +102,10 @@ export function EscrowDashboard() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+      pending: "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20",
       held: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-      released: "bg-green-500/10 text-green-600 border-green-500/20",
-      refunded: "bg-red-500/10 text-red-600 border-red-500/20",
+      released: "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20",
+      refunded: "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20",
     };
 
     const icons = {
@@ -207,7 +207,7 @@ export function EscrowDashboard() {
                           setSelectedTransaction(transaction);
                           setActionType("release");
                         }}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-[#ff4000] hover:bg-[#ff4000]"
                       >
                         <Unlock className="w-4 h-4 mr-2" />
                         Libérer
@@ -272,7 +272,7 @@ export function EscrowDashboard() {
             <Button
               onClick={handleRelease}
               disabled={processing}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
             >
               {processing ? "Traitement..." : "Confirmer"}
             </Button>

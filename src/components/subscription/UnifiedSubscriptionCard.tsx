@@ -183,7 +183,7 @@ export function UnifiedSubscriptionCard({ _userRole, compact = false }: UnifiedS
                       <p className="font-medium">Annuel</p>
                       <p className="text-xs text-muted-foreground">365 jours</p>
                     </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Badge variant="secondary" className="bg-orange-100 text-[#ff4000]">
                       Économisez {discount}%
                     </Badge>
                   </Label>

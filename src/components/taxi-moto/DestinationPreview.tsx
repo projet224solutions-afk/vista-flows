@@ -75,7 +75,7 @@ export default function DestinationPreview({
                                 variant="ghost"
                                 size="sm"
                                 onClick={onClear}
-                                className="text-gray-500 hover:text-red-500"
+                                className="text-gray-500 hover:text-[#ff4000]"
                             >
                                 Modifier
                             </Button>
@@ -86,8 +86,8 @@ export default function DestinationPreview({
                     <div className="space-y-3">
                         {/* Point de départ */}
                         <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                                <Navigation2 className="w-4 h-4 text-green-600" />
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                <Navigation2 className="w-4 h-4 text-[#ff4000]" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide">Départ</p>
@@ -104,7 +104,7 @@ export default function DestinationPreview({
 
                         {/* Ligne de connexion */}
                         <div className="flex items-center gap-3 pl-4">
-                            <div className="w-0.5 h-8 bg-gradient-to-b from-green-400 to-red-400 rounded-full ml-3"></div>
+                            <div className="w-0.5 h-8 bg-gradient-to-b from-[#ff4000] to-[#ff4000] rounded-full ml-3"></div>
                             {routeInfo && (
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <ArrowRight className="w-4 h-4" />
@@ -118,8 +118,8 @@ export default function DestinationPreview({
 
                         {/* Destination */}
                         <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                                <MapPin className="w-4 h-4 text-red-600" />
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                <MapPin className="w-4 h-4 text-[#ff4000]" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide">Destination</p>

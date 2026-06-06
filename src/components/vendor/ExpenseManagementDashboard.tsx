@@ -35,8 +35,8 @@ import { fr } from 'date-fns/locale';
 
 // Couleurs pour les graphiques
 const CHART_COLORS = [
-  '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
-  '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
+  '#ff4000', '#04439e', '#04439e', '#ff4000', '#ff4000',
+  '#04439e', '#ff4000', '#F97316', '#ff4000', '#6B7280'
 ];
 
 interface ExpenseManagementDashboardProps {
@@ -191,17 +191,17 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 </p>
                 <div className="flex items-center mt-1">
                   {metrics.monthlyChange >= 0 ? (
-                    <TrendingUp className="w-3 h-3 text-red-500 mr-1" />
+                    <TrendingUp className="w-3 h-3 text-[#ff4000] mr-1" />
                   ) : (
-                    <TrendingDown className="w-3 h-3 text-green-500 mr-1" />
+                    <TrendingDown className="w-3 h-3 text-[#ff4000] mr-1" />
                   )}
-                  <span className={`text-xs ${metrics.monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  <span className={`text-xs ${metrics.monthlyChange >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                     {Math.abs(metrics.monthlyChange).toFixed(0)}%
                   </span>
                 </div>
               </div>
-              <div className="p-2 sm:p-3 bg-red-50 rounded-full shrink-0">
-                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
+              <div className="p-2 sm:p-3 bg-orange-50 rounded-full shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-[#ff4000]" />
               </div>
             </div>
           </CardContent>
@@ -238,8 +238,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   {metrics.averageExpense.toLocaleString()} ce mois
                 </p>
               </div>
-              <div className="p-2 sm:p-3 bg-green-50 rounded-full shrink-0">
-                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-orange-50 rounded-full shrink-0">
+                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-[#ff4000]" />
               </div>
             </div>
           </CardContent>
@@ -256,8 +256,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisées
                 </p>
               </div>
-              <div className="p-2 sm:p-3 bg-purple-50 rounded-full shrink-0">
-                <Package className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-full shrink-0">
+                <Package className="w-4 h-4 sm:w-6 sm:h-6 text-[#04439e]" />
               </div>
             </div>
           </CardContent>
@@ -343,7 +343,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     />
                     <Bar
                       dataKey="montant"
-                      fill="#3B82F6"
+                      fill="#04439e"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -408,8 +408,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   <Area
                     type="monotone"
                     dataKey="montant"
-                    stroke="#3B82F6"
-                    fill="#3B82F6"
+                    stroke="#04439e"
+                    fill="#04439e"
                     fillOpacity={0.1}
                     strokeWidth={2}
                   />
@@ -721,13 +721,13 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-2">
                     {over.length === 0 ? (
-                      <p className="text-green-700 bg-green-50 p-2 rounded">Aucun dépassement détecté ce mois.</p>
+                      <p className="text-[#ff4000] bg-orange-50 p-2 rounded">Aucun dépassement détecté ce mois.</p>
                     ) : (
                       over.map((o: any) => (
-                        <div key={o.id} className="p-2 rounded border border-red-200 bg-red-50">
+                        <div key={o.id} className="p-2 rounded border border-orange-200 bg-orange-50">
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-red-800">{o.name}</span>
-                            <span className="text-red-700">{fmtAmt(o.spent)} / {fmtAmt(o.budget)}</span>
+                            <span className="font-medium text-[#ff4000]">{o.name}</span>
+                            <span className="text-[#ff4000]">{fmtAmt(o.spent)} / {fmtAmt(o.budget)}</span>
                           </div>
                         </div>
                       ))

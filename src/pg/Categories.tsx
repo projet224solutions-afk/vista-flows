@@ -22,7 +22,7 @@ const mainCategories: Category[] = [
     id: 'boutiques',
     name: 'Boutiques Digitales',
     icon: <Store className="w-6 h-6" />,
-    gradient: 'from-blue-500 to-indigo-600',
+    gradient: '',
     description: 'Explorez les boutiques en ligne',
     path: '/boutiques'
   },
@@ -30,7 +30,7 @@ const mainCategories: Category[] = [
     id: 'billetterie',
     name: 'Billetterie',
     icon: <Ticket className="w-6 h-6" />,
-    gradient: 'from-orange-500 to-red-500',
+    gradient: '',
     description: 'Événements, concerts, spectacles',
     path: '/events'
   },
@@ -38,7 +38,7 @@ const mainCategories: Category[] = [
     id: 'formations',
     name: 'Formations',
     icon: <GraduationCap className="w-6 h-6" />,
-    gradient: 'from-emerald-500 to-teal-500',
+    gradient: '',
     description: 'Cours et formations en ligne',
     path: '/formations'
   },

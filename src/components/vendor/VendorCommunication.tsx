@@ -112,10 +112,10 @@ export default function VendorCommunication() {
   };
 
   const getNetworkQualityColor = (quality: number) => {
-    if (quality === 0) return "text-green-600";
+    if (quality === 0) return "text-[#ff4000]";
     if (quality === 1) return "text-blue-600";
-    if (quality === 2) return "text-yellow-600";
-    return "text-red-600";
+    if (quality === 2) return "text-[#ff4000]";
+    return "text-[#ff4000]";
   };
 
   return (

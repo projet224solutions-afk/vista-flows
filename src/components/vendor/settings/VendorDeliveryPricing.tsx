@@ -140,7 +140,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
           {/* Activer/Désactiver livraison */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-green-600" />
+              <MapPin className="h-5 w-5 text-[#ff4000]" />
               <div>
                 <p className="font-medium">Livraison activée</p>
                 <p className="text-sm text-muted-foreground">
@@ -263,27 +263,27 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-[#ff4000]" />
               Exemples de prix de livraison
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3">
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">2 km</p>
-                <p className="font-bold text-green-600">{formatCurrency(calculateExample(2))}</p>
+                <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(2))}</p>
               </div>
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">5 km</p>
-                <p className="font-bold text-green-600">{formatCurrency(calculateExample(5))}</p>
+                <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(5))}</p>
               </div>
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">10 km</p>
-                <p className="font-bold text-green-600">{formatCurrency(calculateExample(10))}</p>
+                <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(10))}</p>
               </div>
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">20 km</p>
-                <p className="font-bold text-green-600">{formatCurrency(calculateExample(20))}</p>
+                <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(20))}</p>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">

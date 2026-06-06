@@ -115,7 +115,7 @@ export default function AIReviewResponseCard({
           <span className="text-sm font-semibold text-primary">
             💡 Réponse IA proposée
           </span>
-          <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+          <Badge variant="outline" className="text-xs bg-orange-50 text-[#ff4000] border-orange-200">
             <Clock className="w-3 h-3 mr-1" />
             Validation requise
           </Badge>
@@ -158,7 +158,7 @@ export default function AIReviewResponseCard({
               size="sm"
               onClick={() => handleApprove(true)}
               disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
             >
               <Check className="w-4 h-4 mr-1" />
               Valider & Publier

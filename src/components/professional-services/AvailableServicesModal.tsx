@@ -222,14 +222,14 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         </p>
       </div>
 
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+      <div className="bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg p-4">
         <div className="flex gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#ff4000] shrink-0 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+            <p className="font-medium text-[#ff4000] dark:text-orange-200 mb-1">
               Pourquoi un email différent ?
             </p>
-            <p className="text-amber-700 dark:text-amber-300">
+            <p className="text-[#ff4000] dark:text-orange-300">
               Cette séparation permet de mieux gérer votre activité professionnelle et de protéger votre compte personnel.
             </p>
           </div>

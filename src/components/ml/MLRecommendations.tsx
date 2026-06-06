@@ -46,12 +46,12 @@ const REASON_CONFIG = {
   similar_products: {
     icon: Crown,
     label: 'Produits similaires',
-    color: 'bg-purple-100 text-purple-800'
+    color: 'bg-blue-100 text-[#04439e]'
   },
   trending: {
     icon: TrendingUp,
     label: 'Tendance',
-    color: 'bg-green-100 text-green-800'
+    color: 'bg-orange-100 text-[#ff4000]'
   },
   viewed_together: {
     icon: Eye,
@@ -61,12 +61,12 @@ const REASON_CONFIG = {
   bought_together: {
     icon: ShoppingCart,
     label: 'Souvent achetés ensemble',
-    color: 'bg-pink-100 text-pink-800'
+    color: 'bg-orange-100 text-[#ff4000]'
   },
   personalized: {
     icon: Star,
     label: 'Pour vous',
-    color: 'bg-yellow-100 text-yellow-800'
+    color: 'bg-orange-100 text-[#ff4000]'
   }
 };
 
@@ -108,7 +108,7 @@ const RecommendationCard = memo(({
           </Badge>
         )}
         {recommendation.confidence > 0.7 && (
-          <Badge className="absolute top-2 right-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs">
+          <Badge className="absolute top-2 right-2 bg-gradient-to-r from-[#04439e] to-[#ff4000] text-white text-xs">
             <Crown className="w-3 h-3 mr-1" />
             Top pick
           </Badge>
@@ -230,8 +230,8 @@ export function MLRecommendations({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10">
-              <Crown className="w-5 h-5 text-purple-600" />
+            <div className="p-2 rounded-lg bg-gradient-to-br from-[#04439e]/10 to-[#ff4000]/10">
+              <Crown className="w-5 h-5 text-[#04439e]" />
             </div>
             <div>
               <CardTitle className="text-lg">{title}</CardTitle>

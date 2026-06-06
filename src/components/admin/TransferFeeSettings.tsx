@@ -123,15 +123,15 @@ export default function TransferFeeSettings() {
       <CardContent className="space-y-6">
         {/* Statistiques des frais collectés */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
+          <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <p className="text-sm text-green-700 font-medium">Total Frais Collectés</p>
+              <TrendingUp className="w-4 h-4 text-[#ff4000]" />
+              <p className="text-sm text-[#ff4000] font-medium">Total Frais Collectés</p>
             </div>
-            <p className="text-2xl font-bold text-green-900">
+            <p className="text-2xl font-bold text-[#ff4000]">
               {formatPrice(totalFees)}
             </p>
-            <p className="text-xs text-green-600 mt-1">{transactionsCount} transactions</p>
+            <p className="text-xs text-[#ff4000] mt-1">{transactionsCount} transactions</p>
           </div>
 
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">

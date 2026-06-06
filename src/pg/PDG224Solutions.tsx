@@ -365,7 +365,7 @@ export default function PDG224Solutions() {
                     <UserIdDisplay layout="horizontal" showBadge={true} />
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-1 items-center gap-2 hidden sm:flex">
-                    <Lock className="w-3 h-3 text-green-500" />
+                    <Lock className="w-3 h-3 text-[#ff4000]" />
                     Contrôle total et sécurisé
                   </p>
                 </div>
@@ -385,7 +385,7 @@ export default function PDG224Solutions() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/security')}
-                  className="bg-red-600 hover:bg-red-700 text-white gap-1 sm:gap-2 shadow-lg shadow-red-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                  className="bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1 sm:gap-2 shadow-lg shadow-[#ff4000]/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                   Défense
@@ -394,7 +394,7 @@ export default function PDG224Solutions() {
                   variant="default"
                   size="sm"
                   onClick={() => navigate('/pdg/competitive-analysis')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white gap-1 sm:gap-2 shadow-lg shadow-purple-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
+                  className="bg-[#04439e] hover:bg-[#04439e] text-white gap-1 sm:gap-2 shadow-lg shadow-[#04439e]/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
                 >
                   <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                   Analyse IA
@@ -409,8 +409,8 @@ export default function PDG224Solutions() {
                     MFA
                   </Button>
                 )}
-                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 gap-1 text-xs flex-shrink-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20 hover:bg-[#ff4000]/20 gap-1 text-xs flex-shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#ff4000] animate-pulse" />
                   <span className="hidden sm:inline">Système</span> Actif
                 </Badge>
                 {fxCriticalAlerts > 0 && (
@@ -425,7 +425,7 @@ export default function PDG224Solutions() {
                   </Button>
                 )}
                 {aiActive && (
-                  <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1 text-xs flex-shrink-0">
+                  <Badge className="bg-[#04439e]/10 text-[#04439e] border-[#04439e]/20 hover:bg-[#04439e]/20 gap-1 text-xs flex-shrink-0">
                     <Brain className="w-3 h-3" />
                     IA
                   </Badge>

@@ -29,8 +29,8 @@ export default function SyndicateTreasuryManagement({ _bureauId }: SyndicateTrea
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                        <div className="text-2xl font-bold text-green-600">
+                        <DollarSign className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
+                        <div className="text-2xl font-bold text-[#ff4000]">
                             {fc(treasuryData.balance, 'GNF')}
                         </div>
                         <div className="text-sm text-muted-foreground">Solde de Caisse</div>
@@ -49,8 +49,8 @@ export default function SyndicateTreasuryManagement({ _bureauId }: SyndicateTrea
 
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <TrendingDown className="w-8 h-8 mx-auto mb-2 text-red-600" />
-                        <div className="text-2xl font-bold text-red-600">
+                        <TrendingDown className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
+                        <div className="text-2xl font-bold text-[#ff4000]">
                             {fc(treasuryData.monthlyExpenses, 'GNF')}
                         </div>
                         <div className="text-sm text-muted-foreground">Dépenses ce mois</div>

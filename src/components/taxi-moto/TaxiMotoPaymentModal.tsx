@@ -99,7 +99,7 @@ export default function TaxiMotoPaymentModal({
       name: 'Espèces',
       description: 'Paiement en liquide au conducteur',
       icon: Banknote,
-      color: 'text-green-600'
+      color: 'text-[#ff4000]'
     }
   ];
 

@@ -129,12 +129,12 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
 
   const getKycBadge = (status: string | null, isVerified: boolean) => {
     if (isVerified || status === 'verified') {
-      return <Badge className="bg-green-100 text-green-700 border-green-200">Vérifié</Badge>;
+      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Vérifié</Badge>;
     }
     if (status === 'rejected') {
-      return <Badge className="bg-red-100 text-red-700 border-red-200">Rejeté</Badge>;
+      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Rejeté</Badge>;
     }
-    return <Badge className="bg-amber-100 text-amber-700 border-amber-200">En attente</Badge>;
+    return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">En attente</Badge>;
   };
 
   if (loading) {
@@ -149,10 +149,10 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
     <div className="space-y-6">
       {/* Header */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#ff4000] to-[#ff4000] shadow-lg">
                 <Store className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -174,17 +174,17 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
               <p className="text-2xl font-bold text-slate-700">{stats.total}</p>
               <p className="text-xs text-slate-500">Total</p>
             </div>
-            <div className="bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl p-4 text-center">
-              <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-700">{stats.active}</p>
-              <p className="text-xs text-green-500">Actifs</p>
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 text-center">
+              <CheckCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#ff4000]">{stats.active}</p>
+              <p className="text-xs text-[#ff4000]">Actifs</p>
             </div>
-            <div className="bg-gradient-to-br from-red-100 to-rose-200 rounded-xl p-4 text-center">
-              <XCircle className="w-6 h-6 text-red-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-red-700">{stats.inactive}</p>
-              <p className="text-xs text-red-500">Inactifs</p>
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 text-center">
+              <XCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#ff4000]">{stats.inactive}</p>
+              <p className="text-xs text-[#ff4000]">Inactifs</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl p-4 text-center">
+            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 text-center">
               <Shield className="w-6 h-6 text-blue-600 mx-auto mb-2" />
               <p className="text-2xl font-bold text-blue-700">{stats.verified}</p>
               <p className="text-xs text-blue-500">Vérifiés</p>
@@ -222,10 +222,10 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        vendor.is_active ? 'bg-emerald-100' : 'bg-red-100'
+                        vendor.is_active ? 'bg-orange-100' : 'bg-orange-100'
                       }`}>
                         <Store className={`w-6 h-6 ${
-                          vendor.is_active ? 'text-emerald-600' : 'text-red-600'
+                          vendor.is_active ? 'text-[#ff4000]' : 'text-[#ff4000]'
                         }`} />
                       </div>
                       <div>
@@ -260,9 +260,9 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                           onClick={() => toggleVendorStatus(vendor.id, vendor.is_active)}
                         >
                           {vendor.is_active ? (
-                            <XCircle className="w-4 h-4 text-red-500" />
+                            <XCircle className="w-4 h-4 text-[#ff4000]" />
                           ) : (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                           )}
                         </Button>
                       )}

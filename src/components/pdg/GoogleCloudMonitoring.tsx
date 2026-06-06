@@ -214,9 +214,9 @@ export default function GoogleCloudMonitoring() {
       case 'loading':
         return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'error':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+        return <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
       default:
         return <Activity className="h-5 w-5 text-muted-foreground" />;
     }
@@ -227,9 +227,9 @@ export default function GoogleCloudMonitoring() {
       case 'loading':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'success':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Opérationnel</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Opérationnel</Badge>;
       case 'error':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Erreur</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Erreur</Badge>;
       default:
         return <Badge variant="outline">Non testé</Badge>;
     }
@@ -285,7 +285,7 @@ export default function GoogleCloudMonitoring() {
                       </p>
                     )}
                     {tests.geolocation.error && (
-                      <p className="text-xs text-red-500 mt-1">{tests.geolocation.error}</p>
+                      <p className="text-xs text-[#ff4000] mt-1">{tests.geolocation.error}</p>
                     )}
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export default function GoogleCloudMonitoring() {
                       <p className="text-xs text-muted-foreground mt-1">{tests.geocoding.result.address}</p>
                     )}
                     {tests.geocoding.error && (
-                      <p className="text-xs text-red-500 mt-1">{tests.geocoding.error}</p>
+                      <p className="text-xs text-[#ff4000] mt-1">{tests.geocoding.error}</p>
                     )}
                   </div>
                 </div>
@@ -341,7 +341,7 @@ export default function GoogleCloudMonitoring() {
                       <p className="text-xs text-muted-foreground mt-1">{tests.reverseGeocoding.result}</p>
                     )}
                     {tests.reverseGeocoding.error && (
-                      <p className="text-xs text-red-500 mt-1">{tests.reverseGeocoding.error}</p>
+                      <p className="text-xs text-[#ff4000] mt-1">{tests.reverseGeocoding.error}</p>
                     )}
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function GoogleCloudMonitoring() {
                       </p>
                     )}
                     {tests.directions.error && (
-                      <p className="text-xs text-red-500 mt-1">{tests.directions.error}</p>
+                      <p className="text-xs text-[#ff4000] mt-1">{tests.directions.error}</p>
                     )}
                   </div>
                 </div>

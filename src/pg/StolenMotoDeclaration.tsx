@@ -267,7 +267,7 @@ export default function StolenMotoDeclaration() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-50 pt-6 pb-32 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-orange-50 pt-6 pb-32 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -281,7 +281,7 @@ export default function StolenMotoDeclaration() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
-              <ShieldAlert className="w-8 h-8 text-red-600" />
+              <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
               Déclaration de Moto Volée
             </h1>
             <p className="text-slate-600 text-sm mt-1">
@@ -291,10 +291,10 @@ export default function StolenMotoDeclaration() {
         </div>
 
         {/* Alerte d'avertissement */}
-        <Alert className="border-red-300 bg-red-50">
-          <AlertTriangle className="h-5 w-5 text-red-600" />
-          <AlertTitle className="text-red-800">Action Irréversible</AlertTitle>
-          <AlertDescription className="text-red-700">
+        <Alert className="border-orange-300 bg-orange-50">
+          <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000]">Action Irréversible</AlertTitle>
+          <AlertDescription className="text-[#ff4000]">
             La déclaration de vol entraëne le blocage immédiat et global de la moto.
             Cette action sera enregistrée et notifiée à tous les bureaux syndicats.
           </AlertDescription>
@@ -370,14 +370,14 @@ export default function StolenMotoDeclaration() {
         {/* Section 2: Affichage des Informations (si vérifié) */}
         {verified && vehicle && (
           <>
-            <Card className="border-2 border-green-200 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-100 to-emerald-50 border-b">
+            <Card className="border-2 border-orange-200 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-orange-100 to-orange-50 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-[#ff4000]" />
                     Moto Vérifiée
                   </CardTitle>
-                  <Badge className="bg-green-600 text-white">
+                  <Badge className="bg-[#ff4000] text-white">
                     Correspondance exacte
                   </Badge>
                 </div>
@@ -432,19 +432,19 @@ export default function StolenMotoDeclaration() {
                 {member && (
                   <div>
                     <h3 className="font-semibold text-slate-700 flex items-center gap-2 mb-4">
-                      <User className="w-5 h-5 text-purple-600" />
+                      <User className="w-5 h-5 text-[#04439e]" />
                       Informations du Conducteur
                     </h3>
-                    <div className="flex items-start gap-4 bg-purple-50 p-4 rounded-lg">
+                    <div className="flex items-start gap-4 bg-blue-50 p-4 rounded-lg">
                       {member.photo_url ? (
                         <img
                           src={member.photo_url}
                           alt={member.name}
-                          className="w-16 h-16 rounded-full object-cover border-2 border-purple-200"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-purple-200 flex items-center justify-center">
-                          <User className="w-8 h-8 text-purple-600" />
+                        <div className="w-16 h-16 rounded-full bg-blue-200 flex items-center justify-center">
+                          <User className="w-8 h-8 text-[#04439e]" />
                         </div>
                       )}
                       <div className="flex-1 grid grid-cols-2 gap-3">
@@ -476,13 +476,13 @@ export default function StolenMotoDeclaration() {
                 {bureau && (
                   <div>
                     <h3 className="font-semibold text-slate-700 flex items-center gap-2 mb-4">
-                      <Building2 className="w-5 h-5 text-emerald-600" />
+                      <Building2 className="w-5 h-5 text-[#ff4000]" />
                       Informations du Bureau Syndicat
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-emerald-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-orange-50 p-4 rounded-lg">
                       <div>
                         <p className="text-xs text-slate-500">Code Bureau</p>
-                        <p className="font-semibold text-emerald-700">{bureau.bureau_code}</p>
+                        <p className="font-semibold text-[#ff4000]">{bureau.bureau_code}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Zone</p>
@@ -504,13 +504,13 @@ export default function StolenMotoDeclaration() {
             </Card>
 
             {/* Section 3: Confirmation du Vol */}
-            <Card className="border-2 border-red-300 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-red-100 to-orange-50 border-b">
-                <CardTitle className="flex items-center gap-2 text-lg text-red-800">
-                  <ShieldAlert className="w-5 h-5 text-red-600" />
+            <Card className="border-2 border-orange-300 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-orange-100 to-orange-50 border-b">
+                <CardTitle className="flex items-center gap-2 text-lg text-[#ff4000]">
+                  <ShieldAlert className="w-5 h-5 text-[#ff4000]" />
                   SECTION FINALE - Confirmation du Vol
                 </CardTitle>
-                <CardDescription className="text-red-700">
+                <CardDescription className="text-[#ff4000]">
                   Remplissez les informations ci-dessous pour officialiser la déclaration
                 </CardDescription>
               </CardHeader>
@@ -578,18 +578,18 @@ export default function StolenMotoDeclaration() {
                 <Separator />
 
                 {/* Checkbox de confirmation */}
-                <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-lg border border-orange-200">
                   <Checkbox
                     id="confirmStolen"
                     checked={confirmStolen}
                     onCheckedChange={(checked) => setConfirmStolen(checked === true)}
-                    className="mt-1 border-red-400 data-[state=checked]:bg-red-600"
+                    className="mt-1 border-[#ff4000] data-[state=checked]:bg-[#ff4000]"
                   />
                   <div>
-                    <Label htmlFor="confirmStolen" className="font-semibold text-red-800 cursor-pointer">
+                    <Label htmlFor="confirmStolen" className="font-semibold text-[#ff4000] cursor-pointer">
                       Je confirme que cette moto est réellement volée
                     </Label>
-                    <p className="text-sm text-red-600 mt-1">
+                    <p className="text-sm text-[#ff4000] mt-1">
                       En cochant cette case, je certifie que les informations fournies sont exactes
                       et que cette déclaration est faite de bonne foi.
                     </p>
@@ -612,7 +612,7 @@ export default function StolenMotoDeclaration() {
                 <Button
                   onClick={handleSubmitDeclaration}
                   disabled={!confirmStolen || !stolenLocation.trim() || submitting}
-                  className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-6 text-lg font-semibold shadow-lg"
+                  className="w-full bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000] text-white py-6 text-lg font-semibold shadow-lg"
                 >
                   {submitting ? (
                     <>

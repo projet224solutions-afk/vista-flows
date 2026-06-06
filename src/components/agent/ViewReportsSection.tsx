@@ -50,7 +50,7 @@ export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewRepo
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Taux Commission</span>
-                    <TrendingUp className="w-4 h-4 text-green-500" />
+                    <TrendingUp className="w-4 h-4 text-[#ff4000]" />
                   </div>
                   <div className="text-2xl font-bold">{agentData.commission_rate}%</div>
                   <p className="text-xs text-muted-foreground">Taux appliqué</p>
@@ -63,7 +63,7 @@ export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewRepo
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Commissions</span>
-                    <DollarSign className="w-4 h-4 text-purple-500" />
+                    <DollarSign className="w-4 h-4 text-[#04439e]" />
                   </div>
                   <div className="text-2xl font-bold">
                     {totalCommissions.toLocaleString()}
@@ -114,7 +114,7 @@ export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewRepo
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                      className="bg-[#ff4000] h-2 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(commissionsThisMonth > 0 ? 50 : 0, 100)}%` }}
                     ></div>
                   </div>

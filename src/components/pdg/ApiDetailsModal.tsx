@@ -127,9 +127,9 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
   }));
 
   const statusColor = {
-    active: 'bg-green-500',
-    suspended: 'bg-yellow-500',
-    expired: 'bg-red-500',
+    active: 'bg-[#ff4000]',
+    suspended: 'bg-[#ff4000]',
+    expired: 'bg-[#ff4000]',
     error: 'bg-orange-500'
   }[api.status];
 
@@ -202,13 +202,13 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Restants</span>
-                      <span className="text-green-500 font-bold">
+                      <span className="text-[#ff4000] font-bold">
                         {(api.tokens_remaining || 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-3">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
+                        className="bg-[#04439e] h-3 rounded-full transition-all"
                         style={{ width: `${(api.tokens_used / api.tokens_limit) * 100}%` }}
                       />
                     </div>
@@ -232,7 +232,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Line type="monotone" dataKey="tokens" stroke="#3B82F6" strokeWidth={2} />
+                    <Line type="monotone" dataKey="tokens" stroke="#04439e" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -282,7 +282,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge className={log.status_code && log.status_code < 400 ? 'bg-green-600' : 'bg-red-600'}>
+                            <Badge className={log.status_code && log.status_code < 400 ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}>
                               {log.status_code || 'N/A'}
                             </Badge>
                             <span className="text-white font-mono text-sm">{log.method}</span>
@@ -312,27 +312,27 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-500" />
+                  <Shield className="h-5 w-5 text-[#ff4000]" />
                   État de sécurité
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                   <span className="text-slate-300">Chiffrement AES-256</span>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                   <span className="text-slate-300">Monitoring 224Guard</span>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                   <span className="text-slate-300">Logs activés</span>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 {api.expires_at && (
                   <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                     <span className="text-slate-300">Expiration</span>
-                    <span className="text-yellow-500">
+                    <span className="text-[#ff4000]">
                       {new Date(api.expires_at).toLocaleDateString('fr-FR')}
                     </span>
                   </div>

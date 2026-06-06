@@ -58,21 +58,21 @@ interface BugBountyStats {
 // ============================================
 
 const severityColors: Record<BugSeverity, string> = {
-  critical: "bg-red-500",
+  critical: "bg-[#ff4000]",
   high: "bg-orange-500",
-  medium: "bg-yellow-500",
+  medium: "bg-[#ff4000]",
   low: "bg-blue-500",
   info: "bg-gray-500",
 };
 
 const statusColors: Record<BugReportStatus, string> = {
-  pending: "bg-yellow-500",
+  pending: "bg-[#ff4000]",
   reviewing: "bg-blue-500",
-  accepted: "bg-green-500",
-  rejected: "bg-red-500",
+  accepted: "bg-[#ff4000]",
+  rejected: "bg-[#ff4000]",
   duplicate: "bg-gray-500",
-  resolved: "bg-purple-500",
-  rewarded: "bg-emerald-500",
+  resolved: "bg-[#04439e]",
+  rewarded: "bg-[#ff4000]",
 };
 
 // ============================================
@@ -252,7 +252,7 @@ const BugBountyDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats?.pending || 0}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats?.pending || 0}</div>
           </CardContent>
         </Card>
 
@@ -264,7 +264,7 @@ const BugBountyDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats?.resolved || 0}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats?.resolved || 0}</div>
           </CardContent>
         </Card>
 
@@ -276,7 +276,7 @@ const BugBountyDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">{stats?.rewarded || 0}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats?.rewarded || 0}</div>
           </CardContent>
         </Card>
 
@@ -350,7 +350,7 @@ const BugBountyDashboard = () => {
                             {report.reward_amount && (
                               <>
                                 <span>•</span>
-                                <span className="text-green-600 font-semibold">
+                                <span className="text-[#ff4000] font-semibold">
                                   {report.reward_amount}€
                                 </span>
                               </>
@@ -358,7 +358,7 @@ const BugBountyDashboard = () => {
                           </div>
                         </div>
                         {report.severity === "critical" && (
-                          <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                          <AlertTriangle className="w-6 h-6 text-[#ff4000] flex-shrink-0" />
                         )}
                       </div>
                     </CardContent>

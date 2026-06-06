@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Loader2, WifiOff } from 'lucide-react';
 import CryptoJS from 'crypto-js';
-import { shouldAssumeOffline } from '@/lib/networkHealth';
 
 // Clé de chiffrement dérivée de l'ID utilisateur (unique par session)
 const getEncryptionKey = (): string => {
@@ -18,7 +17,7 @@ const getEncryptionKey = (): string => {
 const encryptData = (data: string): string => {
   try {
     return CryptoJS.AES.encrypt(data, getEncryptionKey()).toString();
-  } catch (_e) {
+  } catch (e) {
     console.error('🔴 Erreur chiffrement');
     return data;
   }
@@ -29,7 +28,7 @@ const decryptData = (encryptedData: string): string | null => {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedData, getEncryptionKey());
     return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (_e) {
+  } catch (e) {
     console.error('🔴 Erreur déchiffrement');
     return null;
   }
@@ -38,7 +37,6 @@ const decryptData = (encryptedData: string): string | null => {
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles: string[];
-  allowOfflineAccess?: boolean;
 }
 
 // Fonction pour vérifier les sessions custom (Agent/Bureau)
@@ -124,7 +122,7 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
   return { isValid: false, role: null };
 }
 
-export default function ProtectedRoute({ children, allowedRoles, allowOfflineAccess = false }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading, profileLoading } = useAuth();
   const { isOnline } = useOnlineStatus();
   const navigate = useNavigate();
@@ -138,11 +136,6 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
   const [offlineProfile, setOfflineProfile] = useState<{ role: string } | null>(null);
 
   useEffect(() => {
-    if (!allowOfflineAccess || isOnline || user) {
-      setOfflineProfile(null);
-      return;
-    }
-
     if (!isOnline && !user) {
       // Chercher un profil en cache dans localStorage
       try {
@@ -155,11 +148,11 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
             setOfflineProfile(cached);
           }
         }
-      } catch (_e) {
+      } catch (e) {
         console.warn('⚠️ Erreur lecture profil offline');
       }
     }
-  }, [allowOfflineAccess, isOnline, user]);
+  }, [isOnline, user]);
 
   // Vérifier les sessions custom au montage
   useEffect(() => {
@@ -170,14 +163,14 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
   // Vérification d'authentification sécurisée - NE PAS rediriger si offline
   useEffect(() => {
     if (!loading && customAuth.checked && !user && !customAuth.isValid) {
-      const browserOffline = allowOfflineAccess && shouldAssumeOffline();
-      // En mode vraiment offline, ne pas rediriger si profil cache
-      if (browserOffline && offlineProfile) {
+      const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+      // En mode vraiment offline (navigator.onLine=false), ne pas rediriger si profil cache
+      if (!browserOnline && offlineProfile) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
         return;
       }
       // En mode vraiment offline sans profil cache, ne pas rediriger non plus
-      if (browserOffline) {
+      if (!browserOnline) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
         return;
       }
@@ -190,7 +183,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
-  }, [allowOfflineAccess, user, loading, navigate, customAuth, isOnline, offlineProfile]);
+  }, [user, loading, navigate, customAuth, isOnline, offlineProfile]);
 
   // Attendre que les vérifications soient terminées
   if (loading || profileLoading || !customAuth.checked) {
@@ -205,8 +198,8 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
   }
 
   // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
-  const browserOffline = allowOfflineAccess && shouldAssumeOffline();
-  const isAuthenticated = !!user || customAuth.isValid || (allowOfflineAccess && browserOffline && !!offlineProfile);
+  const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  const isAuthenticated = !!user || customAuth.isValid || (!browserOnline && !!offlineProfile);
   const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
 
   // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
@@ -218,8 +211,10 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
   };
 
   const effectiveRole = normalizeRole(rawRole);
-  if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {
-    const trulyOffline = !isOnline && browserOffline;
+  // Vrai mode offline = navigator.onLine est false (pas juste le health check)
+  const trulyOffline = !isOnline && (typeof navigator === 'undefined' || !navigator.onLine);
+
+  if (!isAuthenticated) {
     if (trulyOffline) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
@@ -239,6 +234,21 @@ export default function ProtectedRoute({ children, allowedRoles, allowOfflineAcc
         </div>
       );
     }
+    // Non authentifié (déconnexion volontaire ou session expirée) : NE PAS afficher de page d'erreur.
+    // Le useEffect ci-dessus sauvegarde la destination et redirige vers /auth — on montre juste un loader
+    // le temps de la redirection (évite le flash « Accès non autorisé » à la sortie de l'application).
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Redirection…</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Authentifié mais rôle non autorisé : vraie page « Accès non autorisé ».
+  if (effectiveRole && !allowedRoles.includes(effectiveRole)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

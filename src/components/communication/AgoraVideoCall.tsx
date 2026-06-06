@@ -136,9 +136,9 @@ export default function AgoraVideoCall({
   };
 
   const getNetworkQualityColor = (quality: number) => {
-    if (quality >= 4) return 'text-green-500';
-    if (quality >= 2) return 'text-yellow-500';
-    return 'text-red-500';
+    if (quality >= 4) return 'text-[#ff4000]';
+    if (quality >= 2) return 'text-[#ff4000]';
+    return 'text-[#ff4000]';
   };
 
   if (isIncoming && !callState.isInCall) {
@@ -146,7 +146,7 @@ export default function AgoraVideoCall({
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
-            <Phone className="w-6 h-6 text-green-600" />
+            <Phone className="w-6 h-6 text-[#ff4000]" />
             Appel entrant
           </CardTitle>
         </CardHeader>
@@ -165,7 +165,7 @@ export default function AgoraVideoCall({
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
               disabled={isConnecting}
             >
               <Phone className="w-4 h-4 mr-2" />

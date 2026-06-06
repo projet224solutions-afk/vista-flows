@@ -56,11 +56,11 @@ export default function PaymentSuccessRedirect() {
           {status === 'success' && (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <div className="rounded-full bg-green-100 p-3">
-                  <CheckCircle2 className="w-12 h-12 text-green-600" />
+                <div className="rounded-full bg-orange-100 p-3">
+                  <CheckCircle2 className="w-12 h-12 text-[#ff4000]" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-green-600">Paiement confirmé !</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement confirmé !</h3>
               <p className="text-sm text-muted-foreground animate-pulse">
                 Redirection vers vos achats...
               </p>
@@ -70,11 +70,11 @@ export default function PaymentSuccessRedirect() {
           {status === 'failed' && (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <div className="rounded-full bg-red-100 p-3">
-                  <XCircle className="w-12 h-12 text-red-600" />
+                <div className="rounded-full bg-orange-100 p-3">
+                  <XCircle className="w-12 h-12 text-[#ff4000]" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-red-600">Paiement échoué</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement échoué</h3>
               <p className="text-sm text-muted-foreground">
                 Votre paiement n'a pas pu être traité. Veuillez réessayer.
               </p>

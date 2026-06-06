@@ -711,7 +711,7 @@ export default function ServiceDetailPage() {
               className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
               onClick={toggleFavorite}
             >
-              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-[#ff4000] text-[#ff4000]' : ''}`} />
             </Button>
           </div>
         </div>
@@ -734,7 +734,7 @@ export default function ServiceDetailPage() {
               {/* Rating - only show if real */}
               {service.rating > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-5 h-5 fill-[#ff4000] text-[#ff4000]" />
                   <span className="font-bold text-lg">{service.rating.toFixed(1)}</span>
                   <span className="text-muted-foreground text-sm">
                     ({service.reviews_count} avis)
@@ -747,7 +747,7 @@ export default function ServiceDetailPage() {
                 <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
                   <Navigation className="w-3.5 h-3.5 text-primary" />
                   {formatDistance(distance)}
-                  {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
+                  {usingRealLocation && <span className="text-[#ff4000] text-xs">●</span>}
                 </Badge>
               )}
 
@@ -929,7 +929,7 @@ export default function ServiceDetailPage() {
                       return (
                         <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
                           <span className="font-medium text-foreground">{dayName}</span>
-                          <span className={`text-sm font-medium ${isClosed ? 'text-red-500' : 'text-muted-foreground'}`}>
+                          <span className={`text-sm font-medium ${isClosed ? 'text-[#ff4000]' : 'text-muted-foreground'}`}>
                             {hoursDisplay}
                           </span>
                         </div>
@@ -983,7 +983,7 @@ export default function ServiceDetailPage() {
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button key={star} onClick={() => setReviewRating(star)}>
-                              <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />
+                              <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-[#ff4000] text-[#ff4000]' : 'text-muted-foreground/30'}`} />
                             </button>
                           ))}
                         </div>
@@ -1024,7 +1024,7 @@ export default function ServiceDetailPage() {
                               </div>
                               <div className="flex items-center gap-0.5 mb-2">
                                 {[...Array(5)].map((_, i) => (
-                                  <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />
+                                  <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-[#ff4000] text-[#ff4000]' : 'text-muted-foreground/30'}`} />
                                 ))}
                               </div>
                               <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>

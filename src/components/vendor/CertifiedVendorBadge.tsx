@@ -49,7 +49,7 @@ export function CertifiedVendorBadge({
         return {
           icon: AlertTriangle,
           label: 'Suspendu',
-          color: 'bg-red-500 text-white border-red-600',
+          color: 'bg-[#ff4000] text-white border-[#ff4000]',
           iconColor: 'text-white',
           tooltipText: 'Certification suspendue temporairement'
         };

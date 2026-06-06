@@ -98,7 +98,7 @@ const SecurityOpsPanel: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Alertes en Attente</CardTitle>
-            <Zap className="h-4 w-4 text-yellow-500" />
+            <Zap className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pending_alerts || 0}</div>
@@ -241,9 +241,9 @@ const SecurityOpsPanel: React.FC = () => {
 
           {/* Security Keys Status */}
           {stats && stats.keys_need_rotation > 0 && (
-            <Card className="border-yellow-500">
+            <Card className="border-[#ff4000]">
               <CardHeader>
-                <CardTitle className="text-yellow-600 flex items-center gap-2">
+                <CardTitle className="text-[#ff4000] flex items-center gap-2">
                   <Lock className="h-5 w-5" />
                   Rotation de Clés Requise
                 </CardTitle>

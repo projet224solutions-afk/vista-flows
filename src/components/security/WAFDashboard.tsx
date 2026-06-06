@@ -189,9 +189,9 @@ export function WAFDashboard() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Statut WAF */}
-        <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-4 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-5 h-5 text-green-600" />
+            <Shield className="w-5 h-5 text-[#ff4000]" />
             <span className="font-semibold">WAF actif et protégé</span>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -207,17 +207,17 @@ export function WAFDashboard() {
             <div className="text-xs text-muted-foreground">Requêtes analysées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Ban className="w-8 h-8 text-red-500 mb-2" />
+            <Ban className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.blockedRequests.toLocaleString()}</div>
             <div className="text-xs text-muted-foreground">Requêtes bloquées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingUp className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingUp className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.legitTraffic}%</div>
             <div className="text-xs text-muted-foreground">Trafic légitime</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Shield className="w-8 h-8 text-purple-500 mb-2" />
+            <Shield className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{stats.activeRules}</div>
             <div className="text-xs text-muted-foreground">Règles actives</div>
           </div>
@@ -253,7 +253,7 @@ export function WAFDashboard() {
                     </div>
                   </div>
                   <Badge
-                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'}`}
+                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-[#ff4000] hover:bg-[#ff4000]' : 'bg-gray-500 hover:bg-gray-600'}`}
                     onClick={() => toggleRuleStatus(rule.id, rule.status)}
                   >
                     {rule.status}
@@ -279,9 +279,9 @@ export function WAFDashboard() {
         </div>
 
         {/* Alertes WAF */}
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+        <div className="p-4 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-[#ff4000] mt-0.5" />
             <div>
               <h5 className="font-semibold text-sm mb-1">Protection Anti-DDoS Active</h5>
               <p className="text-sm text-muted-foreground">

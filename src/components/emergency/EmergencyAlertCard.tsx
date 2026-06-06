@@ -26,11 +26,11 @@ export const EmergencyAlertCard: React.FC<EmergencyAlertCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-red-500 animate-pulse';
+        return 'bg-[#ff4000] animate-pulse';
       case 'in_progress':
         return 'bg-orange-500';
       case 'resolved':
-        return 'bg-green-500';
+        return 'bg-[#ff4000]';
       case 'false_alert':
         return 'bg-gray-500';
       default:
@@ -65,7 +65,7 @@ export const EmergencyAlertCard: React.FC<EmergencyAlertCardProps> = ({
       onClick={onClick}
       className={`cursor-pointer transition-all hover:shadow-lg ${
         isSelected ? 'ring-2 ring-primary shadow-lg' : ''
-      } ${alert.status === 'active' ? 'border-red-500 border-2' : ''}`}
+      } ${alert.status === 'active' ? 'border-[#ff4000] border-2' : ''}`}
     >
       <CardContent className="p-4 space-y-3">
         {/* En-tête avec statut */}

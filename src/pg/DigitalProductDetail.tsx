@@ -447,7 +447,7 @@ export default function DigitalProductDetail() {
                     ) : product.pricing_type === 'pay_what_you_want' ? (
                       <Badge variant="secondary">Prix libre</Badge>
                     ) : (
-                      <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700">
+                      <Badge variant="outline" className="border-[#ff4000]/20 bg-[#ff4000]/10 text-[#ff4000]">
                         Achat unique
                       </Badge>
                     )
@@ -512,7 +512,7 @@ export default function DigitalProductDetail() {
                       )}
                     </>
                   ) : (
-                    <span className="text-3xl font-bold text-green-600">Gratuit</span>
+                    <span className="text-3xl font-bold text-[#ff4000]">Gratuit</span>
                   )}
                 </div>
 
@@ -602,15 +602,15 @@ export default function DigitalProductDetail() {
                     <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Ce que l'acheteur obtient</p>
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         Acces mobile et ordinateur
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         Contenu long format jusqu'a 60 min par video
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
                         Parcours concu pour la conversion et la retention
                       </div>
                     </div>
@@ -709,7 +709,7 @@ export default function DigitalProductDetail() {
                   </div>
                   {product.rating > 0 && (
                     <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star className="h-4 w-4 fill-[#ff4000] text-[#ff4000]" />
                       <span>{product.rating.toFixed(1)} / 5</span>
                     </div>
                   )}

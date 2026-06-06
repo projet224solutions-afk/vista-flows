@@ -37,8 +37,8 @@ export function OfflineBanner() {
       <div className={cn(
         'px-4 py-3 flex items-center justify-between',
         isOnline
-          ? 'bg-green-500 text-white'
-          : 'bg-amber-500 text-white'
+          ? 'bg-[#ff4000] text-white'
+          : 'bg-[#ff4000] text-white'
       )}>
         <div className="flex items-center gap-3">
           {isOnline ? (
@@ -108,7 +108,7 @@ export function SyncIndicator() {
             </>
           ) : (
             <>
-              <CloudOff className="h-4 w-4 text-amber-500" />
+              <CloudOff className="h-4 w-4 text-[#ff4000]" />
               <span className="text-sm">
                 {queueStatus.pending} action{queueStatus.pending > 1 ? 's' : ''} en attente
               </span>
@@ -147,9 +147,9 @@ export function OfflineStatusWidget() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             {isOnline ? (
-              <Wifi className="h-5 w-5 text-green-500" />
+              <Wifi className="h-5 w-5 text-[#ff4000]" />
             ) : (
-              <WifiOff className="h-5 w-5 text-amber-500" />
+              <WifiOff className="h-5 w-5 text-[#ff4000]" />
             )}
             État de la connexion
           </CardTitle>
@@ -178,14 +178,14 @@ export function OfflineStatusWidget() {
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-[#ff4000]" />
             </div>
             <p className="text-2xl font-bold">{queueStatus.completed}</p>
             <p className="text-xs text-muted-foreground">Synchronisés</p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center">
-              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertCircle className="h-4 w-4 text-[#ff4000]" />
             </div>
             <p className="text-2xl font-bold">{queueStatus.failed}</p>
             <p className="text-xs text-muted-foreground">Échoués</p>
@@ -205,9 +205,9 @@ export function OfflineStatusWidget() {
 
         {/* Conflits */}
         {syncStatus.conflicts > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <span className="text-sm text-amber-700 dark:text-amber-300">
+          <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-[#ff4000]" />
+            <span className="text-sm text-[#ff4000] dark:text-orange-300">
               {syncStatus.conflicts} conflit{syncStatus.conflicts > 1 ? 's' : ''} à résoudre
             </span>
           </div>
@@ -253,7 +253,7 @@ export function OfflineStatusWidget() {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-red-500 hover:text-red-600"
+            className="w-full text-[#ff4000] hover:text-[#ff4000]"
             onClick={clearFailedOperations}
           >
             Supprimer les échecs
@@ -287,7 +287,7 @@ export function OfflineStatusBadge({
       <div className={cn(
         'rounded-full',
         sizeClasses[size],
-        isOnline ? 'bg-green-500' : 'bg-amber-500',
+        isOnline ? 'bg-[#ff4000]' : 'bg-[#ff4000]',
         !isOnline && 'animate-pulse'
       )} />
       {showLabel && (

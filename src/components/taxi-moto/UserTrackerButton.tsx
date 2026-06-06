@@ -33,13 +33,13 @@ export function UserTrackerButton({ prominent = false, className, driverName, dr
   const [courseActive, setCourseActive] = useState(false);
 
   const isMerchant = mode === 'merchant';
-  const prominentLabel = isMerchant ? 'Localiser un client' : 'Suivre un client (ID / lien)';
-  const compactLabel = isMerchant ? 'Localiser client' : 'Suivre client';
+  const prominentLabel = isMerchant ? 'Traking' : 'Suivre un client (ID / lien)';
+  const compactLabel = isMerchant ? 'Traking' : 'Suivre client';
   const dialogTitle = courseActive
     ? (isMerchant ? 'Client en approche' : 'Course en cours')
-    : (isMerchant ? 'Localiser un client' : 'Suivre un client');
+    : (isMerchant ? 'Traking' : 'Suivre un client');
   const titleAttr = isMerchant
-    ? "Localiser un client (ID ou numéro) pour qu'il vienne vers vous"
+    ? "Traking — localiser un client (ID ou numéro) pour qu'il vienne vers vous"
     : "Suivre un client par ID ou lien";
 
   return (

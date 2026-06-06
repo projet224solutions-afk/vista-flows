@@ -79,7 +79,6 @@ router.post("/login", async (req: AuthRequest, res: Response) => {
 router.post("/verify-otp", async (req: AuthRequest, res: Response) => {
   try {
     const { email, token } = req.body;
-    const jwtSecret = process.env.JWT_SECRET || "your-secret-key";
 
     if (!email || !token) {
       return res.status(400).json({

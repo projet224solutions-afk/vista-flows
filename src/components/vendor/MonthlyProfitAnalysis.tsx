@@ -81,12 +81,12 @@ interface MonthlyProfitAnalysisProps {
 }
 
 const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  loyer: { label: 'Loyer', icon: <Home className="w-4 h-4" />, color: '#EF4444' },
-  abonnement: { label: 'Abonnement', icon: <CreditCard className="w-4 h-4" />, color: '#8B5CF6' },
-  salaires: { label: 'Salaires', icon: <Users className="w-4 h-4" />, color: '#3B82F6' },
-  electricite: { label: 'Électricité', icon: <Zap className="w-4 h-4" />, color: '#F59E0B' },
-  internet: { label: 'Internet', icon: <Wifi className="w-4 h-4" />, color: '#06B6D4' },
-  assurance: { label: 'Assurance', icon: <Shield className="w-4 h-4" />, color: '#10B981' },
+  loyer: { label: 'Loyer', icon: <Home className="w-4 h-4" />, color: '#ff4000' },
+  abonnement: { label: 'Abonnement', icon: <CreditCard className="w-4 h-4" />, color: '#04439e' },
+  salaires: { label: 'Salaires', icon: <Users className="w-4 h-4" />, color: '#04439e' },
+  electricite: { label: 'Électricité', icon: <Zap className="w-4 h-4" />, color: '#ff4000' },
+  internet: { label: 'Internet', icon: <Wifi className="w-4 h-4" />, color: '#04439e' },
+  assurance: { label: 'Assurance', icon: <Shield className="w-4 h-4" />, color: '#ff4000' },
   autre: { label: 'Autre', icon: <HelpCircle className="w-4 h-4" />, color: '#6B7280' }
 };
 
@@ -410,10 +410,10 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Ventes du mois</p>
-                <p className="text-sm sm:text-xl font-bold text-green-600 truncate">{formatCurrency(monthlySales)}</p>
+                <p className="text-sm sm:text-xl font-bold text-[#ff4000] truncate">{formatCurrency(monthlySales)}</p>
               </div>
-              <div className="p-1.5 sm:p-2 bg-green-100 rounded-full shrink-0 ml-1">
-                <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-600" />
+              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#ff4000]" />
               </div>
             </div>
           </CardContent>
@@ -425,10 +425,10 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Achats du mois</p>
-                <p className="text-sm sm:text-xl font-bold text-red-600 truncate">{formatCurrency(monthlyPurchases)}</p>
+                <p className="text-sm sm:text-xl font-bold text-[#ff4000] truncate">{formatCurrency(monthlyPurchases)}</p>
               </div>
-              <div className="p-1.5 sm:p-2 bg-red-100 rounded-full shrink-0 ml-1">
-                <DollarSign className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-600" />
+              <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
+                <DollarSign className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#ff4000]" />
               </div>
             </div>
           </CardContent>
@@ -450,23 +450,23 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </Card>
 
         {/* Profit net */}
-        <Card className={netProfit >= 0 ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}>
+        <Card className={netProfit >= 0 ? 'border-orange-200 bg-orange-50/50' : 'border-orange-200 bg-orange-50/50'}>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Profit net</p>
-                <p className={`text-sm sm:text-xl font-bold truncate ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm sm:text-xl font-bold truncate ${netProfit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                   {formatCurrency(netProfit)}
                 </p>
-                <p className={`text-[10px] sm:text-xs ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`text-[10px] sm:text-xs ${netProfit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                   Marge: {profitMargin.toFixed(1)}%
                 </p>
               </div>
-              <div className={`p-1.5 sm:p-2 rounded-full shrink-0 ml-1 ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              <div className={`p-1.5 sm:p-2 rounded-full shrink-0 ml-1 ${netProfit >= 0 ? 'bg-orange-100' : 'bg-orange-100'}`}>
                 {netProfit >= 0 ? (
-                  <CheckCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-600" />
+                  <CheckCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#ff4000]" />
                 ) : (
-                  <AlertTriangle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-600" />
+                  <AlertTriangle className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#ff4000]" />
                 )}
               </div>
             </div>
@@ -486,31 +486,31 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Chiffre d'affaires (ventes)</span>
-              <span className="font-medium text-green-600">+ {formatCurrency(monthlySales)}</span>
+              <span className="font-medium text-[#ff4000]">+ {formatCurrency(monthlySales)}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Coût des achats (stock)</span>
-              <span className="font-medium text-red-600">- {formatCurrency(monthlyPurchases)}</span>
+              <span className="font-medium text-[#ff4000]">- {formatCurrency(monthlyPurchases)}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2 bg-muted/50 rounded px-2">
               <span className="font-medium">Marge brute</span>
-              <span className={`font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`font-bold ${grossProfit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                 {formatCurrency(grossProfit)}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Total coûts fixes</span>
-              <span className="font-medium text-red-600">- {formatCurrency(totalFixedCosts)}</span>
+              <span className="font-medium text-[#ff4000]">- {formatCurrency(totalFixedCosts)}</span>
             </div>
             <Separator />
             <div className={`flex justify-between items-center py-3 rounded px-2 ${
-              netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'
+              netProfit >= 0 ? 'bg-orange-100' : 'bg-orange-100'
             }`}>
               <span className="font-bold">Profit net mensuel</span>
-              <span className={`font-bold text-lg ${netProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              <span className={`font-bold text-lg ${netProfit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                 {formatCurrency(netProfit)}
               </span>
             </div>

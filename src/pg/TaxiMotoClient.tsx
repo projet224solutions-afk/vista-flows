@@ -466,7 +466,7 @@ export default function TaxiMotoClient() {
                 {location && (
                   <>
                     <span className="text-muted-foreground">•</span>
-                    <MapPin className="w-3 h-3 text-green-500 flex-shrink-0" />
+                    <MapPin className="w-3 h-3 text-[#ff4000] flex-shrink-0" />
                     {!responsive.isMobile && (
                       <span className="text-xs text-muted-foreground">GPS actif</span>
                     )}
@@ -482,7 +482,7 @@ export default function TaxiMotoClient() {
 
             <div className="flex items-center gap-2 flex-shrink-0">
               {currentRide && (
-                <Badge variant="default" className={`bg-green-500 ${responsive.isMobile ? 'text-xs px-2' : ''}`}>
+                <Badge variant="default" className={`bg-[#ff4000] ${responsive.isMobile ? 'text-xs px-2' : ''}`}>
                   {responsive.isMobile ? 'Actif' : 'Course active'}
                 </Badge>
               )}
@@ -528,7 +528,7 @@ export default function TaxiMotoClient() {
 
       {/* Bandeau "Course active" — visible uniquement quand une course est en cours */}
       {currentRide && (
-        <div className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} rounded-xl bg-green-500 text-white px-4 py-2.5 flex items-center justify-between shadow-md`}>
+        <div className={`${responsive.isMobile ? 'mx-3 mt-3' : 'mx-4 mt-4'} rounded-xl bg-[#ff4000] text-white px-4 py-2.5 flex items-center justify-between shadow-md`}>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" />
             <span className={`${responsive.isMobile ? 'text-xs' : 'text-sm'} font-semibold`}>
@@ -562,7 +562,7 @@ export default function TaxiMotoClient() {
               {!responsive.isMobile && 'Suivi'}
               {responsive.isMobile && <span className="ml-1">Suivi</span>}
               {currentRide && (
-                <span className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="ml-1 w-2 h-2 bg-[#ff4000] rounded-full animate-pulse"></span>
               )}
             </TabsTrigger>
             <TabsTrigger
@@ -647,7 +647,7 @@ export default function TaxiMotoClient() {
                 <div className="text-xs text-muted-foreground">{responsive.isMobile ? 'Note' : 'Note moyenne'}</div>
               </div>
               <div>
-                <div className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-green-600`}>2 min</div>
+                <div className={`${responsive.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-[#ff4000]`}>2 min</div>
                 <div className="text-xs text-muted-foreground">{responsive.isMobile ? 'Attente' : 'Temps d\'attente'}</div>
               </div>
               <div>

@@ -94,7 +94,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-green-500 hover:bg-green-600">
+      <Badge className="bg-[#ff4000] hover:bg-[#ff4000]">
         <CheckCircle className="w-3 h-3 mr-1" />
         Actif
       </Badge>
@@ -135,7 +135,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               <div>
                 <p className="text-sm text-muted-foreground">Agents Totaux</p>
                 <p className="text-2xl font-bold text-blue-600">{overview.totalAgents}</p>
-                <p className="text-xs text-green-600">
+                <p className="text-xs text-[#ff4000]">
                   {overview.activeAgents} actifs
                 </p>
               </div>
@@ -149,12 +149,12 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Sous-Agents</p>
-                <p className="text-2xl font-bold text-green-600">{overview.totalSubAgents}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{overview.totalSubAgents}</p>
                 <p className="text-xs text-muted-foreground">
                   Créés par agents
                 </p>
               </div>
-              <UserPlus className="w-8 h-8 text-green-500" />
+              <UserPlus className="w-8 h-8 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -164,12 +164,12 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Utilisateurs Créés</p>
-                <p className="text-2xl font-bold text-purple-600">{overview.totalUsers}</p>
+                <p className="text-2xl font-bold text-[#04439e]">{overview.totalUsers}</p>
                 <p className="text-xs text-muted-foreground">
                   Par le réseau
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-purple-500" />
+              <Activity className="w-8 h-8 text-[#04439e]" />
             </div>
           </CardContent>
         </Card>
@@ -296,7 +296,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                   {agents.slice(0, 5).map((agent) => (
                     <div key={agent.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 bg-[#04439e] rounded-full flex items-center justify-center text-white font-bold">
                           {agent.name.charAt(0)}
                         </div>
                         <div>
@@ -307,7 +307,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-green-600">
+                        <p className="font-bold text-[#ff4000]">
                           {formatCurrency(agent.total_commissions_earned)}
                         </p>
                         <p className="text-sm text-muted-foreground">commissions</p>
@@ -332,7 +332,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div
-                          className="h-full bg-green-500 rounded-full"
+                          className="h-full bg-[#ff4000] rounded-full"
                           style={{ width: `${(overview.activeAgents / overview.totalAgents) * 100}%` }}
                         />
                       </div>
@@ -360,7 +360,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div
-                          className="h-full bg-purple-500 rounded-full"
+                          className="h-full bg-[#04439e] rounded-full"
                           style={{ width: `${(agents.filter(a => a.total_commissions_earned > 100000).length / overview.totalAgents) * 100}%` }}
                         />
                       </div>
@@ -429,7 +429,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <TableRow key={agent.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                          <div className="w-8 h-8 bg-[#04439e] rounded-full flex items-center justify-center text-white text-sm font-bold">
                             {agent.name.charAt(0)}
                           </div>
                           <div>
@@ -461,7 +461,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                       </TableCell>
                       <TableCell>
                         <div className="text-center">
-                          <p className="font-bold text-green-600">
+                          <p className="font-bold text-[#ff4000]">
                             {formatCurrency(agent.total_commissions_earned)}
                           </p>
                           <p className="text-xs text-muted-foreground">gagnées</p>
@@ -493,7 +493,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                             size="sm"
                             onClick={() => deleteAgent(agent.id)}
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" />
+                            <Trash2 className="w-4 h-4 text-[#ff4000]" />
                           </Button>
                         </div>
                       </TableCell>
@@ -530,7 +530,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               {settings && settings.length > 0 ? (
                 settings.map((setting: unknown) => (
                   <div key={setting.id || Math.random()} className="space-y-4">
-                    <div className="flex items-center justify-between p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                    <div className="flex items-center justify-between p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-50">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-semibold text-lg">
@@ -539,7 +539,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                               : setting.description || 'Configuration'}
                           </h4>
                           {setting.setting_key === 'base_user_commission' && (
-                            <Badge className="bg-green-500">Actif</Badge>
+                            <Badge className="bg-[#ff4000]">Actif</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">
@@ -589,10 +589,10 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     {/* Statistiques d'impact */}
                     {setting.setting_key === 'base_user_commission' && (
                       <div className="grid grid-cols-3 gap-4">
-                        <Card className="border-green-200">
+                        <Card className="border-orange-200">
                           <CardContent className="p-4">
                             <p className="text-sm text-muted-foreground">Taux Actuel</p>
-                            <p className="text-2xl font-bold text-green-600">
+                            <p className="text-2xl font-bold text-[#ff4000]">
                               {((setting.setting_value || 0) * 100).toFixed(1)}%
                             </p>
                           </CardContent>
@@ -605,10 +605,10 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                             </p>
                           </CardContent>
                         </Card>
-                        <Card className="border-purple-200">
+                        <Card className="border-blue-200">
                           <CardContent className="p-4">
                             <p className="text-sm text-muted-foreground">Commission sur 1M</p>
-                            <p className="text-2xl font-bold text-purple-600">
+                            <p className="text-2xl font-bold text-[#04439e]">
                               {Math.round(1000000 * (setting.setting_value || 0)).toLocaleString()} GNF
                             </p>
                           </CardContent>

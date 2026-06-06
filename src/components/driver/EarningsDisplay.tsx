@@ -28,15 +28,15 @@ export function EarningsDisplay({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Gains */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+      <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/5 border-[#ff4000]/20">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-green-500" />
+            <DollarSign className="h-4 w-4 text-[#ff4000]" />
             Gains Totaux
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-[#ff4000]">
             {totalEarnings.toLocaleString()} GNF
           </div>
         </CardContent>
@@ -84,12 +84,12 @@ export function EarningsDisplay({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-purple-500" />
+            <Calendar className="h-4 w-4 text-[#04439e]" />
             Ce Mois
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-purple-600">
+          <div className="text-2xl font-bold text-[#04439e]">
             {monthEarnings.toLocaleString()} GNF
           </div>
           <p className="text-xs text-muted-foreground mt-1">

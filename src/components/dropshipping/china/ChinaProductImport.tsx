@@ -52,7 +52,7 @@ export function ChinaProductImport() {
   const getPlatformBadge = (platform: ChinaPlatformType) => {
     const colors: Record<ChinaPlatformType, string> = {
       ALIBABA: 'bg-orange-500 hover:bg-orange-600',
-      ALIEXPRESS: 'bg-red-500 hover:bg-red-600',
+      ALIEXPRESS: 'bg-[#ff4000] hover:bg-[#ff4000]',
       '1688': 'bg-blue-600 hover:bg-blue-700',
       PRIVATE: 'bg-gray-500 hover:bg-gray-600'
     };
@@ -62,7 +62,7 @@ export function ChinaProductImport() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>;
+        return <Badge variant="default" className="bg-[#ff4000]"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>;
       case 'failed':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Échec</Badge>;
       case 'processing':
@@ -113,7 +113,7 @@ export function ChinaProductImport() {
             <Badge variant="outline" className="text-orange-600 border-orange-300">
               Alibaba
             </Badge>
-            <Badge variant="outline" className="text-red-600 border-red-300">
+            <Badge variant="outline" className="text-[#ff4000] border-orange-300">
               AliExpress
             </Badge>
             <Badge variant="outline" className="text-blue-600 border-blue-300">
@@ -169,7 +169,7 @@ export function ChinaProductImport() {
                     )}
 
                     {imp.product_id && (
-                      <Badge variant="outline" className="text-green-600">
+                      <Badge variant="outline" className="text-[#ff4000]">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Produit créé
                       </Badge>
@@ -227,8 +227,8 @@ export function ChinaProductImport() {
               </div>
 
               {sellingPrice && selectedImport.extracted_data?.price && (
-                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                <div className="p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg">
+                  <p className="text-sm font-medium text-[#ff4000] dark:text-orange-300">
                     Marge estimée calculée automatiquement après création
                   </p>
                 </div>

@@ -327,7 +327,7 @@ export default function ProductRatingDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-[#ff4000]" />
               Merci pour vos avis !
             </DialogTitle>
             <DialogDescription>
@@ -374,7 +374,7 @@ export default function ProductRatingDialog({
                     <Star
                       className={`w-10 h-10 ${
                         star <= (hoveredVendorRating || vendorRating)
-                          ? 'fill-yellow-400 text-yellow-400'
+                          ? 'fill-[#ff4000] text-[#ff4000]'
                           : 'text-muted-foreground/30'
                       }`}
                     />
@@ -471,7 +471,7 @@ export default function ProductRatingDialog({
                   index === currentProductIndex
                     ? 'border-primary bg-primary/5'
                     : product.rated
-                    ? 'border-green-500 bg-green-50 dark:bg-green-950 opacity-60'
+                    ? 'border-[#ff4000] bg-orange-50 dark:bg-[#ff4000] opacity-60'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
@@ -488,7 +488,7 @@ export default function ProductRatingDialog({
                     </div>
                   )}
                   {product.rated && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff4000] rounded-full flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
@@ -542,7 +542,7 @@ export default function ProductRatingDialog({
                   <Star
                     className={`w-8 h-8 ${
                       star <= (hoveredRating || rating)
-                        ? 'fill-yellow-400 text-yellow-400'
+                        ? 'fill-[#ff4000] text-[#ff4000]'
                         : 'text-muted-foreground/30'
                     }`}
                   />

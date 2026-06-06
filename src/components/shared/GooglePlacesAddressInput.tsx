@@ -98,12 +98,12 @@ export function GooglePlacesAddressInput({
       badge: 'bg-primary/10 text-primary',
     },
     pickup: {
-      icon: 'text-green-600',
-      badge: 'bg-green-100 text-green-800',
+      icon: 'text-[#ff4000]',
+      badge: 'bg-orange-100 text-[#ff4000]',
     },
     destination: {
-      icon: 'text-red-600',
-      badge: 'bg-red-100 text-red-800',
+      icon: 'text-[#ff4000]',
+      badge: 'bg-orange-100 text-[#ff4000]',
     },
   };
 
@@ -305,7 +305,7 @@ export function GooglePlacesAddressInput({
             disabled={disabled}
             className={cn(
               'pl-10 pr-10',
-              isValid && 'border-green-500 focus-visible:ring-green-500',
+              isValid && 'border-[#ff4000] focus-visible:ring-[#ff4000]',
               inputClassName
             )}
           />
@@ -321,9 +321,9 @@ export function GooglePlacesAddressInput({
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : isValid ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="w-4 h-4 text-[#ff4000]" />
             ) : inputValue.length > 0 ? (
-              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <AlertCircle className="w-4 h-4 text-[#ff4000]" />
             ) : null}
           </div>
         </div>
@@ -397,7 +397,7 @@ export function GooglePlacesAddressInput({
       )}
 
       {!isValid && inputValue.length >= 3 && !isLoading && suggestions.length === 0 && (
-        <p className="text-xs text-amber-600 mt-1">
+        <p className="text-xs text-[#ff4000] mt-1">
           Sélectionnez une adresse dans la liste pour valider
         </p>
       )}

@@ -130,7 +130,7 @@ export default function AutoDownloadDetector() {
             {
                 platform: 'android',
                 name: 'Android APK',
-                icon: <Smartphone className="w-6 h-6 text-green-600" />,
+                icon: <Smartphone className="w-6 h-6 text-[#ff4000]" />,
                 description: 'Application native Android avec toutes les fonctionnalités',
                 fileSize: '25 MB',
                 downloadUrl: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-android.apk',
@@ -244,7 +244,7 @@ export default function AutoDownloadDetector() {
             {
                 platform: 'web',
                 name: 'Application Web',
-                icon: <Globe className="w-6 h-6 text-purple-600" />,
+                icon: <Globe className="w-6 h-6 text-[#04439e]" />,
                 description: 'Accès direct via navigateur, aucune installation requise',
                 fileSize: 'Streaming',
                 downloadUrl: window.location.origin,
@@ -333,11 +333,11 @@ export default function AutoDownloadDetector() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {isOnline ? (
-                        <Wifi className="w-5 h-5 text-green-600" />
+                        <Wifi className="w-5 h-5 text-[#ff4000]" />
                     ) : (
-                        <WifiOff className="w-5 h-5 text-red-600" />
+                        <WifiOff className="w-5 h-5 text-[#ff4000]" />
                     )}
-                    <span className={`text-sm font-medium ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm font-medium ${isOnline ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                         {isOnline ? 'En ligne' : 'Hors ligne'}
                     </span>
                 </div>
@@ -349,10 +349,10 @@ export default function AutoDownloadDetector() {
 
             {/* Recommandation automatique */}
             {recommendedDownload && (
-                <Card className="border-0 shadow-xl rounded-2xl bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                <Card className="border-0 shadow-xl rounded-2xl bg-gradient-to-r from-blue-50 to-blue-50 border-blue-200">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-3">
-                            <Zap className="w-6 h-6 text-yellow-500" />
+                            <Zap className="w-6 h-6 text-[#ff4000]" />
                             Recommandé pour votre appareil
                         </CardTitle>
                     </CardHeader>
@@ -380,7 +380,7 @@ export default function AutoDownloadDetector() {
                             {/* Fonctionnalités */}
                             <div>
                                 <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                                     Fonctionnalités
                                 </h4>
                                 <ul className="space-y-2">
@@ -413,7 +413,7 @@ export default function AutoDownloadDetector() {
                             {(deviceInfo.isMobile || deviceInfo.isTablet) && (
                                 <div className="text-center">
                                     <h4 className="font-semibold text-gray-800 mb-3 flex items-center justify-center gap-2">
-                                        <QrCode className="w-4 h-4 text-purple-600" />
+                                        <QrCode className="w-4 h-4 text-[#04439e]" />
                                         QR Code
                                     </h4>
                                     <img
@@ -429,7 +429,7 @@ export default function AutoDownloadDetector() {
                         <div className="flex gap-4">
                             <Button
                                 onClick={() => startDownload(recommendedDownload)}
-                                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl py-3 text-lg font-semibold shadow-lg"
+                                className="flex-1 bg-[#04439e] rounded-xl py-3 text-lg font-semibold shadow-lg"
                                 disabled={!isOnline && recommendedDownload.platform !== 'web'}
                             >
                                 <Download className="w-5 h-5 mr-2" />

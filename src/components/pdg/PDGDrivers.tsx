@@ -101,7 +101,7 @@ export default function PDGDrivers() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.online}</span>
-              <Activity className="w-5 h-5 text-green-500" />
+              <Activity className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>

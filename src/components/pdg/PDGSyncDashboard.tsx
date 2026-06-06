@@ -41,22 +41,22 @@ export default function PDGSyncDashboard() {
   const getStatusIcon = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+        return <AlertTriangle className="w-4 h-4 text-[#ff4000]" />;
       case 'error':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-[#ff4000]" />;
     }
   };
 
   const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return 'bg-green-500/10 text-green-600 border-green-500/20';
+        return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
       case 'warning':
-        return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+        return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
       case 'error':
-        return 'bg-red-500/10 text-red-600 border-red-500/20';
+        return 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20';
     }
   };
 
@@ -102,13 +102,13 @@ export default function PDGSyncDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-xl ${isHealthy ? 'bg-green-500/10' : 'bg-yellow-500/10'}`}>
-                <Database className={`w-6 h-6 ${isHealthy ? 'text-green-500' : 'text-yellow-500'}`} />
+              <div className={`p-3 rounded-xl ${isHealthy ? 'bg-[#ff4000]/10' : 'bg-[#ff4000]/10'}`}>
+                <Database className={`w-6 h-6 ${isHealthy ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
                   Synchronisation des Données
-                  <Badge variant="outline" className={isHealthy ? 'border-green-500/30 bg-green-500/10 text-green-600' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600'}>
+                  <Badge variant="outline" className={isHealthy ? 'border-[#ff4000]/30 bg-[#ff4000]/10 text-[#ff4000]' : 'border-[#ff4000]/30 bg-[#ff4000]/10 text-[#ff4000]'}>
                     {isHealthy ? 'Sain' : 'Attention requise'}
                   </Badge>
                 </CardTitle>
@@ -149,9 +149,9 @@ export default function PDGSyncDashboard() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">Score de santé</span>
               <span className={`text-lg font-bold ${
-                healthScore >= 80 ? 'text-green-500' :
-                healthScore >= 50 ? 'text-yellow-500' :
-                'text-red-500'
+                healthScore >= 80 ? 'text-[#ff4000]' :
+                healthScore >= 50 ? 'text-[#ff4000]' :
+                'text-[#ff4000]'
               }`}>
                 {healthScore}%
               </span>
@@ -165,19 +165,19 @@ export default function PDGSyncDashboard() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-muted/50 text-center">
-              <div className="text-2xl font-bold text-green-500">
+              <div className="text-2xl font-bold text-[#ff4000]">
                 {checks.filter(c => c.status === 'ok').length}
               </div>
               <div className="text-xs text-muted-foreground">Vérifications OK</div>
             </div>
             <div className="p-4 rounded-xl bg-muted/50 text-center">
-              <div className="text-2xl font-bold text-yellow-500">
+              <div className="text-2xl font-bold text-[#ff4000]">
                 {checks.filter(c => c.status === 'warning').length}
               </div>
               <div className="text-xs text-muted-foreground">Avertissements</div>
             </div>
             <div className="p-4 rounded-xl bg-muted/50 text-center">
-              <div className="text-2xl font-bold text-red-500">
+              <div className="text-2xl font-bold text-[#ff4000]">
                 {checks.filter(c => c.status === 'error').length}
               </div>
               <div className="text-xs text-muted-foreground">Erreurs</div>
@@ -236,10 +236,10 @@ export default function PDGSyncDashboard() {
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
-        <Card className="border-border/40 bg-card/50 backdrop-blur-sm border-yellow-500/30">
+        <Card className="border-border/40 bg-card/50 backdrop-blur-sm border-[#ff4000]/30">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               Recommandations
             </CardTitle>
           </CardHeader>
@@ -247,7 +247,7 @@ export default function PDGSyncDashboard() {
             <ul className="space-y-2">
               {recommendations.map((rec, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <span className="text-yellow-500 mt-0.5">•</span>
+                  <span className="text-[#ff4000] mt-0.5">•</span>
                   <span>{rec}</span>
                 </li>
               ))}

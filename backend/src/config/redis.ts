@@ -19,6 +19,7 @@ type RedisClient = {
   expire(key: string, ttlSeconds: number): Promise<number>;
   ping(): Promise<string>;
   quit(): Promise<string>;
+  eval(script: string, numKeys: number, ...args: Array<string | number>): Promise<any>;
   multi(): {
     incr(key: string): unknown;
     ttl(key: string): unknown;
@@ -26,7 +27,14 @@ type RedisClient = {
   };
 };
 
-const REDIS_ENABLED = (process.env.REDIS_ENABLED ?? (process.env.NODE_ENV === 'production' ? 'true' : 'false')) === 'true';
+// URL unique d'un Redis managé (Upstash / Redis Cloud / ElastiCache…).
+// Format : redis://:password@host:port  ou  rediss://… (TLS, géré auto par ioredis)
+const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || '';
+
+// Redis est activé si : explicitement (REDIS_ENABLED=true) OU une URL managée est
+// fournie OU on est en production. Sinon désactivé (fallback mémoire) pour le dev.
+const REDIS_ENABLED =
+  (process.env.REDIS_ENABLED ?? ((REDIS_URL || process.env.NODE_ENV === 'production') ? 'true' : 'false')) === 'true';
 
 // ==================== CONFIG ====================
 
@@ -80,7 +88,16 @@ export async function getRedis(): Promise<RedisClient | null> {
   try {
     connectAttempts++;
     if (!client) {
-      client = new (Redis as any)(REDIS_CONFIG) as RedisClient;
+      // URL managée prioritaire ; sinon host/port/password locaux
+      client = (REDIS_URL
+        ? new (Redis as any)(REDIS_URL, {
+            lazyConnect: true,
+            maxRetriesPerRequest: REDIS_CONFIG.maxRetriesPerRequest,
+            retryStrategy: REDIS_CONFIG.retryStrategy,
+            connectTimeout: REDIS_CONFIG.connectTimeout,
+            commandTimeout: REDIS_CONFIG.commandTimeout,
+          })
+        : new (Redis as any)(REDIS_CONFIG)) as RedisClient;
       client.on('connect', () => { isConnected = true; connectAttempts = 0; fallbackLogged = false; logger.info('✅ Redis connected'); });
       client.on('error', (_err) => {
         isConnected = false;
@@ -199,10 +216,29 @@ export const locks = {
 
 // ==================== RATE LIMITING (Redis-backed) ====================
 
+// Rate-limit ATOMIQUE : INCR + EXPIRE-au-1er-hit dans UN seul appel (script Lua).
+// Évite la fenêtre de course de l'ancien `multi(INCR,TTL)` + `expire` séparé, où
+// une clé pouvait rester SANS TTL (crash/échec entre les deux) → IP bloquée pour
+// toujours. Ici, le serveur Redis exécute le tout atomiquement.
+const RATE_LIMIT_LUA = `
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+  return {current, tonumber(ARGV[1])}
+end
+local ttl = redis.call('TTL', KEYS[1])
+if ttl < 0 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+  ttl = tonumber(ARGV[1])
+end
+return {current, ttl}
+`;
+
 export const redisRateLimit = {
   /**
-   * Check and increment rate limit counter.
-   * Returns { allowed: boolean, remaining: number, resetAt: number }
+   * Incrémente et vérifie le compteur de rate limit, ATOMIQUEMENT (Lua).
+   * Retourne { allowed, remaining, resetAt }. resetAt === 0 ⇒ Redis indisponible
+   * (le caller bascule alors sur le fallback mémoire).
    */
   async check(
     identifier: string,
@@ -214,21 +250,14 @@ export const redisRateLimit = {
 
     const key = `rl:${identifier}`;
     try {
-      const multi = redis.multi();
-      multi.incr(key);
-      multi.ttl(key);
-      const results = await multi.exec();
-
-      const count = (results?.[0]?.[1] as number) || 0;
-      const ttl = (results?.[1]?.[1] as number) || -1;
-
-      if (ttl === -1) {
-        await redis.expire(key, windowSeconds);
-      }
+      const res = await redis.eval(RATE_LIMIT_LUA, 1, key, String(windowSeconds));
+      const count = Number(Array.isArray(res) ? res[0] : 0) || 0;
+      const ttlRaw = Number(Array.isArray(res) ? res[1] : windowSeconds);
+      const ttl = ttlRaw > 0 ? ttlRaw : windowSeconds;
 
       const allowed = count <= maxRequests;
       const remaining = Math.max(0, maxRequests - count);
-      const resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : windowSeconds * 1000);
+      const resetAt = Date.now() + ttl * 1000;
 
       return { allowed, remaining, resetAt };
     } catch {

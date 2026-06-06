@@ -157,11 +157,11 @@ export default function PaymentPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-green-100 text-green-800';
+        return 'bg-orange-100 text-[#ff4000]';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-100 text-[#ff4000]';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-orange-100 text-[#ff4000]';
       case 'expired':
         return 'bg-gray-100 text-gray-800';
       default:
@@ -171,7 +171,7 @@ export default function PaymentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600">Chargement des détails du paiement...</p>
@@ -182,10 +182,10 @@ export default function PaymentPage() {
 
   if (!paymentDetails) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
             <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouvé</h2>
             <p className="text-gray-600 mb-4">
               Ce lien de paiement n'existe pas ou a été supprimé.
@@ -202,7 +202,7 @@ export default function PaymentPage() {
 
   if (paymentDetails.status === 'expired') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Clock className="w-12 h-12 mx-auto mb-4 text-gray-500" />
@@ -222,10 +222,10 @@ export default function PaymentPage() {
 
   if (paymentDetails.status === 'success') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
             <h2 className="text-xl font-semibold mb-2">Paiement confirmé !</h2>
             <p className="text-gray-600 mb-4">
               Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a été traité avec succès.
@@ -241,7 +241,7 @@ export default function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* En-tête */}
         <div className="mb-8">
@@ -295,7 +295,7 @@ export default function PaymentPage() {
                   <span>{formatCurrency(paymentDetails.montant, paymentDetails.devise)}</span>
                 </div>
                 {(paymentDetails as any).remise > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
+                  <div className="flex justify-between text-sm text-[#ff4000]">
                     <span>Remise :</span>
                     <span>
                       -{(paymentDetails as any).remise}
@@ -402,11 +402,11 @@ export default function PaymentPage() {
               </div>
 
               {/* Sécurité */}
-              <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                <Shield className="w-5 h-5 text-green-600" />
+              <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                <Shield className="w-5 h-5 text-[#ff4000]" />
                 <div className="text-sm">
-                  <p className="font-semibold text-green-800">Paiement sécurisé</p>
-                  <p className="text-green-600">Vos données sont protégées par SSL</p>
+                  <p className="font-semibold text-[#ff4000]">Paiement sécurisé</p>
+                  <p className="text-[#ff4000]">Vos données sont protégées par SSL</p>
                 </div>
               </div>
 

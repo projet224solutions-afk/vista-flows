@@ -36,9 +36,9 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   planifie: 'bg-muted text-muted-foreground',
   en_cours: 'bg-blue-100 text-blue-800',
-  en_pause: 'bg-amber-100 text-amber-800',
-  termine: 'bg-green-100 text-green-800',
-  annule: 'bg-red-100 text-red-800',
+  en_pause: 'bg-orange-100 text-[#ff4000]',
+  termine: 'bg-orange-100 text-[#ff4000]',
+  annule: 'bg-orange-100 text-[#ff4000]',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -54,10 +54,10 @@ const SPECIALTY_LABELS: Record<string, string> = {
 };
 
 const QUOTE_STATUS: Record<string, { label: string; color: string }> = {
-  en_attente: { label: 'En attente', color: 'bg-amber-100 text-amber-800' },
-  repondu: { label: 'Répondu', color: 'bg-green-100 text-green-800' },
+  en_attente: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]' },
+  repondu: { label: 'Répondu', color: 'bg-orange-100 text-[#ff4000]' },
   accepte: { label: 'Accepté', color: 'bg-blue-100 text-blue-800' },
-  refuse: { label: 'Refusé', color: 'bg-red-100 text-red-800' },
+  refuse: { label: 'Refusé', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 export function ConstructionModule({ serviceId, businessName }: ConstructionModuleProps) {
@@ -128,7 +128,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-amber-100"><Users className="h-4 w-4 text-amber-600" /></div>
+              <div className="p-2 rounded-lg bg-orange-100"><Users className="h-4 w-4 text-[#ff4000]" /></div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalProfessionals}</p>
                 <p className="text-xs text-muted-foreground">Professionnels</p>
@@ -139,7 +139,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-green-100"><TrendingUp className="h-4 w-4 text-green-600" /></div>
+              <div className="p-2 rounded-lg bg-orange-100"><TrendingUp className="h-4 w-4 text-[#ff4000]" /></div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalBudget > 0 ? `${(stats.totalBudget / 1e6).toFixed(0)}M` : '0'}</p>
                 <p className="text-xs text-muted-foreground">Budget GNF</p>
@@ -241,7 +241,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                         <p className="text-xs text-muted-foreground">{SPECIALTY_LABELS[pro.specialty] || pro.specialty}</p>
                         <div className="flex items-center gap-2 mt-1">
                           {pro.experience_years > 0 && <span className="text-xs text-muted-foreground">{pro.experience_years} ans</span>}
-                          {pro.rating > 0 && <span className="text-xs flex items-center gap-0.5"><Star className="h-3 w-3 text-amber-500 fill-amber-500" />{pro.rating}</span>}
+                          {pro.rating > 0 && <span className="text-xs flex items-center gap-0.5"><Star className="h-3 w-3 text-[#ff4000] fill-[#ff4000]" />{pro.rating}</span>}
                           <Badge variant={pro.is_available ? 'default' : 'secondary'} className="text-[10px]">{pro.is_available ? 'Dispo' : 'Occupé'}</Badge>
                         </div>
                         {pro.city && <p className="text-xs text-muted-foreground mt-1"><MapPin className="h-3 w-3 inline" /> {pro.city}</p>}

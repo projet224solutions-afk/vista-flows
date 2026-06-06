@@ -322,14 +322,14 @@ export const SecurityComparisonPanel = () => {
       {/* Notes Détaillées par Plateforme */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Amazon - Leader Mondial */}
-        <Card className="border-2 border-yellow-500/50 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
+        <Card className="border-2 border-[#ff4000]/50 bg-gradient-to-br from-[#ff4000]/5 to-orange-500/5">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-yellow-500" />
+                <Award className="w-5 h-5 text-[#ff4000]" />
                 <span>Amazon</span>
               </div>
-              <Badge className="bg-yellow-500 text-black">
+              <Badge className="bg-[#ff4000] text-black">
                 🥇 1er - {overallScores.amazon}/100
               </Badge>
             </CardTitle>
@@ -342,7 +342,7 @@ export const SecurityComparisonPanel = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
+              <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Infrastructure AWS niveau enterprise (99.99% uptime)</li>
                 <li>• ML avancé pour détection fraude en temps réel</li>
@@ -353,7 +353,7 @@ export const SecurityComparisonPanel = () => {
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">❌ Limites :</p>
+              <p className="text-sm font-medium text-[#ff4000]">❌ Limites :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Pas de wallet intégré natif</li>
                 <li>• Pas de cartes virtuelles</li>
@@ -389,7 +389,7 @@ export const SecurityComparisonPanel = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
+              <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• RLS activé sur 100% des tables (niveau Amazon)</li>
                 <li>• ML fraud detection temps réel (6 critères)</li>
@@ -438,7 +438,7 @@ export const SecurityComparisonPanel = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
+              <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Infrastructure cloud Alibaba solide</li>
                 <li>• CDN global performant</li>
@@ -447,7 +447,7 @@ export const SecurityComparisonPanel = () => {
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">❌ Faiblesses :</p>
+              <p className="text-sm font-medium text-[#ff4000]">❌ Faiblesses :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• RLS partiel seulement (60%)</li>
                 <li>• Détection fraude basique</li>
@@ -485,7 +485,7 @@ export const SecurityComparisonPanel = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
+              <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Suite ERP complète intégrée</li>
                 <li>• Gestion comptabilité/stock</li>
@@ -494,7 +494,7 @@ export const SecurityComparisonPanel = () => {
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">❌ Faiblesses Critiques :</p>
+              <p className="text-sm font-medium text-[#ff4000]">❌ Faiblesses Critiques :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Aucune détection fraude ML</li>
                 <li>• RLS très limité (40%)</li>
@@ -514,11 +514,11 @@ export const SecurityComparisonPanel = () => {
       </div>
 
       {/* Verdict Final */}
-      <Card className="bg-gradient-to-r from-yellow-500/10 via-primary/10 to-primary-glow/10 border-2 border-primary">
+      <Card className="bg-gradient-to-r from-[#ff4000]/10 via-primary/10 to-primary-glow/10 border-2 border-primary">
         <CardContent className="py-8">
           <div className="space-y-6">
             <div className="flex items-center gap-3 justify-center">
-              <Award className="w-8 h-8 text-yellow-500" />
+              <Award className="w-8 h-8 text-[#ff4000]" />
               <h3 className="text-2xl font-bold">🏆 VERDICT FINAL</h3>
             </div>
 
@@ -527,10 +527,10 @@ export const SecurityComparisonPanel = () => {
               <div className="text-center space-y-2">
                 <h4 className="text-lg font-bold">Classement Sécurité & Fiabilité</h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
-                  <div className="p-4 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg border-2 border-yellow-500">
+                  <div className="p-4 bg-gradient-to-br from-[#ff4000]/20 to-orange-500/20 rounded-lg border-2 border-[#ff4000]">
                     <div className="text-3xl mb-1">🥇</div>
                     <div className="text-xl font-bold">Amazon</div>
-                    <div className="text-2xl font-bold text-yellow-600">9.4/10</div>
+                    <div className="text-2xl font-bold text-[#ff4000]">9.4/10</div>
                     <p className="text-xs text-muted-foreground mt-1">Leader Mondial</p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-lg border-2 border-primary">
@@ -559,7 +559,7 @@ export const SecurityComparisonPanel = () => {
             <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
               <div className="space-y-2">
                 <h5 className="font-bold text-sm flex items-center gap-2">
-                  <Award className="w-4 h-4 text-yellow-500" />
+                  <Award className="w-4 h-4 text-[#ff4000]" />
                   Pourquoi Amazon est 1er ?
                 </h5>
                 <ul className="text-xs space-y-1 text-muted-foreground">
@@ -604,7 +604,7 @@ export const SecurityComparisonPanel = () => {
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 pt-4">
-              <Badge className="bg-yellow-500 text-black">
+              <Badge className="bg-[#ff4000] text-black">
                 🥇 Amazon: Leader Absolu
               </Badge>
               <Badge className="bg-primary">

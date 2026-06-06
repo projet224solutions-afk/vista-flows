@@ -550,10 +550,10 @@ export default function AdvancedSalesManager() {
         <Card>
           <CardContent className="p-2 sm:p-4">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Promos</p>
-                <p className="text-sm sm:text-lg font-bold text-green-600">{activePromos}</p>
+                <p className="text-sm sm:text-lg font-bold text-[#ff4000]">{activePromos}</p>
               </div>
             </div>
           </CardContent>
@@ -912,7 +912,7 @@ export default function AdvancedSalesManager() {
                           )}
                           {sale.status === 'paid' && (
                             <div className="p-1.5 sm:p-2">
-                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000]" />
                             </div>
                           )}
                         </div>
@@ -986,7 +986,7 @@ export default function AdvancedSalesManager() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Déjà payé:</span>
-                        <p className="font-medium text-green-600">{fc(selectedCreditForPayment.paid_amount)}</p>
+                        <p className="font-medium text-[#ff4000]">{fc(selectedCreditForPayment.paid_amount)}</p>
                       </div>
                       <div className="col-span-2">
                         <span className="text-muted-foreground">Reste à payer:</span>
@@ -1074,7 +1074,7 @@ export default function AdvancedSalesManager() {
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Payé</span>
-                        <p className="font-medium text-green-600 text-xs sm:text-sm">{fc(selectedCreditForDetails.paid_amount)}</p>
+                        <p className="font-medium text-[#ff4000] text-xs sm:text-sm">{fc(selectedCreditForDetails.paid_amount)}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Reste</span>
@@ -1419,7 +1419,7 @@ export default function AdvancedSalesManager() {
                     <div className="text-right flex-shrink-0">
                       <p className="font-bold text-sm sm:text-base">{fc(gs.total)}</p>
                       {gs.discount_value > 0 && (
-                        <p className="text-[10px] sm:text-xs text-green-600">-{gs.discount_value}%</p>
+                        <p className="text-[10px] sm:text-xs text-[#ff4000]">-{gs.discount_value}%</p>
                       )}
                     </div>
                   </div>
@@ -1711,8 +1711,8 @@ export default function AdvancedSalesManager() {
                   <CardContent className="p-2.5 sm:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                       <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
-                          <Percent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${promo.is_active ? 'bg-orange-100 dark:bg-[#ff4000]/30' : 'bg-muted'}`}>
+                          <Percent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${promo.is_active ? 'text-[#ff4000]' : 'text-muted-foreground'}`} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1784,7 +1784,7 @@ export default function AdvancedSalesManager() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-1">
-                        <p className="font-bold text-sm sm:text-base text-green-600">
+                        <p className="font-bold text-sm sm:text-base text-[#ff4000]">
                           -{promo.discount_type === 'percentage' ? `${promo.discount_value}%` : fc(promo.discount_value)}
                         </p>
                         <Badge variant={promo.is_active ? 'default' : 'secondary'} className="hidden sm:inline-flex">

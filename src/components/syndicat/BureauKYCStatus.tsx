@@ -24,7 +24,7 @@ export function BureauKYCStatus({ status, _bureauId, className }: BureauKYCStatu
 
   if (status === 'verified') {
     return (
-      <Badge className={`bg-green-500 hover:bg-green-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1 ${className}`}>
         <ShieldCheck className="w-3 h-3" />
         Bureau vérifié
       </Badge>
@@ -33,7 +33,7 @@ export function BureauKYCStatus({ status, _bureauId, className }: BureauKYCStatu
 
   if (status === 'pending') {
     return (
-      <Badge className={`bg-yellow-500 hover:bg-yellow-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1 ${className}`}>
         <Shield className="w-3 h-3" />
         Vérification en cours...
       </Badge>
@@ -43,7 +43,7 @@ export function BureauKYCStatus({ status, _bureauId, className }: BureauKYCStatu
   if (status === 'rejected') {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <Badge className="bg-red-500 hover:bg-red-600 text-white gap-1">
+        <Badge className="bg-[#ff4000] hover:bg-[#ff4000] text-white gap-1">
           <ShieldAlert className="w-3 h-3" />
           Vérification rejetée
         </Badge>

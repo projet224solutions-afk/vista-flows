@@ -31,19 +31,19 @@ const getQuickActions = (t: (key: string) => string): QuickAction[] => [
     id: 'boutique',
     icon: <Store className="w-5 h-5" />,
     label: t('home.boutique'),
-    gradient: 'from-[hsl(220,97%,27%)] to-[hsl(220,96%,32%)]'
+    gradient: ''
   },
   {
     id: 'livraison',
     icon: <Truck className="w-5 h-5" />,
     label: t('home.delivery'),
-    gradient: 'from-emerald-500 to-teal-500'
+    gradient: ''
   },
   {
     id: 'transport',
     icon: <Car className="w-5 h-5" />,
     label: t('home.transport'),
-    gradient: 'from-violet-500 to-purple-500'
+    gradient: ''
   },
 ];
 

@@ -155,11 +155,11 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       case 'commission':
       case 'credit':
       case 'deposit':
-        return <TrendingUp className="w-4 h-4 text-green-500" />;
+        return <TrendingUp className="w-4 h-4 text-[#ff4000]" />;
       case 'debit':
       case 'withdrawal':
       case 'transfer_out':
-        return <TrendingDown className="w-4 h-4 text-red-500" />;
+        return <TrendingDown className="w-4 h-4 text-[#ff4000]" />;
       default:
         return <History className="w-4 h-4 text-muted-foreground" />;
     }
@@ -170,11 +170,11 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       case 'commission':
       case 'credit':
       case 'deposit':
-        return 'text-green-600';
+        return 'text-[#ff4000]';
       case 'debit':
       case 'withdrawal':
       case 'transfer_out':
-        return 'text-red-600';
+        return 'text-[#ff4000]';
       default:
         return 'text-muted-foreground';
     }

@@ -368,7 +368,7 @@ export default function WalletDashboard() {
           <TabsContent value="deposit" className="space-y-4">
             <div className="space-y-4">
               {/* ChapChapPay - Mobile Money */}
-              <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-50">
                 <div className="flex items-center gap-2 mb-3">
                   <Smartphone className="w-5 h-5 text-blue-600" />
                   <h4 className="font-semibold">Recharge via Mobile Money</h4>
@@ -491,9 +491,9 @@ export default function WalletDashboard() {
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 {t('wallet.totalDeducted')}</span>
-                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
+                      <span className="text-xl font-bold text-[#ff4000]">{transferPreview?.total_debit?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
-                    <div className="flex justify-between items-center text-green-600">
+                    <div className="flex justify-between items-center text-[#ff4000]">
                       <span className="text-sm font-medium">📈 {t('wallet.recipientWillReceive')}</span>
                       <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
@@ -527,7 +527,7 @@ export default function WalletDashboard() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-green-600" />
+                <Smartphone className="w-5 h-5 text-[#ff4000]" />
                 {t('wallet.mobileMoneyRecharge')}
               </AlertDialogTitle>
               <AlertDialogDescription>

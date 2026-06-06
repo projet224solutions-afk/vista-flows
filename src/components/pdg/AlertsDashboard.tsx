@@ -204,11 +204,11 @@ export default function AlertsDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-4 w-4 text-[#ff4000]" />;
       case 'acknowledged':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-[#ff4000]" />;
       case 'resolved':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
@@ -224,8 +224,8 @@ export default function AlertsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-red-500">{stats.active}</div>
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <div className="text-2xl font-bold text-[#ff4000]">{stats.active}</div>
+              <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -236,8 +236,8 @@ export default function AlertsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-yellow-500">{stats.acknowledged}</div>
-              <Clock className="h-5 w-5 text-yellow-500" />
+              <div className="text-2xl font-bold text-[#ff4000]">{stats.acknowledged}</div>
+              <Clock className="h-5 w-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -248,8 +248,8 @@ export default function AlertsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-green-500">{stats.resolved}</div>
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <div className="text-2xl font-bold text-[#ff4000]">{stats.resolved}</div>
+              <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -260,8 +260,8 @@ export default function AlertsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-red-600">{stats.critical}</div>
-              <Zap className="h-5 w-5 text-red-600" />
+              <div className="text-2xl font-bold text-[#ff4000]">{stats.critical}</div>
+              <Zap className="h-5 w-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -322,7 +322,7 @@ export default function AlertsDashboard() {
             <div className="space-y-3">
               {alerts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[#ff4000]" />
                   <p className="text-lg font-semibold">Aucune alerte</p>
                   <p className="text-sm">Tous les systèmes fonctionnent normalement</p>
                 </div>
@@ -369,7 +369,7 @@ export default function AlertsDashboard() {
 
                         {/* Metadata */}
                         {alert.metadata?.autoFix && (
-                          <div className="flex items-center gap-2 text-xs text-green-600">
+                          <div className="flex items-center gap-2 text-xs text-[#ff4000]">
                             <Zap className="h-3 w-3" />
                             <span>Auto-fix appliqué automatiquement</span>
                           </div>

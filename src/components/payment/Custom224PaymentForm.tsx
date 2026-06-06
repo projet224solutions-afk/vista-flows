@@ -41,8 +41,8 @@ const STRIPE_ELEMENT_STYLE = {
     },
   },
   invalid: {
-    color: '#ef4444',
-    iconColor: '#ef4444',
+    color: '#ff4000',
+    iconColor: '#ff4000',
   },
 };
 
@@ -140,16 +140,16 @@ export function Custom224PaymentForm({
 
   if (succeeded) {
     return (
-      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
+      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-orange-50 to-orange-50">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 p-4">
-                <CheckCircle2 className="w-16 h-16 text-green-600" />
+              <div className="rounded-full bg-orange-100 p-4">
+                <CheckCircle2 className="w-16 h-16 text-[#ff4000]" />
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-green-600">Paiement réussi !</h3>
+              <h3 className="text-2xl font-bold text-[#ff4000]">Paiement réussi !</h3>
               <p className="text-gray-600 mt-2 text-lg">
                 <strong>{formatAmount(amount, currency)}</strong>
               </p>

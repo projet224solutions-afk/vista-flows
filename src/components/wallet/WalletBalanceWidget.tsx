@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { QuickTransferButton } from "./QuickTransferButton";
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface WalletBalanceWidgetProps {
@@ -19,7 +20,7 @@ export function WalletBalanceWidget({
   variant = 'default',
 }: WalletBalanceWidgetProps) {
   const { user } = useAuth();
-  const { currency: vendorCurrency, convert: convertVendor, isReady: currencyReady } = useVendorCurrency();
+  const { convert } = usePriceConverter();
   const { t } = useTranslation();
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -47,13 +48,11 @@ export function WalletBalanceWidget({
     const handleWalletUpdate = () => loadBalance();
     window.addEventListener('wallet-updated', handleWalletUpdate);
     return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const formatBalance = () => {
     if (hidden) return '••••••';
-    if (!currencyReady) return '—';
-    return `${Math.round(convertVendor(balance)).toLocaleString('fr-FR')} ${vendorCurrency}`;
+    return convert(balance, 'GNF').formatted;
   };
 
   const isSurfaceVariant = variant === 'surface';
@@ -106,6 +105,14 @@ export function WalletBalanceWidget({
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
+            {showTransferButton && (
+              <QuickTransferButton
+                variant="ghost"
+                size="icon"
+                className={isSurfaceVariant ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' : 'text-white hover:bg-white/20'}
+                showText={false}
+              />
+            )}
           </div>
         </div>
       </CardContent>

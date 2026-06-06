@@ -21,6 +21,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { inventoryRateLimit } from '../middlewares/routeRateLimiter.js';
+import { resolveVendorId as resolveVendorIdCtx, resolveVendorContext, vendorContextHasPermission } from '../services/vendorContext.service.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -50,15 +51,76 @@ const BatchAdjustmentSchema = z.object({
 // ==================== HELPERS ====================
 
 async function resolveVendorId(userId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
-    .from('vendors')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
-  return data?.id || null;
+  // Agent-aware : vendeur direct OU agent vendeur actif → le vendeur de l'agent.
+  return resolveVendorIdCtx(userId);
 }
 
 // ==================== ROUTES ====================
+
+/**
+ * POST /api/inventory/validate-purchase
+ * Valide un achat de stock ATOMIQUEMENT (RPC validate_stock_purchase) : dépense + stock
+ * + prix + fournisseurs + verrouillage, en une seule transaction. Migre l'Edge Function
+ * `validate-purchase` vers le backend Node. SÉCURITÉ (absente de l'edge) : agent-aware +
+ * l'appelant ne peut valider QUE les achats de SON vendeur (propriété vérifiée).
+ */
+const ValidatePurchaseSchema = z.object({
+  purchase_id: z.string().uuid('purchase_id invalide'),
+  vendor_id: z.string().uuid('vendor_id invalide').optional(),
+  purchase_number: z.string().min(1).max(100),
+  total_amount: z.number().min(0),
+  items: z.array(z.object({
+    product_id: z.string().uuid().nullish(),
+    quantity: z.number(),
+    purchase_price: z.number().nullish(),
+    selling_price: z.number().nullish(),
+    supplier_id: z.string().uuid().nullish(),
+  })).min(1, 'Au moins un article requis'),
+});
+
+router.post('/validate-purchase', verifyJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const parsed = ValidatePurchaseSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Données invalides' });
+      return;
+    }
+    const { purchase_id, vendor_id, purchase_number, total_amount, items } = parsed.data;
+
+    // Auth agent-aware : vendeur direct OU agent vendeur actif
+    const ctx = await resolveVendorContext(req.user!.id);
+    if (!ctx.vendorId) { res.status(403).json({ success: false, error: 'Boutique non trouvée' }); return; }
+    // Propriété : on ne valide que les achats de SON vendeur
+    if (vendor_id && vendor_id !== ctx.vendorId) {
+      res.status(403).json({ success: false, error: 'Vous ne pouvez valider que les achats de votre boutique' });
+      return;
+    }
+    // Permission agent (le vendeur direct a tout)
+    if (ctx.isAgent && !vendorContextHasPermission(ctx, 'manage_inventory') && !vendorContextHasPermission(ctx, 'manage_suppliers')) {
+      res.status(403).json({ success: false, error: 'Permission insuffisante pour valider un achat' });
+      return;
+    }
+
+    const { data, error } = await supabaseAdmin.rpc('validate_stock_purchase', {
+      p_purchase_id: purchase_id,
+      p_vendor_id: ctx.vendorId,
+      p_items: items,
+      p_purchase_number: purchase_number,
+      p_total_amount: total_amount,
+    });
+    if (error) {
+      logger.error(`[inventory/validate-purchase] RPC: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la validation de l\'achat' });
+      return;
+    }
+    const result = data as any;
+    if (result && result.success === false) { res.status(400).json({ success: false, error: result.error }); return; }
+    res.json({ success: true, data: result, ...result });
+  } catch (err: any) {
+    logger.error(`[inventory/validate-purchase] ${err?.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur interne' });
+  }
+});
 
 /**
  * GET /api/inventory/stock
@@ -167,70 +229,39 @@ router.post('/adjust', verifyJWT, inventoryRateLimit, async (req: AuthenticatedR
 
     for (const adj of adjustments) {
       try {
-        // Vérifier propriété du produit
-        const { data: product } = await supabaseAdmin
-          .from('products')
-          .select('id, name, stock_quantity, vendor_id')
-          .eq('id', adj.product_id)
-          .eq('vendor_id', vendorId)
-          .single();
+        // Ajustement ATOMIQUE : verrou de ligne (FOR UPDATE) + garde anti-négatif
+        // + historique dans la même transaction → plus de lost-update sous concurrence.
+        const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('adjust_product_stock_atomic' as any, {
+          p_product_id: adj.product_id,
+          p_vendor_id: vendorId,
+          p_adjustment: adj.adjustment,
+          p_reason: adj.reason,
+          p_notes: adj.notes || null,
+          p_user_id: userId,
+        });
 
-        if (!product) {
+        if (rpcError) throw rpcError;
+
+        const r = rpcResult as { status: 'success' | 'error'; old_stock?: number; new_stock?: number; error?: string };
+
+        if (r.status === 'error') {
           results.push({
             product_id: adj.product_id,
             status: 'error',
-            error: 'Produit non trouvé ou non autorisé',
+            old_stock: r.old_stock,
+            error: r.error,
           });
           continue;
         }
-
-        const oldStock = product.stock_quantity ?? 0;
-        const newStock = oldStock + adj.adjustment;
-
-        if (newStock < 0) {
-          results.push({
-            product_id: adj.product_id,
-            status: 'error',
-            old_stock: oldStock,
-            error: `Stock résultant négatif (${oldStock} + ${adj.adjustment} = ${newStock})`,
-          });
-          continue;
-        }
-
-        // Mettre à jour le stock
-        const { error: updateError } = await supabaseAdmin
-          .from('products')
-          .update({
-            stock_quantity: newStock,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', adj.product_id);
-
-        if (updateError) throw updateError;
-
-        // Enregistrer le mouvement dans l'historique
-        await supabaseAdmin
-          .from('inventory_history')
-          .insert({
-            product_id: adj.product_id,
-            vendor_id: vendorId,
-            change_type: adj.adjustment > 0 ? 'addition' : 'subtraction',
-            quantity_change: Math.abs(adj.adjustment),
-            old_quantity: oldStock,
-            new_quantity: newStock,
-            reason: adj.reason,
-            notes: adj.notes || null,
-            performed_by: userId,
-          });
 
         results.push({
           product_id: adj.product_id,
           status: 'success',
-          old_stock: oldStock,
-          new_stock: newStock,
+          old_stock: r.old_stock,
+          new_stock: r.new_stock,
         });
 
-        logger.info(`Stock adjusted: product=${adj.product_id}, ${oldStock} → ${newStock} (${adj.reason})`);
+        logger.info(`Stock adjusted: product=${adj.product_id}, ${r.old_stock} → ${r.new_stock} (${adj.reason})`);
       } catch (adjError: any) {
         results.push({
           product_id: adj.product_id,

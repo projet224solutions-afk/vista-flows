@@ -95,9 +95,9 @@ export default function AgoraAudioCall({
   };
 
   const getNetworkQualityColor = (quality: number) => {
-    if (quality >= 4) return 'text-green-500';
-    if (quality >= 2) return 'text-yellow-500';
-    return 'text-red-500';
+    if (quality >= 4) return 'text-[#ff4000]';
+    if (quality >= 2) return 'text-[#ff4000]';
+    return 'text-[#ff4000]';
   };
 
   if (isIncoming && !callState.isInCall) {
@@ -105,7 +105,7 @@ export default function AgoraAudioCall({
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
-            <Phone className="w-6 h-6 text-green-600" />
+            <Phone className="w-6 h-6 text-[#ff4000]" />
             Appel entrant
           </CardTitle>
         </CardHeader>
@@ -124,7 +124,7 @@ export default function AgoraAudioCall({
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
               disabled={isConnecting}
             >
               <Phone className="w-4 h-4 mr-2" />
@@ -158,7 +158,7 @@ export default function AgoraAudioCall({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="flex items-center justify-center gap-2">
-          <Phone className="w-6 h-6 text-green-600" />
+          <Phone className="w-6 h-6 text-[#ff4000]" />
           Appel en cours
         </CardTitle>
       </CardHeader>
@@ -235,9 +235,9 @@ export default function AgoraAudioCall({
 
         {/* Indicateurs visuels */}
         <div className="flex justify-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-red-500' : 'bg-green-500'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-[#ff4000]' : 'bg-gray-400'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}`}></div>
         </div>
       </CardContent>
     </Card>

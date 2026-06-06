@@ -69,12 +69,12 @@ export function MerchantActivationDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+          <div className="bg-orange-50 dark:bg-[#ff4000] border border-orange-200 dark:border-[#ff4000] rounded-lg p-4">
+            <h4 className="font-semibold text-sm text-[#ff4000] dark:text-orange-100 mb-2 flex items-center gap-2">
               <Store className="w-4 h-4" />
               Compte Marchand Séparé Requis
             </h4>
-            <p className="text-xs text-amber-800 dark:text-amber-200">
+            <p className="text-xs text-[#ff4000] dark:text-orange-200">
               ⚠️ Vous devez créer un nouveau compte avec une <strong>adresse email différente</strong> de celle de votre compte client actuel ({user?.email}).
               Les deux comptes resteront indépendants.
             </p>
@@ -86,27 +86,27 @@ export function MerchantActivationDialog({
             </h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Vendre vos propres produits numériques
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Créer des formations, eBooks, logiciels, etc.
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Visibilité sur le marketplace public
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Recevoir des paiements directs sur votre wallet
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Statistiques de vente en temps réel
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#ff4000] shrink-0" />
                 Compte 100% gratuit et activation instantanée
               </li>
             </ul>

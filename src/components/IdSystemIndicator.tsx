@@ -54,7 +54,7 @@ export function IdSystemIndicator() {
             </div>
           </div>
           {isStandardized && (
-            <CheckCircle className="w-5 h-5 text-green-500" />
+            <CheckCircle className="w-5 h-5 text-[#ff4000]" />
           )}
         </div>
       </CardHeader>
@@ -90,13 +90,13 @@ export function IdSystemIndicator() {
           <div className="flex items-center gap-1">
             {isStandardized ? (
               <>
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-medium text-green-600">Actif</span>
+                <div className="w-2 h-2 rounded-full bg-[#ff4000] animate-pulse" />
+                <span className="text-xs font-medium text-[#ff4000]">Actif</span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                <span className="text-xs font-medium text-yellow-600">Configuration</span>
+                <div className="w-2 h-2 rounded-full bg-[#ff4000] animate-pulse" />
+                <span className="text-xs font-medium text-[#ff4000]">Configuration</span>
               </>
             )}
           </div>

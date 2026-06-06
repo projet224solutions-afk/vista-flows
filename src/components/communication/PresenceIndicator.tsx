@@ -28,8 +28,8 @@ const statusConfig: Record<PresenceStatus, {
   icon?: React.ComponentType<{ className?: string }>;
 }> = {
   online: {
-    color: 'bg-emerald-500',
-    bgColor: 'bg-emerald-500/20',
+    color: 'bg-[#ff4000]',
+    bgColor: 'bg-[#ff4000]/20',
     label: 'En ligne',
     animation: 'animate-pulse',
   },
@@ -39,18 +39,18 @@ const statusConfig: Record<PresenceStatus, {
     label: 'Hors ligne',
   },
   away: {
-    color: 'bg-amber-500',
-    bgColor: 'bg-amber-500/20',
+    color: 'bg-[#ff4000]',
+    bgColor: 'bg-[#ff4000]/20',
     label: 'Absent',
   },
   busy: {
-    color: 'bg-red-500',
-    bgColor: 'bg-red-500/20',
+    color: 'bg-[#ff4000]',
+    bgColor: 'bg-[#ff4000]/20',
     label: 'Occupé',
   },
   in_call: {
-    color: 'bg-violet-500',
-    bgColor: 'bg-violet-500/20',
+    color: 'bg-[#04439e]',
+    bgColor: 'bg-[#04439e]/20',
     label: 'En appel',
     animation: 'animate-pulse',
   },
@@ -117,10 +117,10 @@ export function PresenceIndicator({
               {showLabel && (
                 <span className={cn(
                   'text-xs',
-                  status === 'online' ? 'text-emerald-700 dark:text-emerald-300' :
-                  status === 'away' ? 'text-amber-700 dark:text-amber-300' :
-                  status === 'busy' ? 'text-red-700 dark:text-red-300' :
-                  status === 'in_call' ? 'text-violet-700 dark:text-violet-300' :
+                  status === 'online' ? 'text-[#ff4000] dark:text-orange-300' :
+                  status === 'away' ? 'text-[#ff4000] dark:text-orange-300' :
+                  status === 'busy' ? 'text-[#ff4000] dark:text-orange-300' :
+                  status === 'in_call' ? 'text-[#04439e] dark:text-blue-300' :
                   'text-muted-foreground'
                 )}>
                   {showLastSeen && status === 'offline' && lastSeen
@@ -150,7 +150,7 @@ export function PresenceIndicator({
         )} />
         <span className={cn(
           'text-xs',
-          status === 'online' ? 'text-emerald-600 dark:text-emerald-400 font-medium' :
+          status === 'online' ? 'text-[#ff4000] dark:text-[#ff4000] font-medium' :
           'text-muted-foreground'
         )}>
           {showLastSeen && status === 'offline' && lastSeen

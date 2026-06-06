@@ -48,7 +48,7 @@ export function DriverVehicleInfo({
       className
     )}>
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-purple-500/5" />
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-transparent to-[#04439e]/5" />
 
       <div className="relative">
         {/* Header compact */}
@@ -63,9 +63,9 @@ export function DriverVehicleInfo({
         <div className="grid grid-cols-2 gap-2">
           {/* ID Chauffeur - Toujours affiché en premier */}
           {displayDriverId && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 col-span-2">
-              <User className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400 text-[10px] font-medium">ID:</span>
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/30 col-span-2">
+              <User className="w-3 h-3 text-[#ff4000]" />
+              <span className="text-[#ff4000] text-[10px] font-medium">ID:</span>
               <span
                 className="text-white text-xs font-mono font-bold tracking-wider"
                 title={driverId ?? undefined}
@@ -87,7 +87,7 @@ export function DriverVehicleInfo({
           {/* Numéro de gilet */}
           {giletNumber && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-800/30 border border-gray-700/30">
-              <CreditCard className="w-3 h-3 text-green-400" />
+              <CreditCard className="w-3 h-3 text-[#ff4000]" />
               <span className="text-gray-400 text-[10px]">Gilet:</span>
               <span className="text-white text-[10px] font-mono font-medium">{giletNumber}</span>
             </div>
@@ -96,7 +96,7 @@ export function DriverVehicleInfo({
           {/* Numéro de série moto */}
           {serialNumber && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-800/30 border border-gray-700/30 col-span-2">
-              <Hash className="w-3 h-3 text-purple-400" />
+              <Hash className="w-3 h-3 text-[#04439e]" />
               <span className="text-gray-400 text-[10px]">Série:</span>
               <span className="text-white text-[10px] font-mono font-medium truncate" title={serialNumber}>
                 {serialNumber}

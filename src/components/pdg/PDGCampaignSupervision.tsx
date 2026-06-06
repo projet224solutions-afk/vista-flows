@@ -26,11 +26,11 @@ import {
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800',
   scheduled: 'bg-blue-100 text-blue-800',
-  queued: 'bg-yellow-100 text-yellow-800',
+  queued: 'bg-orange-100 text-[#ff4000]',
   sending: 'bg-orange-100 text-orange-800',
-  sent: 'bg-green-100 text-green-800',
-  partial: 'bg-amber-100 text-amber-800',
-  failed: 'bg-red-100 text-red-800',
+  sent: 'bg-orange-100 text-[#ff4000]',
+  partial: 'bg-orange-100 text-[#ff4000]',
+  failed: 'bg-orange-100 text-[#ff4000]',
   cancelled: 'bg-gray-100 text-gray-600',
 };
 
@@ -130,7 +130,7 @@ export default function PDGCampaignSupervision() {
         </Card>
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
-            <p className="text-2xl font-bold text-green-600">{globalStats.sent}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{globalStats.sent}</p>
             <p className="text-[10px] text-muted-foreground">Envoyées</p>
           </CardContent>
         </Card>
@@ -142,7 +142,7 @@ export default function PDGCampaignSupervision() {
         </Card>
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
-            <p className="text-2xl font-bold text-red-600">{globalStats.failed}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{globalStats.failed}</p>
             <p className="text-[10px] text-muted-foreground">Échouées</p>
           </CardContent>
         </Card>
@@ -154,7 +154,7 @@ export default function PDGCampaignSupervision() {
         </Card>
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
-            <p className="text-2xl font-bold text-red-500">{globalStats.totalFailed.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{globalStats.totalFailed.toLocaleString()}</p>
             <p className="text-[10px] text-muted-foreground">Échecs total</p>
           </CardContent>
         </Card>
@@ -201,7 +201,7 @@ export default function PDGCampaignSupervision() {
                       <span><Users className="inline h-3 w-3" /> {campaign.total_targeted} ciblés</span>
                       <span><Send className="inline h-3 w-3" /> {campaign.total_sent} envoyés</span>
                       <span>{campaign.total_failed > 0 && (
-                        <span className="text-red-500"><AlertTriangle className="inline h-3 w-3" /> {campaign.total_failed} échecs</span>
+                        <span className="text-[#ff4000]"><AlertTriangle className="inline h-3 w-3" /> {campaign.total_failed} échecs</span>
                       )}</span>
                       <span>{new Date(campaign.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
@@ -260,11 +260,11 @@ export default function PDGCampaignSupervision() {
                     <p className="text-[10px] text-muted-foreground">Éligibles</p>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <p className="font-bold text-green-600">{selectedCampaign.total_sent}</p>
+                    <p className="font-bold text-[#ff4000]">{selectedCampaign.total_sent}</p>
                     <p className="text-[10px] text-muted-foreground">Envoyés</p>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
-                    <p className="font-bold text-red-600">{selectedCampaign.total_failed}</p>
+                    <p className="font-bold text-[#ff4000]">{selectedCampaign.total_failed}</p>
                     <p className="text-[10px] text-muted-foreground">Échecs</p>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ export default function PDGCampaignSupervision() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-3 gap-3">
                       <div className="text-center">
-                        <p className="text-xl font-bold text-green-600">{selectedAnalytics.rates.delivery_rate}%</p>
+                        <p className="text-xl font-bold text-[#ff4000]">{selectedAnalytics.rates.delivery_rate}%</p>
                         <p className="text-[10px] text-muted-foreground">Délivrance</p>
                       </div>
                       <div className="text-center">
@@ -283,7 +283,7 @@ export default function PDGCampaignSupervision() {
                         <p className="text-[10px] text-muted-foreground">Lecture</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xl font-bold text-red-600">{selectedAnalytics.rates.failure_rate}%</p>
+                        <p className="text-xl font-bold text-[#ff4000]">{selectedAnalytics.rates.failure_rate}%</p>
                         <p className="text-[10px] text-muted-foreground">Échec</p>
                       </div>
                     </CardContent>

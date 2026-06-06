@@ -346,10 +346,10 @@ export function DriverNavigation({
           <CardTitle className="flex items-center justify-between">
             <span>Course en cours</span>
             <Badge className={`${
-              activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
+              activeRide.status === 'accepted' ? 'bg-orange-100 text-[#ff4000]' :
               activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-              activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
-              'bg-purple-100 text-purple-800'
+              activeRide.status === 'picked_up' ? 'bg-orange-100 text-[#ff4000]' :
+              'bg-blue-100 text-[#04439e]'
             }`}>
               {activeRide.status === 'accepted' ? 'Acceptée' :
                activeRide.status === 'arriving' ? 'En route' :
@@ -373,12 +373,12 @@ export function DriverNavigation({
           </div>
 
           <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm bg-green-50 p-3 rounded">
-              <MapPin className="w-4 h-4 text-green-600" />
+            <div className="flex items-center gap-2 text-sm bg-orange-50 p-3 rounded">
+              <MapPin className="w-4 h-4 text-[#ff4000]" />
               <span className="font-medium">{activeRide.pickup.address}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm bg-red-50 p-3 rounded">
-              <MapPin className="w-4 h-4 text-red-600" />
+            <div className="flex items-center gap-2 text-sm bg-orange-50 p-3 rounded">
+              <MapPin className="w-4 h-4 text-[#ff4000]" />
               <span className="font-medium">{activeRide.destination.address}</span>
             </div>
           </div>
@@ -410,7 +410,7 @@ export function DriverNavigation({
           {activeRide.status === 'picked_up' && (
             <Button
               onClick={() => updateRideStatus('completed')}
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
               size="lg"
               disabled={loading}
             >
@@ -465,7 +465,7 @@ export function DriverNavigation({
               }
             }}
             variant="outline"
-            className="w-full border-red-300 text-red-700 hover:bg-red-50"
+            className="w-full border-orange-300 text-[#ff4000] hover:bg-orange-50"
             size="lg"
             disabled={loading}
           >

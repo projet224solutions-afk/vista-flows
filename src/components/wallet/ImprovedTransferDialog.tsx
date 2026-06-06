@@ -289,7 +289,7 @@ export const ImprovedTransferDialog = ({
             } else {
               setPinPromptOpen(false);
               setPendingTransferKind(null);
-              toast(message, { style: { background: '#ef4444', color: 'white' } });
+              toast(message, { style: { background: '#ff4000', color: 'white' } });
             }
           } finally {
             setPinLoading(false);

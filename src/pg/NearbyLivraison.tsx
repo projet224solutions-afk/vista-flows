@@ -85,7 +85,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
               )}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              driver.is_online ? 'bg-green-500' : 'bg-gray-400'
+              driver.is_online ? 'bg-[#ff4000]' : 'bg-gray-400'
             }`} />
           </div>
 
@@ -104,7 +104,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
               {/* Rating - seulement si disponible */}
               {driver.rating !== null && driver.rating > 0 && (
                 <span className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  <Star className="w-3 h-3 text-[#ff4000] fill-[#ff4000]" />
                   {driver.rating.toFixed(1)}
                 </span>
               )}

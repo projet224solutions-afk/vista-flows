@@ -103,7 +103,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-[#ff4000] rounded-full" />
           </Button>
 
           {/* Bouton d'abonnement */}
@@ -173,7 +173,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
               </div>
               <Button
                 variant="outline"
-                className="w-full gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full gap-2 text-[#ff4000] hover:text-[#ff4000] hover:bg-orange-50"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />

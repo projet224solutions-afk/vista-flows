@@ -128,12 +128,12 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
 
   // Distribution des codes de statut
   const statusDistribution = [
-    { name: '2xx Succès', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#10B981' },
-    { name: '4xx Client', value: allLogs.filter(log => log.status_code && log.status_code >= 400 && log.status_code < 500).length, color: '#F59E0B' },
-    { name: '5xx Serveur', value: allLogs.filter(log => log.status_code && log.status_code >= 500).length, color: '#EF4444' }
+    { name: '2xx Succès', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#ff4000' },
+    { name: '4xx Client', value: allLogs.filter(log => log.status_code && log.status_code >= 400 && log.status_code < 500).length, color: '#ff4000' },
+    { name: '5xx Serveur', value: allLogs.filter(log => log.status_code && log.status_code >= 500).length, color: '#ff4000' }
   ].filter(item => item.value > 0);
 
-  const _COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const _COLORS = ['#04439e', '#ff4000', '#ff4000', '#ff4000', '#04439e', '#ff4000'];
 
   if (loading) {
     return (
@@ -165,9 +165,9 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Taux de succès</p>
-                <p className="text-2xl font-bold text-green-600">{stats.successRate}%</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{stats.successRate}%</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+              <CheckCircle2 className="h-8 w-8 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                 <p className="text-sm text-muted-foreground">Tokens totaux</p>
                 <p className="text-2xl font-bold">{stats.totalTokens.toLocaleString()}</p>
               </div>
-              <Zap className="h-8 w-8 text-yellow-600" />
+              <Zap className="h-8 w-8 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -201,9 +201,9 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Taux d'erreur</p>
-                <p className="text-2xl font-bold text-red-600">{stats.errorRate}%</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{stats.errorRate}%</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+              <AlertTriangle className="h-8 w-8 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -230,12 +230,12 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                 <AreaChart data={timeSeriesData}>
                   <defs>
                     <linearGradient id="colorRequetes" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#04439e" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#04439e" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ff4000" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#ff4000" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -243,8 +243,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Area type="monotone" dataKey="requetes" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRequetes)" />
-                  <Area type="monotone" dataKey="tokens" stroke="#10B981" fillOpacity={1} fill="url(#colorTokens)" />
+                  <Area type="monotone" dataKey="requetes" stroke="#04439e" fillOpacity={1} fill="url(#colorRequetes)" />
+                  <Area type="monotone" dataKey="tokens" stroke="#ff4000" fillOpacity={1} fill="url(#colorTokens)" />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -263,8 +263,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <YAxis yAxisId="right" orientation="right" />
                   <Tooltip />
                   <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="tempsReponse" stroke="#3B82F6" strokeWidth={2} name="Temps (ms)" />
-                  <Line yAxisId="right" type="monotone" dataKey="erreurs" stroke="#EF4444" strokeWidth={2} name="Erreurs" />
+                  <Line yAxisId="left" type="monotone" dataKey="tempsReponse" stroke="#04439e" strokeWidth={2} name="Temps (ms)" />
+                  <Line yAxisId="right" type="monotone" dataKey="erreurs" stroke="#ff4000" strokeWidth={2} name="Erreurs" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -285,8 +285,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="requests" fill="#3B82F6" name="Requêtes" />
-                  <Bar dataKey="tokens" fill="#10B981" name="Tokens" />
+                  <Bar dataKey="requests" fill="#04439e" name="Requêtes" />
+                  <Bar dataKey="tokens" fill="#ff4000" name="Tokens" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -306,9 +306,9 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="api" />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                  <Radar name="Fiabilité" dataKey="fiabilite" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
-                  <Radar name="Vitesse" dataKey="vitesse" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
-                  <Radar name="Utilisation" dataKey="utilisation" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} />
+                  <Radar name="Fiabilité" dataKey="fiabilite" stroke="#ff4000" fill="#ff4000" fillOpacity={0.6} />
+                  <Radar name="Vitesse" dataKey="vitesse" stroke="#04439e" fill="#04439e" fillOpacity={0.6} />
+                  <Radar name="Utilisation" dataKey="utilisation" stroke="#ff4000" fill="#ff4000" fillOpacity={0.6} />
                   <Legend />
                 </RadarChart>
               </ResponsiveContainer>
@@ -332,7 +332,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                     labelLine={false}
                     label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={120}
-                    fill="#8884d8"
+                    fill="#04439e"
                     dataKey="value"
                   >
                     {statusDistribution.map((entry, index) => (

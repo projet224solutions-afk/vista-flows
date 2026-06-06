@@ -93,7 +93,7 @@ export function DriverSubscriptionCard() {
                     <div>
                       <p className="font-medium">Annuel</p>
                       <p className="text-sm text-muted-foreground">365 jours</p>
-                      <Badge variant="secondary" className="mt-1 bg-green-100 text-green-800">
+                      <Badge variant="secondary" className="mt-1 bg-orange-100 text-[#ff4000]">
                         Économisez {discount}%
                       </Badge>
                     </div>

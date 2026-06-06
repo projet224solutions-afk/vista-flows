@@ -377,11 +377,11 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getStatusColor = (status: TestStep['status']) => {
     switch (status) {
       case 'success':
-        return 'text-green-500';
+        return 'text-[#ff4000]';
       case 'warning':
-        return 'text-yellow-500';
+        return 'text-[#ff4000]';
       case 'error':
-        return 'text-red-500';
+        return 'text-[#ff4000]';
       case 'running':
         return 'text-blue-500';
       default:
@@ -392,11 +392,11 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getStatusBg = (status: TestStep['status']) => {
     switch (status) {
       case 'success':
-        return 'bg-green-500/10 border-green-500/30';
+        return 'bg-[#ff4000]/10 border-[#ff4000]/30';
       case 'warning':
-        return 'bg-yellow-500/10 border-yellow-500/30';
+        return 'bg-[#ff4000]/10 border-[#ff4000]/30';
       case 'error':
-        return 'bg-red-500/10 border-red-500/30';
+        return 'bg-[#ff4000]/10 border-[#ff4000]/30';
       case 'running':
         return 'bg-blue-500/10 border-blue-500/30';
       default:
@@ -407,28 +407,28 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getResultStyle = () => {
     if (systemScore >= 80) {
       return {
-        bg: 'from-green-900/50 to-emerald-900/50',
-        border: 'border-green-500/30',
-        text: 'text-green-400',
-        textLight: 'text-green-300',
+        bg: '',
+        border: 'border-[#ff4000]/30',
+        text: 'text-[#ff4000]',
+        textLight: 'text-orange-300',
         message: 'Système Opérationnel',
         submessage: 'Tous les modules fonctionnent correctement',
       };
     } else if (systemScore >= 60) {
       return {
-        bg: 'from-yellow-900/50 to-orange-900/50',
-        border: 'border-yellow-500/30',
-        text: 'text-yellow-400',
-        textLight: 'text-yellow-300',
+        bg: '',
+        border: 'border-[#ff4000]/30',
+        text: 'text-[#ff4000]',
+        textLight: 'text-orange-300',
         message: 'Système Fonctionnel',
         submessage: 'Certains modules nécessitent une attention',
       };
     } else {
       return {
-        bg: 'from-red-900/50 to-orange-900/50',
-        border: 'border-red-500/30',
-        text: 'text-red-400',
-        textLight: 'text-red-300',
+        bg: '',
+        border: 'border-[#ff4000]/30',
+        text: 'text-[#ff4000]',
+        textLight: 'text-orange-300',
         message: 'Attention Requise',
         submessage: 'Des problèmes ont été détectés',
       };
@@ -612,7 +612,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             {!isRunning && !showResult && (
               <Button
                 onClick={runTest}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold h-12"
+                className="flex-1 bg-[#04439e] text-white font-semibold h-12"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Lancer le Test Système

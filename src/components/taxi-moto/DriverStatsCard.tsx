@@ -19,15 +19,15 @@ interface DriverStatsCardProps {
 export function DriverStatsCard({ stats }: DriverStatsCardProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-gradient-to-br from-orange-50 to-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-600 rounded-lg">
+            <div className="p-3 bg-[#ff4000] rounded-lg">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <p className="text-xs text-gray-600 font-medium">Aujourd'hui</p>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-[#ff4000]">
                 {stats.todayEarnings.toLocaleString()}
               </p>
               <p className="text-xs text-gray-500">GNF</p>
@@ -36,7 +36,7 @@ export function DriverStatsCard({ stats }: DriverStatsCardProps) {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-gradient-to-br from-blue-50 to-blue-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-600 rounded-lg">
@@ -51,15 +51,15 @@ export function DriverStatsCard({ stats }: DriverStatsCardProps) {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-gradient-to-br from-orange-50 to-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-600 rounded-lg">
+            <div className="p-3 bg-[#ff4000] rounded-lg">
               <Star className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <p className="text-xs text-gray-600 font-medium">Note</p>
-              <p className="text-2xl font-bold text-yellow-700 flex items-center gap-1">
+              <p className="text-2xl font-bold text-[#ff4000] flex items-center gap-1">
                 {stats.rating}
                 <Star className="w-4 h-4 fill-current" />
               </p>
@@ -69,15 +69,15 @@ export function DriverStatsCard({ stats }: DriverStatsCardProps) {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-gradient-to-br from-blue-50 to-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-600 rounded-lg">
+            <div className="p-3 bg-[#04439e] rounded-lg">
               <Clock className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <p className="text-xs text-gray-600 font-medium">En ligne</p>
-              <p className="text-2xl font-bold text-purple-700">{stats.onlineTime}</p>
+              <p className="text-2xl font-bold text-[#04439e]">{stats.onlineTime}</p>
               <p className="text-xs text-gray-500">aujourd'hui</p>
             </div>
           </div>

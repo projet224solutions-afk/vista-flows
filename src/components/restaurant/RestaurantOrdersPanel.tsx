@@ -43,13 +43,13 @@ interface RestaurantOrder {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: <Clock className="w-4 h-4" /> },
+  pending: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000] border-orange-300', icon: <Clock className="w-4 h-4" /> },
   confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Check className="w-4 h-4" /> },
-  preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <ChefHat className="w-4 h-4" /> },
-  ready: { label: 'Prête', color: 'bg-green-100 text-green-800 border-green-300', icon: <Package className="w-4 h-4" /> },
-  delivered: { label: 'Livrée', color: 'bg-teal-100 text-teal-800 border-teal-300', icon: <Truck className="w-4 h-4" /> },
+  preparing: { label: 'En préparation', color: 'bg-blue-100 text-[#04439e] border-blue-300', icon: <ChefHat className="w-4 h-4" /> },
+  ready: { label: 'Prête', color: 'bg-orange-100 text-[#ff4000] border-orange-300', icon: <Package className="w-4 h-4" /> },
+  delivered: { label: 'Livrée', color: 'bg-orange-100 text-[#ff4000] border-orange-300', icon: <Truck className="w-4 h-4" /> },
   completed: { label: 'Terminée', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: <Check className="w-4 h-4" /> },
-  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800 border-red-300', icon: <XCircle className="w-4 h-4" /> },
+  cancelled: { label: 'Annulée', color: 'bg-orange-100 text-[#ff4000] border-orange-300', icon: <XCircle className="w-4 h-4" /> },
 };
 
 const orderTypeLabels: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -59,7 +59,7 @@ const orderTypeLabels: Record<string, { label: string; icon: React.ReactNode }> 
 };
 
 const paymentMethodIcons: Record<string, React.ReactNode> = {
-  cash: <Banknote className="w-4 h-4 text-green-600" />,
+  cash: <Banknote className="w-4 h-4 text-[#ff4000]" />,
   mobile: <Phone className="w-4 h-4 text-orange-500" />,
   card: <CreditCard className="w-4 h-4 text-blue-600" />,
 };
@@ -207,7 +207,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
         key={order.id}
         className={cn(
           "cursor-pointer transition-all hover:shadow-md",
-          isPending && "ring-2 ring-yellow-400 animate-pulse"
+          isPending && "ring-2 ring-[#ff4000] animate-pulse"
         )}
         onClick={() => setSelectedOrder(order)}
       >
@@ -220,7 +220,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                 <span className="ml-1">{status.label}</span>
               </Badge>
               {order.payment_status === 'paid' && (
-                <Badge className="bg-green-600">Payé</Badge>
+                <Badge className="bg-[#ff4000]">Payé</Badge>
               )}
             </div>
             <span className="text-xs text-muted-foreground">
@@ -260,7 +260,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-[#ff4000] hover:bg-[#ff4000]"
                 onClick={(e) => {
                   e.stopPropagation();
                   updateOrderStatus(order.id, 'confirmed');
@@ -285,7 +285,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           {order.status === 'confirmed' && (
             <Button
               size="sm"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-[#04439e] hover:bg-[#04439e]"
               onClick={(e) => {
                 e.stopPropagation();
                 updateOrderStatus(order.id, 'preparing');
@@ -313,7 +313,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           {order.status === 'ready' && (
             <Button
               size="sm"
-              className="w-full bg-teal-600 hover:bg-teal-700"
+              className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
               onClick={(e) => {
                 e.stopPropagation();
                 updateOrderStatus(order.id, order.order_type === 'dine_in' ? 'completed' : 'delivered');
@@ -353,7 +353,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           <Bell className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-bold">Commandes</h2>
           {pendingOrders.length > 0 && (
-            <Badge className="bg-red-500 animate-pulse">{pendingOrders.length} nouvelle(s)</Badge>
+            <Badge className="bg-[#ff4000] animate-pulse">{pendingOrders.length} nouvelle(s)</Badge>
           )}
         </div>
         <Button
@@ -373,7 +373,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           <TabsTrigger value="pending" className="relative">
             En attente
             {pendingOrders.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff4000] text-white text-xs rounded-full flex items-center justify-center">
                 {pendingOrders.length}
               </span>
             )}
@@ -420,7 +420,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                   {statusConfig[selectedOrder.status]?.icon}
                   <span className="ml-1">{statusConfig[selectedOrder.status]?.label}</span>
                 </Badge>
-                <Badge className={selectedOrder.payment_status === 'paid' ? 'bg-green-600' : 'bg-yellow-600'}>
+                <Badge className={selectedOrder.payment_status === 'paid' ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}>
                   {selectedOrder.payment_status === 'paid' ? 'Payé' : 'À payer'}
                 </Badge>
               </div>

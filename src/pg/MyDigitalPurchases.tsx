@@ -272,10 +272,10 @@ function PurchaseCard({
                     variant="outline"
                     className={
                       isActive
-                        ? 'bg-green-500/10 text-green-600 border-green-500/20 shrink-0'
+                        ? 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20 shrink-0'
                         : item.status === 'cancelled'
                           ? 'bg-muted text-muted-foreground border-border shrink-0'
-                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0'
+                          : 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20 shrink-0'
                     }
                   >
                     {isActive ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}

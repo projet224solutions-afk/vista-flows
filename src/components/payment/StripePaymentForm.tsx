@@ -96,12 +96,12 @@ export function StripePaymentForm({
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 p-3">
-                <CheckCircle2 className="w-12 h-12 text-green-600" />
+              <div className="rounded-full bg-orange-100 p-3">
+                <CheckCircle2 className="w-12 h-12 text-[#ff4000]" />
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-green-600">Paiement réussi !</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement réussi !</h3>
               <p className="text-muted-foreground mt-2">
                 Votre paiement de <strong>{formatAmount(amount, currency)}</strong> a été traité avec succès.
               </p>
@@ -201,7 +201,7 @@ export function StripePaymentForm({
               <div className="w-10 h-6 bg-gradient-to-r from-primary to-secondary rounded flex items-center justify-center text-white text-[8px] font-bold">
                 VISA
               </div>
-              <div className="w-10 h-6 bg-gradient-to-r from-red-600 to-orange-500 rounded flex items-center justify-center">
+              <div className="w-10 h-6 bg-gradient-to-r from-[#ff4000] to-orange-500 rounded flex items-center justify-center">
                 <div className="flex gap-0.5">
                   <div className="w-2 h-2 rounded-full bg-white opacity-80"></div>
                   <div className="w-2 h-2 rounded-full bg-white opacity-60"></div>

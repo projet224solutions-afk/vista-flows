@@ -101,15 +101,15 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
         return;
       }
 
-      // Appeler la Edge Function pour récupérer les utilisateurs
-      const { data, error } = await supabase.functions.invoke('get-agent-users', {
-        body: { agentToken }
-      });
+      // Backend Node (agent connecté → résolu par JWT)
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/users/list', { method: 'POST', body: {} });
 
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur chargement');
 
-      setUsers(data.users || []);
-      toast.success(`${data.users?.length || 0} utilisateurs chargés`);
+      const users = resp.data?.users || [];
+      setUsers(users);
+      toast.success(`${users.length} utilisateurs chargés`);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
@@ -144,17 +144,10 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const agentToken = getAgentToken();
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch('/api/agents/users/toggle-status', { method: 'POST', body: { userId, currentStatus } });
 
-      const { _data, error } = await supabase.functions.invoke('agent-toggle-user-status', {
-        body: { agentToken, userId, currentStatus }
-      });
-
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur');
 
       toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activé');
       loadUsers();
@@ -166,17 +159,10 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
   const deleteUser = async (userId: string, userEmail: string) => {
     try {
-      const agentToken = getAgentToken();
-      if (!agentToken) {
-        toast.error('Token agent introuvable');
-        return;
-      }
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch('/api/agents/users/delete', { method: 'POST', body: { userId } });
 
-      const { _data, error } = await supabase.functions.invoke('agent-delete-user', {
-        body: { agentToken, userId }
-      });
-
-      if (error) throw error;
+      if (!resp.success) throw new Error(resp.error || 'Erreur');
 
       toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
       loadUsers();
@@ -188,13 +174,13 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
   const getRoleBadge = (role: string) => {
     const colors = {
-      admin: 'bg-red-500/10 text-red-500 border-red-500/20',
+      admin: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
       vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      client: 'bg-green-500/10 text-green-500 border-green-500/20',
-      livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-      taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+      client: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
+      livreur: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20',
+      taxi: 'bg-[#04439e]/10 text-[#04439e] border-[#04439e]/20',
       transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-      syndicat: 'bg-pink-500/10 text-pink-500 border-pink-500/20'
+      syndicat: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20'
     };
     return colors[role as keyof typeof colors] || 'bg-muted text-muted-foreground';
   };
@@ -314,7 +300,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <Shield className="w-8 h-8 text-primary-foreground" />
                       </div>
                       {user.is_active !== false && (
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-card" />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#ff4000] rounded-full border-2 border-card" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -327,7 +313,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <Badge variant="outline" className={getRoleBadge(user.role)}>
                           {user.role || 'client'}
                         </Badge>
-                        <Badge variant="outline" className={user.is_active !== false ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                        <Badge variant="outline" className={user.is_active !== false ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]' : 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]'}>
                           {user.is_active !== false ? 'Actif' : 'Suspendu'}
                         </Badge>
                       </div>
@@ -338,7 +324,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleUserStatus(user.id, user.is_active !== false)}
-                      className={user.is_active !== false ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
+                      className={user.is_active !== false ? 'border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]' : 'border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]'}
                     >
                       {user.is_active !== false ? (
                         <>
@@ -358,7 +344,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-red-500/50 hover:bg-red-500/10 hover:text-red-500"
+                          className="border-[#ff4000]/50 hover:bg-[#ff4000]/10 hover:text-[#ff4000]"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Supprimer
@@ -376,7 +362,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                           <AlertDialogCancel>Annuler</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => deleteUser(user.id, user.email)}
-                            className="bg-red-500 hover:bg-red-600"
+                            className="bg-[#ff4000] hover:bg-[#ff4000]"
                           >
                             Supprimer définitivement
                           </AlertDialogAction>

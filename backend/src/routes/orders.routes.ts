@@ -1,12 +1,12 @@
 /**
  * 📦 ORDERS ROUTES - Phase 6 (P0 Optimized)
- *
+ * 
  * P0 Optimization:
  *   - create_order_core RPC: 1 DB call instead of 4+N sequential calls
  *   - increment_stock_batch RPC: batch stock restore for cancellations
  *   - Redis cache for vendor lookups (TTL 5min)
  *   - Performance timing on POST /api/orders
- *
+ * 
  * Security preserved:
  *   - Zod validation
  *   - Idempotency guard
@@ -21,57 +21,13 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { idempotencyGuard } from '../middlewares/idempotency.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
-import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { orderCreateRateLimit, orderManageRateLimit } from '../middlewares/routeRateLimiter.js';
 import { cache } from '../config/redis.js';
+import { createNotification } from '../services/notification.service.js';
+import { buildOrderFinancialSummary } from '../services/marketplacePricing.service.js';
 import { z } from 'zod';
-import Stripe from 'stripe';
-import {
-  buildOrderFinancialSummary,
-  type OrderFinancialSummary,
-} from '../services/marketplacePricing.service.js';
 
 const router = Router();
-
-// ==================== STRIPE ====================
-
-const stripe: Stripe | null = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' as any })
-  : null;
-
-/**
- * Vérifie auprès de l'API Stripe que le PaymentIntent est bien "succeeded"
- * et appartient bien à l'utilisateur authentifié.
- * Empêche la création de commandes "payées" avec un PI fictif ou non finalisé.
- */
-async function verifyCardPaymentIntent(
-  paymentIntentId: string,
-  authenticatedUserId: string,
-): Promise<{ verified: boolean; error?: string }> {
-  if (!stripe) {
-    logger.error('CRITIQUE: STRIPE_SECRET_KEY absent — paiement carte non vérifiable');
-    return { verified: false, error: 'Service de paiement temporairement indisponible' };
-  }
-  try {
-    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-    if (pi.status !== 'succeeded') {
-      return { verified: false, error: `Paiement Stripe non finalisé (statut: ${pi.status})` };
-    }
-
-    // buyer_id dans metadata doit correspondre à l'utilisateur authentifié
-    const piBuyerId = pi.metadata?.buyer_id;
-    if (piBuyerId && piBuyerId !== authenticatedUserId) {
-      logger.warn(`PI buyer_id mismatch: pi.buyer_id=${piBuyerId}, auth_user=${authenticatedUserId}`);
-      return { verified: false, error: 'Ce paiement ne correspond pas à votre compte' };
-    }
-
-    return { verified: true };
-  } catch (err: any) {
-    logger.error(`Erreur vérification Stripe PI ${paymentIntentId}: ${err.message}`);
-    return { verified: false, error: 'Impossible de vérifier le paiement auprès de Stripe' };
-  }
-}
 
 // ==================== DEVISE DYNAMIQUE ====================
 
@@ -100,18 +56,17 @@ async function getCachedVendor(vendorId: string): Promise<{
   business_name: string;
   user_id: string;
   country: string | null;
-  shop_currency: string | null;
 } | null> {
   const cacheKey = `vendor:${vendorId}`;
 
   // Try cache first
-  const cached = await cache.get<{ id: string; business_name: string; user_id: string; country: string | null; shop_currency: string | null }>(cacheKey);
+  const cached = await cache.get<{ id: string; business_name: string; user_id: string; country: string | null }>(cacheKey);
   if (cached) return cached;
 
   // Fallback to DB
   const { data: vendor } = await supabaseAdmin
     .from('vendors')
-    .select('id, business_name, user_id, country, shop_currency')
+    .select('id, business_name, user_id, country')
     .eq('id', vendorId)
     .eq('is_active', true)
     .single();
@@ -142,12 +97,6 @@ const CreateOrderSchema = z.object({
     country: z.string().trim().min(2).max(100),
     postal_code: z.string().max(20).nullish(),
     notes: z.string().max(500).nullish(),
-    is_cod: z.boolean().nullish(),
-    cod_phone: z.string().trim().max(20).nullish(),
-    cod_city: z.string().trim().max(100).nullish(),
-    neighborhood: z.string().trim().max(200).nullish(),
-    landmark: z.string().trim().max(200).nullish(),
-    instructions: z.string().trim().max(500).nullish(),
   }),
   payment_method: z.enum(['card', 'mobile_money', 'wallet', 'cash']),
   payment_intent_id: z.string().max(500).nullish(),
@@ -204,7 +153,7 @@ async function attachEscrowToOrders<T extends { id: string }>(orders: T[]) {
 
   const { data: escrows, error } = await supabaseAdmin
     .from('escrow_transactions')
-    .select('id, order_id, status, amount, commission_amount, currency, metadata, auto_release_date, released_at, seller_confirmed_at')
+    .select('id, order_id, status, amount, currency, auto_release_date, released_at, seller_confirmed_at')
     .in('order_id', orders.map(order => order.id))
     .order('created_at', { ascending: false });
 
@@ -259,35 +208,6 @@ async function getOrCreateCustomerId(userId: string) {
   return createdCustomer.id;
 }
 
-async function getManagedVendorForUser(userId: string) {
-  const { data: ownedVendor, error: ownedVendorError } = await supabaseAdmin
-    .from('vendors')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (ownedVendorError) {
-    throw ownedVendorError;
-  }
-
-  if (ownedVendor) {
-    return { id: ownedVendor.id, isAgent: false };
-  }
-
-  const { data: agentVendor, error: agentVendorError } = await supabaseAdmin
-    .from('vendor_agents')
-    .select('vendor_id')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (agentVendorError) {
-    throw agentVendorError;
-  }
-
-  return agentVendor?.vendor_id ? { id: agentVendor.vendor_id, isAgent: true } : null;
-}
-
 async function canUserManageBuyerOrder(orderId: string, userId: string, customerId?: string | null) {
   const orderLookup = await supabaseAdmin
     .from('orders')
@@ -313,10 +233,10 @@ async function canUserManageBuyerOrder(orderId: string, userId: string, customer
 
     order = fallbackResult.data
       ? {
-          ...fallbackResult.data,
-          vendor_id: null,
-          metadata: null,
-        }
+        ...fallbackResult.data,
+        vendor_id: null,
+        metadata: null,
+      }
       : null;
   }
 
@@ -510,9 +430,9 @@ async function syncOrderMarketingContacts(params: {
 
 /**
  * POST /api/orders
- *
+ * 
  * P0 OPTIMIZED: Uses create_order_core RPC for atomic single-call order creation.
- *
+ * 
  * BEFORE (Phase 4): 4+N sequential DB calls (~135ms+ for 3 items)
  *   1. SELECT vendor
  *   2. SELECT products (stock validation)
@@ -520,11 +440,11 @@ async function syncOrderMarketingContacts(params: {
  *   4. INSERT order_items
  *   5..5+N. RPC decrement_product_stock × N items
  *   6. INSERT escrow
- *
+ * 
  * AFTER (Phase 6): 2 DB calls (~35ms for 3 items)
  *   1. SELECT vendor (cached in Redis, ~0ms hit)
  *   2. RPC create_order_core (atomic: validate + insert + decrement + escrow)
- *
+ * 
  * Estimated improvement:
  *   - Latency: 135ms → 35ms (-74%)
  *   - DB calls: 6+N → 2 (-80%)
@@ -543,7 +463,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       res.status(400).json({
         success: false,
         error: 'Données de commande invalides',
-        details: validation.error.issues.map(e => ({
+        details: validation.error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -576,163 +496,78 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
-    // 3. Resolve currency — priorité : shop_currency verrouillé, puis country
-    const currency = vendor.shop_currency || resolveVendorCurrency(vendor.country);
+    // 3. Resolve currency (no DB call)
+    let currency = resolveVendorCurrency(vendor.country);
 
-    // 3.5. Résumé financier multi-devises (prix depuis DB, FX interne, commission)
-    //      - Erreur "introuvable ou inactif" → BLOQUANT (produit désactivé/supprimé)
-    //      - Autre erreur (FX, DB temporaire) → non bloquant, fallback charged_amount frontend
-    let financialSummary: OrderFinancialSummary | null = null;
-    let financialSummaryError: string | null = null;
-    try {
-      financialSummary = await buildOrderFinancialSummary({
+    // 3bis. Paiement WALLET → calculer le montant à débiter (avec FX) côté backend et le passer à
+    //       create_order_core. Ainsi DÉBIT WALLET + commande + escrow = UNE SEULE transaction
+    //       atomique (Phase 6 du RPC). Avant : ces params n'étaient pas transmis → le débit se
+    //       faisait hors commande (Edge Function escrow séparée, non atomique) = risque
+    //       « argent prélevé mais commande pas créée ». buildOrderFinancialSummary recalcule tout
+    //       depuis la DB (prix produits + devise wallet acheteur + taux FX) — jamais le frontend.
+    let walletDebitParams: {
+      p_buyer_user_id: string | null;
+      p_wallet_debit_amount: number;
+      p_buyer_wallet_currency: string | null;
+      p_exchange_rate_used: number | null;
+    } = { p_buyer_user_id: null, p_wallet_debit_amount: 0, p_buyer_wallet_currency: null, p_exchange_rate_used: null };
+
+    if (payment_method === 'wallet') {
+      const summary = await buildOrderFinancialSummary({
         buyerUserId: userId,
-        vendorId:    vendor_id,
-        items:       items.map(i => ({ productId: i.product_id, quantity: i.quantity })),
+        vendorId: vendor_id,
+        items: items.map(i => ({ productId: i.product_id, quantity: i.quantity })),
         productType: 'physical',
       });
-    } catch (fsErr: any) {
-      financialSummaryError = fsErr.message;
-      if (fsErr.message?.includes('introuvable ou inactif')) {
-        // Produit réellement absent ou désactivé → bloquer la commande
-        logger.warn(`[ORDER-BLOCKED] Commande refusée — ${fsErr.message} — user: ${userId}`);
-        return res.status(400).json({
-          success: false,
-          error: fsErr.message,
-          error_code: 'PRODUCT_UNAVAILABLE',
-        });
-      }
-      logger.warn(`financial-summary: ${fsErr.message} — fallback to charged_amount`);
-    }
-
-    // 3.6. Résoudre la devise du wallet acheteur pour le filtre SQL
-    //      En cas d'échec du résumé financier, on interroge directement la table wallets.
-    let buyerWalletCurrency: string = financialSummary?.buyerCurrency ?? currency;
-    if (!financialSummary && payment_method === 'wallet') {
-      const { data: walletRow } = await supabaseAdmin
-        .from('wallets')
-        .select('currency')
-        .eq('user_id', userId)
-        .maybeSingle();
-      if (walletRow?.currency) buyerWalletCurrency = walletRow.currency;
-    }
-
-    // 3.7. Calculer le montant à débiter du wallet EN DEVISE ACHETEUR
-    //
-    // Cas même-devise (ex: acheteur GNF / vendeur GNF) :
-    //   → charged_amount du frontend = produits + commission, déjà en GNF ✓
-    //
-    // Cas cross-currency (ex: acheteur GNF / vendeur XOF) :
-    //   → charged_amount est en XOF (devise vendeur), on ne peut PAS le débiter tel quel
-    //   → financialSummary.totalPaidAmount = produits convertis en GNF (devise acheteur)
-    //   → commission en devise acheteur = platformFeeAmount (XOF) × exchangeRate (XOF→GNF)
-    //   → walletDebitAmount = totalPaidAmount + commission_GNF
-    //
-    // Si payment_confirmed=true → wallet déjà débité ailleurs (JomyPaymentSelector), ne pas redébiter.
-    let walletDebitAmount = 0;
-    if (payment_method === 'wallet' && !payment_confirmed) {
-      if (financialSummary?.isCrossCurrency) {
-        const commissionInBuyerCurrency = Math.round(
-          financialSummary.platformFeeAmount * financialSummary.exchangeRate
-        );
-        walletDebitAmount = financialSummary.totalPaidAmount + commissionInBuyerCurrency;
-      } else {
-        walletDebitAmount = typeof charged_amount === 'number' && charged_amount > 0
-          ? charged_amount
-          : (financialSummary?.totalPaidAmount ?? 0);
-      }
+      // Devise réelle du prix produit → cohérente avec le subtotal calculé par le RPC.
+      currency = summary.sellerCurrency;
+      walletDebitParams = {
+        p_buyer_user_id: userId,
+        p_wallet_debit_amount: summary.totalPaidAmount,
+        p_buyer_wallet_currency: summary.buyerCurrency,
+        // ⚠️ p_exchange_rate_used = null VOLONTAIREMENT : le montant à débiter est calculé ICI côté
+        // backend (buildOrderFinancialSummary, taux autoritaire). Le contrôle ±5% du RPC sert à
+        // détecter un taux FRONTEND périmé — non pertinent ici, et il rejetait à tort les commandes
+        // cross-devise car le RPC recalcule le taux AVEC marge (écart = marge ≈ 5% → faux rejet).
+        // Les vraies gardes (existence du taux, fraîcheur BCRG < 24h, âge) restent actives.
+        p_exchange_rate_used: null,
+      };
     }
 
     // 4. Generate order number (no DB call)
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-    // 4.5. VÉRIFICATION STRIPE pour les paiements par carte
-    //      On vérifie AVANT create_order_core pour ne pas créer de stock/escrow
-    //      sur un paiement fictif ou non abouti.
-    if (payment_method === 'card') {
-      if (!payment_intent_id) {
-        res.status(400).json({ success: false, error: 'payment_intent_id obligatoire pour un paiement par carte' });
-        return;
-      }
-
-      // Vérifier que ce PaymentIntent n'a pas déjà été utilisé pour une autre commande
-      const { data: existingOrderWithPI } = await supabaseAdmin
-        .from('orders')
-        .select('id')
-        .eq('payment_intent_id', payment_intent_id)
-        .maybeSingle();
-
-      if (existingOrderWithPI) {
-        logger.warn(`PI déjà utilisé: ${payment_intent_id} → order ${existingOrderWithPI.id}`);
-        res.status(409).json({ success: false, error: 'Ce paiement a déjà été utilisé pour une commande' });
-        return;
-      }
-
-      // Vérification auprès de l'API Stripe (status + buyer_id)
-      const stripeCheck = await verifyCardPaymentIntent(payment_intent_id, userId);
-      if (!stripeCheck.verified) {
-        logger.warn(`Paiement carte refusé: user=${userId}, PI=${payment_intent_id}, raison=${stripeCheck.error}`);
-        res.status(402).json({ success: false, error: stripeCheck.error || 'Paiement non validé' });
-        return;
-      }
-    }
-
     // 5. SINGLE ATOMIC RPC: create_order_core
-    //    Validates stock + creates order + items + decrements stock + creates escrow + wallet debit
-    //    All in one PostgreSQL transaction with row-level locking.
-    //    p_buyer_wallet_currency garantit que le débit cible le bon wallet (filtre devise).
+    //    Validates stock + creates order + items + decrements stock + creates escrow
+    //    (+ débit wallet atomique si payment_method='wallet') — 1 transaction PostgreSQL.
     const { data: result, error: rpcError } = await supabaseAdmin.rpc('create_order_core', {
-      p_order_number:           orderNumber,
-      p_customer_id:            customerId,
-      p_vendor_id:              vendor_id,
-      p_vendor_user_id:         vendor.user_id,
-      p_payment_method:         payment_method,
-      p_payment_intent_id:      payment_intent_id || null,
-      p_shipping_address:       shipping_address,
-      p_currency:               financialSummary?.sellerCurrency ?? buyerWalletCurrency,
+      p_order_number: orderNumber,
+      p_customer_id: customerId,
+      p_vendor_id: vendor_id,
+      p_vendor_user_id: vendor.user_id,
+      p_payment_method: payment_method,
+      p_payment_intent_id: payment_intent_id || null,
+      p_shipping_address: shipping_address,
+      p_currency: currency,
       p_items: items.map(i => ({
         product_id: i.product_id,
-        quantity:   i.quantity,
+        quantity: i.quantity,
         variant_id: i.variant_id || null,
       })),
-      p_auto_release_days:      7,
-      p_buyer_user_id:          userId,
-      p_wallet_debit_amount:    walletDebitAmount,
-      p_buyer_wallet_currency:  buyerWalletCurrency,
-      p_exchange_rate_used:     financialSummary?.exchangeRate ?? null,
+      p_auto_release_days: 7,
+      ...walletDebitParams,
     });
 
     if (rpcError) {
       logger.error(`create_order_core RPC error: ${rpcError.message}`);
-      // Si wallet déjà débité avant cet appel (payment_confirmed=true), on log pour remboursement manuel
-      if (payment_method === 'wallet' && payment_confirmed && payment_intent_id) {
-        logger.error(`[WALLET-LOSS] RPC crash après transfert wallet — réf: ${payment_intent_id}, user: ${userId}, montant: ${charged_amount}`);
-      }
-      res.status(500).json({
-        success: false,
-        error: 'Erreur lors de la création de la commande',
-        ...(payment_method === 'wallet' && payment_confirmed && payment_intent_id
-          ? { wallet_ref: payment_intent_id, note: 'Votre paiement a été reçu. Contactez le support avec cette référence.' }
-          : {}),
-      });
+      res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
       return;
     }
 
     // Check RPC result
     if (!result || !result.success) {
       const errorMsg = result?.error || 'Erreur inconnue';
-      logger.warn(`Order creation rejected: ${errorMsg}, payment_method=${payment_method}, user=${userId}`);
-      // Si wallet déjà débité, indiquer la référence pour remboursement
-      if (payment_method === 'wallet' && payment_confirmed && payment_intent_id) {
-        logger.error(`[WALLET-LOSS] RPC échec après transfert wallet — réf: ${payment_intent_id}, user: ${userId}, erreur: ${errorMsg}`);
-        res.status(409).json({
-          success: false,
-          error: errorMsg,
-          wallet_ref: payment_intent_id,
-          note: 'Votre paiement a été reçu. Contactez le support avec cette référence pour un remboursement.',
-        });
-        return;
-      }
+      logger.warn(`Order creation rejected: ${errorMsg}`);
       res.status(409).json({ success: false, error: errorMsg });
       return;
     }
@@ -741,143 +576,43 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       ? charged_amount
       : Number(result.total_amount || 0);
 
-    // Statut de paiement final — chaque méthode a sa propre source de vérité :
-    //   card    → vérifié par l'API Stripe (step 4.5) → toujours 'paid' ici
-    //   wallet  → débité atomiquement dans create_order_core → toujours 'paid'
-    //   cash    → paiement à la livraison → toujours 'pending'
-    //   mobile_money → confiance à payment_confirmed (flux hors Stripe)
-    const finalPaymentStatus: 'pending' | 'paid' =
-      payment_method === 'cash'
-        ? 'pending'
-        : payment_method === 'card'
+    // orders.payment_status only supports pending|paid|failed|refunded.
+    // wallet → débité atomiquement dans create_order_core, donc 'paid'.
+    // cash → 'pending' (paiement à la livraison). card/mobile → 'paid' seulement si confirmé.
+    const finalPaymentStatus: 'pending' | 'paid' = payment_method === 'cash'
+      ? 'pending'
+      : payment_method === 'wallet'
+        ? 'paid'
+        : payment_confirmed
           ? 'paid'
-          : payment_method === 'wallet'
-            ? 'paid'
-            : payment_confirmed
-              ? 'paid'
-              : 'pending';
+          : 'pending';
 
     const mergedOrderMetadata = {
       ...(payment_method === 'cash'
         ? {
-            payment_type: 'cash_on_delivery',
-            is_cod: true,
-          }
+          payment_type: 'cash_on_delivery',
+          is_cod: true,
+        }
         : {}),
       ...(payment_intent_id ? { external_payment_id: payment_intent_id } : {}),
       ...(order_metadata || {}),
     };
 
-    // ── Étape A : mise à jour des champs essentiels (non-fatale depuis Phase 6) ──
-    // create_order_core a déjà créé la commande atomiquement (wallet débité + ordre en DB).
-    // On tente d'abord la mise à jour complète, puis sans metadata si elle échoue (colonne manquante?),
-    // et en dernier recours on log seulement — la commande reste valide dans tous les cas.
-    {
-      const updatePayload: Record<string, any> = {
+    // ⚠️ create_order_core a DÉJÀ committé atomiquement : commande + items + stock + escrow +
+    // débit wallet. Les étapes ci-dessous ne sont que de la FINALISATION (réconciliation montant/
+    // metadata). Un échec ici ne doit JAMAIS renvoyer une erreur au client : sinon il croit que la
+    // commande a échoué alors que l'argent EST débité et la commande EXISTE → best-effort (log).
+    const { error: orderUpdateError } = await supabaseAdmin
+      .from('orders')
+      .update({
         total_amount: effectiveChargedAmount,
         payment_status: finalPaymentStatus,
         metadata: mergedOrderMetadata,
-        ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
-      };
+      })
+      .eq('id', result.order_id);
 
-      const { error: orderUpdateError } = await supabaseAdmin
-        .from('orders')
-        .update(updatePayload)
-        .eq('id', result.order_id);
-
-      if (orderUpdateError) {
-        logger.warn(`order finalization update failed (tentative sans metadata): ${orderUpdateError.message}`);
-        // Retry without metadata in case the column is absent or has type issues
-        const { error: retryUpdateError } = await supabaseAdmin
-          .from('orders')
-          .update({
-            total_amount: effectiveChargedAmount,
-            payment_status: finalPaymentStatus,
-            ...(payment_method === 'card' && payment_intent_id ? { payment_intent_id } : {}),
-          })
-          .eq('id', result.order_id);
-
-        if (retryUpdateError) {
-          // Non-fatal: create_order_core already set payment_status correctly for wallet.
-          // Log for monitoring but do NOT return 500 — the order exists and wallet is debited.
-          logger.error(`[ORDER-UPDATE-FAILED] Impossible de mettre à jour payment_status — order: ${result.order_id}, user: ${userId}: ${retryUpdateError.message}`);
-          if (payment_method === 'wallet' && walletDebitAmount > 0) {
-            logger.error(`[WALLET-REF] Wallet débité mais update échoué — order_id: ${result.order_id}, montant: ${walletDebitAmount} ${currency}`);
-          }
-        }
-      }
-    }
-
-    // ── Étape B : champs financiers multi-devises (non-fatal) ───────────────
-    // Ces colonnes peuvent être absentes du schéma si la migration multi-devises
-    // n'a pas encore été appliquée. On tente la mise à jour mais on ne bloque
-    // pas la commande si elle échoue — le wallet est déjà débité et la commande créée.
-    if (financialSummary) {
-      const { error: financialUpdateError } = await supabaseAdmin
-        .from('orders')
-        .update({
-          buyer_currency:        financialSummary.buyerCurrency,
-          seller_currency:       financialSummary.sellerCurrency,
-          original_currency:     financialSummary.sellerCurrency,
-          total_original_amount: financialSummary.totalOriginalAmount,
-          total_paid_amount:     financialSummary.totalPaidAmount,
-          paid_currency:         financialSummary.buyerCurrency,
-          exchange_rate_used:    financialSummary.isCrossCurrency ? financialSummary.exchangeRate : null,
-          exchange_rate_source:  financialSummary.exchangeRateSource,
-          is_cross_currency:     financialSummary.isCrossCurrency,
-          platform_fee_percent:  financialSummary.platformFeePercent,
-          platform_fee_amount:   financialSummary.platformFeeAmount,
-          platform_fee_currency: financialSummary.sellerCurrency,
-          seller_net_amount:     financialSummary.sellerNetAmount,
-          seller_net_currency:   financialSummary.sellerCurrency,
-        })
-        .eq('id', result.order_id);
-
-      if (financialUpdateError) {
-        logger.warn(`financial-fields update skipped (colonnes absentes?) — order: ${result.order_id}: ${financialUpdateError.message}`);
-      }
-    }
-
-    // ── Étape C : logging de conversion (non-fatal, fire-and-forget) ─────────
-    // Alimente currency_conversion_logs pour le monitoring PDG en temps réel.
-    // On log toujours : succès, échec du résumé financier, ou même-devise (skipped).
-    {
-      const logStatus = financialSummaryError
-        ? 'error'
-        : financialSummary?.isCrossCurrency
-          ? 'success'
-          : 'skipped';
-
-      const commissionConverted = financialSummary?.isCrossCurrency
-        ? Math.round(financialSummary.platformFeeAmount * financialSummary.exchangeRate)
-        : financialSummary?.platformFeeAmount ?? null;
-
-      supabaseAdmin.from('currency_conversion_logs').insert({
-        order_id:             result.order_id,
-        buyer_user_id:        userId,
-        vendor_id:            vendor_id,
-        from_currency:        financialSummary?.sellerCurrency ?? currency,
-        to_currency:          financialSummary?.buyerCurrency ?? buyerWalletCurrency,
-        is_cross_currency:    financialSummary?.isCrossCurrency ?? false,
-        original_amount:      financialSummary?.totalOriginalAmount ?? null,
-        converted_amount:     financialSummary?.totalPaidAmount ?? null,
-        commission_original:  financialSummary?.platformFeeAmount ?? null,
-        commission_converted: commissionConverted,
-        wallet_debit_amount:  walletDebitAmount > 0 ? walletDebitAmount : null,
-        exchange_rate:        financialSummary?.exchangeRate ?? null,
-        exchange_rate_source: financialSummary?.exchangeRateSource ?? null,
-        rate_fetched_at:      financialSummary?.rateFetchedAt ?? null,
-        status:               logStatus,
-        error_message:        financialSummaryError ?? null,
-        metadata: {
-          payment_method: payment_method,
-          vendor_currency: currency,
-          buyer_wallet_currency: buyerWalletCurrency,
-          charged_amount_frontend: charged_amount,
-        },
-      }).then(({ error: logErr }) => {
-        if (logErr) logger.warn(`conversion-log insert failed: ${logErr.message}`);
-      });
+    if (orderUpdateError) {
+      logger.error(`order finalization non bloquant (commande ${result.order_id} déjà créée): ${orderUpdateError.message}`);
     }
 
     let escrowStatus = result.escrow_status as string;
@@ -889,9 +624,9 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         metadata: {
           ...(payment_method === 'cash'
             ? {
-                payment_type: 'cash_on_delivery',
-                note: 'Paiement à la livraison - escrow virtuel',
-              }
+              payment_type: 'cash_on_delivery',
+              note: 'Paiement à la livraison - escrow virtuel',
+            }
             : {}),
           ...(payment_intent_id ? { external_payment_id: payment_intent_id } : {}),
           ...(order_metadata || {}),
@@ -900,9 +635,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       .eq('order_id', result.order_id);
 
     if (escrowUpdateError) {
-      // Non-fatal: l'escrow a déjà été créé par create_order_core avec les bons paramètres.
-      // Le montant sera légèrement incorrect (sous-total sans commission) mais la commande reste valide.
-      logger.warn(`escrow finalization update non-fatal — order: ${result.order_id}: ${escrowUpdateError.message}`);
+      logger.error(`escrow finalization non bloquant (order ${result.order_id}): ${escrowUpdateError.message}`);
     }
 
     if (payment_method === 'cash') {
@@ -919,29 +652,32 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         },
         orderTotal: effectiveChargedAmount,
       });
-    } catch (marketingErr: any) {
-      logger.warn(`syncOrderMarketingContacts non-fatal error — order: ${result.order_id}: ${marketingErr?.message}`);
+    } catch (e: any) {
+      logger.warn(`syncOrderMarketingContacts non bloquant: ${e?.message || e}`);
     }
 
-    if (finalPaymentStatus === 'paid' && effectiveChargedAmount > 0) {
-      try {
-        const commissionResult = await triggerAffiliateCommission(
-          userId,
-          effectiveChargedAmount,
-          'achat_produit',
-          result.order_id
-        );
-        if (!commissionResult.success) {
-          logger.warn(`Agent commission not credited for order ${result.order_id}: ${commissionResult.error || 'unknown error'}`);
-        }
-      } catch (commissionErr: any) {
-        logger.warn(`triggerAffiliateCommission non-fatal error — order: ${result.order_id}: ${commissionErr?.message}`);
-      }
+    // 🔔 Notifier le vendeur — strictement non bloquant (un échec ne casse pas la commande).
+    try {
+      await createNotification({
+        userId: vendor.user_id,
+        type: 'order',
+        title: 'Nouvelle commande reçue',
+        message: `Commande ${result.order_number} de ${shipping_address.full_name} — ${effectiveChargedAmount} ${currency}`,
+        metadata: {
+          order_id: result.order_id,
+          order_number: result.order_number,
+          total_amount: effectiveChargedAmount,
+          currency,
+          customer_name: shipping_address.full_name,
+        },
+      });
+    } catch (e: any) {
+      logger.warn(`createNotification non bloquant: ${e?.message || e}`);
     }
 
     // Performance logging
     const duration = Date.now() - startTime;
-    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${effectiveChargedAmount} ${currency}, escrow=${escrowStatus}, wallet_debited=${walletDebitAmount > 0 ? walletDebitAmount : 'non'}, duration=${duration}ms, db_calls=2`);
+    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${effectiveChargedAmount} ${currency}, escrow=${escrowStatus}, duration=${duration}ms, db_calls=2`);
 
     res.status(201).json({
       success: true,
@@ -979,7 +715,7 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
       res.status(400).json({
         success: false,
         error: 'Données de commande digitale invalides',
-        details: validation.error.issues.map(e => ({
+        details: validation.error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -1079,13 +815,13 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
           currency,
           ...(isCashOnDelivery
             ? {
-                is_cod: true,
-                payment_type: 'cash_on_delivery',
-                digital_delivery_status: 'awaiting_payment',
-              }
+              is_cod: true,
+              payment_type: 'cash_on_delivery',
+              digital_delivery_status: 'awaiting_payment',
+            }
             : {
-                digital_delivery_status: 'access_granted',
-              }),
+              digital_delivery_status: 'access_granted',
+            }),
         },
       })
       .select(ORDER_LIST_SELECT)
@@ -1097,35 +833,31 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
       return;
     }
 
-    try {
-      await syncOrderMarketingContacts({
-        vendorId: vendor_id,
-        userId,
-        shippingAddress: {
-          full_name: shippingAddress.full_name,
-          phone: shippingAddress.phone,
-        },
-        orderTotal: total_amount,
-      });
-    } catch (marketingErr: any) {
-      logger.warn(`syncOrderMarketingContacts non-fatal error — digital order: ${insertedOrder.id}: ${marketingErr?.message}`);
-    }
+    await syncOrderMarketingContacts({
+      vendorId: vendor_id,
+      userId,
+      shippingAddress: {
+        full_name: shippingAddress.full_name,
+        phone: shippingAddress.phone,
+      },
+      orderTotal: total_amount,
+    });
 
-    if (!isCashOnDelivery && total_amount > 0) {
-      try {
-        const commissionResult = await triggerAffiliateCommission(
-          userId,
-          total_amount,
-          'achat_produit_digital',
-          insertedOrder.id
-        );
-        if (!commissionResult.success) {
-          logger.warn(`Agent commission not credited for digital order ${insertedOrder.id}: ${commissionResult.error || 'unknown error'}`);
-        }
-      } catch (commissionErr: any) {
-        logger.warn(`triggerAffiliateCommission non-fatal error — digital order: ${insertedOrder.id}: ${commissionErr?.message}`);
-      }
-    }
+    // 🔔 Notifier le vendeur de la nouvelle commande numérique (bouton notifications).
+    await createNotification({
+      userId: vendor.user_id,
+      type: 'order',
+      title: 'Nouvelle commande reçue',
+      message: `Commande ${orderNumber} — ${product_name} (${total_amount} ${currency})`,
+      metadata: {
+        order_id: insertedOrder?.id,
+        order_number: orderNumber,
+        total_amount,
+        currency,
+        item_type: 'digital_product',
+        product_name,
+      },
+    });
 
     const [enrichedOrder] = await attachEscrowToOrders([insertedOrder]);
 
@@ -1159,8 +891,9 @@ router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRe
     const isCustomer = customerId !== null && order.customer_id === customerId;
     let isVendor = false;
     if (!isCustomer) {
-      const vendor = await getManagedVendorForUser(userId);
-      isVendor = vendor?.id === order.vendor_id;
+      const { data: vendor } = await supabaseAdmin
+        .from('vendors').select('id').eq('user_id', userId).eq('id', order.vendor_id).maybeSingle();
+      isVendor = !!vendor;
     }
 
     if (!isCustomer && !isVendor) {
@@ -1170,7 +903,7 @@ router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRe
 
     const { data: escrow } = await supabaseAdmin
       .from('escrow_transactions')
-      .select('id, status, amount, commission_amount, currency, metadata, auto_release_date, released_at, seller_confirmed_at')
+      .select('id, status, auto_release_date, released_at, seller_confirmed_at')
       .eq('order_id', orderId)
       .maybeSingle();
 
@@ -1236,45 +969,20 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimi
       return;
     }
 
-    // Batch stock restore (1 call instead of N)
-    const { data: orderItems } = await supabaseAdmin
-      .from('order_items').select('product_id, quantity').eq('order_id', orderId);
+    // Restauration du stock : gérée atomiquement par le trigger DB
+    // restore_stock_on_order_cancel (au passage status → 'cancelled'),
+    // pour couvrir aussi les annulations hors backend. Pas de restore ici
+    // (sinon double restauration).
 
-    if (orderItems && orderItems.length > 0) {
-      const { error: stockRestoreError } = await supabaseAdmin.rpc('increment_stock_batch', {
-        p_items: orderItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-      });
+    // Update escrow
+    const { error: escrowUpdateError } = await supabaseAdmin
+      .from('escrow_transactions')
+      .update({ status: 'refunded', released_at: new Date().toISOString() })
+      .eq('order_id', orderId);
 
-      if (stockRestoreError) {
-        throw stockRestoreError;
-      }
+    if (escrowUpdateError) {
+      throw escrowUpdateError;
     }
-
-    // Remboursement escrow → wallet client (atomique via RPC)
-    const { data: refundResult, error: refundError } = await supabaseAdmin.rpc(
-      'cancel_order_and_refund_wallet' as any,
-      {
-        p_order_id: orderId,
-        p_user_id:  userId,
-        p_reason:   reason.trim(),
-      }
-    );
-
-    if (refundError) {
-      throw refundError;
-    }
-
-    if (refundResult && !refundResult.success) {
-      throw new Error(refundResult.error || 'Erreur lors du remboursement wallet');
-    }
-
-    const wasRefunded: boolean = refundResult?.refunded ?? false;
-    const refundAmount: number  = refundResult?.amount  ?? 0;
-    const refundCurrency: string = refundResult?.currency ?? 'GNF';
-
-    logger.info(
-      `Order ${orderId} cancelled — wallet refund: ${wasRefunded} (${refundAmount} ${refundCurrency})`
-    );
 
     // Update order
     const cancellationReason = reason.trim();
@@ -1309,16 +1017,7 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimi
     if (error) throw error;
 
     logger.info(`Order ${orderId} cancelled by buyer ${userId}: ${reason}`);
-    res.json({
-      success: true,
-      data: updated,
-      refund: {
-        refunded: wasRefunded,
-        amount:   refundAmount,
-        currency: refundCurrency,
-        destination: 'wallet',
-      },
-    });
+    res.json({ success: true, data: updated });
   } catch (error: any) {
     logger.error(`Order cancellation error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de l\'annulation' });
@@ -1368,7 +1067,8 @@ router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) 
 router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const vendor = await getManagedVendorForUser(userId);
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -1413,20 +1113,20 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
       status: z.enum(['confirmed', 'preparing', 'ready', 'shipped', 'in_transit', 'delivered', 'cancelled']),
       tracking_number: z.string().max(100).nullish(),
       cancellation_reason: z.string().max(500).nullish(),
-      estimated_delivery_days: z.number().int().min(1).max(60).nullish(),
     });
 
     const validation = statusSchema.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({ success: false, error: 'Données invalides', details: validation.error.issues });
+      res.status(400).json({ success: false, error: 'Données invalides', details: validation.error.errors });
       return;
     }
 
     const requestedStatus = validation.data.status;
     const status = requestedStatus === 'shipped' ? 'in_transit' : requestedStatus;
-    const { tracking_number, cancellation_reason, estimated_delivery_days } = validation.data;
+    const { tracking_number, cancellation_reason } = validation.data;
 
-    const vendor = await getManagedVendorForUser(userId);
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -1435,7 +1135,7 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
 
     const { data: order } = await supabaseAdmin
       .from('orders')
-      .select('id, status, vendor_id, payment_method, shipping_address, metadata')
+      .select('id, status, vendor_id, customer_id, order_number')
       .eq('id', orderId)
       .eq('vendor_id', vendor.id)
       .single();
@@ -1474,112 +1174,30 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
     const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
     // Note: tracking_number, cancellation_reason, seller_confirmed_at, delivered_at
     // don't exist on orders table — store in metadata instead
-    const existingMetadata =
-      order.metadata && typeof order.metadata === 'object' && !Array.isArray(order.metadata)
-        ? order.metadata
-        : {};
-    const shippingAddress =
-      order.shipping_address && typeof order.shipping_address === 'object' && !Array.isArray(order.shipping_address)
-        ? order.shipping_address
-        : {};
-    const isCashOnDelivery =
-      order.payment_method === 'cash' &&
-      (existingMetadata.is_cod === true || shippingAddress.is_cod === true || existingMetadata.payment_type === 'cash_on_delivery');
-
     if (tracking_number || cancellation_reason) {
       updates.metadata = {
-        ...existingMetadata,
         ...(tracking_number ? { tracking_number } : {}),
         ...(cancellation_reason ? { cancellation_reason } : {}),
       };
     }
 
     if (status === 'confirmed') {
-      const confirmedAt = new Date();
-
-      if (isCashOnDelivery) {
-        updates.metadata = {
-          ...existingMetadata,
-          ...(updates.metadata || {}),
-          seller_confirmed_at: confirmedAt.toISOString(),
-          is_cod: true,
-          payment_type: 'cash_on_delivery',
-        };
-
-        await supabaseAdmin
-          .from('escrow_transactions')
-          .update({
-            seller_confirmed_at: confirmedAt.toISOString(),
-          })
-          .eq('order_id', orderId);
-      } else {
-        // Fallback: délai du vendeur en DB, puis 3 jours par défaut
-        let vendorDefaultDays = 3;
-        const { data: vendorSettings } = await supabaseAdmin
-          .from('vendors')
-          .select('average_delivery_days')
-          .eq('id', vendor.id)
-          .maybeSingle();
-        if ((vendorSettings as any)?.average_delivery_days) {
-          vendorDefaultDays = (vendorSettings as any).average_delivery_days;
-        }
-        const deliveryDays = estimated_delivery_days || vendorDefaultDays;
-        const estimatedDeliveryAt = new Date(confirmedAt.getTime() + deliveryDays * 24 * 60 * 60 * 1000);
-        const autoReleaseAt = new Date(estimatedDeliveryAt.getTime() + 48 * 60 * 60 * 1000);
-
-        const { data: currentEscrow } = await supabaseAdmin
-          .from('escrow_transactions')
-          .select('metadata')
-          .eq('order_id', orderId)
-          .maybeSingle();
-
-        updates.metadata = {
-          ...existingMetadata,
-          ...(updates.metadata || {}),
-          seller_confirmed_at: confirmedAt.toISOString(),
-          estimated_delivery_days: deliveryDays,
-          estimated_delivery_at: estimatedDeliveryAt.toISOString(),
-          escrow_auto_release_at: autoReleaseAt.toISOString(),
-        };
-
-        await supabaseAdmin
-          .from('escrow_transactions')
-          .update({
-            seller_confirmed_at: confirmedAt.toISOString(),
-            auto_release_date: autoReleaseAt.toISOString(),
-            metadata: {
-              ...(currentEscrow?.metadata && typeof currentEscrow.metadata === 'object' && !Array.isArray(currentEscrow.metadata)
-                ? currentEscrow.metadata
-                : {}),
-              estimated_delivery_days: deliveryDays,
-              estimated_delivery_at: estimatedDeliveryAt.toISOString(),
-              auto_release_after_unconfirmed_reception_at: autoReleaseAt.toISOString(),
-              auto_release_grace_hours: 72,
-            },
-          })
-          .eq('order_id', orderId);
-      }
+      await supabaseAdmin
+        .from('escrow_transactions')
+        .update({
+          seller_confirmed_at: new Date().toISOString(),
+          auto_release_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq('order_id', orderId);
     }
 
     if (status === 'delivered') {
-      updates.metadata = {
-        ...existingMetadata,
-        ...(updates.metadata || {}),
-        delivered_at: new Date().toISOString(),
-      };
+      updates.metadata = { ...(updates.metadata || {}), delivered_at: new Date().toISOString() };
     }
 
     if (status === 'cancelled') {
-      // Batch stock restore (1 call instead of N)
-      const { data: orderItems } = await supabaseAdmin
-        .from('order_items').select('product_id, quantity').eq('order_id', orderId);
-
-      if (orderItems && orderItems.length > 0) {
-        await supabaseAdmin.rpc('increment_stock_batch', {
-          p_items: orderItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-        });
-      }
-
+      // Restauration du stock gérée par le trigger DB restore_stock_on_order_cancel
+      // (au passage status → 'cancelled'). Pas de restore ici (sinon double).
       await supabaseAdmin
         .from('escrow_transactions')
         .update({ status: 'refunded', released_at: new Date().toISOString() })
@@ -1591,111 +1209,38 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
 
     if (error) throw error;
 
+    // 🔔 Notifier le client du changement de statut (bouton notifications).
+    if (order.customer_id) {
+      const { data: customer } = await supabaseAdmin
+        .from('customers')
+        .select('user_id')
+        .eq('id', order.customer_id)
+        .maybeSingle();
+
+      if (customer?.user_id) {
+        const statusMessages: Record<string, string> = {
+          confirmed: 'Votre commande a été confirmée par le vendeur',
+          preparing: 'Votre commande est en cours de préparation',
+          ready: 'Votre commande est prête',
+          in_transit: 'Votre commande a été expédiée',
+          delivered: 'Votre commande a été livrée',
+          cancelled: 'Votre commande a été annulée',
+        };
+        await createNotification({
+          userId: customer.user_id,
+          type: 'order',
+          title: `Commande ${order.order_number || ''}`.trim(),
+          message: statusMessages[status] || `Statut de votre commande : ${status}`,
+          metadata: { order_id: orderId, order_number: order.order_number, status },
+        });
+      }
+    }
+
     logger.info(`Order ${orderId} status: ${order.status} → ${status} by vendor=${vendor.id}`);
     res.json({ success: true, data: updated });
   } catch (error: any) {
     logger.error(`Order status update error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
-  }
-});
-
-router.post('/:orderId([0-9a-fA-F-]{36})/confirm-cod-delivery', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.user!.id;
-    const { orderId } = req.params;
-    const customerId = await getCustomerIdByUserId(userId);
-
-    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
-
-    if (!order) {
-      res.status(404).json({ success: false, error: 'Commande non trouvée' });
-      return;
-    }
-
-    if (!isBuyer) {
-      res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' });
-      return;
-    }
-
-    const { data: currentOrder, error: currentOrderError } = await supabaseAdmin
-      .from('orders')
-      .select('id, status, payment_method, payment_status, shipping_address, metadata')
-      .eq('id', orderId)
-      .single();
-
-    if (currentOrderError || !currentOrder) {
-      res.status(404).json({ success: false, error: 'Commande non trouvée' });
-      return;
-    }
-
-    const metadata =
-      currentOrder.metadata && typeof currentOrder.metadata === 'object' && !Array.isArray(currentOrder.metadata)
-        ? currentOrder.metadata
-        : {};
-    const shippingAddress =
-      currentOrder.shipping_address && typeof currentOrder.shipping_address === 'object' && !Array.isArray(currentOrder.shipping_address)
-        ? currentOrder.shipping_address
-        : {};
-    const isCod =
-      currentOrder.payment_method === 'cash' &&
-      (metadata.is_cod === true || shippingAddress.is_cod === true || metadata.payment_type === 'cash_on_delivery');
-
-    if (!isCod) {
-      res.status(400).json({ success: false, error: 'Cette commande n’est pas en paiement à la livraison' });
-      return;
-    }
-
-    if (!['ready', 'shipped', 'in_transit', 'delivered', 'completed'].includes(currentOrder.status)) {
-      res.status(400).json({
-        success: false,
-        error: `Confirmation impossible pour une commande en statut "${currentOrder.status}"`,
-      });
-      return;
-    }
-
-    if (currentOrder.status === 'completed' && currentOrder.payment_status === 'paid') {
-      res.json({ success: true, data: currentOrder });
-      return;
-    }
-
-    const confirmedAt = new Date().toISOString();
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from('orders')
-      .update({
-        status: 'completed',
-        payment_status: 'paid',
-        metadata: {
-          ...metadata,
-          is_cod: true,
-          payment_type: 'cash_on_delivery',
-          cod_confirmed_at: confirmedAt,
-        },
-        updated_at: confirmedAt,
-      })
-      .eq('id', orderId)
-      .select('*')
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    await supabaseAdmin
-      .from('escrow_transactions')
-      .update({
-        metadata: {
-          payment_type: 'cash_on_delivery',
-          note: 'Paiement à la livraison confirmé par le client',
-          cod_confirmed_at: confirmedAt,
-        },
-      })
-      .eq('order_id', orderId);
-
-    logger.info(`COD order ${orderId} confirmed by buyer ${userId}`);
-    res.json({ success: true, data: updated });
-  } catch (error: any) {
-    logger.error(`COD delivery confirmation error: ${error.message}`);
-    res.status(500).json({ success: false, error: 'Erreur lors de la confirmation du paiement à la livraison' });
   }
 });
 

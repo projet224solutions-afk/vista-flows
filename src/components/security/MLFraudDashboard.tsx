@@ -55,10 +55,10 @@ interface DashboardStats {
 }
 
 const RISK_COLORS = {
-  critical: '#ef4444',
+  critical: '#ff4000',
   high: '#f97316',
-  medium: '#eab308',
-  low: '#22c55e'
+  medium: '#ff4000',
+  low: '#ff4000'
 };
 
 export const MLFraudDashboard: React.FC = () => {
@@ -240,8 +240,8 @@ export const MLFraudDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Confiance ML</p>
                 <p className="text-3xl font-bold">{stats.avgConfidence}%</p>
               </div>
-              <div className="p-3 bg-green-500/10 rounded-full">
-                <Target className="h-6 w-6 text-green-500" />
+              <div className="p-3 bg-[#ff4000]/10 rounded-full">
+                <Target className="h-6 w-6 text-[#ff4000]" />
               </div>
             </div>
             <Progress value={stats.avgConfidence} className="mt-2" />
@@ -287,8 +287,8 @@ export const MLFraudDashboard: React.FC = () => {
                 <Area
                   type="monotone"
                   dataKey="score"
-                  stroke="#8884d8"
-                  fill="#8884d8"
+                  stroke="#04439e"
+                  fill="#04439e"
                   fillOpacity={0.3}
                 />
               </AreaChart>
@@ -386,8 +386,8 @@ export const MLFraudDashboard: React.FC = () => {
                       </td>
                       <td className="py-3 px-2">
                         <span className={`font-medium ${
-                          analysis.ml_confidence >= 80 ? 'text-green-600' :
-                          analysis.ml_confidence >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          analysis.ml_confidence >= 80 ? 'text-[#ff4000]' :
+                          analysis.ml_confidence >= 60 ? 'text-[#ff4000]' : 'text-[#ff4000]'
                         }`}>
                           {analysis.ml_confidence}%
                         </span>
@@ -433,11 +433,11 @@ export const MLFraudDashboard: React.FC = () => {
               </p>
               <div className="flex gap-4 mt-2 text-sm">
                 <span className="flex items-center gap-1">
-                  <Target className="h-4 w-4 text-green-500" />
+                  <Target className="h-4 w-4 text-[#ff4000]" />
                   Précision: {stats.mlAccuracy}%
                 </span>
                 <span className="flex items-center gap-1">
-                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <Zap className="h-4 w-4 text-[#ff4000]" />
                   Latence: ~500ms
                 </span>
               </div>

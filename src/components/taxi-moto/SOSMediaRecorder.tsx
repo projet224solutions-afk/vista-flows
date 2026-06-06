@@ -1,9 +1,9 @@
 /**
  * Composant d'enregistrement audio/vidéo pour les alertes SOS
- * Permet au conducteur d'enregistrer et envoyer des preuves au bureau syndicat
+ * Auto-arrêt à 60 secondes + envoi automatique au Bureau Syndicat
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +18,11 @@ import {
   X,
   Play,
   Pause,
-  Volume2
+  Volume2,
+  Clock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadToGCSDirect } from '@/lib/gcsUpload';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +36,8 @@ interface SOSMediaRecorderProps {
 
 type RecordingType = 'audio' | 'video';
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'uploading' | 'sent';
+
+const AUTO_STOP_SECONDS = 60;
 
 export function SOSMediaRecorder({
   sosAlertId,
@@ -54,12 +58,140 @@ export function SOSMediaRecorder({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const autoSendRef = useRef(false);
+  const recordingTypeRef = useRef<RecordingType | null>(null);
+  const durationRef = useRef(0);
+
+  // Synchronise les refs utilisées dans les callbacks asynchrones
+  useEffect(() => { recordingTypeRef.current = recordingType; }, [recordingType]);
+  useEffect(() => { durationRef.current = recordingDuration; }, [recordingDuration]);
+
+  const timeLeft = Math.max(0, AUTO_STOP_SECONDS - recordingDuration);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+  }, []);
+
+  // Auto-stop à 60 secondes
+  useEffect(() => {
+    if (recordingState === 'recording' && recordingDuration >= AUTO_STOP_SECONDS) {
+      autoSendRef.current = true;
+      stopRecording();
+      toast.info('⏱️ Auto-arrêt enregistrement', {
+        description: 'Envoi automatique au Bureau Syndicat en cours...'
+      });
+    }
+  }, [recordingDuration, recordingState, stopRecording]);
+
+  const sendRecordingWithBlob = useCallback(async (blob: Blob) => {
+    if (!blob || !sosAlertId) return;
+
+    setRecordingState('uploading');
+
+    try {
+      const type = recordingTypeRef.current;
+      const mimeType = type === 'video' ? 'video/webm' : 'audio/webm';
+      const fileName = `sos-${sosAlertId}-${Date.now()}.webm`;
+      const filePath = `sos/${sosAlertId}/${fileName}`;
+
+      let publicUrl: string | null = null;
+      let objectPath: string = filePath;
+
+      // 1. Essai GCS via edge function
+      const file = new File([blob], fileName, { type: mimeType });
+      const gcsResult = await uploadToGCSDirect(file, 'sos', fileName, mimeType, sosAlertId);
+
+      if (gcsResult.success && gcsResult.publicUrl) {
+        publicUrl = gcsResult.publicUrl;
+        objectPath = gcsResult.objectPath ?? filePath;
+      } else {
+        // 2. Fallback direct sur communication-files (bucket existant)
+        console.warn('GCS/sos-recordings indisponible, fallback communication-files');
+        const { error: fallbackError } = await supabase.storage
+          .from('communication-files')
+          .upload(filePath, blob, { contentType: mimeType, upsert: true });
+
+        if (fallbackError) {
+          throw new Error(`Upload échoué: ${fallbackError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('communication-files')
+          .getPublicUrl(filePath);
+
+        publicUrl = urlData.publicUrl;
+      }
+
+      // Mettre à jour sos_alerts avec l'URL de l'enregistrement
+      await supabase
+        .from('sos_alerts')
+        .update({
+          recording_url: publicUrl,
+          recording_stopped_at: new Date().toISOString()
+        })
+        .eq('id', sosAlertId);
+
+      // Enregistrer dans sos_media (non bloquant)
+      try {
+        await (supabase as any).from('sos_media').insert({
+          sos_alert_id: sosAlertId,
+          driver_id: driverId,
+          driver_name: driverName,
+          media_type: type,
+          file_path: objectPath,
+          file_url: publicUrl,
+          file_size_bytes: blob.size,
+          duration_seconds: durationRef.current,
+          created_at: new Date().toISOString()
+        });
+      } catch (mediaError) {
+        console.warn('⚠️ sos_media insert warning (non bloquant):', mediaError);
+      }
+
+      setRecordingState('sent');
+      toast.success('🎥 Enregistrement envoyé au Bureau Syndicat!', {
+        description: 'Le bureau peut maintenant visualiser votre preuve'
+      });
+
+      onMediaSent?.();
+
+      setTimeout(() => {
+        setRecordedBlob(null);
+        setRecordingState('idle');
+        setRecordingType(null);
+        setRecordingDuration(0);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Erreur envoi enregistrement:', error);
+      toast.error('Erreur lors de l\'envoi de l\'enregistrement');
+      setRecordingState('stopped');
+    }
+  }, [sosAlertId, driverId, driverName, onMediaSent]);
+
+  // Déclenchement auto-envoi quand blob disponible après auto-stop
+  useEffect(() => {
+    if (recordedBlob && autoSendRef.current) {
+      autoSendRef.current = false;
+      sendRecordingWithBlob(recordedBlob);
+    }
+  }, [recordedBlob, sendRecordingWithBlob]);
+
+  const sendRecording = useCallback(() => {
+    if (recordedBlob) sendRecordingWithBlob(recordedBlob);
+  }, [recordedBlob, sendRecordingWithBlob]);
 
   const startRecording = useCallback(async (type: RecordingType) => {
     try {
       setRecordingType(type);
       chunksRef.current = [];
       setRecordingDuration(0);
+      autoSendRef.current = false;
 
       const constraints = type === 'video'
         ? { video: { facingMode: 'environment' }, audio: true }
@@ -68,7 +200,6 @@ export function SOSMediaRecorder({
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
-      // Afficher le flux vidéo en direct
       if (type === 'video' && videoPreviewRef.current) {
         videoPreviewRef.current.srcObject = stream;
         videoPreviewRef.current.play();
@@ -94,12 +225,10 @@ export function SOSMediaRecorder({
         setRecordedBlob(blob);
         setRecordingState('stopped');
 
-        // Arrêter le stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
         }
 
-        // Afficher la preview
         if (type === 'video' && videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = null;
           videoPreviewRef.current.src = URL.createObjectURL(blob);
@@ -108,15 +237,14 @@ export function SOSMediaRecorder({
         }
       };
 
-      mediaRecorder.start(1000); // Collecter toutes les secondes
+      mediaRecorder.start(1000);
       setRecordingState('recording');
 
-      // Timer pour la durée
       timerRef.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
 
-      toast.success(`Enregistrement ${type === 'video' ? 'vidéo' : 'audio'} démarré`);
+      toast.success(`Enregistrement ${type === 'video' ? 'vidéo' : 'audio'} démarré — auto-envoi dans ${AUTO_STOP_SECONDS}s`);
     } catch (error) {
       console.error('Erreur démarrage enregistrement:', error);
       toast.error('Impossible d\'accéder à la caméra/micro');
@@ -125,16 +253,8 @@ export function SOSMediaRecorder({
     }
   }, []);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  }, []);
-
   const cancelRecording = useCallback(() => {
+    autoSendRef.current = false;
     stopRecording();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -152,83 +272,11 @@ export function SOSMediaRecorder({
     }
   }, [stopRecording]);
 
-  const sendRecording = useCallback(async () => {
-    if (!recordedBlob || !sosAlertId) {
-      toast.error('Aucun enregistrement à envoyer');
-      return;
-    }
-
-    setRecordingState('uploading');
-
-    try {
-      const fileExtension = recordingType === 'video' ? 'webm' : 'webm';
-      const fileName = `sos_${sosAlertId}_${Date.now()}.${fileExtension}`;
-      const filePath = `sos-media/${sosAlertId}/${fileName}`;
-
-      // Upload vers Supabase Storage
-      const { data: _uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, recordedBlob, {
-          contentType: recordingType === 'video' ? 'video/webm' : 'audio/webm',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error('Erreur upload:', uploadError);
-        throw uploadError;
-      }
-
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('documents')
-        .getPublicUrl(filePath);
-
-      // Enregistrer dans la base de données via RPC ou insert brut
-      const { error: insertError } = await (supabase as any)
-        .from('sos_media')
-        .insert({
-          sos_alert_id: sosAlertId,
-          driver_id: driverId,
-          driver_name: driverName,
-          media_type: recordingType,
-          file_path: filePath,
-          file_url: urlData.publicUrl,
-          duration_seconds: recordingDuration,
-          created_at: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error('Erreur insertion DB:', insertError);
-        throw insertError;
-      }
-
-      setRecordingState('sent');
-      toast.success('🎥 Enregistrement envoyé au Bureau Syndicat!', {
-        description: 'Le bureau peut maintenant visualiser votre preuve'
-      });
-
-      onMediaSent?.();
-
-      // Reset après 3 secondes
-      setTimeout(() => {
-        cancelRecording();
-      }, 3000);
-
-    } catch (error) {
-      console.error('Erreur envoi:', error);
-      toast.error('Erreur lors de l\'envoi de l\'enregistrement');
-      setRecordingState('stopped');
-    }
-  }, [recordedBlob, sosAlertId, driverId, driverName, recordingType, recordingDuration, cancelRecording, onMediaSent]);
-
   const togglePlayback = useCallback(() => {
     const player = recordingType === 'video' ? videoPreviewRef.current : audioPreviewRef.current;
     if (player) {
-      if (isPlaying) {
-        player.pause();
-      } else {
-        player.play();
-      }
+      if (isPlaying) player.pause();
+      else player.play();
       setIsPlaying(!isPlaying);
     }
   }, [isPlaying, recordingType]);
@@ -240,15 +288,16 @@ export function SOSMediaRecorder({
   };
 
   return (
-    <Card className={cn("border-2 border-red-200 bg-red-50/50", className)}>
+    <Card className={cn("border-2 border-orange-200 bg-orange-50/50", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2 text-red-700">
+        <CardTitle className="text-base flex items-center gap-2 text-[#ff4000]">
           <Camera className="w-5 h-5" />
           Enregistrement SOS
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* État idle - Boutons de démarrage */}
+
+        {/* Idle */}
         {recordingState === 'idle' && (
           <div className="space-y-3">
             <p className="text-sm text-gray-600 text-center">
@@ -257,7 +306,7 @@ export function SOSMediaRecorder({
             <div className="grid grid-cols-2 gap-3">
               <Button
                 onClick={() => startRecording('video')}
-                className="h-20 bg-gradient-to-br from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group"
+                className="h-20 bg-gradient-to-br from-[#ff4000] via-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:via-[#ff4000] hover:to-[#ff4000] text-white shadow-xl transition-all hover:scale-105 group"
               >
                 <div className="flex flex-col items-center gap-2">
                   <Video className="w-7 h-7 group-hover:scale-110 transition-transform" />
@@ -267,7 +316,7 @@ export function SOSMediaRecorder({
               </Button>
               <Button
                 onClick={() => startRecording('audio')}
-                className="h-20 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 group"
+                className="h-20 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white shadow-xl transition-all hover:scale-105 group"
               >
                 <div className="flex flex-col items-center gap-2">
                   <Mic className="w-7 h-7 group-hover:scale-110 transition-transform" />
@@ -278,126 +327,97 @@ export function SOSMediaRecorder({
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800 flex items-start gap-2">
-                <span className="text-blue-600 flex-shrink-0">💡</span>
-                <span>
-                  L'enregistrement sera envoyé au Bureau Syndicat en temps réel.
-                  Décrivez clairement la situation.
-                </span>
+                <Clock className="w-3.5 h-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <span>Envoi automatique au Bureau Syndicat après {AUTO_STOP_SECONDS}s si vous n'arrêtez pas manuellement.</span>
               </p>
             </div>
           </div>
         )}
 
-        {/* État recording - En cours d'enregistrement */}
+        {/* Recording */}
         {recordingState === 'recording' && (
           <div className="space-y-4">
-            {/* Preview vidéo en direct */}
             {recordingType === 'video' && (
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-2xl ring-4 ring-red-500/50 animate-pulse">
-                <video
-                  ref={videoPreviewRef}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                />
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-2xl ring-4 ring-[#ff4000]/50 animate-pulse">
+                <video ref={videoPreviewRef} className="w-full h-full object-cover" muted playsInline />
                 <div className="absolute top-3 left-3 flex items-center gap-2">
-                  <Badge className="bg-red-600 text-white flex items-center gap-2 px-3 py-1.5 shadow-lg">
+                  <Badge className="bg-[#ff4000] text-white flex items-center gap-2 px-3 py-1.5 shadow-lg">
                     <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
                     <span className="font-bold">ENREGISTREMENT</span>
                   </Badge>
                 </div>
-                <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <p className="text-white text-xs">📹 Filmez la situation actuelle</p>
-                </div>
               </div>
             )}
 
-            {/* Indicateur audio */}
             {recordingType === 'audio' && (
               <div className="bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl p-8 flex flex-col items-center justify-center shadow-xl ring-4 ring-orange-500/50 animate-pulse">
                 <div className="relative mb-4">
                   <div className="absolute inset-0 bg-orange-500/20 rounded-full animate-ping" />
                   <Mic className="w-16 h-16 text-orange-600 relative z-10" />
-                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full animate-pulse shadow-lg" />
+                  <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#ff4000] rounded-full animate-pulse shadow-lg" />
                 </div>
                 <p className="text-orange-800 font-bold text-lg">Enregistrement audio</p>
-                <p className="text-orange-600 text-sm mt-1">Parlez clairement et décrivez la situation</p>
+                <p className="text-orange-600 text-sm mt-1">Décrivez clairement la situation</p>
               </div>
             )}
 
-            {/* Timer et contrôles */}
+            {/* Timer + countdown + contrôles */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                <div className="w-3 h-3 bg-[#ff4000] rounded-full animate-pulse" />
                 <Badge variant="outline" className="text-xl font-mono font-bold px-4 py-2 border-2">
                   {formatDuration(recordingDuration)}
                 </Badge>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={cancelRecording}
-                  variant="outline"
-                  size="sm"
-                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Annuler
-                </Button>
-                <Button
-                  onClick={stopRecording}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg"
-                  size="sm"
-                >
-                  <Square className="w-4 h-4 mr-1" />
-                  Arrêter
-                </Button>
+              {/* Compte à rebours */}
+              <div className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-bold",
+                timeLeft <= 10
+                  ? "bg-orange-100 text-[#ff4000] border border-orange-300 animate-pulse"
+                  : "bg-orange-100 text-orange-700 border border-orange-200"
+              )}>
+                <Clock className="w-3.5 h-3.5" />
+                Auto-envoi dans {timeLeft}s
               </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={cancelRecording} variant="outline" size="sm" className="flex-1 border-orange-300 text-[#ff4000] hover:bg-orange-50">
+                <X className="w-4 h-4 mr-1" />
+                Annuler
+              </Button>
+              <Button onClick={stopRecording} className="flex-1 bg-[#ff4000] hover:bg-[#ff4000] text-white font-bold shadow-lg" size="sm">
+                <Square className="w-4 h-4 mr-1" />
+                Arrêter & Envoyer
+              </Button>
             </div>
           </div>
         )}
 
-        {/* État stopped - Preview et envoi */}
+        {/* Stopped — preview avant envoi manuel */}
         {recordingState === 'stopped' && (
           <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p className="text-sm text-green-800 font-medium flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-sm text-[#ff4000] font-medium flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                 Enregistrement terminé ! Vérifiez avant d'envoyer.
               </p>
             </div>
 
-            {/* Preview vidéo */}
             {recordingType === 'video' && (
               <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-xl">
-                <video
-                  ref={videoPreviewRef}
-                  className="w-full h-full object-cover"
-                  playsInline
-                  onEnded={() => setIsPlaying(false)}
-                />
-                <Button
-                  onClick={togglePlayback}
-                  className="absolute inset-0 bg-black/40 hover:bg-black/50 flex items-center justify-center transition-colors"
-                  variant="ghost"
-                >
+                <video ref={videoPreviewRef} className="w-full h-full object-cover" playsInline onEnded={() => setIsPlaying(false)} />
+                <Button onClick={togglePlayback} className="absolute inset-0 bg-black/40 hover:bg-black/50 flex items-center justify-center" variant="ghost">
                   <div className="bg-white/90 rounded-full p-4 shadow-2xl">
-                    {isPlaying ? (
-                      <Pause className="w-10 h-10 text-gray-900" />
-                    ) : (
-                      <Play className="w-10 h-10 text-gray-900" />
-                    )}
+                    {isPlaying ? <Pause className="w-10 h-10 text-gray-900" /> : <Play className="w-10 h-10 text-gray-900" />}
                   </div>
                 </Button>
                 <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
-                  <span className="text-white text-sm font-medium">
-                    Durée: {formatDuration(recordingDuration)}
-                  </span>
+                  <span className="text-white text-sm font-medium">Durée: {formatDuration(recordingDuration)}</span>
                   <Badge className="bg-white/20 text-white">Prévisualisation</Badge>
                 </div>
               </div>
             )}
 
-            {/* Preview audio */}
             {recordingType === 'audio' && (
               <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
@@ -409,29 +429,16 @@ export function SOSMediaRecorder({
                     <p className="text-sm text-orange-600">Durée: {formatDuration(recordingDuration)}</p>
                   </div>
                 </div>
-                <audio
-                  ref={audioPreviewRef}
-                  controls
-                  className="w-full"
-                  onEnded={() => setIsPlaying(false)}
-                />
+                <audio ref={audioPreviewRef} controls className="w-full" onEnded={() => setIsPlaying(false)} />
               </div>
             )}
 
-            {/* Boutons d'action */}
             <div className="flex gap-2 p-4 bg-gray-50 rounded-lg">
-              <Button
-                onClick={cancelRecording}
-                variant="outline"
-                className="flex-1 border-gray-300 hover:bg-gray-100"
-              >
+              <Button onClick={cancelRecording} variant="outline" className="flex-1 border-gray-300 hover:bg-gray-100">
                 <X className="w-4 h-4 mr-2" />
                 Recommencer
               </Button>
-              <Button
-                onClick={sendRecording}
-                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all"
-              >
+              <Button onClick={sendRecording} className="flex-1 bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000] text-white font-bold shadow-lg">
                 <Send className="w-4 h-4 mr-2" />
                 Envoyer au Bureau
               </Button>
@@ -439,7 +446,7 @@ export function SOSMediaRecorder({
           </div>
         )}
 
-        {/* État uploading */}
+        {/* Uploading */}
         {recordingState === 'uploading' && (
           <div className="flex flex-col items-center justify-center py-10 space-y-4">
             <div className="relative">
@@ -448,36 +455,31 @@ export function SOSMediaRecorder({
             </div>
             <div className="text-center space-y-1">
               <p className="text-lg font-bold text-blue-900">Envoi en cours...</p>
-              <p className="text-sm text-blue-600">
-                Transmission sécurisée vers le Bureau Syndicat
-              </p>
+              <p className="text-sm text-blue-600">Transmission sécurisée vers le Bureau Syndicat</p>
             </div>
             <div className="w-full max-w-xs bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 animate-pulse" style={{ width: '100%' }} />
+              <div className="h-full bg-[#04439e] animate-pulse" style={{ width: '100%' }} />
             </div>
           </div>
         )}
 
-        {/* État sent */}
+        {/* Sent */}
         {recordingState === 'sent' && (
           <div className="flex flex-col items-center justify-center py-10 space-y-4">
             <div className="relative">
-              <CheckCircle className="w-16 h-16 text-green-600" />
-              <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+              <CheckCircle className="w-16 h-16 text-[#ff4000]" />
+              <div className="absolute inset-0 bg-[#ff4000]/20 rounded-full animate-ping" />
             </div>
             <div className="text-center space-y-2">
-              <p className="text-xl font-bold text-green-800">Envoyé avec succès!</p>
-              <p className="text-sm text-green-600">
-                Le Bureau Syndicat a reçu votre enregistrement
-              </p>
+              <p className="text-xl font-bold text-[#ff4000]">Envoyé avec succès!</p>
+              <p className="text-sm text-[#ff4000]">Le Bureau Syndicat a reçu votre enregistrement</p>
             </div>
-            <Badge className="bg-green-100 text-green-800 border-2 border-green-300 px-4 py-2">
+            <Badge className="bg-orange-100 text-[#ff4000] border-2 border-orange-300 px-4 py-2">
               ✓ Preuve enregistrée
             </Badge>
           </div>
         )}
 
-        {/* Hidden audio element pour preview */}
         {recordingType === 'audio' && recordingState !== 'recording' && (
           <audio ref={audioPreviewRef} className="hidden" />
         )}

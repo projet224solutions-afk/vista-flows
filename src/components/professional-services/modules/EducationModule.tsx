@@ -63,13 +63,13 @@ const CATEGORIES = [
 ];
 
 const LEVEL_COLORS: Record<string, string> = {
-  débutant: 'bg-green-100 text-green-800',
-  intermédiaire: 'bg-yellow-100 text-yellow-800',
-  avancé: 'bg-red-100 text-red-800',
+  débutant: 'bg-orange-100 text-[#ff4000]',
+  intermédiaire: 'bg-orange-100 text-[#ff4000]',
+  avancé: 'bg-orange-100 text-[#ff4000]',
 };
 
 const STATUS_COLORS: Record<string, { label: string; color: string }> = {
-  actif: { label: 'Actif', color: 'bg-green-100 text-green-800' },
+  actif: { label: 'Actif', color: 'bg-orange-100 text-[#ff4000]' },
   brouillon: { label: 'Brouillon', color: 'bg-muted text-muted-foreground' },
   complet: { label: 'Complet', color: 'bg-blue-100 text-blue-800' },
   archive: { label: 'Archivé', color: 'bg-muted text-muted-foreground' },
@@ -105,7 +105,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl">
+          <div className="p-3 bg-[#04439e] rounded-xl">
             <GraduationCap className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -168,42 +168,42 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+        <Card className="bg-[#04439e] text-white">
           <CardContent className="p-4">
             <BookOpen className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{activeCourses}</p>
             <p className="text-xs opacity-80">Cours actifs</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Users className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{activeStudents}</p>
             <p className="text-xs opacity-80">Étudiants actifs</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
           <CardContent className="p-4">
             <ClipboardList className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalEnrolled}</p>
             <p className="text-xs opacity-80">Inscriptions</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-orange-600 text-white">
           <CardContent className="p-4">
             <Star className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{avgRating.toFixed(1)}</p>
             <p className="text-xs opacity-80">Note moyenne</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
           <CardContent className="p-4">
             <Award className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{students.filter(s => s.status === 'diplome').length}</p>
             <p className="text-xs opacity-80">Diplômés</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-pink-500 to-rose-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalRevenue / 1e6).toFixed(1)}M</p>
@@ -264,7 +264,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
                         <p className="font-bold text-primary">{course.price.toLocaleString()} GNF</p>
                         {course.rating > 0 && (
                           <div className="flex items-center gap-1 justify-end">
-                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                            <Star className="w-3 h-3 text-[#ff4000] fill-[#ff4000]" />
                             <span className="text-xs font-medium">{course.rating}</span>
                           </div>
                         )}
@@ -273,7 +273,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span>{course.enrolled}/{course.maxStudents} inscrits</span>
-                        <span className={`font-bold ${fillRate >= 90 ? 'text-red-500' : fillRate >= 70 ? 'text-yellow-600' : 'text-green-600'}`}>{fillRate}%</span>
+                        <span className={`font-bold ${fillRate >= 90 ? 'text-[#ff4000]' : fillRate >= 70 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>{fillRate}%</span>
                       </div>
                       <Progress value={fillRate} className="h-1.5" />
                     </div>
@@ -298,7 +298,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-sm">{student.name}</h4>
-                        <Badge className={student.status === 'actif' ? 'bg-green-100 text-green-800' : student.status === 'diplome' ? 'bg-blue-100 text-blue-800' : 'bg-muted text-muted-foreground'}>
+                        <Badge className={student.status === 'actif' ? 'bg-orange-100 text-[#ff4000]' : student.status === 'diplome' ? 'bg-blue-100 text-blue-800' : 'bg-muted text-muted-foreground'}>
                           {student.status === 'diplome' ? '🎓 Diplômé' : student.status === 'actif' ? 'Actif' : 'Inactif'}
                         </Badge>
                       </div>

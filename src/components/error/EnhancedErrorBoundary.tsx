@@ -59,19 +59,19 @@ const DefaultFallback: React.FC<{
         </Alert>
 
         {process.env.NODE_ENV === 'development' && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-semibold text-red-800 mb-2">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+            <h3 className="text-sm font-semibold text-[#ff4000] mb-2">
               Erreur (développement uniquement):
             </h3>
-            <pre className="text-xs text-red-700 overflow-auto max-h-40">
+            <pre className="text-xs text-[#ff4000] overflow-auto max-h-40">
               {error.message}
             </pre>
             {error.stack && (
               <details className="mt-2">
-                <summary className="text-xs text-red-600 cursor-pointer">
+                <summary className="text-xs text-[#ff4000] cursor-pointer">
                   Stack trace
                 </summary>
-                <pre className="text-xs text-red-600 overflow-auto max-h-60 mt-2">
+                <pre className="text-xs text-[#ff4000] overflow-auto max-h-60 mt-2">
                   {error.stack}
                 </pre>
               </details>

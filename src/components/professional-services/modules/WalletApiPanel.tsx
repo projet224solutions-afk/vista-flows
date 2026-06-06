@@ -210,8 +210,8 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-            <Clock className="w-8 h-8 text-amber-500" />
+          <div className="w-16 h-16 rounded-full bg-[#ff4000]/10 flex items-center justify-center mb-4">
+            <Clock className="w-8 h-8 text-[#ff4000]" />
           </div>
           <h3 className="text-xl font-bold mb-2">Demande en cours d'examen</h3>
           <p className="text-muted-foreground max-w-md mb-4">
@@ -219,7 +219,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
             {format(new Date(request.created_at), 'dd MMMM yyyy', { locale: fr })}.
             Elle sera examinée par notre équipe sous 24-48h.
           </p>
-          <Badge variant="outline" className="text-amber-500 border-amber-500/50">
+          <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/50">
             <Clock className="w-3 h-3 mr-1" /> En attente d'approbation
           </Badge>
         </CardContent>
@@ -292,7 +292,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
               <CheckCircle className="w-4 h-4" />
               <span className="text-xs">Réussies</span>
             </div>
-            <p className="text-2xl font-bold text-green-500">
+            <p className="text-2xl font-bold text-[#ff4000]">
               {transactions.filter(t => t.status === 'completed').length}
             </p>
           </CardContent>
@@ -328,11 +328,11 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{key.key_name}</span>
                     {key.is_test_mode ? (
-                      <Badge variant="outline" className="text-amber-500 border-amber-500/50 text-[10px]">
+                      <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/50 text-[10px]">
                         <AlertTriangle className="w-3 h-3 mr-0.5" /> TEST
                       </Badge>
                     ) : (
-                      <Badge className="bg-green-600 text-white text-[10px]">
+                      <Badge className="bg-[#ff4000] text-white text-[10px]">
                         <Zap className="w-3 h-3 mr-0.5" /> PRODUCTION
                       </Badge>
                     )}

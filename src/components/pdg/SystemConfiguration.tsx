@@ -208,26 +208,26 @@ export default function SystemConfiguration() {
   const getStatusIcon = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'not_configured':
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'testing':
         return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
       case 'error':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
     }
   };
 
   const getStatusBadge = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Configuré</Badge>;
+        return <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Configuré</Badge>;
       case 'not_configured':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Non configuré</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Non configuré</Badge>;
       case 'testing':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'error':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Erreur</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Erreur</Badge>;
     }
   };
 
@@ -276,9 +276,9 @@ export default function SystemConfiguration() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Statut Global</CardTitle>
             {requiredConfigured === requiredCount ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-[#ff4000]" />
             ) : (
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
             )}
           </CardHeader>
           <CardContent>

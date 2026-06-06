@@ -92,25 +92,26 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentId]);
 
+  // Migré vers le backend Node (« tout en backend ») : endpoint action-based.
+  // Auth : JWT si l'agent a une session (dashboard), sinon agent_token (interface publique).
   const invokeWithAgentAuth = async (action: string, body?: any) => {
     const token = getAgentToken();
+    const payload = { action, ...(body || {}), agent_token: token || undefined };
 
-    // Préparer les headers
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['X-Agent-Token'] = token;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/agents/affiliate-links', { method: 'POST', body: payload });
+      return { data: resp.data, error: resp.success ? null : { message: resp.error } };
     }
 
-    // CORRECT: passer l'action dans le body au lieu de l'URL
-    const response = await supabase.functions.invoke('agent-affiliate-link', {
-      body: {
-        action,
-        ...(body || {})
-      },
-      headers
+    // Pas de session (interface agent publique) → appel direct avec agent_token
+    const { resolveBackendUrl } = await import('@/config/backend');
+    const res = await fetch(resolveBackendUrl('/api/agents/affiliate-links'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     });
-
-    return response;
+    const json = await res.json();
+    return { data: json.data, error: json.success ? null : { message: json.error || 'Erreur' } };
   };
 
   const loadData = async () => {
@@ -290,7 +291,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-500" />
+              <Users className="h-5 w-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{stats?.affiliated_users || 0}</p>
                 <p className="text-xs text-muted-foreground">Affiliés</p>
@@ -321,10 +322,10 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <p className="text-sm text-yellow-600 font-medium">En attente</p>
-              <p className="text-2xl font-bold text-yellow-700">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+              <p className="text-sm text-[#ff4000] font-medium">En attente</p>
+              <p className="text-2xl font-bold text-[#ff4000]">
                 {(stats?.commissions?.pending || 0).toLocaleString()} GNF
               </p>
             </div>
@@ -334,9 +335,9 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                 {(stats?.commissions?.validated || 0).toLocaleString()} GNF
               </p>
             </div>
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-              <p className="text-sm text-green-600 font-medium">Payées</p>
-              <p className="text-2xl font-bold text-green-700">
+            <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+              <p className="text-sm text-[#ff4000] font-medium">Payées</p>
+              <p className="text-2xl font-bold text-[#ff4000]">
                 {(stats?.commissions?.paid || 0).toLocaleString()} GNF
               </p>
             </div>
@@ -363,7 +364,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
               </Button>
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-pink-600 hover:bg-pink-700 shadow-lg shadow-pink-600/40">
+                  <Button className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">
                     <Plus className="h-4 w-4 mr-2" />
                     Nouveau lien
                   </Button>

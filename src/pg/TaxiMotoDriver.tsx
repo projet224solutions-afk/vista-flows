@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useGPSLocation } from "@/hooks/useGPSLocation";
@@ -16,7 +15,7 @@ import { useTaxiNotifications } from "@/hooks/useTaxiNotifications";
 import { useTaxiErrorBoundary } from "@/hooks/useTaxiErrorBoundary";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { GeolocationService } from "@/services/taxi/GeolocationService";
-import { Car, Star, ShoppingCart } from "lucide-react";
+import { Car, Star } from "lucide-react";
 
 // Hooks modulaires refactorisés
 import { useTaxiDriverProfile } from "@/hooks/useTaxiDriverProfile";
@@ -46,8 +45,6 @@ const ONLINE_SINCE_KEY = 'taxi_driver_online_since';
 export default function TaxiMotoDriver() {
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
-    const navigate = useNavigate();
-
     // GPS unifié avec fallback et error handling
     const {
         location,
@@ -154,7 +151,6 @@ export default function TaxiMotoDriver() {
         setNavigationActive,
         updateRideStatus,
         cancelActiveRide,
-        completeRide
     } = useTaxiActiveRide(driverId, startNavigation, updateLocalStats);
 
     useEffect(() => { activeRideRef.current = activeRide; }, [activeRide]);
@@ -349,9 +345,11 @@ export default function TaxiMotoDriver() {
                     onExpandMap={() => setActiveTab('gps-navigation')}
                     onStatClick={(statId) => {
                         if (statId === 'earnings') setActiveTab('earnings');
+                        else if (statId === 'rides') setActiveTab('history');
                         else if (statId === 'history') setActiveTab('history');
                         else if (statId === 'rating') setActiveTab('rating');
                     }}
+                    onGoToMarketplace={() => setActiveTab('my-purchases')}
                 />
             )}
 
@@ -374,7 +372,6 @@ export default function TaxiMotoDriver() {
                             onUpdateStatus={async (status) => {
                                 await updateRideStatus(status as ActiveRide['status']);
                             }}
-                            onCompleteRide={completeRide}
                             onCancelRide={cancelActiveRide}
                         />
                     ) : (
@@ -447,8 +444,8 @@ export default function TaxiMotoDriver() {
                                     <div key={ride.id as string} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                                         <div className="flex flex-wrap justify-between items-start mb-2 gap-1">
                                             <span className={`text-xs px-2 py-1 rounded-full ${
-                                                ride.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                ride.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                                                ride.status === 'completed' ? 'bg-[#ff4000]/20 text-[#ff4000]' :
+                                                ride.status === 'cancelled' ? 'bg-[#ff4000]/20 text-[#ff4000]' :
                                                 'bg-blue-500/20 text-blue-400'
                                             }`}>
                                                 {ride.status === 'completed' ? 'Terminée' :
@@ -461,7 +458,7 @@ export default function TaxiMotoDriver() {
                                         <p className="text-white text-sm mb-1 truncate">{String(ride.pickup_address || 'Adresse départ')}</p>
                                         <p className="text-gray-400 text-xs truncate">→ {String(ride.dropoff_address || 'Destination')}</p>
                                         {ride.driver_share && (
-                                            <p className="text-emerald-400 font-bold mt-2">{Number(ride.driver_share).toLocaleString()} GNF</p>
+                                            <p className="text-[#ff4000] font-bold mt-2">{Number(ride.driver_share).toLocaleString()} GNF</p>
                                         )}
                                     </div>
                                 ))}
@@ -475,15 +472,15 @@ export default function TaxiMotoDriver() {
                 <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-3 sm:px-4">
                     <div className="space-y-6">
                         <h2 className="text-white font-bold text-base sm:text-lg">Votre note</h2>
-                        <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-4 sm:p-6 border border-amber-500/30 text-center">
-                            <div className="text-4xl sm:text-5xl font-bold text-amber-400 mb-2">
+                        <div className="bg-gradient-to-br from-[#ff4000]/20 to-[#ff4000]/10 rounded-2xl p-4 sm:p-6 border border-[#ff4000]/30 text-center">
+                            <div className="text-4xl sm:text-5xl font-bold text-[#ff4000] mb-2">
                                 {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : '-'}
                             </div>
                             <div className="flex justify-center gap-1 mb-3">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <Star key={star} className={`w-6 h-6 ${
                                         star <= Math.round(driverStats.rating)
-                                            ? 'text-amber-400 fill-amber-400'
+                                            ? 'text-[#ff4000] fill-[#ff4000]'
                                             : 'text-gray-600'
                                     }`} />
                                 ))}
@@ -493,10 +490,10 @@ export default function TaxiMotoDriver() {
                         <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                             <h3 className="text-white font-medium mb-3">Comment améliorer votre note</h3>
                             <ul className="space-y-2 text-gray-400 text-sm">
-                                <li className="flex items-start gap-2"><span className="text-emerald-400">✓</span>Soyez ponctuel aux rendez-vous</li>
-                                <li className="flex items-start gap-2"><span className="text-emerald-400">✓</span>Conduisez prudemment et respectez le code</li>
-                                <li className="flex items-start gap-2"><span className="text-emerald-400">✓</span>Soyez courtois avec les clients</li>
-                                <li className="flex items-start gap-2"><span className="text-emerald-400">✓</span>Maintenez votre véhicule propre</li>
+                                <li className="flex items-start gap-2"><span className="text-[#ff4000]">✓</span>Soyez ponctuel aux rendez-vous</li>
+                                <li className="flex items-start gap-2"><span className="text-[#ff4000]">✓</span>Conduisez prudemment et respectez le code</li>
+                                <li className="flex items-start gap-2"><span className="text-[#ff4000]">✓</span>Soyez courtois avec les clients</li>
+                                <li className="flex items-start gap-2"><span className="text-[#ff4000]">✓</span>Maintenez votre véhicule propre</li>
                             </ul>
                         </div>
                     </div>
@@ -511,13 +508,6 @@ export default function TaxiMotoDriver() {
 
             {activeTab === 'my-purchases' && (
                 <div className="min-h-screen bg-gray-950 pb-24 p-3 sm:p-4">
-                    <button
-                        onClick={() => navigate('/marketplace')}
-                        className="w-full mb-4 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
-                    >
-                        <ShoppingCart className="w-5 h-5" />
-                        Aller au marketplace
-                    </button>
                     <MyPurchasesOrdersList
                         title="Mes Achats Personnels"
                         emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace"

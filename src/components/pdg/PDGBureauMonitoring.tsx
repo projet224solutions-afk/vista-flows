@@ -189,42 +189,42 @@ export default function PDGBureauMonitoring() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/5 border-[#ff4000]/20">
           <CardContent className="p-4 text-center">
-            <Users className="w-6 h-6 mx-auto mb-2 text-green-500" />
-            <div className="text-2xl font-bold text-green-600">{globalStats.totalDrivers}</div>
+            <Users className="w-6 h-6 mx-auto mb-2 text-[#ff4000]" />
+            <div className="text-2xl font-bold text-[#ff4000]">{globalStats.totalDrivers}</div>
             <div className="text-xs text-muted-foreground">Chauffeurs Total</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+        <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/5 border-[#ff4000]/20">
           <CardContent className="p-4 text-center">
-            <Activity className="w-6 h-6 mx-auto mb-2 text-emerald-500" />
-            <div className="text-2xl font-bold text-emerald-600">{globalStats.onlineDrivers}</div>
+            <Activity className="w-6 h-6 mx-auto mb-2 text-[#ff4000]" />
+            <div className="text-2xl font-bold text-[#ff4000]">{globalStats.onlineDrivers}</div>
             <div className="text-xs text-muted-foreground">En Ligne</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+        <Card className="bg-gradient-to-br from-[#04439e]/10 to-[#04439e]/5 border-[#04439e]/20">
           <CardContent className="p-4 text-center">
-            <Car className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-            <div className="text-2xl font-bold text-purple-600">{globalStats.onTripDrivers}</div>
+            <Car className="w-6 h-6 mx-auto mb-2 text-[#04439e]" />
+            <div className="text-2xl font-bold text-[#04439e]">{globalStats.onTripDrivers}</div>
             <div className="text-xs text-muted-foreground">En Course</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
+        <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/5 border-[#ff4000]/20">
           <CardContent className="p-4 text-center">
-            <TrendingUp className="w-6 h-6 mx-auto mb-2 text-amber-500" />
-            <div className="text-2xl font-bold text-amber-600">{globalStats.todayRides}</div>
+            <TrendingUp className="w-6 h-6 mx-auto mb-2 text-[#ff4000]" />
+            <div className="text-2xl font-bold text-[#ff4000]">{globalStats.todayRides}</div>
             <div className="text-xs text-muted-foreground">Courses Aujourd'hui</div>
           </CardContent>
         </Card>
 
-        <Card className={`bg-gradient-to-br ${globalStats.activeSOS > 0 ? 'from-red-500/20 to-red-600/10 border-red-500/40 animate-pulse' : 'from-slate-500/10 to-slate-600/5 border-slate-500/20'}`}>
+        <Card className={`bg-gradient-to-br ${globalStats.activeSOS > 0 ? 'from-[#ff4000]/20 to-[#ff4000]/10 border-[#ff4000]/40 animate-pulse' : 'from-slate-500/10 to-slate-600/5 border-slate-500/20'}`}>
           <CardContent className="p-4 text-center">
-            <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${globalStats.activeSOS > 0 ? 'text-red-500' : 'text-slate-400'}`} />
-            <div className={`text-2xl font-bold ${globalStats.activeSOS > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+            <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${globalStats.activeSOS > 0 ? 'text-[#ff4000]' : 'text-slate-400'}`} />
+            <div className={`text-2xl font-bold ${globalStats.activeSOS > 0 ? 'text-[#ff4000]' : 'text-slate-500'}`}>
               {globalStats.activeSOS}
             </div>
             <div className="text-xs text-muted-foreground">Alertes SOS</div>
@@ -233,18 +233,18 @@ export default function PDGBureauMonitoring() {
       </div>
 
       {/* Revenus du jour */}
-      <Card className="bg-gradient-to-r from-emerald-500/5 to-green-500/10 border-emerald-500/20">
+      <Card className="bg-gradient-to-r from-[#ff4000]/5 to-[#ff4000]/10 border-[#ff4000]/20">
         <CardContent className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <DollarSign className="w-8 h-8 text-emerald-500" />
+            <DollarSign className="w-8 h-8 text-[#ff4000]" />
             <div>
               <p className="text-sm text-muted-foreground">Revenus totaux du jour</p>
-              <p className="text-3xl font-bold text-emerald-600">
+              <p className="text-3xl font-bold text-[#ff4000]">
                 {formatCurrency(globalStats.todayEarnings)}
               </p>
             </div>
           </div>
-          <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+          <Badge className="bg-[#ff4000]/20 text-[#ff4000] border-[#ff4000]/30">
             <Shield className="w-3 h-3 mr-1" />
             Temps réel
           </Badge>
@@ -276,7 +276,7 @@ export default function PDGBureauMonitoring() {
                     key={bureau.id}
                     className={`hover:shadow-lg transition-all cursor-pointer group ${
                       stats?.active_sos && stats.active_sos > 0
-                        ? 'border-red-500/50 bg-red-500/5'
+                        ? 'border-[#ff4000]/50 bg-[#ff4000]/5'
                         : 'hover:border-primary/50'
                     }`}
                     onClick={() => openBureauMonitoring(bureau.id)}
@@ -297,19 +297,19 @@ export default function PDGBureauMonitoring() {
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                         </div>
                       ) : error ? (
-                        <p className="text-xs text-red-500">{error}</p>
+                        <p className="text-xs text-[#ff4000]">{error}</p>
                       ) : stats ? (
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="p-2 bg-muted/50 rounded">
                             <div className="text-lg font-bold">{stats.total_drivers}</div>
                             <div className="text-xs text-muted-foreground">Chauffeurs</div>
                           </div>
-                          <div className="p-2 bg-green-500/10 rounded">
-                            <div className="text-lg font-bold text-green-600">{stats.online_drivers}</div>
+                          <div className="p-2 bg-[#ff4000]/10 rounded">
+                            <div className="text-lg font-bold text-[#ff4000]">{stats.online_drivers}</div>
                             <div className="text-xs text-muted-foreground">En ligne</div>
                           </div>
-                          <div className="p-2 bg-purple-500/10 rounded">
-                            <div className="text-lg font-bold text-purple-600">{stats.on_trip_drivers}</div>
+                          <div className="p-2 bg-[#04439e]/10 rounded">
+                            <div className="text-lg font-bold text-[#04439e]">{stats.on_trip_drivers}</div>
                             <div className="text-xs text-muted-foreground">En course</div>
                           </div>
                         </div>
@@ -322,7 +322,7 @@ export default function PDGBureauMonitoring() {
                             <span className="font-medium">{stats.today_rides}</span>
                           </div>
                           {stats.active_sos > 0 && (
-                            <Badge className="bg-red-500 text-white animate-pulse">
+                            <Badge className="bg-[#ff4000] text-white animate-pulse">
                               <AlertTriangle className="w-3 h-3 mr-1" />
                               {stats.active_sos} SOS
                             </Badge>

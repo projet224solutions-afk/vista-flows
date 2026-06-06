@@ -146,10 +146,10 @@ export function VendorDisputeDialog({
           </div>
 
           {/* Avertissement */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          <div className="bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg p-3">
             <div className="flex gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-800 dark:text-amber-200">
+              <AlertCircle className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-[#ff4000] dark:text-orange-200">
                 <p className="font-medium mb-1">Important</p>
                 <p>Un litige bloquera la transaction jusqu'à sa résolution par un administrateur. Utilisez cette option uniquement en cas de problème réel.</p>
               </div>

@@ -166,7 +166,7 @@ export default function WorkerDashboard() {
             <CardTitle className="text-sm font-medium">Alertes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
+            <div className="text-2xl font-bold text-[#ff4000]">
               {alerts.filter(a => !a.is_read).length}
             </div>
           </CardContent>
@@ -182,7 +182,7 @@ export default function WorkerDashboard() {
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(worker.permissions as any).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${value ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div className={`w-2 h-2 rounded-full ${value ? 'bg-[#ff4000]' : 'bg-gray-300'}`} />
                 <span className="text-sm">
                   {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
@@ -258,15 +258,15 @@ export default function WorkerDashboard() {
               <div
                 key={alert.id}
                 className={`flex items-start gap-4 p-4 rounded-lg border ${
-                  alert.is_critical ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'
+                  alert.is_critical ? 'border-orange-200 bg-orange-50' : 'border-orange-200 bg-orange-50'
                 }`}
               >
-                <AlertCircle className={`w-5 h-5 ${alert.is_critical ? 'text-red-500' : 'text-yellow-500'} flex-shrink-0 mt-0.5`} />
+                <AlertCircle className={`w-5 h-5 ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'} flex-shrink-0 mt-0.5`} />
                 <div className="flex-1">
-                  <h3 className={`font-medium ${alert.is_critical ? 'text-red-900' : 'text-yellow-900'}`}>
+                  <h3 className={`font-medium ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                     {alert.title}
                   </h3>
-                  <p className={`text-sm mt-1 ${alert.is_critical ? 'text-red-700' : 'text-yellow-700'}`}>
+                  <p className={`text-sm mt-1 ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                     {alert.message}
                   </p>
                 </div>

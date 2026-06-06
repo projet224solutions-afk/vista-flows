@@ -165,10 +165,10 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
 
     const getHealthColor = (health: string) => {
         switch (health) {
-            case 'excellent': return 'text-green-600 bg-green-100';
+            case 'excellent': return 'text-[#ff4000] bg-orange-100';
             case 'good': return 'text-blue-600 bg-blue-100';
-            case 'warning': return 'text-yellow-600 bg-yellow-100';
-            case 'critical': return 'text-red-600 bg-red-100';
+            case 'warning': return 'text-[#ff4000] bg-orange-100';
+            case 'critical': return 'text-[#ff4000] bg-orange-100';
             default: return 'text-gray-600 bg-gray-100';
         }
     };
@@ -228,8 +228,8 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                             <Activity className="w-8 h-8 text-blue-600" />
                         </div>
                         <div className="mt-2 flex items-center text-sm">
-                            <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-                            <span className="text-green-600">+12% cette semaine</span>
+                            <TrendingUp className="w-4 h-4 text-[#ff4000] mr-1" />
+                            <span className="text-[#ff4000]">+12% cette semaine</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -239,13 +239,13 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Événements Critiques</p>
-                                <p className="text-2xl font-bold text-red-600">{stats?.criticalEvents || 0}</p>
+                                <p className="text-2xl font-bold text-[#ff4000]">{stats?.criticalEvents || 0}</p>
                             </div>
-                            <AlertTriangle className="w-8 h-8 text-red-600" />
+                            <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
                         </div>
                         <div className="mt-2 flex items-center text-sm">
-                            <TrendingDown className="w-4 h-4 text-green-600 mr-1" />
-                            <span className="text-green-600">-5% cette semaine</span>
+                            <TrendingDown className="w-4 h-4 text-[#ff4000] mr-1" />
+                            <span className="text-[#ff4000]">-5% cette semaine</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -271,9 +271,9 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Incidents Actifs</p>
-                                <p className="text-2xl font-bold text-yellow-600">{stats?.activeIncidents || 0}</p>
+                                <p className="text-2xl font-bold text-[#ff4000]">{stats?.activeIncidents || 0}</p>
                             </div>
-                            <AlertCircle className="w-8 h-8 text-yellow-600" />
+                            <AlertCircle className="w-8 h-8 text-[#ff4000]" />
                         </div>
                         <div className="mt-2 flex items-center text-sm">
                             <Clock className="w-4 h-4 text-gray-600 mr-1" />
@@ -298,9 +298,9 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                             <div className="space-y-3">
                                 {alerts.slice(0, 5).map((alert) => (
                                     <div key={alert.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                                        <AlertTriangle className={`w-5 h-5 mt-0.5 ${alert.priority === 'urgent' ? 'text-red-600' :
+                                        <AlertTriangle className={`w-5 h-5 mt-0.5 ${alert.priority === 'urgent' ? 'text-[#ff4000]' :
                                                 alert.priority === 'high' ? 'text-orange-600' :
-                                                    'text-yellow-600'
+                                                    'text-[#ff4000]'
                                             }`} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate">{alert.title}</p>
@@ -342,7 +342,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Area type="monotone" dataKey="threats" stackId="1" stroke="#ef4444" fill="#fecaca" name="Menaces détectées" />
+                                <Area type="monotone" dataKey="threats" stackId="1" stroke="#ff4000" fill="#ffd9cc" name="Menaces détectées" />
                                 <Area type="monotone" dataKey="blocked" stackId="1" stroke="#f97316" fill="#fed7aa" name="Menaces bloquées" />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -367,8 +367,8 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
-            case 'critical': return 'text-red-600 bg-red-100';
-            case 'warning': return 'text-yellow-600 bg-yellow-100';
+            case 'critical': return 'text-[#ff4000] bg-orange-100';
+            case 'warning': return 'text-[#ff4000] bg-orange-100';
             case 'info': return 'text-blue-600 bg-blue-100';
             default: return 'text-gray-600 bg-gray-100';
         }
@@ -392,13 +392,13 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                         <div className="flex items-center space-x-3">
                             {isConnected && isRealTime ? (
                                 <>
-                                    <Wifi className="w-5 h-5 text-green-600" />
-                                    <span className="text-green-600 font-medium">Connecté - Monitoring actif</span>
+                                    <Wifi className="w-5 h-5 text-[#ff4000]" />
+                                    <span className="text-[#ff4000] font-medium">Connecté - Monitoring actif</span>
                                 </>
                             ) : (
                                 <>
-                                    <WifiOff className="w-5 h-5 text-red-600" />
-                                    <span className="text-red-600 font-medium">Déconnecté - Monitoring en pause</span>
+                                    <WifiOff className="w-5 h-5 text-[#ff4000]" />
+                                    <span className="text-[#ff4000] font-medium">Déconnecté - Monitoring en pause</span>
                                 </>
                             )}
                         </div>
@@ -431,8 +431,8 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                         <span>Flux d'Événements Temps Réel</span>
                         {isRealTime && (
                             <div className="flex items-center space-x-1 ml-auto">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm text-green-600">Live</span>
+                                <div className="w-2 h-2 bg-[#ff4000] rounded-full animate-pulse"></div>
+                                <span className="text-sm text-[#ff4000]">Live</span>
                             </div>
                         )}
                     </CardTitle>
@@ -574,7 +574,7 @@ function ThreatManagement() {
                                     <div className="space-y-1">
                                         {analysisResult.risk_factors.map((factor: string, index: number) => (
                                             <div key={index} className="flex items-center space-x-2">
-                                                <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                                                <AlertTriangle className="w-4 h-4 text-[#ff4000]" />
                                                 <span className="text-sm">{factor}</span>
                                             </div>
                                         ))}
@@ -613,8 +613,8 @@ function ThreatManagement() {
                         ].map((threat, index) => (
                             <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                                 <div className="flex items-center space-x-3">
-                                    <AlertTriangle className={`w-5 h-5 ${threat.severity === 'high' ? 'text-red-600' :
-                                            threat.severity === 'medium' ? 'text-yellow-600' :
+                                    <AlertTriangle className={`w-5 h-5 ${threat.severity === 'high' ? 'text-[#ff4000]' :
+                                            threat.severity === 'medium' ? 'text-[#ff4000]' :
                                                 'text-blue-600'
                                         }`} />
                                     <div>
@@ -707,10 +707,10 @@ function ActiveProtection() {
 
     const getThreatLevelColor = (level: string) => {
         switch (level) {
-            case 'critical': return 'text-red-600 bg-red-100';
+            case 'critical': return 'text-[#ff4000] bg-orange-100';
             case 'high': return 'text-orange-600 bg-orange-100';
-            case 'medium': return 'text-yellow-600 bg-yellow-100';
-            case 'low': return 'text-green-600 bg-green-100';
+            case 'medium': return 'text-[#ff4000] bg-orange-100';
+            case 'low': return 'text-[#ff4000] bg-orange-100';
             default: return 'text-gray-600 bg-gray-100';
         }
     };
@@ -742,7 +742,7 @@ function ActiveProtection() {
                         {Object.entries(protectionStatus).map(([service, isActive]) => (
                             <div key={service} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}`}></div>
                                     <div>
                                         <p className="font-medium capitalize">{service.replace(/([A-Z])/g, ' $1')}</p>
                                         <p className="text-sm text-gray-600">
@@ -914,9 +914,9 @@ function SecurityReports() {
                                             fill="transparent"
                                             strokeDasharray={`${2 * Math.PI * 56}`}
                                             strokeDashoffset={`${2 * Math.PI * 56 * (1 - analysisData.securityScore / 100)}`}
-                                            className={`${analysisData.securityScore >= 80 ? 'text-green-500' :
-                                                    analysisData.securityScore >= 60 ? 'text-yellow-500' :
-                                                        'text-red-500'
+                                            className={`${analysisData.securityScore >= 80 ? 'text-[#ff4000]' :
+                                                    analysisData.securityScore >= 60 ? 'text-[#ff4000]' :
+                                                        'text-[#ff4000]'
                                                 }`}
                                         />
                                     </svg>
@@ -944,7 +944,7 @@ function SecurityReports() {
                                         <XAxis dataKey="date" />
                                         <YAxis />
                                         <Tooltip />
-                                        <Line type="monotone" dataKey="threats" stroke="#ef4444" />
+                                        <Line type="monotone" dataKey="threats" stroke="#ff4000" />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </CardContent>

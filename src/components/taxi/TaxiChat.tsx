@@ -152,7 +152,7 @@ export default function TaxiChat({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar>
-              <AvatarFallback className="bg-yellow-500 text-white">
+              <AvatarFallback className="bg-[#ff4000] text-white">
                 {recipientName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -214,7 +214,7 @@ export default function TaxiChat({
                 <div
                   className={`max-w-[70%] rounded-lg px-4 py-2 ${
                     isOwn
-                      ? 'bg-yellow-500 text-white'
+                      ? 'bg-[#ff4000] text-white'
                       : 'bg-muted'
                   }`}
                 >

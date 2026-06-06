@@ -141,7 +141,7 @@ export function VendorSubscriptionBanner() {
           ? 'border-destructive bg-destructive/5'
           : isExpiringSoon
             ? 'border-orange-400 bg-orange-50'
-            : 'border-primary/20 bg-gradient-to-r from-primary/5 to-blue-50'
+            : 'border-[#ff4000] bg-gradient-to-r from-primary/5 to-blue-50'
       }`}>
         <CardContent className="py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -155,7 +155,7 @@ export function VendorSubscriptionBanner() {
                 }`} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">📅 Mon Abonnement</h3>
+                <h3 className="font-semibold text-lg text-black">📅 Mon Abonnement</h3>
               </div>
             </div>
 
@@ -163,7 +163,7 @@ export function VendorSubscriptionBanner() {
             <div className="flex flex-wrap items-center gap-6">
               {/* Statut */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Statut</span>
+                <span className="text-sm text-black font-medium">Statut</span>
                 <Badge
                   variant={isActive ? "default" : "destructive"}
                   className="gap-1"
@@ -184,14 +184,14 @@ export function VendorSubscriptionBanner() {
 
               {/* Plan */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Plan actuel</span>
+                <span className="text-sm text-black font-medium">Plan actuel</span>
                 <span className="font-semibold text-primary">{subscription?.plan_name || 'Premium'}</span>
               </div>
 
               {/* Date de fin */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Date de fin</span>
-                <span className="font-medium">{formatDate(subscription?.end_date || null)}</span>
+                <span className="text-sm text-black font-medium">Date de fin</span>
+                <span className="font-medium text-black">{formatDate(subscription?.end_date || null)}</span>
               </div>
 
               {/* Jours restants */}

@@ -198,7 +198,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
             <Video className="w-5 h-5 text-blue-600" />
             Médias SOS Reçus
             {unviewedCount > 0 && (
-              <Badge className="bg-red-500 text-white animate-pulse">
+              <Badge className="bg-[#ff4000] text-white animate-pulse">
                 {unviewedCount} nouveau{unviewedCount > 1 ? 'x' : ''}
               </Badge>
             )}
@@ -227,7 +227,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
                 onEnded={stopMedia}
               />
             ) : (
-              <div className="p-6 bg-gradient-to-r from-blue-900 to-blue-800">
+              <div className="p-6 bg-[#04439e]">
                 <div className="flex flex-col items-center text-white">
                   <Volume2 className="w-12 h-12 mb-2 animate-pulse" />
                   <p className="text-sm mb-4">Audio de {currentMedia.driver_name}</p>
@@ -283,7 +283,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center",
                     media.media_type === 'video'
-                      ? "bg-red-100 text-red-600"
+                      ? "bg-orange-100 text-[#ff4000]"
                       : "bg-orange-100 text-orange-600"
                   )}>
                     {media.media_type === 'video' ? (

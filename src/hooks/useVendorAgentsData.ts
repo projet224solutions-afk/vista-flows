@@ -159,13 +159,15 @@ export const useVendorAgentsData = () => {
     }
 
     try {
-      // Si un mot de passe est fourni, utiliser l'edge function pour créer avec auth
+      // Si un mot de passe est fourni → création avec compte auth via le BACKEND Node
+      // (migré depuis l'edge function : atomique + propriété de la boutique vérifiée serveur)
       if (agentData.password && agentData.password.length >= 8) {
-        console.log('📧 Création agent avec authentification Supabase');
+        console.log('📧 Création agent avec authentification (backend)');
 
-        const { data, error } = await supabase.functions.invoke('create-vendor-agent', {
+        const { backendFetch } = await import('@/services/backendApi');
+        const resp = await backendFetch<{ agent: any }>('/api/vendors/agents', {
+          method: 'POST',
           body: {
-            vendor_id: realVendorId,
             name: agentData.name,
             email: agentData.email,
             phone: agentData.phone,
@@ -173,23 +175,17 @@ export const useVendorAgentsData = () => {
             agent_type: agentData.agent_type || 'commercial',
             permissions: agentData.permissions || { view_dashboard: true, access_communication: true },
             can_create_sub_agent: agentData.can_create_sub_agent || false,
-          }
+          },
         });
 
-        if (error) {
-          console.error('Error creating vendor agent with auth:', error);
-          toast.error(error.message || 'Erreur lors de la création de l\'agent');
-          return null;
-        }
-
-        if (!data?.success) {
-          toast.error(data?.error || 'Erreur lors de la création de l\'agent');
+        if (!resp.success) {
+          toast.error(resp.error || 'Erreur lors de la création de l\'agent');
           return null;
         }
 
         toast.success('Agent créé avec authentification');
         await loadAgents();
-        return data.agent;
+        return resp.data?.agent;
       }
 
       // Création sans authentification (mode legacy avec token)
@@ -244,24 +240,19 @@ export const useVendorAgentsData = () => {
       // Si l'email est modifié, utiliser l'edge function pour synchroniser auth
       if (updates.email || updates.new_email) {
         const newEmail = updates.new_email || updates.email;
-        console.log('📧 Mise à jour email agent via edge function');
+        console.log('📧 Mise à jour email agent via backend Node');
 
-        const { data, error } = await supabase.functions.invoke('update-vendor-agent-email', {
+        const { backendFetch } = await import('@/services/backendApi');
+        const resp = await backendFetch<any>('/api/vendors/agents/update-email', {
+          method: 'POST',
           body: {
             agent_id: agentId,
             new_email: newEmail,
-            vendor_id: realVendorId
           }
         });
 
-        if (error) {
-          console.error('Error updating vendor agent email:', error);
-          toast.error(error.message || 'Erreur lors de la modification de l\'email');
-          return;
-        }
-
-        if (!data?.success) {
-          toast.error(data?.error || 'Erreur lors de la modification de l\'email');
+        if (!resp.success) {
+          toast.error(resp.error || 'Erreur lors de la modification de l\'email');
           return;
         }
 

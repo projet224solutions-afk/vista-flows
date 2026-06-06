@@ -65,7 +65,7 @@ import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
 import { useChapChapPay, type ChapChapPayMethod } from '@/hooks/useChapChapPay';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
-import { collectPosMarketingContact, syncPosSales } from '@/services/posBackendService';
+import { collectPosMarketingContact, syncPosSales, createPosOrder } from '@/services/posBackendService';
 
 interface Product {
   id: string;
@@ -1129,65 +1129,39 @@ export function POSSystem() {
         return;
       }
 
-      // 2. Créer la commande dans orders pour décrémenter le stock via trigger
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number: orderNum,
-          vendor_id: vendorId,
-          customer_id: customerId,
-          total_amount: total,
-          subtotal: subtotal,
-          tax_amount: tax,
-          discount_amount: discountValue,
-          payment_status: 'pending',
-          status: 'confirmed',
-          payment_method: 'cash',
-          shipping_address: { address: 'Vente à crédit', is_credit_sale: true },
-          notes: `🔖 VENTE À CRÉDIT - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
-          source: 'pos'
-        })
-        .select('id, order_number')
-        .single();
+      // 2. Création ATOMIQUE via backend : orders + order_items + stock + taxe
+      //    server-side + enregistrement vendor_credit_sales, le tout en 1 transaction.
+      const orderResponse = await createPosOrder({
+        order_number: orderNum,
+        customer_id: customerId,
+        items: cart.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+          discount: 0,
+        })),
+        payment_method: 'credit',
+        payment_status: 'pending',
+        status: 'confirmed',
+        discount_total: discountValue,
+        notes: `🔖 VENTE À CRÉDIT - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
+        shipping_address: { address: 'Vente à crédit', is_credit_sale: true },
+        credit_customer_name: creditCustomerName.trim(),
+        credit_customer_phone: creditCustomerPhone.trim() || null,
+        credit_due_date: creditDueDate ? new Date(creditDueDate).toISOString() : null,
+        credit_notes: creditNotes || `Produits: ${cart.map(i => `${i.name} x${i.quantity}`).join(', ')}`,
+        credit_items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          images: item.images || [],
+        })),
+      }, vendorId);
 
-      if (orderError) throw orderError;
-
-      // 3. Créer les items de commande
-      const orderItems = cart.map(item => ({
-        order_id: order.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-        total_price: item.total
-      }));
-
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
-
-      // 4. Créer la vente à crédit dans vendor_credit_sales
-      const { error: creditError } = await supabase
-        .from('vendor_credit_sales')
-        .insert([{
-          vendor_id: vendorId,
-          customer_name: creditCustomerName.trim(),
-          customer_phone: creditCustomerPhone.trim() || null,
-          order_number: orderNum,
-          total: total,
-          subtotal: subtotal,
-          remaining_amount: total,
-          due_date: creditDueDate,
-          notes: creditNotes || `Produits: ${cart.map(i => `${i.name} x${i.quantity}`).join(', ')}`,
-          items: cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            images: item.images || []
-          })),
-          status: 'pending'
-        }]);
-
-      if (creditError) throw creditError;
+      if (!orderResponse.success || !orderResponse.data?.order_id) {
+        throw new Error(orderResponse.error || 'Impossible de créer la commande à crédit');
+      }
 
       toast.success('Vente à crédit enregistrée !', {
         description: `${creditCustomerName} - ${formatPriceWithCurrency(total)}${selectedCurrency !== 'GNF' ? ` (${total.toLocaleString()} GNF)` : ''} - Stock mis à jour`,
@@ -1380,42 +1354,33 @@ export function POSSystem() {
         // Générer un numéro de commande unique
         const mobileOrderNumber = `POS-MM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            order_number: mobileOrderNumber,
-            vendor_id: vendorId,
-            customer_id: customerId,
-            total_amount: vendorConvert(total),
-            subtotal: vendorConvert(subtotal),
-            tax_amount: vendorConvert(tax),
-            discount_amount: vendorConvert(discountValue),
-            payment_status: 'pending',
-            status: 'processing',
-            payment_method: paymentMethod,
-            shipping_address: { address: 'Point de vente' },
-            notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
-            source: 'pos',
-            currency: selectedCurrency
-          })
-          .select('id, order_number')
-          .single();
+        // Création ATOMIQUE via backend (orders + order_items + stock + taxe server-side)
+        const orderResponse = await createPosOrder({
+          order_number: mobileOrderNumber,
+          customer_id: customerId,
+          items: cart.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: vendorConvert(item.quantity > 0 ? item.total / item.quantity : item.price),
+            discount: 0,
+          })),
+          payment_method: 'mobile_money',
+          payment_status: 'pending',
+          status: 'processing',
+          discount_total: vendorConvert(discountValue),
+          notes: `Paiement Mobile Money (${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}) - ${mobileMoneyPhone}`,
+          currency: selectedCurrency,
+        }, vendorId);
 
-        if (orderError) {
+        if (!orderResponse.success || !orderResponse.data?.order_id) {
           toast.dismiss();
-          throw orderError;
+          throw new Error(orderResponse.error || 'Impossible de créer la commande POS');
         }
 
-        // Créer les items de commande
-        const orderItems = cart.map(item => ({
-          order_id: order.id,
-          product_id: item.id,
-          quantity: item.quantity,
-          unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-          total_price: item.total
-        }));
-
-        await supabase.from('order_items').insert(orderItems);
+        const order = {
+          id: orderResponse.data.order_id,
+          order_number: orderResponse.data.order_number || mobileOrderNumber,
+        };
 
         // Initialiser le paiement ChapChapPay sécurisé
         const chapchapResult = await initiatePullPayment({
@@ -1509,39 +1474,32 @@ export function POSSystem() {
           // Générer un numéro de commande unique
           const cardOrderNumber = `POS-CB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-          // Créer la commande - POS orders start as processing (awaiting payment confirmation)
-          const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert({
-              order_number: cardOrderNumber,
-              vendor_id: vendorId,
-              customer_id: customerId,
-              total_amount: vendorConvert(total),
-              subtotal: vendorConvert(subtotal),
-              tax_amount: vendorConvert(tax),
-              discount_amount: vendorConvert(discountValue),
-              payment_status: 'pending',
-              status: 'processing',
-              payment_method: 'card',
-              shipping_address: { address: 'Point de vente' },
-              notes: 'Paiement par carte bancaire - En attente',
-              source: 'pos',
-              currency: selectedCurrency
-            })
-            .select('id, order_number')
-            .single();
+          // Création ATOMIQUE via backend (orders + order_items + stock + taxe server-side)
+          const orderResponse = await createPosOrder({
+            order_number: cardOrderNumber,
+            customer_id: customerId,
+            items: cart.map(item => ({
+              product_id: item.id,
+              quantity: item.quantity,
+              unit_price: vendorConvert(item.quantity > 0 ? item.total / item.quantity : item.price),
+              discount: 0,
+            })),
+            payment_method: 'card',
+            payment_status: 'pending',
+            status: 'processing',
+            discount_total: vendorConvert(discountValue),
+            notes: 'Paiement par carte bancaire - En attente',
+            currency: selectedCurrency,
+          }, vendorId);
 
-          if (orderError) throw orderError;
+          if (!orderResponse.success || !orderResponse.data?.order_id) {
+            throw new Error(orderResponse.error || 'Impossible de créer la commande POS');
+          }
 
-          // Créer les items de commande
-          const orderItems = cart.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            quantity: item.quantity,
-            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
-            total_price: item.total
-          }));
-          await supabase.from('order_items').insert(orderItems);
+          const order = {
+            id: orderResponse.data.order_id,
+            order_number: orderResponse.data.order_number || cardOrderNumber,
+          };
 
           // Sauvegarder la commande et ouvrir le modal Stripe
           skipStripeCancelOnCloseRef.current = false;
@@ -2686,7 +2644,7 @@ export function POSSystem() {
                 </div>
 
                 {paymentMethod === 'mobile_money' && (
-                  <div className="space-y-2 p-2 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <div className="space-y-2 p-2 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-[#ff4000]/20 rounded-lg border border-orange-200 dark:border-orange-800">
                     <Label className="text-xs font-semibold flex items-center gap-1 text-orange-700 dark:text-orange-400">
                       <Smartphone className="h-3.5 w-3.5" />
                       Paiement Mobile Money
@@ -2706,7 +2664,7 @@ export function POSSystem() {
                         variant={mobileMoneyProvider === 'mtn' ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => setMobileMoneyProvider('mtn')}
-                        className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'mtn' ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 'border-yellow-400'}`}
+                        className={`flex-1 h-8 text-[10px] ${mobileMoneyProvider === 'mtn' ? 'bg-[#ff4000] hover:bg-[#ff4000] text-black' : 'border-[#ff4000]'}`}
                       >
                         🟡 MTN MoMo
                       </Button>
@@ -2735,7 +2693,7 @@ export function POSSystem() {
                 )}
 
                 {paymentMethod === 'card' && (
-                  <div className="space-y-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="space-y-2 p-2 bg-gradient-to-r from-blue-50 to-blue-50 dark:from-blue-950/20 dark:to-[#04439e]/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <Label className="text-xs font-semibold flex items-center gap-1 text-blue-700 dark:text-blue-400">
                       <Shield className="h-3.5 w-3.5" />
                       Paiement par carte sécurisé

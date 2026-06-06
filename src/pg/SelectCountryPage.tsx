@@ -208,11 +208,11 @@ export default function SelectCountryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
 
         {/* En-tête */}
-        <div className="bg-[#023288] px-6 py-8 text-white text-center">
+        <div className="bg-[#04439e] px-6 py-8 text-white text-center">
           <div className="flex justify-center mb-3">
             <Globe className="w-10 h-10 opacity-90" />
           </div>
@@ -245,10 +245,10 @@ export default function SelectCountryPage() {
 
           {/* Pays sélectionné */}
           {selected && (
-            <div className="flex items-center gap-3 rounded-lg border-2 border-[#023288] bg-blue-50 p-3">
+            <div className="flex items-center gap-3 rounded-lg border-2 border-[#04439e] bg-blue-50 p-3">
               <span className="text-3xl">{selected.flag}</span>
               <div className="flex-1">
-                <p className="font-semibold text-[#023288]">{selected.name}</p>
+                <p className="font-semibold text-[#04439e]">{selected.name}</p>
                 <p className="text-sm text-gray-500">
                   Devise : <strong>{COUNTRY_TO_CURRENCY[selected.code] || "GNF"}</strong>
                 </p>
@@ -307,7 +307,7 @@ export default function SelectCountryPage() {
           <Button
             onClick={handleConfirm}
             disabled={!selected || loading}
-            className="w-full bg-[#023288] hover:bg-[#012070] text-white font-semibold py-3"
+            className="w-full bg-[#04439e] hover:bg-[#012070] text-white font-semibold py-3"
           >
             {loading ? (
               <>

@@ -170,7 +170,7 @@ export default function SubscriptionsPage() {
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  <div className="absolute -top-2 -right-2 bg-[#ff4000] text-white text-[10px] px-1.5 py-0.5 rounded-full">
                     -15%
                   </div>
                   <div className="flex items-center gap-2 mb-1">
@@ -183,7 +183,7 @@ export default function SubscriptionsPage() {
                 </button>
               </div>
               {billingCycle === 'yearly' && selectedPlan && (
-                <p className="text-xs text-green-600 font-medium">
+                <p className="text-xs text-[#ff4000] font-medium">
                   Economisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
                 </p>
               )}
@@ -200,7 +200,7 @@ export default function SubscriptionsPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Statut apres paiement</span>
-                <span className="font-medium text-green-600">Actif</span>
+                <span className="font-medium text-[#ff4000]">Actif</span>
               </div>
             </div>
 

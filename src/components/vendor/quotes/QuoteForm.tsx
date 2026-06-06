@@ -129,28 +129,14 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
 
       if (error) throw error;
 
-      // Appeler l'edge function pour générer le PDF
-      const { data: _pdfData, error: pdfError } = await supabase.functions.invoke('generate-quote-pdf', {
-        body: {
-          quote_id: quote.id,
-          ref: quote.ref,
-          vendor_id: vendorId,
-          client_name: clientName,
-          client_email: clientEmail,
-          client_phone: clientPhone,
-          client_address: clientAddress,
-          items,
-          subtotal,
-          discount,
-          tax,
-          total,
-          valid_until: validUntil.toLocaleDateString('fr-FR'),
-          notes
-        }
+      // Générer le PDF via le backend Node
+      const { backendFetch } = await import('@/services/backendApi');
+      const pdfResp = await backendFetch<any>('/api/documents/quote-pdf', {
+        body: { quote_id: quote.id, ref: quote.ref }
       });
 
-      if (pdfError) {
-        console.error('Erreur génération PDF:', pdfError);
+      if (!pdfResp.success) {
+        console.error('Erreur génération PDF:', pdfResp.error);
         toast.error('Devis créé mais erreur génération PDF');
       } else {
         toast.success('Devis créé avec succès!');
@@ -329,7 +315,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
           <Button
             onClick={handleGenerate}
             disabled={loading}
-            className="flex-1 bg-[#0A84FF] hover:bg-[#0A84FF]/90"
+            className="flex-1 bg-[#04439e] hover:bg-[#04439e]/90"
             size="lg"
           >
             <FilePlus className="w-5 h-5 mr-2" />

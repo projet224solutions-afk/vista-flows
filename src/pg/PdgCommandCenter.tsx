@@ -124,13 +124,13 @@ export default function PdgCommandCenter() {
     switch (status) {
       case 'healthy':
       case 'online':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />;
       case 'warning':
       case 'degraded':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
       case 'critical':
       case 'offline':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+        return <AlertTriangle className="h-5 w-5 text-[#ff4000]" />;
       default:
         return <Activity className="h-5 w-5" />;
     }
@@ -206,7 +206,7 @@ export default function PdgCommandCenter() {
             <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
                 <div className="text-lg sm:text-2xl font-bold">{stats.criticalErrors}</div>
-                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-[#ff4000]" />
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">
                 {stats.pendingErrors} en attente
@@ -221,7 +221,7 @@ export default function PdgCommandCenter() {
             <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
                 <div className="text-lg sm:text-2xl font-bold">{stats.autoFixedErrors}</div>
-                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-[#ff4000]" />
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">
                 {autoFixes.length} actifs

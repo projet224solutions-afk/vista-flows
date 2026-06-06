@@ -142,13 +142,13 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      pending: { color: 'bg-amber-100 text-amber-700', icon: <Clock className="w-3 h-3" />, label: 'En attente' },
+      pending: { color: 'bg-orange-100 text-[#ff4000]', icon: <Clock className="w-3 h-3" />, label: 'En attente' },
       confirmed: { color: 'bg-blue-100 text-blue-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Confirmée' },
-      processing: { color: 'bg-indigo-100 text-indigo-700', icon: <Package className="w-3 h-3" />, label: 'En préparation' },
-      shipped: { color: 'bg-purple-100 text-purple-700', icon: <Truck className="w-3 h-3" />, label: 'Expédiée' },
-      delivered: { color: 'bg-green-100 text-green-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Livrée' },
-      completed: { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Terminée' },
-      cancelled: { color: 'bg-red-100 text-red-700', icon: <XCircle className="w-3 h-3" />, label: 'Annulée' },
+      processing: { color: 'bg-blue-100 text-[#04439e]', icon: <Package className="w-3 h-3" />, label: 'En préparation' },
+      shipped: { color: 'bg-blue-100 text-[#04439e]', icon: <Truck className="w-3 h-3" />, label: 'Expédiée' },
+      delivered: { color: 'bg-orange-100 text-[#ff4000]', icon: <CheckCircle className="w-3 h-3" />, label: 'Livrée' },
+      completed: { color: 'bg-orange-100 text-[#ff4000]', icon: <CheckCircle className="w-3 h-3" />, label: 'Terminée' },
+      cancelled: { color: 'bg-orange-100 text-[#ff4000]', icon: <XCircle className="w-3 h-3" />, label: 'Annulée' },
     };
     const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-700', icon: null, label: status };
 
@@ -189,10 +189,10 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
     <div className="space-y-6">
       {/* Header */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-[#ff4000] shadow-lg">
                 <ShoppingCart className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -214,25 +214,25 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
               <p className="text-xl font-bold text-slate-700">{stats.total}</p>
               <p className="text-xs text-slate-500">Total</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-100 to-orange-200 rounded-xl p-4 text-center">
-              <Clock className="w-5 h-5 text-amber-600 mx-auto mb-1" />
-              <p className="text-xl font-bold text-amber-700">{stats.pending}</p>
-              <p className="text-xs text-amber-500">En attente</p>
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 text-center">
+              <Clock className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
+              <p className="text-xl font-bold text-[#ff4000]">{stats.pending}</p>
+              <p className="text-xs text-[#ff4000]">En attente</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl p-4 text-center">
+            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 text-center">
               <Package className="w-5 h-5 text-blue-600 mx-auto mb-1" />
               <p className="text-xl font-bold text-blue-700">{stats.processing}</p>
               <p className="text-xs text-blue-500">En cours</p>
             </div>
-            <div className="bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl p-4 text-center">
-              <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
-              <p className="text-xl font-bold text-green-700">{stats.completed}</p>
-              <p className="text-xs text-green-500">Terminées</p>
+            <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 text-center">
+              <CheckCircle className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
+              <p className="text-xl font-bold text-[#ff4000]">{stats.completed}</p>
+              <p className="text-xs text-[#ff4000]">Terminées</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-100 to-pink-200 rounded-xl p-4 text-center">
-              <DollarSign className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-              <p className="text-lg font-bold text-purple-700">{formatAmount(stats.totalAmount)}</p>
-              <p className="text-xs text-purple-500">Volume total</p>
+            <div className="bg-gradient-to-br from-blue-100 to-orange-200 rounded-xl p-4 text-center">
+              <DollarSign className="w-5 h-5 text-[#04439e] mx-auto mb-1" />
+              <p className="text-lg font-bold text-[#04439e]">{formatAmount(stats.totalAmount)}</p>
+              <p className="text-xs text-[#04439e]">Volume total</p>
             </div>
           </div>
 

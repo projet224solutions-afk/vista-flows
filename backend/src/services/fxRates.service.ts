@@ -318,10 +318,17 @@ function extractBcrgRateFromHtml(html: string, currency: string): number | undef
   const labelPattern = code === 'USD' ? '(?:USD|Dollar)' :
                        code === 'EUR' ? '(?:EUR|Euro)' :
                        code;
+  // SOURCE OFFICIELLE = le WIDGET « <h2>usd =</h2> … <h2>8725.1731</h2> » de la home BCRG
+  // (confirmé par la BCRG : ce sont les taux du jour officiels affichés sur bcrg-guinee.org).
+  // ⚠️ La même page contient AUSSI une table TablePress avec d'AUTRES valeurs (comptables/anciennes)
+  // qu'il NE FAUT PAS utiliser. On lit donc UNIQUEMENT le widget ; si une devise n'y figure pas
+  // (ex. XAF), on renvoie undefined → rien n'est affiché (règle « n'afficher que ce qui existe »).
+  const num = '([\\d\\s\\u00a0.,]+)';
   const patterns = [
-    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,8000}?<h\\d[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/h\\d>`, 'gi'),
-    new RegExp(`<td[^>]*>\\s*${labelPattern}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/td>`, 'gi'),
-    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)([\\d\\s.,]+)`, 'gi'),
+    // 1) Widget officiel BCRG : <hN>USD =</hN> … <hN>valeur</hN> (la valeur suit ~250c après le label).
+    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,600}?<h\\d[^>]*>\\s*${num}\\s*<\\/h\\d>`, 'gi'),
+    // 2) Forme textuelle alternative « 1 USD = … » / « USD/GNF : … » (si la structure du widget change).
+    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)${num}`, 'gi'),
   ];
   for (const pattern of patterns) {
     const matches = Array.from(html.matchAll(pattern));
@@ -507,36 +514,35 @@ async function upsertRateAndLog(
     ...extraFields,
   };
 
-  await Promise.all([
-    supabaseAdmin.from('currency_exchange_rates').upsert({
+  // ÉCRITURE ATOMIQUE : les 4 lignes (USD↔code, EUR↔code) en UN seul upsert = 1 transaction.
+  // Tout-ou-rien : un cross-rate (code via USD/EUR) ne lit jamais un mélange ancien/nouveau.
+  const rows: any[] = [
+    {
       from_currency: 'USD', to_currency: code,
       rate: rateUsd, rate_usd: rateUsd, rate_eur: rateEur,
       margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
       ...baseFields,
-    }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-    supabaseAdmin.from('currency_exchange_rates').upsert({
+    },
+    {
       from_currency: 'EUR', to_currency: code,
       rate: rateEur, rate_usd: rateUsd, rate_eur: rateEur,
       margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
       ...baseFields,
-    }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-    rateUsd > 0
-      ? supabaseAdmin.from('currency_exchange_rates').upsert({
-          from_currency: code, to_currency: 'USD',
-          rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
-          margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
-          ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })
-      : Promise.resolve(),
-    rateEur > 0
-      ? supabaseAdmin.from('currency_exchange_rates').upsert({
-          from_currency: code, to_currency: 'EUR',
-          rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
-          margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
-          ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })
-      : Promise.resolve(),
-  ]);
+    },
+  ];
+  if (rateUsd > 0) rows.push({
+    from_currency: code, to_currency: 'USD',
+    rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+    margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+    ...baseFields,
+  });
+  if (rateEur > 0) rows.push({
+    from_currency: code, to_currency: 'EUR',
+    rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+    margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+    ...baseFields,
+  });
+  await supabaseAdmin.from('currency_exchange_rates').upsert(rows, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false });
 
   await supabaseAdmin.from('fx_collection_log').insert({
     currency_code: code,
@@ -652,35 +658,36 @@ export async function collectAfricanRates(): Promise<{
         status: 'OK',
         is_active: true,
       };
-      await Promise.all([
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+      // ÉCRITURE ATOMIQUE : les lignes USD/EUR↔curr en UN seul upsert (1 transaction, tout-ou-rien
+      // → un cross-rate ne lit jamais un mélange). La paire curr→XOF (autre forme) reste séparée.
+      const bceaoRows: any[] = [
+        {
           from_currency: 'USD', to_currency: curr,
           rate: rateUsd, rate_usd: rateUsd, rate_eur: rateEur,
           margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        },
+        {
           from_currency: 'EUR', to_currency: curr,
           rate: rateEur, rate_usd: rateUsd, rate_eur: rateEur,
           margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        rateUsd > 0
-          ? supabaseAdmin.from('currency_exchange_rates').upsert({
-              from_currency: curr, to_currency: 'USD',
-              rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
-              margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
-              ...baseFields,
-            }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })
-          : Promise.resolve(),
-        rateEur > 0
-          ? supabaseAdmin.from('currency_exchange_rates').upsert({
-              from_currency: curr, to_currency: 'EUR',
-              rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
-              margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
-              ...baseFields,
-            }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })
-          : Promise.resolve(),
+        },
+      ];
+      if (rateUsd > 0) bceaoRows.push({
+        from_currency: curr, to_currency: 'USD',
+        rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+        margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+        ...baseFields,
+      });
+      if (rateEur > 0) bceaoRows.push({
+        from_currency: curr, to_currency: 'EUR',
+        rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+        margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+        ...baseFields,
+      });
+      await Promise.all([
+        supabaseAdmin.from('currency_exchange_rates').upsert(bceaoRows, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
         supabaseAdmin.from('currency_exchange_rates').upsert({
           from_currency: curr, to_currency: 'XOF',
           rate: rateToXof, source: 'bceao-official-html',
@@ -724,45 +731,47 @@ export async function collectAfricanRates(): Promise<{
         status: 'OK',
         is_active: true,
       };
-      await Promise.all([
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+      // ÉCRITURE ATOMIQUE : les 6 lignes (USD↔curr, EUR↔curr, curr↔GNF) en UN seul upsert
+      // = 1 transaction. Tout-ou-rien : un cross-rate (curr via USD/EUR) ne lit jamais un mélange.
+      await supabaseAdmin.from('currency_exchange_rates').upsert([
+        {
           from_currency: 'USD', to_currency: curr,
           rate: rateUsd, rate_usd: rateUsd, rate_eur: rateEur,
           margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        },
+        {
           from_currency: 'EUR', to_currency: curr,
           rate: rateEur, rate_usd: rateUsd, rate_eur: rateEur,
           margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        },
+        {
           from_currency: curr, to_currency: 'USD',
           rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
           margin, final_rate_usd: 1 / finalRateUsd, final_rate_eur: 1 / finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        },
+        {
           from_currency: curr, to_currency: 'EUR',
           rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
           margin, final_rate_usd: 1 / finalRateUsd, final_rate_eur: 1 / finalRateEur,
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
+        },
         // Paires directes avec GNF
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        {
           from_currency: curr, to_currency: 'GNF',
           rate: crossGnf, rate_usd: rateUsd, rate_eur: rateEur,
           margin, final_rate_usd: crossGnf * (1 + margin), final_rate_eur: crossGnf * (1 + margin),
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-        supabaseAdmin.from('currency_exchange_rates').upsert({
+        },
+        {
           from_currency: 'GNF', to_currency: curr,
           rate: 1 / crossGnf, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
           margin, final_rate_usd: 1 / (crossGnf * (1 + margin)), final_rate_eur: 1 / (crossGnf * (1 + margin)),
           ...baseFields,
-        }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false }),
-      ]);
+        },
+      ], { onConflict: 'from_currency,to_currency', ignoreDuplicates: false });
     }
     logger.info(`[BCRG-CROSS] Taux croisés BCRG stockés: ${bcrgCrossMap.filter(([, v]) => v).map(([c]) => c).join(', ')}`);
   }
@@ -1064,13 +1073,15 @@ export async function refreshBcrgOnly(): Promise<BcrgRefreshResult> {
   ];
 
   const changedPairs: string[] = [];
-  const upsertOps: Promise<any>[] = [];
+  const rowsToUpsert: any[] = [];
   const baseFields = {
     source: 'bcrg-live-check',
     source_url: bcrgRates.scrapedUrl,
     source_type: 'official_html',
     effective_date: today,
     retrieved_at: now,
+    // Toutes les devises BCRG reçoivent last_bcrg_scraped_at — requis par create_order_core Phase -1
+    last_bcrg_scraped_at: now,
     status: 'OK',
     is_active: true,
   };
@@ -1081,25 +1092,32 @@ export async function refreshBcrgOnly(): Promise<BcrgRefreshResult> {
     if (prev !== crossGnf) changedPairs.push(`${curr}/GNF`);
 
     const finalRate = crossGnf * (1 + margin);
-    // Toutes les devises BCRG reçoivent last_bcrg_scraped_at — requis par create_order_core Phase -1
-    const extra = { last_bcrg_scraped_at: now };
-    // Toujours upsert pour garder retrieved_at à jour (fraîcheur)
-    upsertOps.push(
-      Promise.resolve(supabaseAdmin.from('currency_exchange_rates').upsert({
+    rowsToUpsert.push(
+      {
         from_currency: curr, to_currency: 'GNF',
         rate: crossGnf, margin, final_rate_usd: finalRate, final_rate_eur: finalRate,
-        ...baseFields, ...extra,
-      }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })),
-      Promise.resolve(supabaseAdmin.from('currency_exchange_rates').upsert({
+        ...baseFields,
+      },
+      {
         from_currency: 'GNF', to_currency: curr,
-        rate: 1 / crossGnf, margin,
-        final_rate_usd: 1 / finalRate, final_rate_eur: 1 / finalRate,
-        ...baseFields, ...extra,
-      }, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false })),
+        rate: 1 / crossGnf, margin, final_rate_usd: 1 / finalRate, final_rate_eur: 1 / finalRate,
+        ...baseFields,
+      },
     );
   }
 
-  await Promise.all(upsertOps);
+  // ÉCRITURE ATOMIQUE : un SEUL upsert de tout le lot = un seul INSERT … ON CONFLICT (1 transaction
+  // PostgREST). Tout-ou-rien : un lecteur (conversion / cross-rate via USD-EUR) ne voit JAMAIS un
+  // mélange ancien/nouveau taux. Avant : 24 upserts séparés (24 transactions) = état incohérent possible.
+  if (rowsToUpsert.length > 0) {
+    const { error: upsertError } = await supabaseAdmin
+      .from('currency_exchange_rates')
+      .upsert(rowsToUpsert, { onConflict: 'from_currency,to_currency', ignoreDuplicates: false });
+    if (upsertError) {
+      logger.error(`[BCRG-LIVE] Échec upsert atomique des taux (aucune écriture appliquée): ${upsertError.message}`);
+      return { changed: false, changedPairs: [], usdGnf: null, eurGnf: null, durationMs: Date.now() - startMs };
+    }
+  }
 
   // Mise à jour du snapshot en mémoire — accessible via /admin/fx-rates-check sans scraping
   const checkedAt = now;

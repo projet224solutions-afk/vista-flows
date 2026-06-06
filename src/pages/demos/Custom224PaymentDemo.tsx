@@ -40,7 +40,7 @@ export function Custom224PaymentDemo() {
 
   if (showPayment) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
@@ -70,7 +70,7 @@ export function Custom224PaymentDemo() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
         {/* En-tête */}
         <div className="text-center space-y-4">
@@ -141,7 +141,7 @@ export function Custom224PaymentDemo() {
             </Button>
 
             {!paymentData.sellerId && (
-              <p className="text-sm text-amber-600 text-center">
+              <p className="text-sm text-[#ff4000] text-center">
                 ⚠️ Entrez un ID vendeur valide pour continuer
               </p>
             )}
@@ -154,11 +154,11 @@ export function Custom224PaymentDemo() {
             <h3 className="text-xl font-bold text-center mb-4">✨ Caractéristiques</h3>
             
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                 <span className="text-2xl">🎨</span>
                 <div>
-                  <h4 className="font-semibold text-green-900">Design personnalisé</h4>
-                  <p className="text-sm text-green-700">Logo et couleurs 224Solutions</p>
+                  <h4 className="font-semibold text-[#ff4000]">Design personnalisé</h4>
+                  <p className="text-sm text-[#ff4000]">Logo et couleurs 224Solutions</p>
                 </div>
               </div>
 
@@ -170,11 +170,11 @@ export function Custom224PaymentDemo() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                 <span className="text-2xl">💳</span>
                 <div>
-                  <h4 className="font-semibold text-purple-900">Toutes les cartes</h4>
-                  <p className="text-sm text-purple-700">VISA, Mastercard, AMEX</p>
+                  <h4 className="font-semibold text-[#04439e]">Toutes les cartes</h4>
+                  <p className="text-sm text-[#04439e]">VISA, Mastercard, AMEX</p>
                 </div>
               </div>
 
@@ -190,7 +190,7 @@ export function Custom224PaymentDemo() {
         </Card>
 
         {/* Carte de test Stripe */}
-        <Card className="shadow-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+        <Card className="shadow-xl bg-gradient-to-r from-[#04439e] to-[#ff4000] text-white">
           <CardContent className="pt-6 space-y-3">
             <h3 className="text-xl font-bold">🧪 Carte de test Stripe</h3>
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 space-y-2">

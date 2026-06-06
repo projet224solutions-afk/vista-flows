@@ -155,10 +155,10 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
 
   const getStatusBadge = (status: RepairRequest['status']) => {
     const variants = {
-      pending: { color: 'bg-yellow-500', label: 'En attente' },
+      pending: { color: 'bg-[#ff4000]', label: 'En attente' },
       quoted: { color: 'bg-blue-500', label: 'Devis envoyé' },
-      approved: { color: 'bg-purple-500', label: 'Approuvé' },
-      in_progress: { color: 'bg-green-500', label: 'En cours' },
+      approved: { color: 'bg-[#04439e]', label: 'Approuvé' },
+      in_progress: { color: 'bg-[#ff4000]', label: 'En cours' },
       completed: { color: 'bg-gray-500', label: 'Terminé' }
     };
     return variants[status];
@@ -186,7 +186,7 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Demandes en Attente</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
+            <Clock className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingRequests}</div>
@@ -197,7 +197,7 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Réparations du Jour</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completedToday}</div>
@@ -219,7 +219,7 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction Client</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.avgRating}/5</div>

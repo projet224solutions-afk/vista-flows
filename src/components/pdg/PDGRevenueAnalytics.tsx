@@ -66,8 +66,8 @@ export default function PDGRevenueAnalytics() {
 
   // Calculer les données pour les graphiques
   const pieData = [
-    { name: 'Frais Wallet', value: Number(stats?.wallet_fees_revenue || 0), color: '#8B5CF6' },
-    { name: 'Commissions Achats', value: Number(stats?.purchase_fees_revenue || 0), color: '#EC4899' },
+    { name: 'Frais Wallet', value: Number(stats?.wallet_fees_revenue || 0), color: '#04439e' },
+    { name: 'Commissions Achats', value: Number(stats?.purchase_fees_revenue || 0), color: '#ff4000' },
   ];
 
   // Données temporelles (groupées par jour)
@@ -193,7 +193,7 @@ export default function PDGRevenueAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Frais Wallet</CardTitle>
-            <Wallet className="h-4 w-4 text-purple-500" />
+            <Wallet className="h-4 w-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -208,7 +208,7 @@ export default function PDGRevenueAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Commissions Achats</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-pink-500" />
+            <ShoppingBag className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -223,7 +223,7 @@ export default function PDGRevenueAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Croissance</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -263,7 +263,7 @@ export default function PDGRevenueAnalytics() {
                       labelLine={false}
                       label={({ name, value }) => `${name}: ${PdgRevenueService.formatAmount(value)}`}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill="#04439e"
                       dataKey="value"
                     >
                       {pieData.map((entry, index) => (
@@ -290,9 +290,9 @@ export default function PDGRevenueAnalytics() {
                     <YAxis />
                     <Tooltip formatter={(value: any) => PdgRevenueService.formatAmount(value)} />
                     <Legend />
-                    <Line type="monotone" dataKey="wallet" stroke="#8B5CF6" name="Frais Wallet" />
-                    <Line type="monotone" dataKey="purchase" stroke="#EC4899" name="Commissions" />
-                    <Line type="monotone" dataKey="total" stroke="#10B981" name="Total" strokeWidth={2} />
+                    <Line type="monotone" dataKey="wallet" stroke="#04439e" name="Frais Wallet" />
+                    <Line type="monotone" dataKey="purchase" stroke="#ff4000" name="Commissions" />
+                    <Line type="monotone" dataKey="total" stroke="#ff4000" name="Total" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -305,25 +305,25 @@ export default function PDGRevenueAnalytics() {
               <CardTitle>💡 Mécanismes de Commission</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-[#04439e] rounded-lg">
                 <div>
                   <p className="font-medium">🔹 Frais Wallet</p>
                   <p className="text-sm text-muted-foreground">
                     Prélevés sur les transferts, retraits et recharges entre wallets
                   </p>
                 </div>
-                <span className="text-xl font-bold text-purple-600">
+                <span className="text-xl font-bold text-[#04439e]">
                   {settings.find(s => s.setting_key === 'wallet_transaction_fee_percentage')?.setting_value?.value || 1.5}%
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-pink-50 dark:bg-pink-950 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg">
                 <div>
                   <p className="font-medium">🔹 Commissions Achats</p>
                   <p className="text-sm text-muted-foreground">
                     Prélevées sur les paiements d'achats de produits ou services
                   </p>
                 </div>
-                <span className="text-xl font-bold text-pink-600">
+                <span className="text-xl font-bold text-[#ff4000]">
                   {settings.find(s => s.setting_key === 'purchase_commission_percentage')?.setting_value?.value || 10}%
                 </span>
               </div>
@@ -347,9 +347,9 @@ export default function PDGRevenueAnalytics() {
                   >
                     <div className="flex items-center gap-3">
                       {rev.source_type === 'frais_transaction_wallet' ? (
-                        <Wallet className="h-5 w-5 text-purple-500" />
+                        <Wallet className="h-5 w-5 text-[#04439e]" />
                       ) : (
-                        <ShoppingBag className="h-5 w-5 text-pink-500" />
+                        <ShoppingBag className="h-5 w-5 text-[#ff4000]" />
                       )}
                       <div>
                         <p className="font-medium">
@@ -363,7 +363,7 @@ export default function PDGRevenueAnalytics() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">
+                      <p className="font-bold text-[#ff4000]">
                         {PdgRevenueService.formatAmount(Number(rev.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -387,13 +387,13 @@ export default function PDGRevenueAnalytics() {
                 const iconConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
                   wallet_transaction_fee_percentage: {
                     icon: <Wallet className="h-5 w-5" />,
-                    color: 'text-purple-600',
-                    bg: 'bg-purple-100 dark:bg-purple-900/30'
+                    color: 'text-[#04439e]',
+                    bg: 'bg-blue-100 dark:bg-[#04439e]/30'
                   },
                   purchase_commission_percentage: {
                     icon: <ShoppingBag className="h-5 w-5" />,
-                    color: 'text-pink-600',
-                    bg: 'bg-pink-100 dark:bg-pink-900/30'
+                    color: 'text-[#ff4000]',
+                    bg: 'bg-orange-100 dark:bg-[#ff4000]/30'
                   },
                   service_commissions: {
                     icon: <Settings className="h-5 w-5" />,
@@ -402,8 +402,8 @@ export default function PDGRevenueAnalytics() {
                   },
                   deposit_fee_percentage: {
                     icon: <ArrowDownToLine className="h-5 w-5" />,
-                    color: 'text-green-600',
-                    bg: 'bg-green-100 dark:bg-green-900/30'
+                    color: 'text-[#ff4000]',
+                    bg: 'bg-orange-100 dark:bg-[#ff4000]/30'
                   },
                   withdrawal_fee_percentage: {
                     icon: <ArrowUpFromLine className="h-5 w-5" />,
@@ -412,8 +412,8 @@ export default function PDGRevenueAnalytics() {
                   },
                   international_transfer_fee_percentage: {
                     icon: <Globe className="h-5 w-5" />,
-                    color: 'text-indigo-600',
-                    bg: 'bg-indigo-100 dark:bg-indigo-900/30'
+                    color: 'text-[#04439e]',
+                    bg: 'bg-blue-100 dark:bg-[#04439e]/30'
                   },
                 };
                 const config = iconConfig[setting.setting_key] || {
@@ -540,7 +540,7 @@ export default function PDGRevenueAnalytics() {
                         {/* Exemple de calcul en temps réel */}
                         <div className="p-3 bg-background rounded-lg border">
                           <p className="text-xs text-muted-foreground mb-1">Exemple sur {PdgRevenueService.formatAmount(labelConfig.example)}:</p>
-                          <p className="font-semibold text-green-600">
+                          <p className="font-semibold text-[#ff4000]">
                             Revenu PDG: {PdgRevenueService.formatAmount(labelConfig.example * currentValue / 100)}
                           </p>
                         </div>
@@ -572,13 +572,13 @@ export default function PDGRevenueAnalytics() {
             </Card>
 
             {/* Note d'information */}
-            <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <Card className="bg-orange-50 dark:bg-[#ff4000]/20 border-orange-200 dark:border-[#ff4000]">
               <CardContent className="pt-6">
                 <div className="flex gap-4">
                   <div className="text-2xl">💡</div>
                   <div>
-                    <p className="font-medium text-amber-800 dark:text-amber-200">Important</p>
-                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    <p className="font-medium text-[#ff4000] dark:text-orange-200">Important</p>
+                    <p className="text-sm text-[#ff4000] dark:text-orange-300 mt-1">
                       Les modifications de taux s'appliquent immédiatement à toutes les nouvelles transactions.
                       Les transactions en cours conservent leur taux d'origine. L'historique des modifications
                       est conservé pour audit.

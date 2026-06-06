@@ -170,16 +170,13 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
       // Générer le PDF de la facture
       if (newInvoice) {
-        const { error: pdfError } = await supabase.functions.invoke('generate-invoice-pdf', {
-          body: {
-            invoice_id: newInvoice.id,
-            ref: invoiceRef,
-            vendor_id: vendorId
-          }
+        const { backendFetch } = await import('@/services/backendApi');
+        const pdfResp = await backendFetch<any>('/api/documents/invoice-pdf', {
+          body: { invoice_id: newInvoice.id, ref: invoiceRef }
         });
 
-        if (pdfError) {
-          console.error('Erreur génération PDF facture:', pdfError);
+        if (!pdfResp.success) {
+          console.error('Erreur génération PDF facture:', pdfResp.error);
           toast.error('Facture créée mais PDF non généré');
         }
       }

@@ -106,9 +106,9 @@ export function SIEMDashboard() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-500';
+      case 'critical': return 'bg-[#ff4000]';
       case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-yellow-500';
+      case 'medium': return 'bg-[#ff4000]';
       case 'low': return 'bg-blue-500';
     }
   };
@@ -155,17 +155,17 @@ export function SIEMDashboard() {
             <div className="text-xs text-muted-foreground">Événements traités</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
+            <AlertTriangle className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{siemStats.threatsDetected.toLocaleString()}</div>
             <div className="text-xs text-muted-foreground">Menaces détectées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingUp className="w-8 h-8 text-purple-500 mb-2" />
+            <TrendingUp className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{siemStats.correlatedIncidents}</div>
             <div className="text-xs text-muted-foreground">Incidents corrélés</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Eye className="w-8 h-8 text-green-500 mb-2" />
+            <Eye className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{siemStats.responseTime}</div>
             <div className="text-xs text-muted-foreground">Temps de réponse</div>
           </div>
@@ -181,7 +181,7 @@ export function SIEMDashboard() {
                 <XAxis dataKey="time" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="threats" stroke="#3b82f6" strokeWidth={2} />
+                <Line type="monotone" dataKey="threats" stroke="#04439e" strokeWidth={2} />
               </LineChart>
             </RechartsContainer>
           </div>
@@ -219,9 +219,9 @@ export function SIEMDashboard() {
           ))}
         </div>
 
-        <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-4 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
           <div className="flex items-center gap-2 mb-2">
-            <Activity className="w-4 h-4 text-green-600" />
+            <Activity className="w-4 h-4 text-[#ff4000]" />
             <span className="font-semibold text-sm">Système SIEM opérationnel</span>
           </div>
           <p className="text-sm text-muted-foreground">

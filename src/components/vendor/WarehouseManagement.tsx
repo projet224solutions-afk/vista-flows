@@ -126,7 +126,7 @@ export default function WarehouseManagement() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {error && (
-        <Alert variant="destructive" className="border-red-200 bg-red-50">
+        <Alert variant="destructive" className="border-orange-200 bg-orange-50">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="font-medium">{error}</AlertDescription>
         </Alert>
@@ -395,7 +395,7 @@ export default function WarehouseManagement() {
                     e.stopPropagation();
                     handleDeleteWarehouse(warehouse.id);
                   }}
-                  className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-300"
+                  className="hover:bg-orange-50 hover:text-[#ff4000] hover:border-orange-200 transition-all duration-300"
                 >
                   Supprimer
                 </Button>

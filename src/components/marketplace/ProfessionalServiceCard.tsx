@@ -147,8 +147,8 @@ export function ProfessionalServiceCard({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {item.rating > 0 ? (
-              <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded-full">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <div className="flex items-center gap-1 bg-orange-100 dark:bg-[#ff4000]/30 px-2 py-1 rounded-full">
+                <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                 <span className="font-semibold text-sm">{item.rating.toFixed(1)}</span>
               </div>
             ) : (
@@ -178,7 +178,7 @@ export function ProfessionalServiceCard({
             e.stopPropagation();
             onViewDetails?.(item.id);
           }}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+          className="w-full bg-[#04439e] text-white"
           size="sm"
         >
           <Store className="w-4 h-4 mr-2" />

@@ -81,7 +81,7 @@ export function SuppliersList() {
               )}
 
               <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                 <span className="text-sm font-medium">{supplier.rating.toFixed(1)}</span>
                 <span className="text-xs text-muted-foreground">
                   ({supplier.total_orders} commandes)

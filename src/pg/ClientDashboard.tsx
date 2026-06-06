@@ -359,17 +359,17 @@ export default function ClientDashboard() {
                         <p className="text-[10px] sm:text-xs text-muted-foreground">En cours</p>
                       </button>
 
-                      <button onClick={() => setStatDetailType('favorites')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-purple-400/40 transition-all active:scale-95">
-                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-1`}>
-                          <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
+                      <button onClick={() => setStatDetailType('favorites')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-blue-50 dark:bg-[#04439e]/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-[#04439e]/40 transition-all active:scale-95">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-blue-100 dark:bg-[#04439e]/30 flex items-center justify-center mb-1`}>
+                          <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-[#04439e]`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>{clientStats?.favorites_count || 0}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Favoris</p>
                       </button>
 
-                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-green-400/40 transition-all active:scale-95">
-                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-1`}>
-                          <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
+                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-[#ff4000]/40 transition-all active:scale-95">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-[#ff4000]/30 flex items-center justify-center mb-1`}>
+                          <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-[#ff4000]`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>{formatPrice(clientStats?.total_spent || 0)}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>

@@ -129,19 +129,19 @@ export default function PlatformRevenueOverview() {
   const getServiceColor = (serviceName: string) => {
     switch (serviceName) {
       case 'wallet_transfer':
-        return 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30';
+        return ' border-[#04439e]/30';
       case 'subscription':
-        return 'from-pink-500/20 to-pink-600/20 border-pink-500/30';
+        return ' border-[#ff4000]/30';
       case 'marketplace':
-        return 'from-green-500/20 to-green-600/20 border-green-500/30';
+        return ' border-[#ff4000]/30';
       case 'taxi':
-        return 'from-blue-500/20 to-blue-600/20 border-blue-500/30';
+        return ' border-blue-500/30';
       case 'delivery':
-        return 'from-orange-500/20 to-orange-600/20 border-orange-500/30';
+        return ' border-orange-500/30';
       case 'livreur':
-        return 'from-purple-500/20 to-purple-600/20 border-purple-500/30';
+        return ' border-[#04439e]/30';
       default:
-        return 'from-gray-500/20 to-gray-600/20 border-gray-500/30';
+        return ' border-gray-500/30';
     }
   };
 
@@ -178,11 +178,11 @@ export default function PlatformRevenueOverview() {
         {/* Résumé Global - Mobile: Full width single column */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#ff4000]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#ff4000]/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ff4000]" />
                 </div>
                 <span className="truncate">Revenus Totaux Plateforme</span>
               </CardTitle>
@@ -192,7 +192,7 @@ export default function PlatformRevenueOverview() {
                 <p className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   {formatAmount(revenues?.total_revenue || 0)}
                 </p>
-                <p className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
+                <p className="text-[10px] sm:text-xs text-[#ff4000] flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   Tous services confondus
                 </p>
@@ -223,11 +223,11 @@ export default function PlatformRevenueOverview() {
           </Card>
 
           <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group sm:col-span-2 lg:col-span-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#04439e]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#04439e]/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#04439e]" />
                 </div>
                 <span className="truncate">Taux de Commission Moyen</span>
               </CardTitle>

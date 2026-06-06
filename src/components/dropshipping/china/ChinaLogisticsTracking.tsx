@@ -157,19 +157,19 @@ const TRACKING_STEPS: TrackingStep[] = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  pending_supplier_confirm: 'bg-yellow-500',
+  pending_supplier_confirm: 'bg-[#ff4000]',
   supplier_confirmed: 'bg-blue-500',
-  in_production: 'bg-purple-500',
-  quality_check: 'bg-indigo-500',
-  ready_to_ship: 'bg-cyan-500',
-  shipped_domestic_china: 'bg-teal-500',
-  at_consolidation_warehouse: 'bg-emerald-500',
-  shipped_international: 'bg-green-500',
+  in_production: 'bg-[#04439e]',
+  quality_check: 'bg-[#04439e]',
+  ready_to_ship: 'bg-[#04439e]',
+  shipped_domestic_china: 'bg-[#ff4000]',
+  at_consolidation_warehouse: 'bg-[#ff4000]',
+  shipped_international: 'bg-[#ff4000]',
   customs_clearance: 'bg-orange-500',
-  last_mile_delivery: 'bg-lime-500',
-  delivered: 'bg-green-600',
-  cancelled: 'bg-red-500',
-  disputed: 'bg-red-600'
+  last_mile_delivery: 'bg-[#ff4000]',
+  delivered: 'bg-[#ff4000]',
+  cancelled: 'bg-[#ff4000]',
+  disputed: 'bg-[#ff4000]'
 };
 
 // ==================== HELPERS ====================
@@ -320,7 +320,7 @@ export function ChinaLogisticsTracking({
                       ${isCompleted
                         ? isCurrent
                           ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
-                          : 'bg-green-500 text-white'
+                          : 'bg-[#ff4000] text-white'
                         : 'bg-muted text-muted-foreground'
                       }
                     `}>
@@ -332,7 +332,7 @@ export function ChinaLogisticsTracking({
                     </div>
                     {index < TRACKING_STEPS.length - 1 && (
                       <div className={`w-0.5 flex-1 mt-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-muted'
+                        isCompleted ? 'bg-[#ff4000]' : 'bg-muted'
                       }`} />
                     )}
                   </div>

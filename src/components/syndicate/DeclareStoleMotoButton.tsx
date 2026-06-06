@@ -50,7 +50,7 @@ export default function DeclareStoleMotoButton({
       variant={variant}
       size={size}
       onClick={handleClick}
-      className={`bg-red-600 hover:bg-red-700 text-white ${className}`}
+      className={`bg-[#ff4000] hover:bg-[#ff4000] text-white ${className}`}
     >
       <ShieldAlert className="w-4 h-4 mr-2" />
       Déclarer Moto Volée

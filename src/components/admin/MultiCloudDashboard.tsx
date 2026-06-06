@@ -18,17 +18,17 @@ import type { ServiceStatus, CloudProvider, CloudServiceCheck } from '@/services
 import { cn } from '@/lib/utils';
 
 const statusConfig: Record<ServiceStatus, { color: string; bgColor: string; icon: typeof CheckCircle; label: string; textColor: string }> = {
-  operational: { color: 'bg-emerald-500', bgColor: 'bg-emerald-500/10', icon: CheckCircle, label: 'Opérationnel', textColor: 'text-emerald-600' },
-  degraded: { color: 'bg-amber-500', bgColor: 'bg-amber-500/10', icon: AlertTriangle, label: 'Dégradé', textColor: 'text-amber-600' },
-  outage: { color: 'bg-red-500', bgColor: 'bg-red-500/10', icon: XCircle, label: 'Panne', textColor: 'text-red-600' },
+  operational: { color: 'bg-[#ff4000]', bgColor: 'bg-[#ff4000]/10', icon: CheckCircle, label: 'Opérationnel', textColor: 'text-[#ff4000]' },
+  degraded: { color: 'bg-[#ff4000]', bgColor: 'bg-[#ff4000]/10', icon: AlertTriangle, label: 'Dégradé', textColor: 'text-[#ff4000]' },
+  outage: { color: 'bg-[#ff4000]', bgColor: 'bg-[#ff4000]/10', icon: XCircle, label: 'Panne', textColor: 'text-[#ff4000]' },
   unknown: { color: 'bg-slate-400', bgColor: 'bg-slate-400/10', icon: HelpCircle, label: 'Inconnu', textColor: 'text-slate-500' }
 };
 
 const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string; bgGradient: string; description: string }> = {
-  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600', bgGradient: 'from-emerald-500/5 to-emerald-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
-  aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: 'from-orange-500/5 to-orange-500/10', description: 'Lambda Backend, Cognito Auth' },
-  google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: 'from-blue-500/5 to-blue-500/10', description: 'Cloud Storage, Cloud Functions' },
-  firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500', bgGradient: 'from-yellow-500/5 to-yellow-500/10', description: 'Cloud Messaging (FCM)' }
+  supabase: { label: 'Supabase', icon: Database, color: 'text-[#ff4000]', bgGradient: '', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
+  aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: '', description: 'Lambda Backend, Cognito Auth' },
+  google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: '', description: 'Cloud Storage, Cloud Functions' },
+  firebase: { label: 'Firebase', icon: Bell, color: 'text-[#ff4000]', bgGradient: '', description: 'Cloud Messaging (FCM)' }
 };
 
 function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: boolean }) {
@@ -44,7 +44,7 @@ function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: b
 function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
   const config = statusConfig[svc.status];
   const Icon = config.icon;
-  const latencyColor = svc.responseTime < 500 ? 'text-emerald-600' : svc.responseTime < 1500 ? 'text-amber-600' : 'text-red-600';
+  const latencyColor = svc.responseTime < 500 ? 'text-[#ff4000]' : svc.responseTime < 1500 ? 'text-[#ff4000]' : 'text-[#ff4000]';
 
   return (
     <TooltipProvider>
@@ -137,8 +137,8 @@ export default function MultiCloudDashboard() {
 
       {/* === SCORE GLOBAL === */}
       <Card className={cn('border-2',
-        report.overall === 'operational' ? 'border-emerald-500/30' :
-        report.overall === 'degraded' ? 'border-amber-500/30' : 'border-red-500/30'
+        report.overall === 'operational' ? 'border-[#ff4000]/30' :
+        report.overall === 'degraded' ? 'border-[#ff4000]/30' : 'border-[#ff4000]/30'
       )}>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -304,9 +304,9 @@ export default function MultiCloudDashboard() {
                       <TooltipTrigger asChild>
                         <div className={cn(
                           'w-3 h-8 rounded-sm flex-shrink-0 transition-all cursor-pointer hover:opacity-80',
-                          h.overall === 'operational' ? 'bg-emerald-500' :
-                          h.overall === 'degraded' ? 'bg-amber-500' :
-                          h.overall === 'outage' ? 'bg-red-500' : 'bg-slate-400',
+                          h.overall === 'operational' ? 'bg-[#ff4000]' :
+                          h.overall === 'degraded' ? 'bg-[#ff4000]' :
+                          h.overall === 'outage' ? 'bg-[#ff4000]' : 'bg-slate-400',
                           'opacity-60 hover:opacity-100'
                         )} />
                       </TooltipTrigger>

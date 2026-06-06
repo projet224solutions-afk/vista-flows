@@ -41,12 +41,12 @@ export default function AddressSuggestionItem({
             return <Building className="w-5 h-5 text-blue-500" />;
         }
         if (addressLower.includes('marché') || addressLower.includes('market')) {
-            return <Map className="w-5 h-5 text-green-500" />;
+            return <Map className="w-5 h-5 text-[#ff4000]" />;
         }
         if (addressLower.includes('aéroport') || addressLower.includes('airport')) {
-            return <Navigation2 className="w-5 h-5 text-purple-500" />;
+            return <Navigation2 className="w-5 h-5 text-[#04439e]" />;
         }
-        return <MapPin className="w-5 h-5 text-red-500" />;
+        return <MapPin className="w-5 h-5 text-[#ff4000]" />;
     };
 
     return (

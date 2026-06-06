@@ -346,10 +346,10 @@ export function AutoInstallPrompt({
               {/* Header gradient - couleur selon contexte */}
               <div className={`p-6 text-white ${
                 displayContext === 'offline'
-                  ? 'bg-gradient-to-r from-orange-500 via-red-500 to-rose-500'
+                  ? 'bg-gradient-to-r from-orange-500 via-[#ff4000] to-[#ff4000]'
                   : isVendor
-                    ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600'
-                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'
+                    ? 'bg-gradient-to-r from-[#ff4000] via-[#ff4000] to-[#04439e]'
+                    : 'bg-[#04439e]'
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -379,7 +379,7 @@ export function AutoInstallPrompt({
                         displayContext === 'offline'
                           ? 'text-orange-100'
                           : isVendor
-                            ? 'text-emerald-100'
+                            ? 'text-orange-100'
                             : 'text-blue-100'
                       }`}>
                         {getSubtitle()}
@@ -404,8 +404,8 @@ export function AutoInstallPrompt({
 
                 {/* Alerte POS non initialisé pour vendeurs */}
                 {isVendor && !posInitialized && (
-                  <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                    <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                  <div className="bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg p-3">
+                    <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                       <Database className="w-4 h-4 flex-shrink-0" />
                       <span>La base de données locale POS n'est pas encore initialisée.</span>
                     </p>
@@ -417,16 +417,16 @@ export function AutoInstallPrompt({
                   {isVendor ? (
                     // Avantages vendeur
                     <>
-                      <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-                        <Store className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
+                        <Store className="w-5 h-5 text-[#ff4000] dark:text-[#ff4000]" />
                         <span className="text-sm font-medium">Caisse POS</span>
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                         <WifiOff className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium">Ventes offline</span>
                       </div>
-                      <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                        <Database className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-[#04439e]/30 rounded-lg">
+                        <Database className="w-5 h-5 text-[#04439e] dark:text-[#04439e]" />
                         <span className="text-sm font-medium">Sync auto</span>
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
@@ -441,12 +441,12 @@ export function AutoInstallPrompt({
                         <WifiOff className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium">Mode hors ligne</span>
                       </div>
-                      <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                        <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
+                        <Zap className="w-5 h-5 text-[#ff4000] dark:text-[#ff4000]" />
                         <span className="text-sm font-medium">Plus rapide</span>
                       </div>
-                      <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                        <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-[#04439e]/30 rounded-lg">
+                        <Bell className="w-5 h-5 text-[#04439e] dark:text-[#04439e]" />
                         <span className="text-sm font-medium">Notifications</span>
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
@@ -459,8 +459,8 @@ export function AutoInstallPrompt({
 
                 {/* Instructions iOS */}
                 {isIOS && (
-                  <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                    <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                  <div className="bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg p-4">
+                    <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                       <Share className="w-4 h-4" />
                       Appuyez sur <strong>Partager</strong> puis <strong>"Sur l'écran d'accueil"</strong>
                     </p>
@@ -474,8 +474,8 @@ export function AutoInstallPrompt({
                     disabled={isInstalling}
                     className={`w-full h-12 text-base font-semibold ${
                       isVendor
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                        ? 'bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000]'
+                        : 'bg-[#04439e]'
                     }`}
                   >
                     {isInstalling ? (

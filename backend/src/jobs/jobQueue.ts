@@ -676,8 +676,8 @@ export const jobQueue = {
       recurringTimers.push(setInterval(() => this.enqueue('orders.stuck-alert', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('payment-links.cleanup-expired', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('fx.african-rates-refresh', {}).catch(() => {}), everyHour));
-      // Surveillance BCRG toutes les 30s — HEAD check léger, GET uniquement si changement
-      recurringTimers.push(setInterval(() => this.enqueue('fx.bcrg-live-check', {}).catch(() => {}), 30 * 1000));
+      // Surveillance BCRG toutes les 1 minute — HEAD check léger, GET uniquement si changement
+      recurringTimers.push(setInterval(() => this.enqueue('fx.bcrg-live-check', {}).catch(() => {}), 60 * 1000));
 
       recurringTimers.push(setInterval(() => this.enqueue('escrow.auto-release', {}).catch(() => {}), every6Hours));
       recurringTimers.push(setInterval(() => this.enqueue('subscriptions.expire-check', {}).catch(() => {}), every6Hours));
@@ -701,8 +701,8 @@ export const jobQueue = {
       await queue.add('orders.stuck-alert', {}, { repeat: { every: 3600000 } });
       await queue.add('payment-links.cleanup-expired', {}, { repeat: { every: 3600000 } });
       await queue.add('fx.african-rates-refresh', {}, { repeat: { every: 3600000 } });
-      // Surveillance BCRG toutes les 30s — HEAD check léger, GET uniquement si changement
-      await queue.add('fx.bcrg-live-check', {}, { repeat: { every: 30 * 1000 } });
+      // Surveillance BCRG toutes les 1 minute — HEAD check léger, GET uniquement si changement
+      await queue.add('fx.bcrg-live-check', {}, { repeat: { every: 60 * 1000 } });
 
       // Every 6 hours: escrow + subscriptions + POS
       await queue.add('escrow.auto-release', {}, { repeat: { every: 6 * 3600000 } });

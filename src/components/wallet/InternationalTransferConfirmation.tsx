@@ -167,7 +167,7 @@ export function InternationalTransferConfirmation({
 
                 <div className="border-t pt-2 flex justify-between">
                   <span className="text-sm font-medium">✅ Montant reçu</span>
-                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                  <span className="text-lg font-bold text-[#ff4000] dark:text-[#ff4000]">
                     {preview.amount_received.toLocaleString()} {preview.currency_received}
                   </span>
                 </div>
@@ -182,9 +182,9 @@ export function InternationalTransferConfirmation({
 
               {/* Rate lock timer */}
               {preview.is_international && (
-                <div className={`p-3 rounded-lg border ${expired ? 'bg-red-50 dark:bg-red-950/30 border-red-300' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300'}`}>
+                <div className={`p-3 rounded-lg border ${expired ? 'bg-orange-50 dark:bg-[#ff4000]/30 border-orange-300' : 'bg-orange-50 dark:bg-[#ff4000]/30 border-orange-300'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className={`w-4 h-4 ${expired ? 'text-red-500' : 'text-amber-500'}`} />
+                    <Clock className={`w-4 h-4 ${expired ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
                     <span className="text-sm font-medium">
                       {expired
                         ? '⏰ Taux expiré — veuillez relancer la prévisualisation'
@@ -199,13 +199,13 @@ export function InternationalTransferConfirmation({
               )}
 
               {preview.is_international && preview.rate_is_stale && (
-                <div className="p-3 rounded-lg border text-xs bg-amber-50 dark:bg-amber-950/30 border-amber-200 text-amber-800 dark:text-amber-300">
+                <div className="p-3 rounded-lg border text-xs bg-orange-50 dark:bg-[#ff4000]/30 border-orange-200 text-[#ff4000] dark:text-orange-300">
                   ⚠️ Le taux de change n'a pas été mis à jour récemment. Le montant reçu peut légèrement varier.
                 </div>
               )}
 
               {expired && (
-                <div className="flex items-center gap-2 p-3 bg-red-100 dark:bg-red-950/40 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                <div className="flex items-center gap-2 p-3 bg-orange-100 dark:bg-[#ff4000]/40 rounded-lg text-[#ff4000] dark:text-[#ff4000] text-sm">
                   <AlertTriangle className="w-4 h-4" />
                   Le taux de change a expiré. Fermez et relancez la prévisualisation pour un nouveau taux.
                 </div>

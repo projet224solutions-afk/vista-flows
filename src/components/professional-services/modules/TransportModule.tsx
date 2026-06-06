@@ -54,15 +54,15 @@ interface Booking {
 
 const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   vol: { label: 'Vol', icon: '✈️', color: 'bg-blue-100 text-blue-800' },
-  hotel: { label: 'Hôtel', icon: '🏨', color: 'bg-purple-100 text-purple-800' },
-  package: { label: 'Package', icon: '📦', color: 'bg-green-100 text-green-800' },
-  excursion: { label: 'Excursion', icon: '🗺️', color: 'bg-amber-100 text-amber-800' },
+  hotel: { label: 'Hôtel', icon: '🏨', color: 'bg-blue-100 text-[#04439e]' },
+  package: { label: 'Package', icon: '📦', color: 'bg-orange-100 text-[#ff4000]' },
+  excursion: { label: 'Excursion', icon: '🗺️', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
-  confirme: { label: 'Confirmé', color: 'bg-green-100 text-green-800' },
-  en_attente: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  annule: { label: 'Annulé', color: 'bg-red-100 text-red-800' },
+  confirme: { label: 'Confirmé', color: 'bg-orange-100 text-[#ff4000]' },
+  en_attente: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]' },
+  annule: { label: 'Annulé', color: 'bg-orange-100 text-[#ff4000]' },
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
@@ -98,7 +98,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-[#04439e] to-blue-600 rounded-xl">
             <Plane className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -139,42 +139,42 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br from-sky-500 to-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-blue-600 text-white">
           <CardContent className="p-4">
             <Globe className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalDestinations}</p>
             <p className="text-xs opacity-80">Destinations</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Ticket className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{confirmedBookings}</p>
             <p className="text-xs opacity-80">Réservations confirmées</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white">
+        <Card className="bg-gradient-to-br from-[#04439e] to-[#04439e] text-white">
           <CardContent className="p-4">
             <Users className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{bookings.reduce((acc, b) => acc + b.passengers, 0)}</p>
             <p className="text-xs opacity-80">Passagers</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-orange-600 text-white">
           <CardContent className="p-4">
             <Star className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{avgRating.toFixed(1)}</p>
             <p className="text-xs opacity-80">Note moyenne</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalRevenue / 1e6).toFixed(1)}M</p>
             <p className="text-xs opacity-80">Revenus GNF</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-rose-500 to-pink-600 text-white">
+        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
           <CardContent className="p-4">
             <Clock className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(pendingRevenue / 1e6).toFixed(1)}M</p>
@@ -198,7 +198,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
               const type = TYPE_LABELS[dest.type];
               return (
                 <Card key={dest.id} className="hover:shadow-md transition-shadow cursor-pointer group overflow-hidden">
-                  <div className="h-24 bg-gradient-to-br from-sky-100 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/10 flex items-center justify-center">
+                  <div className="h-24 bg-gradient-to-br from-blue-100 to-blue-50 dark:from-[#04439e]/20 dark:to-blue-900/10 flex items-center justify-center">
                     <span className="text-4xl group-hover:scale-110 transition-transform">{type.icon}</span>
                   </div>
                   <CardContent className="p-4">
@@ -213,7 +213,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
                     </div>
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        <Star className="w-3 h-3 text-[#ff4000] fill-[#ff4000]" />
                         <span className="text-xs font-medium">{dest.rating}</span>
                         <span className="text-xs text-muted-foreground">({dest.bookings})</span>
                       </div>

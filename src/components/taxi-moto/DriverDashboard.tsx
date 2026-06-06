@@ -254,7 +254,7 @@ export function DriverDashboard({
               driverLoading
                 ? 'bg-gray-300 text-gray-500 cursor-wait'
                 : isOnline
-                ? 'bg-green-600 hover:bg-green-700 text-white'
+                ? 'bg-[#ff4000] hover:bg-[#ff4000] text-white'
                 : !hasSubscription
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
@@ -291,7 +291,7 @@ export function DriverDashboard({
       {/* Statistiques du jour */}
       <div className="grid grid-cols-2 gap-4">
         <Card
-          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.todayEarnings > 0) {
               onNavigate('history');
@@ -302,11 +302,11 @@ export function DriverDashboard({
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-green-700 mb-1">
+            <div className="text-3xl font-bold text-[#ff4000] mb-1">
               {stats.todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
-            <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
+            <div className="text-xs text-[#ff4000] mt-1">👆 Voir détails</div>
           </CardContent>
         </Card>
 
@@ -333,7 +333,7 @@ export function DriverDashboard({
 
       <div className="grid grid-cols-2 gap-4">
         <Card
-          className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.totalRides > 0) {
               onNavigate('history');
@@ -344,17 +344,17 @@ export function DriverDashboard({
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-700 flex items-center justify-center gap-1 mb-1">
+            <div className="text-3xl font-bold text-[#ff4000] flex items-center justify-center gap-1 mb-1">
               {stats.rating.toFixed(1)}
-              <Star className="w-6 h-6 fill-yellow-500 text-yellow-500" />
+              <Star className="w-6 h-6 fill-[#ff4000] text-[#ff4000]" />
             </div>
             <div className="text-xs font-medium text-gray-600">Note moyenne</div>
-            <div className="text-xs text-yellow-600 mt-1">👆 Voir évaluations</div>
+            <div className="text-xs text-[#ff4000] mt-1">👆 Voir évaluations</div>
           </CardContent>
         </Card>
 
         <Card
-          className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (isOnline) {
               toast.success(`⏱️ En ligne depuis ${currentOnlineTime}`);
@@ -364,7 +364,7 @@ export function DriverDashboard({
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-700 mb-1">
+            <div className="text-2xl font-bold text-[#04439e] mb-1">
               {isOnline ? currentOnlineTime : '0h 0m 0s'}
             </div>
             <div className="text-xs font-medium text-gray-600">Temps en ligne</div>
@@ -386,15 +386,15 @@ export function DriverDashboard({
               <div>
                 <h3 className="font-semibold">{activeRide.customer.name}</h3>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
                   <span>{activeRide.customer.rating}</span>
                 </div>
               </div>
               <Badge className={`${
-                activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
+                activeRide.status === 'accepted' ? 'bg-orange-100 text-[#ff4000]' :
                 activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-                activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
-                'bg-purple-100 text-purple-800'
+                activeRide.status === 'picked_up' ? 'bg-orange-100 text-[#ff4000]' :
+                'bg-blue-100 text-[#04439e]'
               }`}>
                 {activeRide.status === 'accepted' ? 'Acceptée' :
                  activeRide.status === 'arriving' ? 'En route' :
@@ -405,11 +405,11 @@ export function DriverDashboard({
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-[#ff4000] rounded-full"></div>
                 <span>{activeRide.pickup.address}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-[#ff4000] rounded-full"></div>
                 <span>{activeRide.destination.address}</span>
               </div>
             </div>
@@ -458,7 +458,7 @@ export function DriverDashboard({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-purple-600" />
+              <Hash className="w-4 h-4 text-[#04439e]" />
               <span className="text-sm font-medium">N° Série</span>
             </div>
             <Badge variant="outline" className="font-mono text-xs">
@@ -468,7 +468,7 @@ export function DriverDashboard({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-green-600" />
+              <CreditCard className="w-4 h-4 text-[#ff4000]" />
               <span className="text-sm font-medium">N° Gilet</span>
             </div>
             <Badge variant="outline" className="font-mono">
@@ -482,27 +482,27 @@ export function DriverDashboard({
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[#ff4000] animate-pulse' : 'bg-gray-400'}`}></div>
             État du système
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-green-600" />
+              <MapPin className="w-4 h-4 text-[#ff4000]" />
               <span className="text-sm font-medium">GPS</span>
             </div>
-            <Badge className={location ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+            <Badge className={location ? "bg-orange-100 text-[#ff4000]" : "bg-orange-100 text-[#ff4000]"}>
               {location ? '✓ Actif' : '✗ Inactif'}
             </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wifi className="w-4 h-4 text-green-600" />
+              <Wifi className="w-4 h-4 text-[#ff4000]" />
               <span className="text-sm font-medium">Base de données</span>
             </div>
-            <Badge className={driverId ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+            <Badge className={driverId ? "bg-orange-100 text-[#ff4000]" : "bg-orange-100 text-[#ff4000]"}>
               {driverId ? '✓ Connecté' : '⏳ En attente'}
             </Badge>
           </div>
@@ -512,7 +512,7 @@ export function DriverDashboard({
               <Battery className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium">Statut</span>
             </div>
-            <Badge className={isOnline ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+            <Badge className={isOnline ? "bg-orange-100 text-[#ff4000]" : "bg-gray-100 text-gray-800"}>
               {isOnline ? '🟢 En ligne' : '⚫ Hors ligne'}
             </Badge>
           </div>

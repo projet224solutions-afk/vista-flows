@@ -236,15 +236,15 @@ export function ChinaProductImportDialog({
             placeholder="https://www.aliexpress.com/item/..."
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
-            className={`pl-10 ${urlError ? 'border-red-500' : ''}`}
+            className={`pl-10 ${urlError ? 'border-[#ff4000]' : ''}`}
           />
         </div>
         {urlError && (
-          <p className="text-sm text-red-500">{urlError}</p>
+          <p className="text-sm text-[#ff4000]">{urlError}</p>
         )}
         {platform && (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
               <CheckCircle className="w-3 h-3 mr-1" />
               {CHINA_PLATFORMS[platform].name} détecté
             </Badge>
@@ -535,7 +535,7 @@ export function ChinaProductImportDialog({
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Marge ({margin}%)</span>
-                    <span className="text-green-600">
+                    <span className="text-[#ff4000]">
                       +{(costBreakdown?.total_cost_local! * (margin / 100))?.toLocaleString()} GNF
                     </span>
                   </div>
@@ -590,9 +590,9 @@ export function ChinaProductImportDialog({
 
     return (
       <div className="space-y-6">
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+        <Alert className="bg-orange-50 border-orange-200">
+          <CheckCircle className="h-4 w-4 text-[#ff4000]" />
+          <AlertDescription className="text-[#ff4000]">
             Votre produit est prêt à être ajouté à votre catalogue !
           </AlertDescription>
         </Alert>
@@ -624,7 +624,7 @@ export function ChinaProductImportDialog({
                     </span>
                   </span>
                   <span className="text-muted-foreground">
-                    Marge: <span className="text-green-600 font-medium">{margin}%</span>
+                    Marge: <span className="text-[#ff4000] font-medium">{margin}%</span>
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-primary">
@@ -647,7 +647,7 @@ export function ChinaProductImportDialog({
           </div>
           <div className="flex justify-between">
             <span>Profit estimé par unité</span>
-            <span className="text-green-600 font-medium">
+            <span className="text-[#ff4000] font-medium">
               {(finalPrice - costBreakdown.total_cost_local)?.toLocaleString()} GNF
             </span>
           </div>
@@ -702,7 +702,7 @@ export function ChinaProductImportDialog({
                 currentStep === step
                   ? 'bg-primary text-primary-foreground'
                   : index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-[#ff4000] text-white'
                     : 'bg-muted text-muted-foreground'
               }`}>
                 {index + 1}
@@ -710,7 +710,7 @@ export function ChinaProductImportDialog({
               {index < 3 && (
                 <div className={`w-8 h-0.5 mx-1 ${
                   index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-green-500'
+                    ? 'bg-[#ff4000]'
                     : 'bg-muted'
                 }`} />
               )}

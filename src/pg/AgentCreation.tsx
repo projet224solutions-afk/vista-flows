@@ -401,8 +401,8 @@ export default function AgentCreation() {
                   </Button>
                 </div>
                 {formData.mfaEnabled && (
-                  <div className="mt-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                    <p className="text-xs text-green-700 dark:text-green-300">
+                  <div className="mt-2 p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
+                    <p className="text-xs text-[#ff4000] dark:text-orange-300">
                       🔐 MFA sera activé avec TOTP et WebAuthn. L'agent devra configurer son authenticator lors de sa première connexion.
                     </p>
                   </div>

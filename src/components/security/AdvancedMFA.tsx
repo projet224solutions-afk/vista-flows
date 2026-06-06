@@ -105,11 +105,11 @@ export function AdvancedMFA() {
   const getSecurityBadge = (security: string) => {
     switch (security) {
       case 'high':
-        return <Badge className="bg-green-500 text-white">Haute sécurité</Badge>;
+        return <Badge className="bg-[#ff4000] text-white">Haute sécurité</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500 text-white">Sécurité moyenne</Badge>;
+        return <Badge className="bg-[#ff4000] text-white">Sécurité moyenne</Badge>;
       case 'low':
-        return <Badge className="bg-red-500 text-white">Sécurité faible</Badge>;
+        return <Badge className="bg-[#ff4000] text-white">Sécurité faible</Badge>;
     }
   };
 
@@ -181,7 +181,7 @@ export function AdvancedMFA() {
                 </div>
                 <div className="flex items-center gap-2">
                   {method.enabled && (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
                   )}
                   <Button
                     variant={method.enabled ? "outline" : "default"}

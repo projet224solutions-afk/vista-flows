@@ -248,19 +248,19 @@ export const WalletTransactionHistory = ({
 
   const getTransactionIcon = (transaction: Transaction, status: string) => {
     if (status === 'pending') return <Clock className="w-4 h-4 text-orange-500" />;
-    if (status === 'failed') return <XCircle className="w-4 h-4 text-red-500" />;
+    if (status === 'failed') return <XCircle className="w-4 h-4 text-[#ff4000]" />;
 
     // Déterminer si c'est un crédit ou débit basé sur sender_id
     const isCredit = transaction.receiver_id === user?.id;
-    if (isCredit) return <ArrowUp className="w-4 h-4 text-green-500" />;
-    return <ArrowDown className="w-4 h-4 text-red-500" />;
+    if (isCredit) return <ArrowUp className="w-4 h-4 text-[#ff4000]" />;
+    return <ArrowDown className="w-4 h-4 text-[#ff4000]" />;
   };
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      completed: 'bg-green-100 text-green-700',
+      completed: 'bg-orange-100 text-[#ff4000]',
       pending: 'bg-orange-100 text-orange-700',
-      failed: 'bg-red-100 text-red-700'
+      failed: 'bg-orange-100 text-[#ff4000]'
     };
 
     const labels = {
@@ -312,11 +312,11 @@ export const WalletTransactionHistory = ({
     : transactions.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
-    <Card className={`${className} border-2 border-green-100 bg-gradient-to-br from-green-50 to-emerald-50`}>
+    <Card className={`${className} border-2 border-orange-100 bg-gradient-to-br from-orange-50 to-orange-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-green-600" />
+            <History className="w-5 h-5 text-[#ff4000]" />
             Historique des transactions
           </CardTitle>
           <Button
@@ -333,8 +333,8 @@ export const WalletTransactionHistory = ({
       <CardContent>
         {error ? (
           <div className="text-center py-8">
-            <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="text-red-600 font-semibold mb-2">Erreur de chargement</p>
+            <XCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-3" />
+            <p className="text-[#ff4000] font-semibold mb-2">Erreur de chargement</p>
             <p className="text-sm text-gray-600 mb-4">
               {error}
             </p>
@@ -361,7 +361,7 @@ export const WalletTransactionHistory = ({
             {displayedTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-green-200 hover:bg-white/80 transition-colors"
+                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-orange-200 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {getTransactionIcon(transaction, transaction.status)}
@@ -389,8 +389,8 @@ export const WalletTransactionHistory = ({
                 <div className="text-right">
                   <p className={`font-bold ${
                     transaction.receiver_id === user?.id
-                      ? 'text-green-600'
-                      : 'text-red-600'
+                      ? 'text-[#ff4000]'
+                      : 'text-[#ff4000]'
                   }`}>
                     {formatAmount(transaction.amount, transaction)}
                   </p>

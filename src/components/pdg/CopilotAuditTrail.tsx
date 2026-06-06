@@ -64,20 +64,20 @@ export default function CopilotAuditTrail() {
 
   const getActionIcon = (log: AuditLog) => {
     if (log.success) {
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return <CheckCircle className="w-4 h-4 text-[#ff4000]" />;
     }
-    return <XCircle className="w-4 h-4 text-red-500" />;
+    return <XCircle className="w-4 h-4 text-[#ff4000]" />;
   };
 
   const getActionBadge = (actionType: string) => {
     const colors: Record<string, string> = {
       'chat_message': 'bg-blue-500',
-      'business_action': 'bg-purple-500',
-      'analyze_system': 'bg-green-500',
+      'business_action': 'bg-[#04439e]',
+      'analyze_system': 'bg-[#ff4000]',
       'status_check': 'bg-gray-500',
-      'rate_limit_exceeded': 'bg-red-500',
+      'rate_limit_exceeded': 'bg-[#ff4000]',
       'business_action_blocked': 'bg-orange-500',
-      'critical_error': 'bg-red-600'
+      'critical_error': 'bg-[#ff4000]'
     };
 
     return (
@@ -123,8 +123,8 @@ export default function CopilotAuditTrail() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-green-600">{stats.success}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-2xl font-bold text-[#ff4000]">{stats.success}</span>
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -137,8 +137,8 @@ export default function CopilotAuditTrail() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-red-600">{stats.errors}</span>
-              <XCircle className="w-5 h-5 text-red-500" />
+              <span className="text-2xl font-bold text-[#ff4000]">{stats.errors}</span>
+              <XCircle className="w-5 h-5 text-[#ff4000]" />
             </div>
           </CardContent>
         </Card>
@@ -243,9 +243,9 @@ export default function CopilotAuditTrail() {
                         </TableCell>
                         <TableCell>
                           {log.error_message ? (
-                            <span className="text-xs text-red-600">{log.error_message}</span>
+                            <span className="text-xs text-[#ff4000]">{log.error_message}</span>
                           ) : (
-                            <span className="text-xs text-green-600">-</span>
+                            <span className="text-xs text-[#ff4000]">-</span>
                           )}
                         </TableCell>
                         <TableCell className="text-right text-sm text-muted-foreground">

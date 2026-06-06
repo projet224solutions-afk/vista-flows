@@ -116,7 +116,7 @@ export default function AgentActivation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4">
@@ -131,11 +131,11 @@ export default function AgentActivation() {
 
   if (!valid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-orange-50">
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <XCircle className="w-10 h-10 text-red-500" />
+              <XCircle className="w-10 h-10 text-[#ff4000]" />
               <CardTitle>Invitation Invalide</CardTitle>
             </div>
           </CardHeader>
@@ -154,11 +154,11 @@ export default function AgentActivation() {
 
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <CheckCircle className="w-10 h-10 text-green-500" />
+              <CheckCircle className="w-10 h-10 text-[#ff4000]" />
               <CardTitle>Déjà connecté</CardTitle>
             </div>
           </CardHeader>
@@ -194,7 +194,7 @@ export default function AgentActivation() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Activation Compte Agent</CardTitle>

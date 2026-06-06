@@ -113,7 +113,7 @@ export default function NetworkStatusIndicator() {
                     <Badge
                         onClick={isOnline && pendingSync > 0 ? forceSyncPending : undefined}
                         className={`${
-                            isSyncing ? 'bg-blue-500' : !isOnline ? 'bg-destructive' : 'bg-yellow-500'
+                            isSyncing ? 'bg-blue-500' : !isOnline ? 'bg-destructive' : 'bg-[#ff4000]'
                         } text-white text-[9px] leading-none px-1.5 py-0.5 flex items-center gap-0.5 ${
                             isOnline && pendingSync > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-help'
                         }`}
@@ -135,7 +135,7 @@ export default function NetworkStatusIndicator() {
                     <div className="space-y-1 text-xs">
                         <div className="flex items-center gap-2">
                             {isOnline ? (
-                                <Wifi className="w-3 h-3 text-green-500" />
+                                <Wifi className="w-3 h-3 text-[#ff4000]" />
                             ) : (
                                 <WifiOff className="w-3 h-3 text-destructive" />
                             )}

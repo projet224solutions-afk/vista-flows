@@ -500,7 +500,7 @@ export default function RestaurantPublicMenu() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header with cover image */}
-      <div className="relative h-48 sm:h-64 bg-gradient-to-br from-orange-500 to-red-600">
+      <div className="relative h-48 sm:h-64 bg-gradient-to-br from-orange-500 to-[#ff4000]">
         {restaurant.cover_image_url ? (
           <img
             src={restaurant.cover_image_url}
@@ -541,7 +541,7 @@ export default function RestaurantPublicMenu() {
               <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
                 {restaurant.rating && (
                   <span className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                     {restaurant.rating.toFixed(1)}
                     {restaurant.total_reviews && ` (${restaurant.total_reviews})`}
                   </span>
@@ -711,12 +711,12 @@ export default function RestaurantPublicMenu() {
                             </Badge>
                           )}
                           {item.spicy_level > 0 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-500 border-red-200">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-[#ff4000] border-orange-200">
                               🌶️ {item.spicy_level > 2 ? 'Très épicé' : 'Épicé'}
                             </Badge>
                           )}
                           {item.dietary_tags?.includes('vegetarian') && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-green-600 border-green-200">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-[#ff4000] border-orange-200">
                               <Leaf className="w-2.5 h-2.5 mr-0.5" /> Végé
                             </Badge>
                           )}
@@ -758,7 +758,7 @@ export default function RestaurantPublicMenu() {
                             ) : (
                               <Button
                                 size="sm"
-                                className="h-8 gap-1 bg-green-600 hover:bg-green-700"
+                                className="h-8 gap-1 bg-[#ff4000] hover:bg-[#ff4000]"
                                 onClick={() => openQuickOrder(item)}
                               >
                                 <ShoppingCart className="w-3.5 h-3.5" />
@@ -993,11 +993,11 @@ export default function RestaurantPublicMenu() {
           {orderSuccess ? (
             // Success state
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8 text-[#ff4000]" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-green-600">Commande envoyée !</h3>
+                <h3 className="text-xl font-bold text-[#ff4000]">Commande envoyée !</h3>
                 <p className="text-muted-foreground mt-1">Référence: {lastOrderNumber}</p>
               </div>
               <Card className="bg-muted/50">
@@ -1196,7 +1196,7 @@ export default function RestaurantPublicMenu() {
                       paymentMethod === 'cash' && 'border-primary bg-primary/5'
                     )}>
                       <RadioGroupItem value="cash" className="sr-only" />
-                      <Wallet className="w-5 h-5 text-green-600" />
+                      <Wallet className="w-5 h-5 text-[#ff4000]" />
                       <span className="text-xs">Espèces</span>
                     </label>
                     <label className={cn(
@@ -1240,7 +1240,7 @@ export default function RestaurantPublicMenu() {
                 </div>
 
                 <Button
-                  className="w-full h-12 text-base bg-green-600 hover:bg-green-700"
+                  className="w-full h-12 text-base bg-[#ff4000] hover:bg-[#ff4000]"
                   onClick={() => handleSubmitOrder(true)}
                   disabled={isSubmitting}
                 >

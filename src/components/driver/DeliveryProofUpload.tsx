@@ -95,7 +95,7 @@ export function DeliveryProofUpload({ _deliveryId, onProofUploaded, onCancel }: 
     const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
 
     ctx.lineTo(x, y);
-    ctx.strokeStyle = '#023288';
+    ctx.strokeStyle = '#04439e';
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -205,7 +205,7 @@ export function DeliveryProofUpload({ _deliveryId, onProofUploaded, onCancel }: 
         <Button
           onClick={handleSubmit}
           disabled={uploading || !photoPreview || !signature}
-          className="w-full bg-green-600 hover:bg-green-700"
+          className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
         >
           {uploading ? (
             <>

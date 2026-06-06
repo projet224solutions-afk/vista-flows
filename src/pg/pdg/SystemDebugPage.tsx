@@ -158,11 +158,11 @@ export default function SystemDebugPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'degraded':
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />;
+        return <AlertCircle className="h-5 w-5 text-[#ff4000]" />;
       case 'critical':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-[#ff4000]" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
     }
@@ -171,11 +171,11 @@ export default function SystemDebugPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-orange-100 text-[#ff4000] border-orange-200';
       case 'degraded':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-orange-100 text-[#ff4000] border-orange-200';
       case 'critical':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-orange-100 text-[#ff4000] border-orange-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -259,11 +259,11 @@ export default function SystemDebugPage() {
               <p className="font-semibold">Pour corriger:</p>
               <ol className="list-decimal list-inside space-y-1 text-sm">
                 <li>Ouvrir un terminal dans le projet</li>
-                <li>Exécuter : <code className="bg-red-200 px-2 py-1 rounded">supabase db push</code></li>
+                <li>Exécuter : <code className="bg-orange-200 px-2 py-1 rounded">supabase db push</code></li>
                 <li>Ou appliquer manuellement la migration dans Supabase Dashboard</li>
               </ol>
               <p className="text-sm mt-3">
-                Fichier : <code className="bg-red-200 px-2 py-1 rounded">
+                Fichier : <code className="bg-orange-200 px-2 py-1 rounded">
                   supabase/migrations/20240130_security_services_infrastructure.sql
                 </code>
               </p>
@@ -340,9 +340,9 @@ export default function SystemDebugPage() {
               >
                 <div className="flex items-center gap-3">
                   {table.exists ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-[#ff4000]" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-600" />
+                    <XCircle className="h-5 w-5 text-[#ff4000]" />
                   )}
                   <div>
                     <div className="font-medium">{table.name}</div>
@@ -351,7 +351,7 @@ export default function SystemDebugPage() {
                         {table.rowCount} ligne(s)
                       </div>
                     ) : (
-                      <div className="text-sm text-red-600">
+                      <div className="text-sm text-[#ff4000]">
                         {table.error || 'Table manquante'}
                       </div>
                     )}

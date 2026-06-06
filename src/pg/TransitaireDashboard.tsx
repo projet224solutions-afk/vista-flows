@@ -41,13 +41,13 @@ export default function TransitaireDashboard() {
       label: t('transit.inTransit'),
       value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(),
       icon: Plane,
-      color: "text-green-500"
+      color: "text-[#ff4000]"
     },
     {
       label: t('transit.monthlyRevenue'),
       value: statsLoading ? "..." : formatPrice(transitaireStats.totalRevenue),
       icon: TrendingUp,
-      color: "text-purple-500"
+      color: "text-[#04439e]"
     },
     {
       label: t('transit.averageDelay'),
@@ -112,10 +112,10 @@ export default function TransitaireDashboard() {
 
       {/* Error Banner */}
       {error && (
-        <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <p className="text-red-800">{error.message}</p>
-            <button onClick={clearError} className="text-red-600 hover:text-red-800">×</button>
+            <p className="text-[#ff4000]">{error.message}</p>
+            <button onClick={clearError} className="text-[#ff4000] hover:text-[#ff4000]">×</button>
           </div>
         </div>
       )}
@@ -175,7 +175,7 @@ export default function TransitaireDashboard() {
                         {shipment.status}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-green-600">ETA: {shipment.eta}</span>
+                    <span className="text-sm font-medium text-[#ff4000]">ETA: {shipment.eta}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -215,7 +215,7 @@ export default function TransitaireDashboard() {
                   <div className="flex-1">
                     <h4 className="font-medium mb-1">{customs.country}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="text-green-600">{customs.processed} traités</span>
+                      <span className="text-[#ff4000]">{customs.processed} traités</span>
                       <span className="text-orange-600">{customs.pending} en attente</span>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export default function TransitaireDashboard() {
 
       {/* Features Overview */}
       <section className="px-4 py-2 mb-6">
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-0">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-50 border-0">
           <CardContent className="p-6">
             <div className="text-center">
               <Globe className="w-12 h-12 mx-auto mb-4 text-blue-500" />

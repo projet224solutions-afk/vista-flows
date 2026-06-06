@@ -63,7 +63,7 @@ export default function FeatureDetailSheet({
     switch (healthData.status) {
       case 'CRITICAL':
         return (
-          <Badge className="bg-red-600 text-white animate-pulse">
+          <Badge className="bg-[#ff4000] text-white animate-pulse">
             <AlertTriangle className="w-3 h-3 mr-1" />
             CRITIQUE
           </Badge>
@@ -77,7 +77,7 @@ export default function FeatureDetailSheet({
         );
       default:
         return (
-          <Badge className="bg-emerald-500 text-white">
+          <Badge className="bg-[#ff4000] text-white">
             <CheckCircle2 className="w-3 h-3 mr-1" />
             OK
           </Badge>
@@ -92,9 +92,9 @@ export default function FeatureDetailSheet({
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-emerald-500';
+    if (score >= 80) return 'bg-[#ff4000]';
     if (score >= 50) return 'bg-orange-500';
-    return 'bg-red-500';
+    return 'bg-[#ff4000]';
   };
 
   const handleApplyCorrection = async () => {
@@ -143,7 +143,7 @@ export default function FeatureDetailSheet({
               <span className="text-slate-300 font-medium">Score de Santé</span>
               <span
                 className="text-2xl font-bold"
-                style={{ color: score >= 80 ? '#10b981' : score >= 50 ? '#f97316' : '#ef4444' }}
+                style={{ color: score >= 80 ? '#ff4000' : score >= 50 ? '#f97316' : '#ff4000' }}
               >
                 {score}%
               </span>
@@ -157,7 +157,7 @@ export default function FeatureDetailSheet({
               <Database className="w-3 h-3" />
               Source de données
             </div>
-            <p className="text-xs font-mono text-emerald-400">
+            <p className="text-xs font-mono text-[#ff4000]">
               {healthData.dataSource || 'Non définie'}
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function FeatureDetailSheet({
               </div>
               <p
                 className="text-2xl font-bold"
-                style={{ color: healthData.anomalyCount > 0 ? '#f97316' : '#10b981' }}
+                style={{ color: healthData.anomalyCount > 0 ? '#f97316' : '#ff4000' }}
               >
                 {healthData.anomalyCount}
               </p>
@@ -192,7 +192,7 @@ export default function FeatureDetailSheet({
                 <Activity className="w-4 h-4" />
                 Activité récente
               </div>
-              <p className="text-2xl font-bold text-emerald-400">
+              <p className="text-2xl font-bold text-[#ff4000]">
                 {healthData.recentActivity}%
               </p>
             </div>
@@ -214,7 +214,7 @@ export default function FeatureDetailSheet({
               <Button
                 onClick={handleApplyCorrection}
                 disabled={localApplying || isApplying}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold"
+                className="w-full bg-gradient-to-r from-[#ff4000] to-[#ff4000] hover:from-[#ff4000] hover:to-[#ff4000] text-white font-semibold"
               >
                 {localApplying || isApplying ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -249,15 +249,15 @@ export default function FeatureDetailSheet({
                 <li>• Appliquer les corrections automatiques</li>
                 <li>• Consulter le tableau de surveillance détaillé</li>
                 {healthData.status === 'CRITICAL' && (
-                  <li className="text-red-400">• ⚠️ Action immédiate requise</li>
+                  <li className="text-[#ff4000]">• ⚠️ Action immédiate requise</li>
                 )}
               </ul>
             </div>
           )}
 
           {healthData.status === 'OK' && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-              <h4 className="text-emerald-400 font-medium mb-2 flex items-center gap-2">
+            <div className="p-4 bg-[#ff4000]/10 border border-[#ff4000]/30 rounded-lg">
+              <h4 className="text-[#ff4000] font-medium mb-2 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Système sain
               </h4>

@@ -185,7 +185,7 @@ export function DropshipProducts({
                       <TableCell>
                         <span className={`font-medium ${
                           calculateMargin(product.selling_price, product.supplier_price) > 20
-                            ? 'text-green-600'
+                            ? 'text-[#ff4000]'
                             : 'text-orange-600'
                         }`}>
                           {calculateMargin(product.selling_price, product.supplier_price).toFixed(1)}%

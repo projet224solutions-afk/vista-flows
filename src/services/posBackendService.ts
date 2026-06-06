@@ -89,6 +89,61 @@ export async function syncPosSales(
   );
 }
 
+export interface PosOrderItem {
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  discount?: number;
+}
+
+export interface PosOrderPayload {
+  order_number: string;
+  customer_id?: string | null;
+  items: PosOrderItem[];
+  payment_method: 'mobile_money' | 'card' | 'credit' | 'cash';
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded';
+  status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  discount_total?: number;
+  notes?: string | null;
+  currency?: string;
+  shipping_address?: Record<string, any> | null;
+  // Vente à crédit (utilisé uniquement si payment_method = 'credit')
+  credit_customer_name?: string | null;
+  credit_customer_phone?: string | null;
+  credit_due_date?: string | null; // ISO 8601
+  credit_notes?: string | null;
+  credit_items?: Record<string, any>[] | null;
+}
+
+export interface PosOrderResult {
+  order_id: string;
+  order_number: string;
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+}
+
+/**
+ * Création ATOMIQUE d'une commande POS en ligne (mobile money / crédit / carte).
+ * Le backend calcule la taxe (TVA configurable) et le total côté serveur, crée
+ * orders(source='pos') + order_items + décrément stock dans une seule transaction.
+ */
+export async function createPosOrder(
+  order: PosOrderPayload,
+  vendorId?: string,
+  signal?: AbortSignal
+) {
+  const headers: Record<string, string> = {};
+  if (vendorId) headers['x-vendor-id'] = vendorId;
+
+  return backendFetch<PosOrderResult>('/api/pos/order', {
+    method: 'POST',
+    body: order,
+    headers,
+    signal,
+  });
+}
+
 /**
  * Lister les ventes POS synchronisées
  */

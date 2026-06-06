@@ -368,7 +368,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               </>
             ) : (
               <>
-                <User className="h-5 w-5 text-green-600" />
+                <User className="h-5 w-5 text-[#ff4000]" />
                 Destination client
               </>
             )}
@@ -448,7 +448,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
             </div>
             <Badge
               variant={delivery.payment_method === 'cod' ? 'secondary' : 'default'}
-              className={delivery.payment_method === 'cod' ? 'bg-yellow-100 text-yellow-800' : ''}
+              className={delivery.payment_method === 'cod' ? 'bg-orange-100 text-[#ff4000]' : ''}
             >
               {delivery.payment_method === 'cod' ? (
                 <>
@@ -465,14 +465,14 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
       {/* Action suivante */}
       {nextAction && (
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20">
           <CardContent className="pt-4">
             {/* Vérification code au retrait */}
             {isAtVendor && delivery.metadata?.pickup_code ? (
               <Dialog open={showCodeDialog} onOpenChange={setShowCodeDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full bg-gradient-to-r from-orange-500 to-green-500"
+                    className="w-full bg-gradient-to-r from-orange-500 to-[#ff4000]"
                     size="lg"
                     disabled={updating}
                   >
@@ -507,7 +507,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               <Dialog open={showProofDialog} onOpenChange={setShowProofDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500"
+                    className="w-full bg-gradient-to-r from-[#ff4000] to-[#ff4000]"
                     size="lg"
                     disabled={updating}
                   >
@@ -532,8 +532,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                           <Loader2 className="h-6 w-6 animate-spin" />
                         ) : proofPhoto ? (
                           <div className="flex items-center gap-2">
-                            <ImageIcon className="h-5 w-5 text-green-600" />
-                            <span className="text-green-600">Photo capturée ✓</span>
+                            <ImageIcon className="h-5 w-5 text-[#ff4000]" />
+                            <span className="text-[#ff4000]">Photo capturée ✓</span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-1">
@@ -599,8 +599,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                         >
                           {clientSignature ? (
                             <div className="flex items-center gap-2">
-                              <PenTool className="h-5 w-5 text-green-600" />
-                              <span className="text-green-600">Signature enregistrée ✓</span>
+                              <PenTool className="h-5 w-5 text-[#ff4000]" />
+                              <span className="text-[#ff4000]">Signature enregistrée ✓</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -621,9 +621,9 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
                     {/* Info COD */}
                     {delivery.payment_method === 'cod' && (
-                      <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                      <div className="p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                         <p className="font-medium flex items-center gap-2">
-                          <Banknote className="h-4 w-4 text-yellow-600" />
+                          <Banknote className="h-4 w-4 text-[#ff4000]" />
                           Collecter: {formatCurrency(delivery.delivery_fee)}
                         </p>
                       </div>
@@ -632,7 +632,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                     {/* Bouton confirmation finale */}
                     <Button
                       onClick={completeDelivery}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
                       disabled={updating || (!proofPhoto && !clientSignature)}
                     >
                       {updating ? (
@@ -651,7 +651,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
             ) : (
               // Action standard
               <Button
-                className="w-full bg-gradient-to-r from-orange-500 to-green-500"
+                className="w-full bg-gradient-to-r from-orange-500 to-[#ff4000]"
                 size="lg"
                 onClick={() => updateStatus(nextAction.to)}
                 disabled={updating}
@@ -674,7 +674,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
       )}
 
       {/* Bouton d'urgence */}
-      <Button variant="outline" className="w-full border-red-300 text-red-600">
+      <Button variant="outline" className="w-full border-orange-300 text-[#ff4000]">
         <AlertTriangle className="h-4 w-4 mr-2" />
         Signaler un problème
       </Button>

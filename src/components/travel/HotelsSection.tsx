@@ -124,7 +124,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
     return (
       <div className="flex gap-0.5">
         {Array.from({ length: count }).map((_, i) => (
-          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+          <Star key={i} className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
         ))}
       </div>
     );
@@ -207,7 +207,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
               <CardContent className="p-0">
                 <div className="flex">
                   {/* Image */}
-                  <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shrink-0">
+                  <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-orange-100 flex items-center justify-center shrink-0">
                     {hotel.images && hotel.images[0] ? (
                       <img
                         src={hotel.images[0]}
@@ -215,7 +215,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Hotel className="w-8 h-8 text-amber-500" />
+                      <Hotel className="w-8 h-8 text-[#ff4000]" />
                     )}
                   </div>
 

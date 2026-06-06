@@ -112,9 +112,9 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              {status === 'ok' && <CheckCircle className="h-5 w-5 text-green-500" />}
+              {status === 'ok' && <CheckCircle className="h-5 w-5 text-[#ff4000]" />}
               {status === 'degraded' && <AlertTriangle className="h-5 w-5 text-orange-500" />}
-              {status === 'down' && <XCircle className="h-5 w-5 text-red-500" />}
+              {status === 'down' && <XCircle className="h-5 w-5 text-[#ff4000]" />}
               <span className="text-2xl font-bold">
                 {status === 'ok' && 'Opérationnel'}
                 {status === 'degraded' && 'Dégradé'}
@@ -169,16 +169,16 @@ export default function PDGApiSupervision() {
               <div key={endpoint.name} className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
                   {endpoint.status === 'operational' ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-[#ff4000]" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
+                    <XCircle className="h-5 w-5 text-[#ff4000]" />
                   )}
                   <div>
                     <p className="font-medium">{endpoint.name}</p>
                     <p className="text-sm text-muted-foreground">Latence: {endpoint.latency}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
+                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20' : 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20'}>
                   {endpoint.status === 'operational' ? 'Opérationnel' : 'Hors service'}
                 </Badge>
               </div>

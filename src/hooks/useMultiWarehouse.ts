@@ -692,46 +692,21 @@ export function useMultiWarehouse() {
     reason: string
   ): Promise<boolean> => {
     try {
-      // Récupérer le stock actuel
-      const { data: current } = await supabase
-        .from('location_stock')
-        .select('quantity')
-        .eq('location_id', locationId)
-        .eq('product_id', productId)
-        .single();
-
-      const previousQty = current?.quantity || 0;
-      const change = newQuantity - previousQty;
-
-      // Upsert le stock
-      const { error: stockError } = await supabase
-        .from('location_stock')
-        .upsert({
-          location_id: locationId,
-          product_id: productId,
-          quantity: newQuantity,
-          last_stock_update: new Date().toISOString()
-        }, {
-          onConflict: 'location_id,product_id'
-        });
-
-      if (stockError) throw stockError;
-
-      // Enregistrer dans l'historique
+      // Ajustement ATOMIQUE via RPC (verrou de ligne + historique dans la même
+      // transaction + contrôle d'appartenance) → plus de read-then-write/course.
       const { data: { user } } = await supabase.auth.getUser();
 
-      await supabase
-        .from('location_stock_history')
-        .insert({
-          location_id: locationId,
-          product_id: productId,
-          movement_type: 'adjustment',
-          quantity_before: previousQty,
-          quantity_change: change,
-          quantity_after: newQuantity,
-          performed_by: user?.id,
-          notes: reason
-        });
+      const { data, error } = await supabase.rpc('adjust_location_stock_atomic', {
+        p_location_id: locationId,
+        p_product_id: productId,
+        p_new_quantity: newQuantity,
+        p_reason: reason,
+        p_user_id: user?.id ?? null,
+      });
+
+      if (error) throw error;
+      const result = data as { status: 'success' | 'error'; error?: string };
+      if (result?.status === 'error') throw new Error(result.error || 'Échec de l\'ajustement');
 
       toast.success('Stock ajusté');
       return true;

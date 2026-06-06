@@ -13,9 +13,9 @@ interface InventoryAlertsProps {
 export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: InventoryAlertsProps) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'critical': return 'bg-orange-100 text-[#ff4000] border-orange-200';
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'medium': return 'bg-orange-100 text-[#ff4000] border-orange-200';
       default: return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
@@ -26,13 +26,13 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
 
   if (alerts.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-orange-200 bg-orange-50">
         <CardContent className="p-6 text-center">
-          <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-green-800 mb-2">
+          <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[#ff4000] mb-2">
             Aucune alerte active
           </h3>
-          <p className="text-green-600">
+          <p className="text-[#ff4000]">
             Tous vos produits sont en bon état de stock 🎉
           </p>
         </CardContent>

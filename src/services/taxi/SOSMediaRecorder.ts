@@ -14,6 +14,8 @@ interface RecordingConfig {
   audioBitrate?: number;
 }
 
+const AUTO_STOP_MS = 60_000; // 60 secondes
+
 interface RecordingData {
   sosId: string;
   startTime: number;
@@ -21,6 +23,7 @@ interface RecordingData {
   mediaRecorder: MediaRecorder | null;
   recordedChunks: Blob[];
   duration: number;
+  autoStopTimer: ReturnType<typeof setTimeout> | null;
 }
 
 export class SOSMediaRecorder {
@@ -117,17 +120,24 @@ export class SOSMediaRecorder {
       mediaRecorder.start(1000); // Chunk toutes les 1 secondes
       console.log('🔴 Enregistrement démarré!');
 
-      // 5. Stocker état enregistrement
+      // 5. Timer auto-stop à 60 secondes
+      const autoStopTimer = setTimeout(() => {
+        console.log(`⏱️ Auto-arrêt SOS ${sosId} après ${AUTO_STOP_MS / 1000}s`);
+        this.stopSOSRecording(sosId);
+      }, AUTO_STOP_MS);
+
+      // 6. Stocker état enregistrement
       this.activeRecordings.set(sosId, {
         sosId,
         startTime: Date.now(),
         mediaStream,
         mediaRecorder,
         recordedChunks,
-        duration: 0
+        duration: 0,
+        autoStopTimer
       });
 
-      // 6. Notification visuelle
+      // 7. Notification visuelle
       this.showRecordingIndicator(sosId);
 
       return true;
@@ -161,6 +171,12 @@ export class SOSMediaRecorder {
     console.log('⏹️ Arrêt enregistrement SOS:', sosId);
     recording.duration = Date.now() - recording.startTime;
 
+    // Annuler le timer auto-stop s'il est encore actif
+    if (recording.autoStopTimer) {
+      clearTimeout(recording.autoStopTimer);
+      recording.autoStopTimer = null;
+    }
+
     if (recording.mediaRecorder && recording.mediaRecorder.state !== 'inactive') {
       recording.mediaRecorder.stop();
     }
@@ -192,21 +208,41 @@ export class SOSMediaRecorder {
 
       console.log(`📁 Fichier: ${fileName}, Taille: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
 
-      // 2. Upload via GCS (fallback sos-recordings)
+      // 2. Upload GCS en premier, fallback communication-files si sos-recordings absent
       const sosFile = new File([blob], fileName, { type: mimeType });
-      const uploadResult = await uploadToGCSDirect(sosFile, 'sos', fileName, mimeType, `recordings/${sosId}`);
+      const filePath = `sos/${sosId}/${fileName}`;
+      let publicUrl: string | null = null;
+      let objectPath: string = filePath;
 
-      if (!uploadResult.success || !uploadResult.publicUrl) {
-        throw new Error(uploadResult.error || 'Échec upload enregistrement SOS');
+      const gcsResult = await uploadToGCSDirect(sosFile, 'sos', fileName, mimeType, sosId);
+
+      if (gcsResult.success && gcsResult.publicUrl) {
+        publicUrl = gcsResult.publicUrl;
+        objectPath = gcsResult.objectPath ?? filePath;
+        console.log('✅ Upload GCS réussi:', objectPath);
+      } else {
+        console.warn('⚠️ GCS/sos-recordings indisponible, fallback communication-files');
+        const { error: fallbackError } = await supabase.storage
+          .from('communication-files')
+          .upload(filePath, blob, { contentType: mimeType, upsert: true });
+
+        if (fallbackError) {
+          throw new Error(`Upload échoué: ${fallbackError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('communication-files')
+          .getPublicUrl(filePath);
+
+        publicUrl = urlData.publicUrl;
+        console.log('✅ Upload Supabase fallback réussi:', filePath);
       }
-
-      console.log('✅ Upload réussi:', uploadResult.objectPath, `(${uploadResult.provider})`);
 
       // 3. Sauvegarder l'URL dans sos_alerts
       const { error: updateError } = await supabase
         .from('sos_alerts')
         .update({
-          recording_url: uploadResult.publicUrl,
+          recording_url: publicUrl,
           recording_stopped_at: new Date().toISOString()
         })
         .eq('id', sosId);
@@ -214,25 +250,25 @@ export class SOSMediaRecorder {
       if (updateError) {
         console.error('❌ Erreur mise à jour SOS avec URL:', updateError);
       } else {
-        console.log('✅ SOS mis à jour avec URL enregistrement:', uploadResult.publicUrl);
+        console.log('✅ SOS mis à jour avec URL enregistrement:', publicUrl);
       }
 
-      // 4. Enregistrer aussi dans sos_media pour l'historique
+      // 4. Enregistrer dans sos_media pour l'historique (non bloquant)
       try {
         await (supabase as any)
           .from('sos_media')
           .insert({
             sos_alert_id: sosId,
             media_type: config.video ? 'video' : 'audio',
-            file_path: uploadResult.objectPath,
-            file_url: uploadResult.publicUrl,
+            file_path: objectPath,
+            file_url: publicUrl,
             file_size_bytes: blob.size,
             duration_seconds: Math.round((Date.now() - (this.activeRecordings.get(sosId)?.startTime || Date.now())) / 1000),
             created_at: new Date().toISOString()
           });
         console.log('✅ Entrée sos_media créée');
       } catch (mediaError) {
-        console.warn('⚠️ Erreur création sos_media:', mediaError);
+        console.warn('⚠️ Erreur création sos_media (non bloquant):', mediaError);
       }
 
     } catch (error) {
@@ -283,7 +319,7 @@ export class SOSMediaRecorder {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #ef4444;
+      background: #ff4000;
       color: white;
       padding: 12px 20px;
       border-radius: 25px;

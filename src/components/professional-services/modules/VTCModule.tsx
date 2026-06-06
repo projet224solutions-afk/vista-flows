@@ -187,11 +187,11 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
 
   const getStatusColor = (status: Ride['status']) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
+      case 'pending': return 'bg-[#ff4000]';
       case 'accepted': return 'bg-blue-500';
-      case 'in_progress': return 'bg-green-500';
+      case 'in_progress': return 'bg-[#ff4000]';
       case 'completed': return 'bg-gray-500';
-      case 'cancelled': return 'bg-red-500';
+      case 'cancelled': return 'bg-[#ff4000]';
       default: return 'bg-gray-500';
     }
   };
@@ -240,7 +240,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Courses Actives</CardTitle>
-            <Activity className="h-4 w-4 text-green-500" />
+            <Activity className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeRides}</div>
@@ -262,7 +262,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Note Moyenne</CardTitle>
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+            <Star className="h-4 w-4 text-[#ff4000] fill-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.avgRating}/5</div>
@@ -448,11 +448,11 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                             </div>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-green-500" />
+                                <MapPin className="w-4 h-4 text-[#ff4000]" />
                                 <span className="font-medium">{ride.pickup}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Navigation className="w-4 h-4 text-red-500" />
+                                <Navigation className="w-4 h-4 text-[#ff4000]" />
                                 <span className="font-medium">{ride.destination}</span>
                               </div>
                             </div>

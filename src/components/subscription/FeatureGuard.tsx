@@ -30,15 +30,15 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
 const PLAN_COLORS: Record<string, string> = {
   'free': 'bg-gray-100 text-gray-700',
   'basic': 'bg-blue-100 text-blue-700',
-  'pro': 'bg-purple-100 text-purple-700',
+  'pro': 'bg-blue-100 text-[#04439e]',
   'business': 'bg-orange-100 text-orange-700',
-  'premium': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
+  'premium': 'bg-gradient-to-r from-[#ff4000] to-orange-500 text-white',
 };
 
 const _PLAN_DESCRIPTIONS: Record<string, string> = {
   'free': "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
-  'basic': "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
-  'pro': "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
+  'basic': "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, analytics de base, facturation automatique.",
+  'pro': "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, programme d’affiliation, produits en vedette et support prioritaire.",
   'business': "Plan complet pour une gestion étendue : POS, fournisseurs et dettes, multi‑entrepôts, exports et accès API.",
   'premium': "Plan premium avec outils et accompagnement avancés : assistant IA Gemini, hub de communication, analytics temps réel, account manager dédié et formation.",
 };
@@ -54,8 +54,8 @@ const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
   'pro': [
     'Tout de Basic +',
     'Marketing & Promotions',
-    'Gestion clients avancée',
     'Programme affiliation',
+    'Produits en vedette',
     'Analytics avancés',
   ],
   'business': [
@@ -63,7 +63,7 @@ const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
     'Devis & Factures',
     'Liens de paiement',
     'Gestion dettes',
-    'Produits illimités',
+    'Multi-entrepôts',
   ],
   'premium': [
     'Toutes les fonctionnalités',
@@ -123,7 +123,7 @@ export function FeatureGuard({
           </div>
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
             <div className="text-center space-y-4 p-6 max-w-md">
-              <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-[#ff4000] to-orange-500 flex items-center justify-center">
                 <Lock className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -136,7 +136,7 @@ export function FeatureGuard({
                 </p>
               </div>
               <Button
-                className="gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
+                className="gap-2 bg-[#ff4000] hover:bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40"
                 onClick={() => setShowDialog(true)}
               >
                 <Crown className="w-4 h-4" />
@@ -151,7 +151,7 @@ export function FeatureGuard({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <div className="p-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500">
+                <div className="p-2 rounded-full bg-gradient-to-br from-[#ff4000] to-orange-500">
                   <Crown className="w-5 h-5 text-white" />
                 </div>
                 <span>Fonctionnalité Premium</span>
@@ -181,13 +181,13 @@ export function FeatureGuard({
               {minPlan !== 'free' && PLAN_FEATURES_PREVIEW[minPlan] && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
-                    <Crown className="w-4 h-4 text-yellow-500" />
+                    <Crown className="w-4 h-4 text-[#ff4000]" />
                     Ce que vous obtiendrez avec {minPlanDisplay}
                   </p>
                   <ul className="space-y-1.5">
                     {PLAN_FEATURES_PREVIEW[minPlan]?.slice(0, 5).map((feat, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <Check className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
                         {feat}
                       </li>
                     ))}
@@ -202,7 +202,7 @@ export function FeatureGuard({
               </Button>
               <Button
                 onClick={handleSubscribe}
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
+                className="flex-1 bg-[#ff4000] hover:bg-[#ff4000] text-white shadow-lg shadow-[#ff4000]/40"
               >
                 <Crown className="w-4 h-4 mr-2" />
                 Mettre à niveau
@@ -286,7 +286,7 @@ export function FeatureButton({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-yellow-500" />
+              <Crown className="w-5 h-5 text-[#ff4000]" />
               Fonctionnalité Premium
             </DialogTitle>
             <DialogDescription>

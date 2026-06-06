@@ -29,8 +29,8 @@ import { InternationalTransferConfirmation, type InternationalPreviewData } from
 // ChapChapPay - Mobile Money
 const PAYMENT_METHODS = [
   { value: 'orange_money', label: 'Orange Money', icon: Smartphone, color: 'text-orange-600' },
-  { value: 'mtn_money', label: 'MTN Money', icon: Smartphone, color: 'text-yellow-600' },
-  { value: 'wallet_224', label: '224Wallet', icon: WalletIcon, color: 'text-purple-600' }
+  { value: 'mtn_money', label: 'MTN Money', icon: Smartphone, color: 'text-[#ff4000]' },
+  { value: 'wallet_224', label: '224Wallet', icon: WalletIcon, color: 'text-[#04439e]' }
 ];
 
 export function WalletOperationsPanel() {
@@ -325,8 +325,8 @@ export function WalletOperationsPanel() {
 
           {/* Dépôt */}
           <TabsContent value="deposit" className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800">
+            <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-sm text-[#ff4000]">
                 Solde actuel: <span className="font-bold">{balance.toLocaleString()} {currency}</span>
               </p>
             </div>
@@ -366,7 +366,7 @@ export function WalletOperationsPanel() {
               <Button
                 onClick={handleDeposit}
                 disabled={!depositAmount || processing}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
               >
                 {processing ? (
                   <>

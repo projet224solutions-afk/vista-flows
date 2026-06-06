@@ -22,17 +22,17 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const severityColors: Record<string, string> = {
-  critical: 'bg-red-500 text-white',
+  critical: 'bg-[#ff4000] text-white',
   high: 'bg-orange-500 text-white',
-  medium: 'bg-yellow-500 text-black',
+  medium: 'bg-[#ff4000] text-black',
   low: 'bg-blue-500 text-white',
   info: 'bg-muted text-muted-foreground',
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
-  healthy: <CheckCircle className="h-4 w-4 text-green-500" />,
-  degraded: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
-  critical: <XCircle className="h-4 w-4 text-red-500" />,
+  healthy: <CheckCircle className="h-4 w-4 text-[#ff4000]" />,
+  degraded: <AlertTriangle className="h-4 w-4 text-[#ff4000]" />,
+  critical: <XCircle className="h-4 w-4 text-[#ff4000]" />,
   unknown: <Clock className="h-4 w-4 text-muted-foreground" />,
   maintenance: <Zap className="h-4 w-4 text-blue-500" />,
 };
@@ -80,9 +80,9 @@ export default function MonitoringDashboard() {
     toast.success('Health check terminé');
   };
 
-  const overallBg = stats.overallStatus === 'healthy' ? 'bg-green-500/10 border-green-500/30'
-    : stats.overallStatus === 'degraded' ? 'bg-yellow-500/10 border-yellow-500/30'
-    : stats.overallStatus === 'critical' ? 'bg-red-500/10 border-red-500/30'
+  const overallBg = stats.overallStatus === 'healthy' ? 'bg-[#ff4000]/10 border-[#ff4000]/30'
+    : stats.overallStatus === 'degraded' ? 'bg-[#ff4000]/10 border-[#ff4000]/30'
+    : stats.overallStatus === 'critical' ? 'bg-[#ff4000]/10 border-[#ff4000]/30'
     : 'bg-muted/10 border-border';
 
   return (
@@ -138,19 +138,19 @@ export default function MonitoringDashboard() {
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-xs text-muted-foreground">Critiques</div>
-            <div className="text-2xl font-bold text-red-500">{stats.criticalAlerts}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.criticalAlerts}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-xs text-muted-foreground">Services sains</div>
-            <div className="text-2xl font-bold text-green-500">{stats.healthyServices}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.healthyServices}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-xs text-muted-foreground">Services dégradés</div>
-            <div className="text-2xl font-bold text-yellow-500">{stats.degradedServices + stats.criticalServices}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.degradedServices + stats.criticalServices}</div>
           </CardContent>
         </Card>
       </div>

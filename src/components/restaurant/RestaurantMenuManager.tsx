@@ -586,7 +586,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500" />
+                    <Star className="w-4 h-4 text-[#ff4000]" />
                     <span className="text-sm font-medium">Plat signature</span>
                   </div>
                   <Switch
@@ -667,7 +667,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
               <Card key={item.id} className={`relative ${!item.is_available ? 'opacity-60' : ''}`}>
                 {item.is_featured && (
                   <div className="absolute top-2 right-2 z-10">
-                    <Badge className="bg-yellow-500">
+                    <Badge className="bg-[#ff4000]">
                       <Star className="w-3 h-3 mr-1" />
                       Signature
                     </Badge>
@@ -735,7 +735,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <div className="flex justify-between items-center pt-3 border-t">
                     <Button variant="ghost" size="sm" onClick={() => toggleItemAvailability(item.id)}>
                       {item.is_available ? (
-                        <><Eye className="w-4 h-4 mr-1 text-green-600" /><span className="text-green-600">Disponible</span></>
+                        <><Eye className="w-4 h-4 mr-1 text-[#ff4000]" /><span className="text-[#ff4000]">Disponible</span></>
                       ) : (
                         <><EyeOff className="w-4 h-4 mr-1" />Indisponible</>
                       )}

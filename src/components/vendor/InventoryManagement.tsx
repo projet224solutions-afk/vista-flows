@@ -402,13 +402,13 @@ export default function InventoryManagement() {
             {/* Indicateur de statut réseau */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
               isOnline
-                ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
+                ? 'bg-orange-50 border-orange-200 dark:bg-[#ff4000] dark:border-[#ff4000]'
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
             }`}>
               {isOnline ? (
                 <>
-                  <Wifi className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium text-green-700 dark:text-green-300 hidden md:inline">
+                  <Wifi className="h-3.5 w-3.5 text-[#ff4000] dark:text-[#ff4000]" />
+                  <span className="font-medium text-[#ff4000] dark:text-orange-300 hidden md:inline">
                     En ligne
                   </span>
                 </>
@@ -697,10 +697,10 @@ export default function InventoryManagement() {
         <Card>
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0" />
+              <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-[#ff4000] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Rupture</p>
-                <p className="text-lg md:text-2xl font-bold text-red-600">{outOfStockItems.length}</p>
+                <p className="text-lg md:text-2xl font-bold text-[#ff4000]">{outOfStockItems.length}</p>
               </div>
             </div>
           </CardContent>
@@ -708,10 +708,10 @@ export default function InventoryManagement() {
         <Card>
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 flex-shrink-0" />
+              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-[#ff4000] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur Stock</p>
-                <p className="text-sm md:text-xl font-bold truncate text-green-600">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-sm md:text-xl font-bold truncate text-[#ff4000]">{totalValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -719,7 +719,7 @@ export default function InventoryManagement() {
         <Card className="col-span-2 md:col-span-1">
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-purple-600 flex-shrink-0" />
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#04439e] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Profit potentiel</p>
                 <p className="text-sm md:text-xl font-bold truncate">{potentialProfit.toLocaleString()} GNF</p>
@@ -846,7 +846,7 @@ export default function InventoryManagement() {
                     <div className="mt-2">
                       <Progress
                         value={Math.min(stockPercentage, 100)}
-                        className={`h-2 ${stockPercentage <= 100 ? 'bg-red-100' : 'bg-green-100'}`}
+                        className={`h-2 ${stockPercentage <= 100 ? 'bg-orange-100' : 'bg-orange-100'}`}
                       />
                     </div>
                   </div>

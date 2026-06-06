@@ -69,7 +69,7 @@ export default function RidePaymentFlow({
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6 text-green-500" />
+                        <CheckCircle className="w-6 h-6 text-[#ff4000]" />
                         Paiement réussi !
                     </CardTitle>
                 </CardHeader>
@@ -90,7 +90,7 @@ export default function RidePaymentFlow({
                                     <Star
                                         className={`w-10 h-10 ${
                                             star <= rating
-                                                ? 'fill-yellow-400 text-yellow-400'
+                                                ? 'fill-[#ff4000] text-[#ff4000]'
                                                 : 'text-gray-300'
                                         }`}
                                     />

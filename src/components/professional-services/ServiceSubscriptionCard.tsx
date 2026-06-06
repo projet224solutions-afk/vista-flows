@@ -241,7 +241,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <span className="text-muted-foreground">Statut</span>
             <span className={cn(
               "font-medium",
-              isFree || isActive ? "text-emerald-600" : "text-destructive"
+              isFree || isActive ? "text-[#ff4000]" : "text-destructive"
             )}>
               {isFree
                 ? '✅ Actif (Gratuit)'
@@ -293,7 +293,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <p className="text-xs font-medium text-muted-foreground">Limites du plan :</p>
             <div className="flex flex-col gap-1.5 text-xs">
               <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-500" />
+                <Check className="w-3 h-3 text-[#ff4000]" />
                 <span>
                   Produits:{' '}
                   {subscription?.max_products != null
@@ -303,7 +303,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
               </div>
               <div className="flex items-center gap-1">
                 {canAccessFeature('priority_listing') ? (
-                  <Check className="w-3 h-3 text-emerald-500" />
+                  <Check className="w-3 h-3 text-[#ff4000]" />
                 ) : (
                   <span className="w-3 h-3 text-muted-foreground text-center">✗</span>
                 )}
@@ -498,7 +498,7 @@ function PlansDialog({
                     </div>
                   )}
                   {isCurrent && (
-                    <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
+                    <div className="absolute top-0 left-0 bg-[#ff4000] text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
                       Actuel
                     </div>
                   )}
@@ -534,7 +534,7 @@ function PlansDialog({
                         .slice(0, 5)
                         .map((feature: string, i: number) => (
                           <li key={i} className="flex items-center gap-1.5 text-xs">
-                            <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                            <Check className="w-3 h-3 text-[#ff4000] flex-shrink-0" />
                             <span>{feature}</span>
                           </li>
                         ))}

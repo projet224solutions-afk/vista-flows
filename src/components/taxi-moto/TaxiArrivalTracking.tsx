@@ -71,17 +71,17 @@ export function TaxiArrivalTracking({
 
         <div className="space-y-4">
           {/* Bandeau statut */}
-          <div className="rounded-lg border bg-green-50 border-green-200 p-3 flex items-center gap-3">
-            <Radio className="w-4 h-4 text-green-500 animate-pulse flex-shrink-0" />
+          <div className="rounded-lg border bg-orange-50 border-orange-200 p-3 flex items-center gap-3">
+            <Radio className="w-4 h-4 text-[#ff4000] animate-pulse flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-green-900">
+              <p className="text-sm font-medium text-[#ff4000]">
                 {driverName ? `${driverName} arrive vers vous` : 'Le chauffeur arrive vers vous'}
               </p>
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-[#ff4000]">
                 {driverPos ? 'Position du taxi en direct' : 'En attente de la position du taxi…'}
               </p>
             </div>
-            <Badge className="bg-green-500 text-xs">EN DIRECT</Badge>
+            <Badge className="bg-[#ff4000] text-xs">EN DIRECT</Badge>
           </div>
 
           {/* Distance + ETA */}

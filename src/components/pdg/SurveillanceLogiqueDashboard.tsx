@@ -94,7 +94,7 @@ export default function SurveillanceLogiqueDashboard() {
   // Vérifier les permissions
   if (!isPDG) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-red-50">
+      <div className="flex items-center justify-center min-h-screen bg-orange-50">
         <Alert variant="destructive" className="max-w-md">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Accès Refusé</AlertTitle>
@@ -180,13 +180,13 @@ export default function SurveillanceLogiqueDashboard() {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'CRITICAL':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       case 'HIGH':
         return 'bg-orange-100 text-orange-800 border-orange-300';
       case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       case 'LOW':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-orange-100 text-[#ff4000] border-orange-300';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -217,7 +217,7 @@ export default function SurveillanceLogiqueDashboard() {
         </div>
         <div className="flex items-center gap-3">
           {isConnected && (
-            <Badge className="bg-green-500 flex items-center gap-1">
+            <Badge className="bg-[#ff4000] flex items-center gap-1">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               En ligne
             </Badge>
@@ -236,9 +236,9 @@ export default function SurveillanceLogiqueDashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               {systemHealth.overall_status === 'OK' ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
               ) : systemHealth.overall_status === 'CRITICAL' ? (
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               ) : (
                 <AlertCircle className="w-5 h-5 text-orange-600" />
               )}
@@ -253,27 +253,27 @@ export default function SurveillanceLogiqueDashboard() {
                   {systemHealth.total_rules}
                 </p>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm text-purple-600 font-medium">Total anomalies</p>
-                <p className="text-2xl font-bold text-purple-900">
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-[#04439e] font-medium">Total anomalies</p>
+                <p className="text-2xl font-bold text-[#04439e]">
                   {systemHealth.total_anomalies}
                 </p>
               </div>
-              <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-sm text-red-600 font-medium">🚨 CRITIQUES</p>
-                <p className="text-2xl font-bold text-red-900">
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-[#ff4000] font-medium">🚨 CRITIQUES</p>
+                <p className="text-2xl font-bold text-[#ff4000]">
                   {systemHealth.critical_anomalies}
                 </p>
               </div>
-              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <p className="text-sm text-yellow-600 font-medium">24h dernières</p>
-                <p className="text-2xl font-bold text-yellow-900">
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-[#ff4000] font-medium">24h dernières</p>
+                <p className="text-2xl font-bold text-[#ff4000]">
                   {systemHealth.recent_anomalies_24h}
                 </p>
               </div>
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-600 font-medium">Taux résolution</p>
-                <p className="text-2xl font-bold text-green-900">
+              <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-[#ff4000] font-medium">Taux résolution</p>
+                <p className="text-2xl font-bold text-[#ff4000]">
                   {systemHealth.resolution_rate.toFixed(1)}%
                 </p>
               </div>
@@ -287,7 +287,7 @@ export default function SurveillanceLogiqueDashboard() {
         {/* Bouton Test Système - Ultra Professionnel */}
         <Button
           onClick={() => setShowSystemTest(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/40 border-0"
+          className="bg-[#04439e] hover:bg-[#04439e] text-white font-semibold shadow-lg shadow-[#04439e]/40 border-0"
         >
           <Shield className="w-4 h-4 mr-2" />
           <Play className="w-3 h-3 mr-1" />
@@ -313,7 +313,7 @@ export default function SurveillanceLogiqueDashboard() {
         <Button
           onClick={() => setAutoRefresh(!autoRefresh)}
           variant={autoRefresh ? 'default' : 'outline'}
-          className={autoRefresh ? 'bg-green-600 hover:bg-green-700' : ''}
+          className={autoRefresh ? 'bg-[#ff4000] hover:bg-[#ff4000]' : ''}
         >
           <Zap className="w-4 h-4 mr-2" />
           {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
@@ -347,12 +347,12 @@ export default function SurveillanceLogiqueDashboard() {
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
-            <Card className="bg-red-50 border-red-200">
+            <Card className="bg-orange-50 border-orange-200">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                  <p className="text-sm text-red-600 font-medium">CRITIQUES</p>
-                  <p className="text-3xl font-bold text-red-900">
+                  <AlertTriangle className="w-8 h-8 text-[#ff4000] mx-auto mb-2" />
+                  <p className="text-sm text-[#ff4000] font-medium">CRITIQUES</p>
+                  <p className="text-3xl font-bold text-[#ff4000]">
                     {anomaliesBySeverity['CRITICAL'] || 0}
                   </p>
                 </div>
@@ -371,24 +371,24 @@ export default function SurveillanceLogiqueDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-yellow-50 border-yellow-200">
+            <Card className="bg-orange-50 border-orange-200">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                  <p className="text-sm text-yellow-600 font-medium">NON RESOLUES</p>
-                  <p className="text-3xl font-bold text-yellow-900">
+                  <Clock className="w-8 h-8 text-[#ff4000] mx-auto mb-2" />
+                  <p className="text-sm text-[#ff4000] font-medium">NON RESOLUES</p>
+                  <p className="text-3xl font-bold text-[#ff4000]">
                     {stats.unresolved}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-green-50 border-green-200">
+            <Card className="bg-orange-50 border-orange-200">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm text-green-600 font-medium">RESOLUES</p>
-                  <p className="text-3xl font-bold text-green-900">{stats.resolved}</p>
+                  <CheckCircle2 className="w-8 h-8 text-[#ff4000] mx-auto mb-2" />
+                  <p className="text-sm text-[#ff4000] font-medium">RESOLUES</p>
+                  <p className="text-3xl font-bold text-[#ff4000]">{stats.resolved}</p>
                 </div>
               </CardContent>
             </Card>
@@ -446,7 +446,7 @@ export default function SurveillanceLogiqueDashboard() {
                           </Button>
                         )}
                         {anomaly.resolved_at && (
-                          <Badge className="bg-green-600">✓ Résolue</Badge>
+                          <Badge className="bg-[#ff4000]">✓ Résolue</Badge>
                         )}
                       </div>
                     </div>
@@ -487,11 +487,11 @@ export default function SurveillanceLogiqueDashboard() {
                         {JSON.stringify(anomaly.expected_value, null, 2)}
                       </pre>
                     </div>
-                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                      <p className="text-sm font-medium text-red-900 mb-2">
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <p className="text-sm font-medium text-[#ff4000] mb-2">
                         Valeur réelle
                       </p>
-                      <pre className="text-xs text-red-800 overflow-auto bg-red-100 p-2 rounded">
+                      <pre className="text-xs text-[#ff4000] overflow-auto bg-orange-100 p-2 rounded">
                         {JSON.stringify(anomaly.actual_value, null, 2)}
                       </pre>
                     </div>
@@ -502,7 +502,7 @@ export default function SurveillanceLogiqueDashboard() {
                       onClick={() =>
                         handleApplyAutoCorrection(anomaly.id)
                       }
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-[#ff4000] hover:bg-[#ff4000]"
                       disabled={isApplying}
                     >
                       <Zap className="w-4 h-4 mr-2" />

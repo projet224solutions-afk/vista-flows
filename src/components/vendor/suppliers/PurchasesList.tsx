@@ -78,7 +78,7 @@ const STATUS_CONFIG_BASE = {
   validated: {
     icon: CheckCircle,
     variant: 'default' as const,
-    color: 'text-green-500',
+    color: 'text-[#ff4000]',
   },
 };
 

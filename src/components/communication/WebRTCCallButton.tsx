@@ -59,7 +59,7 @@ export default function WebRTCCallButton({
         {isInCall ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
-          <Phone className="w-5 h-5 text-green-600" />
+          <Phone className="w-5 h-5 text-[#ff4000]" />
         )}
       </Button>
     );
@@ -72,7 +72,7 @@ export default function WebRTCCallButton({
       size={size}
       disabled={isInCall || disabled}
       className={cn(
-        variant === 'default' && "bg-green-600 hover:bg-green-700",
+        variant === 'default' && "bg-[#ff4000] hover:bg-[#ff4000]",
         isInCall && "opacity-50 cursor-not-allowed",
         className
       )}

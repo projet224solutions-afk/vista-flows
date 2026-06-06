@@ -26,8 +26,8 @@ export function GoOnlineButton({
         {/* Outer pulsing ring when online */}
         {isOnline && !isLoading && (
           <>
-            <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute -inset-2 rounded-full bg-emerald-500/10 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-[#ff4000]/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute -inset-2 rounded-full bg-[#ff4000]/10 animate-pulse" />
           </>
         )}
 
@@ -35,7 +35,7 @@ export function GoOnlineButton({
         <div className={cn(
           "absolute -inset-2 rounded-full blur-xl transition-all duration-500",
           isOnline
-            ? "bg-emerald-500/30 opacity-100"
+            ? "bg-[#ff4000]/30 opacity-100"
             : "bg-gray-500/20 opacity-50"
         )} />
 
@@ -53,7 +53,7 @@ export function GoOnlineButton({
             isLoading && "animate-pulse",
             !isLoading && !isOnline && hasSubscription && "hover:scale-105 active:scale-95",
             isOnline
-              ? "bg-emerald-500 text-white shadow-emerald-500/60"
+              ? "bg-[#ff4000] text-white shadow-[#ff4000]/60"
               : "bg-gray-800 text-gray-300 shadow-black/50 border border-gray-600"
           )}
         >
@@ -88,7 +88,7 @@ export function GoOnlineButton({
         "flex items-center gap-2 px-3 py-1.5 rounded-full",
         "text-xs font-medium transition-all duration-300",
         isOnline
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+          ? "bg-[#ff4000]/10 text-[#ff4000] border border-[#ff4000]/20"
           : "bg-gray-800/50 text-gray-400 border border-gray-700/50"
       )}>
         {isOnline ? (
@@ -106,7 +106,7 @@ export function GoOnlineButton({
 
       {/* Subscription warning - plus compact */}
       {!hasSubscription && (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px]">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20 text-[#ff4000] text-[11px]">
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
           <span>Abonnement requis</span>
         </div>

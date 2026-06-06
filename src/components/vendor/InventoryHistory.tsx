@@ -29,10 +29,10 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
 
   const getMovementColor = (type: string) => {
     switch (type) {
-      case 'sale': return 'text-red-600 bg-red-50';
-      case 'purchase': return 'text-green-600 bg-green-50';
+      case 'sale': return 'text-[#ff4000] bg-orange-50';
+      case 'purchase': return 'text-[#ff4000] bg-orange-50';
       case 'return': return 'text-blue-600 bg-blue-50';
-      case 'transfer': return 'text-purple-600 bg-purple-50';
+      case 'transfer': return 'text-[#04439e] bg-blue-50';
       case 'loss': return 'text-gray-600 bg-gray-50';
       default: return 'text-gray-600 bg-gray-50';
     }
@@ -120,12 +120,12 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
 
               <div className="flex items-center gap-2">
                 {item.quantity_change > 0 ? (
-                  <div className="flex items-center gap-1 text-green-600">
+                  <div className="flex items-center gap-1 text-[#ff4000]">
                     <ArrowUp className="w-4 h-4" />
                     <span className="font-semibold">+{item.quantity_change}</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 text-red-600">
+                  <div className="flex items-center gap-1 text-[#ff4000]">
                     <ArrowDown className="w-4 h-4" />
                     <span className="font-semibold">{item.quantity_change}</span>
                   </div>

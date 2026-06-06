@@ -29,13 +29,13 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
     <header className="sticky top-0 z-40 w-full bg-transparent shadow-none">
       <div className="flex w-full min-w-0 flex-col gap-2 px-2.5 py-2 sm:gap-3 sm:px-5 sm:py-3 md:px-8">
         {/* Brand */}
-        <div className="flex items-center justify-between gap-3 min-w-0 rounded-[28px] border border-sky-200/80 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] px-3 py-2 shadow-[0_14px_30px_rgba(15,23,42,0.07)] sm:px-4 sm:py-3">
+        <div className="flex items-center justify-between gap-3 min-w-0 rounded-[28px] border border-blue-200/80 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] px-3 py-2 shadow-[0_14px_30px_rgba(15,23,42,0.07)] sm:px-4 sm:py-3">
           <div className="flex items-center gap-3 min-w-0">
           <SidebarTrigger
-            className="h-10 w-10 rounded-2xl border border-sky-200/80 bg-white text-slate-700 shadow-[0_8px_18px_rgba(148,163,184,0.16)] hover:bg-sky-50 [&_svg]:h-4 [&_svg]:w-4 sm:h-11 sm:w-11 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
+            className="h-10 w-10 rounded-2xl border border-blue-200/80 bg-white text-slate-700 shadow-[0_8px_18px_rgba(148,163,184,0.16)] hover:bg-blue-50 [&_svg]:h-4 [&_svg]:w-4 sm:h-11 sm:w-11 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
             aria-label="Ouvrir/Fermer le menu"
           />
-            <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-sky-100 bg-white shadow-[0_10px_24px_rgba(59,130,246,0.12)] sm:h-12 sm:w-12">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-blue-100 bg-white shadow-[0_10px_24px_rgba(59,130,246,0.12)] sm:h-12 sm:w-12">
               <img src="/logo-224solutions.png" alt="224Solutions" className="h-5 w-5 rounded-md object-contain sm:h-8 sm:w-8" />
             </div>
             <div className="min-w-0">
@@ -62,7 +62,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             </div>
           </div>
 
-          <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[24px] border border-sky-200/80 bg-white/88 p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.05)] sm:gap-2">
+          <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[24px] border border-blue-200/80 bg-white/88 p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.05)] sm:gap-2">
             <Button
               variant="ghost"
               size="icon"

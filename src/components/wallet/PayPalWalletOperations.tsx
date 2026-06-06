@@ -208,15 +208,15 @@ export default function PayPalWalletOperations({ userId, _walletId, onSuccess }:
 
             {depositStep === 'approve' && (
               <div className="space-y-4 text-center">
-                <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
-                  <p className="text-sm text-amber-800 font-medium">
+                <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+                  <p className="text-sm text-[#ff4000] font-medium">
                     Approuvez le paiement dans la fenêtre PayPal ouverte, puis cliquez ci-dessous.
                   </p>
                 </div>
                 <Button
                   onClick={handleCaptureDeposit}
                   disabled={processing}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white"
                   size="lg"
                 >
                   {processing ? (

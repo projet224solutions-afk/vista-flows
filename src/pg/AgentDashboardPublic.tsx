@@ -380,10 +380,10 @@ export default function AgentDashboardPublic() {
 
   if (!agent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-orange-50">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <AlertCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Accès non autorisé</h2>
             <p className="text-muted-foreground">Token invalide ou expiré</p>
           </CardContent>
@@ -411,7 +411,7 @@ export default function AgentDashboardPublic() {
 
             {/* Agent Info */}
             <Card className="border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+              <CardHeader className="bg-[#04439e] text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <UserCheck className="w-5 h-5" />
                   Informations Agent
@@ -470,7 +470,7 @@ export default function AgentDashboardPublic() {
       case 'create-user':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white rounded-t-lg">
               <CardTitle>Créer un Nouvel Utilisateur</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
@@ -491,7 +491,7 @@ export default function AgentDashboardPublic() {
               <h2 className="text-xl font-bold">Mes Sous-Agents ({subAgents.length})</h2>
               <Dialog open={isSubAgentDialogOpen} onOpenChange={setIsSubAgentDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/40">
+                  <Button className="bg-[#04439e] hover:bg-[#04439e] shadow-lg shadow-[#04439e]/40">
                     <Plus className="w-4 h-4 mr-2" />
                     Nouveau Sous-Agent
                   </Button>
@@ -630,7 +630,7 @@ export default function AgentDashboardPublic() {
 
             {loadingSubAgents ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#04439e] mx-auto"></div>
               </div>
             ) : subAgents.length === 0 ? (
               <Card className="border-0 shadow-lg">
@@ -650,8 +650,8 @@ export default function AgentDashboardPublic() {
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="flex items-center gap-4">
-                          <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl">
-                            <UserCog className="w-6 h-6 text-purple-600" />
+                          <div className="p-3 bg-gradient-to-br from-blue-100 to-orange-100 rounded-xl">
+                            <UserCog className="w-6 h-6 text-[#04439e]" />
                           </div>
                           <div>
                             <h3 className="font-semibold text-lg">{subAgent.name}</h3>
@@ -796,7 +796,7 @@ export default function AgentDashboardPublic() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-blue-50/30 flex">
       {/* Sidebar */}
       <AgentSidebar
         agent={agent}

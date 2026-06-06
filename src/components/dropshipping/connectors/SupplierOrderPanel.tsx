@@ -135,7 +135,7 @@ function getStatusConfig(status: string) {
       return {
         icon: Clock,
         label: 'En attente',
-        color: 'bg-yellow-100 text-yellow-800',
+        color: 'bg-orange-100 text-[#ff4000]',
         description: 'Commande à passer au fournisseur'
       };
     case 'ordered':
@@ -149,14 +149,14 @@ function getStatusConfig(status: string) {
       return {
         icon: Truck,
         label: 'Expédié',
-        color: 'bg-purple-100 text-purple-800',
+        color: 'bg-blue-100 text-[#04439e]',
         description: 'En cours de livraison'
       };
     case 'delivered':
       return {
         icon: CheckCircle,
         label: 'Livré',
-        color: 'bg-green-100 text-green-800',
+        color: 'bg-orange-100 text-[#ff4000]',
         description: 'Commande livrée au client'
       };
     case 'cancelled':
@@ -170,7 +170,7 @@ function getStatusConfig(status: string) {
       return {
         icon: AlertTriangle,
         label: 'Erreur',
-        color: 'bg-red-100 text-red-800',
+        color: 'bg-orange-100 text-[#ff4000]',
         description: 'Erreur lors de la commande'
       };
     default:
@@ -434,8 +434,8 @@ function OrderCard({
 
           {/* Notes */}
           {order.notes && (
-            <div className="text-sm bg-yellow-50 rounded-lg p-2 border border-yellow-200">
-              <p className="text-yellow-800">{order.notes}</p>
+            <div className="text-sm bg-orange-50 rounded-lg p-2 border border-orange-200">
+              <p className="text-[#ff4000]">{order.notes}</p>
             </div>
           )}
 
@@ -483,7 +483,7 @@ function OrderCard({
               <Button
                 variant="outline"
                 size="icon"
-                className="text-red-500 hover:text-red-600"
+                className="text-[#ff4000] hover:text-[#ff4000]"
                 onClick={onCancelOrder}
               >
                 <XCircle className="w-4 h-4" />
@@ -564,7 +564,7 @@ export function SupplierOrderPanel({
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('pending')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-500" />
+              <Clock className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
                 <p className="text-xs text-muted-foreground">À commander</p>
@@ -588,7 +588,7 @@ export function SupplierOrderPanel({
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('shipped')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
-              <Truck className="w-5 h-5 text-purple-500" />
+              <Truck className="w-5 h-5 text-[#04439e]" />
               <div>
                 <p className="text-2xl font-bold">{stats.shipped}</p>
                 <p className="text-xs text-muted-foreground">En transit</p>
@@ -600,7 +600,7 @@ export function SupplierOrderPanel({
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('delivered')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{stats.delivered}</p>
                 <p className="text-xs text-muted-foreground">Livrées</p>
@@ -612,7 +612,7 @@ export function SupplierOrderPanel({
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('error')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
+              <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{stats.error}</p>
                 <p className="text-xs text-muted-foreground">Erreurs</p>
@@ -624,12 +624,12 @@ export function SupplierOrderPanel({
 
       {/* Alerte commandes en attente */}
       {stats.pending > 0 && (
-        <Alert className="bg-yellow-50 border-yellow-200">
-          <AlertTriangle className="w-4 h-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">
+        <Alert className="bg-orange-50 border-orange-200">
+          <AlertTriangle className="w-4 h-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000]">
             {stats.pending} commande(s) en attente
           </AlertTitle>
-          <AlertDescription className="text-yellow-700">
+          <AlertDescription className="text-[#ff4000]">
             Coût total estimé: {formatCurrency(totalPendingCost, 'USD')}.
             Passez ces commandes pour éviter les retards de livraison.
           </AlertDescription>

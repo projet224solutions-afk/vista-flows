@@ -203,7 +203,7 @@ export function VendorDeliveryNotifications() {
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
               <Badge
-                className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs"
+                className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-[#ff4000] text-white text-xs"
               >
                 {unreadCount}
               </Badge>
@@ -249,7 +249,7 @@ export function VendorDeliveryNotifications() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-[#ff4000] flex-shrink-0" />
                             <span className="font-medium text-sm truncate">
                               {notif.delivery?.customer_name || 'Client'}
                             </span>
@@ -268,11 +268,11 @@ export function VendorDeliveryNotifications() {
                               <ImageIcon className="h-3 w-3 text-blue-500" />
                             )}
                             {notif.delivery?.client_signature && (
-                              <PenTool className="h-3 w-3 text-purple-500" />
+                              <PenTool className="h-3 w-3 text-[#04439e]" />
                             )}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-green-600 text-xs">
+                        <Badge variant="outline" className="text-[#ff4000] text-xs">
                           {formatCurrency(notif.delivery?.delivery_fee || 0)}
                         </Badge>
                       </div>
@@ -290,7 +290,7 @@ export function VendorDeliveryNotifications() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
               Livraison confirmée
             </DialogTitle>
           </DialogHeader>
@@ -314,7 +314,7 @@ export function VendorDeliveryNotifications() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Montant</span>
-                    <span className="font-bold text-green-600">
+                    <span className="font-bold text-[#ff4000]">
                       {formatCurrency(selectedNotification.delivery?.delivery_fee || 0)}
                     </span>
                   </div>
@@ -357,7 +357,7 @@ export function VendorDeliveryNotifications() {
               {selectedNotification.delivery?.client_signature && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
-                    <PenTool className="h-4 w-4 text-purple-500" />
+                    <PenTool className="h-4 w-4 text-[#04439e]" />
                     Signature du client
                   </p>
                   <div className="bg-white border rounded-lg p-4">

@@ -186,8 +186,8 @@ export function BrowseModal({
                     <div className="flex items-center gap-2 mt-0.5">
                       {v.country && <span className="text-[11px] text-muted-foreground">{v.country}</span>}
                       {(v.rating ?? 0) > 0 && (
-                        <span className="text-[11px] text-amber-600 flex items-center gap-0.5">
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> {(v.rating ?? 0).toFixed(1)}
+                        <span className="text-[11px] text-[#ff4000] flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" /> {(v.rating ?? 0).toFixed(1)}
                         </span>
                       )}
                     </div>
@@ -210,13 +210,13 @@ export function BrowseModal({
                 <button
                   key={v.id}
                   onClick={() => { onSelectVendor(v.id); onOpenChange(false); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20 hover:border-green-400 hover:shadow-md transition-all text-left group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-orange-200 bg-orange-50/50 dark:border-[#ff4000]/50 dark:bg-[#ff4000]/20 hover:border-[#ff4000] hover:shadow-md transition-all text-left group"
                 >
                   {v.logo_url ? (
-                    <img src={v.logo_url} alt={v.business_name} className="w-10 h-10 rounded-full object-cover border-2 border-green-300" />
+                    <img src={v.logo_url} alt={v.business_name} className="w-10 h-10 rounded-full object-cover border-2 border-orange-300" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                      <ShieldCheck className="w-5 h-5 text-green-600" />
+                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-[#ff4000]/40 flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5 text-[#ff4000]" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -224,13 +224,13 @@ export function BrowseModal({
                     <div className="flex items-center gap-2 mt-0.5">
                       {v.country && <span className="text-[11px] text-muted-foreground">{v.country}</span>}
                       {(v.rating ?? 0) > 0 && (
-                        <span className="text-[11px] text-amber-600 flex items-center gap-0.5">
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> {(v.rating ?? 0).toFixed(1)}
+                        <span className="text-[11px] text-[#ff4000] flex items-center gap-0.5">
+                          <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" /> {(v.rating ?? 0).toFixed(1)}
                         </span>
                       )}
                     </div>
                   </div>
-                  <Badge className="bg-green-600 text-white text-[10px] shrink-0">
+                  <Badge className="bg-[#ff4000] text-white text-[10px] shrink-0">
                     <ShieldCheck className="w-3 h-3 mr-0.5" /> Certifié
                   </Badge>
                 </button>

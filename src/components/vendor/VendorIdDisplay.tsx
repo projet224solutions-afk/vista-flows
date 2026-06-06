@@ -90,9 +90,10 @@ export function VendorIdDisplay({
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
       <StandardIdBadge
         standardId={vendorData.custom_id}
-        variant="secondary"
+        variant="outline"
         size="md"
         copyable={true}
+        className="bg-transparent border-2 border-[#ff4000] text-blue-600 font-bold"
       />
       {showName && vendorData.business_name && (
         <span className="text-sm font-medium break-words">

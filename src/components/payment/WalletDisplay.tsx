@@ -192,8 +192,8 @@ export function WalletDisplay({
 
         {/* Statut bloqué */}
         {isBlocked && (
-          <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+          <div className="p-3 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+            <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">
               ⚠️ Votre portefeuille est bloqué. {wallet.blocked_reason || ''}
             </p>
           </div>

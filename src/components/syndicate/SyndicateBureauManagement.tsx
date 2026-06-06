@@ -81,9 +81,9 @@ export default function SyndicateBureauManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: 'Actif', className: 'bg-green-100 text-green-800' },
-      pending: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800' },
-      suspended: { label: 'Suspendu', className: 'bg-red-100 text-red-800' },
+      active: { label: 'Actif', className: 'bg-orange-100 text-[#ff4000]' },
+      pending: { label: 'En attente', className: 'bg-orange-100 text-[#ff4000]' },
+      suspended: { label: 'Suspendu', className: 'bg-orange-100 text-[#ff4000]' },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -146,9 +146,9 @@ export default function SyndicateBureauManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Bureaux Actifs</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeBureaus}</p>
+                <p className="text-2xl font-bold text-[#ff4000]">{stats.activeBureaus}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
+              <CheckCircle className="w-8 h-8 text-[#ff4000] opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -160,7 +160,7 @@ export default function SyndicateBureauManagement() {
                 <p className="text-sm text-muted-foreground">Membres Total</p>
                 <p className="text-2xl font-bold">{stats.totalMembers}</p>
               </div>
-              <Users className="w-8 h-8 text-purple-500 opacity-20" />
+              <Users className="w-8 h-8 text-[#04439e] opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -184,7 +184,7 @@ export default function SyndicateBureauManagement() {
                 <p className="text-sm text-muted-foreground">Cotisations</p>
                 <p className="text-xl font-bold">{formatCurrency(stats.totalCotisations)}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-green-500 opacity-20" />
+              <DollarSign className="w-8 h-8 text-[#ff4000] opacity-20" />
             </div>
           </CardContent>
         </Card>

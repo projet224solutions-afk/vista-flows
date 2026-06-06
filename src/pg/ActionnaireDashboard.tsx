@@ -78,8 +78,8 @@ function StatCard({
 function VoteChoiceBadge({ choice }: { choice: 'yes' | 'no' | 'abstain' | null | undefined }) {
   if (!choice) return <Badge variant="outline" className="text-xs">Non voté</Badge>;
   const map = {
-    yes:     { label: 'Pour',      cls: 'bg-green-100 text-green-800' },
-    no:      { label: 'Contre',    cls: 'bg-red-100 text-red-800' },
+    yes:     { label: 'Pour',      cls: 'bg-orange-100 text-[#ff4000]' },
+    no:      { label: 'Contre',    cls: 'bg-orange-100 text-[#ff4000]' },
     abstain: { label: 'Abstention', cls: 'bg-gray-100 text-gray-600' },
   };
   const { label, cls } = map[choice];
@@ -109,7 +109,7 @@ function OverviewTab({
   return (
     <div className="space-y-5">
       {/* Profil actionnaire */}
-      <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+      <Card className="border-0 shadow-sm bg-[#04439e] text-white">
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between">
             <div>
@@ -145,8 +145,8 @@ function OverviewTab({
             value={walletBalance > 0 ? walletBalance.toLocaleString('fr-FR') : '— Voir →'}
             sub="Cliquer pour ouvrir"
             icon={Wallet}
-            color="text-green-600"
-            bg="bg-green-50"
+            color="text-[#ff4000]"
+            bg="bg-orange-50"
           />
         </div>
         <StatCard
@@ -169,8 +169,8 @@ function OverviewTab({
               .map((s: any) => s.user_id),
           ).size} payants`}
           icon={assignment.category === 'delivery_driver' ? Truck : Package}
-          color="text-purple-600"
-          bg="bg-purple-50"
+          color="text-[#04439e]"
+          bg="bg-blue-50"
         />
         <StatCard
           title="Votes ouverts"
@@ -219,7 +219,7 @@ function OverviewTab({
                         <span>− Commissions agents</span>
                         <span className="font-medium">{commission > 0 ? `−${Number(commission).toLocaleString('fr-FR')}` : '0'} {r.currency}</span>
                       </div>
-                      <div className="flex justify-between text-green-700 font-bold">
+                      <div className="flex justify-between text-[#ff4000] font-bold">
                         <span>− Ma part ({Number(r.percentage)}%)</span>
                         <span>+{Number(share).toLocaleString('fr-FR')} {r.currency}</span>
                       </div>
@@ -241,7 +241,7 @@ function OverviewTab({
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-green-500" />
+              <DollarSign className="w-4 h-4 text-[#ff4000]" />
               Derniers paiements
             </CardTitle>
           </CardHeader>
@@ -350,11 +350,11 @@ function RevenuesTab({ revenues }: { revenues: ReturnType<typeof useShareholderD
                 </div>
 
                 {/* Part actionnaire */}
-                <div className="flex justify-between items-center px-3 py-2 bg-green-50 rounded-lg">
-                  <span className="text-sm font-bold text-green-800">
+                <div className="flex justify-between items-center px-3 py-2 bg-orange-50 rounded-lg">
+                  <span className="text-sm font-bold text-[#ff4000]">
                     − Ma part ({Number(r.percentage)}%)
                   </span>
-                  <span className="text-sm font-black text-green-700">+{fmt(share, r.currency)}</span>
+                  <span className="text-sm font-black text-[#ff4000]">+{fmt(share, r.currency)}</span>
                 </div>
 
                 {/* Séparateur */}
@@ -455,10 +455,10 @@ function PaymentsTab({ payments }: { payments: ReturnType<typeof useShareholderD
 // Helpers locaux pour la table abonnements
 // ============================================================================
 const SUB_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  active:    { label: 'Actif',           className: 'bg-green-100 text-green-800' },
+  active:    { label: 'Actif',           className: 'bg-orange-100 text-[#ff4000]' },
   expired:   { label: 'Expiré',          className: 'bg-orange-100 text-orange-800' },
-  cancelled: { label: 'Annulé',          className: 'bg-red-100 text-red-800' },
-  pending:   { label: 'En attente',      className: 'bg-yellow-100 text-yellow-800' },
+  cancelled: { label: 'Annulé',          className: 'bg-orange-100 text-[#ff4000]' },
+  pending:   { label: 'En attente',      className: 'bg-orange-100 text-[#ff4000]' },
   none:      { label: 'Sans abonnement', className: 'bg-gray-100 text-gray-500' },
 };
 
@@ -514,7 +514,7 @@ function SubscriptionTable({ rows }: { rows: any[] }) {
               <TableCell className="text-right text-sm font-semibold">
                 {(s.amount ?? 0) > 0
                   ? `${Number(s.amount).toLocaleString('fr-FR')} ${s.currency ?? 'GNF'}`
-                  : <span className="text-purple-600 font-medium text-xs">Gratuit</span>
+                  : <span className="text-[#04439e] font-medium text-xs">Gratuit</span>
                 }
               </TableCell>
             </TableRow>
@@ -551,8 +551,8 @@ function SubSection({
           {title}
           <span className={cn(
             'ml-2 text-xs font-normal px-2 py-0.5 rounded-full',
-            accentColor.includes('green')  && 'bg-green-100 text-green-700',
-            accentColor.includes('purple') && 'bg-purple-100 text-purple-700',
+            accentColor.includes('green')  && 'bg-orange-100 text-[#ff4000]',
+            accentColor.includes('purple') && 'bg-blue-100 text-[#04439e]',
             accentColor.includes('orange') && 'bg-orange-100 text-orange-700',
             accentColor.includes('blue')   && 'bg-blue-100 text-blue-700',
           )}>
@@ -661,12 +661,12 @@ function VendorListSection({ subscriptions }: { subscriptions: any[] }) {
               <TableRow className="bg-gray-50">
                 <TableHead className="pl-4 font-semibold">Boutique</TableHead>
                 <TableHead className="font-semibold">Pays</TableHead>
-                <TableHead className="text-center font-semibold text-green-700">
+                <TableHead className="text-center font-semibold text-[#ff4000]">
                   <span className="flex items-center justify-center gap-1">
                     <CreditCard className="w-3 h-3" />Payant
                   </span>
                 </TableHead>
-                <TableHead className="text-center font-semibold text-purple-700">
+                <TableHead className="text-center font-semibold text-[#04439e]">
                   <span className="flex items-center justify-center gap-1">
                     <Gift className="w-3 h-3" />Offert
                   </span>
@@ -681,7 +681,7 @@ function VendorListSection({ subscriptions }: { subscriptions: any[] }) {
                     <Clock className="w-3 h-3" />Expiré
                   </span>
                 </TableHead>
-                <TableHead className="text-center font-semibold text-red-700">
+                <TableHead className="text-center font-semibold text-[#ff4000]">
                   <span className="flex items-center justify-center gap-1">
                     <XCircle className="w-3 h-3" />Annulé
                   </span>
@@ -719,14 +719,14 @@ function VendorListSection({ subscriptions }: { subscriptions: any[] }) {
                   {/* Payant */}
                   <TableCell className="text-center">
                     {v.payant > 0
-                      ? <Badge className="bg-green-100 text-green-800 font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.payant}</Badge>
+                      ? <Badge className="bg-orange-100 text-[#ff4000] font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.payant}</Badge>
                       : <span className="text-gray-300 text-sm">—</span>}
                   </TableCell>
 
                   {/* Offert PDG */}
                   <TableCell className="text-center">
                     {v.offert > 0
-                      ? <Badge className="bg-purple-100 text-purple-800 font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.offert}</Badge>
+                      ? <Badge className="bg-blue-100 text-[#04439e] font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.offert}</Badge>
                       : <span className="text-gray-300 text-sm">—</span>}
                   </TableCell>
 
@@ -747,7 +747,7 @@ function VendorListSection({ subscriptions }: { subscriptions: any[] }) {
                   {/* Annulé */}
                   <TableCell className="text-center">
                     {v.annule > 0
-                      ? <Badge className="bg-red-100 text-red-800 font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.annule}</Badge>
+                      ? <Badge className="bg-orange-100 text-[#ff4000] font-bold text-xs min-w-[1.5rem]" variant="secondary">{v.annule}</Badge>
                       : <span className="text-gray-300 text-sm">—</span>}
                   </TableCell>
 
@@ -778,12 +778,12 @@ const FILTER_CONFIG: Record<FilterKey, {
   ring: string;
   textColor: string;
 }> = {
-  payant:  { label: 'Abonnements payants actifs',   description: 'Vendeurs avec abonnement payant actif',       selectedBg: 'bg-green-100',  ring: 'ring-green-500',  textColor: 'text-green-700'  },
-  offert:  { label: 'Offerts par le PDG',           description: 'Tous les abonnements offerts par le PDG (actifs + expirés)',  selectedBg: 'bg-purple-100', ring: 'ring-purple-500', textColor: 'text-purple-700' },
+  payant:  { label: 'Abonnements payants actifs',   description: 'Vendeurs avec abonnement payant actif',       selectedBg: 'bg-orange-100',  ring: 'ring-[#ff4000]',  textColor: 'text-[#ff4000]'  },
+  offert:  { label: 'Offerts par le PDG',           description: 'Tous les abonnements offerts par le PDG (actifs + expirés)',  selectedBg: 'bg-blue-100', ring: 'ring-[#04439e]', textColor: 'text-[#04439e]' },
   gratuit: { label: 'Comptes sur plan gratuit',     description: 'Vendeurs inscrits sur le plan gratuit',       selectedBg: 'bg-blue-100',   ring: 'ring-blue-500',   textColor: 'text-blue-700'   },
   expire:  { label: 'Abonnements expirés',          description: 'Vendeurs avec au moins un abonnement expiré', selectedBg: 'bg-orange-100', ring: 'ring-orange-500', textColor: 'text-orange-700' },
-  annule:  { label: 'Abonnements annulés',          description: 'Vendeurs avec au moins un abonnement annulé', selectedBg: 'bg-red-100',    ring: 'ring-red-500',    textColor: 'text-red-700'    },
-  total:   { label: 'Tous les vendeurs',            description: 'Vue complète de tous les vendeurs du pays',   selectedBg: 'bg-teal-100',   ring: 'ring-teal-500',   textColor: 'text-teal-700'   },
+  annule:  { label: 'Abonnements annulés',          description: 'Vendeurs avec au moins un abonnement annulé', selectedBg: 'bg-orange-100',    ring: 'ring-[#ff4000]',    textColor: 'text-[#ff4000]'    },
+  total:   { label: 'Tous les vendeurs',            description: 'Vue complète de tous les vendeurs du pays',   selectedBg: 'bg-orange-100',   ring: 'ring-[#ff4000]',   textColor: 'text-[#ff4000]'   },
 };
 
 // ============================================================================
@@ -848,16 +848,16 @@ function SubscriptionsTab({
           className={cn(
             'text-left rounded-xl p-3 shadow-sm border transition-all duration-150 hover:shadow-md hover:scale-[1.02] focus:outline-none',
             activeFilter === 'payant'
-              ? 'bg-green-100 ring-2 ring-green-500 ring-offset-1 border-green-300'
-              : 'bg-green-50 border-transparent',
+              ? 'bg-orange-100 ring-2 ring-[#ff4000] ring-offset-1 border-orange-300'
+              : 'bg-orange-50 border-transparent',
           )}
         >
           <div className="flex items-center gap-1.5 mb-1">
-            <CreditCard className="w-3.5 h-3.5 text-green-600" />
-            <p className="text-xs text-green-700 font-medium">Abonnements</p>
+            <CreditCard className="w-3.5 h-3.5 text-[#ff4000]" />
+            <p className="text-xs text-[#ff4000] font-medium">Abonnements</p>
           </div>
-          <p className="text-2xl font-bold text-green-700">{activePaid.length}</p>
-          <p className="text-xs text-green-600 mt-0.5">Vendeurs payants actifs</p>
+          <p className="text-2xl font-bold text-[#ff4000]">{activePaid.length}</p>
+          <p className="text-xs text-[#ff4000] mt-0.5">Vendeurs payants actifs</p>
         </button>
 
         {/* Offert */}
@@ -867,16 +867,16 @@ function SubscriptionsTab({
           className={cn(
             'text-left rounded-xl p-3 shadow-sm border transition-all duration-150 hover:shadow-md hover:scale-[1.02] focus:outline-none',
             activeFilter === 'offert'
-              ? 'bg-purple-100 ring-2 ring-purple-500 ring-offset-1 border-purple-300'
-              : 'bg-purple-50 border-transparent',
+              ? 'bg-blue-100 ring-2 ring-[#04439e] ring-offset-1 border-blue-300'
+              : 'bg-blue-50 border-transparent',
           )}
         >
           <div className="flex items-center gap-1.5 mb-1">
-            <Gift className="w-3.5 h-3.5 text-purple-600" />
-            <p className="text-xs text-purple-700 font-medium">Offerts</p>
+            <Gift className="w-3.5 h-3.5 text-[#04439e]" />
+            <p className="text-xs text-[#04439e] font-medium">Offerts</p>
           </div>
-          <p className="text-2xl font-bold text-purple-700">{allOfferedByPDG.length}</p>
-          <p className="text-xs text-purple-600 mt-0.5">Offerts par le PDG</p>
+          <p className="text-2xl font-bold text-[#04439e]">{allOfferedByPDG.length}</p>
+          <p className="text-xs text-[#04439e] mt-0.5">Offerts par le PDG</p>
         </button>
 
         {/* Gratuit */}
@@ -924,16 +924,16 @@ function SubscriptionsTab({
           className={cn(
             'text-left rounded-xl p-3 shadow-sm border transition-all duration-150 hover:shadow-md hover:scale-[1.02] focus:outline-none',
             activeFilter === 'annule'
-              ? 'bg-red-100 ring-2 ring-red-500 ring-offset-1 border-red-300'
-              : 'bg-red-50 border-transparent',
+              ? 'bg-orange-100 ring-2 ring-[#ff4000] ring-offset-1 border-orange-300'
+              : 'bg-orange-50 border-transparent',
           )}
         >
           <div className="flex items-center gap-1.5 mb-1">
-            <XCircle className="w-3.5 h-3.5 text-red-600" />
-            <p className="text-xs text-red-700 font-medium">Annulés</p>
+            <XCircle className="w-3.5 h-3.5 text-[#ff4000]" />
+            <p className="text-xs text-[#ff4000] font-medium">Annulés</p>
           </div>
-          <p className="text-2xl font-bold text-red-700">{cancelledSubs.length}</p>
-          <p className="text-xs text-red-600 mt-0.5">Abonnements annulés</p>
+          <p className="text-2xl font-bold text-[#ff4000]">{cancelledSubs.length}</p>
+          <p className="text-xs text-[#ff4000] mt-0.5">Abonnements annulés</p>
         </button>
 
         {/* Total */}
@@ -943,16 +943,16 @@ function SubscriptionsTab({
           className={cn(
             'text-left rounded-xl p-3 shadow-sm border transition-all duration-150 hover:shadow-md hover:scale-[1.02] focus:outline-none',
             activeFilter === 'total'
-              ? 'bg-teal-100 ring-2 ring-teal-500 ring-offset-1 border-teal-300'
-              : 'bg-teal-50 border-transparent',
+              ? 'bg-orange-100 ring-2 ring-[#ff4000] ring-offset-1 border-orange-300'
+              : 'bg-orange-50 border-transparent',
           )}
         >
           <div className="flex items-center gap-1.5 mb-1">
-            <Building2 className="w-3.5 h-3.5 text-teal-600" />
-            <p className="text-xs text-teal-700 font-medium">Total</p>
+            <Building2 className="w-3.5 h-3.5 text-[#ff4000]" />
+            <p className="text-xs text-[#ff4000] font-medium">Total</p>
           </div>
-          <p className="text-2xl font-bold text-teal-700">{totalSubs}</p>
-          <p className="text-xs text-teal-600 mt-0.5">Total abonnements</p>
+          <p className="text-2xl font-bold text-[#ff4000]">{totalSubs}</p>
+          <p className="text-xs text-[#ff4000] mt-0.5">Total abonnements</p>
         </button>
 
       </div>
@@ -1008,12 +1008,12 @@ function VotesTab({
       {/* Votes ouverts */}
       {openVotes.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2 text-green-700">
+          <h3 className="text-sm font-semibold flex items-center gap-2 text-[#ff4000]">
             <Vote className="w-4 h-4" />
             Votes en cours ({openVotes.length})
           </h3>
           {openVotes.map(vote => (
-            <Card key={vote.id} className="border-green-200 shadow-sm">
+            <Card key={vote.id} className="border-orange-200 shadow-sm">
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -1032,7 +1032,7 @@ function VotesTab({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 border-green-400 text-green-700 hover:bg-green-50 h-8 text-xs"
+                      className="flex-1 border-[#ff4000] text-[#ff4000] hover:bg-orange-50 h-8 text-xs"
                       disabled={voting === vote.id}
                       onClick={() => handleVote(vote, 'yes')}
                     >
@@ -1042,7 +1042,7 @@ function VotesTab({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 border-red-400 text-red-700 hover:bg-red-50 h-8 text-xs"
+                      className="flex-1 border-[#ff4000] text-[#ff4000] hover:bg-orange-50 h-8 text-xs"
                       disabled={voting === vote.id}
                       onClick={() => handleVote(vote, 'no')}
                     >
@@ -1084,8 +1084,8 @@ function VotesTab({
                       </p>
                       {total > 0 && (
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-green-700 font-medium">{vote.total_yes ?? 0} pour</span>
-                          <span className="text-xs text-red-600 font-medium">{vote.total_no ?? 0} contre</span>
+                          <span className="text-xs text-[#ff4000] font-medium">{vote.total_yes ?? 0} pour</span>
+                          <span className="text-xs text-[#ff4000] font-medium">{vote.total_no ?? 0} contre</span>
                           <span className="text-xs text-muted-foreground">{vote.total_abstain ?? 0} abstention</span>
                           <span className="text-xs text-muted-foreground">({total} votant{total > 1 ? 's' : ''})</span>
                         </div>
@@ -1288,7 +1288,7 @@ export default function ActionnaireDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md w-full border-0 shadow-lg">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <XCircle className="w-12 h-12 mx-auto text-red-400" />
+            <XCircle className="w-12 h-12 mx-auto text-[#ff4000]" />
             <div>
               <p className="font-semibold text-lg">Erreur de connexion</p>
               <p className="text-sm text-muted-foreground mt-1">{loadError}</p>
@@ -1372,7 +1372,7 @@ export default function ActionnaireDashboard() {
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <Badge
-                className="bg-red-500 text-white text-xs cursor-pointer"
+                className="bg-[#ff4000] text-white text-xs cursor-pointer"
                 onClick={() => setActiveTab('notifications')}
               >
                 {unreadCount}
@@ -1420,7 +1420,7 @@ export default function ActionnaireDashboard() {
             <TabsTrigger value="notifications"  className="relative text-xs flex-1 min-w-fit">
               Notifs
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#ff4000] text-white rounded-full text-[9px] flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}

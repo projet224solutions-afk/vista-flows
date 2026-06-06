@@ -50,8 +50,8 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
                 Score santé stock
               </span>
               <span className={`text-sm font-bold ${
-                stockHealthPercent >= 80 ? 'text-emerald-600' :
-                stockHealthPercent >= 50 ? 'text-orange-600' : 'text-red-600'
+                stockHealthPercent >= 80 ? 'text-[#ff4000]' :
+                stockHealthPercent >= 50 ? 'text-orange-600' : 'text-[#ff4000]'
               }`}>
                 {stockHealthPercent}%
               </span>
@@ -64,12 +64,12 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
 
           {/* Category grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+            <div className="p-3 rounded-xl bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">En stock</span>
+                <CheckCircle className="w-4 h-4 text-[#ff4000]" />
+                <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">En stock</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{inStock}</div>
+              <div className="text-2xl font-bold text-[#ff4000] dark:text-orange-300">{inStock}</div>
             </div>
 
             <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
@@ -88,12 +88,12 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
               <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">{stock.lowStockCount}</div>
             </div>
 
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+            <div className="p-3 rounded-xl bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2 mb-1">
-                <PackageX className="w-4 h-4 text-red-600" />
-                <span className="text-xs font-medium text-red-700 dark:text-red-400">Rupture</span>
+                <PackageX className="w-4 h-4 text-[#ff4000]" />
+                <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Rupture</span>
               </div>
-              <div className="text-2xl font-bold text-red-700 dark:text-red-300">{stock.outOfStockCount}</div>
+              <div className="text-2xl font-bold text-[#ff4000] dark:text-orange-300">{stock.outOfStockCount}</div>
             </div>
           </div>
 
@@ -104,14 +104,14 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
                 ⚠ Alertes actives
               </h4>
               {stock.outOfStockCount > 0 && (
-                <div className="flex items-center justify-between p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center justify-between p-2.5 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
                   <div className="flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm font-medium text-red-700 dark:text-red-400">
+                    <XCircle className="w-4 h-4 text-[#ff4000]" />
+                    <span className="text-sm font-medium text-[#ff4000] dark:text-[#ff4000]">
                       {stock.outOfStockCount} produit(s) en rupture de stock
                     </span>
                   </div>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600" onClick={() => navigate('/vendeur/products')}>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-[#ff4000]" onClick={() => navigate('/vendeur/products')}>
                     Voir <ArrowUpRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>

@@ -47,7 +47,7 @@ function buildPlanDescription(plan: Plan): string {
     if (normalized.includes('analytic')) return 'analytics';
     if (normalized.includes('support')) return 'support prioritaire';
     if (normalized.includes('avant') || normalized.includes('featured')) return 'mise en avant';
-    if (normalized.includes('api')) return 'acces API';
+    if (normalized.includes('api')) return ''; // Accès API retiré (aucun système API vendeur)
     if (normalized.includes('branding') || normalized.includes('marque')) return 'branding personnalise';
     return normalized;
   };
@@ -65,7 +65,6 @@ function buildPlanDescription(plan: Plan): string {
   if (plan.analytics_access) featureSet.add('analytics');
   if (plan.priority_support) featureSet.add('support prioritaire');
   if (plan.featured_products) featureSet.add('mise en avant');
-  if (plan.api_access) featureSet.add('acces API');
   if (plan.custom_branding) featureSet.add('branding personnalise');
 
   if (Array.isArray(plan.features)) {
@@ -81,7 +80,6 @@ function buildPlanDescription(plan: Plan): string {
     'analytics',
     'support prioritaire',
     'mise en avant',
-    'acces API',
     'branding personnalise',
   ];
 
@@ -169,19 +167,23 @@ export function VendorSubscriptionPlanSelector({
     return null;
   };
 
+  // Rabais annuel réel max parmi les plans payants (évite un pourcentage codé en dur faux).
+  const maxYearlyDiscount = plans.reduce((max, p) => {
+    const pct = p.yearly_discount_percentage
+      ?? (p.monthly_price_gnf && p.yearly_price_gnf
+        ? Math.round(((p.monthly_price_gnf * 12 - p.yearly_price_gnf) / (p.monthly_price_gnf * 12)) * 100)
+        : 0);
+    return Math.max(max, pct || 0);
+  }, 0);
+
   const handleSubscribe = async () => {
     if (!selectedPlan || !user?.id) return;
 
     const priceGNF = calculatePrice(selectedPlan);
-    const priceConverted = Math.round(convert(priceGNF));
 
-    if (walletBalance < priceConverted) {
-      toast.error("Solde insuffisant", {
-        description: `Votre solde : ${walletBalance.toLocaleString()} ${vendorCurrency}. Prix : ${priceConverted.toLocaleString()} ${vendorCurrency}`
-      });
-      return;
-    }
-
+    // NB: pas de blocage sur le solde ici — le backend calcule le montant réel
+    // (0 pour un downgrade avant expiration, différence au prorata pour un upgrade)
+    // et renvoie une erreur explicite si le solde est insuffisant.
     try {
       setSubscribing(true);
 
@@ -238,9 +240,9 @@ export function VendorSubscriptionPlanSelector({
                   <Calendar className="w-4 h-4" />
                 </div>
                 <p className="font-medium mt-2">{BILLING_CYCLE_LABELS[cycle]}</p>
-                {cycle === 'yearly' && (
+                {cycle === 'yearly' && maxYearlyDiscount > 0 && (
                   <Badge variant="secondary" className="mt-2 text-xs">
-                    Economisez jusqu'a 20%
+                    Économisez jusqu'à {maxYearlyDiscount}%
                   </Badge>
                 )}
               </Card>

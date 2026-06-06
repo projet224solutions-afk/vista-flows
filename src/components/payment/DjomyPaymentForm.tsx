@@ -41,8 +41,8 @@ const PAYMENT_METHODS = [
     id: 'MOMO' as PaymentMethod,
     name: 'MTN Mobile Money',
     icon: '💛',
-    color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
-    activeColor: 'ring-2 ring-yellow-500 border-yellow-500'
+    color: 'border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30',
+    activeColor: 'ring-2 ring-[#ff4000] border-[#ff4000]'
   },
   {
     id: 'KULU' as PaymentMethod,
@@ -143,11 +143,11 @@ export function DjomyPaymentForm({
       <Card className={cn('max-w-md mx-auto', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="w-16 h-16 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-[#ff4000] dark:text-[#ff4000]" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-green-600 dark:text-green-400">
+              <h3 className="text-lg font-semibold text-[#ff4000] dark:text-[#ff4000]">
                 Paiement initié !
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -178,11 +178,11 @@ export function DjomyPaymentForm({
       <Card className={cn('max-w-md mx-auto', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
-              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+            <div className="w-16 h-16 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto">
+              <XCircle className="w-8 h-8 text-[#ff4000] dark:text-[#ff4000]" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+              <h3 className="text-lg font-semibold text-[#ff4000] dark:text-[#ff4000]">
                 Échec du paiement
               </h3>
               <p className="text-sm text-muted-foreground mt-1">

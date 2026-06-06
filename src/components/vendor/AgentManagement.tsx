@@ -216,6 +216,7 @@ export default function AgentManagement() {
   };
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [submittingAgent, setSubmittingAgent] = useState(false);
   const [editingAgent, setEditingAgent] = useState<VendorAgent | null>(null);
 
   // ⚡️ Perf: mot de passe isolé (pas de setState pendant la frappe)
@@ -306,45 +307,54 @@ export default function AgentManagement() {
       return;
     }
 
+    // Anti double-soumission : un double-clic créerait 2 agents (chemin sans mot
+    // de passe = insert direct sans dédup). Le garde sérialise l'opération.
+    if (submittingAgent) return;
+    setSubmittingAgent(true);
+
     // Convert permissions object to format needed for update
     const permissionsForDB = formData.permissions;
 
-    if (editingAgent) {
-      await updateAgent(editingAgent.id, {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        agent_type: formData.agent_type,
-        permissions: permissionsForDB,
-        can_create_sub_agent: formData.permissions.manage_agents,
+    try {
+      if (editingAgent) {
+        await updateAgent(editingAgent.id, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          agent_type: formData.agent_type,
+          permissions: permissionsForDB,
+          can_create_sub_agent: formData.permissions.manage_agents,
+        });
+      } else {
+        await createAgent({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: newAgentPassword.length > 0 ? newAgentPassword : undefined,
+          agent_type: formData.agent_type,
+          permissions: permissionsForDB,
+          can_create_sub_agent: formData.permissions.manage_agents,
+        });
+      }
+
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        agent_type: 'commercial',
+        permissions: { ...DEFAULT_AGENT_PERMISSIONS },
       });
-    } else {
-      await createAgent({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: newAgentPassword.length > 0 ? newAgentPassword : undefined,
-        agent_type: formData.agent_type,
-        permissions: permissionsForDB,
-        can_create_sub_agent: formData.permissions.manage_agents,
-      });
+
+      // Reset password input sans re-render à chaque frappe
+      agentPasswordRef.current = "";
+      setPasswordInputKey((k) => k + 1);
+
+      setEditingAgent(null);
+      setIsCreateDialogOpen(false);
+    } finally {
+      setSubmittingAgent(false);
     }
-
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      agent_type: 'commercial',
-      permissions: { ...DEFAULT_AGENT_PERMISSIONS },
-    });
-
-    // Reset password input sans re-render à chaque frappe
-    agentPasswordRef.current = "";
-    setPasswordInputKey((k) => k + 1);
-
-    setEditingAgent(null);
-    setIsCreateDialogOpen(false);
   };
 
   const handleEditAgent = (agent: VendorAgent) => {
@@ -914,8 +924,10 @@ export default function AgentManagement() {
                     <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                       Annuler
                     </Button>
-                    <Button type="submit" className="bg-vendeur-gradient">
-                      {editingAgent ? (
+                    <Button type="submit" className="bg-vendeur-gradient" disabled={submittingAgent}>
+                      {submittingAgent ? (
+                        <>Traitement…</>
+                      ) : editingAgent ? (
                         <>
                           <Edit className="h-4 w-4 mr-2" />
                           Modifier l'Agent
@@ -951,10 +963,10 @@ export default function AgentManagement() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Agents Actifs
                 </CardTitle>
-                <Activity className="h-4 w-4 text-green-500" />
+                <Activity className="h-4 w-4 text-[#ff4000]" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
+                <div className="text-2xl font-bold text-[#ff4000]">{stats.activeAgents}</div>
               </CardContent>
             </Card>
           </div>

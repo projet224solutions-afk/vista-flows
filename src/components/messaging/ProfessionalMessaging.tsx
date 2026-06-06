@@ -551,7 +551,7 @@ export default function ProfessionalMessaging() {
                       </AvatarFallback>
                     </Avatar>
                     {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#ff4000] rounded-full border-2 border-background" />
                     )}
                   </div>
 
@@ -603,7 +603,7 @@ export default function ProfessionalMessaging() {
 
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{activeConversation.name}</h2>
-                {activeConversation.isOnline && <p className="text-xs text-green-500">En ligne</p>}
+                {activeConversation.isOnline && <p className="text-xs text-[#ff4000]">En ligne</p>}
               </div>
 
               <div className="flex items-center gap-1">

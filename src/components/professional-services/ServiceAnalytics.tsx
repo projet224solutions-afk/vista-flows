@@ -66,7 +66,7 @@ function Trend({ current, prev }: { current: number; prev: number }) {
   const pct = prev === 0 ? 100 : Math.round(((current - prev) / prev) * 100);
   const up = pct >= 0;
   return (
-    <span className={cn('flex items-center gap-0.5 text-xs font-medium', up ? 'text-emerald-600' : 'text-destructive')}>
+    <span className={cn('flex items-center gap-0.5 text-xs font-medium', up ? 'text-[#ff4000]' : 'text-destructive')}>
       {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
       {up ? '+' : ''}{pct}%
     </span>
@@ -246,30 +246,30 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
 
       {/* Statuts */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="p-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-600" />
+            <Clock className="w-4 h-4 text-[#ff4000]" />
             <div>
-              <div className="text-lg font-bold text-amber-700">{s.pendingBookings}</div>
-              <div className="text-xs text-amber-600">En attente</div>
+              <div className="text-lg font-bold text-[#ff4000]">{s.pendingBookings}</div>
+              <div className="text-xs text-[#ff4000]">En attente</div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="p-3 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <CheckCircle className="w-4 h-4 text-[#ff4000]" />
             <div>
-              <div className="text-lg font-bold text-emerald-700">{s.confirmedBookings}</div>
-              <div className="text-xs text-emerald-600">Confirmées</div>
+              <div className="text-lg font-bold text-[#ff4000]">{s.confirmedBookings}</div>
+              <div className="text-xs text-[#ff4000]">Confirmées</div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+        <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="p-3 flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-red-500" />
+            <XCircle className="w-4 h-4 text-[#ff4000]" />
             <div>
-              <div className="text-lg font-bold text-red-600">{s.cancelledBookings}</div>
-              <div className="text-xs text-red-500">Annulées</div>
+              <div className="text-lg font-bold text-[#ff4000]">{s.cancelledBookings}</div>
+              <div className="text-xs text-[#ff4000]">Annulées</div>
             </div>
           </CardContent>
         </Card>
@@ -310,7 +310,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <DollarSign className="w-4 h-4 text-[#ff4000]" />
             Revenus encaissés (GNF)
           </CardTitle>
         </CardHeader>
@@ -333,7 +333,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#10b981"
+                  stroke="#ff4000"
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}

@@ -22,7 +22,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
   // Agent vérifié
   if (kyc_status === 'verified') {
     return (
-      <Badge variant="default" className="bg-green-500 hover:bg-green-600 gap-1.5">
+      <Badge variant="default" className="bg-[#ff4000] hover:bg-[#ff4000] gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" />
         <span>Compte vérifié</span>
       </Badge>
@@ -32,7 +32,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
   // Vérification en cours
   if (kyc_status === 'pending') {
     return (
-      <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 gap-1.5">
+      <Badge variant="default" className="bg-[#ff4000] hover:bg-[#ff4000] gap-1.5">
         <Shield className="h-3.5 w-3.5" />
         <span>Vérification en cours...</span>
       </Badge>

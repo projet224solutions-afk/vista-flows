@@ -589,7 +589,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             </div>
 
             {/* Toggle précommande */}
-            <Card className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
+            <Card className="bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-900/20 dark:to-[#ff4000]/20">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <UtensilsCrossed className="w-5 h-5 text-orange-600" />
@@ -670,7 +670,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                                   <Badge variant="secondary" className="text-xs">⭐</Badge>
                                 )}
                                 {item.spicy_level && item.spicy_level > 0 && (
-                                  <span className="text-red-500">
+                                  <span className="text-[#ff4000]">
                                     {Array(item.spicy_level).fill('🌶️').join('')}
                                   </span>
                                 )}
@@ -868,10 +868,10 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
 
               {/* Option paiement */}
               {cartTotal > 0 && (
-                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                <Card className="bg-gradient-to-r from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <CreditCard className="w-5 h-5 text-green-600" />
+                      <CreditCard className="w-5 h-5 text-[#ff4000]" />
                       <div>
                         <p className="font-medium">Payer maintenant</p>
                         <p className="text-xs text-muted-foreground">Payez votre précommande en avance</p>
@@ -944,8 +944,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wallet className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wallet className="w-8 h-8 text-[#ff4000]" />
               </div>
               <h3 className="text-xl font-semibold">Choisissez votre mode de paiement</h3>
               <p className="text-muted-foreground">Payez votre précommande en avance</p>
@@ -1062,12 +1062,12 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
       case 'confirmation':
         return (
           <div className="space-y-6 text-center py-4">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-              <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
+            <div className="w-20 h-20 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto">
+              <Check className="w-10 h-10 text-[#ff4000] dark:text-[#ff4000]" />
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <h3 className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 Réservation confirmée !
               </h3>
               <p className="text-muted-foreground mt-2">
@@ -1076,12 +1076,12 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             </div>
 
             {/* Statut en attente de confirmation restaurant */}
-            <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
+            <Card className="bg-orange-50 dark:bg-[#ff4000]/20 border-orange-200">
               <CardContent className="p-4 flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-[#ff4000] flex-shrink-0" />
                 <div className="text-left">
-                  <p className="font-medium text-yellow-800 dark:text-yellow-200">En attente de confirmation</p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  <p className="font-medium text-[#ff4000] dark:text-orange-200">En attente de confirmation</p>
+                  <p className="text-xs text-[#ff4000] dark:text-orange-300">
                     Le restaurant confirmera votre réservation sous peu. Vous recevrez une notification.
                   </p>
                 </div>
@@ -1118,7 +1118,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   {confirmationData?.paymentIntentId && (
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-muted-foreground">Paiement</span>
-                      <Badge className="bg-green-500">
+                      <Badge className="bg-[#ff4000]">
                         <Check className="w-3 h-3 mr-1" />
                         Carte payée
                       </Badge>

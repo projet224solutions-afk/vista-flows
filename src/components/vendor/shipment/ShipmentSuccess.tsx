@@ -86,19 +86,19 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Animation de succès */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+      <Card className="bg-gradient-to-br from-orange-50 to-orange-50 border-orange-200">
         <CardContent className="p-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600 animate-in zoom-in duration-300" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
+            <CheckCircle className="h-10 w-10 text-[#ff4000] animate-in zoom-in duration-300" />
           </div>
-          <h2 className="text-2xl font-bold text-green-900 mb-2">下单成功 !</h2>
-          <p className="text-green-700 mb-6">Commande d'expédition créée avec succès</p>
+          <h2 className="text-2xl font-bold text-[#ff4000] mb-2">下单成功 !</h2>
+          <p className="text-[#ff4000] mb-6">Commande d'expédition créée avec succès</p>
 
           {/* Numéro de suivi */}
-          <div className="bg-white rounded-lg p-4 mb-4 border-2 border-green-300">
+          <div className="bg-white rounded-lg p-4 mb-4 border-2 border-orange-300">
             <p className="text-sm text-muted-foreground mb-1">Numéro de suivi</p>
             <div className="flex items-center justify-center gap-2">
-              <p className="text-2xl font-bold text-green-900 tracking-wider">{trackingNumber}</p>
+              <p className="text-2xl font-bold text-[#ff4000] tracking-wider">{trackingNumber}</p>
               <Button
                 variant="ghost"
                 size="icon"
@@ -142,7 +142,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
           {/* Destinataire */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#ff4000]">
               <MapPin className="h-4 w-4" />
               <span>Destinataire</span>
             </div>
@@ -186,7 +186,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           {/* Options */}
           <div className="flex flex-wrap gap-2">
             {shipment.cash_on_delivery && (
-              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+              <Badge variant="secondary" className="bg-orange-100 text-[#ff4000]">
                 Contre-remboursement: {shipment.cod_amount?.toLocaleString()} GNF
               </Badge>
             )}
@@ -196,7 +196,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
               </Badge>
             )}
             {shipment.return_option && (
-              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+              <Badge variant="secondary" className="bg-blue-100 text-[#04439e]">
                 Option de retour
               </Badge>
             )}
@@ -204,7 +204,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
           {/* Statut */}
           <div className="flex items-center gap-2">
-            <Badge className="bg-green-100 text-green-800">
+            <Badge className="bg-orange-100 text-[#ff4000]">
               Commande créée
             </Badge>
           </div>

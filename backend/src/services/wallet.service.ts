@@ -11,9 +11,9 @@
  * Migré depuis l'Edge Function wallet-operations
  */
 
+import { randomUUID } from 'crypto';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
-import { countryToCurrency } from '../utils/countryToCurrency.js';
 
 const ZERO_DECIMAL_CURRENCIES = new Set([
   'GNF', 'XOF', 'XAF', 'VND', 'IDR', 'KRW', 'JPY', 'CLP', 'UGX', 'RWF',
@@ -28,63 +28,7 @@ type TransferExecutionOptions = {
   rateUsed?: number;
   rateSource?: string;
   feeAmount?: number;
-  senderWalletId?: string;
-  receiverWalletId?: string;
 };
-
-type TransferWallet = {
-  id: string;
-  balance: number;
-  is_blocked?: boolean | null;
-  currency?: string | null;
-};
-
-async function ensureWalletForTransfer(userId: string, fallbackCurrency = 'GNF'): Promise<TransferWallet | null> {
-  const { data: existingWallet, error: existingError } = await supabaseAdmin
-    .from('wallets')
-    .select('id, balance, is_blocked, currency')
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false })
-    .maybeSingle();
-
-  if (existingWallet) return existingWallet as TransferWallet;
-
-  if (existingError) {
-    logger.warn(`[Wallet] Wallet lookup failed before auto-create for ${userId}: ${existingError.message}`);
-  }
-
-  // Déterminer la devise selon le pays du profil
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('detected_country, country, detected_currency')
-    .eq('id', userId)
-    .maybeSingle();
-
-  const userCountry = (profile as any)?.detected_country || (profile as any)?.country || 'GN';
-  const resolvedCurrency = ((profile as any)?.detected_currency && (profile as any).detected_currency !== 'GNF')
-    ? (profile as any).detected_currency
-    : countryToCurrency(userCountry) || fallbackCurrency;
-
-  const { data: createdWallet, error: createError } = await supabaseAdmin
-    .from('wallets')
-    .insert({
-      user_id: userId,
-      balance: 0,
-      currency: resolvedCurrency,
-      currency_locked: true,
-      currency_locked_at: new Date().toISOString(),
-      currency_lock_reason: `Devise assignée selon pays de résidence: ${userCountry}`,
-    })
-    .select('id, balance, is_blocked, currency')
-    .single();
-
-  if (createError || !createdWallet) {
-    logger.error(`[Wallet] Wallet auto-create failed for ${userId}: ${createError?.message || 'no wallet returned'}`);
-    return null;
-  }
-
-  return createdWallet as TransferWallet;
-}
 
 function smartRoundTransferAmount(amount: number, currency: string): number {
   if (!Number.isFinite(amount)) return 0;
@@ -128,26 +72,6 @@ async function persistTransferHistory(params: {
     feeAmount,
   } = params;
 
-  // Résoudre les noms des profils sender/receiver pour l'historique
-  let senderName = 'Expéditeur';
-  let receiverName = 'Destinataire';
-  try {
-    const [senderProfile, receiverProfile] = await Promise.all([
-      supabaseAdmin.from('profiles').select('full_name, first_name, last_name, custom_id').eq('id', senderId).maybeSingle(),
-      supabaseAdmin.from('profiles').select('full_name, first_name, last_name, custom_id').eq('id', receiverId).maybeSingle(),
-    ]);
-    if (senderProfile.data) {
-      const p = senderProfile.data as any;
-      senderName = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.custom_id || senderName;
-    }
-    if (receiverProfile.data) {
-      const p = receiverProfile.data as any;
-      receiverName = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.custom_id || receiverName;
-    }
-  } catch {
-    // profils non critiques — on continue sans noms
-  }
-
   const metadata = {
     idempotency_key: idempotencyKey,
     source: 'backend-node',
@@ -160,57 +84,28 @@ async function persistTransferHistory(params: {
     rate_used: rateUsed,
     rate_source: rateSource,
     fee_amount: feeAmount,
-    sender_name: senderName,
-    receiver_name: receiverName,
   };
 
-  // 'international_transfer' n'existe pas dans l'enum PostgreSQL — on utilise toujours
-  // 'transfer_out' et on stocke is_international dans metadata
-  const outType = 'transfer_out' as const;
-  const ts = Date.now();
-  const rand = () => Math.random().toString(36).slice(2, 8).toUpperCase();
-  const txIdOut = `TRF-OUT-${ts}-${rand()}`;
-  const txIdIn  = `TRF-IN-${ts}-${rand()}`;
+  const transferType = isInternational ? 'international_transfer' : 'transfer';
 
-  const walletTxPromise = Promise.all([
-    supabaseAdmin.from('wallet_transactions').insert({
-      transaction_id: txIdOut,
+  const walletTxPromise = supabaseAdmin
+    .from('wallet_transactions')
+    .insert({
       sender_wallet_id: senderWalletId,
       receiver_wallet_id: receiverWalletId,
-      sender_user_id: senderId,
-      receiver_user_id: receiverId,
-      transaction_type: outType,
+      transaction_type: transferType,
       amount: amountSent,
-      fee: feeAmount,
-      net_amount: amountSent - feeAmount,
-      currency: senderCurrency,
       status: 'completed',
       description,
       metadata,
-    }),
-    supabaseAdmin.from('wallet_transactions').insert({
-      transaction_id: txIdIn,
-      sender_wallet_id: senderWalletId,
-      receiver_wallet_id: receiverWalletId,
-      sender_user_id: senderId,
-      receiver_user_id: receiverId,
-      transaction_type: 'transfer_in',
-      amount: amountReceived,
-      fee: 0,
-      net_amount: amountReceived,
-      currency: receiverCurrency,
-      status: 'completed',
-      description,
-      metadata,
-    }),
-  ]);
+    });
 
   const persistEnhancedHistory = async () => {
     const enhancedPayload = {
       sender_id: senderId,
       receiver_id: receiverId,
       amount: amountSent,
-      method: outType,
+      method: transferType,
       status: 'completed',
       currency: senderCurrency,
       metadata,
@@ -250,15 +145,13 @@ async function persistTransferHistory(params: {
     return { error: insertError };
   };
 
-  const [walletTxResults, enhancedTxResult] = await Promise.all([
+  const [walletTxResult, enhancedTxResult] = await Promise.all([
     walletTxPromise,
     persistEnhancedHistory(),
   ]);
 
-  for (const walletTxResult of walletTxResults) {
-    if (walletTxResult?.error) {
-      logger.warn(`[Wallet] wallet_transactions history insert failed: ${walletTxResult.error.message}`);
-    }
+  if (walletTxResult?.error) {
+    logger.warn(`[Wallet] wallet_transactions history insert failed: ${walletTxResult.error.message}`);
   }
   if (enhancedTxResult?.error) {
     logger.warn(`[Wallet] enhanced_transactions history write failed: ${enhancedTxResult.error.message}`);
@@ -297,6 +190,18 @@ async function recordIdempotencyKey(
     });
   } catch {
     // Non-blocking — idempotency key may already exist (race condition)
+  }
+}
+
+/**
+ * Supprime une clé d'idempotence (à appeler quand l'opération ÉCHOUE), pour qu'une
+ * nouvelle tentative légitime puisse se rejouer au lieu de renvoyer un faux succès.
+ */
+async function deleteIdempotencyKey(idempotencyKey: string): Promise<void> {
+  try {
+    await supabaseAdmin.from('wallet_idempotency_keys').delete().eq('idempotency_key', idempotencyKey);
+  } catch {
+    // non-bloquant
   }
 }
 
@@ -399,33 +304,16 @@ export async function creditWallet(
 
     const { data: wallet, error: walletErr } = await supabaseAdmin
       .from('wallets')
-      .select('id, balance')
+      .select('id, balance, currency')
       .eq('user_id', userId)
       .single();
 
     if (walletErr || !wallet) {
-      // Créer le wallet si inexistant — devise selon pays du profil
-      const { data: profileForCredit } = await supabaseAdmin
-        .from('profiles')
-        .select('detected_country, country, detected_currency')
-        .eq('id', userId)
-        .maybeSingle();
-      const creditCountry = (profileForCredit as any)?.detected_country || (profileForCredit as any)?.country || 'GN';
-      const creditCurrency = ((profileForCredit as any)?.detected_currency && (profileForCredit as any).detected_currency !== 'GNF')
-        ? (profileForCredit as any).detected_currency
-        : countryToCurrency(creditCountry);
-
+      // Créer le wallet si inexistant
       const { data: newWallet, error: createErr } = await supabaseAdmin
         .from('wallets')
-        .insert({
-          user_id: userId,
-          balance: amount,
-          currency: creditCurrency,
-          currency_locked: true,
-          currency_locked_at: new Date().toISOString(),
-          currency_lock_reason: `Devise assignée selon pays de résidence: ${creditCountry}`,
-        })
-        .select('id, balance')
+        .insert({ user_id: userId, balance: amount, currency: 'GNF' })
+        .select('id, balance, currency')
         .single();
 
       if (createErr || !newWallet) {
@@ -445,16 +333,24 @@ export async function creditWallet(
 
     if (updateErr) return { success: false, error: updateErr.message };
 
-    // Journal transaction
-    await supabaseAdmin.from('wallet_transactions').insert({
-      sender_wallet_id: wallet.id,
+    // Journal transaction (crédit : pas d'émetteur → sender_wallet_id null)
+    const { error: txErr } = await supabaseAdmin.from('wallet_transactions').insert({
+      transaction_id: randomUUID(),
+      sender_wallet_id: null,
       receiver_wallet_id: wallet.id,
+      sender_user_id: null,
+      receiver_user_id: userId,
       transaction_type: transactionType,
       amount,
+      net_amount: amount,
       status: 'completed',
+      currency: (wallet as any).currency || 'GNF',
       description,
       metadata: { reference, source: 'backend-node' },
     });
+    if (txErr) {
+      logger.error(`[Wallet] credit history insert failed (solde déjà crédité): ${txErr.message}`);
+    }
 
     if (idempotencyKey) {
       await recordIdempotencyKey(idempotencyKey, userId, 'credit');
@@ -523,15 +419,25 @@ export async function debitWallet(
     }
 
     // Journal transaction
-    await supabaseAdmin.from('wallet_transactions').insert({
+    // NB: transaction_id + net_amount sont NOT NULL ; receiver_wallet_id doit
+    // différer du sender (CHECK different_wallets) → null pour un débit.
+    const { error: txErr } = await supabaseAdmin.from('wallet_transactions').insert({
+      transaction_id: randomUUID(),
       sender_wallet_id: wallet.id,
-      receiver_wallet_id: wallet.id,
+      receiver_wallet_id: null,
+      sender_user_id: userId,
+      receiver_user_id: null,
       transaction_type: 'withdrawal',
       amount,
+      net_amount: amount,
       status: 'completed',
+      currency: wallet.currency || 'GNF',
       description,
       metadata: { idempotency_key: idempotencyKey, source: 'backend-node' },
     });
+    if (txErr) {
+      logger.error(`[Wallet] debit history insert failed (solde déjà débité): ${txErr.message}`);
+    }
 
     await recordIdempotencyKey(idempotencyKey, userId, 'withdraw');
 
@@ -565,44 +471,35 @@ export async function transferBetweenWallets(
       return { success: true };
     }
 
+    // Record idempotency key early to prevent duplicate transfers on crash/retry
+    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
+
+    // En cas d'ÉCHEC, libérer la clé d'idempotence pour permettre un rejeu légitime
+    // (sinon une nouvelle tentative renverrait un faux succès sans transférer).
+    const fail = async (error: string) => { await deleteIdempotencyKey(idempotencyKey); return { success: false, error }; };
+
     const suspect = await detectSuspiciousActivity(senderId, amount);
     if (suspect.shouldBlock) {
-      return { success: false, error: 'Transfert bloqué pour activité suspecte' };
+      return await fail('Transfert bloqué pour activité suspecte');
     }
 
-    // Utiliser les IDs wallet fournis par la route (déjà validés) pour éviter un double-fetch
-    // qui pourrait retourner un wallet différent si l'utilisateur en a plusieurs
-    let senderWallet: TransferWallet;
-    if (options.senderWalletId) {
-      const { data: sw } = await supabaseAdmin
-        .from('wallets')
-        .select('id, balance, is_blocked, currency')
-        .eq('id', options.senderWalletId)
-        .single();
-      if (!sw) return { success: false, error: 'Wallet expéditeur introuvable' };
-      senderWallet = sw as TransferWallet;
-    } else {
-      const sw = await ensureWalletForTransfer(senderId, options.senderCurrency || 'GNF');
-      if (!sw) return { success: false, error: 'Wallet expéditeur indisponible' };
-      senderWallet = sw;
-    }
-    if (senderWallet.is_blocked) return { success: false, error: 'Wallet expéditeur bloqué' };
-    if (Number(senderWallet.balance) < amount) return { success: false, error: 'Solde insuffisant' };
+    const { data: senderWallet, error: senderErr } = await supabaseAdmin
+      .from('wallets')
+      .select('id, balance, is_blocked, currency')
+      .eq('user_id', senderId)
+      .single();
 
-    let receiverWallet: TransferWallet;
-    if (options.receiverWalletId) {
-      const { data: rw } = await supabaseAdmin
-        .from('wallets')
-        .select('id, balance, is_blocked, currency')
-        .eq('id', options.receiverWalletId)
-        .single();
-      if (!rw) return { success: false, error: 'Wallet destinataire introuvable' };
-      receiverWallet = rw as TransferWallet;
-    } else {
-      const rw = await ensureWalletForTransfer(receiverId, options.receiverCurrency || senderWallet.currency || 'GNF');
-      if (!rw) return { success: false, error: 'Wallet destinataire indisponible' };
-      receiverWallet = rw;
-    }
+    if (senderErr || !senderWallet) return await fail('Wallet expéditeur introuvable');
+    if (senderWallet.is_blocked) return await fail('Wallet expéditeur bloqué');
+    if (Number(senderWallet.balance) < amount) return await fail('Solde insuffisant');
+
+    const { data: receiverWallet, error: receiverErr } = await supabaseAdmin
+      .from('wallets')
+      .select('id, balance, currency')
+      .eq('user_id', receiverId)
+      .single();
+
+    if (receiverErr || !receiverWallet) return await fail('Wallet destinataire introuvable');
 
     const senderCurrency = String(options.senderCurrency || senderWallet.currency || 'GNF').toUpperCase();
     const receiverCurrency = String(options.receiverCurrency || receiverWallet.currency || senderCurrency).toUpperCase();
@@ -616,7 +513,7 @@ export async function transferBetweenWallets(
     );
 
     if (!Number.isFinite(amountToCredit) || amountToCredit <= 0) {
-      return { success: false, error: 'Montant crédité invalide pour le destinataire' };
+      return await fail('Montant crédité invalide pour le destinataire');
     }
 
     const canUseRpc = !isInternational && Math.abs(amountToCredit - amount) < 0.000001;
@@ -654,58 +551,78 @@ export async function transferBetweenWallets(
           rateSource,
           feeAmount,
         });
-        await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
         logger.info(`[Wallet] Transfer via RPC: sender=${senderId}, receiver=${receiverId}, debit=${amount}, credit=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
         return { success: true, transactionId: txId };
       }
 
       logger.warn(`[Wallet] RPC atomic transfer failed (${rpcError.message}), using manual fallback`);
+    } else {
+      // Inter-devises (ou montant crédité différent) → RPC FX ATOMIQUE (débit≠crédit en 1 transaction)
+      const { data: fxData, error: fxError } = await supabaseAdmin.rpc('execute_atomic_wallet_transfer_fx', {
+        p_sender_id: senderId,
+        p_receiver_id: receiverId,
+        p_debit_amount: amount,
+        p_credit_amount: amountToCredit,
+        p_description: description,
+        p_sender_wallet_id: senderWallet.id,
+        p_recipient_wallet_id: receiverWallet.id,
+        p_sender_balance_before: senderWallet.balance,
+        p_recipient_balance_before: receiverWallet.balance,
+        p_sender_currency: senderCurrency,
+        p_receiver_currency: receiverCurrency,
+        p_rate_used: rateUsed,
+      });
+      if (!fxError) {
+        const txId = Array.isArray(fxData) ? (fxData[0]?.transaction_id || fxData[0]?.id) : (fxData?.transaction_id || fxData?.id);
+        await persistTransferHistory({
+          transactionId: txId, senderId, receiverId,
+          senderWalletId: senderWallet.id, receiverWalletId: receiverWallet.id,
+          amountSent: amount, amountReceived: amountToCredit, description, idempotencyKey,
+          senderCurrency, receiverCurrency, isInternational, rateUsed, rateSource, feeAmount,
+        });
+        logger.info(`[Wallet] Transfer FX via RPC: sender=${senderId}, receiver=${receiverId}, debit=${amount}, credit=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
+        return { success: true, transactionId: txId };
+      }
+      // Le RPC FX a échoué → on libère la clé et on renvoie l'erreur (pas de chemin manuel
+      // non-atomique pour le FX : on ne risque pas une perte d'argent sur échec partiel).
+      logger.error(`[Wallet] RPC FX transfer failed: ${fxError.message}`);
+      return await fail('Échec du transfert international. Réessayez.');
     }
 
     const newSenderBalance = Number(senderWallet.balance) - amount;
+    const newReceiverBalance = Number(receiverWallet.balance) + amountToCredit;
 
-    // Débit expéditeur — verrou optimiste sur balance ET ciblage par wallet ID (pas user_id)
     const { data: debitResult, error: debitErr } = await supabaseAdmin
       .from('wallets')
       .update({ balance: newSenderBalance, updated_at: new Date().toISOString() })
-      .eq('id', senderWallet.id)
+      .eq('user_id', senderId)
       .eq('balance', senderWallet.balance)
       .select('balance')
       .single();
 
     if (debitErr || !debitResult) {
-      logger.warn(`[Wallet] Debit failed for wallet ${senderWallet.id} (user=${senderId}): ${debitErr?.message || 'no row matched — concurrent modification'}`);
-      return { success: false, error: 'Solde modifié pendant la transaction. Réessayez.' };
+      return await fail('Solde modifié pendant la transaction. Réessayez.');
     }
 
-    // Récupérer le solde courant du destinataire pour éviter une valeur périmée
-    const { data: freshReceiverWallet } = await supabaseAdmin
-      .from('wallets')
-      .select('balance')
-      .eq('id', receiverWallet.id)
-      .single();
-
-    const currentReceiverBalance = Number(freshReceiverWallet?.balance ?? receiverWallet.balance);
-    const newReceiverBalance = currentReceiverBalance + amountToCredit;
-
-    // Crédit destinataire — ciblage par wallet ID uniquement
-    const { data: creditResult, error: creditErr } = await supabaseAdmin
+    const { error: creditErr } = await supabaseAdmin
       .from('wallets')
       .update({ balance: newReceiverBalance, updated_at: new Date().toISOString() })
-      .eq('id', receiverWallet.id)
-      .select('balance')
-      .single();
+      .eq('user_id', receiverId);
 
-    if (creditErr || !creditResult) {
-      logger.error(`[Wallet] Credit failed for wallet ${receiverWallet.id} (user=${receiverId}), rolling back debit on wallet ${senderWallet.id}: ${creditErr?.message || 'no row matched'}`);
-      await supabaseAdmin
+    if (creditErr) {
+      // Compensation VÉRIFIÉE : re-créditer l'expéditeur. Si même le revert échoue →
+      // incohérence critique (argent débité, non crédité, non rendu) → alerte + pas de rejeu aveugle.
+      const { error: revertErr } = await supabaseAdmin
         .from('wallets')
         .update({ balance: senderWallet.balance, updated_at: new Date().toISOString() })
-        .eq('id', senderWallet.id);
-      return { success: false, error: 'Échec du crédit destinataire — transaction annulée' };
+        .eq('user_id', senderId);
+      if (revertErr) {
+        logger.error(`[Wallet] CRITIQUE: crédit ET revert échoués (${senderId}→${receiverId}, montant=${amount}). Intervention manuelle requise.`);
+        try { await supabaseAdmin.from('wallet_suspicious_activities').insert({ user_id: senderId, activity_type: 'transfer_revert_failed', severity: 'critical', details: { senderId, receiverId, amount, idempotencyKey } }); } catch { /* ignore */ }
+        return { success: false, error: 'Erreur critique de transfert. Contactez le support.' };
+      }
+      return await fail('Échec du crédit destinataire — transaction annulée');
     }
-
-    logger.info(`[Wallet] Balances updated: sender wallet ${senderWallet.id} ${senderWallet.balance}→${newSenderBalance} ${senderCurrency}, receiver wallet ${receiverWallet.id} ${currentReceiverBalance}→${newReceiverBalance} ${receiverCurrency}`);
 
     await persistTransferHistory({
       senderId,
@@ -723,11 +640,11 @@ export async function transferBetweenWallets(
       rateSource,
       feeAmount,
     });
-    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
     logger.info(`[Wallet] Transfer manual: sender=${senderId}, receiver=${receiverId}, debit=${amount}, credit=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
     return { success: true };
   } catch (err: any) {
     logger.error(`[Wallet] transferBetweenWallets error: ${err.message}`);
+    await deleteIdempotencyKey(idempotencyKey);
     return { success: false, error: err.message };
   }
 }

@@ -278,11 +278,11 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'success':
-                return <CheckCircle className="w-5 h-5 text-green-600" />;
+                return <CheckCircle className="w-5 h-5 text-[#ff4000]" />;
             case 'error':
-                return <XCircle className="w-5 h-5 text-red-600" />;
+                return <XCircle className="w-5 h-5 text-[#ff4000]" />;
             case 'warning':
-                return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+                return <AlertTriangle className="w-5 h-5 text-[#ff4000]" />;
             default:
                 return null;
         }
@@ -292,11 +292,11 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
     const getBadgeColor = (status: string) => {
         switch (status) {
             case 'success':
-                return 'bg-green-100 text-green-800';
+                return 'bg-orange-100 text-[#ff4000]';
             case 'error':
-                return 'bg-red-100 text-red-800';
+                return 'bg-orange-100 text-[#ff4000]';
             case 'warning':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-orange-100 text-[#ff4000]';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -336,7 +336,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                                 onClick={autoFix}
                                 disabled={isFixing}
                                 variant="outline"
-                                className="border-green-600 text-green-600 hover:bg-green-50"
+                                className="border-[#ff4000] text-[#ff4000] hover:bg-orange-50"
                             >
                                 {isFixing ? (
                                     <>

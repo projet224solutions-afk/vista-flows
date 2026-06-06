@@ -285,9 +285,9 @@ export default function BureauDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-orange-50 to-orange-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4000] mx-auto mb-4"></div>
           <p className="text-slate-600">{t('bureau.loadingInterface')}</p>
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function BureauDashboard() {
 
   if (!bureau) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-orange-50 to-orange-50">
         <Card className="max-w-md border-0 shadow-xl">
           <CardHeader>
             <CardTitle className="text-center">{t('bureau.notFound')}</CardTitle>
@@ -377,15 +377,15 @@ export default function BureauDashboard() {
       case 'workers':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
+            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-orange-50 to-orange-50 border-b">
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-600" />
+                <Users className="w-5 h-5 text-[#ff4000]" />
                 Gestion des Membres du Bureau
               </CardTitle>
               <div className="flex gap-2">
                 <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+                    <Button variant="outline" className="border-orange-300 text-[#ff4000] hover:bg-orange-50">
                       <UserPlus className="w-4 h-4 mr-2" />
                       Ajouter un Adhérent
                     </Button>
@@ -422,7 +422,7 @@ export default function BureauDashboard() {
                       </div>
                       <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>Annuler</Button>
-                        <Button type="submit" disabled={isSubmittingMember} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
+                        <Button type="submit" disabled={isSubmittingMember} className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">
                           {isSubmittingMember ? 'Création...' : 'Créer l\'adhérent'}
                         </Button>
                       </div>
@@ -431,7 +431,7 @@ export default function BureauDashboard() {
                 </Dialog>
                 <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
+                    <Button className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">
                       <Plus className="w-4 h-4 mr-2" />
                       Ajouter un Membre Bureau
                     </Button>
@@ -508,7 +508,7 @@ export default function BureauDashboard() {
                       <Button type="button" variant="outline" onClick={() => setIsWorkerDialogOpen(false)} disabled={isSubmittingWorker}>
                         Annuler
                       </Button>
-                      <Button type="submit" disabled={isSubmittingWorker} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
+                      <Button type="submit" disabled={isSubmittingWorker} className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">
                         {isSubmittingWorker ? 'Ajout en cours...' : 'Ajouter'}
                       </Button>
                     </div>
@@ -526,7 +526,7 @@ export default function BureauDashboard() {
                       <p className="text-sm text-slate-500">{worker.email}</p>
                       <p className="text-xs text-slate-400">Accès: {worker.access_level}</p>
                     </div>
-                    <Badge className={worker.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                    <Badge className={worker.is_active ? "bg-orange-100 text-[#ff4000]" : "bg-slate-100 text-slate-600"}>
                       {worker.is_active ? '● Actif' : '○ Inactif'}
                     </Badge>
                   </div>
@@ -559,9 +559,9 @@ export default function BureauDashboard() {
       case 'alerts':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 border-b">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
               <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+                <AlertCircle className="w-5 h-5 text-[#ff4000]" />
                 Alertes et Notifications
               </CardTitle>
             </CardHeader>
@@ -571,22 +571,22 @@ export default function BureauDashboard() {
                   <div
                     key={alert.id}
                     className={`flex items-start gap-4 p-4 rounded-xl border ${
-                      alert.is_critical ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'
+                      alert.is_critical ? 'border-orange-200 bg-orange-50' : 'border-orange-200 bg-orange-50'
                     }`}
                   >
-                    <AlertCircle className={`w-5 h-5 ${alert.is_critical ? 'text-red-500' : 'text-amber-500'} flex-shrink-0 mt-0.5`} />
+                    <AlertCircle className={`w-5 h-5 ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'} flex-shrink-0 mt-0.5`} />
                     <div className="flex-1">
-                      <h3 className={`font-medium ${alert.is_critical ? 'text-red-900' : 'text-amber-900'}`}>
+                      <h3 className={`font-medium ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                         {alert.title}
                       </h3>
-                      <p className={`text-sm mt-1 ${alert.is_critical ? 'text-red-700' : 'text-amber-700'}`}>
+                      <p className={`text-sm mt-1 ${alert.is_critical ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                         {alert.message}
                       </p>
                       <p className="text-xs text-slate-500 mt-2">
                         {new Date(alert.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
-                    <Badge className={alert.is_critical ? 'bg-red-500' : 'bg-amber-500'}>
+                    <Badge className={alert.is_critical ? 'bg-[#ff4000]' : 'bg-[#ff4000]'}>
                       {alert.severity}
                     </Badge>
                   </div>
@@ -604,7 +604,7 @@ export default function BureauDashboard() {
       case 'communication':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-blue-600" />
                 Hub de Communication
@@ -638,7 +638,7 @@ export default function BureauDashboard() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-slate-500 uppercase">Statut</p>
-                    <Badge className="bg-emerald-100 text-emerald-700">{bureau?.status}</Badge>
+                    <Badge className="bg-orange-100 text-[#ff4000]">{bureau?.status}</Badge>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-slate-500 uppercase">Préfecture</p>
@@ -662,9 +662,9 @@ export default function BureauDashboard() {
 
             {/* Token d'accès */}
             <Card className="border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
                 <CardTitle className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-amber-600" />
+                  <Lock className="w-5 h-5 text-[#ff4000]" />
                   Accès & Sécurité
                 </CardTitle>
               </CardHeader>
@@ -695,7 +695,7 @@ export default function BureauDashboard() {
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-[#ff4000] mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Ne partagez jamais ce token. Il donne un accès complet à votre bureau.
                   </p>
@@ -706,7 +706,7 @@ export default function BureauDashboard() {
             {/* Gestion du compte */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Mail className="w-5 h-5 text-blue-600" />
                     Modifier l'email
@@ -728,9 +728,9 @@ export default function BureauDashboard() {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+                <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 border-b">
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <Lock className="w-5 h-5 text-green-600" />
+                    <Lock className="w-5 h-5 text-[#ff4000]" />
                     Modifier le mot de passe
                   </CardTitle>
                 </CardHeader>
@@ -739,7 +739,7 @@ export default function BureauDashboard() {
                     Changez votre mot de passe pour sécuriser votre compte
                   </p>
                   <Button
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600"
+                    className="w-full bg-gradient-to-r from-[#ff4000] to-[#ff4000]"
                     onClick={() => setShowPasswordDialog(true)}
                   >
                     Changer le mot de passe
@@ -765,7 +765,7 @@ export default function BureauDashboard() {
         onLogout={logout}
       >
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 mb-6">
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-[#ff4000] mb-6">
             <p className="font-medium">{typeof error === 'string' ? error : error.message}</p>
             <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
           </div>

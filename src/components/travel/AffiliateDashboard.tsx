@@ -100,7 +100,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-500">Approuvé</Badge>;
+        return <Badge className="bg-[#ff4000]">Approuvé</Badge>;
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'suspended':
@@ -125,7 +125,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
   return (
     <div className="space-y-6">
       {/* Header avec statut */}
-      <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
+      <Card className="bg-gradient-to-br from-[#04439e]/10 to-[#ff4000]/10 border-[#04439e]/20">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -159,8 +159,8 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-xl bg-[#ff4000]/10 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total gagné</p>
@@ -175,8 +175,8 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-yellow-500" />
+              <div className="w-10 h-10 rounded-xl bg-[#ff4000]/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">En attente</p>
@@ -205,8 +205,8 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-purple-500" />
+              <div className="w-10 h-10 rounded-xl bg-[#04439e]/10 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Réservations</p>
@@ -253,9 +253,9 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 >
                   <div className="flex items-center gap-2">
                     {commission.status === 'paid' ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                     ) : commission.status === 'approved' ? (
-                      <Clock className="w-4 h-4 text-yellow-500" />
+                      <Clock className="w-4 h-4 text-[#ff4000]" />
                     ) : (
                       <AlertCircle className="w-4 h-4 text-muted-foreground" />
                     )}

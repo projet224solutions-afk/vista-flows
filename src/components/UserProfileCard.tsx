@@ -434,12 +434,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     : profile?.email?.split('@')[0] || 'Utilisateur';
 
   return (
-    <Card className={`${className} border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50`}>
+    <Card className={`${className} border-2 border-blue-100 bg-gradient-to-br from-blue-50 to-blue-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-4">
           <Avatar className="w-16 h-16 border-2 border-blue-200">
             <AvatarImage src={profile?.avatar_url} />
-            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-lg font-bold">
+            <AvatarFallback className="bg-[#04439e] text-white text-lg font-bold">
               {profile?.first_name?.[0]}{profile?.last_name?.[0] || user?.email?.[0]}
             </AvatarFallback>
           </Avatar>
@@ -456,14 +456,14 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
           <div className="bg-white/60 rounded-lg p-4 border border-blue-200">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-green-600" />
+                <Wallet className="w-5 h-5 text-[#ff4000]" />
                 <span className="font-semibold text-gray-800">Wallet</span>
               </div>
-              <Badge variant="outline" className="bg-green-100 text-green-700">
+              <Badge variant="outline" className="bg-orange-100 text-[#ff4000]">
                 {userInfo.wallet ? 'Actif' : 'Création...'}
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-green-600 mb-3">
+            <p className="text-2xl font-bold text-[#ff4000] mb-3">
               {userInfo.wallet ?
                 `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` :
                 'Initialisation...'
@@ -482,7 +482,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
-                      <ArrowDownToLine className="w-4 h-4 mb-1 text-green-600" />
+                      <ArrowDownToLine className="w-4 h-4 mb-1 text-[#ff4000]" />
                       <span className="text-xs">Dépôt</span>
                     </Button>
                   </DialogTrigger>
@@ -507,7 +507,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                       <Button
                         onClick={handleDeposit}
                         disabled={processing || !depositAmount}
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full bg-[#ff4000] hover:bg-[#ff4000]"
                       >
                         {processing ? 'Traitement...' : 'Confirmer le dépôt'}
                       </Button>
@@ -629,9 +629,9 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                      <span className="text-xl font-bold text-red-600">{formatPrice(transferPreview?.total_debit || 0, transferPreview?.currency_sent)}</span>
+                      <span className="text-xl font-bold text-[#ff4000]">{formatPrice(transferPreview?.total_debit || 0, transferPreview?.currency_sent)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-green-600">
+                    <div className="flex justify-between items-center text-[#ff4000]">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
                       <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0, transferPreview?.currency_received || transferPreview?.currency_sent)}</span>
                     </div>

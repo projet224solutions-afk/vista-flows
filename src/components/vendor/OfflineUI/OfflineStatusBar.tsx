@@ -30,7 +30,7 @@ export function OfflineStatusBar({
     return (
       <div
         className={cn(
-          'bg-gradient-to-r from-green-500 to-emerald-600 text-white',
+          'bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white',
           'py-2 px-4 rounded-lg shadow-lg',
           'animate-in slide-in-from-top duration-300',
           className
@@ -64,7 +64,7 @@ export function OfflineStatusBar({
     return (
       <div
         className={cn(
-          'bg-gradient-to-r from-orange-500 to-red-500 text-white',
+          'bg-gradient-to-r from-orange-500 to-[#ff4000] text-white',
           'py-2.5 px-4 rounded-lg shadow-lg border-l-4 border-white/30',
           className
         )}
@@ -109,7 +109,7 @@ export function OfflineStatusBar({
     >
       <div className="flex items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <Wifi className="w-4 h-4 text-green-500" />
+          <Wifi className="w-4 h-4 text-[#ff4000]" />
           <span>En ligne</span>
         </div>
 
@@ -135,7 +135,7 @@ export function OfflineStatusBadge({ className }: { className?: string }) {
       className={cn(
         'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
         isOnline
-          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+          ? 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000]/30 dark:text-[#ff4000]'
           : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
         className
       )}

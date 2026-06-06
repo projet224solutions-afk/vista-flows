@@ -111,8 +111,8 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
         </div>
 
         {link && (
-          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-            <p className="text-sm font-medium text-green-700 mb-2">
+          <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
+            <p className="text-sm font-medium text-[#ff4000] mb-2">
               ✅ Lien d'affiliation généré avec succès !
             </p>
             <div className="flex items-center gap-2">

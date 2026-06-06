@@ -400,7 +400,7 @@ export default function DeliveryClient() {
                         <div>
                           <p className="font-semibold">{driver.full_name}</p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                             <span>{driver.rating.toFixed(1)}</span>
                             <span>•</span>
                             <span>{driver.completedDeliveries} livraisons</span>
@@ -465,7 +465,7 @@ export default function DeliveryClient() {
                         <div className="flex-1">
                           <p className="font-semibold">{currentDelivery.driver?.full_name || 'Livreur'}</p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
                             <span>{currentDelivery.driver?.rating?.toFixed(1) || '4.5'}</span>
                           </div>
                         </div>

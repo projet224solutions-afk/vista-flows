@@ -96,11 +96,11 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'pending': return 'text-[#ff4000] bg-orange-100';
       case 'accepted': return 'text-blue-600 bg-blue-100';
-      case 'picked_up': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-green-600 bg-green-100';
-      case 'cancelled': return 'text-red-600 bg-red-100';
+      case 'picked_up': return 'text-[#04439e] bg-blue-100';
+      case 'delivered': return 'text-[#ff4000] bg-orange-100';
+      case 'cancelled': return 'text-[#ff4000] bg-orange-100';
       case 'disputed': return 'text-orange-600 bg-orange-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -170,28 +170,28 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             <p className="text-2xl font-bold text-blue-600">{stats.totalRequests}</p>
           </div>
 
-          <div className="p-4 bg-yellow-50 rounded-lg">
+          <div className="p-4 bg-orange-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">Actives</span>
+              <Clock className="w-5 h-5 text-[#ff4000]" />
+              <span className="text-sm font-medium text-[#ff4000]">Actives</span>
             </div>
-            <p className="text-2xl font-bold text-yellow-600">{stats.activeRequests}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{stats.activeRequests}</p>
           </div>
 
-          <div className="p-4 bg-green-50 rounded-lg">
+          <div className="p-4 bg-orange-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Terminées</span>
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
+              <span className="text-sm font-medium text-[#ff4000]">Terminées</span>
             </div>
-            <p className="text-2xl font-bold text-green-600">{stats.completedRequests}</p>
+            <p className="text-2xl font-bold text-[#ff4000]">{stats.completedRequests}</p>
           </div>
 
-          <div className="p-4 bg-purple-50 rounded-lg">
+          <div className="p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-purple-600" />
-              <span className="text-sm font-medium text-purple-800">Gains</span>
+              <DollarSign className="w-5 h-5 text-[#04439e]" />
+              <span className="text-sm font-medium text-[#04439e]">Gains</span>
             </div>
-            <p className="text-2xl font-bold text-purple-600">{stats.totalEarnings} GNF</p>
+            <p className="text-2xl font-bold text-[#04439e]">{stats.totalEarnings} GNF</p>
           </div>
         </div>
       </div>
@@ -283,7 +283,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                             <span className="text-sm text-gray-700">{request.pickupAddress}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-green-600" />
+                            <MapPin className="w-4 h-4 text-[#ff4000]" />
                             <span className="text-sm text-gray-700">{request.deliveryAddress}</span>
                           </div>
                         </div>
@@ -297,7 +297,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                               {request.estimatedTime} min
                             </span>
                           </div>
-                          <span className="text-lg font-bold text-green-600">
+                          <span className="text-lg font-bold text-[#ff4000]">
                             {request.totalPrice} GNF
                           </span>
                         </div>
@@ -338,7 +338,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         </p>
                       </div>
                       <div className={`w-3 h-3 rounded-full ${
-                        user.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                        user.isOnline ? 'bg-[#ff4000]' : 'bg-gray-400'
                       }`}></div>
                     </div>
 
@@ -353,7 +353,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Gains</span>
-                        <span className="font-medium text-green-600">{user.earnings} GNF</span>
+                        <span className="font-medium text-[#ff4000]">{user.earnings} GNF</span>
                       </div>
                     </div>
 
@@ -362,7 +362,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         <Phone className="w-4 h-4 inline mr-1" />
                         Appeler
                       </button>
-                      <button className="flex-1 bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm hover:bg-green-200 transition-colors">
+                      <button className="flex-1 bg-orange-100 text-[#ff4000] py-2 px-3 rounded-lg text-sm hover:bg-orange-200 transition-colors">
                         <MessageSquare className="w-4 h-4 inline mr-1" />
                         Message
                       </button>
@@ -395,38 +395,38 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="p-6 bg-green-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-green-800 mb-4">Revenus</h3>
+              <div className="p-6 bg-orange-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-[#ff4000] mb-4">Revenus</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-green-600">Aujourd'hui</span>
-                    <span className="font-bold text-green-800">45,000 GNF</span>
+                    <span className="text-[#ff4000]">Aujourd'hui</span>
+                    <span className="font-bold text-[#ff4000]">45,000 GNF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-green-600">Cette semaine</span>
-                    <span className="font-bold text-green-800">320,000 GNF</span>
+                    <span className="text-[#ff4000]">Cette semaine</span>
+                    <span className="font-bold text-[#ff4000]">320,000 GNF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-green-600">Ce mois</span>
-                    <span className="font-bold text-green-800">1,250,000 GNF</span>
+                    <span className="text-[#ff4000]">Ce mois</span>
+                    <span className="font-bold text-[#ff4000]">1,250,000 GNF</span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 bg-purple-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-purple-800 mb-4">Sécurité</h3>
+              <div className="p-6 bg-blue-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-[#04439e] mb-4">Sécurité</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-purple-600">Litiges</span>
-                    <span className="font-bold text-purple-800">2</span>
+                    <span className="text-[#04439e]">Litiges</span>
+                    <span className="font-bold text-[#04439e]">2</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-purple-600">Résolus</span>
-                    <span className="font-bold text-purple-800">1</span>
+                    <span className="text-[#04439e]">Résolus</span>
+                    <span className="font-bold text-[#04439e]">1</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-purple-600">En cours</span>
-                    <span className="font-bold text-purple-800">1</span>
+                    <span className="text-[#04439e]">En cours</span>
+                    <span className="font-bold text-[#04439e]">1</span>
                   </div>
                 </div>
               </div>

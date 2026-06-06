@@ -12,10 +12,9 @@ import { usePromoCodes } from "@/hooks/useVendorData";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
+import { broadcastToClients } from "@/services/campaignBackendService";
 import {
-  Megaphone, Tag, Mail, _MessageSquare, _TrendingUp,
-  _Users, Eye, MousePointer, Plus, Copy, Edit, _Trash2,
-  BarChart3
+  Megaphone, Tag, Mail, Eye, MousePointer, Plus, Copy, Edit, BarChart3
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TrafficAnalyticsSection } from "./TrafficAnalyticsSection";
@@ -40,8 +39,8 @@ const campaignTypeLabels = {
 
 const statusColors = {
   draft: 'bg-gray-100 text-gray-800',
-  active: 'bg-green-100 text-green-800',
-  paused: 'bg-yellow-100 text-yellow-800',
+  active: 'bg-orange-100 text-[#ff4000]',
+  paused: 'bg-orange-100 text-[#ff4000]',
   completed: 'bg-blue-100 text-blue-800'
 };
 
@@ -61,6 +60,7 @@ export default function MarketingManagement() {
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
   const [isCampaignDialogOpen, setIsCampaignDialogOpen] = useState(false);
+  const [creatingCampaign, setCreatingCampaign] = useState(false);
 
   const [promoForm, setPromoForm] = useState({
     code: '',
@@ -150,6 +150,8 @@ export default function MarketingManagement() {
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (creatingCampaign) return; // anti double-soumission (évite 2 campagnes + 2 diffusions)
+    setCreatingCampaign(true);
     try {
       let resolvedVendorId = vendorId;
       if (!resolvedVendorId && user?.id) {
@@ -176,11 +178,31 @@ export default function MarketingManagement() {
 
       if (error) throw error;
 
-      setCampaigns(prev => [data, ...prev]);
-      toast({
-        title: "Campagne créée",
-        description: "La campagne marketing a été créée avec succès."
-      });
+      // ENVOI RÉEL via la diffusion durcie (idempotente) — email/SMS uniquement.
+      const type = campaignForm.type as string;
+      if (type === 'email' || type === 'sms') {
+        const idem = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `mkt-${Date.now()}`;
+        try {
+          const r = await broadcastToClients(
+            { channel: type as 'email' | 'sms', subject: campaignForm.name, message: campaignForm.content },
+            idem,
+          );
+          const sent = (r.email_sent || 0) + (r.sms_sent || 0);
+          await supabase.from('marketing_campaigns').update({ sent_count: sent, status: 'completed' }).eq('id', data.id);
+          setCampaigns(prev => [{ ...data, sent_count: sent, status: 'completed' }, ...prev]);
+          toast({
+            title: "Campagne envoyée",
+            description: `${r.email_sent} email(s), ${r.sms_sent} SMS${r.sms_error ? ` — SMS : ${r.sms_error}` : ''}`,
+          });
+        } catch (sendErr: any) {
+          setCampaigns(prev => [data, ...prev]);
+          toast({ title: "Campagne créée, mais envoi échoué", description: sendErr?.message || 'Erreur diffusion', variant: 'destructive' });
+        }
+      } else {
+        // notification / réseaux sociaux : enregistrés seulement (pas d'envoi auto)
+        setCampaigns(prev => [data, ...prev]);
+        toast({ title: "Campagne enregistrée", description: "Envoi automatique disponible pour Email et SMS uniquement." });
+      }
 
       setIsCampaignDialogOpen(false);
       setCampaignForm({
@@ -195,6 +217,8 @@ export default function MarketingManagement() {
         description: "Impossible de créer la campagne.",
         variant: "destructive"
       });
+    } finally {
+      setCreatingCampaign(false);
     }
   };
 
@@ -414,7 +438,7 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">Créer la campagne</Button>
+                  <Button type="submit" className="flex-1" disabled={creatingCampaign}>{creatingCampaign ? 'Envoi en cours…' : 'Créer et envoyer'}</Button>
                   <Button type="button" variant="outline" onClick={() => setIsCampaignDialogOpen(false)}>
                     Annuler
                   </Button>
@@ -441,7 +465,7 @@ export default function MarketingManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <Eye className="w-5 h-5 text-green-600" />
+              <Eye className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Taux d'ouverture</p>
                 <p className="text-2xl font-bold">{openRate}%</p>
@@ -452,7 +476,7 @@ export default function MarketingManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <MousePointer className="w-5 h-5 text-purple-600" />
+              <MousePointer className="w-5 h-5 text-[#04439e]" />
               <div>
                 <p className="text-sm text-muted-foreground">Taux de clic</p>
                 <p className="text-2xl font-bold">{clickRate}%</p>

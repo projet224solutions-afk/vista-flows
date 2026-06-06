@@ -350,12 +350,12 @@ export const UserSearchInput = ({
 
       {/* Résultat de la recherche */}
       {userInfo && (
-        <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-            <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+        <div className="mt-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-[#ff4000] flex items-center justify-center">
+            <Check className="w-4 h-4 text-[#ff4000] dark:text-[#ff4000]" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-green-900 dark:text-green-100">
+            <p className="text-sm font-medium text-[#ff4000] dark:text-orange-100">
               {getUserDisplayName(userInfo)}
             </p>
             <div className="flex items-center gap-2 mt-1">
@@ -372,8 +372,8 @@ export const UserSearchInput = ({
 
       {/* Erreur de recherche */}
       {searchError && (
-        <div className="mt-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">
+        <div className="mt-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
+          <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">
             {searchError}
           </p>
         </div>

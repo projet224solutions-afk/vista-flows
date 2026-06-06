@@ -756,7 +756,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   className="text-primary"
                 />
                 {isAffiliateProduct ? (
-                  <Badge className={isAffiliateFlightTicket ? 'bg-orange-500 hover:bg-orange-600 text-white border-0' : 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-0'}>
+                  <Badge className={isAffiliateFlightTicket ? 'bg-orange-500 hover:bg-orange-600 text-white border-0' : 'bg-gradient-to-r from-[#04439e] to-[#ff4000] text-white border-0'}>
                     <ExternalLink className="w-3 h-3 mr-1" />
                     {isAffiliateFlightTicket ? 'Partenaire' : 'Affiliation'}
                   </Badge>
@@ -855,19 +855,19 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {isAffiliateProduct && (
               <div
                 className={isAffiliateFlightTicket
-                  ? 'bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 p-4 rounded-lg border border-orange-200 dark:border-orange-800'
-                  : 'bg-gradient-to-r from-purple-50 to-fuchsia-50 dark:from-purple-950/30 dark:to-fuchsia-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800'
+                  ? 'bg-gradient-to-r from-orange-50 to-orange-50 dark:from-orange-950/30 dark:to-[#ff4000]/30 p-4 rounded-lg border border-orange-200 dark:border-orange-800'
+                  : 'bg-gradient-to-r from-blue-50 to-orange-50 dark:from-[#04439e]/30 dark:to-[#ff4000]/30 p-4 rounded-lg border border-blue-200 dark:border-[#04439e]'
                 }
               >
                 <div className="flex items-start gap-3">
-                  <div className={isAffiliateFlightTicket ? 'p-2 bg-orange-100 dark:bg-orange-900 rounded-full' : 'p-2 bg-purple-100 dark:bg-purple-900 rounded-full'}>
-                    <ExternalLink className={isAffiliateFlightTicket ? 'w-5 h-5 text-orange-600 dark:text-orange-400' : 'w-5 h-5 text-purple-600 dark:text-purple-400'} />
+                  <div className={isAffiliateFlightTicket ? 'p-2 bg-orange-100 dark:bg-orange-900 rounded-full' : 'p-2 bg-blue-100 dark:bg-[#04439e] rounded-full'}>
+                    <ExternalLink className={isAffiliateFlightTicket ? 'w-5 h-5 text-orange-600 dark:text-orange-400' : 'w-5 h-5 text-[#04439e] dark:text-[#04439e]'} />
                   </div>
                   <div>
-                    <h4 className={isAffiliateFlightTicket ? 'font-semibold text-orange-900 dark:text-orange-100' : 'font-semibold text-purple-900 dark:text-purple-100'}>
+                    <h4 className={isAffiliateFlightTicket ? 'font-semibold text-orange-900 dark:text-orange-100' : 'font-semibold text-[#04439e] dark:text-blue-100'}>
                       {isAffiliateFlightTicket ? 'Réservation partenaire' : 'Produit partenaire'}
                     </h4>
-                    <p className={isAffiliateFlightTicket ? 'text-sm text-orange-700 dark:text-orange-300 mt-1' : 'text-sm text-purple-700 dark:text-purple-300 mt-1'}>
+                    <p className={isAffiliateFlightTicket ? 'text-sm text-orange-700 dark:text-orange-300 mt-1' : 'text-sm text-[#04439e] dark:text-blue-300 mt-1'}>
                       {isAffiliateFlightTicket
                         ? 'Réservez votre vol en toute sécurité via notre partenaire. En cliquant sur "Réserver votre vol", vous serez redirigé vers sa plateforme pour consulter les disponibilités et finaliser votre réservation.'
                         : 'En cliquant sur "Acheter", vous serez redirigé vers le site du fournisseur pour finaliser votre achat en toute sécurité.'}
@@ -880,7 +880,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {/* Actions */}
             <div className="space-y-2">
               <Button
-                className={`w-full ${isAffiliateProduct ? (isAffiliateFlightTicket ? '!bg-orange-500 hover:!bg-orange-600 !text-white !shadow-lg !shadow-orange-500/30 hover:!shadow-orange-500/40' : 'bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700') : ''}`}
+                className={`w-full ${isAffiliateProduct ? (isAffiliateFlightTicket ? '!bg-orange-500 hover:!bg-orange-600 !text-white !shadow-lg !shadow-orange-500/30 hover:!shadow-orange-500/40' : 'bg-gradient-to-r from-[#04439e] to-[#ff4000] hover:from-[#04439e] hover:to-[#ff4000]') : ''}`}
                 onClick={handleBuy}
               >
                 {isAffiliateProduct ? (

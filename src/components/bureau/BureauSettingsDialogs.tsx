@@ -75,7 +75,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-emerald-600" />
+            <Lock className="w-5 h-5 text-[#ff4000]" />
             Modifier le mot de passe
           </DialogTitle>
         </DialogHeader>
@@ -152,7 +152,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600"
+              className="bg-gradient-to-r from-[#ff4000] to-[#ff4000]"
             >
               {isLoading ? (
                 <>
@@ -262,7 +262,7 @@ export function ChangeEmailDialog({ open, onOpenChange, bureauId, currentEmail, 
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600"
+              className="bg-[#04439e]"
             >
               {isLoading ? (
                 <>

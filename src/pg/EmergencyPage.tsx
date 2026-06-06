@@ -36,7 +36,7 @@ export const EmergencyPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md">
           <CardContent className="py-12 text-center">
-            <AlertTriangle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+            <AlertTriangle className="h-16 w-16 text-[#ff4000] mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">Accès Refusé</h2>
             <p className="text-muted-foreground mb-6">
               Seuls les administrateurs et les bureaux syndicats peuvent accéder au système d'urgence.
@@ -68,13 +68,13 @@ export const EmergencyPage: React.FC = () => {
 
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                  <AlertTriangle className={activeAlerts > 0 ? 'h-6 w-6 text-red-600 animate-pulse' : 'h-6 w-6'} />
+                  <AlertTriangle className={activeAlerts > 0 ? 'h-6 w-6 text-[#ff4000] animate-pulse' : 'h-6 w-6'} />
                   Système d'Urgence SOS
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {userRole === 'admin' ? 'Vue Globale' : 'Bureau Syndicat'}
                   {activeAlerts > 0 && (
-                    <span className="ml-2 text-red-600 font-semibold animate-pulse">
+                    <span className="ml-2 text-[#ff4000] font-semibold animate-pulse">
                       • {activeAlerts} alerte(s) active(s)
                     </span>
                   )}
@@ -84,7 +84,7 @@ export const EmergencyPage: React.FC = () => {
 
             <div className="flex items-center gap-3">
               {activeAlerts > 0 && (
-                <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-bold text-sm animate-pulse">
+                <div className="bg-orange-100 text-[#ff4000] px-4 py-2 rounded-full font-bold text-sm animate-pulse">
                   🚨 {activeAlerts} URGENCE(S)
                 </div>
               )}
@@ -152,7 +152,7 @@ export const EmergencyPage: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Taux de résolution</span>
-                      <span className="text-2xl font-bold text-green-600">
+                      <span className="text-2xl font-bold text-[#ff4000]">
                         {stats?.total_alerts
                           ? Math.round(((stats.resolved_alerts || 0) / stats.total_alerts) * 100)
                           : 0}%

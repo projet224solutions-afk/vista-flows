@@ -93,7 +93,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
               )}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              isAvailable ? 'bg-green-500' : 'bg-yellow-500'
+              isAvailable ? 'bg-[#ff4000]' : 'bg-[#ff4000]'
             }`} />
           </div>
 
@@ -111,7 +111,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               {driver.rating !== null && driver.rating > 0 && (
                 <span className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  <Star className="w-3 h-3 text-[#ff4000] fill-[#ff4000]" />
                   {driver.rating.toFixed(1)}
                 </span>
               )}

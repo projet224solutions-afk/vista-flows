@@ -202,9 +202,9 @@ export function VoiceRecorderWithTranslation({
     return (
       <div className={cn(
         "flex items-center gap-1 text-xs",
-        translationStatus === 'pending' && "text-yellow-500",
-        translationStatus === 'completed' && "text-green-500",
-        translationStatus === 'failed' && "text-red-500"
+        translationStatus === 'pending' && "text-[#ff4000]",
+        translationStatus === 'completed' && "text-[#ff4000]",
+        translationStatus === 'failed' && "text-[#ff4000]"
       )}>
         {translationStatus === 'pending' && (
           <>
@@ -252,13 +252,13 @@ export function VoiceRecorderWithTranslation({
             variant="ghost"
             size="icon"
             onClick={cancelRecording}
-            className="rounded-full text-red-500 hover:text-red-600"
+            className="rounded-full text-[#ff4000] hover:text-[#ff4000]"
           >
             <X className="h-5 w-5" />
           </Button>
 
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+            <div className="w-3 h-3 rounded-full bg-[#ff4000] animate-pulse" />
             <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
           </div>
 
@@ -266,7 +266,7 @@ export function VoiceRecorderWithTranslation({
             variant="default"
             size="icon"
             onClick={stopRecording}
-            className="rounded-full bg-green-500 hover:bg-green-600"
+            className="rounded-full bg-[#ff4000] hover:bg-[#ff4000]"
           >
             <MicOff className="h-5 w-5" />
           </Button>

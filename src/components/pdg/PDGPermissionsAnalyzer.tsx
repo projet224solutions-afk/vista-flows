@@ -183,9 +183,9 @@ export function PDGPermissionsAnalyzer() {
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'ok': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'ok': return <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-[#ff4000]" />;
+      case 'error': return <AlertTriangle className="h-4 w-4 text-[#ff4000]" />;
       default: return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
@@ -193,9 +193,9 @@ export function PDGPermissionsAnalyzer() {
   const getSeverityColor = (severity?: string) => {
     switch(severity) {
       case 'low': return 'bg-blue-50 text-blue-900';
-      case 'medium': return 'bg-yellow-50 text-yellow-900';
+      case 'medium': return 'bg-orange-50 text-[#ff4000]';
       case 'high': return 'bg-orange-50 text-orange-900';
-      case 'critical': return 'bg-red-50 text-red-900';
+      case 'critical': return 'bg-orange-50 text-[#ff4000]';
       default: return 'bg-gray-50 text-gray-900';
     }
   };

@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, Store, Calendar, CreditCard, Wallet, CalendarDays, CheckCircle2, XCircle, Loader2, Crown, Sparkles, Package, ImageIcon, BarChart3, Headphones, Star, Code, Palette, AlertTriangle } from 'lucide-react';
+﻿import { ArrowLeft, Store, Calendar, CreditCard, Wallet, CalendarDays, CheckCircle2, XCircle, Loader2, Crown, Sparkles, Package, ImageIcon, BarChart3, Headphones, Star, Palette, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +53,7 @@ function FeatureRow({ label, icon: Icon, enabled }: { label: string; icon: any; 
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
       <span className="flex-1">{label}</span>
       {enabled ? (
-        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+        <CheckCircle2 className="h-4 w-4 text-[#ff4000] shrink-0" />
       ) : (
         <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
       )}
@@ -75,7 +75,7 @@ function buildPlanDescription(plan: Plan): string {
     if (normalized.includes('analytic')) return 'analytics';
     if (normalized.includes('support')) return 'support prioritaire';
     if (normalized.includes('avant') || normalized.includes('featured')) return 'mise en avant';
-    if (normalized.includes('api')) return 'acces API';
+    if (normalized.includes('api')) return ''; // Accès API retiré (aucun système API vendeur)
     if (normalized.includes('branding') || normalized.includes('marque')) return 'branding personnalise';
     return normalized;
   };
@@ -96,7 +96,6 @@ function buildPlanDescription(plan: Plan): string {
   if (plan.analytics_access) featureSet.add('analytics');
   if (plan.priority_support) featureSet.add('support prioritaire');
   if (plan.featured_products) featureSet.add('mise en avant');
-  if (plan.api_access) featureSet.add('acces API');
   if (plan.custom_branding) featureSet.add('branding personnalise');
 
   if (Array.isArray(plan.features)) {
@@ -112,7 +111,6 @@ function buildPlanDescription(plan: Plan): string {
     'analytics',
     'support prioritaire',
     'mise en avant',
-    'acces API',
     'branding personnalise',
   ];
 
@@ -210,7 +208,6 @@ function getDigitalFeatureList(plan: Plan): string[] {
   if (plan.analytics_access) features.add('Analytics ventes, telechargements et abonnements');
   if (plan.priority_support) features.add('Support prioritaire pour vos lancements');
   if (plan.featured_products) features.add('Visibilite marketplace et mise en avant');
-  if (plan.api_access) features.add('Automatisations et campagnes avancées');
   if (plan.custom_branding) features.add('Branding de vos pages de vente');
 
   if (Array.isArray(plan.features)) {
@@ -293,7 +290,6 @@ function getFeatureRows(plan: Plan, isDigitalSubscription: boolean) {
       { icon: BarChart3, label: 'Analytics & statistiques', enabled: plan.analytics_access },
       { icon: Headphones, label: 'Support prioritaire', enabled: plan.priority_support },
       { icon: Star, label: 'Produits mis en avant', enabled: plan.featured_products },
-      { icon: Code, label: 'Acces API', enabled: plan.api_access },
       { icon: Palette, label: 'Branding personnalise', enabled: plan.custom_branding },
     ];
   }
@@ -302,7 +298,6 @@ function getFeatureRows(plan: Plan, isDigitalSubscription: boolean) {
     { icon: BarChart3, label: 'Analytics ventes, telechargements et abonnes', enabled: plan.analytics_access },
     { icon: Headphones, label: 'Support prioritaire pour vos lancements', enabled: plan.priority_support },
     { icon: Star, label: 'Mise en avant du catalogue et des offres', enabled: plan.featured_products },
-    { icon: Code, label: 'API, automatisations et integrateurs', enabled: plan.api_access },
     { icon: Palette, label: 'Branding des pages de vente et de paiement', enabled: plan.custom_branding },
   ];
 }
@@ -446,18 +441,11 @@ export default function VendorSubscriptionPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Vous devez être connecté'); return; }
 
-      const { data: walletData } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single();
-
       const price = calculatePrice(selectedPlan, billingCycle);
-      if (!walletData || walletData.balance < price) {
-        toast.error(`Solde insuffisant. Vous avez besoin de ${fmt(price)}`);
-        return;
-      }
 
+      // Pas de blocage sur le solde ici : le backend calcule le montant réel
+      // (0 pour un downgrade avant expiration, différence au prorata pour un upgrade)
+      // et renvoie une erreur explicite si le solde est insuffisant.
       const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
         userId: user.id,
         planId: selectedPlan.id,
@@ -531,11 +519,11 @@ export default function VendorSubscriptionPage() {
                 </CardDescription>
               </div>
               {hasAccess && !isExpired ? (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Actif
                 </Badge>
               ) : isExpired ? (
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Expiré</Badge>
+                <Badge variant="outline" className="bg-orange-50 text-[#ff4000] border-orange-200">Expiré</Badge>
               ) : (
                 <Badge variant="outline" className="bg-muted text-muted-foreground">Gratuit</Badge>
               )}
@@ -568,21 +556,21 @@ export default function VendorSubscriptionPage() {
             )}
 
             {isDigitalSubscription && (
-              <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-4 space-y-3">
+              <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4 space-y-3">
                 <div>
-                  <h3 className="font-semibold text-sm text-sky-950">Modules couverts par votre abonnement digital</h3>
-                  <p className="text-xs text-sky-900/80">
+                  <h3 className="font-semibold text-sm text-[#04439e]">Modules couverts par votre abonnement digital</h3>
+                  <p className="text-xs text-[#04439e]/80">
                     Votre plan pilote surtout la capacite de publication, la visibilite et l'accompagnement de vos ventes numeriques.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {DIGITAL_MODULE_BADGES.map((badge) => (
-                    <Badge key={badge} variant="secondary" className="border border-sky-200 bg-white text-sky-900">
+                    <Badge key={badge} variant="secondary" className="border border-blue-200 bg-white text-[#04439e]">
                       {badge}
                     </Badge>
                   ))}
                 </div>
-                <p className="text-xs text-sky-900/80">
+                <p className="text-xs text-[#04439e]/80">
                   Ici, la limite de produits correspond au nombre d'offres numeriques publiees dans votre catalogue digital.
                 </p>
               </div>
@@ -658,7 +646,7 @@ export default function VendorSubscriptionPage() {
                     <p className="text-xs text-muted-foreground font-medium">Autres avantages :</p>
                     {sanitizedActiveFeatures.map((feature, index) => (
                       <p key={`${feature}-${index}`} className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {feature}
+                        <CheckCircle2 className="h-3 w-3 text-[#ff4000] shrink-0" /> {feature}
                       </p>
                     ))}
                   </div>
@@ -706,7 +694,7 @@ export default function VendorSubscriptionPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-base">{isDigitalSubscription ? digitalPreset?.title : plan.display_name}</h3>
                           {isDigitalSubscription && digitalPreset && (
-                            <Badge variant="outline" className="text-xs border-sky-200 bg-sky-50 text-sky-700">
+                            <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-[#04439e]">
                               {digitalPreset.badge}
                             </Badge>
                           )}
@@ -714,7 +702,7 @@ export default function VendorSubscriptionPage() {
                             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs">Actuel</Badge>
                           )}
                           {isRecommended && !isCurrentPlan && (
-                            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs border-0">
+                            <Badge className="bg-gradient-to-r from-[#ff4000] to-orange-500 text-white text-xs border-0">
                               <Crown className="h-3 w-3 mr-1" /> Recommandé
                             </Badge>
                           )}
@@ -794,7 +782,7 @@ export default function VendorSubscriptionPage() {
                           : `${fmt(plan.monthly_price_gnf)}/mois`}
                       </p>
                       {savingsPercent > 0 && (
-                        <p className="text-xs text-green-600 font-medium">
+                        <p className="text-xs text-[#ff4000] font-medium">
                           Économisez {savingsPercent}% en annuel
                         </p>
                       )}
@@ -803,29 +791,23 @@ export default function VendorSubscriptionPage() {
                     {/* Features grid */}
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
                       <div className="flex items-center gap-1.5">
-                        {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-[#ff4000]" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.analytics_access ? 'text-muted-foreground/60' : ''}>
                           {isDigitalSubscription ? 'Ventes et abonnes' : 'Analytics'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.priority_support ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.priority_support ? <CheckCircle2 className="h-3.5 w-3.5 text-[#ff4000]" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.priority_support ? 'text-muted-foreground/60' : ''}>Support prioritaire</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.featured_products ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.featured_products ? <CheckCircle2 className="h-3.5 w-3.5 text-[#ff4000]" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.featured_products ? 'text-muted-foreground/60' : ''}>
                           {isDigitalSubscription ? 'Visibilite marketplace' : 'Mise en avant'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.api_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
-                        <span className={!plan.api_access ? 'text-muted-foreground/60' : ''}>
-                          {isDigitalSubscription ? 'Automatisations avancées' : 'Acces API'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {plan.custom_branding ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.custom_branding ? <CheckCircle2 className="h-3.5 w-3.5 text-[#ff4000]" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.custom_branding ? 'text-muted-foreground/60' : ''}>
                           {isDigitalSubscription ? 'Pages brandees' : 'Branding personnalise'}
                         </span>
@@ -837,7 +819,7 @@ export default function VendorSubscriptionPage() {
                       <div className="mt-2 pt-2 border-t border-border/50">
                         {digitalFeatures.map((feature, index) => (
                           <p key={`${feature}-${index}`} className="text-xs text-muted-foreground flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {feature}
+                            <CheckCircle2 className="h-3 w-3 text-[#ff4000] shrink-0" /> {feature}
                           </p>
                         ))}
                       </div>
@@ -885,7 +867,7 @@ export default function VendorSubscriptionPage() {
                   }`}
                 >
                   {selectedPlan && (
-                    <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    <div className="absolute -top-2 -right-2 bg-[#ff4000] text-white text-[10px] px-1.5 py-0.5 rounded-full">
                       -{getYearlySavingsPercent(selectedPlan)}%
                     </div>
                   )}
@@ -899,7 +881,7 @@ export default function VendorSubscriptionPage() {
                 </button>
               </div>
               {billingCycle === 'yearly' && selectedPlan && (
-                <p className="text-xs text-green-600 font-medium">
+                <p className="text-xs text-[#ff4000] font-medium">
                   Économisez {fmt(calculateYearlySavings(selectedPlan))} par an !
                 </p>
               )}

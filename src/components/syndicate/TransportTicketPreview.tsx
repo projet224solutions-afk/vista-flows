@@ -116,7 +116,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
         <Button
           onClick={handleExportPDF}
           disabled={isExporting}
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-[#ff4000] hover:bg-[#ff4000] text-white"
         >
           {isExporting ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

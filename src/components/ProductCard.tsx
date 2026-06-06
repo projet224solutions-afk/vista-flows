@@ -126,7 +126,7 @@ export default function ProductCard({
 
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <Star className="w-4 h-4 fill-[#ff4000] text-[#ff4000]" />
             <span className="text-sm font-medium ml-1 text-foreground">{rating}</span>
             <span className="text-xs text-muted-foreground ml-1">({reviewCount})</span>
           </div>
@@ -135,8 +135,8 @@ export default function ProductCard({
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm text-muted-foreground font-inter">{vendor}</p>
           {vendorRating > 0 && (
-            <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <div className="flex items-center gap-1 bg-orange-50 px-2 py-1 rounded">
+              <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
               <span className="text-xs font-medium text-foreground">{vendorRating.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">({vendorRatingCount})</span>
             </div>

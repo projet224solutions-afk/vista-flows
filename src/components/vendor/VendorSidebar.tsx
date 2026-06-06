@@ -31,7 +31,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSubscriptionFeatures, MODULE_FEATURE_MAP, SubscriptionFeature } from "@/hooks/useSubscriptionFeatures";
 import { UpgradeDialog } from "@/components/subscription/UpgradeDialog";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useVendorOptimized } from "@/hooks/useVendorOptimized";
 import { useHasDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import {
   Tooltip,
@@ -42,9 +41,9 @@ import {
 
 const PLAN_BADGE_COLORS: Record<string, string> = {
   'basic': 'bg-blue-500',
-  'pro': 'bg-purple-500',
+  'pro': 'bg-[#04439e]',
   'business': 'bg-orange-500',
-  'premium': 'bg-gradient-to-r from-yellow-400 to-orange-500',
+  'premium': 'bg-gradient-to-r from-[#ff4000] to-orange-500',
 };
 
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
@@ -63,8 +62,7 @@ export function VendorSidebar() {
   const collapsed = state === "collapsed" && !isMobile;
   const { badges, loading: badgesLoading } = useVendorBadges();
   const { canAccessModule, getMinPlanForFeature, loading: subscriptionLoading } = useSubscriptionFeatures();
-  const { _profile } = useVendorOptimized();
-  const { hasProducts: hasDigitalProducts, loading: _digitalProductsLoading } = useHasDigitalProducts();
+  const { hasProducts: hasDigitalProducts, loading: digitalProductsLoading } = useHasDigitalProducts();
 
   // State pour le dialog d'upgrade
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
@@ -129,13 +127,13 @@ export function VendorSidebar() {
 
     // Afficher "Produits Numériques" seulement si le vendeur en a créé
     if (hasDigitalProducts) {
-      items.push({ title: t('sidebar.digitalProducts'), icon: Laptop, path: "digital-products" });
+      items.push({ title: "Produits Numériques", icon: Laptop, path: "digital-products" });
     }
 
     items.push(
       { title: t('sidebar.orders'), icon: ShoppingCart, path: "orders" },
       { title: t('sidebar.inventory'), icon: Box, path: "inventory" },
-      { title: t('sidebar.stockAdjustments'), icon: AlertTriangle, path: "stock-adjustments" },
+      { title: "Ajustements Stock", icon: AlertTriangle, path: "stock-adjustments" },
       { title: t('sidebar.warehouses'), icon: Boxes, path: "warehouse" },
       { title: t('sidebar.suppliers'), icon: Building2, path: "suppliers" },
     );
@@ -151,7 +149,7 @@ export function VendorSidebar() {
         { title: t('sidebar.dashboard'), icon: BarChart3, path: "dashboard" },
         { title: t('sidebar.analytics'), icon: TrendingUp, path: "analytics" },
         { title: t('sidebar.pos'), icon: Store, path: "pos", isPOS: true },
-        { title: t('sidebar.businessModule'), icon: Briefcase, path: "service-module" },
+        { title: "Module Métier", icon: Briefcase, path: "service-module" },
       ]
     },
     {
@@ -167,7 +165,7 @@ export function VendorSidebar() {
         { title: t('sidebar.agents'), icon: Users, path: "agents" },
         { title: t('sidebar.prospects'), icon: Target, path: "prospects" },
         { title: t('sidebar.marketing'), icon: Megaphone, path: "marketing" },
-        { title: t('sidebar.campaigns'), icon: Megaphone, path: "campaigns" },
+        { title: "Campagnes", icon: Megaphone, path: "campaigns" },
       ]
     },
     {
@@ -175,12 +173,12 @@ export function VendorSidebar() {
       icon: Wallet,
       items: [
         { title: t('sidebar.wallet'), icon: Wallet, path: "wallet" },
-        { title: t('sidebar.collectionAccounts'), icon: Wallet, path: "accounts" },
+        { title: "Comptes Encaissement", icon: Wallet, path: "accounts" },
         { title: t('sidebar.virtualCard'), icon: Smartphone, path: "virtual-card" },
         { title: t('sidebar.quotesInvoices'), icon: FileText, path: "quotes-invoices" },
         { title: t('sidebar.payments'), icon: CreditCard, path: "payments" },
-        { title: t('sidebar.installmentPayments'), icon: CreditCard, path: "installments" },
-        { title: t('sidebar.advancedSales'), icon: ShoppingCart, path: "advanced-sales" },
+        { title: "Paiements Échelonnés", icon: CreditCard, path: "installments" },
+        { title: "Ventes Avancées", icon: ShoppingCart, path: "advanced-sales" },
         { title: t('sidebar.paymentLinks'), icon: DollarSign, path: "payment-links" },
         { title: t('sidebar.expenses'), icon: Receipt, path: "expenses" },
         { title: t('sidebar.debts'), icon: AlertTriangle, path: "debts" },
@@ -192,10 +190,10 @@ export function VendorSidebar() {
       label: t('sidebar.services'),
       icon: Truck,
       items: [
-        { title: t('sidebar.myPurchases'), icon: ShoppingCart, path: "my-purchases" },
+        { title: "Mes Achats", icon: ShoppingCart, path: "my-purchases" },
         { title: t('sidebar.deliveries'), icon: Truck, path: "delivery" },
         { title: t('sidebar.ratings'), icon: Star, path: "ratings" },
-        { title: t('sidebar.customerReviews'), icon: MessagesSquare, path: "reviews" },
+        { title: "Avis Clients", icon: MessagesSquare, path: "reviews" },
         { title: t('sidebar.support'), icon: HeadphonesIcon, path: "support" },
         { title: t('sidebar.messages'), icon: MessageSquare, path: "communication" },
         { title: t('sidebar.reports'), icon: FileText, path: "reports" },
@@ -338,7 +336,7 @@ export function VendorSidebar() {
                               <span className={cn(
                                 "absolute -top-1 -right-1 w-4 h-4 rounded-full text-[8px] flex items-center justify-center font-bold",
                                 badgeValue === "HOT"
-                                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse"
+                                  ? "bg-gradient-to-r from-orange-500 to-[#ff4000] text-white animate-pulse"
                                   : "bg-primary text-primary-foreground"
                               )}>
                                 {badgeValue === "HOT" ? "!" : badgeValue.length > 2 ? "+" : badgeValue}
@@ -358,7 +356,7 @@ export function VendorSidebar() {
                             <TooltipContent side="right">
                               <p className="font-medium">{item.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                {t('sidebar.requires')} {PLAN_DISPLAY_NAMES[requiredPlan || ''] || t('sidebar.higherPlan')}
+                                {t('sidebar.requires')} {PLAN_DISPLAY_NAMES[requiredPlan || ''] || 'un abonnement supérieur'}
                               </p>
                             </TooltipContent>
                           </Tooltip>

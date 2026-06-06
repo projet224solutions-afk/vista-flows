@@ -175,7 +175,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200">
+      <Card className="bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-950/30 dark:to-[#04439e]/30 border-blue-200">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900">
@@ -195,10 +195,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             <div className="flex-1 text-center">
               <div className={cn(
                 "inline-flex p-2 rounded-lg mb-1",
-                transfer.from_location?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                transfer.from_location?.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
               )}>
                 {transfer.from_location?.is_pos_enabled ? (
-                  <Store className="w-5 h-5 text-green-600" />
+                  <Store className="w-5 h-5 text-[#ff4000]" />
                 ) : (
                   <Warehouse className="w-5 h-5 text-blue-600" />
                 )}
@@ -209,10 +209,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             <div className="flex-1 text-center">
               <div className={cn(
                 "inline-flex p-2 rounded-lg mb-1",
-                transfer.to_location?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                transfer.to_location?.is_pos_enabled ? "bg-orange-100" : "bg-blue-100"
               )}>
                 {transfer.to_location?.is_pos_enabled ? (
-                  <Store className="w-5 h-5 text-green-600" />
+                  <Store className="w-5 h-5 text-[#ff4000]" />
                 ) : (
                   <Warehouse className="w-5 h-5 text-blue-600" />
                 )}
@@ -232,12 +232,12 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           </CardContent>
         </Card>
         <Card className={cn(
-          isComplete && "border-green-300 bg-green-50/50 dark:bg-green-950/20"
+          isComplete && "border-orange-300 bg-orange-50/50 dark:bg-[#ff4000]/20"
         )}>
           <CardContent className="pt-4 text-center">
             <p className={cn(
               "text-3xl font-bold",
-              isComplete ? "text-green-600" : "text-primary"
+              isComplete ? "text-[#ff4000]" : "text-primary"
             )}>
               {totals.received}
             </p>
@@ -245,12 +245,12 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           </CardContent>
         </Card>
         <Card className={cn(
-          totals.missing > 0 && "border-red-300 bg-red-50/50 dark:bg-red-950/20"
+          totals.missing > 0 && "border-orange-300 bg-orange-50/50 dark:bg-[#ff4000]/20"
         )}>
           <CardContent className="pt-4 text-center">
             <p className={cn(
               "text-3xl font-bold",
-              totals.missing > 0 ? "text-red-600" : "text-muted-foreground"
+              totals.missing > 0 ? "text-[#ff4000]" : "text-muted-foreground"
             )}>
               {totals.missing}
             </p>
@@ -322,7 +322,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                       <span className="text-sm text-muted-foreground">/ {item.quantity_sent}</span>
 
                       {item.quantity_received === item.quantity_sent ? (
-                        <Badge className="bg-green-100 text-green-700">
+                        <Badge className="bg-orange-100 text-[#ff4000]">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Complet
                         </Badge>
@@ -390,10 +390,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       )}
 
       {isComplete && (
-        <Alert className="border-green-300 bg-green-50 dark:bg-green-950/20">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800 dark:text-green-200">Réception complète</AlertTitle>
-          <AlertDescription className="text-green-700 dark:text-green-300">
+        <Alert className="border-orange-300 bg-orange-50 dark:bg-[#ff4000]/20">
+          <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
+          <AlertTitle className="text-[#ff4000] dark:text-orange-200">Réception complète</AlertTitle>
+          <AlertDescription className="text-[#ff4000] dark:text-orange-300">
             Tous les articles ont été reçus en totalité.
           </AlertDescription>
         </Alert>
@@ -409,8 +409,8 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           disabled={isSubmitting}
           className={cn(
             isComplete
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-amber-600 hover:bg-amber-700"
+              ? "bg-[#ff4000] hover:bg-[#ff4000]"
+              : "bg-[#ff4000] hover:bg-[#ff4000]"
           )}
         >
           {isSubmitting ? (

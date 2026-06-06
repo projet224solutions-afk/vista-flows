@@ -72,7 +72,7 @@ function CarBottomNav({ activeTab, onTabChange, hasActiveRide }: {
               {tab.icon}
             </div>
             {tab.badge && (
-              <span className="absolute top-0.5 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-gray-950" />
+              <span className="absolute top-0.5 right-1 w-2.5 h-2.5 bg-[#ff4000] rounded-full border border-gray-950" />
             )}
             <span className={`text-[10px] ${activeTab === tab.id ? 'text-blue-400 font-medium' : 'text-gray-600'}`}>
               {tab.label}
@@ -113,12 +113,12 @@ function CarRideRequestCard({ request, accepting, onAccept, onDecline }: {
 
       <div className="space-y-2 mb-4">
         <div className="flex items-start gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 shrink-0" />
+          <div className="w-2 h-2 rounded-full bg-[#ff4000] mt-1.5 shrink-0" />
           <p className="text-gray-300 text-xs leading-relaxed">{request.pickupAddress || 'Adresse de départ'}</p>
         </div>
         <div className="w-0.5 h-3 bg-gray-600 ml-[3px]" />
         <div className="flex items-start gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+          <div className="w-2 h-2 rounded-full bg-[#ff4000] mt-1.5 shrink-0" />
           <p className="text-gray-300 text-xs leading-relaxed">{request.destinationAddress || 'Destination'}</p>
         </div>
       </div>
@@ -133,7 +133,7 @@ function CarRideRequestCard({ request, accepting, onAccept, onDecline }: {
           <p className="text-gray-500 text-[10px]">Durée</p>
         </div>
         <div className="bg-gray-800/60 rounded-xl p-2 text-center">
-          <p className="text-green-400 font-bold text-sm">{request.estimatedEarnings ? `${request.estimatedEarnings.toLocaleString()}` : '--'}</p>
+          <p className="text-[#ff4000] font-bold text-sm">{request.estimatedEarnings ? `${request.estimatedEarnings.toLocaleString()}` : '--'}</p>
           <p className="text-gray-500 text-[10px]">GNF</p>
         </div>
       </div>
@@ -142,7 +142,7 @@ function CarRideRequestCard({ request, accepting, onAccept, onDecline }: {
         <Button
           onClick={onDecline}
           variant="outline"
-          className="flex-1 border-gray-700 text-gray-400 hover:text-red-400 hover:border-red-500/50"
+          className="flex-1 border-gray-700 text-gray-400 hover:text-[#ff4000] hover:border-[#ff4000]/50"
           disabled={accepting}
         >
           <XCircle className="w-4 h-4 mr-1" />
@@ -201,9 +201,9 @@ function CarMainDashboard({
       <div className="px-4 pt-4 space-y-4">
         {/* Error banner */}
         {error && (
-          <div className="bg-red-900/30 border border-red-500/30 rounded-xl p-3 flex items-center justify-between">
-            <p className="text-red-300 text-sm">{error.message}</p>
-            <button onClick={onClearError} className="text-red-400 ml-3"><XCircle className="w-4 h-4" /></button>
+          <div className="bg-[#ff4000]/30 border border-[#ff4000]/30 rounded-xl p-3 flex items-center justify-between">
+            <p className="text-orange-300 text-sm">{error.message}</p>
+            <button onClick={onClearError} className="text-[#ff4000] ml-3"><XCircle className="w-4 h-4" /></button>
           </div>
         )}
 
@@ -258,7 +258,7 @@ function CarMainDashboard({
           </Button>
 
           {!hasAccess && !isOnline && (
-            <p className="text-amber-400 text-xs text-center mt-2">
+            <p className="text-[#ff4000] text-xs text-center mt-2">
               ⚠️ Abonnement requis pour recevoir des courses
             </p>
           )}
@@ -270,7 +270,7 @@ function CarMainDashboard({
             onClick={() => onStatClick?.('earnings')}
             className="bg-gray-900 rounded-xl p-3 border border-gray-800 text-center hover:border-blue-500/30 transition-colors"
           >
-            <DollarSign className="w-5 h-5 text-green-400 mx-auto mb-1" />
+            <DollarSign className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
             <p className="text-white font-bold text-base">{stats.todayEarnings.toLocaleString()}</p>
             <p className="text-gray-500 text-[10px]">Gains du jour</p>
           </button>
@@ -286,7 +286,7 @@ function CarMainDashboard({
             onClick={() => onStatClick?.('rating')}
             className="bg-gray-900 rounded-xl p-3 border border-gray-800 text-center hover:border-blue-500/30 transition-colors"
           >
-            <Star className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+            <Star className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
             <p className="text-white font-bold text-base">{stats.rating > 0 ? stats.rating.toFixed(1) : '--'}</p>
             <p className="text-gray-500 text-[10px]">Note</p>
           </button>
@@ -696,8 +696,8 @@ export default function TaxiCarDriver() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        ride.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                        ride.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                        ride.status === 'completed' ? 'bg-[#ff4000]/20 text-[#ff4000]' :
+                        ride.status === 'cancelled' ? 'bg-[#ff4000]/20 text-[#ff4000]' :
                         'bg-blue-500/20 text-blue-400'
                       }`}>
                         {ride.status === 'completed' ? 'Terminée' : ride.status === 'cancelled' ? 'Annulée' : String(ride.status)}
@@ -709,7 +709,7 @@ export default function TaxiCarDriver() {
                     <p className="text-white text-sm truncate">{String(ride.pickup_address || 'Adresse départ')}</p>
                     <p className="text-gray-400 text-xs truncate mt-0.5">→ {String(ride.dropoff_address || 'Destination')}</p>
                     {ride.driver_share && (
-                      <p className="text-green-400 font-bold mt-2 text-sm">{Number(ride.driver_share).toLocaleString()} GNF</p>
+                      <p className="text-[#ff4000] font-bold mt-2 text-sm">{Number(ride.driver_share).toLocaleString()} GNF</p>
                     )}
                   </CardContent>
                 </Card>
@@ -722,16 +722,16 @@ export default function TaxiCarDriver() {
       {activeTab === 'rating' && (
         <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-4">
           <h2 className="text-white font-bold text-base mb-4 flex items-center gap-2">
-            <Star className="w-5 h-5 text-amber-400" />
+            <Star className="w-5 h-5 text-[#ff4000]" />
             Votre note chauffeur
           </h2>
-          <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-6 border border-amber-500/30 text-center">
-            <div className="text-5xl font-bold text-amber-400 mb-2">
+          <div className="bg-gradient-to-br from-[#ff4000]/20 to-[#ff4000]/10 rounded-2xl p-6 border border-[#ff4000]/30 text-center">
+            <div className="text-5xl font-bold text-[#ff4000] mb-2">
               {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : '--'}
             </div>
             <div className="flex justify-center gap-1 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className={`w-6 h-6 ${star <= Math.round(driverStats.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-600'}`} />
+                <Star key={star} className={`w-6 h-6 ${star <= Math.round(driverStats.rating) ? 'text-[#ff4000] fill-[#ff4000]' : 'text-gray-600'}`} />
               ))}
             </div>
             <p className="text-gray-400 text-sm">Basé sur {driverStats.totalRides || 0} courses</p>

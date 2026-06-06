@@ -38,14 +38,11 @@ export interface MarketplaceItem {
   service_type?: string;
   rating: number;
   reviews_count: number;
-  item_type: 'product' | 'digital_product' | 'professional_service' | 'menu_item' | 'service_product';
+  item_type: 'product' | 'digital_product' | 'professional_service';
   free_shipping?: boolean;
   created_at: string;
-  marketplace_position?: number;
-  is_sponsored?: boolean;
-  is_featured?: boolean;
-  // ID du service parent (pour menu_item et service_product)
-  service_id?: string;
+  marketplace_position?: number; // Position dans le marketplace (rotation automatique)
+  is_sponsored?: boolean; // Produit sponsorisé (toujours en tête)
   // Champs spécifiques aux services professionnels
   business_name?: string;
   address?: string;
@@ -96,32 +93,6 @@ async function withTimeout<T>(promise: Promise<T>, fallbackValue: T, label: stri
   }
 }
 
-/**
- * Filtre les items de services (menu_item, service_product) selon l'abonnement actif
- * et la limite max_products du plan.
- * Map: professional_service_id → max_products (null = illimité)
- */
-function applySubscriptionLimit(
-  items: MarketplaceItem[],
-  subscriptionMap: Map<string, number | null>
-): MarketplaceItem[] {
-  const byService = new Map<string, MarketplaceItem[]>();
-  for (const item of items) {
-    const sid = item.service_id || item.vendor_id;
-    if (!subscriptionMap.has(sid)) continue; // Pas d'abonnement actif → exclu
-    if (!byService.has(sid)) byService.set(sid, []);
-    byService.get(sid)!.push(item);
-  }
-  const result: MarketplaceItem[] = [];
-  for (const [, sItems] of byService) {
-    const sid = (sItems[0].service_id || sItems[0].vendor_id)!;
-    const maxP = subscriptionMap.get(sid) ?? null;
-    // Prendre les maxP premiers (déjà triés par created_at DESC par le loader)
-    result.push(...(maxP !== null ? sItems.slice(0, maxP) : sItems));
-  }
-  return result;
-}
-
 export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions = {}) => {
   const {
     limit = 24,
@@ -148,7 +119,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   const requestIdRef = useRef(0);
   const lastLoadedAtRef = useRef(0);
   const loadingRef = useRef(false);
-  const refreshRef = useRef<() => void>(() => {});
+  const refreshRef = useRef<() => void>(() => { });
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
@@ -164,7 +135,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           id,
           name,
           price,
-          currency,
+          compare_price,
           description,
           images,
           promotional_videos,
@@ -176,7 +147,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at,
           marketplace_position,
           is_sponsored,
-          vendors(business_name, user_id, business_type, country, city, shop_currency),
+          vendors(business_name, user_id, business_type, country, city),
           categories(name)
         `)
         .eq('is_active', true);
@@ -201,15 +172,16 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .limit(sourceRowLimit);
       if (error) throw error;
 
-      // Règle marketplace: exclure uniquement les vendeurs "physical" (boutique physique sans vente en ligne)
-      // Inclure null/undefined (non renseigné), hybrid, online, digital, etc.
+      // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
       // + Filtrage par pays et ville
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
-        if (!vendor) return false;
+        if (!vendor) return false; // Pas de vendeur = pas affiché
 
-        // Exclure seulement les vendeurs explicitement "physical"
-        if (vendor.business_type === 'physical') return false;
+        // Exclure les vendeurs qui n'ont pas activé la vente en ligne
+        // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
+        const allowedTypes = ['hybrid', 'online'];
+        if (!vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
 
         // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
@@ -251,18 +223,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendor = product.vendors as any;
         const vendorUserId = vendor?.user_id;
         const vendorCountry = vendor?.country || '';
-        // Pays du vendeur = source de vérité (gère codes ISO et noms complets)
-        // product.currency sert de fallback si le pays vendeur est absent
-        const shopCurrency = vendor?.shop_currency || null;
-        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-        // product.currency est la devise réelle du prix (priorité absolue)
-        // shop_currency / countryDerived servent de fallback si le produit n'en a pas
-        const derivedCurrency = (product as any).currency || shopCurrency || countryDerived || 'GNF';
+        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
 
         return {
           id: product.id,
           name: product.name,
           price: product.price,
+          // Prix barré : afficher si compare_price > price
+          originalPrice: (product.compare_price && product.compare_price > product.price) ? product.compare_price : undefined,
           currency: derivedCurrency,
           description: product.description || '',
           images: Array.isArray(product.images) ? (product.images as string[]) : [],
@@ -336,17 +304,17 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // donc le filtrage par pays n'est pas applicable pour ce type
 
       return (data || []).map(service => {
+        // Construire le tableau d'images à partir de logo_url et cover_image_url
         const images: string[] = [];
         if (service.cover_image_url) images.push(service.cover_image_url);
-        if (service.logo_url && service.logo_url !== service.cover_image_url) images.push(service.logo_url);
+        if (service.logo_url) images.push(service.logo_url);
 
         return {
           id: service.id,
           name: service.business_name,
-          price: 0,
+          price: 0, // Les services pro n'ont pas de prix direct
           description: service.description || '',
           images,
-          promotional_videos: [],
           vendor_id: service.id,
           vendor_name: service.business_name,
           vendor_user_id: service.user_id,
@@ -364,188 +332,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       });
     } catch (error) {
       console.error('Erreur chargement services professionnels:', error);
-      return [];
-    }
-  };
-
-  /**
-   * Charge la map des abonnements actifs : professional_service_id → max_products (null = illimité)
-   * Utilise une fonction SECURITY DEFINER pour contourner la RLS sur service_subscriptions
-   * (la RLS bloque les visiteurs/utilisateurs non-admin qui ne voient que leurs propres abonnements)
-   */
-  const loadActiveSubscriptionMap = async (): Promise<Map<string, number | null>> => {
-    const { data, error } = await supabase
-      .rpc('get_active_service_subscription_limits');
-
-    if (error) {
-      console.warn('[Marketplace] Subscription map error:', error);
-      return new Map();
-    }
-
-    const map = new Map<string, number | null>();
-    for (const row of data || []) {
-      const sid: string = row.professional_service_id;
-      const maxP: number | null = row.max_products ?? null;
-      const existing = map.get(sid);
-      // Si plusieurs abonnements actifs pour le même service, garder le max le plus élevé
-      if (existing === undefined || maxP === null || (existing !== null && maxP > existing)) {
-        map.set(sid, maxP);
-      }
-    }
-    return map;
-  };
-
-  /**
-   * Charge les plats des restaurants (restaurant_menu_items)
-   */
-  const loadRestaurantMenuItems = async (): Promise<MarketplaceItem[]> => {
-    if (itemType !== 'all' && itemType !== 'professional_service') return [];
-
-    try {
-      let query = (supabase as any)
-        .from('restaurant_menu_items')
-        .select(`
-          id, name, description, price, image_url, images, video_url,
-          is_featured, is_new, created_at, professional_service_id,
-          professional_services(id, business_name, city, logo_url, cover_image_url, rating, total_reviews, user_id, status),
-          restaurant_menu_categories(name)
-        `)
-        .eq('is_available', true);
-
-      if (searchQuery?.trim()) {
-        query = query.or(`name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
-      }
-      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
-      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
-      if (vendorId) query = query.eq('professional_service_id', vendorId);
-
-      const { data, error } = await query
-        .order('is_featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(sourceRowLimit);
-
-      if (error) throw error;
-
-      const filtered = (data || []).filter((item: any) => {
-        const service = item.professional_services;
-        if (!service || service.status !== 'active') return false;
-        if (city && city !== 'all') {
-          const sc = (service.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
-          const nc = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!sc.startsWith(nc) && !nc.startsWith(sc)) return false;
-        }
-        return true;
-      });
-
-      return filtered.map((item: any) => {
-        const service = item.professional_services;
-        const itemImages: string[] = [];
-        if (item.image_url) itemImages.push(item.image_url);
-        if (Array.isArray(item.images)) {
-          for (const img of item.images) {
-            if (img && !itemImages.includes(img)) itemImages.push(img);
-          }
-        }
-        return {
-          id: item.id,
-          name: item.name,
-          price: item.price || 0,
-          currency: 'GNF',
-          description: item.description || '',
-          images: itemImages,
-          promotional_videos: item.video_url ? [item.video_url] : [],
-          vendor_id: item.professional_service_id,
-          vendor_name: service?.business_name || 'Restaurant',
-          vendor_user_id: service?.user_id,
-          category_name: item.restaurant_menu_categories?.name || 'Plat',
-          rating: Number(service?.rating) || 0,
-          reviews_count: service?.total_reviews || 0,
-          item_type: 'menu_item' as const,
-          is_featured: item.is_featured || false,
-          created_at: item.created_at,
-          service_id: item.professional_service_id,
-        };
-      });
-    } catch (error) {
-      console.error('Erreur chargement plats restaurant:', error);
-      return [];
-    }
-  };
-
-  /**
-   * Charge les produits des services de proximité (service_products)
-   */
-  const loadServiceProducts = async (): Promise<MarketplaceItem[]> => {
-    if (itemType !== 'all' && itemType !== 'professional_service') return [];
-
-    try {
-      let query = (supabase as any)
-        .from('service_products')
-        .select(`
-          id, name, description, price, compare_at_price, images, category,
-          created_at, professional_service_id,
-          professional_services(id, business_name, city, logo_url, cover_image_url, rating, total_reviews, user_id, status)
-        `)
-        .eq('is_available', true);
-
-      if (searchQuery?.trim()) {
-        query = query.or(`name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
-      }
-      if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
-      if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
-      if (vendorId) query = query.eq('professional_service_id', vendorId);
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(sourceRowLimit);
-
-      if (error) throw error;
-
-      const filtered = (data || []).filter((item: any) => {
-        const service = item.professional_services;
-        if (!service || service.status !== 'active') return false;
-        if (city && city !== 'all') {
-          const sc = (service.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
-          const nc = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!sc.startsWith(nc) && !nc.startsWith(sc)) return false;
-        }
-        return true;
-      });
-
-      return filtered.map((item: any) => {
-        const service = item.professional_services;
-        let itemImages: string[] = [];
-        if (Array.isArray(item.images)) {
-          itemImages = item.images
-            .map((img: any) => (typeof img === 'string' ? img : img?.url || img?.src || ''))
-            .filter(Boolean);
-        }
-        // Fallback sur l'image du service parent si le produit n'en a pas
-        if (itemImages.length === 0 && service?.cover_image_url) itemImages.push(service.cover_image_url);
-        if (itemImages.length === 0 && service?.logo_url) itemImages.push(service.logo_url);
-
-        return {
-          id: item.id,
-          name: item.name,
-          price: item.price || 0,
-          originalPrice: item.compare_at_price || undefined,
-          currency: 'GNF',
-          description: item.description || '',
-          images: itemImages,
-          promotional_videos: [],
-          vendor_id: item.professional_service_id,
-          vendor_name: service?.business_name || 'Service',
-          vendor_user_id: service?.user_id,
-          category_name: item.category || 'Service',
-          rating: Number(service?.rating) || 0,
-          reviews_count: service?.total_reviews || 0,
-          item_type: 'service_product' as const,
-          created_at: item.created_at,
-          service_id: item.professional_service_id,
-        };
-      });
-    } catch (error) {
-      console.error('Erreur chargement produits services:', error);
       return [];
     }
   };
@@ -713,7 +499,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   /**
    * Récupère le nom de la catégorie à partir de son ID
    */
-  const _getCategoryName = async (categoryId: string): Promise<string | null> => {
+  const getCategoryName = async (categoryId: string): Promise<string | null> => {
     if (!categoryId || categoryId === 'all') return null;
 
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId);
@@ -750,39 +536,23 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (itemType === 'product') {
         allItems = await withTimeout(loadProducts(), [], 'products');
       } else if (itemType === 'digital_product') {
+        // Si une catégorie e-commerce est sélectionnée, ne pas charger les produits numériques
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
-        // Ce cas est géré par ServiceTypesGrid dans Marketplace.tsx — le hook ne charge rien
-        // pour éviter de passer des profils bruts dans la grille produit.
-        allItems = [];
+        // Si une catégorie e-commerce est sélectionnée, ne pas charger les services pro
+        allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadProfessionalServices(), [], 'professional_services');
       } else {
-        // 'all' = tout : produits + numériques + plats restaurants + produits services
-        // NOTE : les PROFILS de services pro (professional_service) n'apparaissent PAS ici —
-        // seuls leurs articles (menu_item, service_product) sont visibles dans le marketplace.
-        // Les profils sont accessibles via l'onglet "Services Pro" → ServiceTypesGrid.
+        // 'all' = produits + numériques + services professionnels
+        // Si une catégorie e-commerce est sélectionnée, ne charger que les produits
         if (isEcommerceCategorySelected) {
           allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
-          const [products, digitalProducts, menuItems, serviceProds, subscriptionMap] = await Promise.all([
+          const [products, digitalProducts, professionalServices] = await Promise.all([
             withTimeout(loadProducts(), [], 'products'),
             withTimeout(loadDigitalProducts(), [], 'digital_products'),
-            withTimeout(loadRestaurantMenuItems(), [], 'restaurant_menu_items'),
-            withTimeout(loadServiceProducts(), [], 'service_products'),
-            withTimeout(loadActiveSubscriptionMap(), new Map<string, number | null>(), 'subscription_map'),
+            withTimeout(loadProfessionalServices(), [], 'professional_services')
           ]);
-          allItems = [
-            ...products,
-            ...digitalProducts,
-            ...applySubscriptionLimit(menuItems, subscriptionMap),
-            ...applySubscriptionLimit(serviceProds, subscriptionMap),
-          ];
-          // Dédupliquer par ID (évite les doublons si un même item apparaît dans plusieurs sources)
-          const seen = new Set<string>();
-          allItems = allItems.filter(item => {
-            if (seen.has(item.id)) return false;
-            seen.add(item.id);
-            return true;
-          });
+          allItems = [...products, ...digitalProducts, ...professionalServices];
         }
       }
 
@@ -946,7 +716,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         setLoading(false);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     page,
     limit,
@@ -1026,7 +795,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'digital_products' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'professional_services' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_subscriptions' }, scheduleRefresh)
       .subscribe();
 
     return () => {

@@ -76,9 +76,9 @@ const BugBounty = () => {
 
         {/* Rewards Info */}
         <div className="grid md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-red-500/10 to-red-600/10 border-red-500/20">
+          <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardHeader className="pb-3">
-              <Trophy className="w-8 h-8 text-red-500 mb-2" />
+              <Trophy className="w-8 h-8 text-[#ff4000] mb-2" />
               <CardTitle className="text-lg">Critique</CardTitle>
             </CardHeader>
             <CardContent>
@@ -96,9 +96,9 @@ const BugBounty = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-500/20">
+          <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardHeader className="pb-3">
-              <Award className="w-8 h-8 text-yellow-600 mb-2" />
+              <Award className="w-8 h-8 text-[#ff4000] mb-2" />
               <CardTitle className="text-lg">Moyenne</CardTitle>
             </CardHeader>
             <CardContent>
@@ -106,9 +106,9 @@ const BugBounty = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+          <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardHeader className="pb-3">
-              <Award className="w-8 h-8 text-green-600 mb-2" />
+              <Award className="w-8 h-8 text-[#ff4000] mb-2" />
               <CardTitle className="text-lg">Basse</CardTitle>
             </CardHeader>
             <CardContent>

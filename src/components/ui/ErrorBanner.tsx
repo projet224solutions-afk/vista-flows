@@ -11,7 +11,7 @@ interface ErrorBannerProps {
 
 export function ErrorBanner({ title = "Erreur", message, actionLabel, onAction, className }: ErrorBannerProps) {
   return (
-    <div className={cn("mb-3 rounded-md border border-red-200 bg-red-50 p-3 text-red-800", className)}>
+    <div className={cn("mb-3 rounded-md border border-orange-200 bg-orange-50 p-3 text-[#ff4000]", className)}>
       <div className="flex items-start gap-2">
         <AlertTriangle className="h-4 w-4 mt-0.5" />
         <div className="flex-1">

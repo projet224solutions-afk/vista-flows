@@ -444,14 +444,14 @@ export default function MyPurchasesOrdersList({
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-      pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      pending: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]', icon: Clock },
       confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-      preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800', icon: Package },
+      preparing: { label: 'En préparation', color: 'bg-blue-100 text-[#04439e]', icon: Package },
       ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
-      delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
-      cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
+      delivered: { label: 'Livrée', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle },
+      completed: { label: 'Terminée', color: 'bg-orange-100 text-[#ff4000]', icon: CheckCircle },
+      cancelled: { label: 'Annulée', color: 'bg-orange-100 text-[#ff4000]', icon: XCircle }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -471,9 +471,9 @@ export default function MyPurchasesOrdersList({
     const escrowConfig: Record<string, { label: string; color: string }> = {
       pending: { label: 'Fonds bloqués', color: 'bg-orange-100 text-orange-800' },
       held: { label: 'Fonds sécurisés', color: 'bg-blue-100 text-blue-800' },
-      released: { label: 'Fonds libérés', color: 'bg-green-100 text-green-800' },
+      released: { label: 'Fonds libérés', color: 'bg-orange-100 text-[#ff4000]' },
       refunded: { label: 'Remboursé', color: 'bg-gray-100 text-gray-800' },
-      dispute: { label: 'Litige', color: 'bg-red-100 text-red-800' }
+      dispute: { label: 'Litige', color: 'bg-orange-100 text-[#ff4000]' }
     };
 
     const config = escrowConfig[escrowStatus];
@@ -633,7 +633,7 @@ export default function MyPurchasesOrdersList({
                           {getStatusBadge(order.status)}
                           {!isCODOrder && escrow && getEscrowBadge(escrow.status)}
                           {isCODOrder && (
-                            <Badge className="bg-amber-100 text-amber-800">
+                            <Badge className="bg-orange-100 text-[#ff4000]">
                               <Banknote className="w-3 h-3 mr-1" /> Paiement à la livraison
                             </Badge>
                           )}
@@ -641,11 +641,11 @@ export default function MyPurchasesOrdersList({
 
                         {/* Info Escrow */}
                         {!isCODOrder && escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
-                          <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                            <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                            <Shield className="w-5 h-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-sm font-medium text-green-800">Paiement protégé</p>
-                              <p className="text-xs text-green-700">
+                              <p className="text-sm font-medium text-[#ff4000]">Paiement protégé</p>
+                              <p className="text-xs text-[#ff4000]">
                                 {escrow.amount.toLocaleString()} GNF sécurisés jusqu'à confirmation
                               </p>
                             </div>
@@ -697,7 +697,7 @@ export default function MyPurchasesOrdersList({
 
                         {(order.status === 'delivered' || order.status === 'completed') && escrow?.status === 'released' && (
                           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                             <span className="text-sm text-muted-foreground">
                               Terminée - {formatCurrency(getVendorReceivableAmount(order, escrow), getVendorReceivableCurrency(order, escrow))} transférés au vendeur
                             </span>

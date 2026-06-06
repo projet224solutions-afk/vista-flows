@@ -81,110 +81,110 @@ export default function AgentSidebar({
       id: 'overview',
       label: 'Tableau de bord',
       icon: Home,
-      gradient: 'from-blue-500 to-indigo-500'
+      gradient: ''
     },
     {
       id: 'wallet',
       label: 'Wallet',
       icon: Wallet,
-      gradient: 'from-emerald-500 to-teal-500'
+      gradient: ''
     },
     {
       id: 'create-user',
       label: 'Créer Utilisateur',
       icon: UserPlus,
       permission: 'create_users',
-      gradient: 'from-green-500 to-lime-500'
+      gradient: ''
     },
     {
       id: 'sub-agents',
       label: 'Sous-Agents',
       icon: UserCog,
       permission: 'create_sub_agents',
-      gradient: 'from-purple-500 to-pink-500'
+      gradient: ''
     },
     {
       id: 'users',
       label: 'Utilisateurs',
       icon: Users,
       permission: 'manage_users',
-      gradient: 'from-orange-500 to-amber-500'
+      gradient: ''
     },
     {
       id: 'products',
       label: 'Produits',
       icon: Package,
       permission: 'manage_products',
-      gradient: 'from-cyan-500 to-blue-500'
+      gradient: ''
     },
     {
       id: 'reports',
       label: 'Rapports',
       icon: BarChart3,
       permission: 'view_reports',
-      gradient: 'from-violet-500 to-purple-500'
+      gradient: ''
     },
     {
       id: 'commissions',
       label: 'Commissions',
       icon: DollarSign,
       permission: 'manage_commissions',
-      gradient: 'from-yellow-500 to-orange-500'
+      gradient: ''
     },
     {
       id: 'finance',
       label: 'Finance',
       icon: TrendingUp,
       permission: 'view_finance',
-      gradient: 'from-emerald-500 to-green-600'
+      gradient: ''
     },
     {
       id: 'banking',
       label: 'Système Bancaire',
       icon: Shield,
       permission: 'view_banking',
-      gradient: 'from-blue-600 to-indigo-700'
+      gradient: ''
     },
     {
       id: 'wallet-transactions',
       label: 'Transactions Wallet',
       icon: CreditCard,
       permission: 'manage_wallet_transactions',
-      gradient: 'from-teal-500 to-cyan-600'
+      gradient: ''
     },
     {
       id: 'kyc-management',
       label: 'Gestion KYC',
       icon: FileCheck,
       permission: 'view_kyc',
-      gradient: 'from-amber-500 to-orange-600'
+      gradient: ''
     },
     {
       id: 'vendors-management',
       label: 'Vendeurs',
       icon: Store,
       permission: 'view_vendors',
-      gradient: 'from-rose-500 to-pink-600'
+      gradient: ''
     },
     {
       id: 'orders-management',
       label: 'Commandes',
       icon: ShoppingCart,
       permission: 'view_orders',
-      gradient: 'from-orange-500 to-red-500'
+      gradient: ''
     },
     {
       id: 'service-subscriptions',
       label: 'Abonnements Services',
       icon: Sparkles,
       permission: 'view_service_subscriptions',
-      gradient: 'from-yellow-500 to-amber-600'
+      gradient: ''
     },
     {
       id: 'affiliate',
       label: 'Affiliation',
       icon: Link2,
-      gradient: 'from-pink-500 to-rose-500',
+      gradient: '',
       badge: 'Nouveau'
     }
   ];
@@ -230,7 +230,7 @@ export default function AgentSidebar({
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
-              "bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg",
+              "bg-[#04439e] rounded-xl flex items-center justify-center shadow-lg",
               collapsed ? "w-12 h-12" : "w-14 h-14"
             )}>
               <Shield className={cn("text-white", collapsed ? "w-6 h-6" : "w-8 h-8")} />
@@ -255,7 +255,7 @@ export default function AgentSidebar({
               variant={agent.is_active ? "default" : "secondary"}
               className={cn(
                 "mt-3 w-full justify-center",
-                agent.is_active ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : ""
+                agent.is_active ? "bg-[#ff4000]/20 text-orange-300 border-[#ff4000]/30" : ""
               )}
             >
               {agent.is_active ? '✅ Agent Actif' : '⏸️ Inactif'}
@@ -318,7 +318,7 @@ export default function AgentSidebar({
             variant="ghost"
             onClick={onLogout}
             className={cn(
-              "w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10",
+              "w-full justify-start text-[#ff4000] hover:text-orange-300 hover:bg-[#ff4000]/10",
               collapsed ? "px-3" : ""
             )}
           >

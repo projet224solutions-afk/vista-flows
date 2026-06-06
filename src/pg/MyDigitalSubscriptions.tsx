@@ -45,8 +45,8 @@ interface DigitalSubscription {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  active: { label: 'Actif', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: CheckCircle },
-  past_due: { label: 'Paiement en retard', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20', icon: AlertTriangle },
+  active: { label: 'Actif', color: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20', icon: CheckCircle },
+  past_due: { label: 'Paiement en retard', color: 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20', icon: AlertTriangle },
   cancelled: { label: 'Annulé', color: 'bg-muted text-muted-foreground border-border', icon: XCircle },
   expired: { label: 'Expiré', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Clock },
   paused: { label: 'Suspendu', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', icon: Clock },
@@ -337,8 +337,8 @@ export default function MyDigitalSubscriptions() {
                     )}
 
                     {sub.status === 'cancelled' && sub.current_period_end && new Date(sub.current_period_end) > new Date() && (
-                      <div className="border-t border-border px-4 py-2 bg-amber-500/5">
-                        <p className="text-xs text-amber-600">
+                      <div className="border-t border-border px-4 py-2 bg-[#ff4000]/5">
+                        <p className="text-xs text-[#ff4000]">
                           Accès maintenu jusqu'au {formatDate(sub.current_period_end)}
                         </p>
                       </div>

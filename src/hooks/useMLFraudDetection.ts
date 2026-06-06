@@ -100,10 +100,10 @@ export const useMLFraudDetection = () => {
 
   const getRiskColor = useCallback((riskLevel: string): string => {
     switch (riskLevel) {
-      case 'critical': return 'text-red-600 bg-red-100';
+      case 'critical': return 'text-[#ff4000] bg-orange-100';
       case 'high': return 'text-orange-600 bg-orange-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-green-600 bg-green-100';
+      case 'medium': return 'text-[#ff4000] bg-orange-100';
+      case 'low': return 'text-[#ff4000] bg-orange-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   }, []);

@@ -93,8 +93,8 @@ export function EnhancedSOCDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-500';
-      case 'busy': return 'bg-yellow-500';
+      case 'available': return 'bg-[#ff4000]';
+      case 'busy': return 'bg-[#ff4000]';
       case 'on_call': return 'bg-blue-500';
       case 'offline': return 'bg-gray-500';
       default: return 'bg-gray-500';
@@ -154,9 +154,9 @@ export function EnhancedSOCDashboard() {
         </CardHeader>
         <CardContent>
           {/* Statut SOC */}
-          <div className="p-4 rounded-lg border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+          <div className="p-4 rounded-lg border bg-orange-50 dark:bg-[#ff4000] border-orange-200 dark:border-[#ff4000]">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <span className="font-semibold">SOC Opérationnel - Couverture 24/7</span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -173,7 +173,7 @@ export function EnhancedSOCDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+              <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{stats?.total_incidents || 0}</div>
                 <div className="text-xs text-muted-foreground">Incidents totaux</div>
@@ -195,7 +195,7 @@ export function EnhancedSOCDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Users className="w-8 h-8 text-green-500" />
+              <Users className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{activeAnalysts}</div>
                 <div className="text-xs text-muted-foreground">Analystes actifs</div>
@@ -206,7 +206,7 @@ export function EnhancedSOCDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Clock className="w-8 h-8 text-purple-500" />
+              <Clock className="w-8 h-8 text-[#04439e]" />
               <div>
                 <div className="text-2xl font-bold">&lt; 2 min</div>
                 <div className="text-xs text-muted-foreground">Temps de réponse</div>
@@ -295,7 +295,7 @@ export function EnhancedSOCDashboard() {
         <CardContent>
           {investigations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
+              <CheckCircle className="w-12 h-12 mx-auto mb-2 text-[#ff4000]" />
               <p>Aucune enquête active</p>
             </div>
           ) : (

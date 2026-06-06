@@ -105,7 +105,7 @@ function SyncStatusBadge({ status, lastSync }: { status: string; lastSync: strin
   const getStatusConfig = () => {
     switch (status) {
       case 'synced':
-        return { icon: CheckCircle, label: 'Synchronisé', variant: 'default' as const, className: 'bg-green-500' };
+        return { icon: CheckCircle, label: 'Synchronisé', variant: 'default' as const, className: 'bg-[#ff4000]' };
       case 'pending':
         return { icon: Loader2, label: 'En cours', variant: 'secondary' as const, className: 'animate-spin' };
       case 'error':
@@ -143,11 +143,11 @@ function StockStatusBadge({ status, quantity }: { status: string; quantity: numb
   const getConfig = () => {
     switch (status) {
       case 'in_stock':
-        return { label: quantity ? `${quantity} en stock` : 'En stock', className: 'bg-green-100 text-green-800' };
+        return { label: quantity ? `${quantity} en stock` : 'En stock', className: 'bg-orange-100 text-[#ff4000]' };
       case 'low_stock':
-        return { label: `${quantity} restants`, className: 'bg-yellow-100 text-yellow-800' };
+        return { label: `${quantity} restants`, className: 'bg-orange-100 text-[#ff4000]' };
       case 'out_of_stock':
-        return { label: 'Rupture', className: 'bg-red-100 text-red-800' };
+        return { label: 'Rupture', className: 'bg-orange-100 text-[#ff4000]' };
       default:
         return { label: 'Inconnu', className: 'bg-gray-100 text-gray-800' };
     }
@@ -170,7 +170,7 @@ function PriceChangeIndicator({ change, pct }: { change: string | null; pct: num
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center text-red-500">
+            <span className="inline-flex items-center text-[#ff4000]">
               <TrendingUp className="w-4 h-4" />
             </span>
           </TooltipTrigger>
@@ -186,7 +186,7 @@ function PriceChangeIndicator({ change, pct }: { change: string | null; pct: num
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center text-green-500">
+          <span className="inline-flex items-center text-[#ff4000]">
             <TrendingDown className="w-4 h-4" />
           </span>
         </TooltipTrigger>
@@ -353,21 +353,21 @@ export function DropshipProductsTable({
           <p className="text-sm text-muted-foreground">Total produits</p>
           <p className="text-2xl font-bold">{products.length}</p>
         </div>
-        <div className="bg-green-50 rounded-lg p-3">
-          <p className="text-sm text-green-600">Publiés</p>
-          <p className="text-2xl font-bold text-green-700">
+        <div className="bg-orange-50 rounded-lg p-3">
+          <p className="text-sm text-[#ff4000]">Publiés</p>
+          <p className="text-2xl font-bold text-[#ff4000]">
             {products.filter(p => p.isPublished).length}
           </p>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-3">
-          <p className="text-sm text-yellow-600">Erreurs sync</p>
-          <p className="text-2xl font-bold text-yellow-700">
+        <div className="bg-orange-50 rounded-lg p-3">
+          <p className="text-sm text-[#ff4000]">Erreurs sync</p>
+          <p className="text-2xl font-bold text-[#ff4000]">
             {products.filter(p => p.syncStatus === 'error').length}
           </p>
         </div>
-        <div className="bg-red-50 rounded-lg p-3">
-          <p className="text-sm text-red-600">Rupture stock</p>
-          <p className="text-2xl font-bold text-red-700">
+        <div className="bg-orange-50 rounded-lg p-3">
+          <p className="text-sm text-[#ff4000]">Rupture stock</p>
+          <p className="text-2xl font-bold text-[#ff4000]">
             {products.filter(p => p.stockStatus === 'out_of_stock').length}
           </p>
         </div>
@@ -456,7 +456,7 @@ export function DropshipProductsTable({
                   <TableCell className="text-right">
                     <div>
                       <p className="font-medium">{formatCurrency(product.sellingPrice, 'GNF')}</p>
-                      <p className="text-xs text-green-600">+{product.margin.toFixed(0)}%</p>
+                      <p className="text-xs text-[#ff4000]">+{product.margin.toFixed(0)}%</p>
                     </div>
                   </TableCell>
 
@@ -470,7 +470,7 @@ export function DropshipProductsTable({
 
                   <TableCell>
                     {product.isPublished ? (
-                      <Badge className="bg-green-500">
+                      <Badge className="bg-[#ff4000]">
                         <Eye className="w-3 h-3 mr-1" />
                         Publié
                       </Badge>
@@ -525,7 +525,7 @@ export function DropshipProductsTable({
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                          className="text-red-600"
+                          className="text-[#ff4000]"
                           onClick={() => onDeleteProduct(product.id)}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />

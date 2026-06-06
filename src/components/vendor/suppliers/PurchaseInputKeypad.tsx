@@ -85,10 +85,10 @@ export function PurchaseInputKeypad({
           icon: DollarSign,
           title: 'Prix d\'achat',
           subtitle: `Saisir le prix en ${currency}`,
-          color: 'from-emerald-500 to-emerald-600',
-          bgColor: 'bg-emerald-500/10',
-          borderColor: 'border-emerald-500/30',
-          buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
+          color: '',
+          bgColor: 'bg-[#ff4000]/10',
+          borderColor: 'border-[#ff4000]/30',
+          buttonColor: 'bg-[#ff4000] hover:bg-[#ff4000]',
           suffix: currency
         };
       case 'quantity':
@@ -96,7 +96,7 @@ export function PurchaseInputKeypad({
           icon: Hash,
           title: 'Quantité (unités)',
           subtitle: 'Nombre d\'unités à acheter',
-          color: 'from-blue-500 to-blue-600',
+          color: '',
           bgColor: 'bg-blue-500/10',
           borderColor: 'border-blue-500/30',
           buttonColor: 'bg-blue-600 hover:bg-blue-700',
@@ -107,10 +107,10 @@ export function PurchaseInputKeypad({
           icon: Package,
           title: 'Quantité (cartons)',
           subtitle: unitsPerCarton ? `${unitsPerCarton} unités par carton` : 'Nombre de cartons',
-          color: 'from-purple-500 to-purple-600',
-          bgColor: 'bg-purple-500/10',
-          borderColor: 'border-purple-500/30',
-          buttonColor: 'bg-purple-600 hover:bg-purple-700',
+          color: '',
+          bgColor: 'bg-[#04439e]/10',
+          borderColor: 'border-[#04439e]/30',
+          buttonColor: 'bg-[#04439e] hover:bg-[#04439e]',
           suffix: 'cartons'
         };
     }

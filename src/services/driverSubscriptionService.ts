@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch, generateIdempotencyKey } from './backendApi';
 
 export interface DriverSubscription {
   id: string;
@@ -243,50 +244,27 @@ export class DriverSubscriptionService {
     }
   }
   // S'abonner ou renouveler (via Wallet)
-  // La fonction RPC subscribe_driver gère tout: débit wallet, transaction, abonnement, revenus
+  // Toute la logique est gérée par le backend Node.js : POST /api/subscriptions/driver/purchase
+  // (débit wallet TRACÉ dans wallet_transactions, anti-double-facturation si déjà actif).
   static async subscribeWithWallet(
     userId: string,
     userType: 'taxi' | 'livreur',
     billingCycle: 'monthly' | 'yearly' = 'monthly'
   ): Promise<{ success: boolean; subscriptionId?: string; error?: string }> {
     try {
-      // S'assurer que le wallet existe
-      const ensured = await this.ensureWallet(userId);
-      if (!ensured.exists) {
-        return { success: false, error: 'Wallet introuvable' };
+      const response = await backendFetch<{ subscription_id: string; already_active?: boolean }>(
+        '/api/subscriptions/driver/purchase',
+        {
+          method: 'POST',
+          body: { type: userType, billing_cycle: billingCycle, payment_method: 'wallet' },
+          idempotencyKey: generateIdempotencyKey(),
+        }
+      );
+
+      if (!response.success) {
+        return { success: false, error: response.error || 'Erreur création abonnement' };
       }
-
-      // Appeler la fonction RPC qui gère tout le processus atomiquement
-      // (vérification solde, débit, transaction, abonnement, revenus)
-      const { data: subscriptionId, error: subError } = await supabase
-        .rpc('subscribe_driver', {
-          p_user_id: userId,
-          p_type: userType,
-          p_payment_method: 'wallet',
-          p_transaction_id: null, // La fonction génère automatiquement un ID
-          p_billing_cycle: billingCycle
-        });
-
-      if (subError) {
-        console.error('Erreur création abonnement:', subError);
-
-        // Extraire le message d'erreur pour l'affichage
-        const errorMessage = subError.message || 'Erreur création abonnement';
-
-        if (errorMessage.includes('Solde insuffisant')) {
-          return { success: false, error: 'Solde insuffisant' };
-        }
-        if (errorMessage.includes('Wallet non trouvé')) {
-          return { success: false, error: 'Wallet introuvable' };
-        }
-        if (errorMessage.includes('Configuration')) {
-          return { success: false, error: 'Configuration non disponible' };
-        }
-
-        return { success: false, error: errorMessage };
-      }
-
-      return { success: true, subscriptionId };
+      return { success: true, subscriptionId: response.data?.subscription_id };
     } catch (error: any) {
       console.error('Erreur abonnement wallet:', error);
       return { success: false, error: error?.message || 'Erreur système' };

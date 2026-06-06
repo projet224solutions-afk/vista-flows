@@ -511,7 +511,7 @@ export default function ProductDetail() {
                       <Star
                         key={star}
                         className={`w-4 h-4 ${
-                          star <= (product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                          star <= (product.rating || 0) ? 'fill-[#ff4000] text-[#ff4000]' : 'text-gray-300'
                         }`}
                       />
                     ))}

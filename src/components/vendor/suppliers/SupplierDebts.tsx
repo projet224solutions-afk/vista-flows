@@ -164,7 +164,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
               <TableRow key={debt.id}>
                 <TableCell className="font-medium">{debt.supplier.business_name}</TableCell>
                 <TableCell>{formatAmount(debt.total_amount)}</TableCell>
-                <TableCell className="text-green-600">{formatAmount(debt.paid_amount)}</TableCell>
+                <TableCell className="text-[#ff4000]">{formatAmount(debt.paid_amount)}</TableCell>
                 <TableCell className="text-orange-600 font-medium">
                   {formatAmount(debt.remaining_amount)}
                 </TableCell>

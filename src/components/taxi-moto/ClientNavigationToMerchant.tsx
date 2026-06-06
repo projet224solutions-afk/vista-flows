@@ -153,7 +153,7 @@ export function ClientNavigationToMerchant({
           )}
 
           {arrived && (
-            <p className="text-sm text-center text-green-700 font-medium">
+            <p className="text-sm text-center text-[#ff4000] font-medium">
               🎉 Vous êtes à destination. Bonne visite !
             </p>
           )}

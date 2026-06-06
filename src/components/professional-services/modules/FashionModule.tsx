@@ -29,11 +29,11 @@ const SIZES = {
 const COLORS = [
   { name: 'Noir', hex: '#000000' },
   { name: 'Blanc', hex: '#FFFFFF' },
-  { name: 'Rouge', hex: '#EF4444' },
-  { name: 'Bleu', hex: '#3B82F6' },
-  { name: 'Vert', hex: '#10B981' },
-  { name: 'Jaune', hex: '#EAB308' },
-  { name: 'Rose', hex: '#EC4899' },
+  { name: 'Rouge', hex: '#ff4000' },
+  { name: 'Bleu', hex: '#04439e' },
+  { name: 'Vert', hex: '#ff4000' },
+  { name: 'Jaune', hex: '#ff4000' },
+  { name: 'Rose', hex: '#ff4000' },
   { name: 'Gris', hex: '#6B7280' }
 ];
 
@@ -93,7 +93,7 @@ export function FashionModule({ _serviceId, businessName }: FashionModuleProps) 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Commandes</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-green-500" />
+            <ShoppingBag className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalOrders}</div>
@@ -115,7 +115,7 @@ export function FashionModule({ _serviceId, businessName }: FashionModuleProps) 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Note Moyenne</CardTitle>
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+            <Star className="h-4 w-4 text-[#ff4000] fill-[#ff4000]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.avgRating}/5</div>

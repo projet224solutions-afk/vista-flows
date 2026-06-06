@@ -252,17 +252,17 @@ const BankingDashboard: React.FC = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'emergency': return 'bg-red-500';
+      case 'emergency': return 'bg-[#ff4000]';
       case 'critical': return 'bg-orange-500';
-      case 'warning': return 'bg-yellow-500';
+      case 'warning': return 'bg-[#ff4000]';
       default: return 'bg-blue-500';
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return <Badge className="bg-green-500">Confirmé</Badge>;
-      case 'pending': return <Badge className="bg-yellow-500">En attente</Badge>;
+      case 'confirmed': return <Badge className="bg-[#ff4000]">Confirmé</Badge>;
+      case 'pending': return <Badge className="bg-[#ff4000]">En attente</Badge>;
       case 'quarantined': return <Badge className="bg-orange-500">Quarantaine</Badge>;
       case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
       default: return <Badge>{status}</Badge>;
@@ -322,14 +322,14 @@ const BankingDashboard: React.FC = () => {
           ) : (
             <AlertDialog open={showPanicDialog} onOpenChange={setShowPanicDialog}>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                <Button variant="outline" className="border-[#ff4000] text-[#ff4000] hover:bg-[#ff4000] hover:text-white">
                   <AlertOctagon className="h-4 w-4 mr-2" />
                   Mode Panic
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-red-500">Activer le Mode Panic?</AlertDialogTitle>
+                  <AlertDialogTitle className="text-[#ff4000]">Activer le Mode Panic?</AlertDialogTitle>
                   <AlertDialogDescription>
                     ATTENTION: Toutes les transactions financières seront immédiatement gelées.
                     Cette action est réservée aux situations d'urgence uniquement.
@@ -345,7 +345,7 @@ const BankingDashboard: React.FC = () => {
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={activatePanicMode}
-                    className="bg-red-500 hover:bg-red-600"
+                    className="bg-[#ff4000] hover:bg-[#ff4000]"
                   >
                     <Lock className="h-4 w-4 mr-2" />
                     Activer Mode Panic
@@ -359,13 +359,13 @@ const BankingDashboard: React.FC = () => {
 
       {/* Alertes critiques */}
       {dashboardData?.panic_mode_active && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-950">
+        <Card className="border-[#ff4000] bg-orange-50 dark:bg-[#ff4000]">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <AlertOctagon className="h-8 w-8 text-red-500" />
+              <AlertOctagon className="h-8 w-8 text-[#ff4000]" />
               <div>
-                <p className="font-bold text-red-500">SYSTÈME EN MODE PANIC</p>
-                <p className="text-sm text-red-600">Toutes les transactions financières sont actuellement gelées</p>
+                <p className="font-bold text-[#ff4000]">SYSTÈME EN MODE PANIC</p>
+                <p className="text-sm text-[#ff4000]">Toutes les transactions financières sont actuellement gelées</p>
               </div>
             </div>
           </CardContent>
@@ -396,7 +396,7 @@ const BankingDashboard: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-green-500" />
+              <Activity className="h-4 w-4 text-[#ff4000]" />
               Transactions Aujourd'hui
             </CardTitle>
           </CardHeader>
@@ -406,11 +406,11 @@ const BankingDashboard: React.FC = () => {
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-green-500" />
+                <CheckCircle className="h-3 w-3 text-[#ff4000]" />
                 {dashboardData?.today_stats?.successful || 0} réussies
               </div>
               <div className="flex items-center gap-1">
-                <XCircle className="h-3 w-3 text-red-500" />
+                <XCircle className="h-3 w-3 text-[#ff4000]" />
                 {dashboardData?.today_stats?.failed || 0} échouées
               </div>
             </div>
@@ -558,7 +558,7 @@ const BankingDashboard: React.FC = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-green-600 border-green-600"
+                              className="text-[#ff4000] border-[#ff4000]"
                               onClick={() => handleQuarantineAction(tx.id, 'approved')}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
@@ -567,7 +567,7 @@ const BankingDashboard: React.FC = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-600 border-red-600"
+                              className="text-[#ff4000] border-[#ff4000]"
                               onClick={() => handleQuarantineAction(tx.id, 'rejected')}
                             >
                               <XCircle className="h-4 w-4 mr-1" />

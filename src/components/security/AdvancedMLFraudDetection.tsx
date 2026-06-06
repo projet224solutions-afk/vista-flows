@@ -77,29 +77,29 @@ export function AdvancedMLFraudDetection() {
 
   const getModelTypeIcon = (type: string) => {
     switch (type) {
-      case 'neural_network': return <Brain className="w-5 h-5 text-purple-500" />;
+      case 'neural_network': return <Brain className="w-5 h-5 text-[#04439e]" />;
       case 'anomaly_detection': return <Target className="w-5 h-5 text-blue-500" />;
-      case 'classification': return <BarChart3 className="w-5 h-5 text-green-500" />;
+      case 'classification': return <BarChart3 className="w-5 h-5 text-[#ff4000]" />;
       default: return <Activity className="w-5 h-5 text-gray-500" />;
     }
   };
 
   const getPatternTypeColor = (type: string) => {
     switch (type) {
-      case 'velocity': return 'bg-red-500';
+      case 'velocity': return 'bg-[#ff4000]';
       case 'geographic': return 'bg-blue-500';
-      case 'amount': return 'bg-yellow-500';
-      case 'behavior': return 'bg-purple-500';
-      case 'temporal': return 'bg-green-500';
+      case 'amount': return 'bg-[#ff4000]';
+      case 'behavior': return 'bg-[#04439e]';
+      case 'temporal': return 'bg-[#ff4000]';
       default: return 'bg-gray-500';
     }
   };
 
   const getRiskColor = (score: number) => {
-    if (score >= 80) return 'text-red-600';
+    if (score >= 80) return 'text-[#ff4000]';
     if (score >= 60) return 'text-orange-500';
-    if (score >= 40) return 'text-yellow-500';
-    return 'text-green-500';
+    if (score >= 40) return 'text-[#ff4000]';
+    return 'text-[#ff4000]';
   };
 
   const totalPredictions = models.reduce((sum, m) => sum + Number(m.total_predictions), 0);
@@ -135,9 +135,9 @@ export function AdvancedMLFraudDetection() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="p-4 rounded-lg border bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+          <div className="p-4 rounded-lg border bg-blue-50 dark:bg-[#04439e] border-blue-200 dark:border-[#04439e]">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-5 h-5 text-purple-600" />
+              <Zap className="w-5 h-5 text-[#04439e]" />
               <span className="font-semibold">Système ML Actif - Analyse en temps réel</span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ export function AdvancedMLFraudDetection() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Target className="w-8 h-8 text-green-500" />
+              <Target className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{avgAccuracy.toFixed(1)}%</div>
                 <div className="text-xs text-muted-foreground">Précision moyenne</div>
@@ -176,7 +176,7 @@ export function AdvancedMLFraudDetection() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+              <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{highRiskPatterns}</div>
                 <div className="text-xs text-muted-foreground">Patterns à haut risque</div>
@@ -187,7 +187,7 @@ export function AdvancedMLFraudDetection() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Shield className="w-8 h-8 text-purple-500" />
+              <Shield className="w-8 h-8 text-[#04439e]" />
               <div>
                 <div className="text-2xl font-bold">{activePatterns}</div>
                 <div className="text-xs text-muted-foreground">Patterns actifs</div>
@@ -222,14 +222,14 @@ export function AdvancedMLFraudDetection() {
                       </p>
                     </div>
                   </div>
-                  <Badge className={model.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}>
+                  <Badge className={model.status === 'active' ? 'bg-[#ff4000]' : 'bg-gray-500'}>
                     {model.status === 'active' ? 'Actif' : model.status}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-4 gap-4 text-center">
                   <div className="p-2 bg-muted rounded">
-                    <div className="text-lg font-bold text-green-600">{model.accuracy}%</div>
+                    <div className="text-lg font-bold text-[#ff4000]">{model.accuracy}%</div>
                     <div className="text-xs text-muted-foreground">Précision</div>
                   </div>
                   <div className="p-2 bg-muted rounded">
@@ -237,7 +237,7 @@ export function AdvancedMLFraudDetection() {
                     <div className="text-xs text-muted-foreground">Precision</div>
                   </div>
                   <div className="p-2 bg-muted rounded">
-                    <div className="text-lg font-bold text-purple-600">{model.recall_score}%</div>
+                    <div className="text-lg font-bold text-[#04439e]">{model.recall_score}%</div>
                     <div className="text-xs text-muted-foreground">Recall</div>
                   </div>
                   <div className="p-2 bg-muted rounded">

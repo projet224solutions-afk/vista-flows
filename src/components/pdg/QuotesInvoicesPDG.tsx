@@ -309,7 +309,7 @@ export default function QuotesInvoicesPDG() {
                             Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
                           </p>
                           {invoice.paid_at && (
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs text-[#ff4000]">
                               Payée le {new Date(invoice.paid_at).toLocaleDateString('fr-FR')}
                             </p>
                           )}

@@ -98,8 +98,8 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Phone className="w-5 h-5 text-green-600" />
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Phone className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Appels</p>
@@ -112,8 +112,8 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Conversations</p>
@@ -194,11 +194,11 @@ export default function CommunicationPreview({ className }: CommunicationPreview
               {recentCalls.map((call) => (
                 <div key={call.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
+                    <div className="p-2 bg-orange-100 rounded-lg">
                       {call.type === 'video' ? (
-                        <Video className="w-4 h-4 text-green-600" />
+                        <Video className="w-4 h-4 text-[#ff4000]" />
                       ) : (
-                        <Phone className="w-4 h-4 text-green-600" />
+                        <Phone className="w-4 h-4 text-[#ff4000]" />
                       )}
                     </div>
                     <div>
@@ -243,7 +243,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
             </div>
 
             <div className="p-4 border rounded-lg text-center">
-              <Phone className="w-8 h-8 text-green-500 mx-auto mb-2" />
+              <Phone className="w-8 h-8 text-[#ff4000] mx-auto mb-2" />
               <h3 className="font-medium text-sm">Appels Audio</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Qualité HD, contrôles avancés
@@ -251,7 +251,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
             </div>
 
             <div className="p-4 border rounded-lg text-center">
-              <Video className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+              <Video className="w-8 h-8 text-[#04439e] mx-auto mb-2" />
               <h3 className="font-medium text-sm">Appels Vidéo</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 1:1 et conférences
@@ -275,7 +275,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-[#ff4000] rounded-full animate-pulse"></div>
                 <span className="text-sm text-muted-foreground">Système actif</span>
               </div>
 
@@ -285,12 +285,12 @@ export default function CommunicationPreview({ className }: CommunicationPreview
               </div>
 
               <div className="flex items-center space-x-2">
-                <Activity className="w-4 h-4 text-purple-500" />
+                <Activity className="w-4 h-4 text-[#04439e]" />
                 <span className="text-sm text-muted-foreground">Temps réel</span>
               </div>
             </div>
 
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-orange-100 text-[#ff4000]">
               Opérationnel
             </Badge>
           </div>

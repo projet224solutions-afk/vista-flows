@@ -80,8 +80,8 @@ function ResultCard({ item }: { item: SearchResultItem }) {
     item.type === "product"
       ? "bg-blue-100 text-blue-700"
       : item.type === "service"
-      ? "bg-purple-100 text-purple-700"
-      : "bg-emerald-100 text-emerald-700";
+      ? "bg-blue-100 text-[#04439e]"
+      : "bg-orange-100 text-[#ff4000]";
 
   return (
     <Card className="border border-border/60 shadow-sm hover:shadow-md transition-shadow bg-card">
@@ -137,12 +137,12 @@ function ResultCard({ item }: { item: SearchResultItem }) {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {item.rating != null && (
                 <span className="flex items-center gap-0.5 text-xs">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-3 h-3 fill-[#ff4000] text-[#ff4000]" />
                   {item.rating.toFixed(1)}
                 </span>
               )}
               {item.isVerified && (
-                <span className="flex items-center gap-0.5 text-xs text-emerald-600">
+                <span className="flex items-center gap-0.5 text-xs text-[#ff4000]">
                   <CheckCircle className="w-3 h-3" />
                   Vérifié
                 </span>
@@ -199,7 +199,7 @@ function ResultCard({ item }: { item: SearchResultItem }) {
               });
             }}
           >
-            {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-[#ff4000]" /> : <Copy className="w-3 h-3" />}
             {copied ? "Copié !" : "Copier lien"}
           </Button>
 
@@ -254,7 +254,7 @@ function ResultCard({ item }: { item: SearchResultItem }) {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 px-2.5 text-xs gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                className="h-7 px-2.5 text-xs gap-1 text-[#ff4000] border-orange-200 hover:bg-orange-50"
               >
                 <MessageCircle className="w-3 h-3" />
                 WhatsApp
@@ -297,13 +297,13 @@ export default function CopiloteSearchResults({ data }: CopiloteSearchResultsPro
   if (data.total === 0) {
     return (
       <div className="space-y-3">
-        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
-          <Search className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-xl border border-orange-200 dark:border-[#ff4000]">
+          <Search className="w-4 h-4 text-[#ff4000] mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p className="text-sm font-medium text-[#ff4000] dark:text-orange-200">
               Aucun résultat trouvé
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">
+            <p className="text-xs text-[#ff4000] dark:text-orange-300 mt-0.5">
               Recherche : <em>"{data.query}"</em>
             </p>
           </div>

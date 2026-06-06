@@ -10,12 +10,12 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
 const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  success: 'bg-green-100 text-green-800',
-  overdue: 'bg-red-100 text-red-800',
+  pending: 'bg-orange-100 text-[#ff4000]',
+  success: 'bg-orange-100 text-[#ff4000]',
+  overdue: 'bg-orange-100 text-[#ff4000]',
   expired: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-gray-100 text-gray-800',
-  failed: 'bg-red-100 text-red-800'
+  failed: 'bg-orange-100 text-[#ff4000]'
 };
 
 const statusLabels = {
@@ -98,11 +98,11 @@ export default function PaymentManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+              <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Paiements en retard</p>
                 <p className="text-2xl font-bold">{overdueCount}</p>
-                <p className="text-sm text-red-600">{overdueAmount.toFixed(0)} GNF</p>
+                <p className="text-sm text-[#ff4000]">{overdueAmount.toFixed(0)} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -122,11 +122,11 @@ export default function PaymentManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Paiements réussis</p>
                 <p className="text-2xl font-bold">{successCount}</p>
-                <p className="text-sm text-green-600">Total payé</p>
+                <p className="text-sm text-[#ff4000]">Total payé</p>
               </div>
             </div>
           </CardContent>

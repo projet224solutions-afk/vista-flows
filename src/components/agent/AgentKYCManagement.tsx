@@ -147,11 +147,11 @@ export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCMana
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Vérifié</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Vérifié</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700 border-red-200">Rejeté</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Rejeté</Badge>;
       default:
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-200">En attente</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">En attente</Badge>;
     }
   };
 
@@ -171,7 +171,7 @@ export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCMana
     <div className="space-y-6">
       {/* Header */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Shield className="w-6 h-6 text-primary" />
@@ -185,21 +185,21 @@ export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCMana
         </CardHeader>
         <CardContent className="p-6">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-amber-50 rounded-lg p-4 text-center">
-              <Clock className="w-6 h-6 text-amber-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-amber-700">{stats.pending}</p>
-              <p className="text-sm text-amber-600">En attente</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-orange-50 rounded-lg p-4 text-center">
+              <Clock className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#ff4000]">{stats.pending}</p>
+              <p className="text-sm text-[#ff4000]">En attente</p>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 text-center">
-              <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-700">{stats.verified}</p>
-              <p className="text-sm text-green-600">Vérifiés</p>
+            <div className="bg-orange-50 rounded-lg p-4 text-center">
+              <CheckCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#ff4000]">{stats.verified}</p>
+              <p className="text-sm text-[#ff4000]">Vérifiés</p>
             </div>
-            <div className="bg-red-50 rounded-lg p-4 text-center">
-              <XCircle className="w-6 h-6 text-red-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-red-700">{stats.rejected}</p>
-              <p className="text-sm text-red-600">Rejetés</p>
+            <div className="bg-orange-50 rounded-lg p-4 text-center">
+              <XCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#ff4000]">{stats.rejected}</p>
+              <p className="text-sm text-[#ff4000]">Rejetés</p>
             </div>
           </div>
 
@@ -349,7 +349,7 @@ export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCMana
                     <Button
                       onClick={() => handleApprove(selectedVendor)}
                       disabled={processing}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-[#ff4000] hover:bg-[#ff4000]"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Valider KYC

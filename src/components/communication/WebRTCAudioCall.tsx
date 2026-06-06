@@ -41,13 +41,13 @@ export default function WebRTCAudioCall() {
     switch (callState.iceConnectionState) {
       case 'connected':
       case 'completed':
-        return 'text-green-500';
+        return 'text-[#ff4000]';
       case 'checking':
       case 'new':
-        return 'text-yellow-500';
+        return 'text-[#ff4000]';
       case 'disconnected':
       case 'failed':
-        return 'text-red-500';
+        return 'text-[#ff4000]';
       default:
         return 'text-muted-foreground';
     }
@@ -83,14 +83,14 @@ export default function WebRTCAudioCall() {
         <Card className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 relative">
-              <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-              <Phone className="w-12 h-12 text-green-500 mx-auto relative animate-bounce" />
+              <div className="absolute inset-0 bg-[#ff4000]/20 rounded-full animate-ping" />
+              <Phone className="w-12 h-12 text-[#ff4000] mx-auto relative animate-bounce" />
             </div>
             <CardTitle className="text-xl">Appel entrant</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
-              <Avatar className="w-24 h-24 mx-auto mb-4 ring-4 ring-green-500/30">
+              <Avatar className="w-24 h-24 mx-auto mb-4 ring-4 ring-[#ff4000]/30">
                 <AvatarImage src={callState.remoteUserInfo?.avatar} />
                 <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
                   {callState.remoteUserInfo?.name?.charAt(0) || 'U'}
@@ -104,7 +104,7 @@ export default function WebRTCAudioCall() {
               <Button
                 onClick={acceptCall}
                 size="lg"
-                className="bg-green-600 hover:bg-green-700 rounded-full w-16 h-16"
+                className="bg-[#ff4000] hover:bg-[#ff4000] rounded-full w-16 h-16"
               >
                 <Phone className="w-6 h-6" />
               </Button>
@@ -168,14 +168,14 @@ export default function WebRTCAudioCall() {
       <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
         <CardHeader className="text-center pb-2">
           <CardTitle className="flex items-center justify-center gap-2 text-white">
-            <Phone className="w-5 h-5 text-green-500" />
+            <Phone className="w-5 h-5 text-[#ff4000]" />
             Appel en cours
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center">
             <div className="relative inline-block">
-              <Avatar className="w-28 h-28 mx-auto mb-4 ring-4 ring-green-500/30">
+              <Avatar className="w-28 h-28 mx-auto mb-4 ring-4 ring-[#ff4000]/30">
                 <AvatarImage src={callState.remoteUserInfo?.avatar} />
                 <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
                   {callState.remoteUserInfo?.name?.charAt(0) || 'U'}
@@ -183,7 +183,7 @@ export default function WebRTCAudioCall() {
               </Avatar>
               <div className={cn(
                 "absolute bottom-4 right-0 w-5 h-5 rounded-full border-2 border-slate-800",
-                callState.isConnected ? "bg-green-500" : "bg-yellow-500 animate-pulse"
+                callState.isConnected ? "bg-[#ff4000]" : "bg-[#ff4000] animate-pulse"
               )} />
             </div>
             <h3 className="text-2xl font-semibold text-white">{callState.remoteUserInfo?.name}</h3>
@@ -206,7 +206,7 @@ export default function WebRTCAudioCall() {
               variant={callState.isConnected ? "default" : "secondary"}
               className={cn(
                 "text-sm",
-                callState.isConnected ? "bg-green-600" : "bg-yellow-600"
+                callState.isConnected ? "bg-[#ff4000]" : "bg-[#ff4000]"
               )}
             >
               {callState.isConnected ? 'Connecté' : 'Connexion...'}
@@ -244,11 +244,11 @@ export default function WebRTCAudioCall() {
           <div className="flex justify-center gap-2 pt-2">
             <div className={cn(
               "w-2 h-2 rounded-full",
-              callState.isMuted ? 'bg-red-500' : 'bg-green-500'
+              callState.isMuted ? 'bg-[#ff4000]' : 'bg-[#ff4000]'
             )} />
             <div className={cn(
               "w-2 h-2 rounded-full",
-              callState.isConnected ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'
+              callState.isConnected ? 'bg-[#ff4000]' : 'bg-[#ff4000] animate-pulse'
             )} />
           </div>
         </CardContent>

@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { _ScrollArea } from '@/components/ui/scroll-area';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -254,49 +253,38 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     try {
       const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-      console.log('📤 Création sous-agent via edge function:', {
+      console.log('📤 Création sous-agent via backend Node:', {
         parentAgentId: agentProfile.id,
         pdgId: agentProfile.pdg_id,
         email: subAgentData.email,
         agentCode
       });
 
-      const { data, error } = await supabase.functions.invoke('create-sub-agent', {
+      // Migré vers le backend Node (« tout en backend ») : atomique + rollback,
+      // ownership vérifié côté serveur (verifyJWT → parentAgent.user_id).
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<{ agent: any }>('/api/agents/sub-agents', {
+        method: 'POST',
         body: {
-          pdg_id: agentProfile.pdg_id,
           parent_agent_id: agentProfile.id,
           agent_code: agentCode,
           name: subAgentData.name.trim(),
           email: subAgentData.email.trim().toLowerCase(),
           phone: subAgentData.phone.trim(),
-          agent_type: 'sales', // Type par défaut
+          agent_type: 'sales', // Rôle métier par défaut
           password: subAgentData.password, // Mot de passe fourni par l'utilisateur
           permissions: subAgentData.permissions,
           commission_rate: subAgentData.commission_rate || 5,
-          access_token: agentProfile.access_token // Pour l'auth via token
-        }
+        },
       });
 
-      console.log('📥 Réponse Edge Function:', { data, error });
+      console.log('📥 Réponse backend:', resp);
 
-      if (error) {
-        console.error('❌ Edge function error détaillé:', {
-          message: error.message,
-          context: error.context,
-          status: error.status,
-          fullError: error
-        });
-
-        // Message d'erreur plus explicite
-        const errorMsg = error.context?.body?.error || error.message || 'Erreur inconnue';
-        throw new Error(`Erreur Edge Function: ${errorMsg}`);
+      if (!resp.success) {
+        throw new Error(resp.error || 'Erreur lors de la création du sous-agent');
       }
 
-      if (data?.error) {
-        console.error('❌ Response error:', data.error);
-        throw new Error(data.error);
-      }
-
+      const data = { agent: resp.data?.agent };
       console.log('✅ Sous-agent créé:', data?.agent);
       toast.success(`Sous-agent ${subAgentData.name} créé avec succès!`);
 
@@ -660,10 +648,10 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Sous-Agents Actifs
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
+            <UserCheck className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.activeSubAgents}</div>
+            <div className="text-2xl font-bold text-[#ff4000]">{stats.activeSubAgents}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.inactiveSubAgents} inactifs
             </p>

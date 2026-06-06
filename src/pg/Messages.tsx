@@ -877,7 +877,7 @@ export default function Messages() {
                             <AvatarImage src={contact.other_user_avatar} />
                             <AvatarFallback className={cn(
                               "text-white",
-                              contact.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                              contact.is_vendor ? "bg-[#ff4000]" : "bg-blue-500"
                             )}>
                               {contact.other_user_name.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
@@ -905,7 +905,7 @@ export default function Messages() {
                               className={cn(
                                 "text-xs",
                                 contact.is_vendor
-                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  ? "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20"
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}
                             >
@@ -958,7 +958,7 @@ export default function Messages() {
                       <AvatarImage src={conv.other_user_avatar} />
                       <AvatarFallback className={cn(
                         "text-white",
-                        conv.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                        conv.is_vendor ? "bg-[#ff4000]" : "bg-blue-500"
                       )}>
                         {conv.other_user_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
@@ -1007,7 +1007,7 @@ export default function Messages() {
                         <span className={cn(
                           "text-[10px]",
                           isContactOnline(conv.other_user_id)
-                            ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                            ? "text-[#ff4000] dark:text-[#ff4000] font-medium"
                             : "text-muted-foreground"
                         )}>
                           {getLastSeenText(conv.other_user_id)}
@@ -1020,7 +1020,7 @@ export default function Messages() {
                         className={cn(
                           "text-xs",
                           conv.is_vendor
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20"
                             : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                         )}
                       >
@@ -1094,7 +1094,7 @@ export default function Messages() {
                   </div>
                   <div className="flex items-center gap-2">
                     {selectedConvData?.is_vendor ? (
-                      <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                      <Badge variant="secondary" className="text-xs bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
                         {getRoleLabel(selectedConvData)}
                       </Badge>
                     ) : (
@@ -1106,10 +1106,10 @@ export default function Messages() {
                     <div className="flex items-center gap-1.5">
                       <span className={cn(
                         "w-2 h-2 rounded-full",
-                        otherUserPresence === 'online' && "bg-green-500 animate-pulse",
-                        otherUserPresence === 'away' && "bg-yellow-500",
-                        otherUserPresence === 'busy' && "bg-red-500",
-                        otherUserPresence === 'in_call' && "bg-purple-500 animate-pulse",
+                        otherUserPresence === 'online' && "bg-[#ff4000] animate-pulse",
+                        otherUserPresence === 'away' && "bg-[#ff4000]",
+                        otherUserPresence === 'busy' && "bg-[#ff4000]",
+                        otherUserPresence === 'in_call' && "bg-[#04439e] animate-pulse",
                         otherUserPresence === 'offline' && "bg-gray-400"
                       )} />
                       <span className="text-xs text-muted-foreground">
@@ -1410,7 +1410,7 @@ export default function Messages() {
                           <AvatarImage src={user.avatar_url} />
                           <AvatarFallback className={cn(
                             "text-white text-sm",
-                            user.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                            user.is_vendor ? "bg-[#ff4000]" : "bg-blue-500"
                           )}>
                             {user.name.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
@@ -1438,7 +1438,7 @@ export default function Messages() {
                             className={cn(
                               "text-xs",
                               user.is_vendor
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                ? "bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20"
                                 : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                             )}
                           >

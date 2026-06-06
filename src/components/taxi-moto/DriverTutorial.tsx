@@ -39,7 +39,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: "1. Activer le mode en ligne",
     description: "Commencez par activer le bouton 'EN LIGNE' en haut de l'écran pour recevoir des demandes de course.",
-    icon: <PlayCircle className="w-12 h-12 text-green-600" />,
+    icon: <PlayCircle className="w-12 h-12 text-[#ff4000]" />,
     tips: [
       "Assurez-vous que votre GPS est activé",
       "Vérifiez votre connexion internet",
@@ -59,7 +59,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: "3. Accepter la course",
     description: "Appuyez sur 'Accepter' pour confirmer. La course apparaît dans l'onglet 'Course'.",
-    icon: <CheckCircle className="w-12 h-12 text-green-600" />,
+    icon: <CheckCircle className="w-12 h-12 text-[#ff4000]" />,
     tips: [
       "L'adresse de départ s'affiche",
       "La navigation démarre automatiquement",
@@ -79,7 +79,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: "5. Arrivée au point de départ",
     description: "Une fois sur place, appuyez sur 'Je suis arrivé au point de départ'.",
-    icon: <MapPin className="w-12 h-12 text-green-600" />,
+    icon: <MapPin className="w-12 h-12 text-[#ff4000]" />,
     tips: [
       "Vérifiez l'identité du client",
       "Confirmez la destination",
@@ -89,7 +89,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: "6. Démarrer la course",
     description: "Quand le client est à bord, appuyez sur 'Client à bord - Démarrer la course'.",
-    icon: <Car className="w-12 h-12 text-purple-600" />,
+    icon: <Car className="w-12 h-12 text-[#04439e]" />,
     tips: [
       "La navigation vers la destination démarre",
       "Le compteur de course commence",
@@ -99,7 +99,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: "7. Terminer la course",
     description: "À l'arrivée, appuyez sur 'Arrivé à destination - Terminer la course'.",
-    icon: <DollarSign className="w-12 h-12 text-green-600" />,
+    icon: <DollarSign className="w-12 h-12 text-[#ff4000]" />,
     tips: [
       "Le paiement est traité automatiquement",
       "Vos gains sont ajoutés à votre portefeuille",
@@ -180,7 +180,7 @@ export function DriverTutorial() {
                 <ul className="space-y-2">
                   {step.tips.map((tip, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="w-4 h-4 text-[#ff4000] mt-0.5 flex-shrink-0" />
                       <span>{tip}</span>
                     </li>
                   ))}
@@ -213,7 +213,7 @@ export function DriverTutorial() {
             ) : (
               <Button
                 onClick={() => setOpen(false)}
-                className="gap-2 bg-green-600 hover:bg-green-700"
+                className="gap-2 bg-[#ff4000] hover:bg-[#ff4000]"
               >
                 <CheckCircle className="w-4 h-4" />
                 Compris !

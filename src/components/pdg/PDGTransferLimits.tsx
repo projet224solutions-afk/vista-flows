@@ -40,7 +40,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
     icon: <Banknote className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'amount',
-    color: 'text-green-500',
+    color: 'text-[#ff4000]',
   },
   {
     key: 'max_daily_transfer_amount',
@@ -58,7 +58,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 500,
     category: 'daily',
-    color: 'text-cyan-500',
+    color: 'text-[#04439e]',
   },
   {
     key: 'max_international_transfer_amount',
@@ -67,7 +67,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'daily',
-    color: 'text-purple-500',
+    color: 'text-[#04439e]',
   },
 ];
 
@@ -261,7 +261,7 @@ export default function PDGTransferLimits() {
                   </div>
                   {cfg.label}
                   {hasChanges(cfg.key) && (
-                    <Badge variant="outline" className="ml-auto text-xs border-amber-500/50 text-amber-500">
+                    <Badge variant="outline" className="ml-auto text-xs border-[#ff4000]/50 text-[#ff4000]">
                       Modifié
                     </Badge>
                   )}
@@ -319,7 +319,7 @@ export default function PDGTransferLimits() {
                   </div>
                   {cfg.label}
                   {hasChanges(cfg.key) && (
-                    <Badge variant="outline" className="ml-auto text-xs border-amber-500/50 text-amber-500">
+                    <Badge variant="outline" className="ml-auto text-xs border-[#ff4000]/50 text-[#ff4000]">
                       Modifié
                     </Badge>
                   )}

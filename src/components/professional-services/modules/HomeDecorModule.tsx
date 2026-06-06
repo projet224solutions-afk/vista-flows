@@ -62,12 +62,12 @@ interface Order {
 }
 
 const CATEGORIES = [
-  { id: 'furniture', name: 'Meubles', icon: Sofa, count: 45, color: 'from-amber-500 to-orange-500' },
-  { id: 'lighting', name: 'Éclairage', icon: Lamp, count: 32, color: 'from-yellow-400 to-amber-500' },
-  { id: 'bedroom', name: 'Chambre', icon: Bed, count: 28, color: 'from-blue-500 to-indigo-500' },
-  { id: 'decor', name: 'Décoration', icon: Home, count: 52, color: 'from-pink-500 to-rose-500' },
-  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: 'from-green-500 to-emerald-500' },
-  { id: 'textiles', name: 'Textiles', icon: Palette, count: 24, color: 'from-purple-500 to-violet-500' },
+  { id: 'furniture', name: 'Meubles', icon: Sofa, count: 45, color: '' },
+  { id: 'lighting', name: 'Éclairage', icon: Lamp, count: 32, color: '' },
+  { id: 'bedroom', name: 'Chambre', icon: Bed, count: 28, color: '' },
+  { id: 'decor', name: 'Décoration', icon: Home, count: 52, color: '' },
+  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: '' },
+  { id: 'textiles', name: 'Textiles', icon: Palette, count: 24, color: '' },
 ];
 
 const ROOM_TYPES = ['Salon', 'Chambre', 'Cuisine', 'Salle de bain', 'Bureau', 'Terrasse', 'Entrée'];
@@ -75,17 +75,17 @@ const STYLES = ['Moderne', 'Traditionnel', 'Scandinave', 'Bohème', 'Industriel'
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
   consultation: { label: 'Consultation', color: 'bg-blue-100 text-blue-800' },
-  devis: { label: 'Devis envoyé', color: 'bg-yellow-100 text-yellow-800' },
-  en_cours: { label: 'En cours', color: 'bg-purple-100 text-purple-800' },
-  livre: { label: 'Livré', color: 'bg-cyan-100 text-cyan-800' },
-  termine: { label: 'Terminé', color: 'bg-green-100 text-green-800' },
+  devis: { label: 'Devis envoyé', color: 'bg-orange-100 text-[#ff4000]' },
+  en_cours: { label: 'En cours', color: 'bg-blue-100 text-[#04439e]' },
+  livre: { label: 'Livré', color: 'bg-blue-100 text-[#04439e]' },
+  termine: { label: 'Terminé', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
+  pending: { label: 'En attente', color: 'bg-orange-100 text-[#ff4000]' },
   preparing: { label: 'Préparation', color: 'bg-blue-100 text-blue-800' },
-  shipped: { label: 'Expédié', color: 'bg-purple-100 text-purple-800' },
-  delivered: { label: 'Livré', color: 'bg-green-100 text-green-800' },
+  shipped: { label: 'Expédié', color: 'bg-blue-100 text-[#04439e]' },
+  delivered: { label: 'Livré', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
 export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModuleProps) {
@@ -125,7 +125,7 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-[#ff4000] to-orange-600 rounded-xl">
             <Home className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -150,14 +150,14 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
         </Card>
         <Card>
           <CardContent className="p-4">
-            <DollarSign className="h-4 w-4 text-green-500 mb-1" />
+            <DollarSign className="h-4 w-4 text-[#ff4000] mb-1" />
             <p className="text-lg font-bold">{(totalCatalogValue / 1e6).toFixed(1)}M</p>
             <p className="text-xs text-muted-foreground">Valeur stock GNF</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <Palette className="h-4 w-4 text-purple-500 mb-1" />
+            <Palette className="h-4 w-4 text-[#04439e] mb-1" />
             <p className="text-2xl font-bold">{activeProjects}</p>
             <p className="text-xs text-muted-foreground">Projets déco actifs</p>
           </CardContent>
@@ -171,7 +171,7 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
         </Card>
         <Card>
           <CardContent className="p-4">
-            <TrendingUp className={`h-4 w-4 mb-1 ${lowStock > 0 ? 'text-red-500' : 'text-green-500'}`} />
+            <TrendingUp className={`h-4 w-4 mb-1 ${lowStock > 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
             <p className="text-2xl font-bold">{lowStock}</p>
             <p className="text-xs text-muted-foreground">Alertes stock</p>
           </CardContent>
@@ -211,10 +211,10 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
           <div className="space-y-3">
             {products.map(product => {
               const stockBadge = product.status === 'en_stock'
-                ? <Badge className="bg-green-100 text-green-800 text-xs">En stock ({product.stock})</Badge>
+                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">En stock ({product.stock})</Badge>
                 : product.status === 'stock_bas'
-                ? <Badge className="bg-yellow-100 text-yellow-800 text-xs">Stock bas ({product.stock})</Badge>
-                : <Badge className="bg-red-100 text-red-800 text-xs">Rupture</Badge>;
+                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">Stock bas ({product.stock})</Badge>
+                : <Badge className="bg-orange-100 text-[#ff4000] text-xs">Rupture</Badge>;
               return (
                 <Card key={product.id} className="hover:shadow-sm transition-shadow">
                   <CardContent className="p-4">

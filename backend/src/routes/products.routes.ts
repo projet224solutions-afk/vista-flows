@@ -1,15 +1,15 @@
 /**
  * 📦 PRODUCTS ROUTES - Phase 3
- *
+ * 
  * Tables utilisées :
  *   - `products` : name, price, images, vendor_id, is_active, stock_quantity, etc.
  *   - `vendors` : pour résoudre vendor_id depuis user_id
  *   - `plans` + `subscriptions` : pour appliquer les limites max_products et max_images_per_product
- *
+ * 
  * Limites appliquées côté backend :
  *   1. max_products — blocage de la création si quota atteint
  *   2. max_images_per_product — troncature automatique du tableau images[]
- *
+ * 
  * Le trigger DB `trg_enforce_product_limit` reste actif comme filet de sécurité,
  * mais le backend valide AVANT pour donner des messages d'erreur explicites.
  */
@@ -20,6 +20,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { z } from 'zod';
+import { resolveVendorId as resolveVendorIdCtx } from '../services/vendorContext.service.js';
 import {
   shouldBlockActiveProductCreation,
   shouldBlockProductReactivation,
@@ -27,7 +28,7 @@ import {
 
 // ==================== VALIDATION SCHEMAS ====================
 
-const CreateProductSchema = z.object({
+const BaseProductSchema = z.object({
   name: z.string().trim()
     .min(2, 'Nom requis (min 2 caractères)')
     .max(200, 'Nom trop long (max 200 caractères)'),
@@ -53,9 +54,25 @@ const CreateProductSchema = z.object({
   price_carton: z.number().min(0).nullish(),
   units_per_carton: z.number().int().min(1).nullish(),
   carton_sku: z.string().max(100).nullish(),
+  // Champs additionnels gérés par le frontend (POS, médias, section, id public)
+  public_id: z.string().max(20).nullish(),
+  barcode: z.string().max(100).nullish(),
+  barcode_value: z.string().max(100).nullish(),
+  barcode_format: z.string().max(20).nullish(),
+  section: z.string().max(100).nullish(),
+  promotional_videos: z.array(z.string().url()).max(5).nullish(),
 });
 
-const UpdateProductSchema = CreateProductSchema.partial();
+// Règle : le prix barré (compare_price) doit être > prix de vente (sinon barré incohérent)
+const priceConsistency = (d: { price?: number | null; compare_price?: number | null }) =>
+  d.compare_price == null || d.price == null || d.compare_price > d.price;
+const PRICE_RULE = {
+  message: 'Le prix barré doit être supérieur au prix de vente',
+  path: ['compare_price'] as (string | number)[],
+};
+
+const CreateProductSchema = BaseProductSchema.refine(priceConsistency, PRICE_RULE);
+const UpdateProductSchema = BaseProductSchema.partial().refine(priceConsistency, PRICE_RULE);
 
 const router = Router();
 
@@ -91,15 +108,11 @@ async function loadFreePlanLimits() {
 // ==================== HELPERS ====================
 
 /**
- * Résout le vendor_id depuis le user_id authentifié
+ * Résout le vendor_id depuis le user_id authentifié.
+ * Agent-aware : vendeur direct OU agent vendeur actif → le vendeur de l'agent.
  */
 async function resolveVendorId(userId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
-    .from('vendors')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
-  return data?.id || null;
+  return resolveVendorIdCtx(userId);
 }
 
 /**
@@ -140,6 +153,21 @@ async function getVendorLimits(userId: string): Promise<{
     max_images_per_product: FREE_PLAN_LIMITS.max_images_per_product,
     plan_name: 'free',
   };
+}
+
+/**
+ * Synchronise la table `inventory` (miroir de products.stock_quantity).
+ * NB : l'atomicité forte est garantie par le trigger DB sync_product_inventory
+ * (migration 20260603140000) ; cet upsert reste un filet côté backend.
+ */
+async function upsertInventory(productId: string, quantity: number): Promise<{ error: any }> {
+  const { error } = await supabaseAdmin
+    .from('inventory')
+    .upsert(
+      [{ product_id: productId, quantity, last_updated: new Date().toISOString() }],
+      { onConflict: 'product_id' }
+    );
+  return { error };
 }
 
 /**
@@ -237,7 +265,7 @@ router.get('/limits', verifyJWT, async (req: AuthenticatedRequest, res: Response
 /**
  * POST /api/products
  * Créer un produit — avec validation des limites du plan
- *
+ * 
  * Contrôles effectués :
  *   1. L'utilisateur a une boutique (vendor_id résolu)
  *   2. Le nombre de produits actifs < max_products du plan
@@ -291,7 +319,7 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.issues.map(e => ({
+        details: validation.error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -326,6 +354,15 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
         return;
       }
       throw error;
+    }
+
+    // Sync inventaire (atomique : si échec, on annule la création du produit)
+    const inv = await upsertInventory(product.id, validated.stock_quantity ?? 0);
+    if (inv.error) {
+      await supabaseAdmin.from('products').delete().eq('id', product.id);
+      logger.error(`Inventory sync failed, product creation rolled back: ${inv.error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la synchronisation de l\'inventaire' });
+      return;
     }
 
     logger.info(`Product created: ${product.id} by vendor=${vendorId}, plan=${limits.plan_name}, count=${currentCount + 1}/${limits.max_products || '∞'}`);
@@ -403,7 +440,7 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
       res.status(400).json({
         success: false,
         error: 'Données invalides',
-        details: validation.error.issues.map(e => ({
+        details: validation.error.errors.map(e => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -438,6 +475,12 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
       .single();
 
     if (error) throw error;
+
+    // Sync inventaire si le stock a été modifié
+    if (updates.stock_quantity !== undefined) {
+      const inv = await upsertInventory(productId, updates.stock_quantity);
+      if (inv.error) logger.warn(`[products PATCH] inventory sync: ${inv.error.message}`);
+    }
 
     logger.info(`Product updated: ${productId} by vendor=${vendorId}`);
     res.json({

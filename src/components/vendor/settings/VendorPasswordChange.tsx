@@ -160,7 +160,7 @@ export default function VendorPasswordChange() {
   };
 
   const PasswordCheck = ({ passed, label }: { passed: boolean; label: string }) => (
-    <div className={`flex items-center gap-2 text-sm ${passed ? 'text-green-600' : 'text-muted-foreground'}`}>
+    <div className={`flex items-center gap-2 text-sm ${passed ? 'text-[#ff4000]' : 'text-muted-foreground'}`}>
       {passed ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
       {label}
     </div>

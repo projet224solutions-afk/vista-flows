@@ -391,11 +391,11 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
   });
 
-  // Validate purchase mutation - Using Edge Function for atomic transaction
+  // Validate purchase mutation - backend Node (atomique, RPC validate_stock_purchase)
   const validateMutation = useMutation({
     mutationFn: async () => {
-      // Appel à l'Edge Function pour transaction atomique
-      const { data, error } = await supabase.functions.invoke('validate-purchase', {
+      const { backendFetch } = await import('@/services/backendApi');
+      const resp = await backendFetch<any>('/api/inventory/validate-purchase', {
         body: {
           purchase_id: purchase.id,
           vendor_id: vendorId,
@@ -405,10 +405,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         },
       });
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error);
+      if (!resp.success) throw new Error(resp.error || 'Erreur de validation');
 
-      return data;
+      return resp.data ?? resp;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
@@ -588,9 +587,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       </Card>
 
       {/* Analyse Financière (Profits) - Section séparée */}
-      <Card className="border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20">
+      <Card className="border-orange-200 dark:border-[#ff4000] bg-orange-50/50 dark:bg-[#ff4000]/20">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2 text-green-700 dark:text-green-400">
+          <CardTitle className="text-sm flex items-center gap-2 text-[#ff4000] dark:text-[#ff4000]">
             <Calculator className="h-4 w-4" />
             Analyse Financière & Profits
           </CardTitle>
@@ -609,7 +608,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             </div>
             <div className="p-3 rounded-lg bg-background">
               <p className="text-xs text-muted-foreground">Profit Estimé</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-lg font-bold text-[#ff4000]">
                 +{formatCurrency(totalProfit)}
               </p>
             </div>
@@ -633,7 +632,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                         ({item.quantity} × {formatCurrency(item.selling_price - item.purchase_price)})
                       </span>
                     </div>
-                    <span className={`font-semibold ${item.total_profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    <span className={`font-semibold ${item.total_profit >= 0 ? 'text-[#ff4000]' : 'text-destructive'}`}>
                       {item.total_profit >= 0 ? '+' : ''}{formatCurrency(item.total_profit)}
                     </span>
                   </div>
@@ -643,7 +642,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               {/* Marge bénéficiaire */}
               <div className="mt-3 pt-3 border-t flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Marge bénéficiaire</span>
-                <span className="font-bold text-green-600">
+                <span className="font-bold text-[#ff4000]">
                   {totalPurchase > 0 ? ((totalProfit / totalPurchase) * 100).toFixed(1) : 0}%
                 </span>
               </div>
@@ -684,7 +683,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           <Button
             onClick={() => setShowVerificationDialog(true)}
             disabled={items.length === 0}
-            className="gap-2 bg-green-600 hover:bg-green-700"
+            className="gap-2 bg-[#ff4000] hover:bg-[#ff4000]"
           >
             <CheckCircle className="h-4 w-4" />
             Valider l'achat
@@ -904,7 +903,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
             {/* Calculs en temps réel - Amélioré */}
             {newItem.purchase_price > 0 && newItem.selling_price > 0 && (
-              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'}`}>
+              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-orange-50 dark:bg-[#ff4000]/20 border-orange-200 dark:border-[#ff4000]'}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calculator className="h-4 w-4" />
@@ -913,7 +912,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Profit unitaire</p>
-                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-[#ff4000]' : 'text-destructive'}`}>
                         {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
                         {formatCurrency(newItem.selling_price - newItem.purchase_price)}
                       </p>
@@ -926,7 +925,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Profit total</p>
-                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-[#ff4000]' : 'text-destructive'}`}>
                         {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
                         {formatCurrency(newItem.quantity * (newItem.selling_price - newItem.purchase_price))}
                       </p>
@@ -1011,7 +1010,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => validateMutation.mutate()}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[#ff4000] hover:bg-[#ff4000]"
             >
               {validateMutation.isPending ? 'Validation...' : 'Confirmer la validation'}
             </AlertDialogAction>
