@@ -6,46 +6,14 @@
 
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
 import { getCurrencyForCountry } from "@/data/countryMappings";
-
-// Détecte la devise depuis le fuseau horaire du navigateur (fallback sans API)
-const TIMEZONE_COUNTRY: Record<string, string> = {
-  'Africa/Conakry': 'GN', 'Africa/Dakar': 'SN', 'Africa/Abidjan': 'CI',
-  'Africa/Bamako': 'ML', 'Africa/Ouagadougou': 'BF', 'Africa/Niamey': 'NE',
-  'Africa/Lome': 'TG', 'Africa/Porto-Novo': 'BJ', 'Africa/Douala': 'CM',
-  'Africa/Kinshasa': 'CD', 'Africa/Lagos': 'NG', 'Africa/Accra': 'GH',
-  'Africa/Nairobi': 'KE', 'Africa/Dar_es_Salaam': 'TZ', 'Africa/Johannesburg': 'ZA',
-  'Africa/Casablanca': 'MA', 'Africa/Algiers': 'DZ', 'Africa/Cairo': 'EG',
-  'Africa/Tunis': 'TN', 'Africa/Tripoli': 'LY', 'Africa/Addis_Ababa': 'ET',
-  'Europe/Paris': 'FR', 'Europe/London': 'GB', 'Europe/Berlin': 'DE',
-  'Europe/Madrid': 'ES', 'Europe/Rome': 'IT', 'Europe/Brussels': 'BE',
-  'Europe/Amsterdam': 'NL', 'Europe/Lisbon': 'PT',
-  'America/New_York': 'US', 'America/Los_Angeles': 'US', 'America/Chicago': 'US',
-  'America/Toronto': 'CA', 'America/Montreal': 'CA',
-  'Asia/Shanghai': 'CN', 'Asia/Tokyo': 'JP', 'Asia/Kolkata': 'IN',
-  'Asia/Dubai': 'AE', 'Asia/Riyadh': 'SA',
-  'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
-};
-
-function detectCurrencyFromBrowser(): string | null {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const country = TIMEZONE_COUNTRY[tz];
-    if (country) return getCurrencyForCountry(country) || null;
-
-    // Fallback: langue du navigateur (ex: 'fr-SN' → 'SN' → XOF)
-    const lang = (navigator.language || '').toUpperCase();
-    const parts = lang.split('-');
-    if (parts.length >= 2) {
-      const detected = getCurrencyForCountry(parts[parts.length - 1]);
-      if (detected && detected !== 'GNF') return detected;
-    }
-  } catch {}
-  return null;
-}
+import { useAuth } from "@/hooks/useAuth";
 
 interface CurrencyContextType {
   currency: string;
   setCurrency: (c: string) => void;
+  /** Devise OFFICIELLE de l'utilisateur connecté (profiles.detected_currency, gérée par le PDG,
+   *  alignée sur la devise du wallet). Prioritaire sur la géo et le choix manuel. */
+  setProfileCurrency: (c: string | null) => void;
   userCountry: string | null;
   loading: boolean;
 }
@@ -72,7 +40,8 @@ function safeSetLocalStorageItem(key: string, value: string): void {
 
 const CurrencyContext = createContext<CurrencyContextType>({
   currency: "GNF",
-  setCurrency: () => {},
+  setCurrency: () => { },
+  setProfileCurrency: () => { },
   userCountry: null,
   loading: true,
 });
@@ -80,12 +49,12 @@ const CurrencyContext = createContext<CurrencyContextType>({
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(() => {
     try {
-      // 1. Choix manuel de l'utilisateur (priorité absolue)
+      // Vérifier d'abord le choix manuel
       const hasManualChoice = safeGetLocalStorageItem(CURRENCY_MANUAL_KEY) === 'true';
       const stored = safeGetLocalStorageItem(CURRENCY_STORAGE_KEY);
       if (hasManualChoice && stored) return stored;
 
-      // 2. Cache géo (détection réseau, non-fallback)
+      // Sinon, essayer de récupérer depuis le cache géo (ignorer les fallback)
       const geoCache = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCache) {
         const parsed = JSON.parse(geoCache);
@@ -93,18 +62,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           return parsed.data.currency;
         }
       }
+    } catch { }
 
-      // 3. Détection via fuseau horaire / langue du navigateur (sans API)
-      const browserCurrency = detectCurrencyFromBrowser();
-      if (browserCurrency) return browserCurrency;
-    } catch {}
-
-    return "GNF"; // Défaut absolu
+    return "GNF"; // Défaut
   });
 
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasAutoDetected, setHasAutoDetected] = useState(false);
+  // Devise officielle de l'utilisateur connecté (profiles.detected_currency, gérée par le PDG).
+  // Quand elle est définie, elle PRIME sur la géo et le choix manuel → quand le PDG change la
+  // devise, l'interface (prix) suit la même devise que le wallet (cohérence garantie).
+  const [profileCurrency, setProfileCurrencyState] = useState<string | null>(null);
+  const setProfileCurrency = useCallback((c: string | null) => {
+    setProfileCurrencyState(c ? c.toUpperCase() : null);
+  }, []);
 
   // Synchronisation avec géo-détection (utilise UNIQUEMENT le cache de useGeoDetection, pas d'appel direct)
   useEffect(() => {
@@ -140,7 +112,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           return;
         }
       }
-    } catch {}
+    } catch { }
 
     // Pas encore de cache — useGeoDetection le peuplera, on attend via l'intervalle ci-dessous
     setLoading(false);
@@ -167,7 +139,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           setUserCountry(nextCountry || null);
           setHasAutoDetected(true);
         }
-      } catch {}
+      } catch { }
     };
 
     syncFromGeoCache();
@@ -192,10 +164,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     console.log('💱 Devise changée manuellement:', newCurrency);
   }, []);
 
+  // Devise effective : le profil (PDG) prime, sinon géo/manuel.
+  const effectiveCurrency = profileCurrency || currency;
+
   return (
     <CurrencyContext.Provider value={{
-      currency,
+      currency: effectiveCurrency,
       setCurrency,
+      setProfileCurrency,
       userCountry,
       loading
     }}>
@@ -205,3 +181,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 }
 
 export const useCurrency = () => useContext(CurrencyContext);
+
+/**
+ * Synchronise la devise d'affichage avec la devise OFFICIELLE de l'utilisateur connecté
+ * (profiles.detected_currency — gérée par le PDG et alignée sur la devise du wallet).
+ * ⚠️ À monter À L'INTÉRIEUR de AuthProvider (a besoin de useAuth). Ne rend rien.
+ * Corrige : quand le PDG change la devise d'un utilisateur, les PRIX de son interface suivent
+ * désormais la même devise que son wallet (avant : les prix restaient en devise géo/IP).
+ */
+export function CurrencySync() {
+  const { profile } = useAuth();
+  const { setProfileCurrency } = useCurrency();
+
+  useEffect(() => {
+    setProfileCurrency(profile?.detected_currency || null);
+  }, [profile?.detected_currency, setProfileCurrency]);
+
+  return null;
+}
