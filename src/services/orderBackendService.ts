@@ -189,6 +189,18 @@ export async function cancelOrder(orderId: string, reason: string, signal?: Abor
 }
 
 /**
+ * Confirmer la réception d'une commande payée à la livraison (COD) — côté acheteur.
+ * Marque la commande livrée et clôture l'escrow virtuel COD (paiement en espèces).
+ */
+export async function confirmCashOnDeliveryOrder(orderId: string, signal?: AbortSignal) {
+  return backendFetch<OrderSummary>(`/api/orders/${orderId}/confirm-cod-delivery`, {
+    method: 'POST',
+    idempotencyKey: generateIdempotencyKey(),
+    signal,
+  });
+}
+
+/**
  * Mettre à jour le statut d'une commande (vendeur)
  */
 export async function updateOrderStatus(

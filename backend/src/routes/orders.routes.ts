@@ -1025,6 +1025,100 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimi
 });
 
 /**
+ * POST /api/orders/:orderId/confirm-cod-delivery
+ * L'ACHETEUR confirme la réception d'une commande payée à la livraison (COD / cash).
+ * → marque la commande 'delivered' + clôture l'escrow virtuel COD. Aucun mouvement wallet (espèces).
+ */
+router.post('/:orderId([0-9a-fA-F-]{36})/confirm-cod-delivery', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+    const customerId = await getOrCreateCustomerId(userId);
+
+    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
+    if (!order) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+    if (!isBuyer) {
+      res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' });
+      return;
+    }
+
+    // payment_method n'est pas renvoyé par canUserManageBuyerOrder → on le récupère.
+    const { data: fullOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id, status, payment_method, vendor_id, order_number, metadata')
+      .eq('id', orderId)
+      .single();
+
+    if (!fullOrder) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+    if (fullOrder.payment_method !== 'cash') {
+      res.status(400).json({ success: false, error: 'Cette commande n\'est pas un paiement à la livraison' });
+      return;
+    }
+    if (fullOrder.status === 'cancelled') {
+      res.status(400).json({ success: false, error: 'Commande annulée' });
+      return;
+    }
+    if (fullOrder.status === 'delivered') {
+      res.json({ success: true, data: fullOrder });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+
+    // Clôturer l'escrow virtuel COD (le vendeur a reçu les espèces en main propre).
+    await supabaseAdmin
+      .from('escrow_transactions')
+      .update({ status: 'released', released_at: nowIso, seller_confirmed_at: nowIso })
+      .eq('order_id', orderId);
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'delivered',
+        updated_at: nowIso,
+        metadata: {
+          ...(fullOrder.metadata && typeof fullOrder.metadata === 'object' ? fullOrder.metadata : {}),
+          delivered_at: nowIso,
+          cod_confirmed_by_buyer: true,
+        },
+      })
+      .eq('id', orderId)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    // 🔔 Notifier le vendeur — non bloquant.
+    try {
+      const { data: vendor } = await supabaseAdmin.from('vendors').select('user_id').eq('id', fullOrder.vendor_id).maybeSingle();
+      if (vendor?.user_id) {
+        await createNotification({
+          userId: vendor.user_id,
+          type: 'order',
+          title: `Commande ${fullOrder.order_number || ''}`.trim(),
+          message: 'L\'acheteur a confirmé la réception (paiement à la livraison).',
+          metadata: { order_id: orderId, order_number: fullOrder.order_number, status: 'delivered' },
+        });
+      }
+    } catch (e: any) {
+      logger.warn(`COD confirm notification non bloquant: ${e?.message || e}`);
+    }
+
+    logger.info(`COD order ${orderId} confirmed delivered by buyer ${userId}`);
+    res.json({ success: true, data: updated });
+  } catch (error: any) {
+    logger.error(`COD confirm error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la confirmation de livraison' });
+  }
+});
+
+/**
  * GET /api/orders/mine
  */
 router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
