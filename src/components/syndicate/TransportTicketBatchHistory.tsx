@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { formatCurrency } from '@/lib/formatters';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -127,7 +127,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
     });
   };
 
-  const formatAmount = (amount: number) => formatCurrency(amount);
+  const formatAmount = useFormatCurrency();
 
   const ticketTypeLabels: Record<string, string> = {
     stationnement: 'Stationnement',
@@ -231,7 +231,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
               </TableCell>
               <TableCell>{batch.ticket_config.commune}</TableCell>
               <TableCell className="font-semibold">
-                {formatAmount(batch.ticket_config.amount)} GNF
+                {formatAmount(batch.ticket_config.amount)}
               </TableCell>
               <TableCell>
                 <span className="text-sm">

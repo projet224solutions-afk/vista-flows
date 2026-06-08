@@ -129,7 +129,7 @@ export const useSyndicateWorkerPermissions = (workerId?: string) => {
     }
 
     try {
-      const { _data, error } = await supabase.rpc('set_syndicate_worker_permissions', {
+      const { data, error } = await supabase.rpc('set_syndicate_worker_permissions', {
         p_worker_id: workerId,
         p_permissions: newPermissions
       });

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { _Tooltip, _TooltipContent, _TooltipProvider, _TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,12 +28,12 @@ import {
   withdrawFromWallet,
 } from '@/services/walletBackendService';
 import {
-  _CreditCard,
+  CreditCard,
   Wallet,
-  _Plus,
-  _Eye,
-  _EyeOff,
-  _Copy,
+  Plus,
+  Eye,
+  EyeOff,
+  Copy,
   ArrowDownToLine,
   ArrowUpFromLine,
   Send,
@@ -186,7 +187,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         ? `${profile.first_name} ${profile.last_name}`.toUpperCase()
         : user.email?.split('@')[0].toUpperCase() || 'UTILISATEUR 224SOLUTIONS';
 
-      const { _data, error } = await supabase
+      const { data, error } = await supabase
         .from('virtual_cards')
         .insert({
           user_id: user.id,
@@ -541,7 +542,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                           onChange={(e) => setWithdrawAmount(e.target.value)}
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                          Solde disponible: {formatCurrency(userInfo.wallet.balance, userInfo.wallet.currency || 'GNF')}
                         </p>
                       </div>
                       <Button
@@ -590,7 +591,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                           onChange={(e) => setTransferAmount(e.target.value)}
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Solde disponible: {userInfo.wallet.balance.toLocaleString()} GNF
+                          Solde disponible: {formatCurrency(userInfo.wallet.balance, userInfo.wallet.currency || 'GNF')}
                         </p>
                       </div>
                       <Button

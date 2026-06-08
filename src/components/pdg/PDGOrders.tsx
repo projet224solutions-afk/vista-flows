@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Package, Clock, CheckCircle, XCircle, RefreshCw, Eye } from 'lucide-react';
@@ -22,6 +23,7 @@ interface Order {
 }
 
 export default function PDGOrders() {
+  const fc = useFormatCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -63,29 +65,17 @@ export default function PDGOrders() {
     try {
       setLoading(true);
 
-      // Récupérer le vendor_id si pas déjà fait
-      let currentVendorId = vendorId;
-      if (!currentVendorId) {
-        currentVendorId = await loadVendorProfile();
-        if (!currentVendorId) {
-          setLoading(false);
-          return;
-        }
-        setVendorId(currentVendorId);
-      }
-
-      console.log('Chargement commandes pour vendor:', currentVendorId);
-
+      // PDG : charge TOUTES les commandes de la plateforme (vue globale),
+      // et non celles d'un seul vendeur (l'ancien code gatait sur un profil vendeur
+      // du PDG -> introuvable -> « Profil vendeur introuvable » + 0 commande).
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('vendor_id', currentVendorId)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
 
-      console.log('Orders loaded:', data?.length || 0);
       setOrders(data || []);
 
       // Calculer les stats
@@ -212,7 +202,7 @@ export default function PDGOrders() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold">{order.total_amount} GNF</span>
+                  <span className="font-bold">{fc(order.total_amount || 0)}</span>
                   {getStatusBadge(order.status)}
                   <Button variant="ghost" size="sm">
                     <Eye className="w-4 h-4" />

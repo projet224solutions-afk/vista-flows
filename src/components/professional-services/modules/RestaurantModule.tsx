@@ -11,14 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  UtensilsCrossed, ClipboardList, _Users, Calendar,
+  UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
-  DollarSign, ShoppingBag, _Package, Truck, MapPin, _Eye,
+  DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
   Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart
 } from 'lucide-react';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
-import { _formatDistanceToNow } from 'date-fns';
-import { _fr } from 'date-fns/locale';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { RestaurantMenuManager } from '@/components/restaurant/RestaurantMenuManager';
 import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableManager';
@@ -71,7 +71,7 @@ const _orderTypeLabels: Record<string, string> = {
 };
 
 export function RestaurantModule({ serviceId, businessName }: RestaurantModuleProps) {
-  const { stats, _recentOrders, loading, error, refresh } = useServiceRestaurantStats(serviceId);
+  const { stats, recentOrders, loading, error, refresh } = useServiceRestaurantStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
   const _navigate = useNavigate();
 

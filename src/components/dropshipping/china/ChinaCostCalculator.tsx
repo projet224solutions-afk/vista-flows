@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import {
 import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 
 export function ChinaCostCalculator() {
+  const fc = useFormatCurrency();
   const { calculateFullCosts, settings } = useDropshippingChina();
 
   const [supplierPrice, setSupplierPrice] = useState('10');
@@ -189,7 +191,7 @@ export function ChinaCostCalculator() {
                     <span className="text-lg font-bold">${costs.total_cost_usd?.toFixed(2)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    ≈ {((costs.total_cost_usd || 0) * 8500).toLocaleString('fr-FR')} GNF
+                    ≈ {fc((costs.total_cost_usd || 0) * 8500)}
                   </p>
                 </div>
               </CardContent>
@@ -214,13 +216,13 @@ export function ChinaCostCalculator() {
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <p className="text-xl font-semibold">
-                      {margin.profit.toLocaleString('fr-FR')} GNF
+                      {fc(margin.profit)}
                     </p>
                     <p className="text-xs text-muted-foreground">Profit total</p>
                   </div>
                   <div>
                     <p className="text-xl font-semibold">
-                      {(margin.profit / parseInt(quantity)).toLocaleString('fr-FR')} GNF
+                      {fc(margin.profit / parseInt(quantity))}
                     </p>
                     <p className="text-xs text-muted-foreground">Profit/unité</p>
                   </div>

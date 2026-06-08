@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Crown, _Lock, _Zap, Check } from 'lucide-react';
+import { Crown, Lock, Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

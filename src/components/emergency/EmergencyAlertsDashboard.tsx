@@ -4,21 +4,21 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { _Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertTriangle,
   MapPin,
-  _Phone,
-  _MessageSquare,
+  Phone,
+  MessageSquare,
   Shield,
   CheckCircle,
   XCircle,
   Clock,
   Activity,
-  _Navigation,
+  Navigation,
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ interface EmergencyAlertsDashboardProps {
 
 export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> = ({
   bureauId,
-  _userRole,
+  userRole,
   userId,
   userName
 }) => {

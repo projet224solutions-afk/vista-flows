@@ -5,6 +5,7 @@
 
 import { MapPin, Clock, User, Check, X, Loader2, Route, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -78,7 +79,7 @@ export function RideRequestCard({
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff4000]/20 border border-[#ff4000]/30">
             <Zap className="w-4 h-4 text-[#ff4000]" />
             <span className="text-[#ff4000] font-bold text-sm">
-              {(request.estimatedEarnings || 0).toLocaleString()} GNF
+              <Money amount={request.estimatedEarnings || 0} from="GNF" />
             </span>
           </div>
         </div>

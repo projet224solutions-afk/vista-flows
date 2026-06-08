@@ -9,7 +9,7 @@ interface EcommerceProductsProps {
   serviceId: string;
 }
 
-export function EcommerceProducts({ _serviceId }: EcommerceProductsProps) {
+export function EcommerceProducts({ serviceId }: EcommerceProductsProps) {
   return (
     <Card>
       <CardContent className="py-12 text-center">

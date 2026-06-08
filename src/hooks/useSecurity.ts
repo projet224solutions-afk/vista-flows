@@ -4,9 +4,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { _toast } from 'sonner';
+import { toast } from 'sonner';
 
 export interface SecurityStats {
     total_events: number;
@@ -52,7 +52,7 @@ export function useSecurity() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { _user } = useAuth();
+    const { user } = useAuth();
 
     const loadStats = useCallback(async () => {
         setLoading(false);

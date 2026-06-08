@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { _Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ export default function TaxiMotoPayment({
     onPaymentCancel
 }: TaxiMotoPaymentProps) {
     const { _user, _profile } = useAuth();
+    const fc = useFormatCurrency();
 
     const [selectedMethod, setSelectedMethod] = useState<string>('');
     const [paymentInProgress, setPaymentInProgress] = useState(false);
@@ -103,7 +105,7 @@ export default function TaxiMotoPayment({
             type: 'wallet_224',
             name: 'Portefeuille 224Solutions',
             icon: Wallet,
-            description: `Solde: ${(walletBalance || 0).toLocaleString()} GNF`,
+            description: `Solde: ${fc(walletBalance || 0)}`,
             processingFee: 0,
             isAvailable: walletBalance >= (paymentDetails?.amount || 0),
             estimatedTime: 'Instantané'
@@ -246,11 +248,11 @@ export default function TaxiMotoPayment({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
                             <span>Course #{paymentDetails?.rideId || 'N/A'}</span>
-                            <span>{(paymentDetails?.breakdown?.baseAmount || 0).toLocaleString()} GNF</span>
+                            <span>{fc(paymentDetails?.breakdown?.baseAmount || 0)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>TVA (18%)</span>
-                            <span>{(paymentDetails?.breakdown?.taxes || 0).toLocaleString()} GNF</span>
+                            <span>{fc(paymentDetails?.breakdown?.taxes || 0)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
@@ -301,7 +303,7 @@ export default function TaxiMotoPayment({
 
                                         <div className="text-right">
                                             <div className="font-bold">
-                                                {(total || 0).toLocaleString()} GNF
+                                                {fc(total || 0)}
                                             </div>
                                             {method.processingFee > 0 && (
                                                 <div className="text-xs text-orange-600">
@@ -433,10 +435,10 @@ export default function TaxiMotoPayment({
                             <div className="text-center py-4">
                                 <Wallet className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
                                 <p className="text-lg font-semibold">
-                                    Solde disponible: {(walletBalance || 0).toLocaleString()} GNF
+                                    Solde disponible: {fc(walletBalance || 0)}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Montant à débiter: {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
+                                    Montant à débiter: {fc(calculateTotal(selectedMethod) || 0)}
                                 </p>
                             </div>
                         )}
@@ -447,7 +449,7 @@ export default function TaxiMotoPayment({
                                 <Banknote className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
                                 <p className="text-lg font-semibold">Paiement en espèces</p>
                                 <p className="text-sm text-gray-600">
-                                    Vous paierez {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF au conducteur
+                                    Vous paierez {fc(calculateTotal(selectedMethod) || 0)} au conducteur
                                 </p>
                                 <div className="mt-4 p-3 bg-orange-50 rounded-lg">
                                     <p className="text-xs text-[#ff4000]">
@@ -473,7 +475,7 @@ export default function TaxiMotoPayment({
                         <div className="flex justify-between items-center">
                             <span className="font-semibold">Total à payer</span>
                             <span className="text-xl font-bold text-[#ff4000]">
-                                {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
+                                {fc(calculateTotal(selectedMethod) || 0)}
                             </span>
                         </div>
                     </CardContent>
@@ -530,7 +532,7 @@ export default function TaxiMotoPayment({
                         Paiement réussi !
                     </h3>
                     <p className="text-gray-600 mb-4">
-                        Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a été traité avec succès.
+                        Votre paiement de {fc(calculateTotal(selectedMethod) || 0)} a été traité avec succès.
                     </p>
                     <div className="bg-orange-50 p-4 rounded-lg mb-4">
                         <p className="text-sm text-[#ff4000]">

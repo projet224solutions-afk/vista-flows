@@ -175,22 +175,32 @@ export async function checkIdempotency(idempotencyKey: string): Promise<boolean>
   }
 }
 
+/**
+ * Insère la clé d'idempotence de façon ATOMIQUE. Retourne :
+ *   - true  : la clé a bien été insérée → cette requête est la « gagnante », elle traite.
+ *   - false : la clé existe déjà (violation d'unicité 23505) → une requête identique est
+ *             déjà en cours/terminée → l'appelant NE DOIT PAS rejouer (anti double-dépense).
+ * `wallet_idempotency_keys.idempotency_key` est UNIQUE → l'insert sert de verrou atomique
+ * (remplace le motif check-then-act qui laissait une fenêtre de course entre 2 requêtes).
+ */
 async function recordIdempotencyKey(
   idempotencyKey: string,
   userId: string,
   operation: string
-): Promise<void> {
-  try {
-    await supabaseAdmin.from('wallet_idempotency_keys').insert({
-      idempotency_key: idempotencyKey,
-      user_id: userId,
-      operation,
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    });
-  } catch {
-    // Non-blocking — idempotency key may already exist (race condition)
-  }
+): Promise<boolean> {
+  const { error } = await supabaseAdmin.from('wallet_idempotency_keys').insert({
+    idempotency_key: idempotencyKey,
+    user_id: userId,
+    operation,
+    created_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  });
+  if (!error) return true;
+  // 23505 = unique_violation → clé déjà présente (doublon concurrent ou rejeu).
+  if ((error as { code?: string }).code === '23505') return false;
+  // Autre erreur (DB indisponible…) : on log mais on n'autorise pas le transfert à l'aveugle.
+  logger.warn(`[Wallet] recordIdempotencyKey error (${(error as { code?: string }).code || '?'}): ${error.message}`);
+  return false;
 }
 
 /**
@@ -275,91 +285,70 @@ export async function creditWallet(
   reference: string,
   transactionType: string = 'credit',
   idempotencyKey?: string
-): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-  try {
-    if (idempotencyKey && await checkIdempotency(idempotencyKey)) {
-      logger.info(`[Wallet] Credit already processed: ${idempotencyKey}`);
-      return { success: true };
+): Promise<{ success: boolean; newBalance?: number; error?: string; quarantined?: number }> {
+    // VERROU ATOMIQUE insert-first (comme transferBetweenWallets) : l'insert de la clé UNIQUE
+    // fait office de verrou. Si false → doublon concurrent / rejeu → on NE re-crédite PAS
+    // (anti double-crédit sur dépôt). Remplace le check-then-act qui laissait une fenêtre de course.
+    let releaseLock = async () => {};
+    if (idempotencyKey) {
+      const lockAcquired = await recordIdempotencyKey(idempotencyKey, userId, 'credit');
+      if (!lockAcquired) {
+        logger.info(`[Wallet] Credit idempotency lock held — duplicate ignored: ${idempotencyKey}`);
+        return { success: true };
+      }
+      releaseLock = async () => { await deleteIdempotencyKey(idempotencyKey); };
     }
+  try {
 
-    // Essayer d'abord via RPC SQL (atomique, géré côté DB)
-    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('credit_wallet', {
+    // 'credit' n'est pas une valeur d'enum valide → on mappe vers 'deposit'.
+    const txType = transactionType === 'credit' ? 'deposit' : transactionType;
+
+    // Crédit ATOMIQUE + PLAFOND/QUARANTAINE (AML) via le primitif unique credit_user_wallet_safe :
+    // il verrouille/crée le wallet, applique le plafond de détention et met l'excédent en quarantaine.
+    const { data: res, error: rpcError } = await supabaseAdmin.rpc('credit_user_wallet_safe', {
       p_user_id: userId,
       p_amount: amount,
-      p_description: description,
-      p_transaction_type: transactionType,
-      p_reference: reference,
+      p_from_currency: null,        // null = devise du wallet (pas de conversion sur un dépôt)
+      p_source_type: txType,
+      p_source_txn_id: reference,
     });
 
-    if (!rpcError) {
-      if (idempotencyKey) {
-        await recordIdempotencyKey(idempotencyKey, userId, 'credit');
-      }
-      logger.info(`[Wallet] Credited via RPC: user=${userId}, amount=${amount}`);
-      return { success: true, newBalance: rpcData?.new_balance };
+    if (rpcError || !res) {
+      await releaseLock();
+      logger.error(`[Wallet] credit_user_wallet_safe failed: ${rpcError?.message || 'no result'}`);
+      return { success: false, error: rpcError?.message || 'Crédit impossible' };
     }
 
-    // Fallback manuel si le RPC n'existe pas ou échoue
-    logger.warn(`[Wallet] RPC credit_wallet failed (${rpcError.message}), using manual fallback`);
+    const credited = Number((res as any).credited || 0);
+    const quarantined = Number((res as any).quarantined || 0);
+    const walletId = (res as any).wallet_id;
+    const walletCur = (res as any).currency || 'GNF';
 
-    const { data: wallet, error: walletErr } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance, currency')
-      .eq('user_id', userId)
-      .single();
-
-    if (walletErr || !wallet) {
-      // Créer le wallet si inexistant
-      const { data: newWallet, error: createErr } = await supabaseAdmin
-        .from('wallets')
-        .insert({ user_id: userId, balance: amount, currency: 'GNF' })
-        .select('id, balance, currency')
-        .single();
-
-      if (createErr || !newWallet) {
-        return { success: false, error: createErr?.message || 'Impossible de créer le wallet' };
-      }
-      if (idempotencyKey) {
-        await recordIdempotencyKey(idempotencyKey, userId, 'credit');
-      }
-      return { success: true, newBalance: newWallet.balance };
-    }
-
-    const newBalance = Number(wallet.balance) + amount;
-    const { error: updateErr } = await supabaseAdmin
-      .from('wallets')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', wallet.id);
-
-    if (updateErr) return { success: false, error: updateErr.message };
-
-    // Journal transaction (crédit : pas d'émetteur → sender_wallet_id null)
+    // Journal transaction (le solde a déjà été crédité atomiquement ; net_amount = part dépensable).
     const { error: txErr } = await supabaseAdmin.from('wallet_transactions').insert({
       transaction_id: randomUUID(),
       sender_wallet_id: null,
-      receiver_wallet_id: wallet.id,
+      receiver_wallet_id: walletId,
       sender_user_id: null,
       receiver_user_id: userId,
-      transaction_type: transactionType,
+      transaction_type: txType,
       amount,
-      net_amount: amount,
+      net_amount: credited,
       status: 'completed',
-      currency: (wallet as any).currency || 'GNF',
+      currency: walletCur,
       description,
-      metadata: { reference, source: 'backend-node' },
+      metadata: { reference, source: 'backend-node', quarantined },
     });
     if (txErr) {
       logger.error(`[Wallet] credit history insert failed (solde déjà crédité): ${txErr.message}`);
     }
 
-    if (idempotencyKey) {
-      await recordIdempotencyKey(idempotencyKey, userId, 'credit');
-    }
-
-    logger.info(`[Wallet] Credited manually: user=${userId}, amount=${amount}, newBalance=${newBalance}`);
-    return { success: true, newBalance };
+    const { data: w } = await supabaseAdmin.from('wallets').select('balance').eq('id', walletId).maybeSingle();
+    logger.info(`[Wallet] Credited via credit_user_wallet_safe: user=${userId}, credited=${credited}, quarantined=${quarantined}`);
+    return { success: true, newBalance: w?.balance, quarantined };
   } catch (err: any) {
     logger.error(`[Wallet] creditWallet error: ${err.message}`);
+    await releaseLock();
     return { success: false, error: err.message };
   }
 }
@@ -378,17 +367,20 @@ export async function debitWallet(
   description: string,
   idempotencyKey: string
 ): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-  try {
-    // Anti double-paiement
-    if (await checkIdempotency(idempotencyKey)) {
-      logger.info(`[Wallet] Debit already processed: ${idempotencyKey}`);
+    // VERROU ATOMIQUE insert-first (anti double-débit / rejeu) — la clé UNIQUE sert de verrou
+    // AVANT toute action. Si false → doublon concurrent/rejeu → on NE re-débite PAS.
+    const lockAcquired = await recordIdempotencyKey(idempotencyKey, userId, 'withdraw');
+    if (!lockAcquired) {
+      logger.info(`[Wallet] Debit idempotency lock held — duplicate ignored: ${idempotencyKey}`);
       return { success: true };
     }
-
+    const releaseLock = async () => { await deleteIdempotencyKey(idempotencyKey); };
+  try {
     // Vérification activité suspecte
     const suspect = await detectSuspiciousActivity(userId, amount);
     if (suspect.shouldBlock) {
       logger.warn(`[Wallet] Debit blocked: suspicious activity for user=${userId}`);
+      await releaseLock();
       return { success: false, error: 'Transaction bloquée pour activité suspecte' };
     }
 
@@ -399,9 +391,9 @@ export async function debitWallet(
       .eq('user_id', userId)
       .single();
 
-    if (walletErr || !wallet) return { success: false, error: 'Wallet introuvable' };
-    if (wallet.is_blocked) return { success: false, error: 'Wallet bloqué' };
-    if (Number(wallet.balance) < amount) return { success: false, error: 'Solde insuffisant' };
+    if (walletErr || !wallet) { await releaseLock(); return { success: false, error: 'Wallet introuvable' }; }
+    if (wallet.is_blocked) { await releaseLock(); return { success: false, error: 'Wallet bloqué' }; }
+    if (Number(wallet.balance) < amount) { await releaseLock(); return { success: false, error: 'Solde insuffisant' }; }
 
     const newBalance = Number(wallet.balance) - amount;
 
@@ -415,6 +407,7 @@ export async function debitWallet(
       .single();
 
     if (updateErr || !updated) {
+      await releaseLock();
       return { success: false, error: 'Solde modifié pendant la transaction. Réessayez.' };
     }
 
@@ -439,12 +432,11 @@ export async function debitWallet(
       logger.error(`[Wallet] debit history insert failed (solde déjà débité): ${txErr.message}`);
     }
 
-    await recordIdempotencyKey(idempotencyKey, userId, 'withdraw');
-
     logger.info(`[Wallet] Debited: user=${userId}, amount=${amount}, newBalance=${newBalance}`);
     return { success: true, newBalance };
   } catch (err: any) {
     logger.error(`[Wallet] debitWallet error: ${err.message}`);
+    await releaseLock();
     return { success: false, error: err.message };
   }
 }
@@ -471,8 +463,14 @@ export async function transferBetweenWallets(
       return { success: true };
     }
 
-    // Record idempotency key early to prevent duplicate transfers on crash/retry
-    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
+    // VERROU ATOMIQUE : l'insert de la clé (UNIQUE) fait office de verrou. Si false →
+    // une requête identique détient déjà le verrou (course concurrente ou rejeu) → on NE
+    // rejoue PAS le transfert (anti double-dépense). Remplace le check-then-act non atomique.
+    const lockAcquired = await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
+    if (!lockAcquired) {
+      logger.info(`[Wallet] Transfer idempotency lock held — duplicate ignored: ${idempotencyKey}`);
+      return { success: true };
+    }
 
     // En cas d'ÉCHEC, libérer la clé d'idempotence pour permettre un rejeu légitime
     // (sinon une nouvelle tentative renverrait un faux succès sans transférer).
@@ -516,7 +514,12 @@ export async function transferBetweenWallets(
       return await fail('Montant crédité invalide pour le destinataire');
     }
 
-    const canUseRpc = !isInternational && Math.abs(amountToCredit - amount) < 0.000001;
+    // Total réellement débité de l'expéditeur = montant envoyé + commission FX (devise expéditeur).
+    // La commission reste dans le float plateforme (débitée, non recréditée au destinataire).
+    const debitAmount = smartRoundTransferAmount(amount + (Number.isFinite(feeAmount) ? feeAmount : 0), senderCurrency);
+    if (Number(senderWallet.balance) < debitAmount) return await fail('Solde insuffisant');
+
+    const canUseRpc = !isInternational && feeAmount <= 0 && Math.abs(amountToCredit - amount) < 0.000001;
 
     if (canUseRpc) {
       const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('execute_atomic_wallet_transfer', {
@@ -561,7 +564,7 @@ export async function transferBetweenWallets(
       const { data: fxData, error: fxError } = await supabaseAdmin.rpc('execute_atomic_wallet_transfer_fx', {
         p_sender_id: senderId,
         p_receiver_id: receiverId,
-        p_debit_amount: amount,
+        p_debit_amount: debitAmount,
         p_credit_amount: amountToCredit,
         p_description: description,
         p_sender_wallet_id: senderWallet.id,
@@ -571,6 +574,7 @@ export async function transferBetweenWallets(
         p_sender_currency: senderCurrency,
         p_receiver_currency: receiverCurrency,
         p_rate_used: rateUsed,
+        p_fee_amount: Number.isFinite(feeAmount) ? feeAmount : 0,
       });
       if (!fxError) {
         const txId = Array.isArray(fxData) ? (fxData[0]?.transaction_id || fxData[0]?.id) : (fxData?.transaction_id || fxData?.id);
@@ -589,7 +593,7 @@ export async function transferBetweenWallets(
       return await fail('Échec du transfert international. Réessayez.');
     }
 
-    const newSenderBalance = Number(senderWallet.balance) - amount;
+    const newSenderBalance = Number(senderWallet.balance) - debitAmount;
     const newReceiverBalance = Number(receiverWallet.balance) + amountToCredit;
 
     const { data: debitResult, error: debitErr } = await supabaseAdmin

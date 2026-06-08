@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Money } from '@/components/Money';
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useGPSLocation } from "@/hooks/useGPSLocation";
@@ -458,7 +459,7 @@ export default function TaxiMotoDriver() {
                                         <p className="text-white text-sm mb-1 truncate">{String(ride.pickup_address || 'Adresse départ')}</p>
                                         <p className="text-gray-400 text-xs truncate">→ {String(ride.dropoff_address || 'Destination')}</p>
                                         {ride.driver_share && (
-                                            <p className="text-[#ff4000] font-bold mt-2">{Number(ride.driver_share).toLocaleString()} GNF</p>
+                                            <p className="text-[#ff4000] font-bold mt-2"><Money amount={Number(ride.driver_share)} from="GNF" /></p>
                                         )}
                                     </div>
                                 ))}

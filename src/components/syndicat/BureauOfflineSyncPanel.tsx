@@ -16,14 +16,14 @@ import {
     RefreshCw,
     CheckCircle,
     AlertTriangle,
-    _Clock,
+    Clock,
     Bike,
     User,
     Shield,
-    _History,
+    History,
     Trash2
 } from "lucide-react";
-import { _toast } from "sonner";
+import { toast } from "sonner";
 import { useBureauOfflineSync } from '@/hooks/useBureauOfflineSync';
 
 interface Props {
@@ -40,7 +40,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
         forceSync,
         clearSyncErrors,
         getSyncHistory,
-        _updateSyncStats,
+        updateSyncStats,
         hasPendingEvents,
         hasFailedEvents
     } = useBureauOfflineSync(bureauId);

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, TrendingUp, Shield, Zap, _Globe, Lock, Server, Smartphone } from 'lucide-react';
+import { CheckCircle2, XCircle, TrendingUp, Shield, Zap, Globe, Lock, Server, Smartphone } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**

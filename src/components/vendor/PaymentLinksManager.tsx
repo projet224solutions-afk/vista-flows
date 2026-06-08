@@ -5,7 +5,8 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -27,10 +28,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import {
   Link, Plus, Copy, Share2, RefreshCw,
   DollarSign, CheckCircle, Clock, XCircle, AlertCircle,
-  ExternalLink, Calendar, User, Package, _Edit, Trash2,
-  CreditCard, FileText, ShoppingCart, Wrench, _Eye,
-  QrCode, Ban, _MoreVertical, _ArrowUpRight, Receipt,
-  Smartphone, _Store
+  ExternalLink, Calendar, User, Package, Edit, Trash2,
+  CreditCard, FileText, ShoppingCart, Wrench, Eye,
+  QrCode, Ban, MoreVertical, ArrowUpRight, Receipt,
+  Smartphone, Store
 } from 'lucide-react';
 
 const LINK_TYPES: { value: LinkType; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -80,6 +81,7 @@ const initialForm = {
 };
 
 export default function PaymentLinksManager() {
+  const fc = useFormatCurrency();
   const { toast } = useToast();
   const { userId: vendorUserId } = useCurrentVendor();
   const {
@@ -305,7 +307,7 @@ export default function PaymentLinksManager() {
                             <SelectItem key={p.id} value={p.id}>
                               <div className="flex items-center gap-2">
                                 <Package className="w-3.5 h-3.5" />
-                                {p.name} — {new Intl.NumberFormat('fr-FR').format(p.price)} GNF
+                                {p.name} — {fc(p.price)}
                               </div>
                             </SelectItem>
                           ))}

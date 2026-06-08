@@ -1,6 +1,6 @@
 // 🛡️ Security Operations Panel - Système de défense et riposte
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, Ban, Activity, Lock, _FileText, Zap, TrendingUp } from 'lucide-react';
+import { Shield, AlertTriangle, Ban, Activity, Lock, FileText, Zap, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ const SecurityOpsPanel: React.FC = () => {
     blockedIPs,
     stats,
     loading,
-    _error,
+    error,
     loadSecurityData,
     createIncident,
     containIncident,
@@ -27,7 +27,7 @@ const SecurityOpsPanel: React.FC = () => {
     blockIP,
     unblockIP,
     acknowledgeAlert,
-    _detectAnomaly
+    detectAnomaly
   } = useSecurityOps(true);
 
   const [activeTab, setActiveTab] = useState('overview');

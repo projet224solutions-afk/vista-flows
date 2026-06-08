@@ -1318,7 +1318,7 @@ class UniversalCommunicationService {
       console.log('[Communication] 🗑️ Tentative suppression message:', { messageId, userId, deleteForEveryone });
 
       // Essayer d'abord avec la fonction RPC
-      const { _data, error } = await supabase.rpc('soft_delete_message', {
+      const { data, error } = await supabase.rpc('soft_delete_message', {
         p_message_id: messageId,
         p_user_id: userId,
         p_delete_for_everyone: deleteForEveryone,

@@ -9,14 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { _Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Package, User, Phone, Navigation, _Loader2 } from 'lucide-react';
+import { MapPin, Package, User, Phone, Navigation, Loader2 } from 'lucide-react';
 import { PricingService, type PriceEstimate } from '@/services/pricing/PricingService';
 import { PriceEstimatorCard } from './PriceEstimatorCard';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { toast } from 'sonner';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 interface DeliveryRequestUberStyleProps {

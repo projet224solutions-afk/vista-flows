@@ -79,6 +79,7 @@ function useRecentOrders(userId: string | undefined) {
           .select(`
             order_number,
             total_amount,
+            currency,
             status,
             created_at,
             customer:customers!inner(user_id)
@@ -92,8 +93,12 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
+        // La colonne orders.currency existe en base (migrations marketplace) mais manque
+        // dans les types Supabase générés (périmés) → cast pour lire la devise réelle.
+        const orderRows = (data ?? []) as unknown as OrderFromSupabase[];
+
         // 3. R├®cup├®rer les profils des clients pour afficher leurs noms
-        const userIds = (data || [])
+        const userIds = orderRows
           .map((o: OrderFromSupabase) => o.customer?.user_id)
           .filter(Boolean) as string[];
 
@@ -113,7 +118,7 @@ function useRecentOrders(userId: string | undefined) {
         }
 
         // 4. Transformer les donn├®es avec noms clients r├®els
-        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => {
+        const formatted: RecentOrder[] = orderRows.map((order: OrderFromSupabase) => {
           const orderUserId = order.customer?.user_id;
           const clientName = orderUserId && profilesMap[orderUserId]
             ? profilesMap[orderUserId]
@@ -126,6 +131,7 @@ function useRecentOrders(userId: string | undefined) {
             customer_label: clientName,
             status: (order.status as RecentOrder['status']) || 'pending',
             total_amount: order.total_amount || 0,
+            currency: order.currency || 'GNF',
             created_at: order.created_at,
           };
         });

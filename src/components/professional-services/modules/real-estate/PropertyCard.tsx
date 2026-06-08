@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   MapPin, Eye, Heart, Bed, Bath, Maximize,
-  _Building2, MoreVertical, _Pencil, Trash2, CheckCircle
+  Building2, MoreVertical, Pencil, Trash2, CheckCircle
 } from 'lucide-react';
 import {
   DropdownMenu,

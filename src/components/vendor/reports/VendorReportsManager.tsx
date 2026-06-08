@@ -3,16 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
-  BarChart3, _Calendar, TrendingUp, TrendingDown,
-  Download, _FileText, DollarSign, Package, ShoppingCart,
-  _Clock, _Users, CreditCard
+  BarChart3, Calendar, TrendingUp, TrendingDown,
+  Download, FileText, DollarSign, Package, ShoppingCart,
+  Clock, Users, CreditCard
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, _BarChart, _Bar, _PieChart, _Pie, _Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 interface ReportData {
   sales: number;
@@ -26,7 +28,16 @@ interface ReportData {
 const _COLORS = ['#ff4000', '#04439e', '#ff4000', '#ff4000', '#04439e'];
 
 export default function VendorReportsManager() {
-  const { vendorId, _userId } = useCurrentVendor();
+  const { vendorId, userId } = useCurrentVendor();
+  const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  // Axe Y compact (montants stockés en GNF → devise utilisateur, taux BCRG)
+  const compactAxis = (v: number) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
   const { toast } = useToast();
   const [_loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('month');
@@ -180,12 +191,12 @@ Période: ${start.toLocaleDateString('fr-FR')} - ${end.toLocaleDateString('fr-FR
 
 RÉSUMÉ FINANCIER
 ----------------
-Ventes totales: ${reportData.sales.toLocaleString('fr-FR')} GNF
+Ventes totales: ${fc(reportData.sales)}
 Nombre de commandes: ${reportData.orders}
-Dépenses: ${reportData.expenses.toLocaleString('fr-FR')} GNF
-Retours/Remboursements: ${reportData.returns.toLocaleString('fr-FR')} GNF
-Créances en cours: ${reportData.creditSales.toLocaleString('fr-FR')} GNF
-Bénéfice net: ${reportData.profit.toLocaleString('fr-FR')} GNF
+Dépenses: ${fc(reportData.expenses)}
+Retours/Remboursements: ${fc(reportData.returns)}
+Créances en cours: ${fc(reportData.creditSales)}
+Bénéfice net: ${fc(reportData.profit)}
 
 TOP 5 PRODUITS
 --------------
@@ -353,8 +364,8 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `${value.toLocaleString()} GNF`} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={compactAxis} width={70} />
+                <Tooltip formatter={(value: number) => fc(value)} />
                 <Area
                   type="monotone"
                   dataKey="sales"

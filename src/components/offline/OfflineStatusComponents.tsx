@@ -93,7 +93,7 @@ export function OfflineBanner() {
  * Indicateur compact de synchronisation
  */
 export function SyncIndicator() {
-  const { showSyncIndicator, queueStatus, _isOnline } = useOfflineMode();
+  const { showSyncIndicator, queueStatus, isOnline } = useOfflineMode();
 
   if (!showSyncIndicator && queueStatus.pending === 0) return null;
 
@@ -129,7 +129,7 @@ export function OfflineStatusWidget() {
     offlineStatus,
     queueStatus,
     syncStatus,
-    _processQueue,
+    processQueue,
     syncAll,
     retryFailedOperations,
     clearFailedOperations,

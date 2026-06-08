@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Calendar, _Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useServiceLimits } from '@/hooks/useServiceLimits';
+import { Money } from '@/components/Money';
 
 interface Booking {
   id: string;
@@ -213,7 +214,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
                           <div className="flex items-center gap-2 text-sm">
                             <DollarSign className="w-4 h-4 text-muted-foreground" />
                             <span className="font-semibold">
-                              {booking.total_amount.toLocaleString()} GNF
+                              <Money amount={booking.total_amount} from="GNF" />
                             </span>
                           </div>
                         </div>

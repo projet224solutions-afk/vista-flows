@@ -4,7 +4,7 @@
  */
 
 import {
-  _REGIONS,
+  REGIONS,
   RegionConfig,
   RegionHealth,
   getEnabledRegions,

@@ -117,7 +117,7 @@ export function BureauWalletDisplay({
               <Building2 className="w-4 h-4 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">Wallet Bureau {bureauCode ? `(${bureauCode})` : ''}</p>
-                <p className="text-sm font-bold text-primary">{formatAmount(balance)} {currency}</p>
+                <p className="text-sm font-bold text-primary">{formatAmount(balance, currency)}</p>
               </div>
             </div>
             <Button
@@ -146,7 +146,7 @@ export function BureauWalletDisplay({
               <p className="text-xs text-muted-foreground">
                 Wallet Bureau {bureauCode ? `(${bureauCode})` : ''}
               </p>
-              <p className="text-lg font-bold text-primary">{formatAmount(balance)} {currency}</p>
+              <p className="text-lg font-bold text-primary">{formatAmount(balance, currency)}</p>
             </div>
           </div>
           <Button

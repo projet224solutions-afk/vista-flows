@@ -7,14 +7,14 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, CardHeader, CardTitle, _CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { _RadioGroup, _RadioGroupItem } from '@/components/ui/radio-group';
-import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock, _CreditCard, _Wallet, _Shield } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Package, User, MapPin, ArrowRight, Calculator, Loader2, Route, Clock, CreditCard, Wallet, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useDeliveryPriceCalculation } from '@/hooks/useDeliveryPriceCalculation';

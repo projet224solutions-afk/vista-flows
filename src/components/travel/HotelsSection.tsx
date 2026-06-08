@@ -4,8 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Hotel, Star, _ExternalLink, MapPin,
-  _Calendar, Users, _Wifi, _Car, _Coffee
+  Hotel, Star, ExternalLink, MapPin,
+  Calendar, Users, Wifi, Car, Coffee
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { _cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface HotelPartner {

@@ -13,8 +13,8 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   RefreshCw,
-  _Filter,
-  _Calendar
+  Filter,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -146,7 +146,7 @@ export function WalletTransactionsList() {
                     </p>
                     {tx.id && (
                       <PublicIdBadge
-                        publicId={tx.id.slice(0, 8).toUpperCase()}
+                        publicId={String(tx.id).slice(0, 8).toUpperCase()}
                         variant="outline"
                         size="sm"
                       />

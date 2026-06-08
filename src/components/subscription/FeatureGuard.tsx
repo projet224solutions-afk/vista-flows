@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useSubscriptionFeatures, SubscriptionFeature, FEATURE_MIN_PLAN } from '@/hooks/useSubscriptionFeatures';
 import { Button } from '@/components/ui/button';
-import { Lock, Crown, _Zap, Check } from 'lucide-react';
+import { Lock, Crown, Zap, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,

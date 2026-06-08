@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { VideoUploadPreview } from '@/components/ui/video-upload-preview';
@@ -158,7 +159,8 @@ const categoryConfig: Record<ProductCategory, {
 type FormStep = 'mode' | 'details' | 'pricing' | 'media' | 'review';
 
 export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create', initialProduct }: DigitalProductFormProps) {
-  const _navigate = useNavigate();
+  const fc = useFormatCurrency();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const config = categoryConfig[category];
 
@@ -323,9 +325,9 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
     const lessons = Array.isArray(training.lessons) && training.lessons.length > 0
       ? training.lessons.map((lesson: any) => ({
-          title: lesson?.title || '',
-          durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
-        }))
+        title: lesson?.title || '',
+        durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
+      }))
       : DEFAULT_TRAINING_DRAFT.lessons;
 
     return {
@@ -406,9 +408,9 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           : (training.learningGoals || ''),
         lessons: Array.isArray(training.lessons) && training.lessons.length > 0
           ? training.lessons.map((lesson: any) => ({
-              title: lesson?.title || '',
-              durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
-            }))
+            title: lesson?.title || '',
+            durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
+          }))
           : DEFAULT_TRAINING_DRAFT.lessons,
       });
     } else {
@@ -443,18 +445,18 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   // Pour physique_affilie, on n'inclut pas l'étape "mode" car seule l'affiliation est disponible
   const steps: { id: FormStep; label: string }[] = category === 'physique_affilie'
     ? [
-        { id: 'details', label: 'Détails' },
-        { id: 'pricing', label: 'Affiliation' },
-        { id: 'media', label: 'Médias' },
-        { id: 'review', label: 'Validation' }
-      ]
+      { id: 'details', label: 'Détails' },
+      { id: 'pricing', label: 'Affiliation' },
+      { id: 'media', label: 'Médias' },
+      { id: 'review', label: 'Validation' }
+    ]
     : [
-        { id: 'mode', label: 'Mode' },
-        { id: 'details', label: 'Détails' },
-        { id: 'pricing', label: salesMode === 'affiliate' ? 'Affiliation' : 'Prix' },
-        { id: 'media', label: 'Médias' },
-        { id: 'review', label: 'Validation' }
-      ];
+      { id: 'mode', label: 'Mode' },
+      { id: 'details', label: 'Détails' },
+      { id: 'pricing', label: salesMode === 'affiliate' ? 'Affiliation' : 'Prix' },
+      { id: 'media', label: 'Médias' },
+      { id: 'review', label: 'Validation' }
+    ];
 
   const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
@@ -1255,7 +1257,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                   <span className="text-sm font-medium text-primary">
                     {salesMode === 'affiliate'
                       ? `${affiliateData.commissionRate || '0'}%`
-                      : `${parseFloat(directData.price || '0').toLocaleString()} GNF`
+                      : fc(parseFloat(directData.price || '0'))
                     }
                   </span>
                 </div>

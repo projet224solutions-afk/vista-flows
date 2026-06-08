@@ -4,9 +4,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Clock, _Navigation, Phone, MessageSquare, Camera, CheckCircle, AlertTriangle } from 'lucide-react';
+import { MapPin, Clock, Navigation, Phone, MessageSquare, Camera, CheckCircle, AlertTriangle } from 'lucide-react';
 import TransportService, { TransportRequest, TransportUser } from '../../services/transport/TransportService';
 import GeolocationService from '../../services/geolocation/GeolocationService';
+import { Money } from '@/components/Money';
 
 interface TransportTrackingProps {
   requestId: string;
@@ -377,8 +378,8 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <p className="text-xs text-[#ff4000]">Frais 1% inclus</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-[#ff4000]">{request.totalPrice} GNF</p>
-              <p className="text-xs text-[#ff4000]">Net: {request.price} GNF</p>
+              <p className="text-lg font-bold text-[#ff4000]"><Money amount={request.totalPrice} from="GNF" /></p>
+              <p className="text-xs text-[#ff4000]">Net: <Money amount={request.price} from="GNF" /></p>
             </div>
           </div>
         </div>

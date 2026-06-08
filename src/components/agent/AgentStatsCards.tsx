@@ -45,7 +45,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
     },
     {
       title: 'Solde Wallet',
-      value: formatAmount(walletBalance),
+      value: formatAmount(walletBalance, currency),
       subtitle: currency,
       icon: <Wallet className="w-5 h-5" />,
       gradient: '',

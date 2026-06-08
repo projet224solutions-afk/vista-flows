@@ -6,16 +6,17 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress';
 import {
-  Plane, MapPin, _Hotel, Users, _Calendar, Clock,
-  Plus, DollarSign, _TrendingUp, Star, Globe,
-  Ticket, _Palmtree, _Ship, _Car, _CheckCircle
+  Plane, MapPin, Hotel, Users, Calendar, Clock,
+  Plus, DollarSign, TrendingUp, Star, Globe,
+  Ticket, Palmtree, Ship, Car, CheckCircle
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,7 +67,7 @@ const BOOKING_STATUS: Record<string, { label: string; color: string }> = {
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function TransportModule({ _serviceId, businessName }: TransportModuleProps) {
+export function TransportModule({ serviceId, businessName }: TransportModuleProps) {
   const [activeTab, setActiveTab] = useState('destinations');
   const [showNewBooking, setShowNewBooking] = useState(false);
 
@@ -217,7 +218,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
                         <span className="text-xs font-medium">{dest.rating}</span>
                         <span className="text-xs text-muted-foreground">({dest.bookings})</span>
                       </div>
-                      <p className="font-bold text-primary">{dest.price.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary"><Money amount={dest.price} from="GNF" /></p>
                     </div>
                   </CardContent>
                 </Card>
@@ -251,7 +252,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
                           📅 {booking.travelDate} • 👥 {booking.passengers} passager(s)
                         </p>
                       </div>
-                      <p className="font-bold text-primary">{booking.total.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary"><Money amount={booking.total} from="GNF" /></p>
                     </div>
                   </CardContent>
                 </Card>
@@ -281,7 +282,7 @@ export function TransportModule({ _serviceId, businessName }: TransportModulePro
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-sm">{b.total.toLocaleString()} GNF</p>
+                      <p className="font-semibold text-sm"><Money amount={b.total} from="GNF" /></p>
                       <p className="text-xs text-muted-foreground">{b.passengers} voyage(s)</p>
                     </div>
                   </div>

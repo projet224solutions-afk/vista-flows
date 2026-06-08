@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,7 @@ interface TaxiFormData {
 
 export default function TaxiMotoRequestForm() {
   // Utiliser la persistence pour les données du formulaire
-  const { values, updateField, resetForm, _isRestored } = useFormPersistence<TaxiFormData>(
+  const { values, updateField, resetForm, isRestored } = useFormPersistence<TaxiFormData>(
     'taxi_moto_request',
     {
       pickupLat: '',
@@ -107,7 +108,7 @@ export default function TaxiMotoRequestForm() {
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={calculateFare} disabled={loading} className="gap-2"><Calculator className="w-4 h-4"/> Estimer</Button>
-          {estimatedPrice !== null && <Badge variant="outline">{estimatedPrice} GNF</Badge>}
+          {estimatedPrice !== null && <Badge variant="outline"><Money amount={estimatedPrice} from="GNF" /></Badge>}
         </div>
         <div>
           <Button onClick={createRide} disabled={loading || estimatedPrice===null} className="gap-2"><Send className="w-4 h-4"/> Créer la course</Button>

@@ -16,7 +16,7 @@ import {
   Camera,
   Calendar,
   Image,
-  _Users,
+  Users,
   Clock,
   Plus,
   Eye,
@@ -70,7 +70,7 @@ interface Service {
   isPopular: boolean;
 }
 
-export function PhotoStudioModule({ _serviceId, businessName }: PhotoStudioModuleProps) {
+export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModuleProps) {
   const [activeTab, setActiveTab] = useState('reservations');
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showNewGalleryDialog, setShowNewGalleryDialog] = useState(false);

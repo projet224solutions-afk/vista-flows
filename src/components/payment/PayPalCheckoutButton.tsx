@@ -41,8 +41,8 @@ interface PayPalCheckoutButtonProps {
 export default function PayPalCheckoutButton({
   amount,
   currency = 'USD',
-  _description = 'Achat 224Solutions',
-  _orderId,
+  description = 'Achat 224Solutions',
+  orderId,
   onSuccess,
   onCancel,
   onError,

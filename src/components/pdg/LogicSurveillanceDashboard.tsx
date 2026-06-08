@@ -23,7 +23,7 @@ import {
   Wallet,
   ShoppingCart,
   Package,
-  _Users,
+  Users,
   Truck,
   Settings,
   Play,

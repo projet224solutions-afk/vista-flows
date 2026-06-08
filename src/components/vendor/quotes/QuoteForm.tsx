@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ interface QuoteItem {
 }
 
 export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
+  const fc = useFormatCurrency();
   const { vendorId } = useVendorId();
   const [loading, setLoading] = useState(false);
 
@@ -245,7 +247,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
               </div>
               <div className="col-span-2 flex items-center justify-between">
                 <span className="font-semibold">
-                  {(item.total || 0).toLocaleString()} GNF
+                  {fc(item.total || 0)}
                 </span>
                 {items.length > 1 && (
                   <Button
@@ -266,7 +268,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
         <div className="border-t pt-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span>Sous-total:</span>
-            <span className="font-semibold">{subtotal.toLocaleString()} GNF</span>
+            <span className="font-semibold">{fc(subtotal)}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -294,7 +296,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
 
           <div className="flex justify-between text-lg font-bold border-t pt-2">
             <span>TOTAL:</span>
-            <span className="text-primary">{total.toLocaleString()} GNF</span>
+            <span className="text-primary">{fc(total)}</span>
           </div>
         </div>
 

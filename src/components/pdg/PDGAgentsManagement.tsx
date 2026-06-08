@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserCheck, Search, Ban, Trash2, Plus, Mail, Edit, Users, TrendingUp, Activity, ExternalLink, Copy, Eye, UserCog, KeyRound, Settings, Shield, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import AgentCommissionRatesCard from './AgentCommissionRatesCard';
 import { usePDGAgentsData, type Agent } from '@/hooks/usePDGAgentsData';
 import { usePDGActions } from '@/hooks/usePDGActions';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,6 +80,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 export default function PDGAgentsManagement() {
+  const fc = useFormatCurrency();
   const { agents, pdgProfile, loading, stats, refetch } = usePDGAgentsData();
   const {
     createAgent: createAgentAction,
@@ -647,6 +650,9 @@ export default function PDGAgentsManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Réglage global des taux de commission agent (% des frais de transaction) */}
+      <AgentCommissionRatesCard />
+
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
@@ -764,7 +770,7 @@ export default function PDGAgentsManagement() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="commission">Taux Commission (%)</Label>
+                            <Label htmlFor="commission">Taux commission lien d'affiliation (%)</Label>
                             <Input
                               id="commission"
                               type="number"
@@ -969,7 +975,7 @@ export default function PDGAgentsManagement() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="commission">Taux Commission (%)</Label>
+                        <Label htmlFor="commission">Taux commission lien d'affiliation (%)</Label>
                         <Input
                           id="commission"
                           type="number"
@@ -1156,7 +1162,7 @@ export default function PDGAgentsManagement() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCommissionsEarned.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold">{fc(stats.totalCommissionsEarned)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Gagnées à ce jour
             </p>
@@ -1357,7 +1363,7 @@ export default function PDGAgentsManagement() {
 
                 <div className="flex items-center justify-between text-sm pb-3">
                   <span className="text-muted-foreground">Commissions gagnées:</span>
-                  <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
+                  <span className="font-medium">{fc(agent.total_commissions_earned || 0)}</span>
                 </div>
 
                 {/* Lien d'accès à l'interface Agent */}

@@ -27,8 +27,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { _Badge } from "@/components/ui/badge";
-import { _cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
 import { useProximityStats } from "@/hooks/useProximityStats";
 import { Button } from "@/components/ui/button";

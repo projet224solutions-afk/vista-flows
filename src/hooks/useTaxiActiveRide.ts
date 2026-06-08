@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 
@@ -39,6 +40,7 @@ export function useTaxiActiveRide(
   onStartNavigation: (coords: { latitude: number; longitude: number }) => void,
   onStatsUpdate?: (earnings: number) => void
 ): UseTaxiActiveRideReturn {
+  const fc = useFormatCurrency();
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
   const [navigationActive, setNavigationActive] = useState(false);
 
@@ -273,7 +275,7 @@ export function useTaxiActiveRide(
         onStatsUpdate(activeRide.estimatedEarnings);
       }
 
-      toast.success(`💰 Course terminée ! +${activeRide.estimatedEarnings.toLocaleString()} GNF`);
+      toast.success(`💰 Course terminée ! +${fc(activeRide.estimatedEarnings)}`);
 
       setActiveRide(null);
       setNavigationActive(false);

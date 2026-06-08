@@ -181,7 +181,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  Distance ({offer.distanceVendorToClient.toFixed(1)} km × {offer.pricePerKm?.toLocaleString() || '1 000'} GNF/km)
+                  Distance ({offer.distanceVendorToClient.toFixed(1)} km × {formatCurrency(offer.pricePerKm || 1000)}/km)
                 </span>
                 <span className="font-medium">{formatCurrency(offer.distancePrice)}</span>
               </div>

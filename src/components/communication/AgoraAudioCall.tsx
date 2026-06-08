@@ -15,7 +15,7 @@ import {
   Mic,
   MicOff,
   PhoneOff,
-  _Users,
+  Users,
   Wifi,
   Clock,
   Volume2,
@@ -39,8 +39,8 @@ export default function AgoraAudioCall({
   callerInfo,
   onCallEnd
 }: AgoraAudioCallProps) {
-  const { _user } = useAuth();
-  const { callState, _isLoading, joinCall, _leaveCall, toggleMute, endCall } = useAgora();
+  const { user } = useAuth();
+  const { callState, isLoading, joinCall, leaveCall, toggleMute, endCall } = useAgora();
 
   const [callDuration, setCallDuration] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);

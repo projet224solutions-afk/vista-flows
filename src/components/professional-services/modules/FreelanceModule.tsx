@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,9 +15,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
-  Briefcase, _FileText, _Calculator, Users, DollarSign, Clock,
-  Plus, _CheckCircle, AlertCircle, TrendingUp, Star,
-  Phone, Mail, _Calendar, Timer, _Receipt, FolderOpen
+  Briefcase, FileText, Calculator, Users, DollarSign, Clock,
+  Plus, CheckCircle, AlertCircle, TrendingUp, Star,
+  Phone, Mail, Calendar, Timer, Receipt, FolderOpen
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -77,7 +78,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   basse: 'bg-[#ff4000]',
 };
 
-export function FreelanceModule({ _serviceId, businessName }: FreelanceModuleProps) {
+export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNewMission, setShowNewMission] = useState(false);
 
@@ -208,8 +209,8 @@ export function FreelanceModule({ _serviceId, businessName }: FreelanceModulePro
         <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
           <CardContent className="p-4">
             <TrendingUp className="h-4 w-4 opacity-80" />
-            <p className="text-lg font-bold mt-1">{avgHourlyRate.toLocaleString()}</p>
-            <p className="text-xs opacity-80">GNF/heure moy.</p>
+            <p className="text-lg font-bold mt-1"><Money amount={avgHourlyRate} from="GNF" /></p>
+            <p className="text-xs opacity-80">par heure (moy.)</p>
           </CardContent>
         </Card>
       </div>
@@ -340,8 +341,8 @@ export function FreelanceModule({ _serviceId, businessName }: FreelanceModulePro
                     <p className="text-xs text-muted-foreground">Moyenne/jour</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-primary">{avgHourlyRate.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">GNF/heure</p>
+                    <p className="text-2xl font-bold text-primary"><Money amount={avgHourlyRate} from="GNF" /></p>
+                    <p className="text-xs text-muted-foreground">par heure</p>
                   </div>
                 </div>
               </div>

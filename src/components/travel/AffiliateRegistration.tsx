@@ -5,10 +5,10 @@
 import { useState } from 'react';
 import {
   Users, Check, ArrowRight, Briefcase,
-  Mail, _Phone, FileText, Wallet
+  Mail, Phone, FileText, Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';

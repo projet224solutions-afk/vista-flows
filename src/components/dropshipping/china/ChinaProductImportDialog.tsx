@@ -14,15 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  _DialogFooter
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -33,7 +34,7 @@ import {
   Link,
   Loader2,
   Package,
-  _DollarSign,
+  DollarSign,
   Truck,
   Clock,
   AlertTriangle,
@@ -51,7 +52,7 @@ import type {
   ChinaProductImport,
   ChinaCostBreakdown
 } from '@/types/china-dropshipping';
-import { CHINA_PLATFORMS, _TRANSPORT_METHODS } from '@/types/china-dropshipping';
+import { CHINA_PLATFORMS, TRANSPORT_METHODS } from '@/types/china-dropshipping';
 
 // ==================== INTERFACES ====================
 
@@ -76,6 +77,7 @@ export function ChinaProductImportDialog({
   onConvert,
   onCalculateCosts
 }: ChinaProductImportDialogProps) {
+  const fc = useFormatCurrency();
   // États
   const [currentStep, setCurrentStep] = useState<ImportStep['step']>('url');
   const [loading, setLoading] = useState(false);
@@ -531,19 +533,19 @@ export function ChinaProductImportDialog({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Coût de revient</span>
-                    <span>{costBreakdown?.total_cost_local?.toLocaleString()} GNF</span>
+                    <span>{fc(costBreakdown?.total_cost_local || 0)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Marge ({margin}%)</span>
                     <span className="text-[#ff4000]">
-                      +{(costBreakdown?.total_cost_local! * (margin / 100))?.toLocaleString()} GNF
+                      +{fc((costBreakdown?.total_cost_local || 0) * (margin / 100))}
                     </span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Prix de vente</span>
                     <span className="text-primary">
-                      {(costBreakdown?.total_cost_local! * (1 + margin / 100))?.toLocaleString()} GNF
+                      {fc((costBreakdown?.total_cost_local || 0) * (1 + margin / 100))}
                     </span>
                   </div>
                 </div>
@@ -628,7 +630,7 @@ export function ChinaProductImportDialog({
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-primary">
-                  {finalPrice?.toLocaleString()} GNF
+                  {fc(finalPrice || 0)}
                 </p>
               </div>
             </div>
@@ -648,7 +650,7 @@ export function ChinaProductImportDialog({
           <div className="flex justify-between">
             <span>Profit estimé par unité</span>
             <span className="text-[#ff4000] font-medium">
-              {(finalPrice - costBreakdown.total_cost_local)?.toLocaleString()} GNF
+              {fc(finalPrice - costBreakdown.total_cost_local)}
             </span>
           </div>
         </div>

@@ -7,9 +7,9 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   audioTranslationService,
   AudioTranslationResult,
-  _AudioMessage
+  AudioMessage
 } from '@/services/audioTranslationService';
-import { SupportedLanguage, _SUPPORTED_LANGUAGES } from '@/services/translationService';
+import { SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UseAudioTranslationOptions {
@@ -64,7 +64,7 @@ interface UseAudioTranslationReturn {
 export function useAudioTranslation(
   options: UseAudioTranslationOptions = {}
 ): UseAudioTranslationReturn {
-  const { _autoTranslate = true, context = 'general' } = options;
+  const { autoTranslate = true, context = 'general' } = options;
 
   const [isTranslating, setIsTranslating] = useState(false);
   const [userLanguage, setUserLanguage] = useState<SupportedLanguage>('fr');

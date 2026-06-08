@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 
 export interface TrendingProduct {
   product_id: string;
@@ -14,6 +15,8 @@ export interface TrendingProduct {
     price: number;
     images?: string[];
     rating?: number;
+    /** Devise du prix = devise du vendeur (shop_currency en priorité). */
+    sellerCurrency?: string;
   };
 }
 
@@ -40,13 +43,16 @@ export const useTrendingProducts = (days: number = 7, limit: number = 20) => {
 
         const { data: productsData } = await supabase
           .from('products')
-          .select('id, name, price, images, rating')
+          .select('id, name, price, images, rating, vendors(country)')
           .in('id', productIds);
 
-        const enriched = data.map((item: any) => ({
-          ...item,
-          product: productsData?.find(p => p.id === item.product_id)
-        }));
+        const enriched = data.map((item: any) => {
+          const p: any = productsData?.find((pp: any) => pp.id === item.product_id);
+          // Devise du prix = devise du PAYS du vendeur (Guinée→GNF, Sénégal→XOF).
+          const country = p ? (Array.isArray(p.vendors) ? p.vendors[0]?.country : p.vendors?.country) : '';
+          const sellerCurrency = getCurrencyForCountry(country || '');
+          return { ...item, product: p ? { ...p, sellerCurrency } : undefined };
+        });
 
         setProducts(enriched);
       }

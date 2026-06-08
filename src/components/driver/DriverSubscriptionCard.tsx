@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, CreditCard, Wallet, Smartphone, CheckCircle2, XCircle } from 'lucide-react';
@@ -81,7 +82,7 @@ export function DriverSubscriptionCard() {
                       <p className="font-medium">Mensuel</p>
                       <p className="text-sm text-muted-foreground">30 jours</p>
                     </div>
-                    <p className="text-lg font-bold text-primary">{monthlyPrice.toLocaleString('fr-FR')} GNF</p>
+                    <p className="text-lg font-bold text-primary"><Money amount={monthlyPrice} from="GNF" /></p>
                   </div>
                 </Label>
               </div>
@@ -98,8 +99,8 @@ export function DriverSubscriptionCard() {
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground line-through">{(monthlyPrice * 12).toLocaleString('fr-FR')} GNF</p>
-                      <p className="text-lg font-bold text-primary">{yearlyPrice.toLocaleString('fr-FR')} GNF</p>
+                      <p className="text-xs text-muted-foreground line-through"><Money amount={monthlyPrice * 12} from="GNF" /></p>
+                      <p className="text-lg font-bold text-primary"><Money amount={yearlyPrice} from="GNF" /></p>
                     </div>
                   </div>
                 </Label>
@@ -114,7 +115,7 @@ export function DriverSubscriptionCard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Abonnement actuel</p>
-                <p className="text-3xl font-bold text-primary">{priceFormatted} GNF</p>
+                <p className="text-3xl font-bold text-primary"><Money amount={monthlyPrice} from="GNF" /></p>
               </div>
               <Calendar className="h-12 w-12 text-primary opacity-20" />
             </div>

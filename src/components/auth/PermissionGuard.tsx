@@ -20,7 +20,7 @@ export function PermissionGuard({
   children,
   fallback
 }: PermissionGuardProps) {
-  const { _hasPermission, hasAllPermissions, hasAnyPermission, loading } = useAgentPermissions();
+  const { hasPermission, hasAllPermissions, hasAnyPermission, loading } = useAgentPermissions();
 
   if (loading) {
     return <div className="p-4 text-gray-500">Vérification des permissions...</div>;

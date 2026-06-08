@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ interface StockMovement {
 }
 
 export default function WarehouseStockManagement() {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -533,7 +535,7 @@ export default function WarehouseStockManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Valeur Stock</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold">{fc(totalValue)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -611,7 +613,7 @@ export default function WarehouseStockManagement() {
                           <span>Réservé: {stock.reserved_quantity}</span>
                           <span>Min: {stock.minimum_stock}</span>
                           {stock.product?.price && (
-                            <span>Valeur: {(stock.quantity * stock.product.price).toLocaleString()} GNF</span>
+                            <span>Valeur: {fc(stock.quantity * stock.product.price)}</span>
                           )}
                         </div>
                       </div>

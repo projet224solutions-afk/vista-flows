@@ -21,7 +21,7 @@ import {
   Search,
   CheckCircle,
   XCircle,
-  _Shield,
+  Shield,
   ShieldAlert,
   Bike,
   User,
@@ -32,8 +32,8 @@ import {
   ArrowLeft,
   Loader2,
   Lock,
-  _Camera,
-  _AlertCircle
+  Camera,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 

@@ -11,7 +11,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { formatCurrency } from '@/lib/utils';
-import { cancelOrder as cancelOrderRequest, listMyOrders } from '@/services/orderBackendService';
+import { cancelOrder as cancelOrderRequest, confirmCashOnDeliveryOrder, confirmEscrowDelivery, listMyOrders, requestOrderRefund } from '@/services/orderBackendService';
+import { Money } from '@/components/Money';
 import { toast } from 'sonner';
 import {
   Package, CheckCircle, Clock, Truck, XCircle,
@@ -315,25 +316,15 @@ export default function MyPurchasesOrdersList({
       const requiresEscrowRelease = orderToConfirm.payment_method !== 'cash';
 
       if (requiresEscrowRelease) {
-        // Paiements marketplace sécurisés: la function retrouve l'escrow via order_id.
-        const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-          body: { order_id: orderToConfirm.id }
-        });
-
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
+        // Paiement WALLET/escrow : libération atomique vers le vendeur via le backend Node.js
+        // (remplace l'Edge Function 'confirm-delivery', qui appelait le RPC avec un mauvais
+        // paramètre p_order_id). Le backend retrouve l'escrow et crédite le vendeur (net + commission).
+        const response = await confirmEscrowDelivery(orderToConfirm.id);
+        if (!response.success) throw new Error(response.error || 'Erreur lors de la confirmation');
       } else {
-        // Paiement à la livraison: finaliser directement la commande.
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            status: 'completed',
-            payment_status: (isCashOnDelivery(orderToConfirm) ? 'paid' : orderToConfirm.payment_status) as "failed" | "paid" | "pending" | "refunded",
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', orderToConfirm.id);
-
-        if (error) throw error;
+        // Paiement à la livraison (COD) : confirmation via le backend (marque livré, clôt l'escrow COD).
+        const response = await confirmCashOnDeliveryOrder(orderToConfirm.id);
+        if (!response.success) throw new Error(response.error || 'Erreur lors de la confirmation');
       }
 
       toast.success('Réception confirmée !', {
@@ -416,16 +407,12 @@ export default function MyPurchasesOrdersList({
     setShowRefundDialog(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke('request-refund', {
-        body: {
-          order_id: selectedOrder.id,
-          reason: refundReason,
-          requested_amount: refundAmount ? parseFloat(refundAmount) : undefined
-        }
+      const response = await requestOrderRefund(selectedOrder.id, {
+        reason: refundReason,
+        requested_amount: refundAmount ? parseFloat(refundAmount) : undefined,
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erreur lors de la demande');
+      if (!response.success) throw new Error(response.error || 'Erreur lors de la demande');
 
       toast.success('Demande de remboursement envoyée');
       await loadOrders();
@@ -587,7 +574,7 @@ export default function MyPurchasesOrdersList({
                             <p className="text-sm text-muted-foreground">{order.vendors?.business_name || 'Vendeur'}</p>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold">{order.total_amount.toLocaleString()} GNF</div>
+                            <div className="font-bold"><Money amount={order.total_amount} from={getVendorReceivableCurrency(order, escrow)} /></div>
                             <div className="text-xs text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString('fr-FR')}
                             </div>
@@ -646,7 +633,7 @@ export default function MyPurchasesOrdersList({
                             <div>
                               <p className="text-sm font-medium text-[#ff4000]">Paiement protégé</p>
                               <p className="text-xs text-[#ff4000]">
-                                {escrow.amount.toLocaleString()} GNF sécurisés jusqu'à confirmation
+                                <Money amount={escrow.amount} from={escrow.currency || 'GNF'} /> sécurisés jusqu'à confirmation
                               </p>
                             </div>
                           </div>

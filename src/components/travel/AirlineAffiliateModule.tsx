@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plane, Plus, ExternalLink,
-  Eye, Star, _ShoppingCart
+  Eye, Star, ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

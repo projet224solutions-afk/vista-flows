@@ -47,6 +47,13 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const { toast } = useToast();
   const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
   const fmtAmt = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${vendorCurrency}` : '—';
+  // Axe Y compact converti dans la devise du vendeur (taux BCRG)
+  const compactAxis = (v: number) => {
+    const c = convert(v);
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${vendorCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${vendorCurrency}`;
+    return `${Math.round(c)} ${vendorCurrency}`;
+  };
   const [activeTab, setActiveTab] = useState('profit');
   const [_selectedPeriod, _setSelectedPeriod] = useState('30d');
 
@@ -335,7 +342,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       fontSize={12}
                     />
                     <YAxis
-                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                      tickFormatter={compactAxis}
+                      width={72}
                     />
                     <Tooltip
                       formatter={(value: number) => [fmtAmt(value), 'Montant']}
@@ -400,7 +408,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 <AreaChart data={chartData.trendData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
+                  <YAxis tickFormatter={compactAxis} width={72} />
                   <Tooltip
                     formatter={(value: number) => [fmtAmt(value), 'Montant']}
                     labelStyle={{ color: '#374151' }}

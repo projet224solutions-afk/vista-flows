@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import {
-  _PaymentElement,
+  PaymentElement,
   useStripe,
   useElements,
   CardNumberElement,

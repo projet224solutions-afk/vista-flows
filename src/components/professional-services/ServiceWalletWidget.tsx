@@ -5,7 +5,7 @@
  */
 
 import { lazy, Suspense } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet } from 'lucide-react';
 
 const UniversalWalletTransactions = lazy(() =>

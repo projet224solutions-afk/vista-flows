@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,6 +49,7 @@ interface Invoice {
 }
 
 export default function QuotesInvoicesPDG() {
+  const fc = useFormatCurrency();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
@@ -223,7 +225,7 @@ export default function QuotesInvoicesPDG() {
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-primary">
-                            {quote.total.toLocaleString()} GNF
+                            {fc(quote.total)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Valide jusqu'au {new Date(quote.valid_until).toLocaleDateString('fr-FR')}
@@ -303,7 +305,7 @@ export default function QuotesInvoicesPDG() {
                         </div>
                         <div className="text-right">
                           <p className="text-2xl font-bold text-primary">
-                            {invoice.total.toLocaleString()} GNF
+                            {fc(invoice.total)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}

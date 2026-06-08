@@ -4,9 +4,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, DollarSign, Navigation, Users, _Phone, MessageSquare } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Navigation, Users, Phone, MessageSquare } from 'lucide-react';
 import GeolocationService from '../../services/geolocation/GeolocationService';
 import TransportService, { TransportRequest } from '../../services/transport/TransportService';
+import { Money } from '@/components/Money';
 
 interface TransportRequestFormProps {
   onRequestCreated?: (request: TransportRequest) => void;
@@ -218,8 +219,8 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
               <DollarSign className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm font-medium text-gray-700">Prix estimé</p>
-                <p className="text-lg font-bold text-[#ff4000]">{estimatedPrice} GNF</p>
-                <p className="text-xs text-gray-500">+ 1% de frais = {Math.round(estimatedPrice * 1.01)} GNF</p>
+                <p className="text-lg font-bold text-[#ff4000]"><Money amount={estimatedPrice} from="GNF" /></p>
+                <p className="text-xs text-gray-500">+ 1% de frais = <Money amount={Math.round(estimatedPrice * 1.01)} from="GNF" /></p>
               </div>
             </div>
             <div className="flex items-center gap-2">

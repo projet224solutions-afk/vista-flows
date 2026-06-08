@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -151,6 +152,13 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
   };
 
   const formatAmount = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  const compactAxis = (v: number) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
 
   const exportData = async () => {
     try {
@@ -321,7 +329,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
                       <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <YAxis className="text-xs" tickFormatter={compactAxis} width={72} />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Line
                         type="monotone"
@@ -347,7 +355,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
                       <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
+                      <YAxis className="text-xs" tickFormatter={compactAxis} width={72} />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
                     </BarChart>
@@ -399,7 +407,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                             Commission {comm.transaction_type}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Taux: {comm.commission_rate}% sur {formatAmount(comm.transaction_amount)} GNF
+                            Taux: {comm.commission_rate}% sur {formatAmount(comm.transaction_amount)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(comm.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
@@ -407,7 +415,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-[#ff4000]">
-                            +{formatAmount(comm.commission_amount)} GNF
+                            +{formatAmount(comm.commission_amount)}
                           </p>
                           {getStatusBadge(comm.status)}
                         </div>
@@ -456,7 +464,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-foreground">{formatAmount(trans.amount || 0)} GNF</p>
+                            <p className="font-bold text-foreground">{formatAmount(trans.amount || 0)}</p>
                             <Badge variant={trans.status === 'validated' || trans.status === 'paid' ? 'default' : 'secondary'}>
                               {trans.status}
                             </Badge>

@@ -7,11 +7,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import {
     Shield,
     MapPin,
-    _Clock,
+    Clock,
     DollarSign,
     CreditCard,
     Smartphone,
@@ -25,6 +26,7 @@ import EscrowService, { EscrowInvoice, EscrowTransaction } from '../../services/
 type PaymentPageProps = Record<string, never>
 
 const PaymentPage: React.FC<PaymentPageProps> = () => {
+    const fc = useFormatCurrency();
     const { invoiceId } = useParams<{ invoiceId: string }>();
     const navigate = useNavigate();
 
@@ -134,7 +136,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                         <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Paiement sécurisé !</h2>
                         <p className="text-gray-600 mb-4">
-                            Votre paiement de <strong>{transaction.totalAmount} GNF</strong> est sécurisé par 224SECURE.
+                            Votre paiement de <strong>{fc(transaction.totalAmount)}</strong> est sécurisé par 224SECURE.
                         </p>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                             <p className="text-sm text-blue-800">
@@ -205,15 +207,15 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                         <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span>Montant du trajet:</span>
-                                <span className="font-medium">{invoice.amount} GNF</span>
+                                <span className="font-medium">{fc(invoice.amount)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span>Frais 224SECURE (1%):</span>
-                                <span className="font-medium">{feeAmount} GNF</span>
+                                <span className="font-medium">{fc(feeAmount)}</span>
                             </div>
                             <div className="border-t pt-2 flex justify-between font-semibold">
                                 <span>Total à payer:</span>
-                                <span className="text-[#ff4000]">{totalAmount} GNF</span>
+                                <span className="text-[#ff4000]">{fc(totalAmount)}</span>
                             </div>
                         </div>
 
@@ -288,7 +290,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                             ) : (
                                 <>
                                     <DollarSign className="w-4 h-4 mr-2" />
-                                    Payer {totalAmount} GNF
+                                    Payer {fc(totalAmount)}
                                 </>
                             )}
                         </Button>

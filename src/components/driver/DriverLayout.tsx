@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Money } from '@/components/Money';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Menu,
@@ -22,13 +23,13 @@ import {
   LogOut,
   Bell,
   Navigation as NavigationIcon,
-  _Bike
+  Bike
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDriver } from '@/hooks/useDriver';
 import { useResponsive } from '@/hooks/useResponsive';
 import { toast } from 'sonner';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { DriverSubscriptionButton } from '@/components/driver/DriverSubscriptionButton';
 
@@ -39,7 +40,7 @@ interface DriverLayoutProps {
 
 export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayoutProps) {
   const navigate = useNavigate();
-  const { _user, profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { driver, stats } = useDriver();
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -92,7 +93,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
           <div className="hidden lg:flex items-center gap-4">
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Gains aujourd'hui</p>
-              <p className="font-bold text-primary">{stats.todayEarnings.toLocaleString()} GNF</p>
+              <p className="font-bold text-primary"><Money amount={stats.todayEarnings} from="GNF" /></p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Livraisons</p>

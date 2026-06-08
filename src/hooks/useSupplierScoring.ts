@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import type {
   SupplierScore,
   SupplierScoreLevel,
-  _ChinaSupplierExtension
+  ChinaSupplierExtension
 } from '@/types/china-dropshipping';
 import { SUPPLIER_SCORE_THRESHOLDS } from '@/types/china-dropshipping';
 

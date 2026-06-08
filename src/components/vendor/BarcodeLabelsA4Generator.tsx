@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,7 @@ function encodeCode128(text: string): string {
 }
 
 export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabelsA4GeneratorProps) {
+  const fc = useFormatCurrency();
   const [open, setOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
@@ -253,7 +255,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           // Informations supplémentaires (prix, SKU, boutique)
           const infoParts: string[] = [];
           if (showPrice) {
-            infoParts.push(`${label.price.toLocaleString('fr-FR')} GNF`);
+            infoParts.push(fc(label.price));
           }
           if (showSku && label.sku) {
             infoParts.push(label.sku);
@@ -308,7 +310,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
         <svg id="bc-${idx}"></svg>
         <div class="info">
           ${[
-            showPrice ? `${label.price.toLocaleString('fr-FR')} GNF` : '',
+            showPrice ? fc(label.price) : '',
             showSku && label.sku ? label.sku : '',
             showBusinessName && businessName ? businessName : ''
           ].filter(Boolean).join(' • ')}
@@ -510,7 +512,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {product.price.toLocaleString('fr-FR')} GNF
+                          {fc(product.price)}
                           {product.sku && <span className="ml-2">• {product.sku}</span>}
                         </p>
                       </div>

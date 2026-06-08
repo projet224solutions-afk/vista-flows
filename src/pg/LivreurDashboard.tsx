@@ -7,7 +7,9 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from "@/hooks/useTranslation";
-import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,7 +23,7 @@ import { useDelivery } from "@/hooks/useDelivery";
 import { useTaxiRides } from "@/hooks/useTaxiRides";
 import { useDriver } from "@/hooks/useDriver";
 import { useResponsive } from "@/hooks/useResponsive";
-import { _ErrorBanner } from "@/components/ui/ErrorBanner";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLivreurErrorBoundary } from "@/hooks/useLivreurErrorBoundary";
 import { useDeliveryActions } from "@/hooks/useDeliveryActions";
 import { useRealtimeDelivery } from "@/hooks/useRealtimeDelivery";
@@ -50,9 +52,10 @@ const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchases
 const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTicketsUniversal').then(m => ({ default: m.SupportTicketsUniversal })));
 
 export default function LivreurDashboard() {
+  const fc = useFormatCurrency();
   const { user, profile } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
-  const { isMobile, _isTablet } = useResponsive();
+  const { isMobile, isTablet } = useResponsive();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('missions');
@@ -69,10 +72,10 @@ export default function LivreurDashboard() {
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
   // Vérification subscription et KYC
-  const { hasAccess, _subscription, loading: _subscriptionLoading, _isExpired } = useDriverSubscription();
+  const { hasAccess, subscription, loading: _subscriptionLoading, isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
-  const { driver, stats, goOnline, goOffline, pause, updateLocation, _uploadProof, loadDriverProfile } = useDriver();
+  const { driver, stats, goOnline, goOffline, pause, updateLocation, uploadProof, loadDriverProfile } = useDriver();
 
   // Hook pour les livraisons
   const {
@@ -83,7 +86,7 @@ export default function LivreurDashboard() {
     loading: deliveryLoading,
     error: _deliveryError,
     findNearbyDeliveries,
-    _loadTracking,
+    loadTracking,
     subscribeToTracking,
     trackPosition: trackDeliveryPosition,
     processPayment: _processDeliveryPayment,
@@ -156,7 +159,7 @@ export default function LivreurDashboard() {
     acceptRide: _acceptRideFn,
     startRide: startRideFn,
     completeRide: completeRideFn,
-    _cancelRide,
+    cancelRide,
     trackPosition: trackRidePosition,
     processPayment: _processRidePayment
   } = useTaxiRides();
@@ -350,8 +353,8 @@ export default function LivreurDashboard() {
       const amount = (result.amount || 0).toLocaleString();
       toast.success(
         result.credited
-          ? `💰 ${amount} GNF crédités sur votre wallet`
-          : `✅ Encaissement espèces enregistré (${amount} GNF)`
+          ? `💰 ${fc(amount)} crédités sur votre wallet`
+          : `✅ Encaissement espèces enregistré (${fc(amount)})`
       );
       window.dispatchEvent(new Event('wallet-updated'));
       setShowPaymentModal(false);
@@ -609,7 +612,7 @@ export default function LivreurDashboard() {
                     <div className="p-5 bg-gradient-to-r from-orange-500/20 to-[#ff4000]/20 rounded-xl border border-orange-500/30">
                       <p className="text-sm text-muted-foreground mb-2 font-medium">💰 Votre rémunération</p>
                       <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-[#ff4000] bg-clip-text text-transparent">
-                        {(currentDelivery.delivery_fee || 0).toLocaleString()} GNF
+                        <Money amount={currentDelivery.delivery_fee || 0} from="GNF" />
                       </p>
                     </div>
 
@@ -734,7 +737,7 @@ export default function LivreurDashboard() {
                     <div className="p-4 bg-[#ff4000]/10 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Prix de la course</p>
                       <p className="text-3xl font-bold text-[#ff4000]">
-                        {(currentRide.price_total || 0).toLocaleString()} GNF
+                        <Money amount={currentRide.price_total || 0} from="GNF" />
                       </p>
                     </div>
 
@@ -849,7 +852,7 @@ export default function LivreurDashboard() {
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-primary">
-                              +{((delivery as any).driver_earning || delivery.delivery_fee || 0).toLocaleString()} GNF
+                              +<Money amount={(delivery as any).driver_earning || delivery.delivery_fee || 0} from="GNF" />
                             </p>
                             {(delivery as any).distance_km && (
                               <p className="text-xs text-muted-foreground">
@@ -901,7 +904,7 @@ export default function LivreurDashboard() {
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-[#ff4000]">
-                              +{(ride.price_total || 0).toLocaleString()} GNF
+                              +<Money amount={ride.price_total || 0} from="GNF" />
                             </p>
                           </div>
                         </div>
@@ -1006,10 +1009,7 @@ export default function LivreurDashboard() {
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
                 <p className="text-3xl font-bold text-primary">
-                  {currentDelivery
-                    ? (currentDelivery.delivery_fee || 0).toLocaleString()
-                    : (currentRide?.price_total || 0).toLocaleString()
-                  } GNF
+                  <Money amount={currentDelivery ? (currentDelivery.delivery_fee || 0) : (currentRide?.price_total || 0)} from="GNF" />
                 </p>
               </div>
               <div className="space-y-2">

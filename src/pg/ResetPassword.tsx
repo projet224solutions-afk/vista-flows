@@ -22,7 +22,7 @@ type PageState = "loading" | "form" | "expired" | "success";
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { _t } = useTranslation();
+  const { t } = useTranslation();
 
   const [state, setState] = useState<PageState>("loading");
   const [newPassword, setNewPassword] = useState("");

@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,7 @@ export default function PaymentMethodStep({
     onBack,
     isLoading = false
 }: PaymentMethodStepProps) {
+    const fc = useFormatCurrency();
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
     const [phoneNumber, setPhoneNumber] = useState('');
 
@@ -122,7 +124,7 @@ export default function PaymentMethodStep({
                 <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center">
                     <p className="text-sm text-muted-foreground">Montant à payer</p>
                     <p className="text-3xl font-bold text-primary">
-                        {amount.toLocaleString()} GNF
+                        {fc(amount)}
                     </p>
                 </div>
             </CardHeader>
@@ -161,7 +163,7 @@ export default function PaymentMethodStep({
                                             {isWallet && (
                                                 <div className="mt-1 flex items-center gap-2">
                                                     <span className="text-sm">
-                                                        Solde: {walletBalance.toLocaleString()} GNF
+                                                        Solde: {fc(walletBalance)}
                                                     </span>
                                                     {isWalletSufficient ? (
                                                         <Badge variant="default" className="bg-[#ff4000] text-xs">

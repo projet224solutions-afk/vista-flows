@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { Money } from '@/components/Money';
 import {
   Navigation,
   Phone,
@@ -360,7 +361,7 @@ export function ActiveRideNavigationPanel({
             </div>
             <div className="text-right">
               <p className="text-gray-400 text-xs mb-1">Prix course</p>
-              <p className="text-white font-semibold">{activeRide.estimatedPrice.toLocaleString()} GNF</p>
+              <p className="text-white font-semibold"><Money amount={activeRide.estimatedPrice} from="GNF" /></p>
             </div>
           </div>
         </div>

@@ -81,13 +81,16 @@ export default function TransferFeeSettings() {
     try {
       setSaving(true);
 
+      // UPSERT (pas update) : crée la ligne si elle n'existe pas encore — sinon la sauvegarde
+      // échouait silencieusement (0 ligne affectée, aucune erreur) et le réglage n'était jamais
+      // pris en compte par le transfert international.
       const { error } = await supabase
         .from('system_settings')
-        .update({
+        .upsert({
+          setting_key: 'transfer_fee_percent',
           setting_value: fee.toString(),
           updated_at: new Date().toISOString()
-        })
-        .eq('setting_key', 'transfer_fee_percent');
+        }, { onConflict: 'setting_key' });
 
       if (error) throw error;
 

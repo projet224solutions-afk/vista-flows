@@ -5,9 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Navigation, _Clock, DollarSign } from 'lucide-react';
+import { MapPin, Navigation, Clock, DollarSign } from 'lucide-react';
 import { useTaxiMoto } from '@/hooks/useTaxiMoto';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 import TaxiMotoPaymentModal from './TaxiMotoPaymentModal';
@@ -23,7 +24,7 @@ export function TaxiMotoClientInterface() {
     findNearbyDrivers,
     createRide,
     cancelRide,
-    _processPayment
+    processPayment
   } = useTaxiMoto();
 
   const [pickupAddress, setPickupAddress] = useState('');
@@ -162,7 +163,7 @@ export function TaxiMotoClientInterface() {
             </div>
             <div className="flex justify-between">
               <span className="font-medium">Montant:</span>
-              <span className="text-lg font-bold">{(currentRide as any).estimated_price || (currentRide as any).price_total || 0} GNF</span>
+              <span className="text-lg font-bold"><Money amount={(currentRide as any).estimated_price || (currentRide as any).price_total || 0} from="GNF" /></span>
             </div>
 
             <div className="flex gap-2 mt-4">
@@ -223,7 +224,7 @@ export function TaxiMotoClientInterface() {
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Total:</span>
-                    <span>{estimatedFare.total} GNF</span>
+                    <span><Money amount={estimatedFare.total} from="GNF" /></span>
                   </div>
                 </div>
               </Card>

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Delivery {
   id: string;
@@ -61,6 +62,7 @@ interface TrackingPoint {
 }
 
 export function useDelivery() {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const [currentDelivery, setCurrentDelivery] = useState<Delivery | null>(null);
   const [deliveryHistory, setDeliveryHistory] = useState<Delivery[]>([]);
@@ -434,7 +436,7 @@ export function useDelivery() {
       }
 
       // Marquer le paiement comme traité
-      toast.success(`Paiement de ${delivery.driver_earning} GNF reçu !`);
+      toast.success(`Paiement de ${fc(delivery.driver_earning)} reçu !`);
 
       return {
         success: true,

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -659,7 +660,7 @@ export default function TaxiMotoBooking({
 
                                         <div className="text-right">
                                             <div className="text-lg font-bold text-[#ff4000]">
-                                                {(option.price?.totalPrice || 0).toLocaleString()} GNF
+                                                <Money amount={option.price?.totalPrice || 0} from="GNF" />
                                             </div>
                                             {option.price?.appliedMultipliers?.length > 0 && (
                                                 <Badge variant="secondary" className="text-xs">
@@ -687,15 +688,15 @@ export default function TaxiMotoBooking({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
                             <span>Prix de base</span>
-                            <span>{(priceEstimate?.basePrice || 0).toLocaleString()} GNF</span>
+                            <span><Money amount={priceEstimate?.basePrice || 0} from="GNF" /></span>
                         </div>
                         <div className="flex justify-between">
                             <span>Distance ({routeInfo?.distance}km)</span>
-                            <span>{(priceEstimate?.distancePrice || 0).toLocaleString()} GNF</span>
+                            <span><Money amount={priceEstimate?.distancePrice || 0} from="GNF" /></span>
                         </div>
                         <div className="flex justify-between">
                             <span>Temps ({routeInfo?.duration}min)</span>
-                            <span>{(priceEstimate?.timePrice || 0).toLocaleString()} GNF</span>
+                            <span><Money amount={priceEstimate?.timePrice || 0} from="GNF" /></span>
                         </div>
 
                         {priceEstimate?.appliedMultipliers?.length > 0 && (
@@ -711,21 +712,21 @@ export default function TaxiMotoBooking({
                                 ))}
                                 <div className="flex justify-between text-sm">
                                     <span>Majoration</span>
-                                    <span>+{(priceEstimate?.surgeAmount || 0).toLocaleString()} GNF</span>
+                                    <span>+<Money amount={priceEstimate?.surgeAmount || 0} from="GNF" /></span>
                                 </div>
                             </>
                         )}
 
                         <div className="flex justify-between text-sm">
                             <span>TVA (18%)</span>
-                            <span>{(priceEstimate?.taxes || 0).toLocaleString()} GNF</span>
+                            <span><Money amount={priceEstimate?.taxes || 0} from="GNF" /></span>
                         </div>
 
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span className="text-[#ff4000]">
-                                {(priceEstimate?.totalPrice || 0).toLocaleString()} GNF
+                                <Money amount={priceEstimate?.totalPrice || 0} from="GNF" />
                             </span>
                         </div>
                     </CardContent>

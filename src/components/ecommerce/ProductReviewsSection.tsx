@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, ThumbsUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { _toast } from 'sonner';
+import { toast } from 'sonner';
 
 interface Review {
   id: string;

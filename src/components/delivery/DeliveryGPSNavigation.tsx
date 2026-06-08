@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Navigation, Phone, ExternalLink, Clock, ArrowRight, Package } from "lucide-react";
@@ -41,7 +42,7 @@ interface DeliveryGPSNavigationProps {
   onContactCustomer?: (phone: string) => void;
 }
 
-export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onContactCustomer }: DeliveryGPSNavigationProps) {
+export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onContactCustomer }: DeliveryGPSNavigationProps) {
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
@@ -358,7 +359,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, _onCont
             <div>
               <p className="text-xs text-muted-foreground mb-1">💰 Rémunération</p>
               <p className="text-lg font-bold text-[#ff4000]">
-                {(activeDelivery.delivery_fee || activeDelivery.driver_earning || 0).toLocaleString()} GNF
+                <Money amount={activeDelivery.delivery_fee || activeDelivery.driver_earning || 0} from="GNF" />
               </p>
             </div>
             <div>

@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Wallet, ArrowUpRight, ArrowDownLeft, Send, RefreshCw,
-  Search, _Filter, Clock, CheckCircle, XCircle, _AlertTriangle,
-  CreditCard, _Building2, _User
+  Search, Filter, Clock, CheckCircle, XCircle, AlertTriangle,
+  CreditCard, Building2, User
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -42,6 +43,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCurrency, setWalletCurrency] = useState('GNF');
   const [_walletId, setWalletId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -89,6 +91,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
       if (wallet) {
         setWalletBalance(wallet.balance || 0);
+        if (wallet.currency) setWalletCurrency(wallet.currency);
         setWalletId(String(wallet.id));
       }
 
@@ -143,7 +146,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
       setProcessing(true);
 
       // Appel à une fonction RPC pour le transfert sécurisé
-      const { _data, error } = await supabase.rpc('agent_wallet_transfer' as any, {
+      const { data, error } = await supabase.rpc('agent_wallet_transfer' as any, {
         p_agent_id: agentId,
         p_recipient_id: transferData.recipientId,
         p_amount: amount,
@@ -220,7 +223,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm mb-1">Solde Disponible</p>
-              <p className="text-3xl font-bold text-white">{formatAmount(walletBalance)} GNF</p>
+              <p className="text-3xl font-bold text-white">{formatCurrency(walletBalance, walletCurrency)}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -263,7 +266,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                         onChange={(e) => setTransferData({...transferData, amount: e.target.value})}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Solde disponible: {formatAmount(walletBalance)} GNF
+                        Solde disponible: {formatCurrency(walletBalance, walletCurrency)}
                       </p>
                     </div>
                     <div>
@@ -375,11 +378,11 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                           ? 'text-[#ff4000]' : 'text-[#ff4000]'
                       }`}>
                         {tx.transaction_type === 'deposit' || tx.transaction_type === 'credit' ? '+' : '-'}
-                        {formatAmount(tx.amount)} {tx.currency || 'GNF'}
+                        {formatCurrency(tx.amount, tx.currency || walletCurrency)}
                       </p>
                       {tx.fee > 0 && (
                         <p className="text-xs text-muted-foreground">
-                          Frais: {formatAmount(tx.fee)} GNF
+                          Frais: {formatCurrency(tx.fee, tx.currency || walletCurrency)}
                         </p>
                       )}
                       {getStatusBadge(tx.status)}

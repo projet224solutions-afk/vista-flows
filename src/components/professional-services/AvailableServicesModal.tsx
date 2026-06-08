@@ -52,7 +52,7 @@ interface AvailableServicesModalProps {
 export function AvailableServicesModal({ open, onOpenChange }: AvailableServicesModalProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { _t } = useTranslation();
+  const { t } = useTranslation();
 
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);

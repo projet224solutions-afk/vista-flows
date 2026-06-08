@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {  _AlertCircle, Eye, CheckCircle2, _XCircle, AlertTriangle, _Download, _QrCode, CreditCard } from 'lucide-react';
+import {  AlertCircle, Eye, CheckCircle2, XCircle, AlertTriangle, Download, QrCode, CreditCard } from 'lucide-react';
 import BadgeGenerator from './BadgeGenerator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -153,7 +153,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       setLoadingAction(true);
 
       // CENTRALISÉ: Utilise le RPC declare_vehicle_stolen
-      const { _data, error } = await supabase.rpc('declare_vehicle_stolen', {
+      const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
         p_vehicle_id: motoId,
         p_bureau_id: bureauId,
         p_declared_by: null, // Sera rempli côté serveur si possible

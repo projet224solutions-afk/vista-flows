@@ -6,7 +6,7 @@
 
 import { memo, Suspense, useCallback, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { Money } from '@/components/Money';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,12 +57,8 @@ interface VendorDashboardHomeProps {
  */
 const OrderCard = memo(function OrderCard({
   order,
-  currency,
-  convert,
 }: {
   order: RecentOrder;
-  currency: string;
-  convert: (amount: number) => number;
 }) {
   const { t } = useTranslation();
 
@@ -86,7 +82,7 @@ const OrderCard = memo(function OrderCard({
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
         <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-          {Math.round(convert(order.total_amount)).toLocaleString('fr-FR')} {currency}
+          <Money amount={order.total_amount} from={order.currency} />
         </span>
         <Badge variant="secondary" className="text-[10px] sm:text-xs">
           {order.status}
@@ -103,14 +99,10 @@ const RecentOrdersSection = memo(function RecentOrdersSection({
   orders,
   showAll,
   onToggleShowAll,
-  currency,
-  convert,
 }: {
   orders: RecentOrder[];
   showAll: boolean;
   onToggleShowAll: () => void;
-  currency: string;
-  convert: (amount: number) => number;
 }) {
   const { t } = useTranslation();
   const displayedOrders = showAll ? orders : orders.slice(0, 2);
@@ -126,7 +118,7 @@ const RecentOrdersSection = memo(function RecentOrdersSection({
       <CardContent className="pt-0">
         <div className="space-y-3 sm:space-y-4">
           {displayedOrders.map((order) => (
-            <OrderCard key={order.order_number} order={order} currency={currency} convert={convert} />
+            <OrderCard key={order.order_number} order={order} />
           ))}
 
           {orders.length === 0 && (
@@ -262,7 +254,6 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
   canAccessPOS,
 }: VendorDashboardHomeProps) {
   const { t } = useTranslation();
-  const { currency: walletCurrency, convert } = useVendorCurrency();
 
   return (
     <Suspense fallback={<SectionLoader text={t('vendor.loadingDashboard')} />}>
@@ -292,8 +283,6 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
               orders={recentOrders}
               showAll={showAllOrders}
               onToggleShowAll={onToggleShowAllOrders}
-              currency={walletCurrency}
-              convert={convert}
             />
           </div>
         </div>

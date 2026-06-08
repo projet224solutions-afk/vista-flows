@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +56,7 @@ export function BarcodeScannerModal({
   onAddToCart,
   onAddToCartByCarton
 }: BarcodeScannerModalProps) {
+  const fc = useFormatCurrency();
   const [scanMode, setScanMode] = useState<ScanMode>('select');
   const [barcodeInput, setBarcodeInput] = useState('');
   const [foundProduct, setFoundProduct] = useState<Product | null>(null);
@@ -67,6 +70,10 @@ export function BarcodeScannerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const externalInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const zxingControlsRef = useRef<{ stop: () => void } | null>(null);
+  // null = pas encore testé, true = détection auto active (BarcodeDetector/ZXing), false = non supporté
+  const [autoScanSupported, setAutoScanSupported] = useState<boolean | null>(null);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -86,14 +93,27 @@ export function BarcodeScannerModal({
     setSaleType('unit');
     setIsProcessing(false);
     setCameraToastShown(false);
+    setAutoScanSupported(null);
   };
 
+  const stopDetectLoop = useCallback(() => {
+    if (detectLoopRef.current) {
+      clearInterval(detectLoopRef.current);
+      detectLoopRef.current = null;
+    }
+    if (zxingControlsRef.current) {
+      try { zxingControlsRef.current.stop(); } catch { /* ignore */ }
+      zxingControlsRef.current = null;
+    }
+  }, []);
+
   const stopCamera = useCallback(() => {
+    stopDetectLoop();
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
     }
-  }, [cameraStream]);
+  }, [cameraStream, stopDetectLoop]);
 
   // Handle external scanner input
   const handleExternalScan = useCallback((barcode: string) => {
@@ -169,8 +189,72 @@ export function BarcodeScannerModal({
     }
   };
 
+  // Démarre la détection AUTOMATIQUE du code-barres via l'API native BarcodeDetector
+  // (Android Chrome/Edge, Chrome/Edge desktop). Si non supporté → saisie manuelle (fallback).
+  // Fallback ZXing (iOS Safari, Firefox… = navigateurs sans BarcodeDetector) : décode en continu
+  // depuis l'élément vidéo déjà alimenté par getUserMedia.
+  const startZxingDetection = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) { setAutoScanSupported(false); return; }
+    try {
+      const reader = new BrowserMultiFormatReader();
+      const controls = await reader.decodeFromVideoElement(video, (result, _err, ctrl) => {
+        const code = result?.getText?.()?.trim();
+        if (code) {
+          try { ctrl.stop(); } catch { /* ignore */ }
+          zxingControlsRef.current = null;
+          handleExternalScan(code);
+        }
+      });
+      zxingControlsRef.current = controls as { stop: () => void };
+      setAutoScanSupported(true);
+    } catch (e) {
+      console.error('ZXing init error:', e);
+      setAutoScanSupported(false);
+    }
+  }, [handleExternalScan]);
+
+  const startBarcodeDetection = useCallback(() => {
+    stopDetectLoop();
+    const BD = (window as any).BarcodeDetector;
+    if (!BD) {
+      // Pas d'API native → fallback ZXing (universel, iOS Safari inclus).
+      void startZxingDetection();
+      return;
+    }
+    let detector: any;
+    try {
+      detector = new BD({
+        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar', 'qr_code'],
+      });
+    } catch {
+      // Certains navigateurs exigent une liste de formats restreinte → tenter sans formats.
+      try { detector = new BD(); } catch { setAutoScanSupported(false); return; }
+    }
+    setAutoScanSupported(true);
+    stopDetectLoop();
+    let inFlight = false;
+    detectLoopRef.current = setInterval(async () => {
+      const video = videoRef.current;
+      if (inFlight || !video || video.readyState < 2) return;
+      inFlight = true;
+      try {
+        const codes = await detector.detect(video);
+        const raw = codes && codes.length > 0 ? String(codes[0]?.rawValue || '').trim() : '';
+        if (raw) {
+          stopDetectLoop();
+          handleExternalScan(raw); // réutilise la recherche produit + vérification
+        }
+      } catch {
+        // erreur ponctuelle de décodage sur une frame → ignorée
+      } finally {
+        inFlight = false;
+      }
+    }, 300);
+  }, [handleExternalScan, stopDetectLoop, startZxingDetection]);
+
   // Start camera for barcode scanning
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -184,8 +268,11 @@ export function BarcodeScannerModal({
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play().catch(() => {});
       }
+
+      // Démarrer la détection auto du code-barres.
+      startBarcodeDetection();
 
       // Éviter les toasts dupliqués
       if (!cameraToastShown) {
@@ -200,21 +287,17 @@ export function BarcodeScannerModal({
       toast.error('Impossible d\'accéder à la caméra');
       setScanMode('select');
     }
-  };
+  }, [cameraToastShown, startBarcodeDetection]);
 
-  // Handle keyboard input for external scanner
-  useEffect(() => {
-    if (scanMode !== 'external') return;
-
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && barcodeInput) {
-        handleExternalScan(barcodeInput);
-      }
-    };
-
-    document.addEventListener('keypress', handleKeyPress);
-    return () => document.removeEventListener('keypress', handleKeyPress);
-  }, [scanMode, barcodeInput, handleExternalScan]);
+  // Enter (lecteur USB/Bluetooth = clavier) → recherche, en lisant la valeur SYNCHRONE du champ
+  // (e.currentTarget.value) au lieu de l'état React (qui peut être en retard d'un caractère).
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = (e.currentTarget.value || '').trim();
+      if (val) handleExternalScan(val);
+    }
+  }, [handleExternalScan]);
 
   // Focus input when external mode is selected
   useEffect(() => {
@@ -232,6 +315,16 @@ export function BarcodeScannerModal({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanMode, stopCamera]);
+
+  // Reprendre le scan auto caméra après un « produit non trouvé » (verification revenue à idle).
+  useEffect(() => {
+    if (scanMode === 'camera' && cameraStream && !foundProduct
+        && verificationState === 'idle' && autoScanSupported
+        && !detectLoopRef.current && !zxingControlsRef.current) {
+      startBarcodeDetection();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanMode, cameraStream, foundProduct, verificationState, autoScanSupported]);
 
   // Calculate max quantity based on stock and sale type
   const getMaxQuantity = () => {
@@ -331,6 +424,7 @@ export function BarcodeScannerModal({
                   placeholder="Le code-barres apparaîtra ici..."
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
                   className="text-center font-mono text-lg"
                   autoFocus
                 />
@@ -387,15 +481,23 @@ export function BarcodeScannerModal({
             </Card>
 
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                Positionnez le code-barres dans le cadre
-              </p>
+              {autoScanSupported === false ? (
+                <p className="text-sm text-[#ff4000] mb-3">
+                  ⚠️ Le scan automatique n'est pas supporté par ce navigateur (essayez Chrome sur Android,
+                  ou un lecteur externe). Saisissez le code ci-dessous.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-3">
+                  📷 Scan automatique actif — positionnez le code-barres dans le cadre
+                </p>
+              )}
 
               <div className="flex gap-2 justify-center items-center">
                 <Input
                   placeholder="Ou saisissez le code"
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
                   className="flex-1 min-w-0 max-w-[180px] text-center font-mono text-sm"
                 />
                 <Button
@@ -443,7 +545,7 @@ export function BarcodeScannerModal({
                     <p className="text-sm text-muted-foreground">{foundProduct.category}</p>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-xl font-bold text-primary">
-                        {foundProduct.price.toLocaleString()} GNF
+                        {fc(foundProduct.price)}
                       </span>
                       <span className="text-xs text-muted-foreground">/unité</span>
                     </div>
@@ -582,7 +684,7 @@ export function BarcodeScannerModal({
                       <Package className="h-4 w-4 mr-2" />
                       Unité
                       <span className="ml-2 text-xs opacity-75">
-                        {foundProduct.price.toLocaleString()} GNF
+                        {fc(foundProduct.price)}
                       </span>
                     </Button>
 
@@ -597,7 +699,7 @@ export function BarcodeScannerModal({
                       >
                         📦 Carton
                         <span className="ml-2 text-xs opacity-75">
-                          {(foundProduct.price_carton || foundProduct.price * (foundProduct.units_per_carton || 1)).toLocaleString()} GNF
+                          {fc(foundProduct.price_carton || foundProduct.price * (foundProduct.units_per_carton || 1))}
                         </span>
                       </Button>
                     )}
@@ -663,10 +765,10 @@ export function BarcodeScannerModal({
                   <div className="flex justify-between items-center bg-primary/5 p-3 rounded-lg">
                     <span className="font-medium">Total :</span>
                     <span className="text-xl font-bold text-primary">
-                      {(saleType === 'carton'
+                      {fc(saleType === 'carton'
                         ? (foundProduct.price_carton || foundProduct.price * (foundProduct.units_per_carton || 1)) * quantity
                         : foundProduct.price * quantity
-                      ).toLocaleString()} GNF
+                      )}
                     </span>
                   </div>
 

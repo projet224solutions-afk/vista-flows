@@ -5,6 +5,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Position } from '../../services/geolocation/GeolocationService';
@@ -35,6 +36,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
     height = '400px',
     className = ''
 }) => {
+    const fc = useFormatCurrency();
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -229,7 +231,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             <p class="text-sm text-gray-600">${deliveryRequest.deliveryAddress}</p>
             <p class="text-sm text-gray-600">Distance: ${Math.round(deliveryRequest.distance / 1000 * 10) / 10} km</p>
             <p class="text-sm text-gray-600">Temps estimé: ${deliveryRequest.estimatedTime} min</p>
-            <p class="text-sm text-gray-600">Prix: ${deliveryRequest.totalPrice} GNF</p>
+            <p class="text-sm text-gray-600">Prix: ${fc(deliveryRequest.totalPrice)}</p>
           </div>
         `))
             .addTo(map.current);

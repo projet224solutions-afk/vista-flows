@@ -5,8 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { _Badge } from '@/components/ui/badge';
-import { _Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
@@ -15,8 +15,8 @@ import {
 } from 'recharts';
 import { ApiConnection, ApiUsageLog, ApiMonitoringService } from '@/services/apiMonitoring';
 import {
-  _TrendingUp, _TrendingDown, Activity, Zap,
-  Clock, AlertTriangle, CheckCircle2, _DollarSign
+  TrendingUp, TrendingDown, Activity, Zap,
+  Clock, AlertTriangle, CheckCircle2, DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 

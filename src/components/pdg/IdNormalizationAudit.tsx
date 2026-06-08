@@ -262,7 +262,7 @@ export default function IdNormalizationAudit() {
     try {
       // Search in user_ids table - exact match first
       // eslint-disable-next-line prefer-const
-      let { data: userIdData, error: _userIdError } = await supabase
+      let { data: userIdData, error: userIdError } = await supabase
         .from('user_ids')
         .select('*')
         .eq('custom_id', normalizedId)

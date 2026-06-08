@@ -6,17 +6,18 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
   GraduationCap, Users, BookOpen, Calendar, Clock,
-  Plus, _CheckCircle, Star, Award, _TrendingUp,
-  DollarSign, _FileText, _Video, ClipboardList
+  Plus, CheckCircle, Star, Award, TrendingUp,
+  DollarSign, FileText, Video, ClipboardList
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -75,7 +76,7 @@ const STATUS_COLORS: Record<string, { label: string; color: string }> = {
   archive: { label: 'Archivé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function EducationModule({ _serviceId, businessName }: EducationModuleProps) {
+export function EducationModule({ serviceId, businessName }: EducationModuleProps) {
   const [activeTab, setActiveTab] = useState('courses');
   const [showNewCourse, setShowNewCourse] = useState(false);
 
@@ -261,7 +262,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="font-bold text-primary">{course.price.toLocaleString()} GNF</p>
+                        <p className="font-bold text-primary"><Money amount={course.price} from="GNF" /></p>
                         {course.rating > 0 && (
                           <div className="flex items-center gap-1 justify-end">
                             <Star className="w-3 h-3 text-[#ff4000] fill-[#ff4000]" />
@@ -302,7 +303,7 @@ export function EducationModule({ _serviceId, businessName }: EducationModulePro
                           {student.status === 'diplome' ? '🎓 Diplômé' : student.status === 'actif' ? 'Actif' : 'Inactif'}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{student.coursesEnrolled} cours • {student.totalPaid.toLocaleString()} GNF</p>
+                      <p className="text-xs text-muted-foreground">{student.coursesEnrolled} cours • <Money amount={student.totalPaid} from="GNF" /></p>
                       <div className="mt-2">
                         <div className="flex justify-between text-xs mb-0.5">
                           <span>Progression</span>

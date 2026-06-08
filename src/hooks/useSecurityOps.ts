@@ -323,12 +323,13 @@ export function useSecurityOps(autoLoad?: boolean) {
 
   const blockIP = async (ip: string, reason: string) => {
     try {
-      const { error } = await supabase.rpc('block_ip_address', {
-        p_ip_address: ip,
-        p_reason: reason,
-        p_duration_hours: 24,
-        p_auto_block: false
-      });
+      // Upsert direct (ip_address UNIQUE ; le RPC block_ip_address est désynchronisé du schéma réel).
+      const { error } = await supabase.from('blocked_ips').upsert({
+        ip_address: ip,
+        reason,
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }, { onConflict: 'ip_address' });
 
       if (error) throw error;
 

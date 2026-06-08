@@ -6,13 +6,14 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shirt, ShoppingBag, _TrendingUp, DollarSign, Package, Star } from 'lucide-react';
+import { Shirt, ShoppingBag, TrendingUp, DollarSign, Package, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FashionModuleProps {
@@ -37,7 +38,7 @@ const COLORS = [
   { name: 'Gris', hex: '#6B7280' }
 ];
 
-export function FashionModule({ _serviceId, businessName }: FashionModuleProps) {
+export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
   const [activeTab, setActiveTab] = useState('products');
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -107,7 +108,7 @@ export function FashionModule({ _serviceId, businessName }: FashionModuleProps) 
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold"><Money amount={stats.revenue} from="GNF" /></div>
             <p className="text-xs text-muted-foreground">+18% vs mois dernier</p>
           </CardContent>
         </Card>

@@ -46,7 +46,7 @@ export function EnhancedWalletCard({
   const formatBalance = () => {
     if (!wallet) return '0';
     if (hidden) return '••••••';
-    return convert(wallet.balance, 'GNF').formatted;
+    return convert(wallet.balance, wallet.currency).formatted;
   };
 
   const getStatusBadge = () => {
@@ -104,7 +104,7 @@ export function EnhancedWalletCard({
               <CardTitle className="text-white text-lg">{t('wallet.myWallet')}</CardTitle>
               {wallet.id && (
                 <PublicIdBadge
-                  publicId={wallet.id.slice(0, 8).toUpperCase()}
+                  publicId={String(wallet.id).slice(0, 8).toUpperCase()}
                   variant="outline"
                   size="sm"
                   className="mt-1 bg-white/10 border-white/30 text-white"

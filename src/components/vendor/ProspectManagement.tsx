@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useProspects, Prospect } from "@/hooks/useVendorData";
-import { Plus, Phone, Mail, _Calendar, TrendingUp, Target } from "lucide-react";
+import { Plus, Phone, Mail, Calendar, TrendingUp, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
@@ -29,6 +30,7 @@ const statusLabels = {
 };
 
 export default function ProspectManagement() {
+  const fc = useFormatCurrency();
   const { prospects, loading, error, createProspect, updateProspect } = useProspects();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -265,7 +267,7 @@ export default function ProspectManagement() {
               <TrendingUp className="w-5 h-5 text-[#ff4000]" />
               <div>
                 <p className="text-sm text-muted-foreground">Valeur pipeline</p>
-                <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-2xl font-bold">{fc(totalValue)}</p>
               </div>
             </div>
           </CardContent>
@@ -314,7 +316,7 @@ export default function ProspectManagement() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Valeur estimée</span>
                 <span className="font-semibold text-[#ff4000]">
-                  {prospect.estimated_value.toLocaleString()} GNF
+                  {fc(prospect.estimated_value)}
                 </span>
               </div>
 

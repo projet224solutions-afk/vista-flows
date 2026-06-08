@@ -23,6 +23,7 @@ export function WalletBalanceWidget({
   const { convert } = usePriceConverter();
   const { t } = useTranslation();
   const [balance, setBalance] = useState<number>(0);
+  const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
 
@@ -35,7 +36,7 @@ export function WalletBalanceWidget({
         .eq('user_id', user.id)
         .single();
       if (error) throw error;
-      if (data) setBalance(data.balance || 0);
+      if (data) { setBalance(data.balance || 0); setCurrency(data.currency || 'GNF'); }
     } catch (error) {
       console.error('Wallet load error:', error);
     } finally {
@@ -52,7 +53,7 @@ export function WalletBalanceWidget({
 
   const formatBalance = () => {
     if (hidden) return '••••••';
-    return convert(balance, 'GNF').formatted;
+    return convert(balance, currency).formatted;
   };
 
   const isSurfaceVariant = variant === 'surface';

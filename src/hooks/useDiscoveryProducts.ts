@@ -74,7 +74,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       // 2. Priorité aux produits récents et aux nouvelles catégories
       let query = supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('created_at', { ascending: false }) // Nouveautés en premier
         .limit(limit * 3);
@@ -97,7 +97,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
         const { data: fallback } = await withDiscoveryTimeout(
           supabase
             .from('products')
-            .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, categories(name), vendors(business_type, country)')
+            .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(business_type, country, shop_currency)')
             .eq('is_active', true)
             .order('reviews_count', { ascending: false })
             .limit(limit * 2),
@@ -112,10 +112,8 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       }
 
       return unseen.map(p => {
-        const vendor = (p as any).vendors;
-        const vendorCountry = vendor?.country || '';
-        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-        const currency = countryDerived || (p as any).currency || 'GNF';
+        // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
+        const currency = getCurrencyForCountry((p as any).vendors?.country || '');
         return {
           product_id: p.id,
           name: p.name,

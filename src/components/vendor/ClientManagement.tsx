@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +11,8 @@ import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useToast } from "@/hooks/use-toast";
 import { listVendorClients, broadcastToClients, type VendorCustomerLink, type BroadcastResult } from '@/services/campaignBackendService';
 import {
-  Users, Search, Filter, Eye, _Star, ShoppingCart,
-  CreditCard, _Calendar, Mail, Phone, _MapPin,
+  Users, Search, Filter, Eye, Star, ShoppingCart,
+  CreditCard, Calendar, Mail, Phone, MapPin,
   TrendingUp, Award, Clock, MessageSquare, Send, Loader2
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ interface ClientStats {
 }
 
 export default function ClientManagement() {
+  const fc = useFormatCurrency();
   const {
     vendorId: currentVendorId,
     loading: vendorContextLoading,
@@ -433,7 +435,7 @@ export default function ClientManagement() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Total dépensé:</span>
                     <span className="font-semibold text-vendeur-primary">
-                      {clientRevenue.toLocaleString()} GNF
+                      {fc(clientRevenue)}
                     </span>
                   </div>
                   {lastOrder && (
@@ -448,7 +450,7 @@ export default function ClientManagement() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Panier moyen:</span>
                       <span className="text-sm font-medium">
-                        {Math.round(clientRevenue / orderCount).toLocaleString()} GNF
+                        {fc(Math.round(clientRevenue / orderCount))}
                       </span>
                     </div>
                   )}
@@ -600,7 +602,7 @@ export default function ClientManagement() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{order.total_amount.toLocaleString()} GNF</p>
+                        <p className="font-semibold">{fc(order.total_amount)}</p>
                         <Badge variant="outline">{order.status}</Badge>
                       </div>
                     </div>
@@ -663,7 +665,7 @@ export default function ClientManagement() {
                       </div>
                       <div className="flex gap-2">
                         <Badge variant="outline">{client.total_orders} commande{client.total_orders > 1 ? 's' : ''}</Badge>
-                        <Badge variant="outline">{client.total_spent.toLocaleString()} GNF</Badge>
+                        <Badge variant="outline">{fc(client.total_spent)}</Badge>
                       </div>
                     </div>
 

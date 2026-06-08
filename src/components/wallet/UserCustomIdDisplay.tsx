@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { User } from 'lucide-react';
-import { _toast } from 'sonner';
+import { toast } from 'sonner';
 
 export const UserCustomIdDisplay = () => {
   const { user } = useAuth();

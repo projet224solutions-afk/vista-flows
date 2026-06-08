@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { TaxiMotoService } from '@/services/taxi/TaxiMotoService';
 
 interface UseDriverRideActionsProps {
@@ -21,6 +22,7 @@ export function useDriverRideActions({
   startNavigation,
   loadDriverStats
 }: UseDriverRideActionsProps) {
+  const fc = useFormatCurrency();
 
   const acceptRide = useCallback(async (request: any) => {
     if (!driverId) {
@@ -154,7 +156,7 @@ export function useDriverRideActions({
       });
 
       toast.success('🎉 Course terminée avec succès!', {
-        description: `Vous avez gagné ${activeRide.estimatedEarnings} GNF`
+        description: `Vous avez gagné ${fc(activeRide.estimatedEarnings)}`
       });
 
       setActiveRide(null);

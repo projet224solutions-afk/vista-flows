@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useWallet } from '@/hooks/useWallet';
 
 export default function VendorLocaleSettings() {
-  const { _language, currency, setCurrency, country, loading, refreshGeo } = useLocale();
+  const { language, currency, setCurrency, country, loading, refreshGeo } = useLocale();
   const { toast } = useToast();
   const { wallet } = useWallet();
 

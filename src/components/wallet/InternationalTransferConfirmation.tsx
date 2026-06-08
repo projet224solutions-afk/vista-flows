@@ -41,7 +41,9 @@ export interface InternationalPreviewData {
   receiver_country: string;
   commission_conversion: number;
   frais_international: number;
+  total_debit?: number;
   rate_lock_seconds?: number;
+  current_balance?: number;
   balance_after?: number;
   // For RPC-based flows
   receiver_name?: string;
@@ -158,12 +160,23 @@ export function InternationalTransferConfirmation({
                   <span className="font-bold">{preview.amount_sent.toLocaleString()} {preview.currency_sent}</span>
                 </div>
 
-                {preview.currency_sent !== preview.currency_received && (
-                  <div className="flex justify-between text-blue-600 dark:text-blue-400 text-sm">
-                    <span>💱 Taux de change</span>
-                    <span className="font-medium">1 {preview.currency_sent} = {preview.rate_displayed.toLocaleString(undefined, { maximumFractionDigits: 4 })} {preview.currency_received}</span>
-                  </div>
-                )}
+                {/* La commission plateforme est prélevée côté backend mais N'EST PAS
+                    affichée à l'utilisateur (décision PDG). Le client ne voit que
+                    montant envoyé / taux / montant reçu. */}
+
+                {preview.currency_sent !== preview.currency_received && (() => {
+                  // Le taux affiché à l'expéditeur INCLUT la commission (taux net + %),
+                  // sans afficher le pourcentage. Le destinataire reçoit au taux net
+                  // (amount_received est calculé au taux net côté backend).
+                  const commissionPct = preview.is_international ? Number(preview.fee_percentage) || 0 : 0;
+                  const displayedRate = preview.rate_displayed * (1 + commissionPct / 100);
+                  return (
+                    <div className="flex justify-between text-blue-600 dark:text-blue-400 text-sm">
+                      <span>💱 Taux de change</span>
+                      <span className="font-medium">1 {preview.currency_sent} = {displayedRate.toLocaleString(undefined, { maximumFractionDigits: 4 })} {preview.currency_received}</span>
+                    </div>
+                  );
+                })()}
 
                 <div className="border-t pt-2 flex justify-between">
                   <span className="text-sm font-medium">✅ Montant reçu</span>
@@ -172,8 +185,14 @@ export function InternationalTransferConfirmation({
                   </span>
                 </div>
 
-                {typeof preview.balance_after === 'number' && (
+                {typeof preview.current_balance === 'number' && (
                   <div className="flex justify-between text-sm text-muted-foreground border-t pt-2">
+                    <span>Solde actuel</span>
+                    <span className="font-semibold">{preview.current_balance.toLocaleString()} {preview.currency_sent}</span>
+                  </div>
+                )}
+                {typeof preview.balance_after === 'number' && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Solde après transfert</span>
                     <span className="font-semibold">{preview.balance_after.toLocaleString()} {preview.currency_sent}</span>
                   </div>

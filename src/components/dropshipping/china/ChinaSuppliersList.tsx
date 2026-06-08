@@ -4,9 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { _Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -29,7 +29,7 @@ import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 import type { ChinaPlatformType } from '@/types/dropshipping-china';
 
 export function ChinaSuppliersList() {
-  const { chinaSuppliers, _loading } = useDropshippingChina();
+  const { chinaSuppliers, loading } = useDropshippingChina();
   const [search, setSearch] = useState('');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'orders'>('score');

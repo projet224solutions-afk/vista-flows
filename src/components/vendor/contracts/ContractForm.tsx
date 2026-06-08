@@ -27,7 +27,7 @@ interface ContractFormProps {
 export default function ContractForm({ onSuccess }: ContractFormProps) {
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState('');
-  const { register, handleSubmit, reset, formState: { _errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const { toast } = useToast();
 
   const selectedContract = CONTRACT_TYPES.find(t => t.value === selectedType);
@@ -38,7 +38,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
 
       const { client_name, client_email, client_phone, client_info, amount, ...fields } = formData;
 
-      const { _data, error } = await supabase.functions.invoke('create-contract', {
+      const { data, error } = await supabase.functions.invoke('create-contract', {
         body: {
           contract_type: selectedType,
           client_name,

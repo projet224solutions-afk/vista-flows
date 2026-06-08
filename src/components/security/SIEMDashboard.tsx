@@ -85,17 +85,27 @@ export function SIEMDashboard() {
       setSiemStats({
         eventsProcessed: auditLogs.length,
         threatsDetected: stats.critical_alerts + stats.high_alerts,
-        correlatedIncidents: Math.floor(stats.critical_alerts * 0.7),
-        responseTime: '2.1s'
+        correlatedIncidents: stats.critical_alerts,
+        responseTime: '—'
       });
 
-      // Générer données graphique depuis les logs
-      const _last24h = auditLogs.slice(0, 100);
-      const hourlyData = Array.from({ length: 6 }, (_, i) => ({
-        time: `${i * 4}:00`,
-        threats: Math.floor(Math.random() * 50) + 10
-      }));
-      setThreatData(hourlyData);
+      // Agrégation RÉELLE : nombre d'événements par tranche de 4 h sur les dernières 24 h
+      // (remplace l'ancien Math.random() qui affichait de fausses menaces).
+      const nowMs = Date.now();
+      const fourHoursMs = 4 * 60 * 60 * 1000;
+      const buckets = Array.from({ length: 6 }, (_, i) => {
+        const end = nowMs - (5 - i) * fourHoursMs;
+        const start = end - fourHoursMs;
+        const count = (auditLogs || []).filter((l) => {
+          const t = new Date(l.created_at).getTime();
+          return Number.isFinite(t) && t > start && t <= end;
+        }).length;
+        return {
+          time: new Date(end).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          threats: count,
+        };
+      });
+      setThreatData(buckets);
     }
   }, [auditLogs, stats]);
 
@@ -173,7 +183,7 @@ export function SIEMDashboard() {
 
         {/* Graphique des menaces */}
         <div>
-          <h4 className="font-semibold text-sm mb-3">Détection des menaces (24h)</h4>
+          <h4 className="font-semibold text-sm mb-3">Activité de sécurité — événements par tranche de 4h (24h)</h4>
           <div className="h-48">
             <RechartsContainer width="100%" height="100%">
               <LineChart data={threatData}>

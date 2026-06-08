@@ -9,7 +9,7 @@ import { MapPin, Navigation, Play, Square, RefreshCw, Clock, CheckCircle, XCircl
 import { useToast } from '@/hooks/use-toast';
 
 export const TrackingMap = () => {
-  const { _user } = useAuth();
+  const { user } = useAuth();
   const {
     trackingData,
     currentLocation,

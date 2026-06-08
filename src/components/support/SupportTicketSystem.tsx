@@ -15,8 +15,8 @@ import {
   MessageSquare,
   Plus,
   Clock,
-  _CheckCircle,
-  _AlertCircle,
+  CheckCircle,
+  AlertCircle,
   Send,
   Loader2
 } from 'lucide-react';

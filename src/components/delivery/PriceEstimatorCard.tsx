@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { DollarSign, Navigation, TrendingUp, Info } from 'lucide-react';
@@ -40,7 +41,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
             <span className="text-sm font-medium text-muted-foreground">Prix estimé</span>
           </div>
           <div className="text-4xl font-bold text-orange-600">
-            {estimate.totalPrice.toLocaleString()} GNF
+            <Money amount={estimate.totalPrice} from="GNF" />
           </div>
           <Badge variant="outline" className="mt-2 gap-1">
             <Navigation className="h-3 w-3" />
@@ -54,11 +55,11 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Prix de base</span>
-            <span className="font-medium">{estimate.breakdown.base.toLocaleString()} GNF</span>
+            <span className="font-medium"><Money amount={estimate.breakdown.base} from="GNF" /></span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Distance ({estimate.distanceKm.toFixed(1)} km)</span>
-            <span className="font-medium">{estimate.breakdown.distance.toLocaleString()} GNF</span>
+            <span className="font-medium"><Money amount={estimate.breakdown.distance} from="GNF" /></span>
           </div>
           {estimate.breakdown.surge > 0 && (
             <div className="flex items-center justify-between text-sm">
@@ -67,13 +68,13 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
                 Ajustement
               </span>
               <span className="font-medium text-orange-600">
-                +{estimate.breakdown.surge.toLocaleString()} GNF
+                +<Money amount={estimate.breakdown.surge} from="GNF" />
               </span>
             </div>
           )}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Frais de service</span>
-            <span className="font-medium">{estimate.breakdown.serviceFee.toLocaleString()} GNF</span>
+            <span className="font-medium"><Money amount={estimate.breakdown.serviceFee} from="GNF" /></span>
           </div>
         </div>
 

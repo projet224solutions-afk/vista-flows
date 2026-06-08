@@ -167,7 +167,7 @@ export default function ClientContracts() {
 
       const signatureData = canvas.toDataURL('image/png');
 
-      const { _data, error } = await supabase.functions.invoke('sign-contract', {
+      const { data, error } = await supabase.functions.invoke('sign-contract', {
         body: {
           contract_id: selectedContract.id,
           signature_data: signatureData,

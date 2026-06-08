@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,8 @@ const statusLabels = {
 };
 
 export default function PaymentManagement() {
-  const { paymentLinks, loading, _stats } = usePaymentLinks();
+  const fc = useFormatCurrency();
+  const { paymentLinks, loading, stats } = usePaymentLinks();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
@@ -102,7 +104,7 @@ export default function PaymentManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">Paiements en retard</p>
                 <p className="text-2xl font-bold">{overdueCount}</p>
-                <p className="text-sm text-[#ff4000]">{overdueAmount.toFixed(0)} GNF</p>
+                <p className="text-sm text-[#ff4000]">{fc(overdueAmount)}</p>
               </div>
             </div>
           </CardContent>
@@ -114,7 +116,7 @@ export default function PaymentManagement() {
               <div>
                 <p className="text-sm text-muted-foreground">En attente</p>
                 <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-sm text-orange-600">{pendingAmount.toFixed(0)} GNF</p>
+                <p className="text-sm text-orange-600">{fc(pendingAmount)}</p>
               </div>
             </div>
           </CardContent>
@@ -208,15 +210,15 @@ export default function PaymentManagement() {
                       </div>
                     </div>
                     <div className="text-right space-y-1">
-                      <p className="text-lg font-bold">{link.total.toFixed(0)} GNF</p>
+                      <p className="text-lg font-bold">{fc(link.total)}</p>
                       {link.remise && link.remise > 0 && (
                         <p className="text-xs text-muted-foreground line-through">
-                          {link.montant.toFixed(0)} GNF
+                          {fc(link.montant)}
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
                         {link.remise && link.remise > 0
-                          ? `Remise: ${link.type_remise === 'percentage' ? `${link.remise}%` : `${link.remise.toFixed(0)} GNF`}`
+                          ? `Remise: ${link.type_remise === 'percentage' ? `${link.remise}%` : fc(link.remise)}`
                           : 'Montant total'
                         }
                       </p>

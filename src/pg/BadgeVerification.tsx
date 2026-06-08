@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Shield,
   User,
-  _CreditCard,
+  CreditCard,
   Bike,
   Calendar,
   MapPin,

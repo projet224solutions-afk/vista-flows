@@ -6,8 +6,8 @@
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
-  Wallet, TrendingUp, Users, _Copy,
-  CheckCircle, Clock, AlertCircle, _ExternalLink,
+  Wallet, TrendingUp, Users, Copy,
+  CheckCircle, Clock, AlertCircle, ExternalLink,
   BarChart3, Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { _cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface AffiliateData {
   id: string;

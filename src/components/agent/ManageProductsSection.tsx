@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,7 +70,7 @@ interface ManageProductsSectionProps {
   agentId: string;
 }
 
-export default function ManageProductsSection({ _agentId }: ManageProductsSectionProps) {
+export default function ManageProductsSection({ agentId }: ManageProductsSectionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<VendorInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -282,7 +283,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {stats.totalValue.toLocaleString('fr-FR')} GNF
+              <Money amount={stats.totalValue} from="GNF" />
             </div>
             <p className="text-xs text-muted-foreground mt-1">valeur catalogue</p>
           </CardContent>
@@ -334,7 +335,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">Prix: {product.price.toLocaleString()} GNF</span>
+                        <span className="font-medium text-foreground">Prix: <Money amount={product.price} from="GNF" /></span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -414,7 +415,7 @@ export default function ManageProductsSection({ _agentId }: ManageProductsSectio
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Prix</Label>
-                  <p className="font-medium">{viewProduct.price.toLocaleString()} GNF</p>
+                  <p className="font-medium"><Money amount={viewProduct.price} from="GNF" /></p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Stock</Label>

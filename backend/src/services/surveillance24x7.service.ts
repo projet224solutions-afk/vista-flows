@@ -3,6 +3,7 @@ import { logger } from '../config/logger.js';
 import { checkSupabaseConnection, supabaseAdmin } from '../config/supabase.js';
 import { redisHealthCheck } from '../config/redis.js';
 import { emitCoreFeatureEvent, type FeatureHealthStatus } from './coreFeatureEvents.service.js';
+import { runPlatformMonitors } from './escrowMonitor.service.js';
 
 type ServiceStatus = 'healthy' | 'degraded' | 'critical' | 'unknown';
 
@@ -79,6 +80,13 @@ class Surveillance24x7Service {
 
       const features = await this.collectFeatureStatuses();
       await this.persistFeatureStatuses(features, trigger);
+
+      // Surveillance plateforme (escrow/conversion + abonnements) → alertes system_alerts (best-effort)
+      try {
+        await runPlatformMonitors();
+      } catch (e: any) {
+        logger.warn(`[Surveillance24x7] platform monitor failed: ${e?.message || e}`);
+      }
 
       const summary: SurveillanceRunSummary = {
         trigger,

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -370,7 +371,7 @@ export const ProfessionalVirtualCard = () => {
                   <CardContent className="p-3">
                     <p className="text-white/60 text-xs mb-1">Dépensé aujourd'hui</p>
                     <p className="text-white font-semibold">
-                      {(stats?.daily_spent || card.daily_spent || 0).toLocaleString('fr-FR')} GNF
+                      <Money amount={stats?.daily_spent || card.daily_spent || 0} from="GNF" />
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
                       <div
@@ -381,7 +382,7 @@ export const ProfessionalVirtualCard = () => {
                       />
                     </div>
                     <p className="text-white/40 text-[10px] mt-1">
-                      Limite: {(card.daily_limit || 0).toLocaleString('fr-FR')} GNF
+                      Limite: <Money amount={card.daily_limit || 0} from="GNF" />
                     </p>
                   </CardContent>
                 </Card>
@@ -389,7 +390,7 @@ export const ProfessionalVirtualCard = () => {
                   <CardContent className="p-3">
                     <p className="text-white/60 text-xs mb-1">Dépensé ce mois</p>
                     <p className="text-white font-semibold">
-                      {(stats?.monthly_spent || card.monthly_spent || 0).toLocaleString('fr-FR')} GNF
+                      <Money amount={stats?.monthly_spent || card.monthly_spent || 0} from="GNF" />
                     </p>
                     <div className="mt-1 h-1 bg-white/10 rounded-full overflow-hidden">
                       <div
@@ -400,7 +401,7 @@ export const ProfessionalVirtualCard = () => {
                       />
                     </div>
                     <p className="text-white/40 text-[10px] mt-1">
-                      Limite: {(card.monthly_limit || 0).toLocaleString('fr-FR')} GNF
+                      Limite: <Money amount={card.monthly_limit || 0} from="GNF" />
                     </p>
                   </CardContent>
                 </Card>
@@ -462,7 +463,7 @@ export const ProfessionalVirtualCard = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Total dépensé</span>
                         <span className="text-white font-medium">
-                          {(stats?.total_spent || card.total_spent || 0).toLocaleString('fr-FR')} GNF
+                          <Money amount={stats?.total_spent || card.total_spent || 0} from="GNF" />
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">

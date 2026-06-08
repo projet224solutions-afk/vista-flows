@@ -25,6 +25,7 @@ import { orderCreateRateLimit, orderManageRateLimit } from '../middlewares/route
 import { cache } from '../config/redis.js';
 import { createNotification } from '../services/notification.service.js';
 import { buildOrderFinancialSummary } from '../services/marketplacePricing.service.js';
+import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -510,7 +511,13 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       p_wallet_debit_amount: number;
       p_buyer_wallet_currency: string | null;
       p_exchange_rate_used: number | null;
-    } = { p_buyer_user_id: null, p_wallet_debit_amount: 0, p_buyer_wallet_currency: null, p_exchange_rate_used: null };
+      p_buyer_fee_amount: number;
+      p_seller_commission_amount: number | null;
+    } = {
+      p_buyer_user_id: null, p_wallet_debit_amount: 0, p_buyer_wallet_currency: null,
+      p_exchange_rate_used: null, p_buyer_fee_amount: 0, p_seller_commission_amount: null,
+    };
+    let buyerFeePercentForLog = 0;
 
     if (payment_method === 'wallet') {
       const summary = await buildOrderFinancialSummary({
@@ -521,6 +528,24 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       });
       // Devise réelle du prix produit → cohérente avec le subtotal calculé par le RPC.
       currency = summary.sellerCurrency;
+
+      // COMMISSION ACHETEUR (purchase_fee_percent, gérée par le PDG) — prélevée EN PLUS sur
+      // l'acheteur et gardée par la plateforme. Calculée ICI (backend, autoritaire) sur le
+      // montant payé converti, dans la devise du wallet acheteur, puis débitée + créditée au PDG
+      // atomiquement par create_order_core. Avant : seulement affichée par le frontend → jamais
+      // prélevée pour les paiements wallet.
+      const NO_DEC = new Set(['GNF', 'XOF', 'XAF', 'JPY', 'KRW', 'VND', 'CLP']);
+      let buyerFeePercent = 0;
+      try {
+        const { data: feeSetting } = await supabaseAdmin
+          .from('system_settings').select('setting_value').eq('setting_key', 'purchase_fee_percent').maybeSingle();
+        buyerFeePercent = Math.max(0, Math.min(50, Number(feeSetting?.setting_value ?? 0)));
+      } catch { buyerFeePercent = 0; }
+      const rawFee = summary.totalPaidAmount * (buyerFeePercent / 100);
+      const buyerFee = NO_DEC.has(summary.buyerCurrency.toUpperCase())
+        ? Math.round(rawFee) : Math.round(rawFee * 100) / 100;
+      buyerFeePercentForLog = buyerFeePercent;
+
       walletDebitParams = {
         p_buyer_user_id: userId,
         p_wallet_debit_amount: summary.totalPaidAmount,
@@ -531,6 +556,10 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         // cross-devise car le RPC recalcule le taux AVEC marge (écart = marge ≈ 5% → faux rejet).
         // Les vraies gardes (existence du taux, fraîcheur BCRG < 24h, âge) restent actives.
         p_exchange_rate_used: null,
+        p_buyer_fee_amount: buyerFee,
+        // COMMISSION VENDEUR centralisée (PLATFORM_FEE_RATES par type) → stockée sur l'escrow,
+        // utilisée telle quelle à la libération (au lieu du 2,5 % codé en dur du RPC de release).
+        p_seller_commission_amount: summary.platformFeeAmount,
       };
     }
 
@@ -559,6 +588,23 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     });
 
     if (rpcError) {
+      // IDEMPOTENCE PAIEMENT : si une commande existe DÉJÀ pour ce payment_intent (webhook
+      // paiement rejoué → violation de l'index unique uniq_orders_payment_intent), la transaction
+      // create_order_core a été annulée (AUCUN double-débit). On renvoie la commande existante.
+      const isDupPaymentIntent = !!payment_intent_id &&
+        ((rpcError as any).code === '23505' || /uniq_orders_payment_intent|duplicate key/i.test(rpcError.message || ''));
+      if (isDupPaymentIntent) {
+        const { data: existing } = await supabaseAdmin
+          .from('orders')
+          .select('id, order_number, payment_status')
+          .eq('payment_intent_id', payment_intent_id)
+          .maybeSingle();
+        if (existing) {
+          logger.warn(`create_order_core: commande déjà créée pour payment_intent ${payment_intent_id} → renvoi idempotent (${existing.id})`);
+          res.status(200).json({ success: true, data: { order_id: existing.id, order_number: (existing as any).order_number, idempotent_replay: true } });
+          return;
+        }
+      }
       logger.error(`create_order_core RPC error: ${rpcError.message}`);
       res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
       return;
@@ -615,11 +661,71 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       logger.error(`order finalization non bloquant (commande ${result.order_id} déjà créée): ${orderUpdateError.message}`);
     }
 
+    // 📊 REVENUS PDG — logger la commission acheteur dans revenus_pdg pour TOUTES les commandes wallet
+    // (avant : seul ProductPaymentModal le faisait côté frontend → seules les commandes "reco"
+    // apparaissaient dans le tableau de revenus du PDG ; Payment.tsx ne loggait rien). Désormais
+    // centralisé ici → cohérent pour tous les chemins. best-effort (ne bloque jamais la commande).
+    if (payment_method === 'wallet' && walletDebitParams.p_buyer_fee_amount > 0) {
+      try {
+        await supabaseAdmin.rpc('record_pdg_revenue', {
+          p_source_type: 'frais_achat_commande',
+          p_amount: walletDebitParams.p_buyer_fee_amount,
+          p_percentage: buyerFeePercentForLog,
+          p_transaction_id: result.order_id,
+          p_user_id: userId,
+          p_metadata: {
+            order_id: result.order_id,
+            order_number: orderNumber,
+            vendor_id,
+            currency: walletDebitParams.p_buyer_wallet_currency,
+            source: 'create_order_core_backend',
+          },
+        });
+      } catch (revErr: any) {
+        logger.warn(`record_pdg_revenue non bloquant (commande ${result.order_id}): ${revErr?.message || revErr}`);
+      }
+    }
+
+    // 💰 COMMISSION AGENT (affiliation) sur l'achat marketplace — best-effort, non bloquant.
+    // RÈGLE MÉTIER : l'agent (et son parent) touche un % des FRAIS DE TRANSACTION (la commission
+    // acheteur, ex. 2 %), et NON du montant brut. Ex : achat 100 000, frais 2 % = 2 000 ; sous-agent
+    // 15 % des frais = 300, agent principal 5 % = 100 (total 400 = 20 % des frais ; plateforme garde
+    // 80 %). Base = buyer fee converti en GNF (credit_agent_commission raisonne en GNF). Anti-doublon
+    // par order_id + plafonné. On ne déclenche que sur commande PAYÉE.
+    // ⚠️ Réserve : pas de reprise sur annulation/remboursement (même profil que record_pdg_revenue).
+    if (finalPaymentStatus === 'paid') {
+      try {
+        const feeAmount = Number(walletDebitParams.p_buyer_fee_amount || 0); // frais de transaction (devise acheteur)
+        const feeCur = String(walletDebitParams.p_buyer_wallet_currency || currency || 'GNF').toUpperCase();
+        let gnfFee = feeAmount;
+        if (feeCur !== 'GNF' && feeAmount > 0) {
+          const { data: fx } = await supabaseAdmin
+            .from('currency_exchange_rates')
+            .select('rate')
+            .eq('from_currency', feeCur)
+            .eq('to_currency', 'GNF')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          // Pas de taux dispo → on n'invente pas (commission ignorée plutôt que fausse).
+          gnfFee = fx?.rate ? feeAmount * Number(fx.rate) : 0;
+        }
+        if (gnfFee > 0) {
+          await triggerAffiliateCommission(userId, Math.round(gnfFee), 'achat_produit', result.order_id);
+        }
+      } catch (commErr: any) {
+        logger.warn(`commission agent achat non bloquante (commande ${result.order_id}): ${commErr?.message || commErr}`);
+      }
+    }
+
     let escrowStatus = result.escrow_status as string;
     const { error: escrowUpdateError } = await supabaseAdmin
       .from('escrow_transactions')
       .update({
-        amount: effectiveChargedAmount,
+        // ⚠️ L'escrow tient le MONTANT PRODUIT (dû au vendeur), PAS le montant chargé : ce dernier
+        // inclut la commission acheteur déjà prélevée séparément → sinon le vendeur est sur-payé de
+        // la commission acheteur (fuite). create_order_core a déjà mis amount = subtotal ; on le garde.
+        amount: Number((result as any).subtotal ?? effectiveChargedAmount),
         status: payment_method === 'cash' ? 'pending' : result.escrow_status,
         metadata: {
           ...(payment_method === 'cash'
@@ -974,14 +1080,13 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimi
     // pour couvrir aussi les annulations hors backend. Pas de restore ici
     // (sinon double restauration).
 
-    // Update escrow
-    const { error: escrowUpdateError } = await supabaseAdmin
-      .from('escrow_transactions')
-      .update({ status: 'refunded', released_at: new Date().toISOString() })
-      .eq('order_id', orderId);
-
-    if (escrowUpdateError) {
-      throw escrowUpdateError;
+    // Rembourser l'acheteur ATOMIQUEMENT (recrédit wallet + escrow 'refunded') via RPC.
+    // Corrige le bug : avant, l'escrow passait 'refunded' SANS recréditer l'acheteur débité.
+    const { data: refundRes, error: refundErr } = await supabaseAdmin.rpc('refund_order_escrow', { p_order_id: orderId });
+    if (refundErr || (refundRes && (refundRes as any).success === false)) {
+      logger.error(`Refund escrow failed (order ${orderId}): ${refundErr?.message || (refundRes as any)?.error}`);
+      res.status(500).json({ success: false, error: 'Échec du remboursement. Réessayez ou contactez le support.' });
+      return;
     }
 
     // Update order
@@ -1115,6 +1220,206 @@ router.post('/:orderId([0-9a-fA-F-]{36})/confirm-cod-delivery', verifyJWT, order
   } catch (error: any) {
     logger.error(`COD confirm error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la confirmation de livraison' });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/confirm-delivery
+ * L'ACHETEUR confirme la réception d'une commande payée au WALLET/escrow.
+ * → libère l'escrow vers le vendeur (net) + commission plateforme, ATOMIQUEMENT via le RPC
+ *   confirm_delivery_and_release_escrow(p_escrow_id, p_customer_id). Corrige le maillon manquant :
+ *   avant, seul le COD avait une confirmation, et le PATCH 'delivered' ne payait pas le vendeur.
+ */
+router.post('/:orderId([0-9a-fA-F-]{36})/confirm-delivery', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+    const customerId = await getOrCreateCustomerId(userId);
+
+    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
+    if (!order) { res.status(404).json({ success: false, error: 'Commande non trouvée' }); return; }
+    if (!isBuyer) { res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' }); return; }
+
+    const { data: fullOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id, status, payment_method, vendor_id, order_number, metadata')
+      .eq('id', orderId)
+      .single();
+    if (!fullOrder) { res.status(404).json({ success: false, error: 'Commande non trouvée' }); return; }
+    if (fullOrder.payment_method === 'cash') {
+      res.status(400).json({ success: false, error: 'Paiement à la livraison : utilisez la confirmation COD.' });
+      return;
+    }
+    if (fullOrder.status === 'cancelled') {
+      res.status(400).json({ success: false, error: 'Commande annulée' });
+      return;
+    }
+
+    const { data: escrow } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, status')
+      .eq('order_id', orderId)
+      .maybeSingle();
+    if (!escrow) { res.status(400).json({ success: false, error: 'Aucun escrow associé à cette commande' }); return; }
+
+    // Idempotent : si déjà libéré/remboursé, on ne refait rien.
+    if (!['held', 'pending'].includes(String(escrow.status))) {
+      res.json({ success: true, data: fullOrder, already_released: true });
+      return;
+    }
+
+    // Libération atomique vers le vendeur (crédit net + commission plateforme).
+    const { error: relErr } = await supabaseAdmin.rpc('confirm_delivery_and_release_escrow', {
+      p_escrow_id: escrow.id,
+      p_customer_id: userId,
+      p_notes: 'Réception confirmée par l\'acheteur',
+    });
+    if (relErr) {
+      logger.error(`confirm-delivery release failed (order ${orderId}): ${relErr.message}`);
+      res.status(500).json({ success: false, error: 'Échec de la libération des fonds. Réessayez ou contactez le support.' });
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: updated } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'delivered',
+        updated_at: nowIso,
+        metadata: {
+          ...(fullOrder.metadata && typeof fullOrder.metadata === 'object' ? fullOrder.metadata : {}),
+          delivered_at: nowIso,
+          buyer_confirmed_delivery: true,
+        },
+      })
+      .eq('id', orderId)
+      .select('*')
+      .single();
+
+    // 🔔 Notifier le vendeur (non bloquant).
+    try {
+      const { data: vendor } = await supabaseAdmin.from('vendors').select('user_id').eq('id', fullOrder.vendor_id).maybeSingle();
+      if (vendor?.user_id) {
+        await createNotification({
+          userId: vendor.user_id,
+          type: 'order',
+          title: `Commande ${fullOrder.order_number || ''}`.trim(),
+          message: 'L\'acheteur a confirmé la réception. Les fonds ont été libérés sur votre wallet.',
+          metadata: { order_id: orderId, order_number: fullOrder.order_number, status: 'delivered' },
+        });
+      }
+    } catch (e: any) {
+      logger.warn(`confirm-delivery notification non bloquant: ${e?.message || e}`);
+    }
+
+    logger.info(`Order ${orderId} delivery confirmed by buyer ${userId} → escrow released`);
+    res.json({ success: true, data: updated, released: true });
+  } catch (error: any) {
+    logger.error(`confirm-delivery error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la confirmation de réception' });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/request-refund
+ * Ouvre un litige de remboursement (remplace l'Edge Function 'request-refund' — pas de mouvement
+ * d'argent ici, juste la création du litige + notification vendeur). L'argent ne bouge qu'à la
+ * résolution/annulation (refund_order_escrow, qui convertit).
+ */
+router.post('/:orderId([0-9a-fA-F-]{36})/request-refund', verifyJWT, orderManageRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+    const { reason, requested_amount, evidence_text } = req.body || {};
+    if (!reason || typeof reason !== 'string') {
+      res.status(400).json({ success: false, error: 'Motif requis' });
+      return;
+    }
+
+    const customerId = await getOrCreateCustomerId(userId);
+    const { order, isBuyer } = await canUserManageBuyerOrder(orderId, userId, customerId);
+    if (!order) { res.status(404).json({ success: false, error: 'Commande non trouvée' }); return; }
+    if (!isBuyer) { res.status(403).json({ success: false, error: 'Non autorisé pour cette commande' }); return; }
+
+    const { data: escrow } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, amount, status')
+      .eq('order_id', orderId)
+      .maybeSingle();
+    if (!escrow) { res.status(404).json({ success: false, error: 'Aucun escrow pour cette commande' }); return; }
+    if (!['pending', 'held', 'released'].includes(String(escrow.status))) {
+      res.status(400).json({ success: false, error: 'Cette commande ne peut plus être remboursée' });
+      return;
+    }
+
+    // Litige déjà ouvert ?
+    const { data: existing } = await supabaseAdmin
+      .from('disputes')
+      .select('id, status')
+      .eq('escrow_id', escrow.id)
+      .maybeSingle();
+    if (existing && existing.status !== 'resolved') {
+      res.status(400).json({ success: false, error: 'Un litige est déjà en cours pour cette commande' });
+      return;
+    }
+
+    const { data: dispute, error: disputeErr } = await supabaseAdmin
+      .from('disputes')
+      .insert({
+        escrow_id: escrow.id,
+        client_id: (order as any).customer_id,
+        vendor_id: (order as any).vendor_id,
+        order_id: orderId,
+        dispute_type: 'refund_request',
+        request_type: 'full_refund',
+        requested_amount: typeof requested_amount === 'number' && requested_amount > 0 ? requested_amount : escrow.amount,
+        description: `${reason}${evidence_text ? '\n\nDétails: ' + evidence_text : ''}`,
+        status: 'open',
+      })
+      .select('id')
+      .single();
+    if (disputeErr || !dispute) {
+      logger.error(`request-refund dispute creation failed (order ${orderId}): ${disputeErr?.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la création du litige' });
+      return;
+    }
+
+    // Preuve + action (best-effort, non bloquant)
+    try {
+      if (evidence_text) {
+        await supabaseAdmin.from('dispute_evidence').insert({
+          dispute_id: dispute.id, submitted_by: userId,
+          evidence_type: 'text', evidence_data: { description: evidence_text },
+        });
+      }
+      await supabaseAdmin.from('dispute_actions').insert({
+        dispute_id: dispute.id, actor_id: userId, action_type: 'opened', notes: reason,
+      });
+    } catch (e: any) {
+      logger.warn(`request-refund evidence/action non bloquant: ${e?.message || e}`);
+    }
+
+    // Notifier le vendeur (résolution de son user_id, non bloquant)
+    try {
+      const { data: vendor } = await supabaseAdmin.from('vendors').select('user_id').eq('id', (order as any).vendor_id).maybeSingle();
+      if (vendor?.user_id) {
+        await createNotification({
+          userId: vendor.user_id,
+          type: 'order',
+          title: 'Demande de remboursement',
+          message: `Le client a demandé un remboursement pour la commande ${(order as any).order_number || ''}. Motif : ${reason}`,
+          metadata: { order_id: orderId, dispute_id: dispute.id, escrow_id: escrow.id },
+        });
+      }
+    } catch (e: any) {
+      logger.warn(`request-refund notification non bloquant: ${e?.message || e}`);
+    }
+
+    logger.info(`Refund dispute opened for order ${orderId} by buyer ${userId} (dispute ${dispute.id})`);
+    res.json({ success: true, dispute_id: dispute.id, message: 'Demande de remboursement envoyée' });
+  } catch (error: any) {
+    logger.error(`request-refund error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la demande de remboursement' });
   }
 });
 
@@ -1292,10 +1597,12 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
     if (status === 'cancelled') {
       // Restauration du stock gérée par le trigger DB restore_stock_on_order_cancel
       // (au passage status → 'cancelled'). Pas de restore ici (sinon double).
-      await supabaseAdmin
-        .from('escrow_transactions')
-        .update({ status: 'refunded', released_at: new Date().toISOString() })
-        .eq('order_id', orderId);
+      // Remboursement acheteur ATOMIQUE (recrédit wallet + escrow 'refunded') — corrige la perte
+      // d'argent acheteur quand le vendeur annule une commande payée au wallet.
+      const { error: refundErr } = await supabaseAdmin.rpc('refund_order_escrow', { p_order_id: orderId });
+      if (refundErr) {
+        logger.error(`Refund escrow (vendor cancel) failed (order ${orderId}): ${refundErr.message}`);
+      }
     }
 
     const { data: updated, error } = await supabaseAdmin

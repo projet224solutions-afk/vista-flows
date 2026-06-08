@@ -13,13 +13,17 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 import { usePDGErrorBoundary } from '@/hooks/usePDGErrorBoundary';
-import PDGNavigation from '@/components/pdg/PDGNavigation';
+import PDGNavigation, { NAV_TAB_PERMISSIONS } from '@/components/pdg/PDGNavigation';
+import { useCurrentUserPermissions } from '@/hooks/useCurrentUserPermissions';
 import { PDGDashboardHome } from '@/components/pdg/PDGDashboardHome';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 // Lazy-loaded tab components
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
+const UniversalWalletDashboard = lazy(() => import('@/components/wallet/UniversalWalletDashboard'));
+const EscrowConversionMonitor = lazy(() => import('@/components/pdg/EscrowConversionMonitor'));
+const WalletProvenancePanel = lazy(() => import('@/components/pdg/WalletProvenancePanel'));
 const PDGUsers = lazy(() => import('@/components/pdg/PDGUsers'));
 const SecurityOpsPanel = lazy(() => import('@/components/pdg/SecurityOpsPanel'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
@@ -95,6 +99,26 @@ export default function PDG224Solutions() {
   const { error, clearError } = usePDGErrorBoundary();
   const { aiActive } = usePDGAIAssistant();
 
+  // Permissions de l'utilisateur courant : un AGENT du PDG accède à cette interface
+  // avec une nav filtrée + un contenu gaté par permission (le PDG a tout).
+  const { isPDG, isAgent, hasPermission, loading: permsLoading } = useCurrentUserPermissions();
+
+  // Un onglet est-il accessible à l'utilisateur courant ?
+  // PDG/CEO/Admin : tout. Agent : uniquement les onglets dont la permission requise est accordée
+  // (les onglets sans permission mappée — ex. 'dashboard' — sont réservés au PDG).
+  const canViewTab = useCallback((tab: string): boolean => {
+    if (isPDG) return true;
+    if (!isAgent) return false;
+    const required = NAV_TAB_PERMISSIONS[tab];
+    return required ? hasPermission(required) : false;
+  }, [isPDG, isAgent, hasPermission]);
+
+  // Premier onglet réellement permis (pour l'atterrissage par défaut d'un agent).
+  const firstAllowedTab = useCallback((): string | null => {
+    const tabs = Object.keys(NAV_TAB_PERMISSIONS);
+    return tabs.find((t) => canViewTab(t)) || null;
+  }, [canViewTab]);
+
   const setActiveTabPersisted = useCallback((tab: string) => {
     setActiveTab(tab);
     sessionStorage.setItem(PDG_TAB_STORAGE_KEY, tab);
@@ -109,6 +133,15 @@ export default function PDG224Solutions() {
     }
     setActiveTabPersisted(tab);
   }, [navigate, setActiveTabPersisted]);
+
+  // Agent : garantir un onglet AUTORISÉ (atterrissage par défaut + anti-forçage via sessionStorage).
+  useEffect(() => {
+    if (permsLoading || isPDG || !isAgent) return;
+    if (!canViewTab(activeTab)) {
+      const next = firstAllowedTab();
+      if (next && next !== activeTab) setActiveTabPersisted(next);
+    }
+  }, [permsLoading, isPDG, isAgent, activeTab, canViewTab, firstAllowedTab, setActiveTabPersisted]);
 
   const loadFxCriticalAlerts = useCallback(async () => {
     try {
@@ -137,14 +170,15 @@ export default function PDG224Solutions() {
     if (profileLoading || !profile) return;
 
     const currentRole = (profile.role || '').toString().toLowerCase();
-    if (!['admin', 'pdg', 'ceo'].includes(currentRole)) {
-      toast.error('Accès refusé - Réservé au PDG');
+    // PDG/CEO/Admin : accès total. Agent : accès filtré par permissions (nav + contenu gatés).
+    if (!['admin', 'pdg', 'ceo', 'agent'].includes(currentRole)) {
+      toast.error('Accès refusé');
       navigate('/home');
       return;
     }
 
-    // Show MFA dialog if not verified
-    if (!mfaVerified) {
+    // MFA réservé au PDG/admin (les agents n'ont pas la MFA PDG).
+    if (currentRole !== 'agent' && !mfaVerified) {
       setShowMfaDialog(true);
     }
 
@@ -487,6 +521,21 @@ export default function PDG224Solutions() {
           />
 
           <div className="mt-4 sm:mt-8 animate-fade-in">
+            {!isPDG && isAgent && !canViewTab(activeTab) ? (
+              permsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="max-w-lg mx-auto mt-8 rounded-xl border bg-card p-6 text-center space-y-2">
+                  <Shield className="w-10 h-10 text-muted-foreground mx-auto" />
+                  <p className="font-semibold">Accès non autorisé</p>
+                  <p className="text-sm text-muted-foreground">
+                    Vous n'avez pas la permission d'accéder à cette section. Contactez le PDG.
+                  </p>
+                </div>
+              )
+            ) : (
             <Suspense fallback={
               <div className="flex items-center justify-center py-12">
                 <div className="flex items-center gap-3">
@@ -500,6 +549,20 @@ export default function PDG224Solutions() {
               )}
               {activeTab === 'finance' && (
                 <ErrorBoundary><PDGFinance /></ErrorBoundary>
+              )}
+              {activeTab === 'pdg-wallet' && user && (
+                <ErrorBoundary>
+                  <UniversalWalletDashboard
+                    userId={user.id}
+                    userCode={(profile as any)?.public_id || (profile as any)?.custom_id || ''}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'escrow-monitor' && (
+                <ErrorBoundary><EscrowConversionMonitor /></ErrorBoundary>
+              )}
+              {activeTab === 'aml-wallet' && (
+                <ErrorBoundary><WalletProvenancePanel /></ErrorBoundary>
               )}
               {activeTab === 'banking' && (
                 <ErrorBoundary><BankingDashboard /></ErrorBoundary>
@@ -613,6 +676,7 @@ export default function PDG224Solutions() {
                 <ErrorBoundary><PDGSupportTechnique /></ErrorBoundary>
               )}
             </Suspense>
+            )}
           </div>
         </div>
       </div>

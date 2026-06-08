@@ -21,7 +21,7 @@ import {
   Eye,
   Trash2,
   ShoppingCart,
-  _Building2,
+  Building2,
   Pencil,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

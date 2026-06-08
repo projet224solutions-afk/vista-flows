@@ -257,7 +257,7 @@ export const useVendorAgentsData = () => {
         }
 
         // Mettre à jour les autres champs si nécessaire
-        const { _email, _new_email, ...otherUpdates } = updates;
+        const { email, new_email, ...otherUpdates } = updates;
         if (Object.keys(otherUpdates).length > 0) {
           const updatePayload: any = { ...otherUpdates };
           await supabase

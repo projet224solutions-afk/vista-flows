@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAppPersistence, useFormPersistence } from '@/hooks/useAppPersistence';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -17,15 +18,15 @@ import {
   Star,
   MapPin,
   Phone,
-  _X,
+  X,
   ChefHat,
   Utensils,
   Leaf,
-  _AlertTriangle,
+  AlertTriangle,
   CreditCard,
   Wallet,
   Check,
-  _Receipt,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,7 +37,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -90,6 +91,7 @@ export default function RestaurantPublicMenu() {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const fc = useFormatCurrency();
 
   const [restaurant, setRestaurant] = useState<RestaurantInfo | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -618,7 +620,7 @@ export default function RestaurantPublicMenu() {
                 </div>
                 <CardContent className="p-2">
                   <h3 className="font-medium text-sm line-clamp-1">{item.name}</h3>
-                  <p className="text-primary font-bold text-sm">{item.price.toLocaleString()} GNF</p>
+                  <p className="text-primary font-bold text-sm">{fc(item.price)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -732,7 +734,7 @@ export default function RestaurantPublicMenu() {
                           <span className={cn(
                             "font-bold",
                             item.is_available ? "text-primary" : "text-muted-foreground"
-                          )}>{item.price.toLocaleString()} GNF</span>
+                          )}>{fc(item.price)}</span>
 
                           {item.is_available ? (
                             qty > 0 ? (
@@ -794,7 +796,7 @@ export default function RestaurantPublicMenu() {
                   </Badge>
                 </div>
                 <span className="flex-1">Voir le panier</span>
-                <span className="font-bold">{cartTotal.toLocaleString()} GNF</span>
+                <span className="font-bold">{fc(cartTotal)}</span>
               </Button>
             </SheetTrigger>
 
@@ -823,7 +825,7 @@ export default function RestaurantPublicMenu() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm line-clamp-1">{item.name}</h4>
                         <p className="text-primary font-semibold text-sm">
-                          {(item.price * item.quantity).toLocaleString()} GNF
+                          {fc(item.price * item.quantity)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -950,11 +952,11 @@ export default function RestaurantPublicMenu() {
                 <div className="pt-4 border-t space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Sous-total</span>
-                    <span>{cartTotal.toLocaleString()} GNF</span>
+                    <span>{fc(cartTotal)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
+                    <span className="text-primary">{fc(cartTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -970,7 +972,7 @@ export default function RestaurantPublicMenu() {
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      Confirmer la commande • {cartTotal.toLocaleString()} GNF
+                      Confirmer la commande • {fc(cartTotal)}
                     </>
                   )}
                 </Button>
@@ -1012,7 +1014,7 @@ export default function RestaurantPublicMenu() {
                   </div>
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span className="text-primary">{quickOrderTotal.toLocaleString()} GNF</span>
+                    <span className="text-primary">{fc(quickOrderTotal)}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -1071,7 +1073,7 @@ export default function RestaurantPublicMenu() {
                         {quickOrderItem.description && (
                           <p className="text-xs text-muted-foreground line-clamp-2">{quickOrderItem.description}</p>
                         )}
-                        <p className="text-primary font-bold mt-1">{quickOrderItem.price.toLocaleString()} GNF</p>
+                        <p className="text-primary font-bold mt-1">{fc(quickOrderItem.price)}</p>
                       </div>
                     </div>
 
@@ -1236,7 +1238,7 @@ export default function RestaurantPublicMenu() {
               <div className="pt-3 border-t space-y-3">
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">{quickOrderTotal.toLocaleString()} GNF</span>
+                  <span className="text-primary">{fc(quickOrderTotal)}</span>
                 </div>
 
                 <Button

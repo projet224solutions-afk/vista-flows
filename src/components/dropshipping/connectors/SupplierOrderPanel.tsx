@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { _Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -42,18 +42,18 @@ import {
   AlertTitle,
 } from '@/components/ui/alert';
 import {
-  _Tabs,
-  _TabsContent,
-  _TabsList,
-  _TabsTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@/components/ui/tabs';
 import {
-  _Table,
-  _TableBody,
-  _TableCell,
-  _TableHead,
-  _TableHeader,
-  _TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
   Tooltip,
@@ -77,14 +77,14 @@ import {
   MapPin,
   Phone,
   User,
-  _Box,
-  _DollarSign,
-  _Calendar,
+  Box,
+  DollarSign,
+  Calendar,
   FileText,
-  _Link2
+  Link2
 } from 'lucide-react';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils';
-import { _useConnectors } from '@/hooks/useConnectors';
+import { useConnectors } from '@/hooks/useConnectors';
 import type { ConnectorType, OrderResult, TrackingInfo } from '@/services/connectors';
 
 // ==================== INTERFACES ====================
@@ -529,7 +529,7 @@ function OrderCard({
 // ==================== MAIN COMPONENT ====================
 
 export function SupplierOrderPanel({
-  _vendorId,
+  vendorId,
   orders,
   loading,
   onCreateOrder,

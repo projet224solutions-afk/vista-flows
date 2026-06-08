@@ -31,7 +31,7 @@ interface PermissionManagerProps {
 }
 
 export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
-  const { permissions, _permissionCatalog, _loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
+  const { permissions, permissionCatalog, loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
   const { agents, loading: _agentsLoading } = usePDGAgentsData();
 
   const [selectedAgent, setSelectedAgent] = useState<string>('');

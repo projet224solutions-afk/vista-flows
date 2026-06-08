@@ -18,7 +18,7 @@ interface ServiceIdBadgeProps {
 }
 
 export function ServiceIdBadge({ serviceId, compact = false, className }: ServiceIdBadgeProps) {
-  const { user, _profile } = useAuth();
+  const { user, profile } = useAuth();
   const [publicId, setPublicId] = useState<string | null>(null);
   const [_serviceName, setServiceName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

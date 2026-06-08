@@ -26,7 +26,7 @@ interface UseMessageTranslationReturn {
 }
 
 export function useMessageTranslation(options: UseMessageTranslationOptions = {}): UseMessageTranslationReturn {
-  const { _autoTranslate = true, context = 'general' } = options;
+  const { autoTranslate = true, context = 'general' } = options;
 
   const [userLanguage, setUserLanguageState] = useState<SupportedLanguage>('fr');
   const [showOriginalIds, setShowOriginalIds] = useState<Set<string>>(new Set());

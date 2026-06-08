@@ -4,6 +4,7 @@
  */
 
 import { Badge } from '@/components/ui/badge';
+import { Money } from '@/components/Money';
 import { Shield, Clock, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 
 interface EscrowStatusBadgeProps {
@@ -90,7 +91,7 @@ export function EscrowStatusBadge({
       {config.label}
       {showAmount && amount && (
         <span className="ml-1 font-bold">
-          {amount.toLocaleString()} GNF
+          <Money amount={amount || 0} from="GNF" />
         </span>
       )}
     </Badge>

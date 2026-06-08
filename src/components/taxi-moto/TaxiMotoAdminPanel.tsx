@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
@@ -90,7 +91,7 @@ export function TaxiMotoAdminPanel() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-muted-foreground">Revenus totaux</p>
-              <p className="text-2xl font-bold">{Math.round(stats.totalRevenue)} GNF</p>
+              <p className="text-2xl font-bold"><Money amount={Math.round(stats.totalRevenue)} from="GNF" /></p>
             </div>
             <DollarSign className="w-6 h-6 text-blue-500" />
           </div>
@@ -143,7 +144,7 @@ export function TaxiMotoAdminPanel() {
               </div>
               <div className="text-right">
                 <Badge>{ride.status}</Badge>
-                <p className="text-sm font-semibold mt-1">{(ride as any).price_total || (ride as any).estimated_price || 0} GNF</p>
+                <p className="text-sm font-semibold mt-1"><Money amount={(ride as any).price_total || (ride as any).estimated_price || 0} from="GNF" /></p>
               </div>
             </div>
           ))}

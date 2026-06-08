@@ -6,7 +6,7 @@ import {
   Users, TrendingUp, Package, ShoppingCart, Warehouse,
   Truck, UserPlus, LogOut, BarChart3, FileText,
   MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign,
-  Menu, _X, ChevronRight, Home
+  Menu, X, ChevronRight, Home
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

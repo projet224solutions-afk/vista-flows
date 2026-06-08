@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useWallet } from '@/hooks/useWallet';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,8 @@ interface NavItem {
   disabled?: boolean;
   /** Clé de permission requise pour afficher cet item */
   permission?: string;
+  /** Si défini, le clic navigue vers cette route (au lieu de changer d'onglet interne) */
+  external?: string;
 }
 
 export function AgentLayoutProfessional({
@@ -81,6 +84,7 @@ export function AgentLayoutProfessional({
   onSignOut,
   unifiedPermissions = {}
 }: AgentLayoutProfessionalProps) {
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { wallet } = useWallet();
@@ -285,6 +289,19 @@ export function AgentLayoutProfessional({
       badge: 'Nouveau'
     },
     // --- Fin nouvelles fonctionnalités ---
+    // Passerelle vers l'interface PDG filtrée : donne accès à TOUTES les permissions
+    // accordées par le PDG (y compris celles sans module dédié ici : syndicat, agents,
+    // paiements, id-normalization, etc.). Visible dès qu'au moins une permission est accordée.
+    ...(Object.values(unifiedPermissions).some((v) => v === true)
+      ? ([{
+          id: 'pdg-access',
+          label: 'Mes accès PDG',
+          icon: <Shield className="w-5 h-5" />,
+          gradient: '',
+          external: '/pdg',
+          badge: 'Accès',
+        }] as NavItem[])
+      : []),
     {
       id: 'create-user',
       label: 'Créer Utilisateur',
@@ -486,7 +503,11 @@ export function AgentLayoutProfessional({
                         ],
                         isDisabled && "opacity-40 cursor-not-allowed"
                       )}
-                      onClick={() => !isDisabled && onTabChange(item.id)}
+                      onClick={() => {
+                        if (isDisabled) return;
+                        if (item.external) { setMobileMenuOpen(false); navigate(item.external); return; }
+                        onTabChange(item.id);
+                      }}
                       disabled={isDisabled}
                     >
                       <span className={cn(

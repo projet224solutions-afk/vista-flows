@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,9 +15,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Wrench, Smartphone, _Monitor, Car,
-  Zap, Home, Clock, CheckCircle2, _AlertCircle,
-  _Calendar, DollarSign, TrendingUp, _Users
+  Wrench, Smartphone, Monitor, Car,
+  Zap, Home, Clock, CheckCircle2, AlertCircle,
+  Calendar, DollarSign, TrendingUp, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -77,7 +78,7 @@ const REPAIR_CATEGORIES: RepairCategory[] = [
   }
 ];
 
-export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
+export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [requests, setRequests] = useState<RepairRequest[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,7 +212,7 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold"><Money amount={stats.revenue} from="GNF" /></div>
             <p className="text-xs text-muted-foreground">Ce mois</p>
           </CardContent>
         </Card>
@@ -417,7 +418,7 @@ export function RepairModule({ _serviceId, businessName }: RepairModuleProps) {
                                 <p className="text-sm">{request.description}</p>
                                 {request.estimatedCost && (
                                   <p className="text-sm font-medium text-primary">
-                                    Devis: {request.estimatedCost.toLocaleString()} GNF
+                                    Devis: <Money amount={request.estimatedCost} from="GNF" />
                                   </p>
                                 )}
                               </div>

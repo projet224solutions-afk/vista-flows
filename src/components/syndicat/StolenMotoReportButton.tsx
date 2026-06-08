@@ -36,7 +36,7 @@ interface Props {
   bureauLocation: string;
 }
 
-export default function StolenMotoReportButton({ moto, _bureauName, bureauLocation }: Props) {
+export default function StolenMotoReportButton({ moto, bureauName, bureauLocation }: Props) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
-import { _Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -55,7 +55,7 @@ interface DropshipOrdersProps {
   onUpdateStatus: (orderId: string, status: string, notes?: string) => Promise<boolean>;
 }
 
-export function DropshipOrders({ orders, _loading, onUpdateStatus }: DropshipOrdersProps) {
+export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrdersProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DropshipOrder | null>(null);
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);

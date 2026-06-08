@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Phone, Map, Navigation, CheckCircle, _ExternalLink, MapPin, _Video } from 'lucide-react';
+import { AlertTriangle, Phone, Map, Navigation, CheckCircle, ExternalLink, MapPin, Video } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
 import { supabase } from '@/integrations/supabase/client';
 import type { SOSAlert } from '@/types/sos.types';

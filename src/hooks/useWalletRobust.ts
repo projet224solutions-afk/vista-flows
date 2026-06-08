@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useMoneyFormat } from '@/components/Money';
 import { toast } from 'sonner';
 import { circuitBreaker } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
@@ -75,6 +76,7 @@ const QUERY_RETRY_CONFIG: Partial<RetryConfig> = {
 
 export const useWalletRobust = () => {
   const { user } = useAuth();
+  const { format: fmtMoney, userCurrency } = useMoneyFormat();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [stats, setStats] = useState<WalletStats | null>(null);
@@ -358,7 +360,7 @@ export const useWalletRobust = () => {
     );
 
     if (result.success) {
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Dépôt de ${fmtMoney(amount, userCurrency)} réussi !`);
     } else {
       toast.error(result.error || 'Erreur lors du dépôt');
     }
@@ -409,7 +411,7 @@ export const useWalletRobust = () => {
     );
 
     if (result.success) {
-      toast.success(`Retrait de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Retrait de ${fmtMoney(amount, userCurrency)} réussi !`);
     } else {
       toast.error(result.error || 'Erreur lors du retrait');
     }
@@ -468,7 +470,7 @@ export const useWalletRobust = () => {
     );
 
     if (result.success) {
-      toast.success(`Transfert de ${amount.toLocaleString()} GNF réussi !`);
+      toast.success(`Transfert de ${fmtMoney(amount, userCurrency)} réussi !`);
     } else {
       toast.error(result.error || 'Erreur lors du transfert');
     }

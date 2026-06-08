@@ -38,7 +38,7 @@ export function UniversalMarketplaceCard({
 }: UniversalMarketplaceCardProps) {
   const { convert, loading: priceLoading } = usePriceConverter();
   const { t } = useTranslation();
-  const { _displayCurrency } = useDisplayCurrency();
+  const { displayCurrency } = useDisplayCurrency();
 
   // Images par défaut selon le type
   const defaultImage =

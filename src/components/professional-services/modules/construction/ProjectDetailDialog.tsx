@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { _Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -101,8 +102,8 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
           <Progress value={progressCalc} className="h-3" />
           <div className="grid grid-cols-3 gap-3 text-center text-sm">
             <div className="bg-muted/50 rounded-lg p-2">
-              <p className="font-bold">{Number(project.budget_estimated).toLocaleString()}</p>
-              <p className="text-muted-foreground text-xs">Budget GNF</p>
+              <p className="font-bold"><Money amount={Number(project.budget_estimated)} from="GNF" /></p>
+              <p className="text-muted-foreground text-xs">Budget</p>
             </div>
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold">{project.estimated_duration_days}j</p>

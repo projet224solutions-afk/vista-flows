@@ -2,6 +2,7 @@ import React, { createContext, useContext, useRef, useMemo, useCallback } from '
 import { toast } from 'sonner';
 import { useListPersistence } from '@/hooks/useAppPersistence';
 import { trackCartAdd } from '@/hooks/useProductRecommendations';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export interface CartItem {
   id: string;
@@ -58,6 +59,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onRestore: handleRestore,
   });
 
+  // Convertit chaque item depuis SA devise (vendeur) vers la devise d'affichage de l'utilisateur.
+  const { convert } = usePriceConverter();
+
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     if (item.item_type === 'digital_product') {
       toast.info('Les produits numériques ne passent pas par le panier. Utilisez le bouton Acheter.');
@@ -97,9 +101,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.info('Panier vidé');
   }, [clearList]);
 
+  // Total CONVERTI : chaque item est converti depuis SA devise (vendeur) vers la devise d'affichage
+  // avant la somme. Avant : somme des prix bruts → faux pour un panier multi-vendeur multi-devise.
   const getCartTotal = useCallback(() => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [cartItems]);
+    return cartItems.reduce(
+      (total, item) => total + convert(item.price, item.currency || 'GNF').convertedAmount * item.quantity,
+      0,
+    );
+  }, [cartItems, convert]);
 
   const getCartCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);

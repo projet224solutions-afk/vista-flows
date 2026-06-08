@@ -10,7 +10,7 @@ import DetailedTransactionsList from './DetailedTransactionsList';
 import {
   Wallet,
   TrendingUp,
-  _ShoppingCart,
+  ShoppingCart,
   Users,
   Truck,
   Package,

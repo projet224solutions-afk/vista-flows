@@ -19,6 +19,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Money } from '@/components/Money';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 interface ServiceSubscriptionCardProps {
   serviceId: string;
@@ -40,7 +42,6 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
     daysRemaining,
     subscribe,
     canAccessFeature,
-    formatAmount,
     refresh,
   } = useServiceSubscription({ serviceId, serviceTypeId });
 
@@ -48,20 +49,25 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
   const [subscribing, setSubscribing] = useState(false);
   const [selectedBilling, setSelectedBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCurrency, setWalletCurrency] = useState('GNF');
+
+  // Convertisseur (taux BCRG) : prix plans en GNF → devise réelle du wallet de l'utilisateur
+  const { convert } = usePriceConverter();
 
   // Confirmation avant achat
   const [confirmPlan, setConfirmPlan] = useState<{ id: string; name: string; price: number } | null>(null);
 
-  // Lire le solde GNF directement depuis Supabase — même source que record_service_subscription_payment
+  // Lire le wallet RÉEL de l'utilisateur (peu importe la devise — le PDG peut l'avoir changée).
+  // On ne filtre plus sur GNF, sinon un prestataire passé en XOF/EUR verrait un solde à 0.
   const loadWalletBalance = async () => {
     if (!user?.id) return;
     const { data } = await supabase
       .from('wallets')
-      .select('balance')
+      .select('balance, currency')
       .eq('user_id', user.id)
-      .eq('currency', 'GNF')
       .maybeSingle();
     setWalletBalance(Number(data?.balance ?? 0));
+    if (data?.currency) setWalletCurrency(data.currency);
   };
 
   useEffect(() => {
@@ -87,8 +93,12 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
       ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
       : plan.monthly_price_gnf;
 
-    if (price > 0 && walletBalance < price) {
-      toast.error(`Solde insuffisant — disponible : ${formatAmount(walletBalance)} GNF, requis : ${formatAmount(price)} GNF`);
+    // Prix plan (GNF) converti dans la devise réelle du wallet pour une comparaison correcte
+    const priceInWalletCurrency = convert(price, 'GNF').convertedAmount;
+    if (price > 0 && walletBalance < priceInWalletCurrency) {
+      const dispo = convert(walletBalance, walletCurrency).formatted;
+      const requis = convert(price, 'GNF').formatted;
+      toast.error(`Solde insuffisant — disponible : ${dispo}, requis : ${requis}`);
       return;
     }
 
@@ -184,14 +194,13 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
           onBillingChange={setSelectedBilling}
           onSubscribe={handleRequestSubscribe}
           subscribing={subscribing}
-          formatAmount={formatAmount}
           walletBalance={walletBalance}
+          walletCurrency={walletCurrency}
         />
 
         <ConfirmDialog
           plan={confirmPlan}
           billing={selectedBilling}
-          formatAmount={formatAmount}
           onConfirm={handleConfirmSubscribe}
           onCancel={() => setConfirmPlan(null)}
         />
@@ -285,7 +294,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
               <Wallet className="w-3.5 h-3.5" />
               Solde wallet
             </span>
-            <span className="font-medium">{formatAmount(walletBalance)} GNF</span>
+            <span className="font-medium"><Money amount={walletBalance} from={walletCurrency} /></span>
           </div>
 
           {/* Limites du plan */}
@@ -335,14 +344,13 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
         onBillingChange={setSelectedBilling}
         onSubscribe={handleRequestSubscribe}
         subscribing={subscribing}
-        formatAmount={formatAmount}
         walletBalance={walletBalance}
+        walletCurrency={walletCurrency}
       />
 
       <ConfirmDialog
         plan={confirmPlan}
         billing={selectedBilling}
-        formatAmount={formatAmount}
         onConfirm={handleConfirmSubscribe}
         onCancel={() => setConfirmPlan(null)}
       />
@@ -354,13 +362,11 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
 function ConfirmDialog({
   plan,
   billing,
-  formatAmount,
   onConfirm,
   onCancel,
 }: {
   plan: { id: string; name: string; price: number } | null;
   billing: 'monthly' | 'yearly';
-  formatAmount: (n: number) => string;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -387,7 +393,7 @@ function ConfirmDialog({
                 <div className="flex justify-between border-t pt-1.5 mt-1.5">
                   <span className="text-muted-foreground">Montant débité</span>
                   <span className="font-bold text-primary">
-                    {plan ? formatAmount(plan.price) : '—'} GNF
+                    {plan ? <Money amount={plan.price} from="GNF" /> : '—'}
                   </span>
                 </div>
               </div>
@@ -419,8 +425,8 @@ function PlansDialog({
   onBillingChange,
   onSubscribe,
   subscribing,
-  formatAmount,
   walletBalance,
+  walletCurrency,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -430,9 +436,10 @@ function PlansDialog({
   onBillingChange: (billing: 'monthly' | 'yearly') => void;
   onSubscribe: (planId: string) => void;
   subscribing: boolean;
-  formatAmount: (amount: number) => string;
   walletBalance: number;
+  walletCurrency: string;
 }) {
+  const { convert } = usePriceConverter();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -449,7 +456,7 @@ function PlansDialog({
             <Wallet className="w-4 h-4" />
             Solde disponible
           </span>
-          <span className="font-semibold">{formatAmount(walletBalance)} GNF</span>
+          <span className="font-semibold"><Money amount={walletBalance} from={walletCurrency} /></span>
         </div>
 
         {/* Toggle facturation */}
@@ -483,7 +490,9 @@ function PlansDialog({
               const price = selectedBilling === 'yearly'
                 ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
                 : plan.monthly_price_gnf;
-              const canAfford = plan.monthly_price_gnf === 0 || walletBalance >= price;
+              // Prix (GNF) converti dans la devise du wallet pour comparer correctement
+              const priceInWalletCurrency = convert(price, 'GNF').convertedAmount;
+              const canAfford = plan.monthly_price_gnf === 0 || walletBalance >= priceInWalletCurrency;
 
               return (
                 <Card key={plan.id} className={cn(
@@ -511,7 +520,7 @@ function PlansDialog({
 
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-black">
-                        {plan.monthly_price_gnf === 0 ? 'Gratuit' : formatAmount(price)}
+                        {plan.monthly_price_gnf === 0 ? 'Gratuit' : <Money amount={price} from="GNF" />}
                       </span>
                       {plan.monthly_price_gnf > 0 && (
                         <span className="text-xs text-muted-foreground">
@@ -524,7 +533,7 @@ function PlansDialog({
                     {!canAfford && plan.monthly_price_gnf > 0 && (
                       <div className="flex items-center gap-1 text-[10px] text-destructive">
                         <AlertTriangle className="w-3 h-3" />
-                        Solde insuffisant ({formatAmount(price - walletBalance)} GNF manquants)
+                        Solde insuffisant ({convert(Math.max(0, priceInWalletCurrency - walletBalance), walletCurrency).formatted} manquants)
                       </div>
                     )}
 

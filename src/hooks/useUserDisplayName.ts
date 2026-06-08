@@ -3,7 +3,7 @@
  * Source de vérité unique: profiles.public_id
  */
 import { useState, useEffect } from 'react';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 interface UserDisplayInfo {

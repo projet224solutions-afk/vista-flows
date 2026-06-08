@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, _CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,13 +25,13 @@ import {
   Settings,
   Plus,
   TrendingUp,
-  _DollarSign,
+  DollarSign,
   AlertTriangle,
   BarChart3,
-  _RefreshCw,
-  _Loader2,
+  RefreshCw,
+  Loader2,
   Activity,
-  _ShoppingCart
+  ShoppingCart
 } from 'lucide-react';
 
 // Components

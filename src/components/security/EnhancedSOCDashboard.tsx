@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Shield, Clock, Users, _Activity, AlertTriangle, CheckCircle,
-  _XCircle, RefreshCw, Phone, _Mail, _UserCheck, Eye, FileText
+  Shield, Clock, Users, Activity, AlertTriangle, CheckCircle,
+  XCircle, RefreshCw, Phone, Mail, UserCheck, Eye, FileText
 } from "lucide-react";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveContainer";
 import { useSecurityOps } from "@/hooks/useSecurityOps";
@@ -43,7 +43,7 @@ interface Investigation {
 }
 
 export function EnhancedSOCDashboard() {
-  const { _incidents, _alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
+  const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
   const [analysts, setAnalysts] = useState<SOCAnalyst[]>([]);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
   const [loadingAnalysts, setLoadingAnalysts] = useState(true);

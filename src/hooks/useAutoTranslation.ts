@@ -4,10 +4,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { translationService, SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { Message } from '@/types/communication.types';
-import { _getLanguageForCountry } from '@/data/countryMappings';
+import { getLanguageForCountry } from '@/data/countryMappings';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 interface UseAutoTranslationOptions {

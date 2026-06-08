@@ -17,7 +17,7 @@ import {
   CalendarDays,
   Calendar,
   CalendarRange,
-  _TrendingUp,
+  TrendingUp,
   Lock,
   Package
 } from 'lucide-react';
@@ -179,7 +179,7 @@ export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionPro
           {/* Tabs de période */}
           <Tabs value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
             <TabsList className="grid grid-cols-5 w-full">
-              {Object.entries(periodConfig).map(([key, { _label, icon: Icon }]) => (
+              {Object.entries(periodConfig).map(([key, { label, icon: Icon }]) => (
                 <TabsTrigger key={key} value={key} className="text-xs px-2">
                   <Icon className="h-3 w-3 mr-1 hidden sm:inline" />
                   {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'Année' : 'Tout'}

@@ -44,7 +44,7 @@ export interface ConflictContext<T = any> {
 export async function resolvePOSSaleConflict<T = any>(
   context: ConflictContext<T>
 ): Promise<ConflictResolution<T>> {
-  const { localData, serverData, _localModified, _serverModified } = context;
+  const { localData, serverData, localModified, serverModified } = context;
 
   // Pour les ventes POS, la version locale prime TOUJOURS
   // Car elle représente une transaction physique déjà effectuée

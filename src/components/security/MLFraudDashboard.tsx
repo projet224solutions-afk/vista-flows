@@ -28,8 +28,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  _BarChart,
-  _Bar,
+  BarChart,
+  Bar,
   Legend
 } from 'recharts';
 

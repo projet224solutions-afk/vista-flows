@@ -23,12 +23,12 @@ import {
   Car,
   Package,
   Star,
-  _Clock,
+  Clock,
   Download,
   RefreshCw,
   Mail,
   Phone,
-  _MapPin,
+  MapPin,
   Calendar,
   Activity,
   TrendingUp,
@@ -51,7 +51,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft
 } from 'lucide-react';
-import { useUserActivityTracker, _UserActivitySummary, MessageActivity } from '@/hooks/useUserActivityTracker';
+import { useUserActivityTracker, UserActivitySummary, MessageActivity } from '@/hooks/useUserActivityTracker';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -847,7 +847,7 @@ export function UserActivitySearch() {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="font-medium">Commande #{order.order_number || order.id.slice(0, 8)}</p>
+                                <p className="font-medium">Commande #{order.order_number || String(order.id).slice(0, 8)}</p>
                                 {order.role && (
                                   <Badge variant="outline" className="text-xs">
                                     {order.role === 'customer' ? 'Client' : 'Vendeur'}
@@ -1112,7 +1112,7 @@ export function UserActivitySearch() {
                       ) : (
                         activityData.favorites.map((f: any) => (
                           <div key={f.id} className="p-2 mb-2 bg-muted/30 rounded-lg text-xs">
-                            <p className="font-mono">{f.product_id?.slice(0, 8) || f.id.slice(0, 8)}...</p>
+                            <p className="font-mono">{String(f.product_id || f.id || '').slice(0, 8)}...</p>
                             <p className="text-muted-foreground">
                               {f.created_at && format(new Date(f.created_at), 'dd/MM/yyyy')}
                             </p>

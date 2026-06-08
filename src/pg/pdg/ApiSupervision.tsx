@@ -12,13 +12,13 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertTriangle, Activity, Key, Plus, RefreshCw,
-  _TrendingUp, _TrendingDown, Shield, Bell, _Settings,
+  TrendingUp, TrendingDown, Shield, Bell, Settings,
   CheckCircle2, XCircle, Clock, Zap, ArrowLeft
 } from 'lucide-react';
 import { ApiMonitoringService, ApiConnection, ApiAlert } from '@/services/apiMonitoring';
 import { maskApiKey } from '@/services/apiEncryption';
 import { toast } from 'sonner';
-import { _LineChart, _Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import ApiDetailsModal from '@/components/pdg/ApiDetailsModal';
 import AddApiModal from '@/components/pdg/AddApiModal';
 import ApiAnalytics from '@/components/pdg/ApiAnalytics';

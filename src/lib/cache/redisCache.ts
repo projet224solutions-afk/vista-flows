@@ -33,7 +33,7 @@ function setInMemory(key: string, data: any, ttlSeconds: number) {
 // Appel Edge Function Redis
 async function redisGet(key: string): Promise<any | null> {
   try {
-    const { _data, _error } = await supabase.functions.invoke('redis-cache', {
+    const { data, error } = await supabase.functions.invoke('redis-cache', {
       body: null,
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },

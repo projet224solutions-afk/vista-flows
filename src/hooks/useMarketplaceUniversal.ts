@@ -147,7 +147,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           created_at,
           marketplace_position,
           is_sponsored,
-          vendors(business_name, user_id, business_type, country, city),
+          seller_currency,
+          vendors(business_name, user_id, business_type, country, city, shop_currency),
           categories(name)
         `)
         .eq('is_active', true);
@@ -222,8 +223,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       return filtered.map(product => {
         const vendor = product.vendors as any;
         const vendorUserId = vendor?.user_id;
-        const vendorCountry = vendor?.country || '';
-        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
+        // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF. PAS shop_currency (parfois faux).
+        const derivedCurrency = getCurrencyForCountry(vendor?.country || '');
 
         return {
           id: product.id,

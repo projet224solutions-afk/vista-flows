@@ -61,7 +61,7 @@ export function BureauStatsCards({
     },
     {
       title: 'Solde Wallet',
-      value: formatAmount(walletBalance),
+      value: formatAmount(walletBalance, currency),
       subtitle: currency,
       icon: <Wallet className="w-6 h-6 text-white" />,
       gradient: ''

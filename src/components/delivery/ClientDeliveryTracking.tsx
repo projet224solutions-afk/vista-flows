@@ -6,7 +6,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, _Navigation, Clock, Phone, User, Package } from 'lucide-react';
+import { MapPin, Navigation, Clock, Phone, User, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import mapboxgl from 'mapbox-gl';

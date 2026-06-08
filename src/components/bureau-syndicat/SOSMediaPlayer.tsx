@@ -13,7 +13,7 @@ import {
   Mic,
   Play,
   Pause,
-  _Eye,
+  Eye,
   Clock,
   User,
   Download,

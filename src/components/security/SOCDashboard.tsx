@@ -13,7 +13,7 @@ import { useSecurityOps } from "@/hooks/useSecurityOps";
 import { toast } from "sonner";
 
 export function SOCDashboard() {
-  const { incidents, _alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
+  const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
   const [socStatus, _setSocStatus] = useState({
     operational: true,
     activeAnalysts: 3,

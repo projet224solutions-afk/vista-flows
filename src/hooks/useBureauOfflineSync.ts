@@ -76,7 +76,7 @@ export function useBureauOfflineSync(bureauId?: string) {
         type: 'motorcycle'
       };
 
-      const { _data, error } = await supabase
+      const { data, error } = await supabase
         .from('vehicles')
         .upsert(vehicleData, { onConflict: 'serial_number' });
 
@@ -96,7 +96,7 @@ export function useBureauOfflineSync(bureauId?: string) {
    */
   const syncMemberEvent = async (event: any) => {
     try {
-      const { _data, error } = await supabase
+      const { data, error } = await supabase
         .from('syndicate_workers')
         .upsert(event.data);
 

@@ -10,8 +10,8 @@ import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Calendar, Clock, Users, Phone, Mail, User, Sparkles, Check, AlertCircle,
-  UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, _Trash2, ChevronRight,
-  _Flame, _Leaf, _Info, _Download, Receipt, Eye, Wallet
+  UtensilsCrossed, CreditCard, ShoppingCart, Plus, Minus, Trash2, ChevronRight,
+  Flame, Leaf, Info, Download, Receipt, Eye, Wallet
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,18 +22,19 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useRestaurantReservations, TimeSlot, ReservationFormData } from '@/hooks/useRestaurantReservations';
-import { useRestaurantMenu, MenuItem, _MenuCategory } from '@/hooks/useRestaurantMenu';
+import { useRestaurantMenu, MenuItem, MenuCategory } from '@/hooks/useRestaurantMenu';
 import { useAuth } from '@/hooks/useAuth';
-import { _supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { supabase } from '@/integrations/supabase/client';
 import { StripePaymentWrapper } from '@/components/payment/StripePaymentWrapper';
-import { _useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
+import { useFormPersistence, useAppPersistence } from '@/hooks/useAppPersistence';
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export function ReservationModal({
   restaurantPhone
 }: ReservationModalProps) {
   const { user } = useAuth();
+  const fc = useFormatCurrency();
   const { createReservation, checkAvailability } = useRestaurantReservations(serviceId);
   const { categories, menuItems, loading: menuLoading } = useRestaurantMenu(serviceId);
 
@@ -256,10 +258,10 @@ export function ReservationModal({
         reservation_time: selectedTime,
         special_requests: specialRequests
           ? (preorderData
-            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${fc(cartTotal)}${paymentInfo}`
             : `${specialRequests}${paymentInfo}`)
           : (preorderData
-            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${fc(cartTotal)}${paymentInfo}`
             : (paymentInfo ? paymentInfo.trim() : undefined)),
       };
 
@@ -682,7 +684,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                               )}
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="font-semibold text-primary">
-                                  {item.price.toLocaleString()} GNF
+                                  {fc(item.price)}
                                 </span>
                                 {item.preparation_time && (
                                   <span className="text-xs text-muted-foreground">
@@ -748,13 +750,13 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                         {cart.map(c => (
                           <div key={c.menuItem.id} className="flex justify-between">
                             <span>{c.quantity}x {c.menuItem.name}</span>
-                            <span>{(c.menuItem.price * c.quantity).toLocaleString()} GNF</span>
+                            <span>{fc(c.menuItem.price * c.quantity)}</span>
                           </div>
                         ))}
                       </div>
                       <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
                         <span>Total</span>
-                        <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
+                        <span className="text-primary">{fc(cartTotal)}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -801,7 +803,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               {cart.length > 0 && (
                 <Badge className="h-10 px-4 bg-orange-500">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {cartTotal.toLocaleString()} GNF
+                  {fc(cartTotal)}
                 </Badge>
               )}
             </div>
@@ -917,7 +919,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             <div className="space-y-6">
               <div className="text-center mb-4">
                 <h3 className="text-xl font-semibold">Paiement par carte</h3>
-                <p className="text-muted-foreground">Montant: {cartTotal.toLocaleString()} GNF</p>
+                <p className="text-muted-foreground">Montant: {fc(cartTotal)}</p>
               </div>
 
               <StripePaymentWrapper
@@ -958,12 +960,12 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 {cart.map(c => (
                   <div key={c.menuItem.id} className="flex justify-between text-sm">
                     <span>{c.quantity}x {c.menuItem.name}</span>
-                    <span>{(c.menuItem.price * c.quantity).toLocaleString()} GNF</span>
+                    <span>{fc(c.menuItem.price * c.quantity)}</span>
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
                   <span>Total à payer</span>
-                  <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
+                  <span className="text-primary">{fc(cartTotal)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1112,7 +1114,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Précommande</span>
                     <span className="font-semibold text-orange-600">
-                      {confirmationData.preorderTotal.toLocaleString()} GNF
+                      {fc(confirmationData.preorderTotal)}
                     </span>
                   </div>
                   {confirmationData?.paymentIntentId && (

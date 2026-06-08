@@ -615,13 +615,7 @@ router.post('/admin/change-currency', verifyJWT, async (req: AuthenticatedReques
       oldCurrency = vendor.shop_currency || 'GNF';
     }
 
-    // 3. Même devise → no-op
-    if (oldCurrency.toUpperCase() === newCurrency) {
-      res.json({ success: true, changed: false, message: `La devise est déjà ${newCurrency}` });
-      return;
-    }
-
-    // 4. Récupérer le wallet du vendeur (solde + devise actuelle)
+    // 3. Récupérer le wallet (solde + devise actuelle)
     const { data: wallet } = await supabaseAdmin
       .from('wallets')
       .select('id, balance, currency')
@@ -632,47 +626,59 @@ router.post('/admin/change-currency', verifyJWT, async (req: AuthenticatedReques
     const currentBalance = Number(wallet?.balance || 0);
     const walletCurrency = (wallet?.currency || oldCurrency).toUpperCase();
 
-    // 5. Récupérer les taux BCRG — live en priorité, cache en fallback
-    const bcrgRates = await fetchLiveBcrgRates();
-    if (!bcrgRates) {
-      logger.warn(`[VendorCurrency] BCRG indisponible (live + cache) pour ${vendor_id}: ${oldCurrency}→${newCurrency}`);
-      res.status(503).json({
-        success: false,
-        error: 'Aucun taux de change disponible (ni en direct ni en cache). Réessayez dans quelques minutes.',
-        bcrg_unavailable: true,
-      });
-      return;
+    // 4+5+6. Taux de conversion du solde wallet.
+    // ⚠️ On ne court-circuite PLUS si oldCurrency===newCurrency : un compte peut être INCOHÉRENT
+    // (wallet déjà XOF mais profil GNF / boutique GBP) → il faut quand même tout resynchroniser.
+    // Si le WALLET est déjà dans la devise cible → taux 1, pas besoin du BCRG (réconciliation pure).
+    let bcrgRates: Awaited<ReturnType<typeof fetchLiveBcrgRates>> = null;
+    let rate = 1;
+    let rateDescription = `Réconciliation (wallet déjà en ${newCurrency})`;
+
+    if (walletCurrency !== newCurrency) {
+      bcrgRates = await fetchLiveBcrgRates();
+      if (!bcrgRates) {
+        logger.warn(`[VendorCurrency] BCRG indisponible (live + cache) pour ${vendor_id}: ${walletCurrency}→${newCurrency}`);
+        res.status(503).json({
+          success: false,
+          error: 'Aucun taux de change disponible (ni en direct ni en cache). Réessayez dans quelques minutes.',
+          bcrg_unavailable: true,
+        });
+        return;
+      }
+      if (!bcrgRates.isLive) {
+        logger.info(`[VendorCurrency] BCRG live inaccessible — cache (${bcrgRates.retrievedAt}) pour ${vendor_id}`);
+      }
+      const conversionResult = computeConversionRate(walletCurrency, newCurrency, bcrgRates);
+      if (!conversionResult) {
+        const available = ['GNF', ...Object.keys(bcrgRates.gnfRates), 'XOF', 'XAF'].filter((v, i, a) => a.indexOf(v) === i);
+        res.status(422).json({
+          success: false,
+          error: `Aucun taux disponible pour convertir ${walletCurrency}→${newCurrency}. Devises disponibles : ${available.join(', ')}.`,
+          supported_currencies: available,
+        });
+        return;
+      }
+      rate = conversionResult.rate;
+      rateDescription = conversionResult.description;
     }
 
-    if (!bcrgRates.isLive) {
-      logger.info(`[VendorCurrency] BCRG live inaccessible — utilisation du cache (récupéré le ${bcrgRates.retrievedAt}) pour ${vendor_id}`);
-    }
-
-    // 6. Calculer le taux de conversion du solde wallet
-    const conversionResult = computeConversionRate(walletCurrency, newCurrency, bcrgRates);
-    if (!conversionResult) {
-      const available = ['GNF', ...Object.keys(bcrgRates.gnfRates), 'XOF', 'XAF'].filter((v, i, a) => a.indexOf(v) === i);
-      res.status(422).json({
-        success: false,
-        error: `Aucun taux disponible pour convertir ${walletCurrency}→${newCurrency}. Devises disponibles : ${available.join(', ')}.`,
-        supported_currencies: available,
-      });
-      return;
-    }
-
-    const { rate, description: rateDescription } = conversionResult;
     const newBalance = currentBalance === 0 ? 0 : roundForCurrency(currentBalance * rate, newCurrency);
 
     logger.info(`[VendorCurrency] ${vendor_id}: ${walletCurrency} ${currentBalance} → ${newCurrency} ${newBalance} (taux=${rate}, ${rateDescription})`);
 
-    // 7. Compter les escrows actifs (commandes en cours dans l'ancienne devise)
-    let activeEscrow = 0;
-    if (entity_type !== 'agent') {
-      const { data: vendorOrders } = await supabaseAdmin
-        .from('orders')
-        .select('id')
-        .eq('vendor_id', vendor_id);
+    // 7. Résoudre TOUS les enregistrements devise de cet utilisateur (par user_id).
+    //    C'EST LA CLÉ : une conversion PDG doit tout aligner, peu importe par quel écran
+    //    (user/vendor/agent) elle est lancée → wallet + profil + boutique + produits + agent.
+    const [{ data: vendorRecord }, { data: agentRecord }] = await Promise.all([
+      supabaseAdmin.from('vendors').select('id').eq('user_id', vendorUserId).maybeSingle(),
+      supabaseAdmin.from('agents_management').select('id').eq('user_id', vendorUserId).maybeSingle(),
+    ]);
 
+    // Escrows actifs (commandes en cours) de la boutique du user, si vendeur.
+    let activeEscrow = 0;
+    if (vendorRecord?.id) {
+      const { data: vendorOrders } = await supabaseAdmin
+        .from('orders').select('id').eq('vendor_id', vendorRecord.id);
       if (vendorOrders && vendorOrders.length > 0) {
         const orderIds = vendorOrders.map((o: any) => o.id);
         const { count } = await supabaseAdmin
@@ -684,80 +690,70 @@ router.post('/admin/change-currency', verifyJWT, async (req: AuthenticatedReques
       }
     }
 
-    // 8. Mise à jour atomique : vendor + wallet + produits
     const now = new Date().toISOString();
-
-    // 8a. Mettre à jour la devise du vendeur/agent (pas nécessaire pour entity_type 'user'/'client')
-    if (entity_type === 'agent') {
-      const { error: agentErr } = await supabaseAdmin
-        .from('agents_management')
-        .update({ currency: newCurrency, country_code: newCountryCode, updated_at: now })
-        .eq('id', vendor_id);
-      if (agentErr) logger.warn(`[VendorCurrency] Mise à jour agent ${vendor_id}: ${agentErr.message}`);
-    } else if (entity_type !== 'user' && entity_type !== 'client') {
-      // Tenter avec currency_locked (migration appliquée) sinon sans
-      const { error: vendorErr } = await supabaseAdmin
-        .from('vendors')
-        .update({ shop_currency: newCurrency, seller_country_code: newCountryCode, currency_locked: true, updated_at: now } as any)
-        .eq('id', vendor_id);
-      if (vendorErr) {
-        logger.warn(`[VendorCurrency] Tentative sans currency_locked pour vendor ${vendor_id}: ${vendorErr.message}`);
-        const { error: vendorErr2 } = await supabaseAdmin
-          .from('vendors')
-          .update({ shop_currency: newCurrency, updated_at: now } as any)
-          .eq('id', vendor_id);
-        if (vendorErr2) throw new Error(`Impossible de mettre à jour le vendeur: ${vendorErr2.message}`);
-      }
-    }
-
-    // 8b. Convertir le solde du wallet + mettre à jour la devise (OPÉRATION CRITIQUE)
-    if (wallet) {
-      // Tenter avec currency_locked (migration appliquée) sinon sans
-      const lockReason = `Changement de devise PDG: ${walletCurrency}→${newCurrency} au taux BCRG ${rate.toFixed(6)} (${rateDescription})`;
-      const { error: walletErr } = await supabaseAdmin
-        .from('wallets')
-        .update({ currency: newCurrency, balance: newBalance, currency_locked: true, currency_lock_reason: lockReason, updated_at: now } as any)
-        .eq('id', wallet.id);
-      if (walletErr) {
-        logger.warn(`[VendorCurrency] Tentative sans currency_locked pour wallet ${wallet.id}: ${walletErr.message}`);
-        const { error: walletErr2 } = await supabaseAdmin
-          .from('wallets')
-          .update({ currency: newCurrency, balance: newBalance, updated_at: now })
-          .eq('id', wallet.id);
-        if (walletErr2) throw new Error(`Impossible de mettre à jour le wallet: ${walletErr2.message}`);
-      }
-    }
-
-    // 8b2. Mettre à jour le profil utilisateur (pays + devise + profile_completed)
-    // → empêche CountrySelectionGate de bloquer l'utilisateur au prochain login
-    const { error: vendorProfileErr } = await supabaseAdmin
-      .from('profiles')
-      .update({ detected_country: newCountryCode || null, detected_currency: newCurrency, country: newCountryCode || null, updated_at: now } as any)
-      .eq('id', vendorUserId);
-    if (!vendorProfileErr) {
-      // Tenter profile_completed = true si la colonne existe (migration 20260512)
-      await supabaseAdmin
-        .from('profiles')
-        .update({ profile_completed: true } as any)
-        .eq('id', vendorUserId);
-    }
-
-    // 8c. Flaguer les produits actifs pour révision des prix
+    const lockReason = `Changement de devise PDG: ${walletCurrency}→${newCurrency} (taux ${rate.toFixed(6)}, ${rateDescription})`;
     let productsFlagged = 0;
-    if (entity_type !== 'agent') {
-      const { count: pCount } = await supabaseAdmin
-        .from('products')
-        .select('id', { count: 'exact', head: true })
-        .eq('vendor_id', vendor_id)
-        .eq('is_active', true);
 
-      await supabaseAdmin
-        .from('products')
-        .update({ needs_currency_review: true, seller_currency: newCurrency, updated_at: now })
-        .eq('vendor_id', vendor_id)
-        .eq('is_active', true);
+    // 8. ÉCRITURES ATOMIQUES (tout-ou-rien) via RPC change_user_currency_atomic : wallet + profil +
+    //    boutique + produits + agent en UNE transaction PostgreSQL. Fallback séquentiel si le RPC
+    //    n'est pas encore appliqué en base (migration 20260606170000) — fonctionnel mais non atomique.
+    const { data: atomicRes, error: atomicErr } = await supabaseAdmin.rpc('change_user_currency_atomic', {
+      p_user_id: vendorUserId,
+      p_new_currency: newCurrency,
+      p_new_country: newCountryCode || null,
+      p_wallet_id: wallet?.id ?? null,
+      p_new_balance: newBalance,
+      p_lock_reason: lockReason,
+    });
 
-      productsFlagged = pCount || 0;
+    if (!atomicErr && atomicRes?.success) {
+      // ✅ Chemin ATOMIQUE
+      productsFlagged = Number(atomicRes.products_flagged || 0);
+      await supabaseAdmin.from('profiles').update({ profile_completed: true } as any).eq('id', vendorUserId);
+    } else {
+      // ⚠️ FALLBACK séquentiel (RPC absent ou en échec) — non atomique mais maintient le service.
+      logger.warn(`[VendorCurrency] RPC atomique indisponible (${atomicErr?.message || atomicRes?.error || 'inconnu'}) → fallback séquentiel`);
+
+      if (wallet) {
+        const { error: walletErr } = await supabaseAdmin
+          .from('wallets')
+          .update({ currency: newCurrency, balance: newBalance, currency_locked: true, currency_lock_reason: lockReason, updated_at: now } as any)
+          .eq('id', wallet.id);
+        if (walletErr) {
+          const { error: walletErr2 } = await supabaseAdmin
+            .from('wallets').update({ currency: newCurrency, balance: newBalance, updated_at: now }).eq('id', wallet.id);
+          if (walletErr2) throw new Error(`Impossible de mettre à jour le wallet: ${walletErr2.message}`);
+        }
+      }
+
+      const { error: profileSyncErr } = await supabaseAdmin
+        .from('profiles')
+        .update({ detected_country: newCountryCode || null, detected_currency: newCurrency, country: newCountryCode || null, updated_at: now } as any)
+        .eq('id', vendorUserId);
+      if (!profileSyncErr) {
+        await supabaseAdmin.from('profiles').update({ profile_completed: true } as any).eq('id', vendorUserId);
+      }
+
+      if (vendorRecord?.id) {
+        const { error: vErr } = await supabaseAdmin
+          .from('vendors')
+          .update({ shop_currency: newCurrency, seller_country_code: newCountryCode, currency_locked: true, updated_at: now } as any)
+          .eq('id', vendorRecord.id);
+        if (vErr) {
+          await supabaseAdmin.from('vendors').update({ shop_currency: newCurrency, updated_at: now } as any).eq('id', vendorRecord.id);
+        }
+        // ⚠️ On NE TOUCHE PAS aux PRODUITS : prix CANONIQUE en GNF (le vendeur saisit « Prix (GNF) »).
+        // Réétiqueter en shop_currency ferait lire « 60 000 GNF » comme « 60 000 EUR ». L'affichage
+        // convertit GNF → devise utilisateur à la volée. Seul shop_currency (devise vendeur) change.
+        productsFlagged = 0;
+      }
+
+      if (agentRecord?.id) {
+        await supabaseAdmin
+          .from('agents_management')
+          .update({ currency: newCurrency, country_code: newCountryCode, updated_at: now } as any)
+          .eq('id', agentRecord.id);
+      }
     }
 
     // 8d. Journaliser la conversion dans wallet_logs si disponible
@@ -778,9 +774,9 @@ router.post('/admin/change-currency', verifyJWT, async (req: AuthenticatedReques
           new_balance: newBalance,
           rate_used: rate,
           rate_description: rateDescription,
-          bcrg_usd_gnf: bcrgRates.gnfRates['USD'] ?? null,
-          bcrg_eur_gnf: bcrgRates.gnfRates['EUR'] ?? null,
-          bcrg_source_url: bcrgRates.sourceUrl,
+          bcrg_usd_gnf: bcrgRates?.gnfRates?.['USD'] ?? null,
+          bcrg_eur_gnf: bcrgRates?.gnfRates?.['EUR'] ?? null,
+          bcrg_source_url: bcrgRates?.sourceUrl ?? null,
           initiated_by: callerId,
           reason: reason || null,
           entity_type,
@@ -799,11 +795,11 @@ router.post('/admin/change-currency', verifyJWT, async (req: AuthenticatedReques
       new_balance: newBalance,
       rate_used: rate,
       rate_description: rateDescription,
-      bcrg_usd_gnf: bcrgRates.gnfRates['USD'] ?? null,
-      bcrg_eur_gnf: bcrgRates.gnfRates['EUR'] ?? null,
-      bcrg_source_url: bcrgRates.sourceUrl,
-      bcrg_is_live: bcrgRates.isLive,
-      bcrg_retrieved_at: bcrgRates.retrievedAt,
+      bcrg_usd_gnf: bcrgRates?.gnfRates?.['USD'] ?? null,
+      bcrg_eur_gnf: bcrgRates?.gnfRates?.['EUR'] ?? null,
+      bcrg_source_url: bcrgRates?.sourceUrl ?? null,
+      bcrg_is_live: bcrgRates?.isLive ?? null,
+      bcrg_retrieved_at: bcrgRates?.retrievedAt ?? null,
       products_flagged: productsFlagged,
       active_escrow_count: activeEscrow,
       wallet_converted: wallet !== null,

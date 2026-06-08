@@ -85,26 +85,26 @@ function shouldPreferRateRow(candidate: RateRow, current: RateRow): boolean {
 }
 
 function resolveDisplayedRate(row: RateRow): number {
-  const from = String(row.from_currency || '').toUpperCase();
-  const to = String(row.to_currency || '').toUpperCase();
-  const finalByBase = from === 'USD'
-    ? Number(row.final_rate_usd)
-    : from === 'EUR'
-      ? Number(row.final_rate_eur)
-      : to === 'USD'
-        ? Number(row.final_rate_usd)
-        : to === 'EUR'
-          ? Number(row.final_rate_eur)
-      : Number.NaN;
-
-  if (Number.isFinite(finalByBase) && finalByBase > 0) {
-    return finalByBase;
+  // TAUX EXACT BCRG : on AFFICHE le taux OFFICIEL du jour (colonne `rate`), SANS marge.
+  // Avant : on retournait final_rate_usd/eur (= rate margé ~20%) → prix produits sous-évalués
+  // (ex. 45 000 GNF affiché 3,69 € au lieu du taux exact 4,43 €). Le PDG veut le taux BCRG exact
+  // sur toutes les pages produit. (La marge/commission éventuelle s'applique à l'ACHAT, pas à
+  // l'affichage du taux du jour.)
+  const rawRate = Number(row.rate || 0);
+  if (Number.isFinite(rawRate) && rawRate > 0) {
+    return rawRate;
   }
 
-  const rawRate = Number(row.rate || 0);
-  const margin = Number(row.margin || 0);
-  if (Number.isFinite(rawRate) && rawRate > 0) {
-    return rawRate * (Number.isFinite(margin) && margin > 0 ? 1 + margin : 1);
+  // Repli UNIQUEMENT si `rate` absent : final_rate (mieux que rien).
+  const from = String(row.from_currency || '').toUpperCase();
+  const to = String(row.to_currency || '').toUpperCase();
+  const finalByBase = (from === 'USD' || to === 'USD')
+    ? Number(row.final_rate_usd)
+    : (from === 'EUR' || to === 'EUR')
+      ? Number(row.final_rate_eur)
+      : Number.NaN;
+  if (Number.isFinite(finalByBase) && finalByBase > 0) {
+    return finalByBase;
   }
 
   return Number.NaN;

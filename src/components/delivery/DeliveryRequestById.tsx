@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -253,7 +254,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
           {estimatedPrice && (
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
               <p className="text-sm text-[#ff4000] font-medium">
-                Prix estimé: <span className="text-xl">{estimatedPrice.toLocaleString()} GNF</span>
+                Prix estimé: <span className="text-xl"><Money amount={estimatedPrice} from="GNF" /></span>
               </p>
             </div>
           )}

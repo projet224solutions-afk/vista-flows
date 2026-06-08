@@ -39,7 +39,7 @@ export default function AgoraVideoCall({
   callerInfo,
   onCallEnd
 }: AgoraVideoCallProps) {
-  const { _user } = useAuth();
+  const { user } = useAuth();
   const { callState, joinCall, toggleMute, toggleVideo, endCall } = useAgora();
 
   const [callDuration, setCallDuration] = useState(0);

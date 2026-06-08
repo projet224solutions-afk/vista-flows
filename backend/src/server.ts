@@ -76,6 +76,7 @@ import mediaRoutes from './routes/media.routes.js';
 import internalRoutes from './routes/internal.routes.js';
 // @ts-ignore
 import { rateLimiter } from './middlewares/rateLimiter.js';
+import { ipBlocklist, autoBlockGuard, refreshBlocklist } from './middlewares/ipBlocklist.js';
 
 const app = express();
 
@@ -183,7 +184,13 @@ app.use((req, res, next) => {
 });
 
 app.use(rateLimiter);
+// Riposte : rejette les IPs bloquees, puis auto-bloque les attaques evidentes.
+app.use(ipBlocklist);
+app.use(autoBlockGuard);
 app.use(requestLogger);
+
+// Pre-charge la liste des IPs bloquees au demarrage (cache memoire).
+void refreshBlocklist();
 
 // ==================== ROUTES ====================
 

@@ -10,8 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import {
   FileSpreadsheet,
-  _Download,
-  _Plus,
+  Download,
+  Plus,
   BarChart3,
   TrendingUp,
   Users,

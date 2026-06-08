@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -12,8 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { backendConfig } from '@/config/backend';
 import {
   CreditCard, Smartphone, Wallet, Shield, CheckCircle,
-  AlertCircle, Clock, _DollarSign, User, Package, Calendar,
-  _Lock, _ExternalLink, ArrowLeft, Loader2
+  AlertCircle, Clock, DollarSign, User, Package, Calendar,
+  Lock, ExternalLink, ArrowLeft, Loader2
 } from 'lucide-react';
 
 interface PaymentDetails {
@@ -43,7 +43,7 @@ interface PaymentDetails {
 export default function PaymentPage() {
   const { paymentId } = useParams();
   const navigate = useNavigate();
-  const { _user } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);

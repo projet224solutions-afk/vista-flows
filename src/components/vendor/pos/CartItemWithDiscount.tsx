@@ -60,7 +60,7 @@ export function CartItemWithDiscount({
   item,
   onUpdateDiscount,
   onRemove,
-  _onUpdateQuantity,
+  onUpdateQuantity,
   formatCurrency,
 }: CartItemWithDiscountProps) {
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);

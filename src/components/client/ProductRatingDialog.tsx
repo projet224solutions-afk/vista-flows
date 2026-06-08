@@ -173,9 +173,11 @@ export default function ProductRatingDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
+      // upsert : contrainte UNIQUE (user_id, product_id) → si déjà noté, on met à jour l'avis
+      // au lieu d'échouer en duplicate key.
       const { error } = await supabase
         .from('product_reviews')
-        .insert({
+        .upsert({
           product_id: currentProduct.product_id,
           order_id: orderId,
           user_id: user.id,
@@ -184,7 +186,8 @@ export default function ProductRatingDialog({
           content: comment.trim() || 'Aucun commentaire',
           verified_purchase: true,
           is_approved: true,
-        });
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,product_id' });
 
       if (error) throw error;
 

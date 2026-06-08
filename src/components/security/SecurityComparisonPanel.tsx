@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Lock, AlertTriangle, _CheckCircle2, XCircle, Award, TrendingUp } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, CheckCircle2, XCircle, Award, TrendingUp } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 /**

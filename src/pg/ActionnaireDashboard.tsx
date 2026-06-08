@@ -10,6 +10,7 @@ const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -99,6 +100,7 @@ function OverviewTab({
   unreadCount,
   onGoToWallet,
 }: ReturnType<typeof useShareholderDashboard> & { onGoToWallet: () => void }) {
+  const fc = useFormatCurrency();
   const sh = dashboardData?.shareholder;
   const assignment = dashboardData?.assignment;
   if (!sh || !assignment) return null;
@@ -151,7 +153,7 @@ function OverviewTab({
         </div>
         <StatCard
           title="Revenus totaux"
-          value={`${(dashboardData?.total_earnings ?? 0).toLocaleString('fr-FR')} GNF`}
+          value={fc(dashboardData?.total_earnings ?? 0)}
           icon={TrendingUp}
           color="text-blue-600"
           bg="bg-blue-50"

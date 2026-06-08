@@ -10,9 +10,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Download, Package, ArrowLeft, _ShoppingBag,
+  Download, Package, ArrowLeft, ShoppingBag,
   Calendar, Loader2, FileText, Clock, CheckCircle,
   AlertTriangle, RefreshCw, Infinity
 } from 'lucide-react';

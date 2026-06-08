@@ -15,12 +15,12 @@ import {
     CheckCircle,
     Activity,
     Bell,
-    _Settings,
+    Settings,
     Eye,
     RefreshCw,
-    _TrendingUp,
-    _TrendingDown,
-    _MapPin,
+    TrendingUp,
+    TrendingDown,
+    MapPin,
     Clock
 } from 'lucide-react';
 import { useMotoSecurity } from '@/hooks/useMotoSecurity';

@@ -1,5 +1,6 @@
 import { useTrendingProducts } from '@/hooks/useTrendingProducts';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Flame, Star, Eye, Heart } from 'lucide-react';
@@ -105,7 +106,7 @@ export const TrendingProducts = ({
                   )}
                 </div>
                 <p className="font-bold text-lg text-primary">
-                  {item.product?.price.toLocaleString()} GNF
+                  <Money amount={item.product?.price || 0} from={item.product?.sellerCurrency || 'GNF'} />
                 </p>
                 <Badge variant="secondary" className="text-xs">
                   {item.view_count} vues · {item.review_count} avis

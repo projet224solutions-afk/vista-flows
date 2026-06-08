@@ -33,7 +33,7 @@ interface PayPalInlineDepositProps {
 
 const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
-export default function PayPalInlineDeposit({ onSuccess, _onClose }: PayPalInlineDepositProps) {
+export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInlineDepositProps) {
   const { currency: userCurrency } = useCurrency();
   const allCurrencies = getSortedCurrencies().filter(c => PAYPAL_NATIVE_CODES.has(c.code));
   const defaultCurrency = PAYPAL_NATIVE_CODES.has(userCurrency) ? userCurrency : 'USD';

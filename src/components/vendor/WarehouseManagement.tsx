@@ -15,14 +15,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function WarehouseManagement() {
   const {
     warehouses,
-    _warehouseStocks,
+    warehouseStocks,
     stockMovements,
     loading,
     error,
     createWarehouse,
-    _updateWarehouse,
+    updateWarehouse,
     deleteWarehouse,
-    _updateStock,
+    updateStock,
     transferStock
   } = useWarehouseManagement();
   const { toast } = useToast();

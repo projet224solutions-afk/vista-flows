@@ -4,7 +4,7 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Sparkles, _TrendingUp, _Clock, _Zap } from "lucide-react";
+import { ArrowLeft, Sparkles, TrendingUp, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAIPersonalized, useAITrending, useAIContextual } from "@/hooks/useAIRecommendations";

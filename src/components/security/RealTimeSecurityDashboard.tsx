@@ -7,10 +7,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { _Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Shield,
@@ -21,18 +21,18 @@ import {
   CheckCircle2,
   XCircle,
   TrendingUp,
-  _TrendingDown,
-  _Users,
+  TrendingDown,
+  Users,
   Lock,
   Eye,
   Ban,
-  _Globe,
+  Globe,
   Server,
   Database,
   Zap,
   RefreshCw
 } from 'lucide-react';
-import { _LineChart, _Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 
 interface SecurityMetrics {
   score: number;

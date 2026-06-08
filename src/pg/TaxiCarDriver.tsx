@@ -22,6 +22,7 @@ import { GeolocationService } from '@/services/taxi/GeolocationService';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
 import { DriverEarnings } from '@/components/taxi-moto/DriverEarnings';
@@ -401,8 +402,8 @@ export default function TaxiCarDriver() {
     }
   });
 
-  const { notifications, unreadCount, markAsRead, _markAllAsRead } = useTaxiNotifications();
-  const { hasAccess, _subscription, loading: _subscriptionLoading } = useDriverSubscription();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
+  const { hasAccess, subscription, loading: _subscriptionLoading } = useDriverSubscription();
 
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [_onlineSince, setOnlineSince] = useState<Date | null>(null);
@@ -709,7 +710,7 @@ export default function TaxiCarDriver() {
                     <p className="text-white text-sm truncate">{String(ride.pickup_address || 'Adresse départ')}</p>
                     <p className="text-gray-400 text-xs truncate mt-0.5">→ {String(ride.dropoff_address || 'Destination')}</p>
                     {ride.driver_share && (
-                      <p className="text-[#ff4000] font-bold mt-2 text-sm">{Number(ride.driver_share).toLocaleString()} GNF</p>
+                      <p className="text-[#ff4000] font-bold mt-2 text-sm"><Money amount={Number(ride.driver_share)} from="GNF" /></p>
                     )}
                   </CardContent>
                 </Card>

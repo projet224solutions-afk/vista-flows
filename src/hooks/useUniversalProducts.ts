@@ -143,13 +143,15 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           free_shipping,
           created_at,
           is_active,
+          seller_currency,
           vendors(
             business_name,
             user_id,
             country,
             city,
             business_type,
-            public_id
+            public_id,
+            shop_currency
           ),
           categories(
             name
@@ -272,8 +274,11 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         const vendor = product.vendors as any;
         const category = product.categories as any;
         const isNew = new Date(product.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const vendorCountry = vendor?.country || '';
-        const derivedCurrency = vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF';
+        // DEVISE = PAYS DU VENDEUR (source fiable). Un vendeur du Sénégal price en XOF, de Guinée en
+        // GNF. On déduit de `vendors.country` (texte fiable), PAS de shop_currency (parfois faux,
+        // ex. Fusion=EUR) NI du champ produit (toujours GNF par défaut). getCurrencyForCountry gère
+        // « Guinée »→GNF, « Sénégal »→XOF (accents/espaces inclus), défaut GNF.
+        const derivedCurrency = getCurrencyForCountry(vendor?.country || '');
 
         return {
           id: product.id,
@@ -288,7 +293,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           vendor_public_id: vendor?.public_id || undefined,
           vendor_rating: product.rating || 0,
           vendor_rating_count: product.reviews_count || 0,
-          vendor_country: vendorCountry,
+          vendor_country: vendor?.country || '',
           category_id: product.category_id || '',
           category_name: category?.name || 'Général',
           stock_quantity: product.stock_quantity || 0,

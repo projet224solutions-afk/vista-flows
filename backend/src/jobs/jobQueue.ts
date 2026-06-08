@@ -224,32 +224,16 @@ registerHandler('escrow.auto-release', async () => {
         continue;
       }
 
-      const escrowAmount = Number(escrow.amount || 0);
-      const commissionAmount = Number(
-        (escrow as any).commission_amount && Number.isFinite(Number((escrow as any).commission_amount))
-          ? (escrow as any).commission_amount
-          : escrowAmount * 0.025,
-      );
-      const vendorAmount = Math.max(escrowAmount - commissionAmount, 0);
+      // 🧱 Libération via la PRIMITIVE CANONIQUE (FOR UPDATE + idempotente + conversion + atomique).
+      // Crédit vendeur (converti) + commission PDG + ligne d'historique + statut escrow, en 1 transaction.
+      const { data: relData, error: relErr } = await supabaseAdmin.rpc('release_escrow_to_seller', {
+        p_escrow_id: escrow.id,
+        p_reason: 'buyer_confirmation_timeout_48h',
+      });
+      if (relErr) throw new Error(relErr.message);
+      if (relData && (relData as any).success === false) throw new Error((relData as any).error || 'release failed');
 
-      await supabaseAdmin
-        .from('escrow_transactions')
-        .update({
-          status: 'released',
-          released_at: now,
-          metadata: {
-            ...((escrow as any).metadata && typeof (escrow as any).metadata === 'object' && !Array.isArray((escrow as any).metadata)
-              ? (escrow as any).metadata
-              : {}),
-            auto_confirmed_reception: true,
-            auto_confirmed_reception_at: now,
-            release_reason: 'buyer_confirmation_timeout_48h',
-            vendor_amount: vendorAmount,
-            commission_amount: commissionAmount,
-          },
-        })
-        .eq('id', escrow.id);
-
+      // Marquer la commande complétée (la primitive ne touche pas la commande)
       await supabaseAdmin
         .from('orders')
         .update({
@@ -265,37 +249,7 @@ registerHandler('escrow.auto-release', async () => {
         })
         .eq('id', escrow.order_id);
 
-      // Credit seller wallet
-      if (escrow.seller_id) {
-        await supabaseAdmin.rpc('credit_wallet', {
-          p_user_id: escrow.seller_id,
-          p_amount: vendorAmount,
-          p_description: `Libération escrow commande`,
-          p_transaction_type: 'escrow_release',
-          p_reference: escrow.id,
-        });
-      }
-
-      if (commissionAmount > 0) {
-        const { data: activePdg } = await supabaseAdmin
-          .from('pdg_management')
-          .select('user_id')
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
-
-        if (activePdg?.user_id) {
-          await supabaseAdmin.rpc('credit_wallet', {
-            p_user_id: activePdg.user_id,
-            p_amount: commissionAmount,
-            p_description: `Commission escrow commande`,
-            p_transaction_type: 'escrow_commission',
-            p_reference: escrow.id,
-          });
-        }
-      }
-
-      logger.info(`Escrow auto-released: ${escrow.id}, gross=${escrowAmount}, vendor=${vendorAmount}, commission=${commissionAmount}`);
+      logger.info(`Escrow auto-released via primitive: ${escrow.id} — ${JSON.stringify(relData)}`);
     } catch (err: any) {
       logger.error(`Escrow release failed: ${escrow.id} — ${err.message}`);
     }
@@ -304,14 +258,32 @@ registerHandler('escrow.auto-release', async () => {
 
 registerHandler('subscriptions.expire-check', async () => {
   const now = new Date().toISOString();
-  const { data, error } = await supabaseAdmin
+
+  // 1. Abonnements VENDEUR (subscriptions.current_period_end)
+  const { data: vend } = await supabaseAdmin
     .from('subscriptions')
     .update({ status: 'expired' })
     .in('status', ['active', 'trialing', 'past_due'])
     .lt('current_period_end', now)
     .select('id');
 
-  logger.info(`Subscriptions expired: ${data?.length || 0}`);
+  // 2. Abonnements CHAUFFEUR (driver_subscriptions.end_date) — n'étaient JAMAIS expirés (fuite)
+  const { data: drv } = await supabaseAdmin
+    .from('driver_subscriptions')
+    .update({ status: 'expired', updated_at: now })
+    .eq('status', 'active')
+    .lt('end_date', now)
+    .select('id');
+
+  // 3. Abonnements SERVICE (service_subscriptions.current_period_end) — idem
+  const { data: svc } = await supabaseAdmin
+    .from('service_subscriptions')
+    .update({ status: 'expired', updated_at: now })
+    .eq('status', 'active')
+    .lt('current_period_end', now)
+    .select('id');
+
+  logger.info(`Subscriptions expired — vendeur:${vend?.length || 0} chauffeur:${drv?.length || 0} service:${svc?.length || 0}`);
 });
 
 registerHandler('orders.stuck-alert', async () => {

@@ -17,6 +17,8 @@ export interface RecentOrder {
   customer_label: string;
   status: OrderStatus;
   total_amount: number;
+  /** Devise dans laquelle total_amount est libellé (orders.currency = devise vendeur/produit) */
+  currency: string;
   created_at: string;
 }
 
@@ -38,6 +40,7 @@ export type OrderStatus =
 export interface OrderFromSupabase {
   order_number: string;
   total_amount: number | null;
+  currency?: string | null;
   status: string | null;
   created_at: string;
   customer: {
@@ -164,6 +167,7 @@ export function transformOrderToRecentOrder(order: OrderFromSupabase): RecentOrd
       : 'Client',
     status: (order.status as OrderStatus) || 'pending',
     total_amount: order.total_amount || 0,
+    currency: order.currency || 'GNF',
     created_at: order.created_at,
   };
 }

@@ -10,7 +10,7 @@ import {
   Clock,
   Zap,
   RefreshCw,
-  _XCircle
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 

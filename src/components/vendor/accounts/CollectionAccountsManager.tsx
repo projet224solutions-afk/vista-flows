@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
   Wallet, Plus, Banknote, Smartphone, Building,
-  ArrowUpRight, ArrowDownLeft, _RefreshCw, _MoreVertical,
+  ArrowUpRight, ArrowDownLeft, RefreshCw, MoreVertical,
   TrendingUp, TrendingDown
 } from 'lucide-react';
 

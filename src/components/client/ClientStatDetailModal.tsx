@@ -4,9 +4,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { _Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package, TrendingUp, Heart, CreditCard, CheckCircle, _XCircle, Clock, Truck, _Plus, _Search, Trash2, Store, _Loader2 } from "lucide-react";
+import { Package, TrendingUp, Heart, CreditCard, CheckCircle, XCircle, Clock, Truck, Plus, Search, Trash2, Store, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";

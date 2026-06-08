@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Trash2, Plus, Minus, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { createOfflineSale, checkDailyLimit, type OfflinePaymentMethod } from '@/lib/offline/advancedPOSManager';
@@ -28,6 +29,7 @@ interface CartItem {
 }
 
 export function OfflinePOSInterface() {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const { stock, isInStock } = useOfflineStock();
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -118,7 +120,7 @@ export function OfflinePOSInterface() {
       const limitCheck = await checkDailyLimit(user.id, total);
       if (!limitCheck.allowed) {
         toast.error(`Limite journalière atteinte!`, {
-          description: `Restant: ${limitCheck.remaining.toLocaleString()} GNF`
+          description: `Restant: ${fc(limitCheck.remaining)}`
         });
         return;
       }
@@ -233,7 +235,7 @@ export function OfflinePOSInterface() {
                 <div key={item.product_id} className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-500">{item.unit_price.toLocaleString()} GNF</p>
+                    <p className="text-xs text-gray-500">{fc(item.unit_price)}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
@@ -323,17 +325,17 @@ export function OfflinePOSInterface() {
             <div className="space-y-2 border-t pt-3">
               <div className="flex justify-between text-sm">
                 <span>Sous-total:</span>
-                <span>{subtotal.toLocaleString()} GNF</span>
+                <span>{fc(subtotal)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-sm text-[#ff4000]">
                   <span>Remise:</span>
-                  <span>-{discount.toLocaleString()} GNF</span>
+                  <span>-{fc(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
                 <span>Total:</span>
-                <span>{total.toLocaleString()} GNF</span>
+                <span>{fc(total)}</span>
               </div>
             </div>
 

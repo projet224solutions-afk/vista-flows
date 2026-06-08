@@ -46,7 +46,7 @@ import {
   Trash2,
   FileText,
   CheckCircle,
-  _Download,
+  Download,
   Lock,
   Package,
   Calculator,
@@ -305,7 +305,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   const generateDocMutation = useMutation({
     mutationFn: async () => {
       // Appel à l'Edge Function pour générer le PDF
-      const { _data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
+      const { data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
         body: {
           purchase_id: purchase.id,
           vendor_id: vendorId,

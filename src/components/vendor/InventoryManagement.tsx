@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ interface Warehouse {
 }
 
 export default function InventoryManagement() {
+  const fc = useFormatCurrency();
   const { _user } = useAuth();
   const { toast } = useToast();
   const {
@@ -711,7 +713,7 @@ export default function InventoryManagement() {
               <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-[#ff4000] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur Stock</p>
-                <p className="text-sm md:text-xl font-bold truncate text-[#ff4000]">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-sm md:text-xl font-bold truncate text-[#ff4000]">{fc(totalValue)}</p>
               </div>
             </div>
           </CardContent>
@@ -722,7 +724,7 @@ export default function InventoryManagement() {
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-[#04439e] flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Profit potentiel</p>
-                <p className="text-sm md:text-xl font-bold truncate">{potentialProfit.toLocaleString()} GNF</p>
+                <p className="text-sm md:text-xl font-bold truncate">{fc(potentialProfit)}</p>
               </div>
             </div>
           </CardContent>
@@ -853,10 +855,10 @@ export default function InventoryManagement() {
 
                   <div className="text-right ml-6">
                     <p className="font-semibold text-lg">
-                      {(item.quantity * item.product.price).toLocaleString()} GNF
+                      {fc(item.quantity * item.product.price)}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.price.toLocaleString()} GNF/unité
+                      {fc(item.product.price)}/unité
                     </p>
                   </div>
 

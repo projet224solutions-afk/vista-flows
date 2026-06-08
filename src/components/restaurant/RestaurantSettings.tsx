@@ -61,7 +61,7 @@ const DEFAULT_HOURS: OpeningHours = {
 };
 
 export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
-  const { uploadFile, _isUploading } = useStorageUpload();
+  const { uploadFile, isUploading } = useStorageUpload();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingType, setUploadingType] = useState<'logo' | 'cover' | null>(null);

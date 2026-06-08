@@ -5,13 +5,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Clock, Check, XCircle, ChefHat, Package, Truck,
-  Phone, MapPin, CreditCard, _Wallet, Banknote, RefreshCw,
+  Phone, MapPin, CreditCard, Wallet, Banknote, RefreshCw,
   Bell, Eye, Utensils
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,6 +70,7 @@ interface RestaurantOrdersPanelProps {
 }
 
 export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps) {
+  const fc = useFormatCurrency();
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
@@ -129,7 +131,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
 
             // Notification sonore et toast
             toast.success(`🔔 Nouvelle commande: ${newOrder.order_number}`, {
-              description: `${newOrder.customer_name} - ${newOrder.total.toLocaleString()} GNF`
+              description: `${newOrder.customer_name} - ${fc(newOrder.total)}`
             });
 
             // Play sound
@@ -232,7 +234,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <span className="font-bold text-lg">{order.order_number}</span>
-              <span className="font-bold text-primary">{order.total.toLocaleString()} GNF</span>
+              <span className="font-bold text-primary">{fc(order.total)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{order.customer_name}</span>
@@ -491,13 +493,13 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                           <p className="text-xs text-muted-foreground italic">{item.special_instructions}</p>
                         )}
                       </div>
-                      <span className="font-medium">{item.total_price?.toLocaleString()} GNF</span>
+                      <span className="font-medium">{fc(item.total_price || 0)}</span>
                     </div>
                   ))}
 
                   <div className="pt-2 border-t flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">{selectedOrder.total.toLocaleString()} GNF</span>
+                    <span className="text-primary">{fc(selectedOrder.total)}</span>
                   </div>
                 </CardContent>
               </Card>

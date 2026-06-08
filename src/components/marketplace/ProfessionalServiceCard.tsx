@@ -10,7 +10,7 @@ import {
   Star,
   MapPin,
   Phone,
-  _Clock,
+  Clock,
   ArrowRight,
   Briefcase,
   Store
@@ -32,7 +32,7 @@ export function ProfessionalServiceCard({
   className
 }: ProfessionalServiceCardProps) {
   const [imageError, setImageError] = useState(false);
-  const { _t } = useTranslation();
+  const { t } = useTranslation();
 
   // Images par défaut selon le type de service
   const getDefaultImage = () => {

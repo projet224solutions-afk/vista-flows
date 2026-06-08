@@ -6,7 +6,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Utensils, Truck, Car, _ChevronRight, _Package, GraduationCap } from 'lucide-react';
+import { Store, Utensils, Truck, Car, ChevronRight, Package, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';

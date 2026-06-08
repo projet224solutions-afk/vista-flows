@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, TrendingUp, Calendar, Clock, MapPin, Wallet, ArrowUpCircle, ArrowDownCircle, History, Shield } from 'lucide-react';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
+import { Money } from '@/components/Money';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -408,7 +409,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <div>
                 <p className="text-sm opacity-90">Solde disponible</p>
                 <p className="text-4xl font-bold mt-1">
-                  {(balance || 0).toLocaleString()} {currency || 'GNF'}
+                  <Money amount={balance || 0} from={currency || 'GNF'} />
                 </p>
                 {pinStatus?.pin_enabled && (
                   <p className="text-xs text-white/60 mt-1 flex items-center gap-1">
@@ -569,7 +570,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <div className="text-center">
                 <Calendar className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Aujourd'hui</p>
-                <p className="text-lg font-bold">{(stats.todayEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+                <p className="text-lg font-bold"><Money amount={stats.todayEarnings || 0} from="GNF" /></p>
                 <p className="text-xs text-muted-foreground">{stats.todayRides || 0} courses</p>
               </div>
             </CardContent>
@@ -580,7 +581,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <div className="text-center">
                 <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">7 jours</p>
-                <p className="text-lg font-bold">{(stats.weekEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+                <p className="text-lg font-bold"><Money amount={stats.weekEarnings || 0} from="GNF" /></p>
                 <p className="text-xs text-muted-foreground">{stats.weekRides || 0} courses</p>
               </div>
             </CardContent>
@@ -591,7 +592,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <div className="text-center">
                 <Calendar className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">30 jours</p>
-                <p className="text-lg font-bold">{(stats.monthEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+                <p className="text-lg font-bold"><Money amount={stats.monthEarnings || 0} from="GNF" /></p>
                 <p className="text-xs text-muted-foreground">{stats.monthRides || 0} courses</p>
               </div>
             </CardContent>
@@ -602,7 +603,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               <div className="text-center">
                 <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
                 <p className="text-xs text-muted-foreground">Année {new Date().getFullYear()}</p>
-                <p className="text-lg font-bold">{(stats.yearEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
+                <p className="text-lg font-bold"><Money amount={stats.yearEarnings || 0} from="GNF" /></p>
                 <p className="text-xs text-muted-foreground">{stats.yearRides || 0} courses</p>
               </div>
             </CardContent>
@@ -636,7 +637,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-[#ff4000]">
-                          {(ride.fare || 0).toLocaleString()} {currency || 'GNF'}
+                          <Money amount={ride.fare || 0} from="GNF" />
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {ride.status === 'completed' ? 'Terminée' : 'Payée'}

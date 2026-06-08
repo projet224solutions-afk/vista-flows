@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,14 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Package,
   Truck,
-  _Users,
+  Users,
   MapPin,
   Clock,
   Phone,
   Plus,
   CheckCircle,
   AlertCircle,
-  _TrendingUp,
+  TrendingUp,
   DollarSign,
   Navigation
 } from 'lucide-react';
@@ -64,7 +64,7 @@ interface Courier {
   rating: number;
 }
 
-export function DeliveryModule({ _serviceId, businessName }: DeliveryModuleProps) {
+export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps) {
   const [activeTab, setActiveTab] = useState('livraisons');
   const [showNewDeliveryDialog, setShowNewDeliveryDialog] = useState(false);
   const [showNewCourierDialog, setShowNewCourierDialog] = useState(false);

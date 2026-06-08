@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard, Smartphone, _Banknote } from "lucide-react";
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertCircle, Eye, EyeOff, CreditCard, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
@@ -181,7 +181,7 @@ export default function UniversalWalletDashboard({
   const balanceDisplay = useMemo(() => {
     if (!wallet) return "—";
     if (hidden) return "••••••";
-    return convert(wallet.balance, 'GNF').formatted;
+    return convert(wallet.balance, wallet.currency).formatted;
   }, [wallet, hidden, convert]);
 
   const handleDeposit = useCallback(async () => {
@@ -223,7 +223,7 @@ export default function UniversalWalletDashboard({
           amount: amount,
           net_amount: amount,
           fee: 0,
-          currency: 'GNF',
+          currency: wallet.currency || 'GNF',
           status: 'completed',
           description: 'Dépôt sur le wallet',
           receiver_wallet_id: wallet.id,
@@ -288,7 +288,7 @@ export default function UniversalWalletDashboard({
           amount: amount,
           net_amount: amount,
           fee: 0,
-          currency: 'GNF',
+          currency: wallet.currency || 'GNF',
           status: 'completed',
           description: 'Retrait du wallet',
           sender_wallet_id: wallet.id,
@@ -626,7 +626,7 @@ export default function UniversalWalletDashboard({
                   max={wallet.balance}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {t('wallet.minAmount')}: 5,000 GNF | {t('wallet.availableBalance')}: {convert(wallet.balance, 'GNF').formatted}
+                  {t('wallet.minAmount')}: 5,000 GNF | {t('wallet.availableBalance')}: {convert(wallet.balance, wallet.currency).formatted}
                 </p>
               </div>
 

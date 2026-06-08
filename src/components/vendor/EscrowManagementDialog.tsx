@@ -161,7 +161,7 @@ export default function EscrowManagementDialog({
                             <div>
                               <p>ID Transaction:</p>
                               <p className="text-xs font-mono bg-muted px-2 py-1 rounded">
-                                {transaction.id ? transaction.id.slice(0, 16) + '...' : 'N/A'}
+                                {transaction.id ? String(transaction.id).slice(0, 16) + '...' : 'N/A'}
                               </p>
                             </div>
                           </div>

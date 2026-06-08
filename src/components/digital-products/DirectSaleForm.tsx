@@ -6,10 +6,10 @@
 import {} from 'react';
 import {
   Package,
-  _FileText,
-  _Upload,
+  FileText,
+  Upload,
   DollarSign,
-  _Clock,
+  Clock,
   Shield,
   Users,
   Zap,
@@ -17,12 +17,13 @@ import {
   Download,
   Mail,
   RefreshCw,
-  _AlertCircle
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -81,6 +82,7 @@ const accessDurations = [
 ];
 
 export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
+  const fc = useFormatCurrency();
   return (
     <div className="space-y-4 sm:space-y-5">
       {data.pricingType === 'subscription' && (
@@ -271,7 +273,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                 -{Math.round((1 - parseFloat(data.price) / parseFloat(data.originalPrice)) * 100)}%
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Économie de {(parseFloat(data.originalPrice) - parseFloat(data.price)).toLocaleString()} GNF
+                Économie de {fc(parseFloat(data.originalPrice) - parseFloat(data.price))}
               </span>
             </div>
           )}

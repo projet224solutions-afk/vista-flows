@@ -9,11 +9,11 @@ import { format, isToday, isTomorrow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Calendar, Clock, Users, Phone, Mail, CheckCircle, XCircle,
-  User, RefreshCw, _Bell, Eye, MessageSquare, _CreditCard,
+  User, RefreshCw, Bell, Eye, MessageSquare, CreditCard,
   CalendarDays, Filter, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -23,8 +23,8 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
-import { _Textarea } from '@/components/ui/textarea';
-import { _supabase } from '@/integrations/supabase/client';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRestaurantReservations, RestaurantReservation } from '@/hooks/useRestaurantReservations';
 

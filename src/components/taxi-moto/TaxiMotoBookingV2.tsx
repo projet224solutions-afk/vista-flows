@@ -6,26 +6,27 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-    _MapPin,
+    MapPin,
     Navigation,
-    _Clock,
+    Clock,
     CreditCard,
     Star,
     Loader2,
-    _Calendar,
+    Calendar,
     Users,
-    _Zap,
+    Zap,
     DollarSign,
     Route,
     CheckCircle,
     AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { _getVehicleTypeInfo } from "@/services/pricingService";
+import { getVehicleTypeInfo } from "@/services/pricingService";
 import { useAuth } from "@/hooks/useAuth";
 import { TaxiMotoService } from "@/services/taxi/TaxiMotoService";
 import { supabase } from "@/integrations/supabase/client";
@@ -425,7 +426,7 @@ export default function TaxiMotoBooking({
                     <CardContent className="space-y-3">
                         <div className="flex justify-between text-sm">
                             <span>Prix de base</span>
-                            <span>{(priceEstimate.basePrice || 0).toLocaleString()} GNF</span>
+                            <span><Money amount={priceEstimate.basePrice || 0} from="GNF" /></span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span>Distance ({routeInfo?.distanceText || `${priceEstimate.distance}km`})</span>
@@ -440,7 +441,7 @@ export default function TaxiMotoBooking({
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
                             <span className="text-[#ff4000]">
-                                {(priceEstimate.totalPrice || 0).toLocaleString()} GNF
+                                <Money amount={priceEstimate.totalPrice || 0} from="GNF" />
                             </span>
                         </div>
                     </CardContent>

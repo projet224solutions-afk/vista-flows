@@ -7,11 +7,11 @@
 
 import {} from 'react';
 import {
-  _Plane, _Hotel, Search, Users, Briefcase,
-  _ArrowRight, Check, Settings, _Globe
+  Plane, Hotel, Search, Users, Briefcase,
+  ArrowRight, Check, Settings, Globe
 } from 'lucide-react';
-import { _Button } from '@/components/ui/button';
-import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 

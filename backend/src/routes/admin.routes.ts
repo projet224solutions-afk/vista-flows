@@ -19,6 +19,8 @@ import { verifyJWT, requireRole } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { runPlatformMonitors } from '../services/escrowMonitor.service.js';
+import * as aml from '../services/aml.service.js';
 
 const router = Router();
 const PDG_ROLES = ['admin', 'pdg', 'ceo'];
@@ -687,6 +689,155 @@ router.post('/ids/normalize', verifyJWT, requireRole(PDG_ROLES), async (req: Aut
   } catch (error: any) {
     logger.error(`[admin/ids/normalize] ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la normalisation de l\'ID' });
+  }
+});
+
+/**
+ * GET /api/admin/platform-monitor
+ * Surveillance plateforme multi-domaines (escrow/conversion + abonnements + …) : lance chaque
+ * rapport d'anomalies, synchronise les alertes (system_alerts) et renvoie { domains, alerts }.
+ * Réservé PDG/admin.
+ */
+router.get('/platform-monitor', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = await runPlatformMonitors();
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error(`[admin/platform-monitor] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la surveillance plateforme' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AML — Provenance & plafonds de wallet (réservé PDG/admin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/aml/overview — config + compteurs + wallets dépassant le plafond + quarantaine. */
+router.get('/aml/overview', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    res.json({ success: true, data: await aml.getOverview() });
+  } catch (error: any) {
+    logger.error(`[admin/aml/overview] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur AML overview' });
+  }
+});
+
+/** GET /api/admin/aml/wallets?flagged=1 — aperçu des wallets (rôle, KYC, plafond, dépassement). */
+router.get('/aml/wallets', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const flagged = req.query.flagged === '1' || req.query.flagged === 'true';
+    const limit = Math.min(parseInt(req.query.limit as string) || 200, 1000);
+    res.json({ success: true, data: await aml.listWallets(flagged, limit) });
+  } catch (error: any) {
+    logger.error(`[admin/aml/wallets] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur AML wallets' });
+  }
+});
+
+/** GET /api/admin/aml/quarantine?status=pending — liste des fonds en quarantaine. */
+router.get('/aml/quarantine', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const status = (req.query.status as string) || 'pending';
+    res.json({ success: true, data: await aml.listQuarantine(status) });
+  } catch (error: any) {
+    logger.error(`[admin/aml/quarantine] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur AML quarantaine' });
+  }
+});
+
+/** POST /api/admin/aml/quarantine/:id/release { notes? } — libérer (recrédit tracé). */
+router.post('/aml/quarantine/:id/release', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = await aml.releaseQuarantine(req.params.id, req.user!.id, req.body?.notes);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error(`[admin/aml/release] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** POST /api/admin/aml/quarantine/:id/reject { notes? } — rejeter (non recrédité). */
+router.post('/aml/quarantine/:id/reject', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const data = await aml.rejectQuarantine(req.params.id, req.user!.id, req.body?.notes);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error(`[admin/aml/reject] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** POST /api/admin/aml/quarantine-amount { user_id, amount, notes? } — mettre un montant du solde en quarantaine. */
+router.post('/aml/quarantine-amount', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { user_id, amount, notes } = req.body || {};
+    if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
+    const data = await aml.quarantineAmount(user_id, Number(amount), req.user!.id, notes);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error(`[admin/aml/quarantine-amount] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** POST /api/admin/aml/freeze { user_id, frozen, reason? } — geler / dégeler un wallet. */
+router.post('/aml/freeze', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { user_id, frozen, reason } = req.body || {};
+    if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
+    const data = await aml.setWalletFrozen(user_id, frozen !== false, req.user!.id, reason);
+    res.json({ success: true, data });
+  } catch (error: any) {
+    logger.error(`[admin/aml/freeze] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** POST /api/admin/aml/kyc { user_id, level } — régler le palier KYC (0/1/2). */
+router.post('/aml/kyc', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { user_id, level } = req.body || {};
+    if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
+    await aml.setKycLevel(user_id, Number(level));
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/aml/kyc] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** POST /api/admin/aml/cap-override { user_id, amount|null } — plafond manuel d'un wallet. */
+router.post('/aml/cap-override', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { user_id, amount } = req.body || {};
+    if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
+    await aml.setCapOverride(user_id, amount === null || amount === undefined || amount === '' ? null : Number(amount));
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/aml/cap-override] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/** GET/PUT /api/admin/aml/caps — config globale des plafonds (rôle × palier KYC). */
+router.get('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    res.json({ success: true, data: await aml.getHoldingCaps() });
+  } catch (error: any) {
+    logger.error(`[admin/aml/caps GET] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur AML caps' });
+  }
+});
+
+router.put('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const config = req.body?.config ?? req.body;
+    if (!config || typeof config !== 'object') { res.status(400).json({ success: false, error: 'config invalide' }); return; }
+    await aml.updateHoldingCaps(config, req.user!.id);
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/aml/caps PUT] ${error.message}`);
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 

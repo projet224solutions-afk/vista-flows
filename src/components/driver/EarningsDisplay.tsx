@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { TrendingUp, Package, Calendar, DollarSign } from 'lucide-react';
 
 interface EarningsDisplayProps {
@@ -37,7 +38,7 @@ export function EarningsDisplay({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-[#ff4000]">
-            {totalEarnings.toLocaleString()} GNF
+            <Money amount={totalEarnings} from="GNF" />
           </div>
         </CardContent>
       </Card>
@@ -52,7 +53,7 @@ export function EarningsDisplay({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-primary">
-            {todayEarnings.toLocaleString()} GNF
+            <Money amount={todayEarnings} from="GNF" />
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             <Package className="h-3 w-3 inline mr-1" />
@@ -71,7 +72,7 @@ export function EarningsDisplay({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">
-            {weekEarnings.toLocaleString()} GNF
+            <Money amount={weekEarnings} from="GNF" />
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             <Package className="h-3 w-3 inline mr-1" />
@@ -90,7 +91,7 @@ export function EarningsDisplay({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-[#04439e]">
-            {monthEarnings.toLocaleString()} GNF
+            <Money amount={monthEarnings} from="GNF" />
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             <Package className="h-3 w-3 inline mr-1" />

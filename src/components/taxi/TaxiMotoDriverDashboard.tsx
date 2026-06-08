@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -209,7 +210,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
               <div key={req.id} className="border rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm">Course {req.ride_code || req.id.substring(0,8)} — {Math.round((req.distance_km||0)*10)/10} km</div>
-                  <Badge variant="outline">{req.price_total ? `${req.price_total} GNF` : 'Tarif N/A'}</Badge>
+                  <Badge variant="outline">{req.price_total ? <Money amount={req.price_total} from="GNF" /> : 'Tarif N/A'}</Badge>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <Button size="sm" className="gap-2" onClick={() => acceptRide(req.id)} disabled={loading}><Check className="w-3 h-3"/> Accepter</Button>
@@ -231,7 +232,7 @@ export default function TaxiMotoDriverDashboard({ driverId }: { driverId: string
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-sm">{currentRide.ride_code || currentRide.id.substring(0,8)}</div>
-                <Badge variant="outline">{currentRide.price_total || 0} GNF</Badge>
+                <Badge variant="outline"><Money amount={currentRide.price_total || 0} from="GNF" /></Badge>
               </div>
               <div className="text-xs text-muted-foreground">Points de suivi: {trackingPoints.length}</div>
             </div>

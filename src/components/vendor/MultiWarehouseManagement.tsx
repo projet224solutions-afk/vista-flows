@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -224,6 +225,7 @@ function TransferStatusBadge({ status }: { status: string }) {
 
 // Composant principal
 export default function MultiWarehouseManagement() {
+  const fc = useFormatCurrency();
   const {
     warehouses,
     transfers,
@@ -734,7 +736,7 @@ export default function MultiWarehouseManagement() {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-[#ff4000]">
-                    {totalLossValue.toLocaleString()} GNF
+                    {fc(totalLossValue)}
                   </p>
                   <p className="text-xs text-muted-foreground">Valeur totale des pertes</p>
                 </div>
@@ -770,7 +772,7 @@ export default function MultiWarehouseManagement() {
                         </TableCell>
                         <TableCell>{loss.quantity}</TableCell>
                         <TableCell className="text-[#ff4000] font-medium">
-                          {loss.total_loss_value?.toLocaleString()} GNF
+                          {fc(loss.total_loss_value || 0)}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {loss.reported_at ? format(new Date(loss.reported_at), 'dd/MM/yyyy', { locale: fr }) : '-'}

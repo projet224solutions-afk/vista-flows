@@ -14,7 +14,7 @@ import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap, Cloud,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight, Car, _Lock, RefreshCw, Megaphone, Headphones
+  Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone, Headphones, Wallet, Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -39,20 +39,23 @@ interface NavCategory {
 const categories: NavCategory[] = [
   {
     title: 'Finance',
-    color: '',
+    color: 'from-[#ff4000] to-[#ff7a3c]',
     bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign, permission: 'view_finance' },
+      { value: 'pdg-wallet', label: 'Mon Portefeuille', icon: Wallet, permission: 'access_pdg_wallet' },
+      { value: 'escrow-monitor', label: 'Surveillance Plateforme', icon: Activity, badge: true, permission: 'view_platform_surveillance' },
+      { value: 'aml-wallet', label: 'Provenance & Plafonds', icon: Shield, badge: true, permission: 'view_finance' },
       { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true, permission: 'view_banking' },
     ]
   },
   {
     title: 'Gestion',
-    color: '',
+    color: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-500',
     items: [
       { value: 'users', label: 'Utilisateurs', icon: Users, permission: 'view_users' },
-      { value: 'shareholders', label: 'Actionnaires', icon: Percent, permission: 'view_users' },
+      { value: 'shareholders', label: 'Actionnaires', icon: Percent, permission: 'view_shareholders' },
       { value: 'products', label: 'Produits', icon: Package, permission: 'view_products' },
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent, permission: 'view_transfer_fees' },
       { value: 'kyc', label: 'Gestion KYC', icon: Shield, permission: 'view_kyc' },
@@ -62,7 +65,7 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Opérations',
-    color: '',
+    color: 'from-[#ff4000] to-[#ff7a3c]',
     bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck, permission: 'view_agents' },
@@ -85,7 +88,7 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Système',
-    color: '',
+    color: 'from-[#04439e] to-[#0a5ec9]',
     bgColor: 'bg-[#04439e]',
     items: [
       { value: 'security', label: 'Sécurité', icon: Shield, permission: 'view_security' },
@@ -103,7 +106,7 @@ const categories: NavCategory[] = [
   },
   {
     title: 'Intelligence',
-    color: '',
+    color: 'from-[#ff4000] to-[#ff7a3c]',
     bgColor: 'bg-[#ff4000]',
     items: [
       { value: 'ai-assistant', label: 'Assistant IA', icon: Brain, badge: true, permission: 'access_ai_assistant' },
@@ -115,6 +118,16 @@ const categories: NavCategory[] = [
   }
 ];
 
+// Table onglet -> permission requise (source unique, dérivée des catégories ci-dessus).
+// Sert à gater le CONTENU des onglets pour les agents (un onglet sans permission ici
+// n'est PAS accessible à un agent — ex: 'dashboard').
+export const NAV_TAB_PERMISSIONS: Record<string, PermissionKey> = categories
+  .flatMap((c) => c.items)
+  .reduce((acc, item) => {
+    if (item.permission) acc[item.value] = item.permission;
+    return acc;
+  }, {} as Record<string, PermissionKey>);
+
 interface PDGNavigationProps {
   activeTab: string;
   onTabChange: (value: string) => void;
@@ -125,7 +138,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
   const isMobile = useIsMobile();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { hasPermission, isPDG, _isAgent, loading: permissionsLoading } = useCurrentUserPermissions();
+  const { hasPermission, isPDG, isAgent, loading: permissionsLoading } = useCurrentUserPermissions();
 
   const toggleCategory = (title: string) => {
     setExpandedCategory(expandedCategory === title ? null : title);

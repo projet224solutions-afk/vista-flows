@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,6 +46,7 @@ const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNo
 ];
 
 export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: RecordPaymentDialogProps) {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState('');
@@ -68,12 +70,12 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
     }
 
     if (paymentAmount < debt.minimum_installment && paymentAmount !== debt.remaining_amount) {
-      toast.error(`Le montant doit être au minimum ${debt.minimum_installment.toLocaleString('fr-FR')} GNF (sauf pour solder la dette)`);
+      toast.error(`Le montant doit être au minimum ${fc(debt.minimum_installment)} (sauf pour solder la dette)`);
       return;
     }
 
     if (paymentAmount > debt.remaining_amount) {
-      toast.error(`Le montant ne peut pas dépasser le restant dû (${debt.remaining_amount.toLocaleString('fr-FR')} GNF)`);
+      toast.error(`Le montant ne peut pas dépasser le restant dû (${fc(debt.remaining_amount)})`);
       return;
     }
 

@@ -31,7 +31,7 @@ import RecentlyViewedProducts from '@/components/shared/RecentlyViewedProducts';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { _user } = useAuth();
+  const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
 

@@ -12,11 +12,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { CreditCard, Smartphone, Wallet, Banknote, Loader2, Shield } from "lucide-react";
-import { _PaymentsService, type PaymentMethod } from "@/services/taxi/paymentsService";
+import { PaymentsService, type PaymentMethod } from "@/services/taxi/paymentsService";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
@@ -42,6 +43,7 @@ export default function TaxiMotoPaymentModal({
   driverId,
   onPaymentSuccess
 }: TaxiMotoPaymentModalProps) {
+  const fc = useFormatCurrency();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -172,7 +174,7 @@ export default function TaxiMotoPaymentModal({
       // Messages selon la méthode
       if (paymentMethod === 'wallet') {
         toast.success('Paiement sécurisé effectué !', {
-          description: `${amount.toLocaleString()} GNF bloqués en escrow - Seront transférés au chauffeur à la fin de la course`
+          description: `${fc(amount)} bloqués en escrow - Seront transférés au chauffeur à la fin de la course`
         });
       } else if (paymentMethod === 'cash') {
         toast.success('Course confirmée !', {
@@ -223,7 +225,7 @@ export default function TaxiMotoPaymentModal({
 
       if (escrowResult.success) {
         toast.success('Paiement par carte réussi !', {
-          description: `${amount.toLocaleString()} GNF payés par carte`
+          description: `${fc(amount)} payés par carte`
         });
       }
     } catch (error) {
@@ -247,12 +249,12 @@ export default function TaxiMotoPaymentModal({
             <DialogDescription>
               <div className="space-y-2">
                 <div>
-                  Montant: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
+                  Montant: <span className="font-bold text-lg">{fc(amount)}</span>
                 </div>
                 {paymentMethod === 'wallet' && walletBalance !== null && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Solde disponible:</span>
-                    <span className="font-semibold">{walletBalance.toLocaleString()} GNF</span>
+                    <span className="font-semibold">{fc(walletBalance)}</span>
                   </div>
                 )}
                 {(paymentMethod === 'wallet' || paymentMethod === 'card') && (

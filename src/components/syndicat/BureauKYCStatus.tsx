@@ -14,7 +14,7 @@ interface BureauKYCStatusProps {
   className?: string;
 }
 
-export function BureauKYCStatus({ status, _bureauId, className }: BureauKYCStatusProps) {
+export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatusProps) {
   const _navigate = useNavigate();
 
   const handleVerifyClick = () => {

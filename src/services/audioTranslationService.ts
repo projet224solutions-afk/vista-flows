@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { SupportedLanguage, _SUPPORTED_LANGUAGES } from './translationService';
+import { SupportedLanguage, SUPPORTED_LANGUAGES } from './translationService';
 
 export interface AudioTranslationResult {
   success: boolean;

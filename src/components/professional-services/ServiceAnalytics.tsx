@@ -6,6 +6,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -74,6 +76,15 @@ function Trend({ current, prev }: { current: number; prev: number }) {
 }
 
 export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
+  const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  // Axe Y compact (revenus stockés en GNF → devise de l'utilisateur, taux BCRG)
+  const compactAxis = (v: number) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
   const [period, setPeriod] = useState('30');
   const [stats, setStats] = useState<Stats | null>(null);
   const [chartData, setChartData] = useState<DayStats[]>([]);
@@ -214,7 +225,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
               <span className="text-xs text-muted-foreground">Revenus période</span>
               <DollarSign className="w-4 h-4 text-muted-foreground" />
             </div>
-            <div className="text-xl font-bold">{formatAmount(s.periodRevenue)}</div>
+            <div className="text-xl font-bold">{fc(s.periodRevenue)}</div>
             <Trend current={s.periodRevenue} prev={s.prevPeriodRevenue} />
           </CardContent>
         </Card>
@@ -238,7 +249,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
               <span className="text-xs text-muted-foreground">Revenu total</span>
               <TrendingUp className="w-4 h-4 text-muted-foreground" />
             </div>
-            <div className="text-xl font-bold">{formatAmount(s.totalRevenue)}</div>
+            <div className="text-xl font-bold">{fc(s.totalRevenue)}</div>
             <span className="text-xs text-muted-foreground">{s.totalBookings} au total</span>
           </CardContent>
         </Card>
@@ -311,7 +322,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-[#ff4000]" />
-            Revenus encaissés (GNF)
+            Revenus encaissés
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -325,9 +336,9 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
               <LineChart data={chartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 10 }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={compactAxis} width={64} />
                 <Tooltip
-                  formatter={(v: number) => [`${v.toLocaleString('fr-FR')} GNF`, 'Revenus']}
+                  formatter={(v: number) => [fc(v), 'Revenus']}
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
                 />
                 <Line

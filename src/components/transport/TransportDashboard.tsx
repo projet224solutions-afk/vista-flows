@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Navigation, Users, MapPin, Clock, DollarSign, Phone, MessageSquare, _AlertTriangle, CheckCircle, Eye } from 'lucide-react';
+import { Navigation, Users, MapPin, Clock, DollarSign, Phone, MessageSquare, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
 import TransportService, { TransportRequest, TransportUser } from '../../services/transport/TransportService';
+import { Money } from '@/components/Money';
 import TransportRequestForm from './TransportRequestForm';
 import TransportTracking from './TransportTracking';
 
@@ -17,7 +18,7 @@ interface TransportDashboardProps {
 
 const TransportDashboard: React.FC<TransportDashboardProps> = ({
   userType,
-  _userId,
+  userId,
   className = ''
 }) => {
   const [activeTab, setActiveTab] = useState('requests');
@@ -191,7 +192,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
               <DollarSign className="w-5 h-5 text-[#04439e]" />
               <span className="text-sm font-medium text-[#04439e]">Gains</span>
             </div>
-            <p className="text-2xl font-bold text-[#04439e]">{stats.totalEarnings} GNF</p>
+            <p className="text-2xl font-bold text-[#04439e]"><Money amount={stats.totalEarnings} from="GNF" /></p>
           </div>
         </div>
       </div>
@@ -298,7 +299,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                             </span>
                           </div>
                           <span className="text-lg font-bold text-[#ff4000]">
-                            {request.totalPrice} GNF
+<Money amount={request.totalPrice} from="GNF" />
                           </span>
                         </div>
                       </div>
@@ -353,7 +354,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Gains</span>
-                        <span className="font-medium text-[#ff4000]">{user.earnings} GNF</span>
+                        <span className="font-medium text-[#ff4000]"><Money amount={user.earnings} from="GNF" /></span>
                       </div>
                     </div>
 

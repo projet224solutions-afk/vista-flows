@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Package, User, MapPin, Clock, Edit, Plus, Copy } from 'lucide-react';
@@ -42,6 +43,7 @@ interface ShipmentDetails {
 }
 
 export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onEdit }: ShipmentSuccessProps) {
+  const fc = useFormatCurrency();
   const [shipment, setShipment] = useState<ShipmentDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -187,12 +189,12 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           <div className="flex flex-wrap gap-2">
             {shipment.cash_on_delivery && (
               <Badge variant="secondary" className="bg-orange-100 text-[#ff4000]">
-                Contre-remboursement: {shipment.cod_amount?.toLocaleString()} GNF
+                Contre-remboursement: {fc(shipment.cod_amount || 0)}
               </Badge>
             )}
             {shipment.insurance && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Assuré: {shipment.insurance_amount?.toLocaleString()} GNF
+                Assuré: {fc(shipment.insurance_amount || 0)}
               </Badge>
             )}
             {shipment.return_option && (

@@ -1,19 +1,28 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
-import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { useMoneyFormat } from '@/components/Money';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { TrendingUp, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
   const { analytics, loading } = useVendorAnalytics();
-  const { currency, convert } = useVendorCurrency();
+  const { format, userCurrency } = useMoneyFormat();
+  const { convert } = usePriceConverter();
 
-  // Données du graphique converties dans la devise du wallet (pour un axe Y cohérent)
+  // Données du graphique converties (GNF stocké → devise de l'utilisateur, taux BCRG)
   const weekChartData = useMemo(
-    () => (analytics?.week ?? []).map(d => ({ ...d, total_sales: convert(d.total_sales) })),
+    () => (analytics?.week ?? []).map(d => ({ ...d, total_sales: convert(d.total_sales, 'GNF').convertedAmount })),
     [analytics?.week, convert]
   );
+
+  // Format compact pour l'axe Y (ex: 15k, 1,2M) avec le code devise de l'utilisateur
+  const compactAxis = (v: number) => {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(v) >= 1_000) return `${Math.round(v / 1_000)}k ${userCurrency}`;
+    return `${Math.round(v)} ${userCurrency}`;
+  };
 
   if (loading) {
     return (
@@ -28,7 +37,7 @@ export function VendorAnalyticsDashboard() {
   const stats = [
     {
       title: "Ventes Aujourd'hui",
-      value: `${Math.round(convert(analytics.today.totalSales)).toLocaleString('fr-FR')} ${currency}`,
+      value: format(analytics.today.totalSales, 'GNF'),
       subtitle: `POS: ${analytics.today.posOrders} • En ligne: ${analytics.today.onlineOrders}`,
       icon: TrendingUp,
       color: 'text-[#ff4000]'
@@ -80,9 +89,9 @@ export function VendorAnalyticsDashboard() {
                 tickFormatter={(value) => new Date(value).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                 tick={{ fontSize: 12 }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} tickFormatter={compactAxis} width={70} />
               <Tooltip
-                formatter={(value: number) => `${Math.round(value).toLocaleString('fr-FR')} ${currency}`}
+                formatter={(value: number) => format(value, userCurrency)}
                 labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR')}
               />
               <Area

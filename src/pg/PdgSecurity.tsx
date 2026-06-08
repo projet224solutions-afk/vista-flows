@@ -14,11 +14,35 @@ import { AdvancedMFA } from '@/components/security/AdvancedMFA';
 import { MLFraudDetection } from '@/components/security/MLFraudDetection';
 import { SIEMDashboard } from '@/components/security/SIEMDashboard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
+import { useSecurityOps } from '@/hooks/useSecurityOps';
 
 export default function PdgSecurity() {
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
   const [selectedTab, setSelectedTab] = useState('overview');
+
+  // Données RÉELLES de sécurité (incidents, alertes, IPs bloquées) — plus de valeurs codées en dur.
+  const { stats, incidents, alerts, blockedIPs, loading: secLoading } = useSecurityOps(true);
+  // Incidents ouverts + alertes en attente = problèmes actifs (critical ⊂ open → pas de double comptage).
+  const activeIssues = (stats.open_incidents || 0) + (stats.pending_alerts || 0);
+  const allClear = !secLoading && activeIssues === 0;
+
+  // Badge couleur selon la sévérité (réutilisé dans les listes ci-dessous).
+  const severityClass = (sev?: string) => {
+    switch ((sev || '').toLowerCase()) {
+      case 'critical': return 'bg-red-600/15 text-red-700 border-red-600/30';
+      case 'high':     return 'bg-red-500/10 text-red-600 border-red-500/20';
+      case 'medium':   return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
+      default:         return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+    }
+  };
+  const fmtDateTime = (iso?: string) => {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+    catch { return ''; }
+  };
+  const activeBlockedIPs = (blockedIPs || []).filter((b) => b.is_active);
+  const openIncidents = (incidents || []).filter((i) => i.status !== 'resolved' && i.status !== 'closed');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-4 md:p-8">
@@ -46,11 +70,19 @@ export default function PdgSecurity() {
           </Button>
         </div>
 
-        {/* Security Status Alert */}
-        <Alert className="border-[#ff4000]/50 bg-[#ff4000]/10">
-          <Activity className="h-4 w-4 text-[#ff4000]" />
-          <AlertDescription className="text-[#ff4000]">
-            Tous les systèmes de sécurité sont opérationnels
+        {/* Security Status Alert — calculé sur les vraies données */}
+        <Alert className={allClear ? 'border-[#ff4000]/50 bg-[#ff4000]/10' : 'border-red-500/60 bg-red-500/10'}>
+          {allClear ? (
+            <Activity className="h-4 w-4 text-[#ff4000]" />
+          ) : (
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          )}
+          <AlertDescription className={allClear ? 'text-[#ff4000]' : 'text-red-600 font-medium'}>
+            {secLoading
+              ? 'Vérification des systèmes de sécurité…'
+              : allClear
+                ? 'Tous les systèmes de sécurité sont opérationnels'
+                : `${activeIssues} problème(s) de sécurité actif(s) — ${stats.open_incidents || 0} incident(s) ouvert(s), ${stats.pending_alerts || 0} alerte(s) en attente${(stats.critical_incidents || 0) > 0 ? `, dont ${stats.critical_incidents} critique(s)` : ''}`}
           </AlertDescription>
         </Alert>
 
@@ -106,9 +138,11 @@ export default function PdgSecurity() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">0</span>
-                    <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
-                      Sécurisé
+                    <span className="text-3xl font-bold">{stats.open_incidents || 0}</span>
+                    <Badge variant="outline" className={(stats.open_incidents || 0) > 0
+                      ? 'bg-red-500/10 text-red-600 border-red-500/20'
+                      : 'bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20'}>
+                      {(stats.open_incidents || 0) > 0 ? 'Alerte' : 'Sécurisé'}
                     </Badge>
                   </div>
                 </CardContent>
@@ -122,7 +156,7 @@ export default function PdgSecurity() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">0</span>
+                    <span className="text-3xl font-bold">{stats.active_blocks || 0}</span>
                     <Ban className="w-5 h-5 text-[#ff4000]" />
                   </div>
                 </CardContent>
@@ -136,7 +170,7 @@ export default function PdgSecurity() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">0</span>
+                    <span className="text-3xl font-bold">{stats.pending_alerts || 0}</span>
                     <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                   </div>
                 </CardContent>
@@ -150,7 +184,7 @@ export default function PdgSecurity() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">0</span>
+                    <span className="text-3xl font-bold">{stats.total_incidents || 0}</span>
                     <FileText className="w-5 h-5 text-blue-500" />
                   </div>
                 </CardContent>
@@ -251,16 +285,36 @@ export default function PdgSecurity() {
               <CardHeader>
                 <CardTitle>Menaces Détectées</CardTitle>
                 <CardDescription>
-                  Aucune menace active détectée
+                  {openIncidents.length > 0
+                    ? `${openIncidents.length} incident(s) actif(s) sur ${incidents?.length || 0} enregistré(s)`
+                    : 'Aucune menace active détectée'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Shield className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">
-                    Tous les systèmes sont sécurisés
-                  </p>
-                </div>
+                {!incidents || incidents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Shield className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">Tous les systèmes sont sécurisés</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {incidents.slice(0, 30).map((inc) => (
+                      <div key={inc.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium truncate">{inc.title || inc.incident_type}</span>
+                            <Badge variant="outline" className={severityClass(inc.severity)}>{inc.severity}</Badge>
+                            <Badge variant="outline" className="text-xs">{inc.status}</Badge>
+                          </div>
+                          {inc.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{inc.description}</p>}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {inc.source_ip ? `IP ${inc.source_ip} • ` : ''}{inc.target_service ? `${inc.target_service} • ` : ''}{fmtDateTime(inc.detected_at || inc.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -271,16 +325,37 @@ export default function PdgSecurity() {
               <CardHeader>
                 <CardTitle>Surveillance en Temps Réel</CardTitle>
                 <CardDescription>
-                  Activité du système de surveillance
+                  {alerts && alerts.length > 0
+                    ? `${stats.pending_alerts || 0} alerte(s) en attente sur ${alerts.length} récente(s)`
+                    : 'Activité du système de surveillance'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Eye className="w-16 h-16 text-blue-500 mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">
-                    Surveillance active - Aucune anomalie
-                  </p>
-                </div>
+                {!alerts || alerts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Eye className="w-16 h-16 text-blue-500 mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">Surveillance active - Aucune anomalie</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {alerts.slice(0, 30).map((al) => (
+                      <div key={al.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium truncate">{al.message || al.alert_type}</span>
+                            <Badge variant="outline" className={severityClass(al.severity)}>{al.severity}</Badge>
+                            {al.acknowledged
+                              ? <Badge variant="outline" className="text-xs">acquittée</Badge>
+                              : <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">en attente</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {al.source ? `${al.source} • ` : ''}{fmtDateTime(al.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -291,16 +366,35 @@ export default function PdgSecurity() {
               <CardHeader>
                 <CardTitle>Entités Bloquées</CardTitle>
                 <CardDescription>
-                  IPs et utilisateurs bloqués
+                  {activeBlockedIPs.length > 0
+                    ? `${activeBlockedIPs.length} IP(s) actuellement bloquée(s)`
+                    : 'IPs et utilisateurs bloqués'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Ban className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">
-                    Aucune entité bloquée actuellement
-                  </p>
-                </div>
+                {activeBlockedIPs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Ban className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">Aucune entité bloquée actuellement</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activeBlockedIPs.slice(0, 50).map((b) => (
+                      <div key={b.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Ban className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
+                            <span className="font-mono font-medium truncate">{b.ip_address}</span>
+                          </div>
+                          {b.reason && <p className="text-sm text-muted-foreground mt-1">{b.reason}</p>}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Bloquée le {fmtDateTime(b.blocked_at)}{b.expires_at ? ` • expire le ${fmtDateTime(b.expires_at)}` : ' • permanent'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

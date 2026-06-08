@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -99,6 +100,7 @@ const menuItems = [
 type ActivityItem = { id: string | number; type?: string; title: string; description?: string; timestamp: string; status?: string };
 
 export default function Profil() {
+  const fc = useFormatCurrency();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   useRoleRedirect();
@@ -328,7 +330,7 @@ export default function Profil() {
             orders.map((o: any) => ({
               id: o.id,
               title: `Commande #${o.id}`,
-              description: `Montant: ${o.total_amount?.toLocaleString?.() || o.total_amount} GNF`,
+              description: `Montant: ${fc(o.total_amount || 0)}`,
               timestamp: o.created_at,
               status: o.status
             }))
@@ -601,7 +603,7 @@ export default function Profil() {
                       <Badge>{order.status}</Badge>
                     </div>
                     <p className="text-lg font-bold">
-                      {order.total_amount ? `${order.total_amount.toLocaleString()} GNF` : 'N/A'}
+                      {order.total_amount ? fc(order.total_amount) : 'N/A'}
                     </p>
                     {order.delivery_address && (
                       <p className="text-sm text-muted-foreground mt-1">

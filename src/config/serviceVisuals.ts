@@ -7,7 +7,7 @@ import {
   Dumbbell,
   GraduationCap,
   HardHat,
-  _Heart,
+  Heart,
   Home,
   Laptop,
   LucideIcon,

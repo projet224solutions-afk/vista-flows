@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import {
     Receipt,
@@ -16,11 +17,11 @@ import {
     DollarSign,
     User,
     Phone,
-    _Link,
-    _QrCode,
+    Link,
+    QrCode,
     Copy,
     Share2,
-    _Clock,
+    Clock,
     Shield
 } from 'lucide-react';
 import useGeolocation from '../../hooks/useGeolocation';
@@ -39,6 +40,7 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     onInvoiceCreated,
     onCancel
 }) => {
+    const fc = useFormatCurrency();
     const [amount, setAmount] = useState('');
     const [startLocation, setStartLocation] = useState('');
     const [endLocation, setEndLocation] = useState('');
@@ -399,19 +401,19 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span>Montant du trajet:</span>
-                                            <span className="font-medium">{parseFloat(amount) || 0} GNF</span>
+                                            <span className="font-medium">{fc(parseFloat(amount) || 0)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span>Frais 224SECURE (1%):</span>
-                                            <span className="font-medium">{feeAmount} GNF</span>
+                                            <span className="font-medium">{fc(feeAmount)}</span>
                                         </div>
                                         <div className="border-t pt-2 flex justify-between font-semibold">
                                             <span>Total client paiera:</span>
-                                            <span className="text-[#ff4000]">{totalAmount} GNF</span>
+                                            <span className="text-[#ff4000]">{fc(totalAmount)}</span>
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-600">
                                             <span>Vous recevrez:</span>
-                                            <span>{parseFloat(amount) || 0} GNF</span>
+                                            <span>{fc(parseFloat(amount) || 0)}</span>
                                         </div>
                                     </div>
                                 </CardContent>

@@ -6,6 +6,7 @@
 import { ReactNode, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Loader2, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { useUniversalEscrow } from '@/hooks/useUniversalEscrow';
@@ -47,6 +48,7 @@ export function EscrowPaymentWrapper({
   onError,
   onComplete
 }: EscrowPaymentWrapperProps) {
+  const fc = useFormatCurrency();
   const [showDialog, setShowDialog] = useState(false);
   const { createEscrow, creating, calculateFees } = useUniversalEscrow();
 
@@ -142,11 +144,11 @@ export function EscrowPaymentWrapper({
               <div className="border-t pt-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Montant:</span>
-                  <span className="font-semibold">{transaction.amount.toLocaleString()} GNF</span>
+                  <span className="font-semibold">{fc(transaction.amount)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Frais escrow (2.5%):</span>
-                  <span>{fees.fee.toLocaleString()} GNF</span>
+                  <span>{fc(fees.fee)}</span>
                 </div>
               </div>
             </div>

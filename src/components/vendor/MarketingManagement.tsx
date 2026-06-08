@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +53,7 @@ const statusLabels = {
 };
 
 export default function MarketingManagement() {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
@@ -525,7 +527,7 @@ export default function MarketingManagement() {
                       <p className="font-medium">
                         {promo.discount_type === 'percentage'
                           ? `${promo.discount_value}%`
-                          : `${promo.discount_value.toLocaleString()} GNF`}
+                          : fc(promo.discount_value)}
                       </p>
                     </div>
                     <div>
@@ -536,7 +538,7 @@ export default function MarketingManagement() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Commande min.</p>
-                      <p className="font-medium">{promo.minimum_order_amount.toLocaleString()} GNF</p>
+                      <p className="font-medium">{fc(promo.minimum_order_amount)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Expire le</p>

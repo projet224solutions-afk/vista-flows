@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { PermissionKey, AVAILABLE_PERMISSIONS } from './useAgentPermissions';
@@ -31,6 +31,9 @@ export const useCurrentUserPermissions = (): CurrentUserPermissions => {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [agentId, setAgentId] = useState<string | null>(null);
+  // Identifiant unique par instance du hook : évite la collision de canal realtime
+  // quand le hook est monté à plusieurs endroits (ex: PDGNavigation + PDG224Solutions).
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
 
   // Déterminer le type d'utilisateur
   const isPDG = useMemo(() => {
@@ -168,7 +171,7 @@ export const useCurrentUserPermissions = (): CurrentUserPermissions => {
     if (!agentId || isPDG) return;
 
     const channel = supabase
-      .channel(`current-user-permissions-${agentId}`)
+      .channel(`current-user-permissions-${agentId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2 } from 'lucide-react';
@@ -570,13 +571,13 @@ export function GoogleMapsNavigation({
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-1">Prix course</p>
                 <p className="text-lg font-bold text-[#ff4000]">
-                  {(activeRide.estimatedPrice || 0).toLocaleString()} GNF
+                  <Money amount={activeRide.estimatedPrice || 0} from="GNF" />
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-1">Mes gains</p>
                 <p className="text-lg font-bold text-blue-600">
-                  {(activeRide.estimatedEarnings || 0).toLocaleString()} GNF
+                  <Money amount={activeRide.estimatedEarnings || 0} from="GNF" />
                 </p>
               </div>
             </div>

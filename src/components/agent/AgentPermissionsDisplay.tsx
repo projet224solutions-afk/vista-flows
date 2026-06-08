@@ -37,7 +37,7 @@ export function AgentPermissionsDisplay({
   permissions,
   loading = false,
   compact = false,
-  _showAllPermissions = true, // Par défaut, affiche toutes les permissions
+  showAllPermissions = true, // Par défaut, affiche toutes les permissions
   className
 }: AgentPermissionsDisplayProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(

@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MessageSquare, User, Calendar, _Bot } from 'lucide-react';
+import { Star, MessageSquare, User, Calendar, Bot } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';

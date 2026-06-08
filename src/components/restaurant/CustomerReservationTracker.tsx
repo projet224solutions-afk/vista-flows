@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Calendar, Clock, Users, Check, X, AlertCircle,
-  _Download, RefreshCw, MapPin, _Phone, Receipt,
+  Download, RefreshCw, MapPin, Phone, Receipt,
   CheckCircle2, Timer, Armchair, XCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,7 +87,7 @@ const statusConfig = {
 export function CustomerReservationTracker({
   reservationId,
   customerEmail,
-  _onClose
+  onClose
 }: CustomerReservationTrackerProps) {
   const { user } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);

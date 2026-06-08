@@ -144,7 +144,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
         // Upload vers Supabase Storage
         const fileName = `delivery-proof/${delivery.id}-${Date.now()}.jpg`;
-        const { _data, error } = await supabase.storage
+        const { data, error } = await supabase.storage
           .from('documents')
           .upload(fileName, file, {
             contentType: 'image/jpeg',

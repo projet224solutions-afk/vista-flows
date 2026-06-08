@@ -152,7 +152,7 @@ export function useDriverSubscription(): UseDriverSubscriptionResult {
 
     try {
       // Utiliser la fonction RPC subscribe_driver pour le débit wallet
-      const { _data, error } = await supabase.rpc('subscribe_driver', {
+      const { data, error } = await supabase.rpc('subscribe_driver', {
         p_user_id: user.id,
         p_type: profile.role, // 'taxi' ou 'livreur' selon le rôle
         p_payment_method: paymentMethod,

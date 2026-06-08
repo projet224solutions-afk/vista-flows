@@ -39,6 +39,8 @@ import _StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { formatCurrency } from '@/lib/formatters';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 import {
   changeWalletPin,
@@ -83,7 +85,10 @@ interface Transaction {
 export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   // Utiliser le contexte Auth comme tous les autres composants de l'application
   const { user, profile } = useAuth();
-  const { currency: vendorCurrency, convert: convertVendor, isReady: currencyReady } = useVendorCurrency();
+  const { currency: vendorCurrency } = useVendorCurrency();
+  // Convertisseur fiable (devise d'affichage = devise synchronisée du profil/wallet) pour
+  // convertir les montants historiques (ex. transactions/abonnements en GNF) vers la devise du wallet.
+  const { convert: convertPrice } = usePriceConverter();
   // Utiliser propUserId si fourni, sinon utiliser user?.id
   const effectiveUserId = propUserId || user?.id;
 
@@ -495,8 +500,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             ? receiver.name
             : (txMeta.receiver_name || receiver.name);
 
+          // Pour un transfert INTERNATIONAL, le DESTINATAIRE doit voir le montant
+          // qu'il a RÉELLEMENT reçu, dans SA devise (pas le montant/devise de l'expéditeur).
+          const isReceiverHere = tx.receiver_id === effectiveUserId;
+          const intlReceived = isReceiverHere
+            && !!txMeta.is_international
+            && Number.isFinite(Number(txMeta.amount_received))
+            && Number(txMeta.amount_received) > 0;
+          const displayAmount = intlReceived ? Number(txMeta.amount_received) : tx.amount;
+          const displayCurrency = intlReceived ? (txMeta.receiver_currency || tx.currency) : tx.currency;
+
           allTransactions.push({
             ...tx,
+            amount: displayAmount,
+            currency: displayCurrency,
             sender_custom_id: sender.customId,
             receiver_custom_id: receiver.customId,
             sender_name: senderNameResolved,
@@ -525,6 +542,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             || (userWalletId && tx.receiver_wallet_id === userWalletId);
           if (isOutgoingType && !isUserSender) continue;
           if (isIncomingType && !isUserReceiver) continue;
+          // 💡 Paiement marketplace « Fonds bloqués en Escrow » : l'argent part en ESCROW, il n'est
+          // PAS crédité au vendeur (create_order_core ne débite que l'acheteur). Le vendeur le reçoit
+          // RÉELLEMENT à la libération (transaction escrow_release). On ne montre donc PAS ce paiement
+          // côté vendeur (receiver) — sinon il croit être payé deux fois. L'acheteur (sender) le voit.
+          if (txType === 'payment' && metadata?.source === 'create_order_core' && !isUserSender) continue;
 
           const isOutgoing = Boolean(isUserSender);
           const otherWalletId = isOutgoing ? tx.receiver_wallet_id : tx.sender_wallet_id;
@@ -564,7 +586,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             amount: tx.amount,
             method: tx.transaction_type,
             status: tx.status,
-            currency: tx.currency ?? 'GNF',
+            // La colonne wallet_transactions.currency n'est pas toujours renseignée (ex. paiement
+            // marketplace via create_order_core). Le montant est alors dans la devise du WALLET
+            // débité, présente dans metadata.wallet_currency (ou metadata.currency). On l'utilise
+            // pour éviter d'étiqueter à tort « GNF » un montant en EUR/XOF (et pour la conversion).
+            currency: tx.currency ?? metadata?.wallet_currency ?? metadata?.currency ?? 'GNF',
             created_at: tx.created_at,
             metadata: {
               ...metadata,
@@ -1230,6 +1256,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             receiver_country: data.receiver_country || '',
             commission_conversion: data.commission_conversion || 0,
             frais_international: data.frais_international || 0,
+            total_debit: data.total_debit,
+            // Solde actuel + après transfert (devise de l'expéditeur) — comme le transfert national.
+            current_balance: data.sender_balance ?? (wallet?.balance || 0),
+            balance_after: data.balance_after ?? ((data.sender_balance ?? (wallet?.balance || 0)) - (data.total_debit || data.amount_sent || amount)),
             rate_lock_seconds: data.rate_lock_seconds || 60,
             receiver_name: recipientName || data.receiver_name,
             receiver_code: recipientUuid,
@@ -1451,7 +1481,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         receiverId,
         preview.amount_sent,
         transferDescription || 'Transfert international wallet',
-        pin
+        pin,
+        preview.rate_displayed, // taux NET du preview → garde anti-dérive backend
       );
       if (!result.success) throw new Error(result.error || 'Erreur lors du transfert');
 
@@ -1571,16 +1602,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     }
   };
 
+  // Devise officielle d'affichage = celle du WALLET (l'argent réellement détenu, gérée par le PDG).
   const formatWalletBalance = (amount: number, currency?: string) => {
-    if (!currencyReady) return '—';
-    // Si la devise de la transaction est fournie, l'afficher directement sans re-conversion
-    if (currency && currency.toUpperCase() !== 'GNF' && currency.toUpperCase() !== vendorCurrency.toUpperCase()) {
-      return `${Math.round(amount).toLocaleString('fr-FR')} ${currency.toUpperCase()}`;
-    }
-    if (currency && currency.toUpperCase() === vendorCurrency.toUpperCase()) {
-      return `${Math.round(amount).toLocaleString('fr-FR')} ${vendorCurrency}`;
-    }
-    return `${Math.round(convertVendor(amount)).toLocaleString('fr-FR')} ${vendorCurrency}`;
+    const walletCur = (wallet?.currency || vendorCurrency || 'GNF').toUpperCase();
+    const from = (currency || walletCur).toUpperCase();
+    // Montant DÉJÀ dans la devise du wallet (ex. le SOLDE, déjà converti en base) → affichage DIRECT
+    // (pas de reconversion, sinon double conversion = montant faux).
+    if (from === walletCur) return formatCurrency(amount, walletCur);
+    // Montant dans une autre devise (transaction/abonnement historique en GNF) → converti vers la
+    // devise d'affichage, synchronisée sur la devise du wallet via CurrencySync.
+    return convertPrice(amount, from).formatted;
   };
 
   const getTransactionType = (tx: Transaction) => {
@@ -2216,13 +2247,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount || 0)}</span>
                     </div>
-                    {transferPreview?.is_international && (
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span className="text-sm font-medium">📊 Frais de conversion</span>
-                        <span className="text-sm">Intégrés au taux (3%)</span>
-                      </div>
-                    )}
-                    {!transferPreview?.is_international && (transferPreview?.fee_amount || 0) > 0 && (
+                    {(transferPreview?.fee_amount || 0) > 0 && (
                       <div className="flex justify-between items-center text-orange-600">
                         <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
                         <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.fee_amount || 0)}</span>
@@ -2384,11 +2409,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                       {tx.sender_id === effectiveUserId && tx.receiver_id !== effectiveUserId ? '-' : '+'}
                       {formatWalletBalance(tx.amount, tx.currency)}
                     </p>
-                    {tx.sender_id === effectiveUserId && Number(tx.metadata?.fee_amount) > 0 && (
-                      <p className="text-[10px] sm:text-xs text-orange-600">
-                        +{formatWalletBalance(tx.metadata.fee_amount, tx.currency)} frais
-                      </p>
-                    )}
+                    {/* Frais NON affichés dans l'historique : la commission est facturée en silence
+                        (incluse dans le débit / le taux), pas exposée comme ligne séparée. */}
                     <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] sm:text-xs px-1 sm:px-2 py-0 mt-0.5">
                       {tx.status === 'completed' ? 'OK' : tx.status}
                     </Badge>

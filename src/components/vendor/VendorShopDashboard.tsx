@@ -54,7 +54,7 @@ const statusLabels: Record<string, string> = {
 export function VendorShopDashboard({
   vendorId,
   businessName,
-  _onCreateService
+  onCreateService
 }: VendorShopDashboardProps) {
   const { stats, recentOrders, loading, error, refresh } = useVendorEcommerceStats(vendorId);
   const [activeTab, setActiveTab] = useState('overview');

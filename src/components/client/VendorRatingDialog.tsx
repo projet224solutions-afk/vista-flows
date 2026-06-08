@@ -46,16 +46,18 @@ export default function VendorRatingDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
-      // Insérer la note dans la table vendor_ratings
+      // Enregistrer la note (upsert) : contrainte UNIQUE (order_id, customer_id) → si le client a
+      // déjà noté cette commande, on MET À JOUR sa note au lieu d'échouer en duplicate key.
       const { error } = await supabase
         .from('vendor_ratings')
-        .insert({
+        .upsert({
           vendor_id: vendorId,
           customer_id: user.id,
           order_id: orderId,
           rating: rating,
-          comment: comment.trim() || null
-        });
+          comment: comment.trim() || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'order_id,customer_id' });
 
       if (error) throw error;
 

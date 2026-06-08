@@ -7,21 +7,19 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { getCurrencyForCountry } from '@/data/countryMappings';
 
 // =====================================================
 // TYPES ET INTERFACES
 // =====================================================
 
-type _DbWallet = Database['public']['Tables']['wallets']['Row'];
-type _DbTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
+type DbWallet = Database['public']['Tables']['wallets']['Row'];
+type DbTransaction = Database['public']['Tables']['wallet_transactions']['Row'];
 
 export interface Wallet {
   id: string;
   user_id: string;
   balance: number;
   currency: string;
-  currency_locked?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -57,25 +55,6 @@ export interface WalletStats {
 // =====================================================
 
 class WalletService {
-  // Résoudre la devise selon le pays du profil utilisateur
-  private async resolveCurrencyForUser(userId: string): Promise<string> {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('detected_country, country, detected_currency')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profile?.detected_currency && profile.detected_currency !== 'GNF') {
-        return profile.detected_currency;
-      }
-      const country = profile?.detected_country || profile?.country || 'GN';
-      return getCurrencyForCountry(country) || 'GNF';
-    } catch {
-      return 'GNF';
-    }
-  }
-
   // Récupérer le wallet d'un utilisateur
   /**
    * Récupère le wallet d'un utilisateur, le crée si inexistant ou inactif
@@ -86,7 +65,6 @@ class WalletService {
       return null;
     }
     try {
-      // eslint-disable-next-line prefer-const
       let { data: wallet, error } = await supabase
         .from('wallets')
         .select('*')
@@ -95,20 +73,11 @@ class WalletService {
 
       if (error) throw error;
 
-      // Si le wallet n'existe pas, le créer avec la devise du pays
+      // Si le wallet n'existe pas, le créer
       if (!wallet) {
-        const currency = await this.resolveCurrencyForUser(userId);
         const { data: created, error: createError } = await supabase
           .from('wallets')
-          .insert({
-            user_id: userId,
-            balance: 0,
-            currency,
-            wallet_status: 'active',
-            currency_locked: true,
-            currency_locked_at: new Date().toISOString(),
-            currency_lock_reason: 'Devise assignée automatiquement selon le pays de résidence',
-          })
+          .insert({ user_id: userId, balance: 0, currency: 'GNF', wallet_status: 'active' })
           .select('*')
           .maybeSingle();
         if (createError) throw createError;
@@ -131,17 +100,12 @@ class WalletService {
   // Créer un wallet pour un utilisateur
   async createUserWallet(userId: string, initialBalance: number = 10000): Promise<Wallet | null> {
     try {
-      const currency = await this.resolveCurrencyForUser(userId);
-
       const { data, error } = await supabase
         .from('wallets')
         .insert({
           user_id: userId,
           balance: initialBalance,
-          currency,
-          currency_locked: true,
-          currency_locked_at: new Date().toISOString(),
-          currency_lock_reason: 'Devise assignée automatiquement selon le pays de résidence',
+          currency: 'GNF'
         })
         .select()
         .single();
@@ -156,7 +120,7 @@ class WalletService {
           amount: initialBalance,
           net_amount: initialBalance,
           fee: 0,
-          currency,
+          currency: 'GNF',
           description: 'Bonus de bienvenue 224Solutions',
           status: 'completed',
           receiver_wallet_id: data.id
@@ -223,7 +187,7 @@ class WalletService {
   // Effectuer un transfert entre wallets
   // ⚠️ DÉPRÉCIÉ: Utiliser l'Edge Function wallet-transfer à la place
   // Cette méthode n'est PAS sécurisée (pas de HMAC, pas d'audit, race conditions)
-  async transferFunds(_fromWalletId: string, _toWalletId: string, _amount: number, _description: string): Promise<boolean> {
+  async transferFunds(fromWalletId: string, toWalletId: string, amount: number, description: string): Promise<boolean> {
     console.error('⚠️ ATTENTION: walletService.transferFunds() est déprécié!');
     console.error('➡️ Utilisez plutôt: supabase.functions.invoke("wallet-transfer")');
 

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +9,20 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PdgRevenueService, type RevenueStats, type PdgRevenue, type PdgSetting } from '@/services/pdgRevenueService';
 import { supabase } from '@/lib/supabaseClient';
-import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, _Calendar, ArrowDownToLine, ArrowUpFromLine, Globe } from 'lucide-react';
+import { TrendingUp, DollarSign, Wallet, ShoppingBag, RefreshCw, Settings, Download, Calendar, ArrowDownToLine, ArrowUpFromLine, Globe } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function PDGRevenueAnalytics() {
+  const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  const compactAxis = (v: number) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
   const [stats, setStats] = useState<RevenueStats | null>(null);
   const [revenues, setRevenues] = useState<PdgRevenue[]>([]);
   const [settings, setSettings] = useState<PdgSetting[]>([]);
@@ -182,7 +192,7 @@ export default function PDGRevenueAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {PdgRevenueService.formatAmount(Number(stats?.total_revenue || 0))}
+              {fc(Number(stats?.total_revenue || 0))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats?.transaction_count || 0} transactions
@@ -197,7 +207,7 @@ export default function PDGRevenueAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {PdgRevenueService.formatAmount(Number(stats?.wallet_fees_revenue || 0))}
+              {fc(Number(stats?.wallet_fees_revenue || 0))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats?.wallet_transaction_count || 0} transactions
@@ -212,7 +222,7 @@ export default function PDGRevenueAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {PdgRevenueService.formatAmount(Number(stats?.purchase_fees_revenue || 0))}
+              {fc(Number(stats?.purchase_fees_revenue || 0))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats?.purchase_transaction_count || 0} transactions
@@ -261,7 +271,7 @@ export default function PDGRevenueAnalytics() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, value }) => `${name}: ${PdgRevenueService.formatAmount(value)}`}
+                      label={({ name, value }) => `${name}: ${fc(value)}`}
                       outerRadius={80}
                       fill="#04439e"
                       dataKey="value"
@@ -270,7 +280,7 @@ export default function PDGRevenueAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => PdgRevenueService.formatAmount(value)} />
+                    <Tooltip formatter={(value: any) => fc(value)} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -287,8 +297,8 @@ export default function PDGRevenueAnalytics() {
                   <LineChart data={timelineData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value: any) => PdgRevenueService.formatAmount(value)} />
+                    <YAxis tickFormatter={compactAxis} width={72} />
+                    <Tooltip formatter={(value: any) => fc(value)} />
                     <Legend />
                     <Line type="monotone" dataKey="wallet" stroke="#04439e" name="Frais Wallet" />
                     <Line type="monotone" dataKey="purchase" stroke="#ff4000" name="Commissions" />
@@ -364,7 +374,7 @@ export default function PDGRevenueAnalytics() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-[#ff4000]">
-                        {PdgRevenueService.formatAmount(Number(rev.amount))}
+                        {fc(Number(rev.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Taux: {rev.percentage_applied}%
@@ -539,9 +549,9 @@ export default function PDGRevenueAnalytics() {
 
                         {/* Exemple de calcul en temps réel */}
                         <div className="p-3 bg-background rounded-lg border">
-                          <p className="text-xs text-muted-foreground mb-1">Exemple sur {PdgRevenueService.formatAmount(labelConfig.example)}:</p>
+                          <p className="text-xs text-muted-foreground mb-1">Exemple sur {fc(labelConfig.example)}:</p>
                           <p className="font-semibold text-[#ff4000]">
-                            Revenu PDG: {PdgRevenueService.formatAmount(labelConfig.example * currentValue / 100)}
+                            Revenu PDG: {fc(labelConfig.example * currentValue / 100)}
                           </p>
                         </div>
 

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Shield, Search, CheckCircle, XCircle, Clock, Eye,
-  Building2, _User, _Phone, _FileText, _AlertTriangle, RefreshCw
+  Building2, User, Phone, FileText, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ interface AgentKYCManagementProps {
   canManage?: boolean;
 }
 
-export function AgentKYCManagement({ _agentId, canManage = false }: AgentKYCManagementProps) {
+export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManagementProps) {
   const [vendors, setVendors] = useState<VendorKYC[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

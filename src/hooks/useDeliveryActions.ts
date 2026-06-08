@@ -5,6 +5,7 @@
 
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { completeDelivery as completeDeliveryBackend } from '@/services/deliveryBackendService';
 
@@ -23,6 +24,7 @@ export function useDeliveryActions({
   onDeliveryCompleted,
   onDeliveryCancelled,
 }: UseDeliveryActionsProps) {
+  const fc = useFormatCurrency();
 
   /**
    * Accepter une livraison
@@ -225,11 +227,11 @@ export function useDeliveryActions({
 
       console.log('✅ Delivery completed successfully (backend)');
       if (result.driver_earning && result.credited) {
-        toast.success(`🎉 Livraison terminée ! ${result.driver_earning.toLocaleString()} GNF crédités sur votre wallet`);
+        toast.success(`🎉 Livraison terminée ! ${fc(result.driver_earning)} crédités sur votre wallet`);
         // Rafraîchir le solde wallet affiché
         window.dispatchEvent(new Event('wallet-updated'));
       } else if (result.driver_earning) {
-        toast.success(`🎉 Livraison terminée ! Gain : ${result.driver_earning.toLocaleString()} GNF (espèces)`);
+        toast.success(`🎉 Livraison terminée ! Gain : ${fc(result.driver_earning)} (espèces)`);
       } else {
         toast.success('🎉 Livraison terminée avec succès!');
       }

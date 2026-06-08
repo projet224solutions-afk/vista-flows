@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,13 +18,13 @@ import {
   Store,
   Phone,
   CreditCard,
-  _Route,
+  Route,
   Calculator,
   Check,
   X,
   Loader2,
   Truck,
-  _WifiOff
+  WifiOff
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -59,7 +59,7 @@ interface DriverAvailableDeliveriesProps {
   driverLocation?: { lat: number; lng: number } | null;
 }
 
-export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverAvailableDeliveriesProps) {
+export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAvailableDeliveriesProps) {
   const { user } = useAuth();
   const [deliveries, setDeliveries] = useState<AvailableDelivery[]>([]);
   const [loading, setLoading] = useState(false);
@@ -315,7 +315,7 @@ export function DriverAvailableDeliveries({ onAccept, _driverLocation }: DriverA
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Distance × {(delivery.price_per_km || 1000).toLocaleString()} GNF/km
+                    Distance × {formatCurrency(delivery.price_per_km || 1000)}/km
                   </span>
                   <span>{formatCurrency(delivery.distance_price || 0)}</span>
                 </div>

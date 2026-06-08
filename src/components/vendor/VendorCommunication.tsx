@@ -37,7 +37,7 @@ export default function VendorCommunication() {
   const {
     callState,
     isInitialized,
-    _isLoading,
+    isLoading,
     startCall,
     endCall,
     toggleMute,

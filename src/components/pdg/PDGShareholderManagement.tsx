@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1390,7 +1391,7 @@ export default function PDGShareholderManagement() {
     }
   }, [user?.id, refetch]);
 
-  const formatCurrency = (n: number) => `${(n || 0).toLocaleString()} GNF`;
+  const formatCurrency = useFormatCurrency();
 
   return (
     <div className="space-y-6">

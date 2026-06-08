@@ -13,7 +13,7 @@ import {
   dropshipMarketplace,
   MarketplaceProduct,
   ProductQueryOptions,
-  _ProductQueryResult
+  ProductQueryResult
 } from '@/services/dropship';
 
 interface UseMarketplaceProductsOptions extends Omit<ProductQueryOptions, 'page'> {

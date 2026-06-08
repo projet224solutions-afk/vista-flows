@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle, _CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,8 +15,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { ServiceSubscriptionService } from '@/services/serviceSubscriptionService';
 import {
-  CheckCircle, XCircle, Clock, MapPin, Phone, Mail, _Eye,
-  Shield, _AlertTriangle, RefreshCw, _Store
+  CheckCircle, XCircle, Clock, MapPin, Phone, Mail, Eye,
+  Shield, AlertTriangle, RefreshCw, Store
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -42,7 +42,7 @@ interface PendingService {
   service_type?: { name: string; code: string } | null;
 }
 
-export function PDGServiceValidation({ activeServiceTab, _serviceTypes, onRefresh }: PDGServiceValidationProps) {
+export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh }: PDGServiceValidationProps) {
   const [services, setServices] = useState<PendingService[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionService, setActionService] = useState<PendingService | null>(null);

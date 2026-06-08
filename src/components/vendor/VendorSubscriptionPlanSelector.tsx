@@ -15,7 +15,7 @@ import { SubscriptionService, Plan } from "@/services/subscriptionService";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import walletService from "@/services/walletService";
-import { useVendorCurrency } from "@/hooks/useVendorCurrency";
+import { Money } from "@/components/Money";
 
 interface VendorSubscriptionPlanSelectorProps {
   open: boolean;
@@ -108,7 +108,6 @@ export function VendorSubscriptionPlanSelector({
   onSuccess
 }: VendorSubscriptionPlanSelectorProps) {
   const { user } = useAuth();
-  const { currency: vendorCurrency, convert } = useVendorCurrency();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -306,7 +305,7 @@ export function VendorSubscriptionPlanSelector({
 
                         <div className="space-y-1">
                           <span className="text-2xl font-extrabold tracking-tight text-primary">
-                            {Math.round(convert(price)).toLocaleString('fr-FR')} {vendorCurrency}
+                            <Money amount={price} from="GNF" />
                           </span>
                           <p className="text-sm text-muted-foreground/90">
                             pour {BILLING_CYCLE_DURATION[billingCycle]} mois
@@ -326,7 +325,7 @@ export function VendorSubscriptionPlanSelector({
             <Wallet className="w-4 h-4" />
             <span className="text-sm font-medium">Solde wallet</span>
           </div>
-          <span className="font-bold">{walletBalance.toLocaleString('fr-FR')} {vendorCurrency}</span>
+          <span className="font-bold"><Money amount={walletBalance} from={walletCurrency} /></span>
         </div>
 
         <DialogFooter>

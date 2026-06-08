@@ -31,11 +31,11 @@ export const TranslatedAudioPlayer: React.FC<TranslatedAudioPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const {
-    _playAudioForMessage,
-    _stopAudio,
+    playAudioForMessage,
+    stopAudio,
     isAudioTranslated,
     getDisplayAudioUrl,
-    _getTranscription,
+    getTranscription,
     isTranslating
   } = useAudioTranslation();
 
@@ -230,7 +230,7 @@ export const CompactAudioPlayer: React.FC<{
   message: Message;
   onPlay?: () => void;
 }> = ({ message, onPlay }) => {
-  const { isAudioTranslated, _getDisplayAudioUrl } = useAudioTranslation();
+  const { isAudioTranslated, getDisplayAudioUrl } = useAudioTranslation();
   const isTranslated = isAudioTranslated(message);
 
   return (

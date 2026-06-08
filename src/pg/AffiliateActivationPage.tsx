@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export default function AffiliateActivationPage() {
   const navigate = useNavigate();
-  const { _t } = useTranslation();
+  const { t } = useTranslation();
   const {
     loading,
     isAffiliateEnabled,

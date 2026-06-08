@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,6 +58,7 @@ export default function QuoteEditDialog({
   onOpenChange,
   onSuccess,
 }: QuoteEditDialogProps) {
+  const fc = useFormatCurrency();
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -335,23 +337,23 @@ export default function QuoteEditDialog({
           <div className="border-t pt-4">
             <div className="flex justify-between text-lg mb-2">
               <span>Sous-total:</span>
-              <span className="font-semibold">{subtotal.toLocaleString()} GNF</span>
+              <span className="font-semibold">{fc(subtotal)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>Remise:</span>
-                <span>-{discount.toLocaleString()} GNF</span>
+                <span>-{fc(discount)}</span>
               </div>
             )}
             {tax > 0 && (
               <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>TVA:</span>
-                <span>+{tax.toLocaleString()} GNF</span>
+                <span>+{fc(tax)}</span>
               </div>
             )}
             <div className="flex justify-between text-2xl font-bold text-primary border-t pt-2">
               <span>TOTAL:</span>
-              <span>{total.toLocaleString()} GNF</span>
+              <span>{fc(total)}</span>
             </div>
           </div>
         </div>

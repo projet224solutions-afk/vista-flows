@@ -214,7 +214,7 @@ export class AgentService {
         }
 
         // Si d'autres champs à mettre à jour (sans l'email)
-        const { _email, ...otherUpdates } = updates;
+        const { email, ...otherUpdates } = updates;
         if (Object.keys(otherUpdates).length > 0) {
           const { error: dbError } = await supabase
             .from('agents_management')

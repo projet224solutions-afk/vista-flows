@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, _DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
     Building2,
     Users,
@@ -30,7 +30,7 @@ import {
     Download,
     RefreshCw,
     Eye,
-    _Plus,
+    Plus,
     Receipt,
     Star,
     Bell,
@@ -89,7 +89,7 @@ export default function SyndicatDashboardUltraPro() {
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
     // Données du bureau
-    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, _error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
+    const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
 
     useEffect(() => {
         setLoading(dataLoading);

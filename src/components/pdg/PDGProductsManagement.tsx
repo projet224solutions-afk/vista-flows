@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,8 @@ import { getPdgVisibilityOverview, updatePdgVisibilityConfig } from '@/services/
 import { toast } from 'sonner';
 
 export default function PDGProductsManagement() {
-  const { products, _vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
+  const fc = useFormatCurrency();
+  const { products, vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
   const [visibilityOverview, setVisibilityOverview] = useState<any>(null);
   const [savingVisibilityConfig, setSavingVisibilityConfig] = useState(false);
   const [visibilityConfig, setVisibilityConfig] = useState({
@@ -230,7 +232,7 @@ export default function PDGProductsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {stats.totalValue.toLocaleString('fr-FR')} GNF
+              {fc(stats.totalValue)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">valeur catalogue</p>
           </CardContent>
@@ -264,7 +266,7 @@ export default function PDGProductsManagement() {
             </div>
             <div className="p-3 rounded-lg border bg-card">
               <p className="text-xs text-muted-foreground">Revenus boosts</p>
-              <p className="text-2xl font-bold">{Number(visibilityOverview?.totalBoostRevenue || 0).toLocaleString('fr-FR')} GNF</p>
+              <p className="text-2xl font-bold">{fc(Number(visibilityOverview?.totalBoostRevenue || 0))}</p>
             </div>
             <div className="p-3 rounded-lg border bg-card">
               <p className="text-xs text-muted-foreground">Vendeurs boosteurs (top)</p>
@@ -422,7 +424,7 @@ export default function PDGProductsManagement() {
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">Prix: {product.price.toLocaleString()} GNF</span>
+                        <span className="font-medium text-foreground">Prix: {fc(product.price)}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -507,7 +509,7 @@ export default function PDGProductsManagement() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Prix</Label>
-                  <p className="font-medium">{viewProduct.price.toLocaleString()} GNF</p>
+                  <p className="font-medium">{fc(viewProduct.price)}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Vendeur</Label>

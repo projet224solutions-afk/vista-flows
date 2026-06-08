@@ -93,7 +93,7 @@ export default function SystemDebugPage() {
       const dbTime = Date.now() - dbStart;
 
       // Check auth
-      const { data: { _session }, error: authError } = await supabase.auth.getSession();
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
 
       // Check storage
       const { data: _buckets, error: storageError } = await supabase.storage.listBuckets();

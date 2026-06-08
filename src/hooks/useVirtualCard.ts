@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export interface CardTransaction {
   id: string;
@@ -44,6 +45,7 @@ export interface PaymentResult {
 }
 
 export function useVirtualCard() {
+  const fc = useFormatCurrency();
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<CardStats | null>(null);
 
@@ -73,7 +75,7 @@ export function useVirtualCard() {
 
       if (result.success) {
         toast.success('Paiement effectué !', {
-          description: `${amount.toLocaleString('fr-FR')} GNF débité chez ${merchantName}`
+          description: `${fc(amount)} débité chez ${merchantName}`
         });
       } else {
         toast.error('Paiement refusé', {

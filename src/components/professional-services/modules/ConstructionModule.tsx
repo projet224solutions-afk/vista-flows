@@ -4,14 +4,15 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
   HardHat, Building, Plus, Users, FileText, Package,
-  TrendingUp, Clock, _CheckCircle2, _AlertTriangle, MapPin,
+  TrendingUp, Clock, CheckCircle2, AlertTriangle, MapPin,
   Loader2, Trash2, Eye, Star, Phone, Mail
 } from 'lucide-react';
 import { useBTPData } from '@/hooks/useBTPData';
@@ -68,7 +69,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
     addProfessional, createQuote, respondToQuote,
     addMaterial, addTask, fetchTasks,
     addDailyReport, fetchDailyReports,
-    _refresh,
+    refresh,
   } = useBTPData(serviceId);
 
   const [activeTab, setActiveTab] = useState('projets');
@@ -195,7 +196,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                       <Progress value={project.progress_percent} className="h-2" />
                     </div>
                     <div className="flex justify-between mt-3 text-xs text-muted-foreground">
-                      <span>💰 {Number(project.budget_estimated).toLocaleString()} GNF</span>
+                      <span>💰 <Money amount={Number(project.budget_estimated)} from="GNF" /></span>
                       <span>📅 {project.estimated_duration_days}j</span>
                     </div>
                     <div className="flex justify-end gap-1 mt-2" onClick={e => e.stopPropagation()}>
@@ -322,7 +323,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
 
                       {quote.status === 'repondu' && (
                         <div className="mt-2 bg-muted/50 rounded-lg p-3 text-sm">
-                          <p>💰 {Number(quote.estimated_cost).toLocaleString()} GNF • ⏱ {quote.estimated_duration}</p>
+                          <p>💰 <Money amount={Number(quote.estimated_cost)} from="GNF" /> • ⏱ {quote.estimated_duration}</p>
                           {quote.response_details && <p className="text-muted-foreground mt-1">{quote.response_details}</p>}
                         </div>
                       )}
@@ -363,7 +364,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                       </Badge>
                     </div>
                     <div className="mt-2 text-sm">
-                      <p>💰 {Number(mat.unit_price).toLocaleString()} GNF / {mat.unit}</p>
+                      <p>💰 <Money amount={Number(mat.unit_price)} from="GNF" /> / {mat.unit}</p>
                       <p className="text-muted-foreground">📦 {mat.quantity_available} {mat.unit}(s) disponibles</p>
                     </div>
                     {mat.supplier_name && (

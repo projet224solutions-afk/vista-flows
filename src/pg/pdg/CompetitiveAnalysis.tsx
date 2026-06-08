@@ -36,7 +36,7 @@ interface AnalysisResult {
 
 export default function CompetitiveAnalysis() {
   const navigate = useNavigate();
-  const { isMobile, _isTablet } = useResponsive();
+  const { isMobile, isTablet } = useResponsive();
   const [loadingCompetitive, setLoadingCompetitive] = useState<boolean>(false);
   const [loadingSecurity, setLoadingSecurity] = useState<boolean>(false);
   const [competitiveAnalysis, setCompetitiveAnalysis] = useState<AnalysisResult | null>(null);

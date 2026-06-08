@@ -15,7 +15,7 @@ import {
   X,
   Shield,
   Activity,
-  _Zap,
+  Zap,
   Database,
   Wallet,
   ShoppingCart,

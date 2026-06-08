@@ -2,6 +2,8 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,14 @@ const PDGTransferLimits = lazy(() => import('./PDGTransferLimits'));
 
 export default function PDGFinance() {
   const navigate = useNavigate();
+  const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  const compactAxis = (v) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
   const [activeFinanceTab, setActiveFinanceTab] = useState('overview');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
@@ -886,7 +896,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {(stats.total_revenue || 0).toLocaleString()} GNF
+                {fc(stats.total_revenue || 0)}
               </p>
               <p className="text-xs text-[#ff4000] flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
@@ -909,7 +919,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {(stats.total_commission || 0).toLocaleString()} GNF
+                {fc(stats.total_commission || 0)}
               </p>
               <p className="text-xs text-muted-foreground">
                   Sur {transactions?.length || 0} transactions
@@ -931,7 +941,7 @@ export default function PDGFinance() {
           <CardContent>
             <div className="space-y-2">
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {(stats.pending_payments || 0).toLocaleString()} GNF
+                {fc(stats.pending_payments || 0)}
               </p>
               <p className="text-xs text-muted-foreground">
                 {transactions?.filter(t => t.status === 'pending').length || 0} transactions
@@ -994,7 +1004,7 @@ export default function PDGFinance() {
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
                 <XAxis dataKey="date" className="text-xs" />
-                <YAxis className="text-xs" />
+                <YAxis className="text-xs" tickFormatter={compactAxis} width={72} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line
                   type="monotone"
@@ -1021,7 +1031,7 @@ export default function PDGFinance() {
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
                 <XAxis dataKey="date" className="text-xs" />
-                <YAxis className="text-xs" />
+                <YAxis className="text-xs" tickFormatter={compactAxis} width={72} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="commission" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
               </BarChart>
@@ -1091,7 +1101,7 @@ export default function PDGFinance() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold">
-                        {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{trans.id.slice(0, 8)}
+                        {trans.transaction_type?.toUpperCase() || 'TRANSACTION'} #{String(trans.id).slice(0, 8)}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {new Date(trans.created_at).toLocaleDateString('fr-FR', {
@@ -1111,7 +1121,7 @@ export default function PDGFinance() {
                   </div>
                   <div className="text-right space-y-2">
                     <p className="text-xl font-bold">
-                      {Number(trans.amount).toLocaleString()} GNF
+                      {fc(Number(trans.amount))}
                     </p>
                     <Badge variant="outline" className={
                       trans.status === 'completed' ? 'border-[#ff4000]/50 bg-[#ff4000]/10 text-[#ff4000]' :

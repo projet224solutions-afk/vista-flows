@@ -11,7 +11,7 @@ import { Navigation, Phone, Car, CheckCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SimpleMapView } from "./SimpleMapView";
-import { _GeolocationService } from "@/services/taxi/GeolocationService";
+import { GeolocationService } from "@/services/taxi/GeolocationService";
 import { TaxiMotoGeolocationService } from "@/services/taxi/TaxiMotoGeolocationService";
 
 interface ActiveRide {

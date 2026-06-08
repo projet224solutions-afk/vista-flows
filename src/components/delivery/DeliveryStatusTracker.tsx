@@ -59,7 +59,7 @@ interface DeliveryStatusTrackerProps {
   userRole: 'client' | 'vendor' | 'driver';
 }
 
-export function DeliveryStatusTracker({ deliveryId, _userRole }: DeliveryStatusTrackerProps) {
+export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTrackerProps) {
   const [delivery, setDelivery] = useState<DeliveryStatus | null>(null);
   const [loading, setLoading] = useState(true);
 

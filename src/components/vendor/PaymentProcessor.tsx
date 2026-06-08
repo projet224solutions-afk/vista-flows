@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -112,6 +113,7 @@ const statusLabels = {
 };
 
 export default function PaymentProcessor() {
+  const fc = useFormatCurrency();
   const { user: authUser } = useAuth();
   const { userId: vendorUserId, isAgent } = useCurrentVendor();
   // En mode agent, utiliser le user_id du vendeur pour les transactions
@@ -411,7 +413,7 @@ export default function PaymentProcessor() {
               <div className="w-5 h-5 bg-[#ff4000] rounded-full" />
               <div>
                 <p className="text-sm text-muted-foreground">Montant total</p>
-                <p className="text-2xl font-bold">{totalAmount.toLocaleString()} GNF</p>
+                <p className="text-2xl font-bold">{fc(totalAmount)}</p>
               </div>
             </div>
           </CardContent>
@@ -489,7 +491,7 @@ export default function PaymentProcessor() {
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-lg">{transaction.amount.toLocaleString()} GNF</p>
+                  <p className="font-semibold text-lg">{fc(transaction.amount)}</p>
                 </div>
                 <div className="flex gap-2 ml-4">
                   {transaction.status === 'failed' && (

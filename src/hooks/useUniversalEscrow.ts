@@ -6,8 +6,10 @@
 import { useState, useCallback } from 'react';
 import { UniversalEscrowService, UniversalEscrowRequest, EscrowStatus, TransactionType } from '@/services/UniversalEscrowService';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export function useUniversalEscrow() {
+  const fc = useFormatCurrency();
   const [creating, setCreating] = useState(false);
   const [releasing, setReleasing] = useState(false);
   const [refunding, setRefunding] = useState(false);
@@ -23,7 +25,7 @@ export function useUniversalEscrow() {
 
       if (result.success) {
         toast.success('Paiement sécurisé', {
-          description: `Fonds bloqués en escrow - ${request.amount.toLocaleString()} GNF`
+          description: `Fonds bloqués en escrow - ${fc(request.amount)}`
         });
       } else {
         toast.error('Erreur escrow', {

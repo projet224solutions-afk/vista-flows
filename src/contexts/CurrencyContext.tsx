@@ -7,6 +7,7 @@
 import { createContext, useState, useContext, useEffect, useCallback, ReactNode } from "react";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CurrencyContextType {
   currency: string;
@@ -190,12 +191,64 @@ export const useCurrency = () => useContext(CurrencyContext);
  * désormais la même devise que son wallet (avant : les prix restaient en devise géo/IP).
  */
 export function CurrencySync() {
-  const { profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { setProfileCurrency } = useCurrency();
 
+  // Résout la devise d'affichage de l'utilisateur. SOURCE DE VÉRITÉ = le WALLET (devise réellement
+  // détenue, pilotée par le PDG), comme le système vendeur (useWallet). Ordre de priorité :
+  //   1. devise du WALLET si explicite (≠ GNF) — gagne même si detected_currency est périmé en GNF ;
+  //   2. sinon profiles.detected_currency si explicite (≠ GNF) ;
+  //   3. sinon null → CurrencyContext garde la devise géo/manuelle (clients à wallet GNF par défaut).
+  // ⚠️ NE PAS court-circuiter sur detected_currency='GNF' : une valeur GNF périmée bloquait la
+  //    conversion alors que le wallet est en XOF/EUR. ⚠️ PAS de .maybeSingle() : plusieurs lignes
+  //    wallet (changements de devise répétés) la faisaient planter → repli erroné sur la géo.
+  const applyCurrency = useCallback(async () => {
+    const detected = profile?.detected_currency
+      ? String(profile.detected_currency).toUpperCase()
+      : null;
+    // Indice rapide (évite un flash GNF avant la lecture wallet).
+    if (detected && detected !== 'GNF') setProfileCurrency(detected);
+    if (!user?.id) { setProfileCurrency(detected && detected !== 'GNF' ? detected : null); return; }
+    try {
+      const { data } = await supabase
+        .from('wallets')
+        .select('currency, updated_at')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
+      const rows = Array.isArray(data) ? data : [];
+      // Gérer les lignes wallet multiples : préférer une devise explicite (≠ GNF), sinon la + récente.
+      const explicit = rows.find((w) => w.currency && String(w.currency).toUpperCase() !== 'GNF');
+      const walletCurrency = explicit?.currency
+        ? String(explicit.currency).toUpperCase()
+        : (rows[0]?.currency ? String(rows[0].currency).toUpperCase() : null);
+      if (walletCurrency && walletCurrency !== 'GNF') { setProfileCurrency(walletCurrency); return; }
+      // Wallet en GNF (ou introuvable) → detected_currency explicite, sinon géo.
+      setProfileCurrency(detected && detected !== 'GNF' ? detected : null);
+    } catch {
+      setProfileCurrency(detected && detected !== 'GNF' ? detected : null);
+    }
+  }, [user?.id, profile?.detected_currency, setProfileCurrency]);
+
+  useEffect(() => { applyCurrency(); }, [applyCurrency]);
+
+  // TEMPS RÉEL : si le PDG change la devise de l'utilisateur (profiles.detected_currency ou
+  // wallets.currency), on ré-applique la devise → l'interface suit IMMÉDIATEMENT, sans re-login.
+  // On émet aussi 'wallet-updated' pour que les widgets de solde se rafraîchissent.
   useEffect(() => {
-    setProfileCurrency(profile?.detected_currency || null);
-  }, [profile?.detected_currency, setProfileCurrency]);
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`currency-sync-${user.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, () => {
+        refreshProfile().catch(() => {});
+        applyCurrency();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'wallets', filter: `user_id=eq.${user.id}` }, () => {
+        applyCurrency();
+        try { window.dispatchEvent(new Event('wallet-updated')); } catch { /* SSR/embed */ }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, refreshProfile, applyCurrency]);
 
   return null;
 }

@@ -6,16 +6,16 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { _Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown, PieChart, _Download } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, PieChart, Download } from "lucide-react";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface SyndicateTreasuryManagementProps {
     bureauId: string;
 }
 
-export default function SyndicateTreasuryManagement({ _bureauId }: SyndicateTreasuryManagementProps) {
+export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreasuryManagementProps) {
     const fc = useFormatCurrency();
     const [treasuryData, _setTreasuryData] = useState({
         balance: 1850000,

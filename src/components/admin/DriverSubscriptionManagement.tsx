@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +32,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function DriverSubscriptionManagement() {
+  const fc = useFormatCurrency();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [subscriptions, setSubscriptions] = useState<DriverSubscription[]>([]);
@@ -166,7 +168,7 @@ export function DriverSubscriptionManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(stats?.total_revenue || 0).toLocaleString()} GNF
+              {fc(stats?.total_revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Depuis le début
@@ -181,7 +183,7 @@ export function DriverSubscriptionManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(stats?.revenue_this_month || 0).toLocaleString()} GNF
+              {fc(stats?.revenue_this_month || 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Revenus du mois en cours
@@ -274,7 +276,7 @@ export function DriverSubscriptionManagement() {
                       <TableCell>
                         {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: fr })}
                       </TableCell>
-                      <TableCell>{sub.price.toLocaleString()} GNF</TableCell>
+                      <TableCell>{fc(sub.price)}</TableCell>
                       <TableCell className="capitalize text-xs">
                         {sub.payment_method}
                       </TableCell>
@@ -318,7 +320,7 @@ export function DriverSubscriptionManagement() {
               <div className="space-y-2">
                 <Label>Prix actuel</Label>
                 <div className="text-2xl font-bold text-primary">
-                  {parseFloat(currentPrice).toLocaleString()} GNF
+                  {fc(parseFloat(currentPrice))}
                 </div>
               </div>
 

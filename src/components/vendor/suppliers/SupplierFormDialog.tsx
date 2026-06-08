@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -110,6 +111,7 @@ export function SupplierFormDialog({
   isSaving,
   editingSupplier,
 }: SupplierFormDialogProps) {
+  const fc = useFormatCurrency();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SupplierFormData>({
@@ -601,7 +603,7 @@ export function SupplierFormDialog({
                                   <p className="text-xs text-muted-foreground">{product.sku}</p>
                                   {product.price != null && product.price > 0 && (
                                     <p className="text-xs font-semibold text-primary">
-                                      {product.price.toLocaleString()} GNF
+                                      {fc(product.price)}
                                     </p>
                                   )}
                                 </div>
@@ -722,7 +724,7 @@ export function SupplierFormDialog({
                               </div>
                               {lp.unitPrice != null && lp.unitPrice > 0 && (
                                 <span className="text-xs font-semibold text-primary ml-auto">
-                                  {(lp.unitPrice * lp.quantity).toLocaleString()} GNF
+                                  {fc(lp.unitPrice * lp.quantity)}
                                 </span>
                               )}
                             </div>
@@ -738,9 +740,8 @@ export function SupplierFormDialog({
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Total estimé</span>
                         <span className="text-lg font-bold text-primary">
-                          {formData.linkedProducts
-                            .reduce((sum, lp) => sum + (lp.unitPrice || 0) * lp.quantity, 0)
-                            .toLocaleString()} GNF
+                          {fc(formData.linkedProducts
+                            .reduce((sum, lp) => sum + (lp.unitPrice || 0) * lp.quantity, 0))}
                         </span>
                       </div>
                     </div>

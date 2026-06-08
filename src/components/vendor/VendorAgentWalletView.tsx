@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { _Wallet, Info, _RefreshCw } from 'lucide-react';
-import { _Button } from '@/components/ui/button';
+import { Wallet, Info, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
 
 interface VendorAgentWalletViewProps {

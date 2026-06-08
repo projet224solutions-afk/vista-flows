@@ -5,8 +5,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { _Button } from '@/components/ui/button';
-import { MapPin, Loader2, AlertCircle, _Maximize } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Loader2, AlertCircle, Maximize } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { Property } from '@/hooks/useRealEstateData';
 

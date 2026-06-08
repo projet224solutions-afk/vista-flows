@@ -4,9 +4,10 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Money } from "@/components/Money";
 import { Badge } from "@/components/ui/badge";
-import { _Tabs, _TabsContent, _TabsList, _TabsTrigger } from "@/components/ui/tabs";
-import { Clock, MapPin, _DollarSign, _Calendar, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Clock, MapPin, DollarSign, Calendar, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 
 interface Ride {
@@ -145,7 +146,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                   </div>
                 </div>
                 <span className="text-xs font-medium text-gray-700 w-24 text-right">
-                  {Math.round(data.earnings).toLocaleString()} GNF
+                  <Money amount={Math.round(data.earnings)} from="GNF" />
                 </span>
               </div>
             ))}

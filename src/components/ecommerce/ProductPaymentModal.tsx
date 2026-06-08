@@ -26,7 +26,6 @@ import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { createOrder } from '@/services/orderBackendService';
-import { getCartItemVendorId, getCartVendorEntries, groupCartItemsByVendor } from '@/lib/marketplace/checkout';
 
 const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
@@ -39,9 +38,7 @@ interface CartItem {
   name: string;
   price: number;
   vendorId?: string;
-  vendor_id?: string;
   quantity?: number;
-  currency?: string;
 }
 
 interface CommissionConfig {
@@ -77,8 +74,6 @@ export default function ProductPaymentModal({
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
-  // Devise du wallet utilisateur (peut différer de la devise du produit)
-  const wCur = (userCurrency || 'GNF').toUpperCase();
 
   /** Affiche le montant converti en devise locale, avec l'original en dessous si conversion */
   const renderPrice = (amount: number, className?: string) => {
@@ -99,23 +94,23 @@ export default function ProductPaymentModal({
     const converted = convert(amount, cur);
     return converted.formatted;
   };
-  const { initiatePullPayment, pollStatus, isLoading: _ccpLoading } = useChapChapPay();
+  const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('select_method');
   const [showCardInline, setShowCardInline] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [_loadingBalance, setLoadingBalance] = useState(false);
+  const [loadingBalance, setLoadingBalance] = useState(false);
   const [vendorCode, setVendorCode] = useState<string | null>(null);
-  const [_loadingVendorCode, setLoadingVendorCode] = useState(false);
+  const [loadingVendorCode, setLoadingVendorCode] = useState(false);
   const [codPhone, setCodPhone] = useState('');
   const [codCity, setCodCity] = useState('');
 
   const [mobilePhone, setMobilePhone] = useState('');
   const [mobileProcessing, setMobileProcessing] = useState(false);
 
-  const [_sellerUserId, setSellerUserId] = useState<string>('');
+  const [sellerUserId, setSellerUserId] = useState<string>('');
 
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [loadingCommission, setLoadingCommission] = useState(false);
@@ -124,6 +119,10 @@ export default function ProductPaymentModal({
   const isCashOnDelivery = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
   const effectiveCommissionFee = isCashOnDelivery ? 0 : commissionFee;
   const effectiveGrandTotal = isCashOnDelivery ? totalAmount : grandTotal;
+  // L'acheteur paie depuis SON wallet (devise = userCurrency), pas la devise du produit.
+  // On convertit le total (en devise produit `cur`) vers la devise du wallet acheteur pour
+  // comparer au solde (le backend fait la même conversion au débit réel).
+  const effectiveGrandTotalInWallet = convert(effectiveGrandTotal, cur).convertedAmount;
   const isVendorDashboardRoute = location.pathname === '/vendeur' || location.pathname.startsWith('/vendeur/');
   const isDigitalVendorDashboardRoute = location.pathname === '/vendeur-digital' || location.pathname.startsWith('/vendeur-digital/');
 
@@ -202,7 +201,7 @@ export default function ProductPaymentModal({
 
   useEffect(() => {
     if (open && cartItems.length > 0) {
-      const vendorId = getCartItemVendorId(cartItems.find(item => getCartItemVendorId(item)) || {});
+      const vendorId = cartItems.find(item => item.vendorId)?.vendorId;
       if (vendorId) {
         supabase.from('vendors').select('user_id').eq('id', vendorId).single()
           .then(({ data }) => {
@@ -230,8 +229,7 @@ export default function ProductPaymentModal({
       loadWalletBalance();
       loadCommissionConfig();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userId, wCur]);
+  }, [open, userId, userCurrency]);
 
   useEffect(() => {
     if (commissionConfig && totalAmount > 0) {
@@ -240,7 +238,6 @@ export default function ProductPaymentModal({
       setCommissionFee(0);
       setGrandTotal(totalAmount);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalAmount, commissionConfig]);
 
   useEffect(() => {
@@ -249,7 +246,6 @@ export default function ProductPaymentModal({
     } else {
       setVendorCode(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, paymentMethod, cartItems]);
 
   useEffect(() => {
@@ -259,38 +255,21 @@ export default function ProductPaymentModal({
   const loadCommissionConfig = async () => {
     setLoadingCommission(true);
     try {
-      const parseRate = (raw: unknown): number | null => {
-        const value = raw && typeof raw === 'object' && 'value' in raw
-          ? Number((raw as { value?: unknown }).value)
-          : Number(raw);
-        return Number.isFinite(value) && value >= 0 ? value : null;
-      };
-
-      const pdgKeys = ['commission_achats', 'purchase_commission_percentage'];
-      for (const key of pdgKeys) {
-        const { data } = await supabase
-          .from('pdg_settings')
-          .select('setting_value')
-          .eq('setting_key', key)
-          .maybeSingle();
-
-        const rate = parseRate(data?.setting_value);
-        if (rate !== null) {
-          setCommissionConfig({ commission_type: 'percentage', commission_value: rate });
-          return;
-        }
-      }
-
-      const { data: settingsData } = await supabase
+      const { data: settingsData, error } = await supabase
         .from('system_settings')
         .select('setting_value')
         .eq('setting_key', 'purchase_fee_percent')
-        .maybeSingle();
+        .single();
 
-      const legacyRate = parseRate(settingsData?.setting_value);
-      setCommissionConfig({ commission_type: 'percentage', commission_value: legacyRate ?? 5 });
+      if (error) {
+        setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
+      } else if (settingsData?.setting_value) {
+        setCommissionConfig({ commission_type: 'percentage', commission_value: Number(settingsData.setting_value) });
+      } else {
+        setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
+      }
     } catch {
-      setCommissionConfig({ commission_type: 'percentage', commission_value: 5 });
+      setCommissionConfig({ commission_type: 'percentage', commission_value: 10 });
     } finally {
       setLoadingCommission(false);
     }
@@ -309,16 +288,23 @@ export default function ProductPaymentModal({
   const loadWalletBalance = async () => {
     setLoadingBalance(true);
     try {
-      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', wCur).single();
-      if (error) throw error;
-      setWalletBalance(data?.balance || 0);
+      // Charger le wallet de l'ACHETEUR dans SA devise (userCurrency), PAS la devise du produit.
+      // Avant : `.eq('currency', cur)` (devise produit) → un acheteur en EUR achetant un produit
+      // CFA ne trouvait aucun wallet → solde 0 « wallet vide » à tort.
+      const { data } = await supabase.from('wallets').select('balance, currency')
+        .eq('user_id', userId).eq('currency', userCurrency).maybeSingle();
+      if (data) { setWalletBalance(data.balance || 0); return; }
+      // Repli : prendre le wallet le plus approvisionné de l'acheteur (devise principale).
+      const { data: fallbackW } = await supabase.from('wallets').select('balance, currency')
+        .eq('user_id', userId).order('balance', { ascending: false }).limit(1).maybeSingle();
+      setWalletBalance(fallbackW?.balance || 0);
     } catch { setWalletBalance(0); } finally { setLoadingBalance(false); }
   };
 
   const loadVendorCode = async () => {
     setLoadingVendorCode(true);
     try {
-      const firstVendorId = getCartItemVendorId(cartItems.find(item => getCartItemVendorId(item)) || {});
+      const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId;
       if (!firstVendorId) { setVendorCode(null); return; }
       const { data: vendorData, error: vendorError } = await supabase.from('vendors').select('user_id, vendor_code').eq('id', firstVendorId).single();
       if (vendorError || !vendorData) { setVendorCode(null); return; }
@@ -333,8 +319,8 @@ export default function ProductPaymentModal({
     { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantané depuis votre wallet', icon: Wallet, color: 'text-primary' },
     { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
     { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'Débit instantané sur votre téléphone', icon: Smartphone, color: 'text-orange-500' },
-    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-[#ff4000]' },
-    { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-[#ff4000]' },
+    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
+    { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-green-600' },
   ];
 
   const createOrderAfterPayment = async (paymentId: string, method: string) => {
@@ -349,16 +335,21 @@ export default function ProductPaymentModal({
       }
     }
 
-    const itemsByVendor = groupCartItemsByVendor(cartItems);
+    const itemsByVendor = cartItems.reduce((acc, item) => {
+      const vendorKey = item.vendorId || 'unknown';
+      if (!acc[vendorKey]) acc[vendorKey] = [];
+      acc[vendorKey].push(item);
+      return acc;
+    }, {} as Record<string, CartItem[]>);
 
-    const vendorCount = Object.keys(itemsByVendor).length;
+    const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
     const commissionPerVendor = vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
     const createdOrders: string[] = [];
 
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
+      if (vendorId === 'unknown') continue;
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
       const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
-      const vendorCurrencyMobile = items[0]?.currency || cur;
       const normalizedMethod = method === 'mtn_money' || method === 'orange_money'
         ? 'mobile_money'
         : method === 'cash' || method === 'cash_on_delivery'
@@ -381,7 +372,7 @@ export default function ProductPaymentModal({
           postal_code: null,
           notes: null,
         },
-        metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal, vendor_currency: vendorCurrencyMobile },
+        metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal },
       });
 
       createdOrders.push(order.id);
@@ -389,7 +380,7 @@ export default function ProductPaymentModal({
       if (commissionPerVendor > 0) {
         await supabase.rpc('record_pdg_revenue', {
           p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
-          p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: paymentId,
+          p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: paymentId,
           p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
         });
       }
@@ -420,7 +411,14 @@ export default function ProductPaymentModal({
         }
       }
 
-      const vendorEntries = getCartVendorEntries(cartItems);
+      const itemsByVendor = cartItems.reduce((acc, item) => {
+        const vendorKey = item.vendorId || 'unknown';
+        if (!acc[vendorKey]) acc[vendorKey] = [];
+        acc[vendorKey].push(item);
+        return acc;
+      }, {} as Record<string, CartItem[]>);
+
+      const vendorEntries = Object.entries(itemsByVendor).filter(([k]) => k !== 'unknown');
 
       if (vendorEntries.length === 0) {
         console.error('[ProductPayment] No vendor entries found! cartItems:', JSON.stringify(cartItems));
@@ -436,9 +434,8 @@ export default function ProductPaymentModal({
       for (const [vendorId, items] of vendorEntries) {
         const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
-        const vendorCurrencyCard = items[0]?.currency || cur;
 
-        console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission, currency: vendorCurrencyCard });
+        console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission });
 
         let order;
         try {
@@ -448,7 +445,7 @@ export default function ProductPaymentModal({
             paymentMethod: 'card',
             chargedAmount: vendorTotalWithCommission,
             paymentReference: data.paymentIntentId,
-            markAsPaid: true,
+            markAsPaid: false,
             shippingAddress: {
               full_name: 'Client 224Solutions',
               phone: 'Non fourni',
@@ -462,8 +459,7 @@ export default function ProductPaymentModal({
               escrow_active: true,
               commission_fee: commissionPerVendor,
               product_total: vendorProductTotal,
-              commission_percent: commissionConfig?.commission_value || 5,
-              vendor_currency: vendorCurrencyCard,
+              commission_percent: commissionConfig?.commission_value || 10,
             },
           });
         } catch (error: any) {
@@ -481,7 +477,7 @@ export default function ProductPaymentModal({
         if (commissionPerVendor > 0) {
           await supabase.rpc('record_pdg_revenue', {
             p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
-            p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: data.paymentIntentId,
+            p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: data.paymentIntentId,
             p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
           });
         }
@@ -588,37 +584,30 @@ export default function ProductPaymentModal({
       }
     }
 
-    const itemsByVendor = groupCartItemsByVendor(cartItems);
-    const vendorCount = Object.keys(itemsByVendor).length;
+    const itemsByVendor = cartItems.reduce((acc, item) => {
+      const vendorKey = item.vendorId || 'unknown';
+      if (!acc[vendorKey]) acc[vendorKey] = [];
+      acc[vendorKey].push(item);
+      return acc;
+    }, {} as Record<string, CartItem[]>);
+
+    const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
     const commissionPerVendor = isCODMethod ? 0 : vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+
     const createdOrders: string[] = [];
     const errors: string[] = [];
 
     for (const [vendorId, items] of Object.entries(itemsByVendor)) {
+      if (vendorId === 'unknown') continue;
       const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-      // Devise du groupe vendeur (priorité : item.currency, fallback : cur du modal)
-      const vendorCurrency = items[0]?.currency || cur;
       const vendorChargedAmount = vendorProductTotal + commissionPerVendor;
 
-      // Correction : markAsPaid toujours false, walletDebitAmount correct
-      let markAsPaid = false;
-      let chargedAmount = 0;
       if (paymentMethod === 'wallet') {
-        // Convertir le total vendeur en devise du wallet acheteur pour vérifier le solde
-        const convResult = convert(vendorProductTotal + commissionPerVendor, vendorCurrency);
-        const neededInWalletCur = convResult.wasConverted
-          ? convResult.convertedAmount
-          : (wCur === vendorCurrency ? vendorProductTotal + commissionPerVendor : null);
-        if (walletBalance !== null && neededInWalletCur !== null && walletBalance < neededInWalletCur) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(neededInWalletCur, wCur)}` });
+        if (walletBalance !== null && walletBalance < effectiveGrandTotalInWallet) {
+          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(effectiveGrandTotal, cur)}` });
           setProcessing(false);
           return;
         }
-        chargedAmount = vendorChargedAmount;
-      } else if (isCODMethod) {
-        chargedAmount = 0;
-      } else {
-        chargedAmount = vendorChargedAmount;
       }
 
       const normalizedPaymentMethod = isCODMethod ? 'cash' : paymentMethod;
@@ -634,10 +623,10 @@ export default function ProductPaymentModal({
         notes: isCODMethod ? 'Paiement à la livraison' : null,
         ...(isCODMethod
           ? {
-              is_cod: true,
-              cod_phone: codPhone.trim(),
-              cod_city: codCity.trim(),
-            }
+            is_cod: true,
+            cod_phone: codPhone.trim(),
+            cod_city: codCity.trim(),
+          }
           : {}),
       };
 
@@ -646,23 +635,24 @@ export default function ProductPaymentModal({
           vendorId,
           items,
           paymentMethod: normalizedPaymentMethod as 'wallet' | 'card' | 'mobile_money' | 'cash',
-          chargedAmount,
-          markAsPaid,
+          chargedAmount: vendorChargedAmount,
+          markAsPaid: paymentMethod === 'wallet',
           shippingAddress,
           metadata: {
             commission_fee: commissionPerVendor,
             product_total: vendorProductTotal,
-            commission_percent: commissionConfig?.commission_value || 5,
-            vendor_currency: vendorCurrency,
+            commission_percent: commissionConfig?.commission_value || 10,
             ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {}),
           },
         });
 
         createdOrders.push(order.id);
 
-        if (paymentMethod === 'wallet' && commissionPerVendor > 0) {
-          await supabase.rpc('record_pdg_revenue', { p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor, p_percentage: commissionConfig?.commission_value || 5, p_transaction_id: `wallet-${order.id}`, p_user_id: userId, p_metadata: { order_id: order.id, order_number: order.order_number, vendor_id: vendorId, product_total: vendorProductTotal } });
-        }
+        // NB : la commission acheteur des paiements WALLET est désormais prélevée ET loggée dans
+        // revenus_pdg côté backend (create_order_core + orders.routes), pour TOUS les chemins de
+        // façon cohérente. On ne logge donc plus ici (évite le double-comptage + l'ID invalide
+        // `wallet-<uuid>` que record_pdg_revenue rejetait). Les paiements non-wallet (Stripe/COD)
+        // gardent leur log frontend dédié plus haut.
       } catch (error: any) {
         errors.push(error?.message || 'Erreur inconnue');
         toast.error('Erreur création commande', { description: error?.message });
@@ -681,26 +671,19 @@ export default function ProductPaymentModal({
     }
 
     finalizeSuccessfulCheckout();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, effectiveGrandTotal, walletBalance, commissionConfig, codPhone, codCity, fc, finalizeSuccessfulCheckout]);
 
-  // Convertir le total (devise produit) vers la devise du wallet utilisateur
-  const grandTotalConverted = convert(effectiveGrandTotal, cur);
-  const totalInWalletCurrency = grandTotalConverted.wasConverted
-    ? grandTotalConverted.convertedAmount
-    : (wCur === cur ? effectiveGrandTotal : null); // null = taux absent, impossible de comparer
-  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && totalInWalletCurrency !== null && walletBalance < totalInWalletCurrency;
+  const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < effectiveGrandTotalInWallet;
 
   const stripeExtraParams = useMemo(() => ({
-    cartItems: cartItems.map(i => {
-      const vendorId = getCartItemVendorId(i);
-      return { id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId, vendor_id: vendorId };
-    })
+    cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId }))
   }), [cartItems]);
 
   const handleStripeError = useCallback((error: string) => {
     toast.error(error);
   }, []);
+  const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId || '';
+
   // ======== RENDER: Success screen ========
   if (paymentStep === 'success') {
     return (
@@ -722,7 +705,7 @@ export default function ProductPaymentModal({
   // ======== RENDER: Processing screen ========
   if (paymentStep === 'processing') {
     return (
-      <Dialog open={open} onOpenChange={() => {}}>
+      <Dialog open={open} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
@@ -742,8 +725,8 @@ export default function ProductPaymentModal({
   if (paymentStep === 'mobile_money_form') {
     const isMTN = paymentMethod === 'mtn_money';
     const providerName = isMTN ? 'MTN Mobile Money' : 'Orange Money';
-    const providerColor = isMTN ? 'text-[#ff4000]' : 'text-orange-500';
-    const providerBg = isMTN ? 'bg-orange-50 border-orange-200' : 'bg-orange-50 border-orange-200';
+    const providerColor = isMTN ? 'text-yellow-600' : 'text-orange-500';
+    const providerBg = isMTN ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200';
 
     return (
       <Dialog open={open} onOpenChange={onClose}>
@@ -772,7 +755,7 @@ export default function ProductPaymentModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobile-phone">Numéro de téléphone {providerName} <span className="text-[#ff4000]">*</span></Label>
+              <Label htmlFor="mobile-phone">Numéro de téléphone {providerName} <span className="text-red-500">*</span></Label>
               <Input
                 id="mobile-phone"
                 type="tel"
@@ -819,170 +802,170 @@ export default function ProductPaymentModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            Paiement Sécurisé
-          </DialogTitle>
-          <DialogDescription asChild>
-            <div className="space-y-3 mt-2">
-              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-sm items-start">
-                  <span>Sous-total produits:</span>
-                  {renderPrice(totalAmount)}
-                </div>
-                {effectiveCommissionFee > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground items-start">
-                    <span className="flex items-center gap-1">
-                      <Info className="w-3 h-3" />
-                      Frais de service ({commissionConfig?.commission_value || 5}%):
-                    </span>
-                    <span>+{priceText(effectiveCommissionFee)}</span>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              Paiement Sécurisé
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 mt-2">
+                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between text-sm items-start">
+                    <span>Sous-total produits:</span>
+                    {renderPrice(totalAmount)}
                   </div>
-                )}
-                {loadingCommission && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Calcul des frais...
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
-                  <span>Total à payer:</span>
-                  {renderPrice(effectiveGrandTotal, 'text-primary')}
-                </div>
-              </div>
-
-              {paymentMethod === 'wallet' && (
-                <>
-                  <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-[#ff4000] rounded-md border border-orange-200 dark:border-[#ff4000]">
-                    <Shield className="w-4 h-4 text-[#ff4000]" />
-                    <span className="text-xs text-[#ff4000] dark:text-orange-200">
-                      Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-[#ff4000]'}`}>
-                      {fc(walletBalance || 0, wCur)}
-                    </span>
-                  </div>
-                  {walletBalance === 0 && (
-                    <Alert variant="default" className="border-orange-200 bg-orange-50 dark:bg-orange-950">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
-                      <AlertDescription className="text-orange-900 dark:text-orange-200">
-                        Votre wallet est vide. Rechargez-le d'abord ou sélectionnez un autre moyen de paiement.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {vendorCode && (
-                    <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-md">
-                      <Wallet className="w-4 h-4 text-primary" />
-                      <span className="text-sm">ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span></span>
+                  {effectiveCommissionFee > 0 && (
+                    <div className="flex justify-between text-sm text-muted-foreground items-start">
+                      <span className="flex items-center gap-1">
+                        <Info className="w-3 h-3" />
+                        Frais de service ({commissionConfig?.commission_value || 1.5}%):
+                      </span>
+                      <span>+{priceText(effectiveCommissionFee)}</span>
                     </div>
                   )}
-                </>
-              )}
-            </div>
-          </DialogDescription>
-        </DialogHeader>
-
-        {insufficientBalance && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Solde insuffisant. Il vous manque {fc((totalInWalletCurrency || 0) - (walletBalance || 0), wCur)}.</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-4 py-4">
-          <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v as ProductPaymentMethod); setShowCardInline(false); }}>
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              return (
-                <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
-                     onClick={() => { setPaymentMethod(method.id); setShowCardInline(false); }}>
-                  <RadioGroupItem value={method.id} id={method.id} />
-                  <Icon className={`w-6 h-6 ${method.color}`} />
-                  <div className="flex-1">
-                    <Label htmlFor={method.id} className="font-medium cursor-pointer">{method.name}</Label>
-                    <p className="text-sm text-muted-foreground">{method.description}</p>
+                  {loadingCommission && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Calcul des frais...
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
+                    <span>Total à payer:</span>
+                    {renderPrice(effectiveGrandTotal, 'text-primary')}
                   </div>
                 </div>
-              );
-            })}
-          </RadioGroup>
 
-          {isCashOnDelivery && (
-            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg animate-in slide-in-from-top-2">
-              <h4 className="font-semibold text-[#ff4000] flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4" /> Informations de contact
-              </h4>
-              <div className="space-y-2">
-                <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-[#ff4000]">*</span></Label>
-                <Input id="marketplace-cod-phone" type="tel" inputMode="tel" placeholder="Ex: 620 00 00 00" value={codPhone} onChange={(e) => setCodPhone(e.target.value)} className="bg-white" required />
+                {paymentMethod === 'wallet' && (
+                  <>
+                    <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-green-800 dark:text-green-200">
+                        Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
+                        {fc(walletBalance || 0, userCurrency)}
+                      </span>
+                    </div>
+                    {walletBalance === 0 && (
+                      <Alert variant="default" className="border-orange-200 bg-orange-50 dark:bg-orange-950">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <AlertDescription className="text-orange-900 dark:text-orange-200">
+                          Votre wallet est vide. Rechargez-le d'abord ou sélectionnez un autre moyen de paiement.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {vendorCode && (
+                      <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-md">
+                        <Wallet className="w-4 h-4 text-primary" />
+                        <span className="text-sm">ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span></span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="marketplace-cod-city" className="text-sm">Ville <span className="text-[#ff4000]">*</span></Label>
-                <Input id="marketplace-cod-city" placeholder="Ex: Conakry, Kindia, Dakar..." value={codCity} onChange={(e) => setCodCity(e.target.value)} className="bg-white" required />
+            </DialogDescription>
+          </DialogHeader>
+
+          {insufficientBalance && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Solde insuffisant. Il vous manque {fc(effectiveGrandTotalInWallet - (walletBalance || 0), userCurrency)}.</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-4 py-4">
+            <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v as ProductPaymentMethod); setShowCardInline(false); }}>
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                return (
+                  <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
+                    onClick={() => { setPaymentMethod(method.id); setShowCardInline(false); }}>
+                    <RadioGroupItem value={method.id} id={method.id} />
+                    <Icon className={`w-6 h-6 ${method.color}`} />
+                    <div className="flex-1">
+                      <Label htmlFor={method.id} className="font-medium cursor-pointer">{method.name}</Label>
+                      <p className="text-sm text-muted-foreground">{method.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </RadioGroup>
+
+            {paymentMethod === 'cash' && (
+              <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
+                <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4" /> Informations de contact
+                </h4>
+                <div className="space-y-2">
+                  <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-red-500">*</span></Label>
+                  <Input id="marketplace-cod-phone" type="tel" inputMode="tel" placeholder="Ex: 620 00 00 00" value={codPhone} onChange={(e) => setCodPhone(e.target.value)} className="bg-white" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="marketplace-cod-city" className="text-sm">Ville <span className="text-red-500">*</span></Label>
+                  <Input id="marketplace-cod-city" placeholder="Ex: Conakry, Kindia, Dakar..." value={codCity} onChange={(e) => setCodCity(e.target.value)} className="bg-white" required />
+                </div>
+                <Alert className="bg-emerald-50 border-emerald-200 mt-2">
+                  <Truck className="h-4 w-4 text-emerald-600" />
+                  <AlertDescription className="text-emerald-700">
+                    <strong>Paiement à la livraison confirmé</strong><br />
+                    Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(effectiveGrandTotal, cur)} en espèces.
+                  </AlertDescription>
+                </Alert>
               </div>
-              <Alert className="bg-orange-50 border-orange-200 mt-2">
-                <Truck className="h-4 w-4 text-[#ff4000]" />
-                <AlertDescription className="text-[#ff4000]">
-                  <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(effectiveGrandTotal, cur)} en espèces.
-                </AlertDescription>
-              </Alert>
+            )}
+          </div>
+
+          {/* Carte bancaire Stripe inline */}
+          {showCardInline && paymentMethod === 'card' && (
+            <div className="space-y-3 py-2 border-t">
+              <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+                <Shield className="w-4 h-4 text-green-600" />
+                <span className="text-xs text-green-800 dark:text-green-200">
+                  Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
+              </div>
+              <Suspense fallback={
+                <div className="flex items-center justify-center p-4 gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Chargement...</span>
+                </div>
+              }>
+                <StripeCheckoutButton
+                  amount={totalAmount}
+                  currency={cur}
+                  description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
+                  edgeFunction="marketplace-escrow-payment"
+                  extraParams={stripeExtraParams}
+                  onSuccess={handleCardSuccess}
+                  onCancel={() => setShowCardInline(false)}
+                  onError={handleStripeError}
+                />
+              </Suspense>
+              <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Changer de méthode
+              </Button>
             </div>
           )}
-        </div>
 
-        {/* Carte bancaire Stripe inline */}
-        {showCardInline && paymentMethod === 'card' && (
-          <div className="space-y-3 py-2 border-t">
-            <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-[#ff4000] rounded-md border border-orange-200 dark:border-[#ff4000]">
-              <Shield className="w-4 h-4 text-[#ff4000]" />
-              <span className="text-xs text-[#ff4000] dark:text-orange-200">
-                Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
-            </div>
-            <Suspense fallback={
-              <div className="flex items-center justify-center p-4 gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">Chargement...</span>
-              </div>
-            }>
-              <StripeCheckoutButton
-                amount={totalAmount}
-                currency={cur}
-                description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
-                edgeFunction="marketplace-escrow-payment"
-                extraParams={stripeExtraParams}
-                onSuccess={handleCardSuccess}
-                onCancel={() => setShowCardInline(false)}
-                onError={handleStripeError}
-              />
-            </Suspense>
-            <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Changer de méthode
-            </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>Annuler</Button>
+            <SecureButton
+              onSecureClick={executePayment}
+              className="flex-1"
+              disabled={insufficientBalance || loadingCommission || showCardInline}
+              loadingText="Traitement..."
+              debounceMs={1000}
+            >
+              {paymentMethod === 'card' ? `Payer maintenant ${priceText(effectiveGrandTotal)}` :
+                paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
+                  paymentMethod === 'wallet' ? `Payer ${priceText(effectiveGrandTotal)}` : `Confirmer ${priceText(effectiveGrandTotal)}`}
+            </SecureButton>
           </div>
-        )}
-
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>Annuler</Button>
-          <SecureButton
-            onSecureClick={executePayment}
-            className="flex-1"
-            disabled={insufficientBalance || loadingCommission || showCardInline}
-            loadingText="Traitement..."
-            debounceMs={1000}
-          >
-            {paymentMethod === 'card' ? `Payer maintenant ${priceText(effectiveGrandTotal)}` :
-             paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
-             paymentMethod === 'wallet' ? `Payer ${priceText(effectiveGrandTotal)}` : `Confirmer ${priceText(effectiveGrandTotal)}`}
-          </SecureButton>
-        </div>
         </div>
       </DialogContent>
     </Dialog>

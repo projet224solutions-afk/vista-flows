@@ -12,7 +12,7 @@ import {
   cognitoSignUp,
   cognitoSignOut,
   cognitoGetCurrentSession,
-  _cognitoGetCurrentUser,
+  cognitoGetCurrentUser,
   cognitoConfirmSignUp,
   cognitoForgotPassword,
   cognitoConfirmPassword,

@@ -290,7 +290,7 @@ export class MFAService {
       if (challengeError) throw challengeError;
 
       // Vérifier le code
-      const { _data, error } = await supabase.auth.mfa.verify({
+      const { data, error } = await supabase.auth.mfa.verify({
         factorId,
         challengeId: challenge.id,
         code

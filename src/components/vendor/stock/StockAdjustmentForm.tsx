@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ const adjustmentTypes = [
 ];
 
 export default function StockAdjustmentForm() {
+  const fc = useFormatCurrency();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([]);
@@ -288,7 +290,7 @@ export default function StockAdjustmentForm() {
               {selectedProduct && formData.quantity_adjusted && (
                 <div className="p-3 bg-destructive/10 rounded-lg">
                   <p className="text-sm font-medium text-destructive">
-                    Perte estimée: {((selectedProduct.cost_price || 0) * parseInt(formData.quantity_adjusted || '0')).toLocaleString('fr-FR')} GNF
+                    Perte estimée: {fc((selectedProduct.cost_price || 0) * parseInt(formData.quantity_adjusted || '0'))}
                   </p>
                 </div>
               )}
@@ -313,7 +315,7 @@ export default function StockAdjustmentForm() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Perte totale</p>
-            <p className="text-2xl font-bold text-destructive">{totalLoss.toLocaleString('fr-FR')} GNF</p>
+            <p className="text-2xl font-bold text-destructive">{fc(totalLoss)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -373,7 +375,7 @@ export default function StockAdjustmentForm() {
                     <Badge variant="outline">-{adj.quantity_adjusted} unités</Badge>
                     {adj.total_cost && adj.total_cost > 0 && (
                       <p className="text-sm text-destructive mt-1">
-                        -{adj.total_cost.toLocaleString('fr-FR')} GNF
+                        -{fc(adj.total_cost)}
                       </p>
                     )}
                   </div>

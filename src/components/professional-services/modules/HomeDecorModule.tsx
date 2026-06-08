@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,9 +16,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
   Home, Sofa, Lamp, Bed, DollarSign, Package,
-  Plus, ShoppingCart, TrendingUp, _Eye, _Star,
-  Palette, _Ruler, _Users, _CheckCircle, _Clock,
-  Image, _MapPin
+  Plus, ShoppingCart, TrendingUp, Eye, Star,
+  Palette, Ruler, Users, CheckCircle, Clock,
+  Image, MapPin
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -88,7 +89,7 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   delivered: { label: 'Livré', color: 'bg-orange-100 text-[#ff4000]' },
 };
 
-export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModuleProps) {
+export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProps) {
   const [activeTab, setActiveTab] = useState('catalog');
   const [showNewProject, setShowNewProject] = useState(false);
 
@@ -229,7 +230,7 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
                           {product.material && <span>🪵 {product.material}</span>}
                         </div>
                       </div>
-                      <p className="font-bold text-primary shrink-0 ml-4">{product.price.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary shrink-0 ml-4"><Money amount={product.price} from="GNF" /></p>
                     </div>
                   </CardContent>
                 </Card>
@@ -292,7 +293,7 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
                         </div>
                         <p className="text-sm text-muted-foreground">🏠 {project.roomType} • 🎨 Style {project.style}</p>
                       </div>
-                      <p className="font-bold text-primary">{project.budget.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary"><Money amount={project.budget} from="GNF" /></p>
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
@@ -325,7 +326,7 @@ export function HomeDecorModule({ _serviceId, businessName }: HomeDecorModulePro
                         </div>
                         <p className="text-xs text-muted-foreground">{order.items} article(s) • {order.date}</p>
                       </div>
-                      <p className="font-bold text-primary">{order.total.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary"><Money amount={order.total} from="GNF" /></p>
                     </div>
                   </CardContent>
                 </Card>

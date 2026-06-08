@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, _Download, Share, _Smartphone } from 'lucide-react';
+import { X, Download, Share, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import IOSInstallGuide from './IOSInstallGuide';
 

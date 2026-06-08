@@ -14,8 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  _MapPin, Package, Navigation, Phone, Store, Clock,
-  DollarSign, CreditCard, _Truck, Check, _X, Loader2, RefreshCw
+  MapPin, Package, Navigation, Phone, Store, Clock,
+  DollarSign, CreditCard, Truck, Check, X, Loader2, RefreshCw
 } from 'lucide-react';
 import { DeliveryService, type NearbyDelivery } from '@/services/delivery/DeliveryService';
 import { supabase } from '@/integrations/supabase/client';

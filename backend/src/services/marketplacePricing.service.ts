@@ -101,6 +101,40 @@ const RATE_LOCK_DURATION_MS = 8 * 60 * 1000; // 8 minutes
 // Devises sans décimales
 const NO_DECIMAL_CURRENCIES = new Set(['GNF', 'XOF', 'XAF', 'JPY', 'KRW', 'VND', 'CLP']);
 
+// Devise du PAYS du vendeur = source FIABLE du prix produit (Guinée→GNF, Sénégal/UEMOA→XOF,
+// CEMAC→XAF). Le champ `currency`/`seller_currency` du produit vaut toujours GNF par défaut, et
+// `shop_currency` est parfois faux (ex. vendeur Guinée avec shop=EUR) → on déduit du pays.
+// ⚠️ DOIT rester synchronisé avec le frontend `getCurrencyForCountry` (src/data/countryMappings.ts)
+// ET la fonction SQL `resolve_country_currency` (migration 20260607180000). Les trois donnent le
+// MÊME résultat pour que affichage = stockage = achat ne divergent jamais.
+const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  'guinée': 'GNF', 'guinee': 'GNF', 'guinea': 'GNF', 'gn': 'GNF',
+  'sénégal': 'XOF', 'senegal': 'XOF', 'sn': 'XOF',
+  'mali': 'XOF', 'ml': 'XOF', "côte d'ivoire": 'XOF', "cote d'ivoire": 'XOF', 'ivory coast': 'XOF', 'ci': 'XOF',
+  'burkina faso': 'XOF', 'bf': 'XOF', 'niger': 'XOF', 'ne': 'XOF', 'togo': 'XOF', 'tg': 'XOF',
+  'bénin': 'XOF', 'benin': 'XOF', 'bj': 'XOF', 'guinée-bissau': 'XOF', 'guinea-bissau': 'XOF', 'gw': 'XOF',
+  'cameroun': 'XAF', 'cameroon': 'XAF', 'cm': 'XAF', 'gabon': 'XAF', 'ga': 'XAF', 'tchad': 'XAF', 'chad': 'XAF', 'td': 'XAF',
+  'congo': 'XAF', 'cg': 'XAF', 'centrafrique': 'XAF', 'cf': 'XAF', 'guinée équatoriale': 'XAF', 'guinee equatoriale': 'XAF', 'gq': 'XAF',
+  'sierra leone': 'SLL', 'sl': 'SLL', 'liberia': 'LRD', 'libéria': 'LRD', 'lr': 'LRD',
+  'gambie': 'GMD', 'gambia': 'GMD', 'gm': 'GMD', 'nigeria': 'NGN', 'nigéria': 'NGN', 'ng': 'NGN', 'ghana': 'GHS', 'gh': 'GHS',
+  'rd congo': 'CDF', 'rdc': 'CDF', 'congo-kinshasa': 'CDF', 'cd': 'CDF',
+  'maroc': 'MAD', 'morocco': 'MAD', 'ma': 'MAD', 'tunisie': 'TND', 'tunisia': 'TND', 'tn': 'TND',
+  'algérie': 'DZD', 'algeria': 'DZD', 'dz': 'DZD', 'égypte': 'EGP', 'egypt': 'EGP', 'eg': 'EGP',
+  'kenya': 'KES', 'ke': 'KES', 'tanzanie': 'TZS', 'tanzania': 'TZS', 'tz': 'TZS',
+  'ouganda': 'UGX', 'uganda': 'UGX', 'ug': 'UGX', 'rwanda': 'RWF', 'rw': 'RWF',
+  'éthiopie': 'ETB', 'ethiopia': 'ETB', 'et': 'ETB', 'afrique du sud': 'ZAR', 'south africa': 'ZAR', 'za': 'ZAR',
+  'france': 'EUR', 'fr': 'EUR', 'belgique': 'EUR', 'belgium': 'EUR', 'be': 'EUR',
+  'suisse': 'CHF', 'switzerland': 'CHF', 'ch': 'CHF', 'canada': 'CAD', 'ca': 'CAD',
+  'états-unis': 'USD', 'united states': 'USD', 'usa': 'USD', 'us': 'USD',
+  'royaume-uni': 'GBP', 'united kingdom': 'GBP', 'uk': 'GBP', 'gb': 'GBP',
+  'chine': 'CNY', 'china': 'CNY', 'cn': 'CNY', 'japon': 'JPY', 'japan': 'JPY', 'jp': 'JPY',
+  'inde': 'INR', 'india': 'INR', 'in': 'INR', 'brésil': 'BRL', 'brazil': 'BRL', 'br': 'BRL',
+  'turquie': 'TRY', 'turkey': 'TRY', 'tr': 'TRY',
+};
+function currencyFromCountry(country?: string | null): string {
+  return COUNTRY_TO_CURRENCY[String(country || '').trim().toLowerCase()] || 'GNF';
+}
+
 // ─────────────────────────────────────────────────────────────────
 // FX INTERNE — réutilise la même logique que wallet-transfer
 // ─────────────────────────────────────────────────────────────────
@@ -367,10 +401,15 @@ export async function getProductOriginalPrice(productId: string): Promise<Produc
 
     const productType: 'physical' | 'digital' | 'service' = 'physical';
 
+    // DEVISE DU PRIX = devise du PAYS du vendeur (source fiable) : Guinée→GNF, Sénégal→XOF.
+    // PAS shop_currency (parfois faux, ex. Fusion=EUR) NI le champ produit (toujours GNF). Ainsi
+    // l'ACHAT débite le bon montant, cohérent avec l'affichage. Conversion → devise acheteur au BCRG.
+    const priceCurrency = currencyFromCountry(vendor?.country);
+
     return {
       productId: data.id,
       amount: Number(data.price),
-      currency: data.original_price_currency || sellerCurrency,
+      currency: priceCurrency,
       comparePrice: data.compare_price ? Number(data.compare_price) : null,
       vendorId: data.vendor_id,
       vendorCurrency: sellerCurrency,

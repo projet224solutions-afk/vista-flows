@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { BarChart3, TrendingUp, Users, Package, DollarSign } from 'lucide-react';
 import type { AgentStats } from '@/hooks/useAgentStats';
 
@@ -12,7 +13,7 @@ interface ViewReportsSectionProps {
   agentStats?: AgentStats;
 }
 
-export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewReportsSectionProps) {
+export function ViewReportsSection({ agentId, agentData, agentStats }: ViewReportsSectionProps) {
   const usersThisMonth = agentStats?.usersThisMonth ?? 0;
   const commissionsThisMonth = agentStats?.commissionsThisMonth ?? 0;
   const totalCommissions = agentData.total_commissions_earned ?? agentStats?.totalCommissions ?? 0;
@@ -110,7 +111,7 @@ export function ViewReportsSection({ _agentId, agentData, agentStats }: ViewRepo
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Commissions ce mois</span>
-                    <span className="font-semibold">{commissionsThisMonth.toLocaleString()} GNF</span>
+                    <span className="font-semibold"><Money amount={commissionsThisMonth} from="GNF" /></span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div

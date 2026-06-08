@@ -29,7 +29,7 @@ import {
   Plus,
   RefreshCw,
   MoreVertical,
-  _Edit,
+  Edit,
   Trash2,
   ExternalLink,
   Eye,

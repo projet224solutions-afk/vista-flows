@@ -271,7 +271,9 @@ export async function transferToWallet(
   recipientId: string,
   amount: number,
   description?: string,
-  pin?: string
+  pin?: string,
+  /** Taux NET affiché au preview (international) → garde anti-dérive côté backend. */
+  expectedRate?: number
 ): Promise<WalletOperationResult> {
   const idempotencyKey = generateIdempotencyKey();
   const result = await backendFetch<WalletOperationResult>('/api/v2/wallet/transfer', {
@@ -282,6 +284,7 @@ export async function transferToWallet(
       description,
       pin,
       idempotency_key: idempotencyKey,
+      ...(Number.isFinite(expectedRate) && (expectedRate as number) > 0 ? { expected_rate: expectedRate } : {}),
     },
     idempotencyKey,
   });

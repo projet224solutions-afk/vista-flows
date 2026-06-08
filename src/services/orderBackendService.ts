@@ -201,6 +201,37 @@ export async function confirmCashOnDeliveryOrder(orderId: string, signal?: Abort
 }
 
 /**
+ * Confirmer la réception d'une commande payée au WALLET/escrow — côté acheteur.
+ * Libère atomiquement l'escrow vers le vendeur (net + commission plateforme) via le backend Node.js
+ * (remplace l'Edge Function 'confirm-delivery'). Idempotent si déjà libéré.
+ */
+export async function confirmEscrowDelivery(orderId: string, signal?: AbortSignal) {
+  return backendFetch<OrderSummary>(`/api/orders/${orderId}/confirm-delivery`, {
+    method: 'POST',
+    idempotencyKey: generateIdempotencyKey(),
+    signal,
+  });
+}
+
+/**
+ * Ouvrir une demande de remboursement (litige) — côté acheteur, via le backend Node.js
+ * (remplace l'Edge Function 'request-refund'). Aucun mouvement d'argent ici : crée le litige
+ * et notifie le vendeur. L'argent ne bouge qu'à l'annulation/résolution (refund_order_escrow).
+ */
+export async function requestOrderRefund(
+  orderId: string,
+  body: { reason: string; requested_amount?: number; evidence_text?: string },
+  signal?: AbortSignal,
+) {
+  return backendFetch<{ dispute_id: string }>(`/api/orders/${orderId}/request-refund`, {
+    method: 'POST',
+    body,
+    idempotencyKey: generateIdempotencyKey(),
+    signal,
+  });
+}
+
+/**
  * Mettre à jour le statut d'une commande (vendeur)
  */
 export async function updateOrderStatus(

@@ -6,17 +6,18 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { _Textarea } from '@/components/ui/textarea';
-import { _Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import {
   Sprout, Apple, Egg, Fish, DollarSign, TrendingUp,
   Plus, Package, ShoppingCart, Users, Calendar,
-  MapPin, Truck, Sun, CloudRain, Leaf, _Scale
+  MapPin, Truck, Sun, CloudRain, Leaf, Scale
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -70,7 +71,7 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
 };
 
-export function AgricultureModule({ _serviceId, businessName }: AgricultureModuleProps) {
+export function AgricultureModule({ serviceId, businessName }: AgricultureModuleProps) {
   const [activeTab, setActiveTab] = useState('produits');
   const [showNewProduct, setShowNewProduct] = useState(false);
 
@@ -264,7 +265,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="font-bold text-primary">{product.pricePerUnit.toLocaleString()} GNF</p>
+                        <p className="font-bold text-primary"><Money amount={product.pricePerUnit} from="GNF" /></p>
                         <p className="text-xs text-muted-foreground">/{product.unit}</p>
                       </div>
                     </div>
@@ -298,7 +299,7 @@ export function AgricultureModule({ _serviceId, businessName }: AgricultureModul
                           {' • '}{order.date}
                         </p>
                       </div>
-                      <p className="font-bold text-primary">{order.total.toLocaleString()} GNF</p>
+                      <p className="font-bold text-primary"><Money amount={order.total} from="GNF" /></p>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {order.items.map((item, i) => (

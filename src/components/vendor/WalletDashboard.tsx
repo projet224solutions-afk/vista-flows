@@ -33,7 +33,7 @@ interface WalletInfo {
 export default function WalletDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
+  const { currency: vendorCurrency } = useVendorCurrency();
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,9 +75,11 @@ export default function WalletDashboard() {
 
   const _walletId = useMemo(() => wallet?.id, [wallet]);
   const balanceDisplay = useMemo(() => {
-    if (!wallet || !currencyReady) return "—";
-    return `${Math.round(convert(wallet.balance)).toLocaleString('fr-FR')} ${vendorCurrency}`;
-  }, [wallet, convert, vendorCurrency, currencyReady]);
+    if (!wallet) return "—";
+    // Le solde est DÉJÀ stocké dans la devise du wallet (converti par le PDG si changement).
+    // On l'affiche directement, SANS reconvertir (sinon double conversion = montant faux).
+    return `${Number(wallet.balance || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${wallet.currency || vendorCurrency}`;
+  }, [wallet, vendorCurrency]);
 
   const _handleDeposit = useCallback(async () => {
     if (!user?.id || !wallet) return;

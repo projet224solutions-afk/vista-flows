@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,7 @@ interface InstallmentPayment {
 }
 
 export default function InstallmentPlansManager() {
+  const fc = useFormatCurrency();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -302,7 +304,7 @@ export default function InstallmentPlansManager() {
                   <p className="text-sm">
                     <strong>{parseInt(newPlan.number_of_installments)}</strong> versements de{' '}
                     <strong>
-                      {Math.ceil(parseFloat(newPlan.total_amount || '0') / parseInt(newPlan.number_of_installments)).toLocaleString()} GNF
+                      {fc(Math.ceil(parseFloat(newPlan.total_amount || '0') / parseInt(newPlan.number_of_installments)))}
                     </strong>
                   </p>
                 </div>
@@ -394,9 +396,9 @@ export default function InstallmentPlansManager() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-bold">{plan.total_amount.toLocaleString()} GNF</p>
+                      <p className="font-bold">{fc(plan.total_amount)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {plan.installment_amount.toLocaleString()} GNF/mois
+                        {fc(plan.installment_amount)}/mois
                       </p>
                     </div>
                     <Badge variant={plan.status === 'completed' ? 'default' : 'secondary'}>
@@ -445,7 +447,7 @@ export default function InstallmentPlansManager() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-bold">{payment.amount_due.toLocaleString()} GNF</span>
+                            <span className="font-bold">{fc(payment.amount_due)}</span>
                             {payment.status === 'pending' && (
                               <Button
                                 size="sm"

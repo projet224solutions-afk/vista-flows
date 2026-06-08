@@ -1,12 +1,12 @@
 ﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Package, Plane, Ship, TrendingUp, Clock, _MessageSquare } from "lucide-react";
+import { Globe, Package, Plane, Ship, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
-import { _ErrorBanner } from "@/components/ui/ErrorBanner";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useTransitaireErrorBoundary } from "@/hooks/useTransitaireErrorBoundary";
 
 import { useTransitaireStats } from "@/hooks/useTransitaireStats";
@@ -20,7 +20,7 @@ export default function TransitaireDashboard() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
-  const { error, _captureError, clearError } = useTransitaireErrorBoundary();
+  const { error, captureError, clearError } = useTransitaireErrorBoundary();
   const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
   const formatPrice = useFormatCurrency();
 

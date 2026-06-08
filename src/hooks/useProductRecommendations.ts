@@ -27,6 +27,7 @@ export interface ProductRecommendation {
     price: number;
     images?: string[];
     rating?: number;
+    vendors?: { country?: string | null } | { country?: string | null }[] | null;
   };
 }
 
@@ -43,7 +44,7 @@ export const useProductRecommendations = (limit: number = 10) => {
 
       const { data: existingRecs, error: recsError } = await supabase
         .from('product_recommendations')
-        .select(`*, product:products!recommended_product_id(id, name, price, images, rating)`)
+        .select(`*, product:products!recommended_product_id(id, name, price, images, rating, vendors(country))`)
         .eq('user_id', user.id)
         .order('score', { ascending: false })
         .limit(limit);
@@ -54,7 +55,7 @@ export const useProductRecommendations = (limit: number = 10) => {
         await supabase.rpc('generate_recommendations_for_user', { p_user_id: user.id, p_limit: limit });
         const { data: newRecs } = await supabase
           .from('product_recommendations')
-          .select(`*, product:products!recommended_product_id(id, name, price, images, rating)`)
+          .select(`*, product:products!recommended_product_id(id, name, price, images, rating, vendors(country))`)
           .eq('user_id', user.id)
           .order('score', { ascending: false })
           .limit(limit);

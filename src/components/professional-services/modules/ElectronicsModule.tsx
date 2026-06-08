@@ -6,14 +6,15 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { _Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Smartphone, Laptop, Tv, Headphones, Watch, Camera, DollarSign, Package, TrendingUp } from 'lucide-react';
-import { _toast } from 'sonner';
+import { toast } from 'sonner';
 
 interface ElectronicsModuleProps {
   serviceId: string;
@@ -29,7 +30,7 @@ const CATEGORIES = [
   { id: 'cameras', name: 'Photo & Vidéo', icon: Camera }
 ];
 
-export function ElectronicsModule({ _serviceId, businessName }: ElectronicsModuleProps) {
+export function ElectronicsModule({ serviceId, businessName }: ElectronicsModuleProps) {
   const [activeTab, setActiveTab] = useState('catalog');
   const [stats] = useState({ products: 243, orders: 67, revenue: 18500000, rating: 4.5 });
 
@@ -72,7 +73,7 @@ export function ElectronicsModule({ _serviceId, businessName }: ElectronicsModul
             <DollarSign className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold"><Money amount={stats.revenue} from="GNF" /></div>
           </CardContent>
         </Card>
 

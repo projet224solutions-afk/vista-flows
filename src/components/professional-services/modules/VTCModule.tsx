@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,11 +16,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Car, Users, MapPin, DollarSign, _Clock, Calendar,
-  Navigation, Phone, Star, _CheckCircle2, AlertCircle,
-  _TrendingUp, Activity, _BarChart3, Settings
+  Car, Users, MapPin, DollarSign, Clock, Calendar,
+  Navigation, Phone, Star, CheckCircle2, AlertCircle,
+  TrendingUp, Activity, BarChart3, Settings
 } from 'lucide-react';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface VTCModuleProps {
@@ -254,7 +255,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold"><Money amount={stats.revenue} from="GNF" /></div>
             <p className="text-xs text-muted-foreground">Ce mois</p>
           </CardContent>
         </Card>
@@ -406,8 +407,8 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                         <Badge variant="outline">{vehicle.capacity} places</Badge>
                         <div className="pt-2 border-t mt-2">
                           <p className="text-xs text-muted-foreground">Tarif de base</p>
-                          <p className="font-bold text-lg">{vehicle.basePrice.toLocaleString()} GNF</p>
-                          <p className="text-xs text-muted-foreground">+ {vehicle.pricePerKm} GNF/km</p>
+                          <p className="font-bold text-lg"><Money amount={vehicle.basePrice} from="GNF" /></p>
+                          <p className="text-xs text-muted-foreground">+ <Money amount={vehicle.pricePerKm} from="GNF" />/km</p>
                         </div>
                       </div>
                     </CardContent>
@@ -464,7 +465,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-primary">{ride.price.toLocaleString()} GNF</p>
+                            <p className="text-2xl font-bold text-primary"><Money amount={ride.price} from="GNF" /></p>
                             <p className="text-xs text-muted-foreground">{VEHICLE_TYPES.find(v => v.id === ride.vehicleType)?.name}</p>
                           </div>
                         </div>

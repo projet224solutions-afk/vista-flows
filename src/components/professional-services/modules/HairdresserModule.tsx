@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,11 +20,11 @@ import {
   Plus,
   Star,
   TrendingUp,
-  _User,
+  User,
   Gift,
-  _Heart,
+  Heart,
   Phone,
-  _CheckCircle,
+  CheckCircle,
   Sparkles,
   Crown
 } from 'lucide-react';
@@ -87,7 +87,7 @@ interface LoyaltyClient {
   favoriteService: string;
 }
 
-export function HairdresserModule({ _serviceId, businessName }: HairdresserModuleProps) {
+export function HairdresserModule({ serviceId, businessName }: HairdresserModuleProps) {
   const [activeTab, setActiveTab] = useState('agenda');
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);

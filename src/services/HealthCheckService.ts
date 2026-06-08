@@ -131,7 +131,7 @@ class HealthCheckService {
     const startTime = Date.now();
 
     try {
-      const { _data, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('id')
         .limit(1)

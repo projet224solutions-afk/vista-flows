@@ -27,7 +27,7 @@ export const EmergencyPage: React.FC = () => {
   const bureauId = userRole === 'syndicat' ? (user as any)?.bureau_id : undefined;
 
   // Hooks
-  const { _alerts, count: _alertCount } = useActiveEmergencyAlerts(bureauId);
+  const { alerts, count: _alertCount } = useActiveEmergencyAlerts(bureauId);
   const { stats, activeAlerts } = useEmergencyStats(bureauId);
 
   // Vérifier les permissions

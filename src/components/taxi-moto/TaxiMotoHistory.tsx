@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ interface TaxiMotoHistoryProps {
 }
 
 export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
+    const fc = useFormatCurrency();
     const [rides, setRides] = useState<RideHistory[]>([]);
     const [filteredRides, setFilteredRides] = useState<RideHistory[]>([]);
     const [loading, setLoading] = useState(true);
@@ -342,10 +344,9 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                         </div>
                         <div className="text-center">
                             <div className="text-lg font-bold text-[#ff4000]">
-                                {filteredRides
+                                {fc(filteredRides
                                     .filter(r => r.status === 'completed')
-                                    .reduce((sum, r) => sum + r.price, 0)
-                                    .toLocaleString()} GNF
+                                    .reduce((sum, r) => sum + r.price, 0))}
                             </div>
                             <div className="text-xs text-gray-600">Total dépensé</div>
                         </div>
@@ -397,7 +398,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
 
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-[#ff4000]">
-                                            {ride.price.toLocaleString()} GNF
+                                            {fc(ride.price)}
                                         </p>
                                         {ride.rating && (
                                             <div className="flex items-center gap-1 text-xs text-gray-600">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Money } from '@/components/Money';
 import { DollarSign, TrendingUp, Calendar, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -89,7 +90,7 @@ export function ManageCommissionsSection({
                 <DollarSign className="w-4 h-4 text-[#ff4000]" />
               </div>
               <div className="text-2xl font-bold text-[#ff4000]">
-                {totalCommissions.toLocaleString()} GNF
+                <Money amount={totalCommissions} from="GNF" />
               </div>
               <p className="text-xs text-muted-foreground">Depuis le début</p>
             </div>
@@ -144,7 +145,7 @@ export function ManageCommissionsSection({
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <p className="font-semibold">{commission.amount.toLocaleString()} GNF</p>
+                        <p className="font-semibold"><Money amount={commission.amount} from="GNF" /></p>
                         {commission.description && (
                           <p className="text-sm text-muted-foreground">{commission.description}</p>
                         )}

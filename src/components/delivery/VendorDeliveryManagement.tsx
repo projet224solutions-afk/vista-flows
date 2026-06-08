@@ -5,26 +5,26 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { _Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
   Package,
   Truck,
   CheckCircle2,
-  _Clock,
+  Clock,
   MapPin,
   Phone,
   User,
   QrCode,
   Loader2,
   RefreshCw,
-  _Eye,
-  _Navigation,
-  _Bell
+  Eye,
+  Navigation,
+  Bell
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

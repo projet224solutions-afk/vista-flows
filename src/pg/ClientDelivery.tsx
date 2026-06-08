@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Package, _MapPin, Truck } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClientDeliveryRequest } from '@/components/delivery/ClientDeliveryRequest';
@@ -16,7 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function ClientDelivery() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { _user } = useAuth();
+  const { user } = useAuth();
 
   const trackingId = searchParams.get('track');
   const [activeTab, setActiveTab] = useState(trackingId ? 'tracking' : 'order');

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TaxiMotoService, type NearbyDriver } from '@/services/taxi/TaxiMotoService';
-import { _TaxiMotoRealtimeService } from '@/services/taxi/TaxiMotoRealtimeService';
+import { TaxiMotoRealtimeService } from '@/services/taxi/TaxiMotoRealtimeService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';

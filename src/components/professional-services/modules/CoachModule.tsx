@@ -22,8 +22,8 @@ import {
   Plus,
   User,
   Activity,
-  _CheckCircle,
-  _Star,
+  CheckCircle,
+  Star,
   MapPin
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -77,7 +77,7 @@ interface Session {
   notes?: string;
 }
 
-export function CoachModule({ _serviceId, businessName }: CoachModuleProps) {
+export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
   const [activeTab, setActiveTab] = useState('clients');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);

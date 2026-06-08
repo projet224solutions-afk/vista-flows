@@ -31,19 +31,19 @@ import {
     MapPin,
     Clock,
     Eye,
-    _FileText,
+    FileText,
     Download,
     RefreshCw,
     Search,
     Lock,
     Unlock,
     Navigation,
-    _Smartphone,
+    Smartphone,
     Activity,
     History,
     AlertCircle,
     CheckCircle,
-    _XCircle
+    XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from 'date-fns';

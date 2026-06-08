@@ -4,16 +4,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Smartphone, Mail, Key, QrCode, _AlertTriangle, Check, Copy, RefreshCw } from 'lucide-react';
+import { Shield, Smartphone, Mail, Key, QrCode, AlertTriangle, Check, Copy, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, _DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { _cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import useMFA from '@/hooks/useMFA';
 import { MFAMethod, MFAFactor } from '@/services/auth/MFAService';
 import { toast } from 'sonner';
@@ -93,7 +93,7 @@ export function MFASetupDialog({
   const [isVerifying, setIsVerifying] = useState(false);
   const [currentFactorId, setCurrentFactorId] = useState<string | null>(null);
 
-  const { enrollTOTP, enrollSMS, enrollEmail, verifyTOTP, verifyCode, _factors } = useMFA();
+  const { enrollTOTP, enrollSMS, enrollEmail, verifyTOTP, verifyCode, factors } = useMFA();
 
   // Enrôler TOTP
   const handleEnrollTOTP = async () => {
@@ -545,7 +545,7 @@ export function MFASettingsPanel() {
     isLoading,
     removeFactor,
     regenerateBackupCodes,
-    _refresh
+    refresh
   } = useMFA();
   const [showSetup, setShowSetup] = useState(false);
   const [showBackupCodes, setShowBackupCodes] = useState<string[] | null>(null);

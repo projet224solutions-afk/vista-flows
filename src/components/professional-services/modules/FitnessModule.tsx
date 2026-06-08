@@ -17,18 +17,18 @@ import {
   Dumbbell,
   Users,
   Calendar,
-  _Clock,
+  Clock,
   Plus,
-  _CreditCard,
+  CreditCard,
   TrendingUp,
   User,
   Activity,
-  _Target,
+  Target,
   Flame,
-  _Award,
+  Award,
   CheckCircle,
   Timer,
-  _Heart
+  Heart
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -89,7 +89,7 @@ interface _Equipment {
   lastMaintenance: string;
 }
 
-export function FitnessModule({ _serviceId, businessName }: FitnessModuleProps) {
+export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNewMemberDialog, setShowNewMemberDialog] = useState(false);
   const [showNewClassDialog, setShowNewClassDialog] = useState(false);

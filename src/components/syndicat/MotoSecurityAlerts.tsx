@@ -137,7 +137,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const handleResolve = async (alertId: string) => {
     try {
       // CENTRALISÉ: Utilise le RPC declare_vehicle_recovered
-      const { _data, error } = await supabase.rpc('declare_vehicle_recovered', {
+      const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
         p_vehicle_id: alertId,
         p_bureau_id: bureauId,
         p_recovered_by: null as any, // Sera rempli côté serveur si possible

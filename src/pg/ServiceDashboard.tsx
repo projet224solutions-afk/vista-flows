@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserTrackerButton } from '@/components/taxi-moto/UserTrackerButton';
 import { Badge } from '@/components/ui/badge';
@@ -229,7 +230,7 @@ export default function ServiceDashboard() {
               <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
-              <div className="text-lg sm:text-2xl font-bold truncate">{service.total_revenue.toLocaleString()} GNF</div>
+              <div className="text-lg sm:text-2xl font-bold truncate"><Money amount={service.total_revenue} from="GNF" /></div>
             </CardContent>
           </Card>
 

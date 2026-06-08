@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { SecureButton } from '@/components/ui/SecureButton';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 import { WalletPinPromptDialog } from './WalletPinDialogs';
+import { useMoneyFormat } from '@/components/Money';
 import { Loader2 } from 'lucide-react';
 
 interface ImprovedTransferDialogProps {
@@ -25,6 +26,7 @@ export const ImprovedTransferDialog = ({
   currentBalance = 0
 }: ImprovedTransferDialogProps) => {
   const { user } = useAuth();
+  const { format: fmtMoney, userCurrency } = useMoneyFormat();
   const [recipientCode, setRecipientCode] = useState('');
   const [recipientUserId, setRecipientUserId] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
@@ -197,7 +199,7 @@ export const ImprovedTransferDialog = ({
                 onChange={(e) => setAmount(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Solde disponible: {currentBalance.toLocaleString()} GNF
+                Solde disponible: {fmtMoney(currentBalance, userCurrency)}
               </p>
             </div>
 

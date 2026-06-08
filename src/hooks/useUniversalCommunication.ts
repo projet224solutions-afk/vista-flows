@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   universalCommunicationService,
   type Conversation,
-  type _Message,
+  type Message,
   type CommunicationNotification
 } from '@/services/UniversalCommunicationService';
 

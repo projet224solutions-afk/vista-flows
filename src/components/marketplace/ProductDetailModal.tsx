@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, _Star, Truck, Shield, _X, Plus, ExternalLink, Play, _Pause, Layers, Package, Volume2 } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Layers, Package, Volume2 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { toast } from "sonner";
-import { useNavigate, _Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
@@ -86,12 +86,12 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     currentVideoIndex,
     currentImageIndex,
     isPlayingVideo,
-    _isAutoPlaying,
+    isAutoPlaying,
     videoRef,
     goToVideo,
     goToImage,
     pauseAutoPlay,
-    _toggleAutoPlay
+    toggleAutoPlay
   } = useAutoCarousel({
     videos,
     images,
@@ -224,6 +224,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           name,
           price,
           currency,
+          original_price_currency,
+          seller_currency,
           description,
           images,
           promotional_videos,
@@ -234,6 +236,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             business_name,
             user_id,
             shop_slug,
+            shop_currency,
             country,
             average_delivery_days
           )
@@ -244,15 +247,19 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       if (physicalError) throw physicalError;
       if (physicalProduct) {
-        // Dériver la devise du pays du vendeur (supporte vendors objet OU tableau)
         const vendor = Array.isArray((physicalProduct as any).vendors)
           ? (physicalProduct as any).vendors?.[0]
           : (physicalProduct as any).vendors;
 
-        const vendorCountry = vendor?.country || '';
-        const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-        const derivedCurrency = countryDerived || (physicalProduct as any).currency || 'GNF';
-
+        // PRIX EN DEVISE DU VENDEUR : un vendeur en CFA/EUR price ses produits dans SA devise.
+        // Devise du prix = original_price_currency / seller_currency (produit), sinon shop_currency
+        // (vendeur), sinon devise du produit, sinon déduite du pays, sinon GNF. C'est la MÊME source
+        // que le paiement (getSellerCurrency). <Money>/LocalPrice convertit ensuite vers la devise
+        // d'affichage de l'acheteur (ex. 50 000 CFA → 74,76 € pour un acheteur EUR).
+        // DEVISE = PAYS DU VENDEUR (source fiable) : Guinée→GNF, Sénégal→XOF. PAS shop_currency
+        // (parfois faux, ex. Fusion=EUR) NI le champ produit (toujours GNF). <Money> convertit
+        // ensuite vers la devise de l'acheteur au taux EXACT BCRG.
+        const derivedCurrency = getCurrencyForCountry(vendor?.country || '');
         setProduct({ ...physicalProduct, vendors: vendor, currency: derivedCurrency });
         return;
       }
@@ -346,8 +353,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         const vRaw = (digitalProduct.vendors as any) || null;
         const v = Array.isArray(vRaw) ? vRaw?.[0] : vRaw;
 
+        // Digital : devise explicite du produit, sinon devise déduite du pays du vendeur, sinon GNF.
         const vendorCountry = v?.country || '';
-        const derivedCurrency = (digitalProduct.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF'));
+        const derivedCurrency = digitalProduct.currency || (vendorCountry ? getCurrencyForCountry(vendorCountry) : 'GNF');
 
         setProduct({
           id: digitalProduct.id,

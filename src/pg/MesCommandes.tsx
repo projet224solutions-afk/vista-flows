@@ -5,11 +5,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, _Phone } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, _TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Money } from '@/components/Money';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import QuickFooter from '@/components/QuickFooter';
@@ -171,7 +172,7 @@ function RestaurantOrderCard({ order }: { order: RestaurantOrderTracking }) {
             )}
           </div>
           <p className="font-bold text-base">
-            {order.total ? `${order.total.toLocaleString()} GNF` : '-'}
+            {order.total ? <Money amount={order.total} from="GNF" /> : '-'}
           </p>
         </div>
 
@@ -233,7 +234,7 @@ function TaxiTripCard({ trip }: { trip: TaxiTripTracking }) {
             {trip.duration_min && <span>~{Math.round(trip.duration_min)} min</span>}
           </div>
           <p className="font-bold text-base">
-            {trip.price_total ? `${trip.price_total.toLocaleString()} GNF` : '-'}
+            {trip.price_total ? <Money amount={trip.price_total} from="GNF" /> : '-'}
           </p>
         </div>
       </CardContent>

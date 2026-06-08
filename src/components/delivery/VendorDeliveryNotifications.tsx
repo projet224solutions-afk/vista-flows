@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -17,7 +17,7 @@ import {
   ImageIcon,
   PenTool,
   Clock,
-  _X,
+  X,
   ExternalLink,
   Loader2
 } from 'lucide-react';

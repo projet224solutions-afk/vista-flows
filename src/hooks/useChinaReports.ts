@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type {
   ChinaDropshipReport,
-  _ChinaSupplierExtension,
+  ChinaSupplierExtension,
   ChinaSupplierOrder,
   ChinaPlatformType
 } from '@/types/china-dropshipping';

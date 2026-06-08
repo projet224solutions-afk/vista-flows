@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowDownCircle, _Loader2, Shield, CreditCard } from "lucide-react";
+import { ArrowDownCircle, Loader2, Shield, CreditCard } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 
@@ -19,7 +19,7 @@ interface StripeWalletDepositProps {
   onSuccess?: () => void;
 }
 
-export default function StripeWalletDeposit({ _userId, _walletId, onSuccess }: StripeWalletDepositProps) {
+export default function StripeWalletDeposit({ userId, walletId, onSuccess }: StripeWalletDepositProps) {
   const [depositAmount, setDepositAmount] = useState("");
   const [showStripe, setShowStripe] = useState(false);
 

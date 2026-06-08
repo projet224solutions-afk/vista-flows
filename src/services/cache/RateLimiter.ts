@@ -3,7 +3,7 @@
  * Algorithme: Token Bucket avec sliding window
  */
 
-import { _REDIS_CONFIG, CACHE_KEYS } from '@/config/redis';
+import { REDIS_CONFIG, CACHE_KEYS } from '@/config/redis';
 
 interface RateLimitConfig {
   windowMs: number;      // Fenêtre de temps en ms

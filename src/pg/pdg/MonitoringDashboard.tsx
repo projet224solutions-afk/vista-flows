@@ -15,7 +15,7 @@ import {
   Bell, Eye, CheckCheck, Zap, Globe, Smartphone,
   TrendingUp, ArrowLeft
 } from 'lucide-react';
-import { useMonitoringRealtime, type MonitoringAlert, type _ServiceStatus } from '@/hooks/useMonitoringRealtime';
+import { useMonitoringRealtime, type MonitoringAlert, type ServiceStatus } from '@/hooks/useMonitoringRealtime';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -50,7 +50,7 @@ const serviceIcons: Record<string, React.ReactNode> = {
 
 export default function MonitoringDashboard() {
   const navigate = useNavigate();
-  const { alerts, services, stats, _loading, lastRefresh, acknowledgeAlert, resolveAlert, forceHealthCheck, refreshData } = useMonitoringRealtime();
+  const { alerts, services, stats, loading, lastRefresh, acknowledgeAlert, resolveAlert, forceHealthCheck, refreshData } = useMonitoringRealtime();
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
 

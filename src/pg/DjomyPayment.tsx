@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function DjomyPayment() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { _user } = useAuth();
+  const { user } = useAuth();
 
   // Get payment params from URL
   const amount = parseInt(searchParams.get('amount') || '0', 10);

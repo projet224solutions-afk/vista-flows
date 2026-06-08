@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -12,8 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEscrowTransactions } from '@/hooks/useEscrowTransactions';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Shield, AlertCircle, CheckCircle, Clock, XCircle, _Bell,
-  RefreshCw, Search, _Filter, _Download, TrendingUp, DollarSign
+  Shield, AlertCircle, CheckCircle, Clock, XCircle, Bell,
+  RefreshCw, Search, Filter, Download, TrendingUp, DollarSign
 } from 'lucide-react';
 import PDGEscrowDisputes from './PDGEscrowDisputes';
 import {
@@ -62,6 +63,7 @@ const statusConfig = {
 };
 
 export default function PDGEscrowManagement() {
+  const fc = useFormatCurrency();
   const { profile } = useAuth();
   const { toast } = useToast();
   const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow } = useEscrowTransactions();
@@ -224,7 +226,7 @@ export default function PDGEscrowManagement() {
                 <TrendingUp className="w-4 h-4 text-[#04439e]" />
               </div>
               <p className="text-2xl font-bold text-[#04439e]">
-                {stats.commission.toLocaleString()} GNF
+                {fc(stats.commission)}
               </p>
             </CardContent>
           </Card>
@@ -342,7 +344,7 @@ export default function PDGEscrowManagement() {
                                 <p>
                                   <span className="text-muted-foreground">ID Vendeur:</span>{' '}
                                   <span className="font-mono text-xs bg-white px-2 py-0.5 rounded">
-                                    {transaction.receiver.id ? transaction.receiver.id.slice(0, 12) + '...' : 'N/A'}
+                                    {transaction.receiver.id ? String(transaction.receiver.id).slice(0, 12) + '...' : 'N/A'}
                                   </span>
                                 </p>
                               </div>
@@ -365,7 +367,7 @@ export default function PDGEscrowManagement() {
                             <div>
                               <p className="text-sm text-muted-foreground mb-1">ID Transaction</p>
                               <p className="text-xs font-mono bg-background px-2 py-1 rounded">
-                                {transaction.id ? transaction.id.slice(0, 16) + '...' : 'N/A'}
+                                {transaction.id ? String(transaction.id).slice(0, 16) + '...' : 'N/A'}
                               </p>
                             </div>
                           </div>

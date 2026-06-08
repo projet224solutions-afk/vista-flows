@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, CheckCircle, XCircle, Clock, RefreshCw, Eye, Trash2, Edit } from 'lucide-react';
@@ -44,6 +45,7 @@ interface Quote {
 }
 
 export default function QuotesList({ refresh }: { refresh?: number }) {
+  const fc = useFormatCurrency();
   const { vendorId } = useVendorId();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +276,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">
-                        {(quote.total || 0).toLocaleString()} GNF
+                        {fc(quote.total || 0)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Valide jusqu'au {quote.valid_until ? new Date(quote.valid_until).toLocaleDateString('fr-FR') : 'N/A'}

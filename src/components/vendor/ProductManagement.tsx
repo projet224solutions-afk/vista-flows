@@ -4,8 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { formatCurrency } from '@/lib/formatters';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ import { PublicIdBadge } from "@/components/PublicIdBadge";
 import {
   Package, Plus, Search, Filter, Edit, Trash2,
   ShoppingCart, TrendingUp, Camera, Save, X, Copy,
-  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, _Barcode, AlertCircle, Video
+  Sparkles, Loader2, ImagePlus, Tags, FolderOpen, Barcode, AlertCircle, Video
 } from "lucide-react";
 import { ProductBarcodeDisplay } from "./ProductBarcodeDisplay";
 import { BarcodeLabelsA4Generator } from "./BarcodeLabelsA4Generator";
@@ -74,8 +73,6 @@ interface Category {
 }
 
 export default function ProductManagement() {
-  const fc = useFormatCurrency();
-  const { currency: vendorCurrency, convert } = useVendorCurrency();
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1034,7 +1031,7 @@ export default function ProductManagement() {
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-sm md:text-2xl font-bold truncate">
-              {fc(convert(stats.totalValue), vendorCurrency)}
+              {formatCurrency(stats.totalValue, 'GNF')}
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
               Valeur inventaire
@@ -1178,11 +1175,11 @@ export default function ProductManagement() {
               {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <span className="text-sm md:text-xl font-bold text-primary truncate">
-                  {fc(convert(product.price), vendorCurrency)}
+                  {formatCurrency(product.price, 'GNF')}
                 </span>
                 {product.compare_price && product.compare_price > product.price && (
                   <span className="text-[10px] md:text-sm line-through text-muted-foreground">
-                    {fc(convert(product.compare_price), vendorCurrency)}
+                    {formatCurrency(product.compare_price, 'GNF')}
                   </span>
                 )}
               </div>
@@ -1610,10 +1607,10 @@ export default function ProductManagement() {
                         />
                         {formData.units_per_carton && formData.price && (
                           <p className="text-xs text-[#ff4000]">
-                            Économie: {fc(convert(
+                            Économie: {formatCurrency(
                               (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) -
                               parseFloat(formData.price_carton || '0')
-                            ), vendorCurrency)} vs unités
+                            , 'GNF')} vs unités
                           </p>
                         )}
                       </div>

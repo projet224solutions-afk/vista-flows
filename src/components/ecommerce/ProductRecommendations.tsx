@@ -1,5 +1,7 @@
 import { useProductRecommendations } from '@/hooks/useProductRecommendations';
+import { getCurrencyForCountry } from '@/data/countryMappings';
 import { Card, CardContent } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -78,7 +80,12 @@ export const ProductRecommendations = ({
                   )}
                 </div>
                 <p className="font-bold text-primary">
-                  {rec.product?.price.toLocaleString()} GNF
+                  <Money
+                    amount={rec.product?.price || 0}
+                    from={getCurrencyForCountry((Array.isArray(rec.product?.vendors)
+                      ? rec.product?.vendors[0]?.country
+                      : rec.product?.vendors?.country) || '')}
+                  />
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {rec.reason}

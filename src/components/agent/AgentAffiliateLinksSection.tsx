@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -326,19 +327,19 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
             <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
               <p className="text-sm text-[#ff4000] font-medium">En attente</p>
               <p className="text-2xl font-bold text-[#ff4000]">
-                {(stats?.commissions?.pending || 0).toLocaleString()} GNF
+                <Money amount={stats?.commissions?.pending || 0} from="GNF" />
               </p>
             </div>
             <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <p className="text-sm text-blue-600 font-medium">Validées</p>
               <p className="text-2xl font-bold text-blue-700">
-                {(stats?.commissions?.validated || 0).toLocaleString()} GNF
+                <Money amount={stats?.commissions?.validated || 0} from="GNF" />
               </p>
             </div>
             <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
               <p className="text-sm text-[#ff4000] font-medium">Payées</p>
               <p className="text-2xl font-bold text-[#ff4000]">
-                {(stats?.commissions?.paid || 0).toLocaleString()} GNF
+                <Money amount={stats?.commissions?.paid || 0} from="GNF" />
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MapPin, AlertTriangle, _CheckCircle, Loader2, RefreshCw } from 'lucide-react';
+import { MapPin, AlertTriangle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface GPSPermissionHelperProps {

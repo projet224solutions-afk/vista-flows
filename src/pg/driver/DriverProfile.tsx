@@ -4,18 +4,20 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { _User, Mail, Phone, _MapPin, Star, Award, TrendingUp, Bike } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Star, Award, TrendingUp, Bike } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDriver } from '@/hooks/useDriver';
 import { DriverLayout } from '@/components/driver/DriverLayout';
 
 export default function DriverProfile() {
+  const fc = useFormatCurrency();
   const { profile } = useAuth();
   const { driver, stats } = useDriver();
 
@@ -134,10 +136,10 @@ export default function DriverProfile() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-primary">
-                  {(driver?.earnings_total || 0).toLocaleString()} GNF
+                  {fc(driver?.earnings_total || 0)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.monthEarnings.toLocaleString()} GNF ce mois
+                  {fc(stats.monthEarnings)} ce mois
                 </p>
               </CardContent>
             </Card>

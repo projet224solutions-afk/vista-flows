@@ -6,6 +6,7 @@
 import { useRef } from 'react';
 import Barcode from 'react-barcode';
 import { Button } from '@/components/ui/button';
+import { Money } from '@/components/Money';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Download, Printer, Copy, Barcode as BarcodeIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -211,7 +212,7 @@ export function ProductBarcodeDisplay({
             {sku && <p className="text-sm text-muted-foreground">SKU: {sku}</p>}
             {price && (
               <p className="text-lg font-bold text-primary">
-                {price.toLocaleString('fr-FR')} GNF
+                <Money amount={price} from="GNF" />
               </p>
             )}
           </div>

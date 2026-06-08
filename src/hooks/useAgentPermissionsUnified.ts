@@ -2,7 +2,7 @@
  * Hook unifié pour les permissions d'agent
  * Combine les permissions de la table agent_permissions avec les permissions legacy du JSON
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AVAILABLE_PERMISSIONS, PermissionKey } from './useAgentPermissions';
 import { hasPermissionWithAliases } from '@/lib/agent-permissions';
@@ -21,6 +21,9 @@ export interface UnifiedAgentPermissions {
 export function useAgentPermissionsUnified(agentId: string | undefined): UnifiedAgentPermissions {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  // Suffixe unique par instance : évite la collision de canal realtime si le hook
+  // est monté à plusieurs endroits avec le même agentId.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2));
 
   const loadPermissions = useCallback(async () => {
     if (!agentId) {
@@ -124,7 +127,7 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
      * on recharge les permissions à chaque update.
      */
     const channelAgentPermissions = supabase
-      .channel(`agent-permissions-unified-${agentId}`)
+      .channel(`agent-permissions-unified-${agentId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
@@ -141,7 +144,7 @@ export function useAgentPermissionsUnified(agentId: string | undefined): Unified
       .subscribe();
 
     const channelAgentRow = supabase
-      .channel(`agent-row-unified-${agentId}`)
+      .channel(`agent-row-unified-${agentId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

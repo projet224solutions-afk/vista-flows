@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { authenticateWithPIN, _getRemainingAttempts, canAuthenticate } from '@/lib/offline/auth/offlineAuth';
+import { authenticateWithPIN, getRemainingAttempts, canAuthenticate } from '@/lib/offline/auth/offlineAuth';
 import { authenticateWithBiometric, isBiometricAvailable, isBiometricConfigured } from '@/lib/offline/auth/biometric';
 import { toast } from 'sonner';
 

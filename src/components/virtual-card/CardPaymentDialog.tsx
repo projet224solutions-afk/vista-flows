@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useVirtualCard } from '@/hooks/useVirtualCard';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { CreditCard, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +43,7 @@ export function CardPaymentDialog({
   monthlyRemaining,
   onSuccess
 }: CardPaymentDialogProps) {
+  const fc = useFormatCurrency();
   const { processPayment, loading } = useVirtualCard();
   const [amount, setAmount] = useState('');
   const [merchantName, setMerchantName] = useState('');
@@ -69,7 +71,7 @@ export function CardPaymentDialog({
     if (paymentAmount > maxAmount) {
       setResult({
         success: false,
-        message: `Montant maximum: ${maxAmount.toLocaleString('fr-FR')} GNF`
+        message: `Montant maximum: ${fc(maxAmount)}`
       });
       return;
     }
@@ -85,7 +87,7 @@ export function CardPaymentDialog({
     if (paymentResult.success) {
       setResult({
         success: true,
-        message: `Paiement de ${paymentAmount.toLocaleString('fr-FR')} GNF effectué !`
+        message: `Paiement de ${fc(paymentAmount)} effectué !`
       });
 
       // Reset et fermer après succès
@@ -176,7 +178,7 @@ export function CardPaymentDialog({
                 required
               />
               <p className="text-xs text-white/50">
-                Maximum: {maxAmount.toLocaleString('fr-FR')} GNF
+                Maximum: {fc(maxAmount)}
               </p>
             </div>
 

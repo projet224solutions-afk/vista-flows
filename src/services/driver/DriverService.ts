@@ -268,7 +268,7 @@ export class DriverService {
       const fileName = `delivery-${deliveryId}-${Date.now()}.${file.name.split('.').pop()}`;
       const filePath = `delivery-proofs/${fileName}`;
 
-      const { _data, error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('deliveries')
         .upload(filePath, file);
 

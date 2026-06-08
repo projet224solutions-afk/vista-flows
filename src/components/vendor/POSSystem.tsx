@@ -49,7 +49,7 @@ import {
 import { toast } from 'sonner';
 import { usePOSSettings } from '@/hooks/usePOSSettings';
 
-import { useVendorCurrency } from '@/hooks/useVendorCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { getCurrencyByCode, formatCurrency } from '@/data/currencies';
 import { useAuth } from '@/hooks/useAuth';
@@ -99,7 +99,13 @@ interface Customer {
 }
 
 export function POSSystem() {
-  const { currency: vendorCurrency, convert: vendorConvert, isReady: currencyReady, lastUpdated: ratesLastUpdatedFromCtx } = useVendorCurrency();
+  // Devise unifiée (CurrencyContext synchronisé au profil — fiable, ne retombe pas sur GNF
+  // sur un simple retard de taux comme l'ancien useVendorCurrency). Le POS affiche donc
+  // toujours la VRAIE devise de la boutique (ex: XOF) sur les prix, le panier ET le reçu.
+  const { convert: priceConvert, userCurrency, loading: priceLoading, lastUpdated: ratesLastUpdatedFromCtx } = usePriceConverter();
+  const vendorCurrency = userCurrency;
+  const vendorConvert = useCallback((priceInGNF: number) => priceConvert(priceInGNF, 'GNF').convertedAmount, [priceConvert]);
+  const currencyReady = !priceLoading;
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings(vendorCurrency);
   const { user: authUser, _session } = useAuth();
   const { vendorId: currentVendorId, userId: vendorOwnerUserId, loading: currentVendorLoading } = useCurrentVendor();

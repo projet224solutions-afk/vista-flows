@@ -5,6 +5,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,6 +39,7 @@ interface VendorDelivery {
 }
 
 export function VendorDeliveriesPanel() {
+  const fc = useFormatCurrency();
   const [deliveries, setDeliveries] = useState<VendorDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShipmentManager, setShowShipmentManager] = useState(false);
@@ -186,7 +188,7 @@ export function VendorDeliveriesPanel() {
                 {getStatusLabel(delivery.status)}
               </Badge>
               <Badge variant="outline">
-                {delivery.delivery_fee?.toLocaleString()} GNF
+                {fc(delivery.delivery_fee || 0)}
               </Badge>
               {delivery.distance_km && (
                 <Badge variant="secondary">
@@ -463,7 +465,7 @@ export function VendorDeliveriesPanel() {
                           </p>
                         </div>
                         <span className="text-sm font-medium text-[#ff4000]">
-                          {delivery.delivery_fee?.toLocaleString()} GNF
+                          {fc(delivery.delivery_fee || 0)}
                         </span>
                       </div>
                     ))}
@@ -626,7 +628,7 @@ export function VendorDeliveriesPanel() {
               <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
                 <span className="font-medium">Frais de livraison</span>
                 <span className="font-bold text-orange-600">
-                  {selectedDelivery.delivery_fee?.toLocaleString()} GNF
+                  {fc(selectedDelivery.delivery_fee || 0)}
                 </span>
               </div>
             </div>

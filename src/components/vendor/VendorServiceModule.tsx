@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, _Plus, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw, Plus, Clock, XCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useVendorServices } from '@/hooks/useVendorServices';
@@ -24,10 +24,10 @@ export default function VendorServiceModule() {
     selectedService,
     selectedServiceId,
     selectService,
-    _hasMultipleServices,
+    hasMultipleServices,
     loading: servicesLoading,
     error,
-    _refresh
+    refresh
   } = useVendorServices();
 
   const [showAddService, setShowAddService] = useState(false);

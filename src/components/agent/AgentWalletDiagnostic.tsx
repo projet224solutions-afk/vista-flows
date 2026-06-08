@@ -85,7 +85,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
       toast.info('Tentative de création du wallet...');
 
       // Créer le wallet manuellement
-      const { _data, error } = await supabase
+      const { data, error } = await supabase
         .from('agent_wallets')
         .insert({
           agent_id: agentId,

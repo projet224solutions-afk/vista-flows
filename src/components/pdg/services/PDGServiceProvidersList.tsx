@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { backendFetch } from '@/services/backendApi';
 import { ServiceSubscriptionService, ServicePlan } from '@/services/serviceSubscriptionService';
 import {
-  Search, Users, MapPin, Star, Phone, Mail, _Eye,
+  Search, Users, MapPin, Star, Phone, Mail, Eye,
   CheckCircle, Clock, XCircle, AlertTriangle, RefreshCw,
   TrendingUp, ShoppingBag, Store, Globe, Loader2, Gift, Crown, Calendar
 } from 'lucide-react';
@@ -89,6 +90,7 @@ const statusConfig: Record<string, { label: string; icon: any; className: string
 };
 
 export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGServiceProvidersListProps) {
+  const fc = useFormatCurrency();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -464,7 +466,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                         <div className="flex items-center justify-between gap-3 w-full">
                           <span className="font-medium">{plan.display_name}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {plan.monthly_price_gnf.toLocaleString()} GNF/mois
+                            {fc(plan.monthly_price_gnf)}/mois
                           </span>
                         </div>
                       </SelectItem>

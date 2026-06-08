@@ -31,7 +31,7 @@ import { AgricultureModule } from './AgricultureModule';
 import { ConstructionModule } from './ConstructionModule';
 import { DropshippingModule } from './DropshippingModule';
 import { CateringModule } from './stubs';
-import { _normalizeServiceCode } from '@/config/serviceTypesConfig';
+import { normalizeServiceCode } from '@/config/serviceTypesConfig';
 
 interface ServiceModuleManagerProps {
   serviceId: string;

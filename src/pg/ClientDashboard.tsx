@@ -40,7 +40,7 @@ const RecentlyViewedProducts = lazy(() => import("@/components/shared/RecentlyVi
 const SupportTicketsUniversal = lazy(() => import("@/components/shared/SupportTicketsUniversal").then(m => ({ default: m.SupportTicketsUniversal })));
 
 export default function ClientDashboard() {
-  const { user, _profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const responsive = useResponsive();
   const { t } = useTranslation();
@@ -62,9 +62,9 @@ export default function ClientDashboard() {
 
   // Données client: commandes, favoris, contact vendeur
   const {
-    _orders,
-    _favorites,
-    _toggleFavorite,
+    orders,
+    favorites,
+    toggleFavorite,
     contactVendor,
     loadAllData
   } = useClientData();

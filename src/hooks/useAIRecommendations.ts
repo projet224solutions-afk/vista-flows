@@ -35,14 +35,15 @@ async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
     const ids = products.map(p => p.product_id);
     const { data } = await supabase
       .from('products')
-      .select('id, promotional_videos, vendors(country)')
+      .select('id, promotional_videos, seller_currency, vendors(country, shop_currency)')
       .in('id', ids);
 
     const currencyMap: Record<string, string> = {};
     const videoMap: Record<string, string[]> = {};
     (data || []).forEach((p: any) => {
-      const country = (p.vendors as any)?.country || '';
-      if (country) currencyMap[p.id] = getCurrencyForCountry(country);
+      // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
+      const cur = getCurrencyForCountry((p.vendors as any)?.country || '');
+      if (cur) currencyMap[p.id] = cur;
       if (Array.isArray(p.promotional_videos) && p.promotional_videos.length > 0) {
         videoMap[p.id] = p.promotional_videos as string[];
       }
@@ -121,7 +122,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       // Fallback: produits récents bien notés
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(limit * 2);
@@ -129,10 +130,8 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       return filterByAllowedVendors(data || [])
         .slice(0, limit)
         .map(p => {
-          const vendor = (p as any).vendors;
-          const vendorCountry = vendor?.country || '';
-          const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-          const currency = countryDerived || (p as any).currency || 'GNF';
+          // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
+          const currency = getCurrencyForCountry((p as any).vendors?.country || '');
           return {
             product_id: p.id,
             name: p.name,
@@ -211,7 +210,7 @@ export function useAITrending(limit = 16, enabled = true) {
 
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, vendors(business_type, country)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('reviews_count', { ascending: false })
         .limit(limit * 3);
@@ -229,10 +228,8 @@ export function useAITrending(limit = 16, enabled = true) {
       return scored
         .slice(0, limit)
         .map(p => {
-          const vendor = (p as any).vendors;
-          const vendorCountry = vendor?.country || '';
-          const countryDerived = vendorCountry ? getCurrencyForCountry(vendorCountry) : null;
-          const currency = countryDerived || (p as any).currency || 'GNF';
+          // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
+          const currency = getCurrencyForCountry((p as any).vendors?.country || '');
           return {
             product_id: p.id,
             name: p.name,

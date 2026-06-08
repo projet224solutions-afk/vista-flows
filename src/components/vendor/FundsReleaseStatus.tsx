@@ -17,12 +17,12 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
-  _Table,
-  _TableBody,
-  _TableCell,
-  _TableHead,
-  _TableHeader,
-  _TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import {
   Clock,

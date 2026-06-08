@@ -11,7 +11,7 @@ import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { cartItems, removeFromCart, updateQuantity, clearCart, _getCartTotal, getCartCount } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartCount } = useCart();
   const { convert } = usePriceConverter();
 
   // Formater le prix dans la devise locale de l'utilisateur
@@ -20,7 +20,7 @@ export default function Cart() {
     return converted.formatted;
   };
 
-  // Séparer les produits affiliés des produits normaux
+  // S├®parer les produits affili├®s des produits normaux
   const affiliateItems = cartItems.filter(item =>
     item.item_type === 'digital_product' && item.product_mode === 'affiliate'
   );
@@ -28,21 +28,26 @@ export default function Cart() {
     !(item.item_type === 'digital_product' && item.product_mode === 'affiliate')
   );
 
-  // Calculer le total des produits normaux uniquement
-  const normalItemsTotal = normalItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  // Total des produits normaux — CHAQUE item est converti depuis SA devise (vendeur) vers la devise
+  // d'affichage AVANT de sommer. Avant : somme des prix bruts → total absurde pour un panier
+  // multi-vendeur multi-devise (ex. 50 000 XOF + 25 000 GNF additionnés tels quels).
+  const normalItemsTotal = normalItems.reduce(
+    (total, item) => total + convert(item.price, item.currency || 'GNF').convertedAmount * item.quantity,
+    0
+  );
 
   const handleAffiliateClick = (item: typeof cartItems[0]) => {
     if (item.affiliate_url) {
       window.open(item.affiliate_url, '_blank');
       toast.success('Redirection vers le partenaire...');
-      // Optionnel: retirer du panier après redirection
+      // Optionnel: retirer du panier apr├¿s redirection
       removeFromCart(item.id);
     }
   };
 
   const handleCheckout = () => {
     if (normalItems.length === 0) {
-      toast.info('Votre panier ne contient que des produits affiliés. Cliquez sur "Voir l\'offre" pour chaque produit.');
+      toast.info('Votre panier ne contient que des produits affili├®s. Cliquez sur "Voir l\'offre" pour chaque produit.');
       return;
     }
 
@@ -92,18 +97,18 @@ export default function Cart() {
       </header>
 
       <div className="flex-1 overflow-auto max-w-4xl mx-auto w-full p-4 pb-24 md:pb-6 space-y-4">
-        {/* Alerte pour les produits affiliés */}
+        {/* Alerte pour les produits affili├®s */}
         {affiliateItems.length > 0 && (
           <Alert className="border-primary/50 bg-primary/5">
             <AlertCircle className="h-4 w-4 text-primary" />
             <AlertDescription className="text-sm">
-              <strong>{affiliateItems.length} produit{affiliateItems.length > 1 ? 's' : ''} affilié{affiliateItems.length > 1 ? 's' : ''}</strong> : Ces produits sont vendus par nos partenaires.
-              Cliquez sur "Voir l'offre" pour être redirigé vers leur site.
+              <strong>{affiliateItems.length} produit{affiliateItems.length > 1 ? 's' : ''} affili├®{affiliateItems.length > 1 ? 's' : ''}</strong> : Ces produits sont vendus par nos partenaires.
+              Cliquez sur "Voir l'offre" pour ├¬tre redirig├® vers leur site.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Liste des produits affiliés */}
+        {/* Liste des produits affili├®s */}
         {affiliateItems.length > 0 && (
           <Card className="border-primary/30">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -220,11 +225,11 @@ export default function Cart() {
           </Card>
         )}
 
-        {/* Résumé de la commande - seulement pour les produits normaux */}
+        {/* R├®sum├® de la commande - seulement pour les produits normaux */}
         {normalItems.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Résumé de la commande</CardTitle>
+              <CardTitle>R├®sum├® de la commande</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -234,7 +239,7 @@ export default function Cart() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Frais de livraison</span>
-                  <span className="font-semibold">À calculer</span>
+                  <span className="font-semibold">├Ç calculer</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
@@ -247,21 +252,21 @@ export default function Cart() {
                 size="lg"
                 onClick={handleCheckout}
               >
-                Procéder au paiement
+                Proc├®der au paiement
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Message si uniquement des produits affiliés */}
+        {/* Message si uniquement des produits affili├®s */}
         {normalItems.length === 0 && affiliateItems.length > 0 && (
           <Card className="border-muted">
             <CardContent className="py-8 text-center">
               <ExternalLink className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="font-semibold text-lg mb-2">Produits partenaires uniquement</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Votre panier ne contient que des produits affiliés.
-                Cliquez sur "Voir l'offre" pour chaque produit afin d'être redirigé vers le site du partenaire.
+                Votre panier ne contient que des produits affili├®s.
+                Cliquez sur "Voir l'offre" pour chaque produit afin d'├¬tre redirig├® vers le site du partenaire.
               </p>
               <Button variant="outline" onClick={() => navigate('/marketplace')}>
                 Continuer mes achats

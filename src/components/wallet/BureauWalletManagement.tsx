@@ -205,7 +205,7 @@ export default function BureauWalletManagement({
 
       if (updateError) throw updateError;
 
-      toast.success(`Dépôt de ${amount.toLocaleString()} GNF effectué`);
+      toast.success(`Dépôt de ${fc(amount)} effectué`);
       setDepositAmount('');
       setShowDepositConfirm(false);
       await loadWallet();
@@ -260,7 +260,7 @@ export default function BureauWalletManagement({
 
       if (updateError) throw updateError;
 
-      toast.success(`Retrait de ${amount.toLocaleString()} GNF effectué`);
+      toast.success(`Retrait de ${fc(amount)} effectué`);
       setWithdrawAmount('');
       setShowWithdrawConfirm(false);
       await loadWallet();

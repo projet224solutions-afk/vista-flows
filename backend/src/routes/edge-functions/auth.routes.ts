@@ -16,8 +16,13 @@
 import { Router, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import speakeasy from "speakeasy";
+import { getClientIp } from "../../middlewares/ipBlocklist.js";
 
 const router = Router();
+
+// Anti-brute-force login : verrouillage temporaire apres trop d'echecs.
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_BLOCK_MINUTES = 30;
 
 const supabase = createClient(
   process.env.SUPABASE_URL || "",
@@ -44,18 +49,71 @@ router.post("/login", async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Use Supabase Auth
+    const identifier = String(email).toLowerCase().trim();
+    const ip = getClientIp(req);
+
+    // 1) Verrouillage actif ? (fail-open : si la lecture echoue, on n'empeche pas la connexion)
+    let existing: { attempt_count?: number; blocked_until?: string | null } | null = null;
+    try {
+      const { data: row } = await supabase
+        .from("failed_login_attempts")
+        .select("attempt_count, blocked_until")
+        .eq("identifier", identifier)
+        .maybeSingle();
+      existing = row as any;
+    } catch { /* table indisponible -> on continue */ }
+
+    if (existing?.blocked_until && new Date(existing.blocked_until).getTime() > Date.now()) {
+      const mins = Math.ceil((new Date(existing.blocked_until).getTime() - Date.now()) / 60000);
+      return res.status(429).json({
+        success: false,
+        error: `Trop de tentatives echouees. Compte temporairement bloque (~${mins} min).`,
+      });
+    }
+
+    // 2) Tentative d'authentification
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      return res.status(401).json({
+      // 3) Echec -> enregistrer la tentative (fail-open sur le tracking)
+      let blockedUntil: string | null = null;
+      try {
+        const newCount = (existing?.attempt_count || 0) + 1;
+        blockedUntil = newCount >= MAX_LOGIN_ATTEMPTS
+          ? new Date(Date.now() + LOGIN_BLOCK_MINUTES * 60000).toISOString()
+          : null;
+        if (existing) {
+          await supabase.from("failed_login_attempts").update({
+            attempt_count: newCount,
+            last_attempt: new Date().toISOString(),
+            blocked_until: blockedUntil,
+            ip_address: ip,
+          }).eq("identifier", identifier);
+        } else {
+          await supabase.from("failed_login_attempts").insert({
+            identifier,
+            ip_address: ip,
+            attempt_count: 1,
+            last_attempt: new Date().toISOString(),
+          });
+        }
+      } catch { /* tracking best-effort */ }
+
+      return res.status(blockedUntil ? 429 : 401).json({
         success: false,
-        error: error.message,
+        error: blockedUntil
+          ? `Trop de tentatives echouees. Compte bloque ${LOGIN_BLOCK_MINUTES} min.`
+          : error.message,
       });
     }
+
+    // 4) Succes -> reset du compteur
+    try {
+      await supabase.from("failed_login_attempts").delete().eq("identifier", identifier);
+    } catch { /* best-effort */ }
 
     return res.status(200).json({
       success: true,

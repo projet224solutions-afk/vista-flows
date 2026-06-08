@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,11 +16,11 @@ import {
   Code,
   FolderGit2,
   FileText,
-  _Users,
+  Users,
   Clock,
   Plus,
   ExternalLink,
-  _DollarSign,
+  DollarSign,
   CheckCircle,
   AlertCircle,
   GitBranch
@@ -74,7 +74,7 @@ interface PortfolioItem {
   featured: boolean;
 }
 
-export function DeveloperModule({ _serviceId, businessName }: DeveloperModuleProps) {
+export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProps) {
   const [activeTab, setActiveTab] = useState('projets');
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewQuoteDialog, setShowNewQuoteDialog] = useState(false);

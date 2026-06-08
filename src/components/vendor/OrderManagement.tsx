@@ -3,20 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, _DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
-import { useVendorCurrency } from "@/hooks/useVendorCurrency";
+import { useMoneyFormat } from "@/components/Money";
 import { supabase } from "@/integrations/supabase/client";
 import { updateOrderStatus as updateOrderStatusBackend } from "@/services/orderBackendService";
 import { useToast } from "@/hooks/use-toast";
-import { _GeocodedAddress } from "@/components/vendor/GeocodedAddress";
+import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
 import CreditSalesForm from "@/components/vendor/CreditSalesForm";
 import {
-  ShoppingCart, Search, Filter, Eye, Package, _Clock,
+  ShoppingCart, Search, Filter, Eye, Package, Clock,
   CheckCircle, XCircle, Truck, CreditCard, FileText,
-  Calendar, User, MapPin, Download, _MoreHorizontal, Shield, RefreshCw, Banknote, Lock
+  Calendar, User, MapPin, Download, MoreHorizontal, Shield, RefreshCw, Banknote, Lock
 } from "lucide-react";
 
 interface Address {
@@ -46,6 +46,8 @@ interface Order {
   shipping_amount: number;
   discount_amount: number;
   total_amount: number;
+  /** Devise de la commande (orders.currency = devise vendeur/produit, pas toujours GNF) */
+  currency?: string;
   shipping_address: any; // Json from Supabase
   billing_address?: any; // Json from Supabase
   notes?: string;
@@ -166,13 +168,14 @@ const getPaymentMethodLabel = (order: Order): string => {
 };
 
 export default function OrderManagement() {
-  const { vendorId, user, loading: vendorLoading, canAccessPOS, _businessType } = useCurrentVendor();
-  const { currency, convert } = useVendorCurrency();
+  const { vendorId, user, loading: vendorLoading, canAccessPOS, businessType } = useCurrentVendor();
+  const { format, userCurrency } = useMoneyFormat();
   const { toast } = useToast();
 
-  // Formate un montant GNF converti dans la devise du wallet
-  const fmtAmount = (amount: number) =>
-    `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}`;
+  // Formate un montant dans sa devise d'origine (orders.currency) converti vers la devise
+  // d'affichage de l'utilisateur (taux BCRG). Défaut = userCurrency pour les agrégats
+  // (sommes multi-commandes) où il n'y a pas une devise unique fiable.
+  const fmtAmount = (amount: number, currency: string = userCurrency) => format(amount, currency);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -235,7 +238,7 @@ export default function OrderManagement() {
           if (newStatus === 'released' && oldStatus !== 'released') {
             toast({
               title: "💰 Paiement libéré !",
-              description: `Le client a confirmé la réception. ${((payload.new as any).amount || 0).toLocaleString()} GNF transférés sur votre compte.`,
+              description: `Le client a confirmé la réception. ${fmtAmount((payload.new as any).amount || 0)} transférés sur votre compte.`,
               duration: 10000
             });
           }
@@ -680,7 +683,7 @@ export default function OrderManagement() {
 
               toast({
                 title: "✅ Remboursement effectué",
-                description: `La commande ${order.order_number} a été remboursée (${fmtAmount(order.total_amount)})`
+                description: `La commande ${order.order_number} a été remboursée (${fmtAmount(order.total_amount, order.currency)})`
               });
 
               // Rafraîchir les commandes
@@ -1162,11 +1165,11 @@ export default function OrderManagement() {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                       <p className="text-xl font-bold text-[hsl(15,100%,50%)]">
-                        {fmtAmount(order.total_amount)}
+                        {fmtAmount(order.total_amount, order.currency)}
                       </p>
                       {order.discount_amount > 0 && (
                         <p className="text-sm text-[#ff4000]">
-                          Remise: -{fmtAmount(order.discount_amount)}
+                          Remise: -{fmtAmount(order.discount_amount, order.currency)}
                         </p>
                       )}
                     </div>
@@ -1440,11 +1443,11 @@ export default function OrderManagement() {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Montant total</p>
                       <p className="text-xl font-bold text-blue-700">
-                        {fmtAmount(order.total_amount)}
+                        {fmtAmount(order.total_amount, order.currency)}
                       </p>
                       {order.discount_amount > 0 && (
                         <p className="text-sm text-[#ff4000]">
-                          Remise: -{fmtAmount(order.discount_amount)}
+                          Remise: -{fmtAmount(order.discount_amount, order.currency)}
                         </p>
                       )}
                     </div>
@@ -1483,10 +1486,10 @@ export default function OrderManagement() {
                               : 'text-gray-800'
                           }`}>
                             {(order.escrow.status === 'pending' || order.escrow.status === 'held') && (
-                              <>🔒 Fonds sécurisés - {fmtAmount(order.escrow.amount)}</>
+                              <>🔒 Fonds sécurisés - {fmtAmount(order.escrow.amount, order.currency)}</>
                             )}
                             {order.escrow.status === 'released' && (
-                              <>✅ Paiement libéré ! Vous avez reçu {fmtAmount(order.escrow.amount)}</>
+                              <>✅ Paiement libéré ! Vous avez reçu {fmtAmount(order.escrow.amount, order.currency)}</>
                             )}
                             {order.escrow.status === 'refunded' && '↩️ Commande remboursée au client'}
                           </p>
@@ -1606,29 +1609,29 @@ export default function OrderManagement() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Sous-total:</span>
-                      <span>{fmtAmount(selectedOrder.subtotal)}</span>
+                      <span>{fmtAmount(selectedOrder.subtotal, selectedOrder.currency)}</span>
                     </div>
                     {selectedOrder.tax_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Taxes:</span>
-                        <span>{fmtAmount(selectedOrder.tax_amount)}</span>
+                        <span>{fmtAmount(selectedOrder.tax_amount, selectedOrder.currency)}</span>
                       </div>
                     )}
                     {selectedOrder.shipping_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Livraison:</span>
-                        <span>{fmtAmount(selectedOrder.shipping_amount)}</span>
+                        <span>{fmtAmount(selectedOrder.shipping_amount, selectedOrder.currency)}</span>
                       </div>
                     )}
                     {selectedOrder.discount_amount > 0 && (
                       <div className="flex justify-between text-[#ff4000]">
                         <span>Remise:</span>
-                        <span>-{fmtAmount(selectedOrder.discount_amount)}</span>
+                        <span>-{fmtAmount(selectedOrder.discount_amount, selectedOrder.currency)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total:</span>
-                      <span>{fmtAmount(selectedOrder.total_amount)}</span>
+                      <span>{fmtAmount(selectedOrder.total_amount, selectedOrder.currency)}</span>
                     </div>
                   </div>
                 </div>
@@ -1644,8 +1647,8 @@ export default function OrderManagement() {
                         <span className="font-medium">{item.products.name}</span>
                       </div>
                       <div className="text-right">
-                        <div>{item.quantity} x {fmtAmount(item.unit_price)}</div>
-                        <div className="font-semibold">{fmtAmount(item.total_price)}</div>
+                        <div>{item.quantity} x {fmtAmount(item.unit_price, selectedOrder.currency)}</div>
+                        <div className="font-semibold">{fmtAmount(item.total_price, selectedOrder.currency)}</div>
                       </div>
                     </div>
                   ))}
@@ -1769,7 +1772,7 @@ export default function OrderManagement() {
       <span class="value">${codPhone}</span>
     </div>` : ''}
     <div class="field" style="font-size:12pt;font-weight:800;color:#ff4000;justify-content:center;border:none;margin-top:2mm;">
-      Montant à collecter: ${fmtAmount(selectedOrder.total_amount)}
+      Montant à collecter: ${fmtAmount(selectedOrder.total_amount, selectedOrder.currency)}
     </div>
   </div>` : ''}
 

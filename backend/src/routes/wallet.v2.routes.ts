@@ -131,17 +131,23 @@ function resolveStoredFxRate(
 ): number {
   if (!row) return Number.NaN;
 
+  // TAUX NET DU JOUR (brut BCRG, SANS la marge plateforme). La marge/commission
+  // est désormais prélevée SÉPARÉMENT comme commission explicite (cf. getFxCommissionRate),
+  // et non plus intégrée au taux du destinataire (final_rate). Le destinataire reçoit
+  // donc TOUJOURS au taux net du jour, de façon cohérente sur tous les corridors.
   const base = String(baseCurrency || '').toUpperCase();
+  const directRate = Number(row.rate);
+  if (Number.isFinite(directRate) && directRate > 0) {
+    return directRate;
+  }
+
+  // Fallback uniquement si `rate` (net) est absent : on retombe sur final_rate_*
+  // (qui peut contenir la marge — dégradé acceptable car cas rare).
   if (base === 'USD' && Number.isFinite(Number(row.final_rate_usd)) && Number(row.final_rate_usd) > 0) {
     return Number(row.final_rate_usd);
   }
   if (base === 'EUR' && Number.isFinite(Number(row.final_rate_eur)) && Number(row.final_rate_eur) > 0) {
     return Number(row.final_rate_eur);
-  }
-
-  const directRate = Number(row.rate);
-  if (Number.isFinite(directRate) && directRate > 0) {
-    return directRate;
   }
 
   const fallbackUsd = Number(row.final_rate_usd);
@@ -232,6 +238,46 @@ async function getInternalFxRateFromTable(from: string, to: string): Promise<{ r
   }
 
   throw new Error(`Taux de change introuvable pour ${sourceCurrency}→${targetCurrency}`);
+}
+
+/**
+ * Taux de commission FX de la plateforme (fraction, ex: 0.05 = 5%).
+ * Cette commission est prélevée EN PLUS sur l'expéditeur lors d'un transfert international ;
+ * le destinataire reçoit au taux NET du jour. Défaut 5% si non réglé.
+ *
+ * SOURCE PRIORITAIRE : `system_settings.transfer_fee_percent` (en POURCENTAGE) — c'est CE que le
+ * SOURCE PRIORITAIRE : `margin_config.default_margin` — c'est CE que le PDG règle dans **PDGFinance**
+ * (champ « marge de conversion FX »), déjà stocké en FRACTION (0.01 = 1%). Repli : l'UI alternative
+ * `system_settings.transfer_fee_percent` (en POURCENTAGE), puis 5%. AUCUN cache : la valeur est relue
+ * à chaque preview/transfert → toute modif PDG s'applique IMMÉDIATEMENT.
+ */
+const DEFAULT_FX_COMMISSION = 0.05;
+async function getFxCommissionRate(): Promise<number> {
+  // 1) Source PDG officielle : margin_config.default_margin (PDGFinance — déjà une FRACTION).
+  try {
+    const { data } = await supabaseAdmin
+      .from('margin_config')
+      .select('config_value')
+      .eq('config_key', 'default_margin')
+      .maybeSingle();
+    const v = Number(data?.config_value);
+    if (Number.isFinite(v) && v >= 0 && v <= 0.3) return v;
+  } catch {
+    // ignore — repli ci-dessous
+  }
+  // 2) Repli : system_settings.transfer_fee_percent (TransferFeeSettings — en POURCENTAGE).
+  try {
+    const { data } = await supabaseAdmin
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'transfer_fee_percent')
+      .maybeSingle();
+    const pct = Number(data?.setting_value);
+    if (Number.isFinite(pct) && pct >= 0 && pct <= 30) return pct / 100;
+  } catch {
+    // ignore — fallback défaut
+  }
+  return DEFAULT_FX_COMMISSION;
 }
 
 function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
@@ -665,31 +711,66 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       recipientWallet = createdWallet as any;
     }
 
-    const feePercentage = 0;
-    const feeAmount = 0;
-    const totalDebit = amount + feeAmount;
+    const senderCurrency = String((senderWallet as any).currency || 'GNF').toUpperCase();
+    const receiverCurrency = String((recipientWallet as any).currency || senderCurrency).toUpperCase();
+    const isInternational = senderCurrency !== receiverCurrency;
     const senderBalance = Number((senderWallet as any).balance || 0);
+
+    // COMMISSION FX : prélevée EN PLUS sur l'expéditeur uniquement pour les transferts
+    // internationaux (cross-devise). Le destinataire reçoit au TAUX NET du jour.
+    // Ex (5%) : 1 EUR envoyé → destinataire reçoit 1 × taux_net (10 156,1011 GNF),
+    // l'expéditeur est débité 1,05 EUR, la plateforme garde 0,05 EUR (= 507,8 GNF).
+    const commissionRate = isInternational ? await getFxCommissionRate() : 0;
+    const feePercentage = commissionRate * 100;
+    const feeAmount = isInternational
+      ? smartRoundCurrencyAmount(amount * commissionRate, senderCurrency)
+      : 0;
+    const totalDebit = smartRoundCurrencyAmount(amount + feeAmount, senderCurrency);
 
     if (senderBalance < totalDebit) {
       res.status(402).json({ success: false, error: 'Solde insuffisant' });
       return;
     }
 
-    const senderCurrency = String((senderWallet as any).currency || 'GNF').toUpperCase();
-    const receiverCurrency = String((recipientWallet as any).currency || senderCurrency).toUpperCase();
-    const isInternational = senderCurrency !== receiverCurrency;
-    const amountAfterFee = amount;
+    const amountAfterFee = amount; // base convertie au taux net (la commission est EN PLUS)
     let rateDisplayed = 1;
     let amountReceived = amountAfterFee;
     let rateSource = 'identity';
     let rateFetchedAt = new Date().toISOString();
+    let commissionConversion = 0;
 
     if (isInternational) {
       const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
-      rateDisplayed = fxResult.rate;
+      rateDisplayed = fxResult.rate; // TAUX NET du jour
       rateSource = fxResult.source;
       rateFetchedAt = fxResult.fetchedAt;
-      amountReceived = smartRoundCurrencyAmount(amountAfterFee * rateDisplayed, receiverCurrency);
+      amountReceived = smartRoundCurrencyAmount(amount * rateDisplayed, receiverCurrency);
+      // Commission exprimée dans la devise du destinataire (pour l'affichage)
+      commissionConversion = smartRoundCurrencyAmount(feeAmount * rateDisplayed, receiverCurrency);
+    }
+
+    // LIMITE de transfert vérifiée sur l'ÉQUIVALENT GNF du montant envoyé (limite en GNF).
+    const MAX_TRANSFER_AMOUNT_GNF = 50_000_000;
+    const MIN_TRANSFER_AMOUNT_GNF = 100;
+    let amountInGnf = amount;
+    if (senderCurrency !== 'GNF') {
+      if (isInternational && receiverCurrency === 'GNF') {
+        amountInGnf = amountReceived; // = montant × taux(expéditeur→GNF)
+      } else {
+        try {
+          amountInGnf = amount * (await getInternalFxRateFromTable(senderCurrency, 'GNF')).rate;
+        } catch {
+          // pas de taux GNF → on ne bloque pas le preview
+        }
+      }
+    }
+    if (amountInGnf < MIN_TRANSFER_AMOUNT_GNF) {
+      res.status(400).json({ success: false, error: `Montant minimum: ${MIN_TRANSFER_AMOUNT_GNF.toLocaleString('fr-FR')} GNF (équivalent)` });
+      return;
+    }
+    if (amountInGnf > MAX_TRANSFER_AMOUNT_GNF) {
+      res.status(400).json({ success: false, error: `Montant maximum: ${MAX_TRANSFER_AMOUNT_GNF.toLocaleString('fr-FR')} GNF (équivalent)` });
+      return;
     }
 
     res.json({
@@ -726,8 +807,8 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       balance_after: senderBalance - totalDebit,
       sender_country: mapCurrencyToCountry(senderCurrency),
       receiver_country: mapCurrencyToCountry(receiverCurrency),
-      commission_conversion: 0,
-      frais_international: 0,
+      commission_conversion: commissionConversion,
+      frais_international: feeAmount,
       rate_source: rateSource,
       rate_fetched_at: rateFetchedAt,
       rate_lock_seconds: 60,
@@ -1159,24 +1240,18 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const senderId = req.user!.id;
-    const { amount, recipient_id, description, idempotency_key, pin } = req.body || {};
+    const { amount, recipient_id, description, idempotency_key, pin, expected_rate } = req.body || {};
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       res.status(400).json({ success: false, error: 'Montant invalide' });
       return;
     }
 
-    const MAX_TRANSFER_AMOUNT = 50_000_000;
-    const MIN_TRANSFER_AMOUNT = 100;
-
-    if (amount < MIN_TRANSFER_AMOUNT) {
-      res.status(400).json({ success: false, error: `Montant minimum: ${MIN_TRANSFER_AMOUNT}` });
-      return;
-    }
-    if (amount > MAX_TRANSFER_AMOUNT) {
-      res.status(400).json({ success: false, error: `Montant maximum: ${MAX_TRANSFER_AMOUNT.toLocaleString()}` });
-      return;
-    }
+    // Limites exprimées en GNF (devise plateforme). La vérification réelle se fait
+    // plus bas sur l'ÉQUIVALENT GNF du montant envoyé (cf. amountInGnf), car un
+    // expéditeur peut envoyer en EUR/XOF/USD et il faut comparer au même étalon.
+    const MAX_TRANSFER_AMOUNT_GNF = 50_000_000;
+    const MIN_TRANSFER_AMOUNT_GNF = 100;
 
     if (!recipient_id || typeof recipient_id !== 'string' || !recipient_id.trim()) {
       res.status(400).json({ success: false, error: 'recipient_id requis' });
@@ -1254,10 +1329,67 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 
     if (isInternational) {
       const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
-      rateUsed = fxResult.rate;
+      rateUsed = fxResult.rate; // TAUX NET du jour
       rateSource = fxResult.source;
+
+      // GARDE ANTI-DÉRIVE DE TAUX : si le taux BCRG a bougé de plus de 2% depuis le preview
+      // (expected_rate envoyé par le front), on REJETTE → l'utilisateur ne valide jamais un
+      // montant périmé. Le débit/crédit utilisent ensuite ce taux frais, de façon atomique.
+      const expRate = Number(expected_rate);
+      if (Number.isFinite(expRate) && expRate > 0 && rateUsed > 0
+          && Math.abs(rateUsed - expRate) / expRate > 0.02) {
+        res.status(409).json({
+          success: false,
+          error: 'Le taux de change a changé depuis l\'aperçu. Veuillez relancer la prévisualisation.',
+          rate_changed: true,
+          previous_rate: expRate,
+          current_rate: rateUsed,
+        });
+        return;
+      }
+
+      // Destinataire crédité au taux NET (la commission est prélevée EN PLUS, ci-dessous)
       amountToCredit = smartRoundCurrencyAmount(amount * rateUsed, receiverCurrency);
     }
+
+    // COMMISSION FX (internationale uniquement) prélevée EN PLUS sur l'expéditeur.
+    // Total débité = montant + commission. Le destinataire reçoit montant × taux NET.
+    // La commission reste dans le float plateforme (débitée mais non recréditée).
+    const commissionRate = isInternational ? await getFxCommissionRate() : 0;
+    const feeAmount = isInternational
+      ? smartRoundCurrencyAmount(amount * commissionRate, senderCurrency)
+      : 0;
+
+    // ── LIMITE de transfert vérifiée sur l'ÉQUIVALENT GNF du montant envoyé ──
+    // (la limite est en GNF ; on convertit le montant — quelle que soit la devise
+    // de l'expéditeur — pour comparer au même étalon).
+    let amountInGnf = amount;
+    if (senderCurrency !== 'GNF') {
+      if (receiverCurrency === 'GNF') {
+        amountInGnf = amountToCredit; // déjà = montant × taux(expéditeur→GNF)
+      } else {
+        try {
+          amountInGnf = amount * (await getInternalFxRateFromTable(senderCurrency, 'GNF')).rate;
+        } catch {
+          // Aucun taux vers GNF disponible → on ne bloque pas faute d'étalon.
+        }
+      }
+    }
+    if (amountInGnf < MIN_TRANSFER_AMOUNT_GNF) {
+      res.status(400).json({ success: false, error: `Montant minimum: ${MIN_TRANSFER_AMOUNT_GNF.toLocaleString('fr-FR')} GNF (équivalent)` });
+      return;
+    }
+    if (amountInGnf > MAX_TRANSFER_AMOUNT_GNF) {
+      res.status(400).json({ success: false, error: `Montant maximum: ${MAX_TRANSFER_AMOUNT_GNF.toLocaleString('fr-FR')} GNF (équivalent)` });
+      return;
+    }
+
+    // ── Description : pour un transfert INTERNATIONAL, on inscrit la conversion
+    // dans la description pour que le DESTINATAIRE voie « X EUR envoyé → Y GNF reçu ».
+    const fmtMoney = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+    const finalDescription = isInternational
+      ? `${description ? `${description} — ` : ''}${fmtMoney(amount)} ${senderCurrency} envoyé → ${fmtMoney(amountToCredit)} ${receiverCurrency} reçu`
+      : (description || 'Transfert');
 
     const idemKey = idempotency_key || `transfer:${senderId}:${resolvedRecipientId}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
 
@@ -1265,7 +1397,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       senderId,
       resolvedRecipientId,
       amount,
-      description || 'Transfert',
+      finalDescription,
       idemKey,
       {
         amountToCredit,
@@ -1274,7 +1406,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         isInternational,
         rateUsed,
         rateSource,
-        feeAmount: 0,
+        feeAmount,
       },
     );
 
@@ -1323,8 +1455,9 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       amount_received: amountToCredit,
       currency_sent: senderCurrency,
       currency_received: receiverCurrency,
-      fee_amount: 0,
-      fee_percentage: 0,
+      fee_amount: feeAmount,
+      fee_percentage: commissionRate * 100,
+      total_debit: smartRoundCurrencyAmount(amount + feeAmount, senderCurrency),
       rate_used: rateUsed,
       rate_source: rateSource,
     });

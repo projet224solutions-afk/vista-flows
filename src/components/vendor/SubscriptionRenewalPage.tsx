@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -26,11 +27,13 @@ interface Subscription {
 }
 
 export function SubscriptionRenewalPage() {
+  const fc = useFormatCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'external'>('wallet');
   const [processing, setProcessing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -77,12 +80,13 @@ export function SubscriptionRenewalPage() {
       // Load wallet balance
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
-        .select('balance')
+        .select('balance, currency')
         .eq('user_id', user.id)
         .single();
 
       if (walletError) throw walletError;
       setWalletBalance(walletData?.balance || 0);
+      if (walletData?.currency) setWalletCurrency(walletData.currency);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -201,7 +205,7 @@ export function SubscriptionRenewalPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Prix</p>
-              <p className="font-semibold">{subscription.plans.price_gnf.toLocaleString()} GNF</p>
+              <p className="font-semibold">{fc(subscription.plans.price_gnf)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Durée</p>
@@ -253,7 +257,7 @@ export function SubscriptionRenewalPage() {
                     <div>
                       <p className="font-medium">Wallet 224SOLUTIONS</p>
                       <p className="text-sm text-muted-foreground">
-                        Solde disponible : {walletBalance.toLocaleString()} GNF
+                        Solde disponible : {fc(walletBalance, walletCurrency)}
                       </p>
                     </div>
                   </div>
@@ -282,7 +286,7 @@ export function SubscriptionRenewalPage() {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <strong>Montant à payer :</strong> {subscription.plans.price_gnf.toLocaleString()} GNF
+              <strong>Montant à payer :</strong> {fc(subscription.plans.price_gnf)}
             </p>
             <p className="text-sm text-blue-700 mt-1">
               Votre abonnement sera renouvelé pour {subscription.plans.duration_days} jours supplémentaires

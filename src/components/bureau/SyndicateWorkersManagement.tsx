@@ -38,7 +38,7 @@ import {
   UserCheck,
   UserX,
   Trash2,
-  _Edit,
+  Edit,
   Crown,
   Key,
   Loader2,
@@ -53,7 +53,7 @@ interface SyndicateWorkersManagementProps {
 }
 
 export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWorkersManagementProps) {
-  const { workers, loading, stats, createWorker, _updateWorker, deleteWorker, toggleWorkerStatus, refetch } = useSyndicateWorkersData(bureauId);
+  const { workers, loading, stats, createWorker, updateWorker, deleteWorker, toggleWorkerStatus, refetch } = useSyndicateWorkersData(bureauId);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');

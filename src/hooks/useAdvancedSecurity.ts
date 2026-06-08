@@ -23,7 +23,7 @@ export const useAdvancedSecurity = (_userId?: string) => {
    */
   const checkIfBlocked = async (identifier: string) => {
     try {
-      const { data, _error } = await supabase
+      const { data, error } = await supabase
         .from('failed_login_attempts')
         .select('*')
         .eq('identifier', identifier)

@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   TrendingUp,
-  _TrendingDown,
+  TrendingDown,
   DollarSign,
   Home,
   CreditCard,
@@ -51,17 +51,17 @@ import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
-  _AreaChart,
-  _Area,
-  _XAxis,
-  _YAxis,
-  _CartesianGrid,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  _Legend
+  Legend
 } from 'recharts';
 
 interface FixedCost {

@@ -4,11 +4,12 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Car, MapPin, Phone, MessageCircle,
-  Navigation, Star, _Clock, DollarSign
+  Navigation, Star, Clock, DollarSign
 } from 'lucide-react';
 
 interface ActiveRideCardProps {
@@ -162,7 +163,7 @@ export function ActiveRideCard({
             <span className="text-sm text-gray-600">Gain estimé</span>
           </div>
           <span className="text-2xl font-bold text-[#ff4000]">
-            {(ride?.estimatedEarnings || 0).toLocaleString()} GNF
+            <Money amount={ride?.estimatedEarnings || 0} from="GNF" />
           </span>
         </div>
 

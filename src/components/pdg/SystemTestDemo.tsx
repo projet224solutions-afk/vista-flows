@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   Shield,
   Database,
-  _Zap,
+  Zap,
   Activity,
   Server,
   Lock,
@@ -68,7 +68,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
       status: 'pending',
       testFn: async () => {
         try {
-          const { _data, error } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('id')
             .limit(1);

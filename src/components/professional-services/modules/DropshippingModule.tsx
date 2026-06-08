@@ -64,7 +64,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
   const {
     stats,
     suppliers,
-    _products,
+    products,
     orders,
     loading,
     loadStats,

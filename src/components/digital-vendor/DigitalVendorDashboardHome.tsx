@@ -6,6 +6,7 @@
 import { memo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -45,6 +46,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { products, loading } = useMerchantDigitalProducts();
+  const fc = useFormatCurrency();
   const [stats, setStats] = useState<MerchantStats>({
     totalSales: 0, grossRevenue: 0, totalCommissions: 0,
     netRevenue: 0, activeSubscribers: 0, totalDownloads: 0, subscriptionRevenue: 0
@@ -115,7 +117,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: "Chiffre d'affaires brut",
-      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} GNF`,
+      value: statsLoading ? '...' : fc(stats.grossRevenue),
       note: 'avant commissions',
       icon: DollarSign,
       cardBg: 'bg-[#ff4000]',
@@ -127,8 +129,8 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     },
     {
       label: 'Revenu net',
-      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} GNF`,
-      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} GNF de commissions` : 'aucune commission déduite',
+      value: statsLoading ? '...' : fc(stats.netRevenue),
+      note: stats.totalCommissions > 0 ? `-${fc(stats.totalCommissions)} de commissions` : 'aucune commission déduite',
       icon: TrendingUp,
       cardBg: 'bg-[#04439e]',
       valueTone: 'text-white',
@@ -140,7 +142,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     {
       label: 'Abonnés actifs',
       value: statsLoading ? '...' : fmtNum(stats.activeSubscribers),
-      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} GNF par période` : 'aucun abonnement actif',
+      note: stats.subscriptionRevenue > 0 ? `${fc(stats.subscriptionRevenue)} par période` : 'aucun abonnement actif',
       icon: Users,
       cardBg: 'bg-[#ff4000]',
       valueTone: 'text-white',

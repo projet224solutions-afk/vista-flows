@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Zap, TrendingUp, Rocket, Package, ImageIcon, Infinity } from 'lucide-react';
 import { SubscriptionService, Plan, ActiveSubscription } from '@/services/subscriptionService';
+import { Money } from '@/components/Money';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -214,7 +215,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
 
                 <div className="mt-4 space-y-1">
                   <div className="text-3xl font-extrabold tracking-tight text-foreground">
-                    {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
+                    <Money amount={plan.monthly_price_gnf} from="GNF" />
                   </div>
                   <div className="text-sm text-muted-foreground/90">pour 1 mois</div>
                 </div>

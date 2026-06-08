@@ -57,7 +57,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const { data, _error } = await supabase
+        const { data, error } = await supabase
           .from('drivers')
           .select('metadata')
           .eq('id', driverId)

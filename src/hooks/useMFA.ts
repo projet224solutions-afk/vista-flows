@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   mfaService,
   MFAFactor,
-  _MFAMethod,
+  MFAMethod,
   MFAStatus,
   MFAEnrollmentResult,
   MFAChallenge

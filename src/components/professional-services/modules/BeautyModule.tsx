@@ -16,7 +16,7 @@ import {
   TrendingUp, Settings
 } from 'lucide-react';
 import { useServiceBeautyStats } from '@/hooks/useServiceBeautyStats';
-import { _formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 

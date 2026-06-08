@@ -53,7 +53,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const { data, _error } = await supabase
+        const { data, error } = await supabase
           .from('vendors')
           .select('delivery_base_price, delivery_price_per_km, delivery_rush_bonus, delivery_enabled, average_delivery_days')
           .eq('id', vendorId)

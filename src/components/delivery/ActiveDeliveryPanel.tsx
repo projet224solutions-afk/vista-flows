@@ -73,10 +73,10 @@ const STATUS_STEPS: { status: DeliveryStatus; label: string; icon: any }[] = [
 
 export function ActiveDeliveryPanel({
   delivery,
-  _driverLocation,
+  driverLocation,
   onUpdateStatus,
   onUploadProof,
-  _onCancel
+  onCancel
 }: ActiveDeliveryPanelProps) {
   const [loading, setLoading] = useState(false);
   const [_showCancelDialog, setShowCancelDialog] = useState(false);

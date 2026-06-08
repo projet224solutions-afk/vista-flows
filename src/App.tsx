@@ -551,7 +551,7 @@ function App() {
                               <Route
                                 path="/pdg"
                                 element={
-                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}>
+                                  <ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo', 'agent']}>
                                     <PDG224Solutions />
                                   </ProtectedRoute>
                                 }

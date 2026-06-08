@@ -41,7 +41,7 @@ export interface Correction {
 }
 
 export function useSurveillanceLogic() {
-  const { _user, profile } = useAuth();
+  const { user, profile } = useAuth();
   const [anomalies, setAnomalies] = useState<LogicAnomaly[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(false);

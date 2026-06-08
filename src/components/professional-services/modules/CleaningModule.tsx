@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,9 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Sparkles, Home, Building2, _Users, Calendar,
-  Clock, CheckCircle2, DollarSign, _TrendingUp,
-  MapPin, Star, _ShoppingBag, Shirt
+  Sparkles, Home, Building2, Users, Calendar,
+  Clock, CheckCircle2, DollarSign, TrendingUp,
+  MapPin, Star, ShoppingBag, Shirt
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -107,7 +108,7 @@ const CLEANING_SERVICES: CleaningService[] = [
   }
 ];
 
-export function CleaningModule({ _serviceId, businessName }: CleaningModuleProps) {
+export function CleaningModule({ serviceId, businessName }: CleaningModuleProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
@@ -241,7 +242,7 @@ export function CleaningModule({ _serviceId, businessName }: CleaningModuleProps
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.revenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold"><Money amount={stats.revenue} from="GNF" /></div>
             <p className="text-xs text-muted-foreground">Ce mois</p>
           </CardContent>
         </Card>
@@ -485,7 +486,7 @@ export function CleaningModule({ _serviceId, businessName }: CleaningModuleProps
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-2xl font-bold text-primary">{booking.price.toLocaleString()} GNF</p>
+                              <p className="text-2xl font-bold text-primary"><Money amount={booking.price} from="GNF" /></p>
                               <Button size="sm" variant="outline" className="mt-2">
                                 Gérer
                               </Button>
@@ -531,7 +532,7 @@ export function CleaningModule({ _serviceId, businessName }: CleaningModuleProps
                         <p className="text-sm mb-3">{service.description}</p>
                         <div className="flex items-baseline justify-between">
                           <div>
-                            <p className="text-2xl font-bold text-primary">{service.basePrice.toLocaleString()} GNF</p>
+                            <p className="text-2xl font-bold text-primary"><Money amount={service.basePrice} from="GNF" /></p>
                             <p className="text-xs text-muted-foreground">{service.unit}</p>
                           </div>
                           <Button size="sm">Réserver</Button>

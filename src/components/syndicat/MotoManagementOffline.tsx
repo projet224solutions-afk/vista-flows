@@ -4,10 +4,10 @@
  * 224SOLUTIONS - Bureau Syndicat
  */
 
-import { _Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import StolenMotoReportButton from './StolenMotoReportButton';
-import { _AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
 interface Props {
   moto: any;
@@ -16,7 +16,7 @@ interface Props {
   onUpdate?: () => void;
 }
 
-export default function MotoManagementOffline({ moto, bureauName, bureauLocation, _onUpdate }: Props) {
+export default function MotoManagementOffline({ moto, bureauName, bureauLocation, onUpdate }: Props) {
   const getSyncBadge = () => {
     if (moto.synced_from_firestore || moto.synced_from_supabase) {
       return (

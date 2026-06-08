@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bug, DollarSign, Users, TrendingUp, RefreshCw, ExternalLink } from "lucide-react";
@@ -33,7 +34,8 @@ interface BugBountyStats {
 }
 
 export function BugBountyProgram() {
-  const { _isMobile } = useResponsive();
+  const fc = useFormatCurrency();
+  const { isMobile } = useResponsive();
   const navigate = useNavigate();
   const [reports, setReports] = useState<BountyReport[]>([]);
   const [stats, setStats] = useState<BugBountyStats>({
@@ -199,7 +201,7 @@ export function BugBountyProgram() {
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <DollarSign className="w-8 h-8 text-[#ff4000] mb-2" />
-            <div className="text-2xl font-bold">{stats.totalRewards.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold">{fc(stats.totalRewards)}</div>
             <div className="text-xs text-muted-foreground">Récompenses versées</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
@@ -245,7 +247,7 @@ export function BugBountyProgram() {
                   </div>
                   {report.reward_amount && report.reward_amount > 0 && (
                     <div className="text-right">
-                      <div className="font-bold text-[#ff4000]">{report.reward_amount.toLocaleString()} GNF</div>
+                      <div className="font-bold text-[#ff4000]">{fc(report.reward_amount)}</div>
                     </div>
                   )}
                 </div>

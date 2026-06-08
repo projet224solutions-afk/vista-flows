@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { _autoConvertIfNeeded, _needsConversionForIOS, _isIOS } from '@/services/AudioConversionService';
+import { autoConvertIfNeeded, needsConversionForIOS, isIOS } from '@/services/AudioConversionService';
 import { audioTranslationService } from '@/services/audioTranslationService';
 import { useToast } from '@/hooks/use-toast';
 import { useStorageUpload } from '@/hooks/useStorageUpload';

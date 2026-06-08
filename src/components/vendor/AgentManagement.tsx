@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserPlus, _Settings, MessageSquare, Copy, ExternalLink, Edit, _TrendingUp, Activity } from 'lucide-react';
+import { Users, UserPlus, Settings, MessageSquare, Copy, ExternalLink, Edit, TrendingUp, Activity } from 'lucide-react';
 import { useVendorAgentsData, type VendorAgent } from '@/hooks/useVendorAgentsData';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

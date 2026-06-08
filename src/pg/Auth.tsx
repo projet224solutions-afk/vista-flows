@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { _User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag, Bike, Truck, Utensils, Scissors, Car, Wrench, Sparkles, Dumbbell, Building2, Camera, Heart, Home, Phone, Lock, Mail } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -21,7 +21,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 import { getSafeBrowserGeo } from "@/lib/safeGeo";
 import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags, getValidatedPostAuthRedirect } from "@/utils/postAuthRoute";
-import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, _PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
+import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
 // Validation schemas avec tous les rôles
 // Password strength: 8+ chars, uppercase, lowercase, digit
@@ -1228,19 +1228,59 @@ export default function Auth() {
 
         const validatedData = loginSchema.parse(formData);
 
-        // 🔑 Login Supabase (système principal)
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: validatedData.email,
-          password: validatedData.password,
-        });
+        // 🔑 Login via le backend (verrouillage anti-brute-force serveur), avec repli
+        // automatique sur Supabase direct si le backend est injoignable ou ne gère pas
+        // l'endpoint → le login n'est JAMAIS cassé. On n'honore la réponse backend que
+        // sur succès, ou sur 401/429 explicites (identifiants invalides / compte verrouillé).
+        let data: any = null;
+        let error: any = null;
+        let handledByBackend = false;
+        try {
+          const { resolveBackendUrl } = await import('@/config/backend');
+          const resp = await fetch(resolveBackendUrl('/auth/login'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: validatedData.email, password: validatedData.password }),
+          });
+          let json: any = null;
+          try { json = await resp.json(); } catch { json = null; }
+
+          if (resp.ok && json?.success === true && json.session?.access_token) {
+            // Persiste la session côté client pour le reste de l'app (RLS, realtime…)
+            const { data: sess, error: setErr } = await supabase.auth.setSession({
+              access_token: json.session.access_token,
+              refresh_token: json.session.refresh_token,
+            });
+            if (!setErr) {
+              data = { user: json.user || sess.user, session: sess.session || json.session };
+              handledByBackend = true;
+            }
+          } else if ((resp.status === 401 || resp.status === 429) && json?.success === false) {
+            error = { message: json.error || 'Échec de connexion' };
+            handledByBackend = true;
+          }
+          // Autre cas (404/500/non-JSON) → repli ci-dessous.
+        } catch {
+          // Backend injoignable → repli direct.
+        }
+
+        if (!handledByBackend) {
+          const direct = await supabase.auth.signInWithPassword({
+            email: validatedData.email,
+            password: validatedData.password,
+          });
+          data = direct.data;
+          error = direct.error;
+        }
 
         if (error) {
-          if (error.message.includes('Email not confirmed')) {
+          const msg = String(error.message || '');
+          if (msg.includes('Email not confirmed')) {
             throw new Error('Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
-          } else if (error.message.includes('Invalid login credentials')) {
+          } else if (msg.includes('Invalid login credentials')) {
             throw new Error('Email ou mot de passe incorrect. Veuillez réessayer.');
           } else {
-            throw error;
+            throw new Error(msg || 'Échec de connexion');
           }
         }
 

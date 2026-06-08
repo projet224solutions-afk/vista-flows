@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CreditCard, Smartphone, Shield, CheckCircle2, AlertCircle } from 'lucide-react';
-import { _supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type PaymentType = 'ORDER_PAYMENT' | 'SUBSCRIPTION' | 'BOOST' | 'DELIVERY' | 'COMMISSION' | 'WALLET_TOPUP';
@@ -53,10 +53,10 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
   referenceId,
   amount,
   currency = 'GNF',
-  _vendorId,
+  vendorId,
   description,
-  _metadata = {},
-  _onSuccess,
+  metadata = {},
+  onSuccess,
   onError,
   onCancel,
 }) => {

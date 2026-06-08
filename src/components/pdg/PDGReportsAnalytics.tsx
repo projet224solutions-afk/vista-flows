@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, TrendingUp, Download, _Calendar, _Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { BarChart3, TrendingUp, Download, Calendar, Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { usePDGReportsData } from '@/hooks/usePDGReportsData';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export default function PDGReportsAnalytics() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const { analyticsData, stats, topProducts, topVendors, loading, exportToCSV } = usePDGReportsData(timeRange);
   const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+  const compactAxis = (v: number) => {
+    const c = convert(v, 'GNF').convertedAmount;
+    if (Math.abs(c) >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M ${userCurrency}`;
+    if (Math.abs(c) >= 1_000) return `${(c / 1_000).toFixed(0)}K ${userCurrency}`;
+    return `${Math.round(c)} ${userCurrency}`;
+  };
 
   if (loading) {
     return (
@@ -143,8 +151,8 @@ export default function PDGReportsAnalytics() {
               <LineChart data={analyticsData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" />
-                <YAxis />
-                <Tooltip />
+                <YAxis tickFormatter={compactAxis} width={72} />
+                <Tooltip formatter={(value: number) => fc(value)} />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#04439e" name="Revenu" />
               </LineChart>

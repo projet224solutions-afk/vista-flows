@@ -616,8 +616,10 @@ export default function Payment() {
               name,
               price,
               currency,
+              seller_currency,
+              original_price_currency,
               vendor_id,
-              vendors!inner(user_id, country, vendor_code, public_id)
+              vendors!inner(user_id, country, vendor_code, public_id, shop_currency)
             `)
             .eq('id', id)
             .single();
@@ -630,8 +632,9 @@ export default function Payment() {
             const vendorUserId = (product.vendors as any)?.user_id as string;
             const vendorCountry = (product.vendors as any)?.country as string | null;
 
-            // Priorité : currency du produit > currency du state navigation > dérivation depuis pays
-            const vendorCurr = (product as any).currency || stateData?.currency || getVendorCurrency(vendorCountry);
+            // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF. PAS shop_currency
+            // (parfois faux) NI le champ produit (toujours GNF). getVendorCurrency utilise le pays.
+            const vendorCurr = getVendorCurrency(vendorCountry) || stateData?.currency || 'GNF';
             setProductCurrency(vendorCurr);
             setVendorDeliveryDays((product.vendors as any)?.average_delivery_days ?? null);
 

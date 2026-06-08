@@ -6,9 +6,9 @@
 
 import _React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { _Button } from '@/components/ui/button';
-import { _Badge } from '@/components/ui/badge';
-import { _MessageSquare, _Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Bell } from 'lucide-react';
 import { useUniversalCommunication } from '@/hooks/useUniversalCommunication';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -18,8 +18,8 @@ interface CommunicationWidgetProps {
 }
 
 export default function CommunicationWidget({
-  _position = 'bottom-right',
-  _showNotifications = true
+  position = 'bottom-right',
+  showNotifications = true
 }: CommunicationWidgetProps) {
   const { user } = useAuth();
   const { stats } = useUniversalCommunication();

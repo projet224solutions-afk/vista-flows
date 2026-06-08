@@ -34,7 +34,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   vehiclePlate,
   serialNumber,
   dateOfBirth,
-  _joinedDate,
+  joinedDate,
   expireDate,
   bureauName = '224SOLUTIONS',
   bureauPhone,

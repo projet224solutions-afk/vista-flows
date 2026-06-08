@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +30,7 @@ import {
 import TransferFeeSettings from '@/components/admin/TransferFeeSettings';
 
 export default function PDGConfig() {
+  const fc = useFormatCurrency();
   const { configs, stats, loading, refetch, createConfig, updateConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
   const [newConfig, setNewConfig] = useState({
     service_name: '',
@@ -400,13 +402,13 @@ export default function PDGConfig() {
                       <p className="text-sm font-medium text-primary">
                         Commission: {config.commission_type === 'percentage'
                           ? `${config.commission_value}%`
-                          : `${config.commission_value} GNF`
+                          : fc(config.commission_value)
                         }
                       </p>
                       {(config.min_amount || config.max_amount) && (
                         <p className="text-xs text-muted-foreground">
-                          Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'}
-                          {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
+                          Montants: {config.min_amount ? fc(config.min_amount) : '0'}
+                          {config.max_amount ? ` - ${fc(config.max_amount)}` : ' - Illimité'}
                         </p>
                       )}
                     </div>

@@ -23,7 +23,7 @@ interface HomeServiceCardProps {
 }
 
 export function HomeServiceCard({
-  _id,
+  id,
   icon,
   title,
   subtitle,

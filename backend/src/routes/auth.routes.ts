@@ -18,8 +18,91 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
+import { getClientIp } from '../middlewares/ipBlocklist.js';
 
 const router = Router();
+
+// Anti-brute-force login : verrouillage temporaire apres trop d'echecs (autoritaire, cote serveur).
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_BLOCK_MINUTES = 30;
+
+/**
+ * POST /auth/login
+ * Login email/mot de passe AVEC verrouillage anti-brute-force serveur.
+ * Le frontend appelle cet endpoint puis fait supabase.auth.setSession(session).
+ * Fail-open sur le tracking : si la table failed_login_attempts est indisponible,
+ * l'authentification fonctionne quand meme (on ne bloque jamais un login legitime).
+ */
+router.post('/login', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      res.status(400).json({ success: false, error: 'Email et mot de passe requis.' });
+      return;
+    }
+
+    const identifier = String(email).toLowerCase().trim();
+    const ip = getClientIp(req);
+
+    // 1) Verrouillage actif ?
+    let existing: { attempt_count?: number; blocked_until?: string | null } | null = null;
+    try {
+      const { data } = await supabaseAdmin
+        .from('failed_login_attempts')
+        .select('attempt_count, blocked_until')
+        .eq('identifier', identifier)
+        .maybeSingle();
+      existing = data as any;
+    } catch { /* table indisponible -> on continue */ }
+
+    if (existing?.blocked_until && new Date(existing.blocked_until).getTime() > Date.now()) {
+      const mins = Math.ceil((new Date(existing.blocked_until).getTime() - Date.now()) / 60000);
+      logger.warn(`[auth/login] compte verrouille ${identifier} (IP ${ip})`);
+      res.status(429).json({ success: false, error: `Trop de tentatives. Compte bloque ~${mins} min.` });
+      return;
+    }
+
+    // 2) Authentification
+    const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      // 3) Echec -> incrementer (best-effort)
+      let blockedUntil: string | null = null;
+      try {
+        const newCount = (existing?.attempt_count || 0) + 1;
+        blockedUntil = newCount >= MAX_LOGIN_ATTEMPTS
+          ? new Date(Date.now() + LOGIN_BLOCK_MINUTES * 60000).toISOString()
+          : null;
+        if (existing) {
+          await supabaseAdmin.from('failed_login_attempts').update({
+            attempt_count: newCount,
+            last_attempt: new Date().toISOString(),
+            blocked_until: blockedUntil,
+            ip_address: ip,
+          }).eq('identifier', identifier);
+        } else {
+          await supabaseAdmin.from('failed_login_attempts').insert({
+            identifier, ip_address: ip, attempt_count: 1, last_attempt: new Date().toISOString(),
+          });
+        }
+      } catch { /* tracking best-effort */ }
+
+      res.status(blockedUntil ? 429 : 401).json({
+        success: false,
+        error: blockedUntil ? `Trop de tentatives. Compte bloque ${LOGIN_BLOCK_MINUTES} min.` : error.message,
+      });
+      return;
+    }
+
+    // 4) Succes -> reset du compteur
+    try { await supabaseAdmin.from('failed_login_attempts').delete().eq('identifier', identifier); } catch { /* best-effort */ }
+
+    res.status(200).json({ success: true, user: data.user, session: data.session });
+  } catch (e: any) {
+    logger.error('[auth/login] erreur', e);
+    res.status(500).json({ success: false, error: 'Erreur interne.' });
+  }
+});
 
 /**
  * POST /auth/finalize-phone-signup
