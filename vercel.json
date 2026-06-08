@@ -30,6 +30,58 @@
       "destination": "https://uakkxaibujzxdiqzpnpr.supabase.co/functions/v1/short-link/:path*"
     },
     {
+      "source": "/api/:path*",
+      "destination": "https://backend.224solution.net/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://backend.224solution.net/health"
+    },
+    {
+      "source": "/healthz",
+      "destination": "https://backend.224solution.net/healthz"
+    },
+    {
+      "source": "/healthz.json",
+      "destination": "https://backend.224solution.net/healthz.json"
+    },
+    {
+      "source": "/auth/confirm",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/set-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/select-country",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://backend.224solution.net/auth/:path*"
+    },
+    {
+      "source": "/jobs/:path*",
+      "destination": "https://backend.224solution.net/jobs/:path*"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "https://backend.224solution.net/media/:path*"
+    },
+    {
+      "source": "/internal/:path*",
+      "destination": "https://backend.224solution.net/internal/:path*"
+    },
+    {
+      "source": "/edge-functions/:path*",
+      "destination": "https://backend.224solution.net/edge-functions/:path*"
+    },
+    {
+      "source": "/webhooks/:path*",
+      "destination": "https://backend.224solution.net/webhooks/:path*"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }
