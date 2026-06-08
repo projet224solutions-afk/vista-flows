@@ -39,8 +39,10 @@ function getManualChunks(id: string) {
     // Stripe - LAZY LOAD (seulement pages paiement)
     if (id.includes('@stripe')) return 'vendor-stripe';
 
-    // Charts - LAZY LOAD (rarement utilisé au démarrage)
-    if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+    // Charts (recharts + d3 + victory-vendor) : NE PAS isoler — les séparer de leurs
+    // dépendances crée une dépendance circulaire entre chunks → TDZ au démarrage
+    // (« Cannot access 'C' before initialization ») qui empêche React de monter.
+    // On les laisse dans vendor-misc avec leur écosystème (cycle intra-chunk = OK).
 
     // Forms - utilisé partout
     if (id.match(/react-hook-form|@hookform|zod/)) return 'vendor-forms';
@@ -64,42 +66,13 @@ function getManualChunks(id: string) {
     return 'vendor-misc';
   }
 
-  // Application code - OPTIMISÉ POUR LAZY LOADING
-
-  // Pages dashboards - un chunk par dashboard
-  if (id.includes('src/pages/')) {
-    if (id.includes('PDG')) return 'page-pdg';
-    if (id.includes('Vendeur')) return 'page-vendeur';
-    if (id.includes('Bureau') || id.includes('Syndicat')) return 'page-bureau';
-    if (id.includes('Agent')) return 'page-agent';
-    if (id.includes('Livreur') || id.includes('Delivery')) return 'page-livreur';
-    if (id.includes('TaxiMoto') || id.includes('Taxi')) return 'page-taxi';
-    if (id.includes('Client')) return 'page-client';
-    if (id.includes('Marketplace') || id.includes('Product')) return 'page-marketplace';
-  }
-
-  // Composants - par feature
-  if (id.includes('src/components/')) {
-    if (id.includes('/vendor/')) {
-      if (id.match(/Product|Inventory|Stock/)) return 'comp-vendor-products';
-      if (id.match(/Order|Delivery|Shipment/)) return 'comp-vendor-orders';
-      if (id.match(/Quote|Invoice|Contract/)) return 'comp-vendor-docs';
-      if (id.match(/Analytics|Report|Stats/)) return 'comp-vendor-analytics';
-      return 'comp-vendor';
-    }
-    if (id.includes('/pdg/')) return 'comp-pdg';
-    if (id.includes('/agent/')) return 'comp-agent';
-    if (id.includes('/bureau/')) return 'comp-bureau';
-    if (id.includes('/delivery/')) return 'comp-delivery';
-    if (id.includes('/taxi/')) return 'comp-taxi';
-    if (id.includes('/communication/')) return 'comp-communication';
-    if (id.includes('/wallet/') || id.includes('/payment/')) return 'comp-wallet';
-    if (id.includes('/ui/')) return 'comp-ui';
-  }
-
-  // Hooks et Contexts
-  if (id.includes('src/hooks/')) return 'hooks';
-  if (id.includes('src/contexts/')) return 'contexts';
+  // Code APPLICATIF (src/) : on NE force PLUS de chunks manuels.
+  // Le découpage manuel par feature (comp-ui, comp-pdg, page-*, hooks…) créait des
+  // dépendances circulaires ENTRE chunks → erreurs runtime au démarrage
+  // (« Cannot read properties of undefined (reading 'displayName') ») empêchant
+  // React de monter. On laisse Vite/Rollup découper automatiquement (dépendance-aware,
+  // + chunks de route via les import() dynamiques existants) → cycles intra-chunk = OK.
+  return undefined;
 }
 
 // https://vitejs.dev/config/
@@ -152,7 +125,12 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: getManualChunks
+          // manualChunks DÉSACTIVÉ : le découpage manuel (vendors + code app) créait des
+          // dépendances circulaires ENTRE chunks → erreurs runtime au démarrage empêchant
+          // React de monter (TDZ « before initialization », « Class extends undefined »,
+          // « reading 'displayName' »). On laisse Vite/Rollup découper automatiquement
+          // (dépendance-aware + chunks de route via import() dynamiques) → app stable.
+          // (getManualChunks conservé pour référence ; optimisation du chunking à revoir.)
         },
         // Obfuscation avancée uniquement avec OBFUSCATE=true
         // Usage: OBFUSCATE=true npm run build
