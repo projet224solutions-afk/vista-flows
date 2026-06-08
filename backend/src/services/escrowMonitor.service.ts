@@ -10,6 +10,7 @@
 
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { scanFrontendSecurity } from './frontendSecurity.service.js';
 
 export interface MonitorCheck {
   key: string;
@@ -24,7 +25,14 @@ export interface MonitorReport {
   overall: 'ok' | 'warning' | 'critical';
 }
 
-interface DomainDef { key: string; module: string; label: string; rpc: string; }
+interface DomainDef {
+  key: string;
+  module: string;
+  label: string;
+  rpc?: string;
+  /** Domaine basé sur une fonction JS (ex. scan HTTP) au lieu d'une RPC SQL. */
+  fn?: () => Promise<{ generated_at: string; checks: MonitorCheck[] }>;
+}
 
 // Registre des domaines surveillés — pour en ajouter un : créer la RPC <x>_monitor_report() et l'ajouter ici.
 export const MONITOR_DOMAINS: DomainDef[] = [
@@ -36,6 +44,7 @@ export const MONITOR_DOMAINS: DomainDef[] = [
   { key: 'wallet', module: 'wallet', label: 'Wallet (dépôts/retraits)', rpc: 'wallet_monitor_report' },
   { key: 'pos', module: 'pos', label: 'POS (caisse vendeur)', rpc: 'pos_monitor_report' },
   { key: 'aml', module: 'aml', label: 'Provenance & plafonds wallet', rpc: 'wallet_provenance_report' },
+  { key: 'frontend_security', module: 'frontend_security', label: 'Sécurité Frontend', fn: scanFrontendSecurity },
 ];
 
 const SUGGESTED_FIX: Record<string, string> = {
@@ -89,6 +98,14 @@ const SUGGESTED_FIX: Record<string, string> = {
   wallet_over_cap: 'Wallet dont le solde dépasse le plafond de détention de son rôle × palier KYC. Examiner la provenance : monter le KYC, relever le plafond (override) si légitime, ou geler/mettre en quarantaine.',
   quarantine_pending: 'Fonds en quarantaine (crédit au-dessus du plafond) en attente. Examiner la provenance puis libérer (KYC/override) ou rejeter depuis le panneau PDG « Provenance & plafonds ».',
   quarantine_stale: 'Quarantaine non traitée depuis > 7 jours. Décider (libérer ou rejeter) — l\'utilisateur attend ses fonds.',
+  // frontend_security
+  frontend_secret_exposed: 'GRAVE : un secret dangereux est présent dans le bundle JS public. L\'extraire IMMÉDIATEMENT du frontend, le révoquer/régénérer côté fournisseur, et le déplacer vers le backend (jamais en VITE_).',
+  frontend_service_role_key: 'CRITIQUE : la clé service_role Supabase (accès TOTAL à la base, bypass RLS) est dans le bundle public. La RÉGÉNÉRER sur-le-champ dans Supabase et la retirer du frontend — n\'utiliser que l\'anon key côté client.',
+  frontend_source_map_exposed: 'Source maps .map accessibles en prod → tout ton code source est lisible. Mettre build.sourcemap=false (déjà le cas) et purger les .map du déploiement / CDN.',
+  frontend_missing_headers: 'En-têtes de sécurité HTTP manquants. Ajouter CSP, X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security, Referrer-Policy (headers Vercel / vercel.json).',
+  frontend_provider_key: 'Clé fournisseur publique (Google/Mapbox) dans le bundle : normal mais DOIT être restreinte côté provider (referrer HTTP + APIs autorisées) sinon abus/facturation.',
+  frontend_scan_error: 'Certains bundles n\'ont pas pu être téléchargés pour le scan (réseau/CDN). Vérifier la disponibilité du frontend.',
+  frontend_scan_unreachable: 'Le frontend est injoignable pour le scan sécurité. Vérifier que le site répond.',
 };
 
 function computeOverall(checks: MonitorCheck[]): 'ok' | 'warning' | 'critical' {
@@ -104,7 +121,14 @@ export async function runDomainMonitor(rpcName: string, module: string): Promise
     logger.error(`[Monitor:${module}] RPC ${rpcName} failed: ${error.message}`);
     throw new Error(error.message);
   }
-  const report = data as { generated_at: string; checks: MonitorCheck[] };
+  return syncDomainAlerts(module, data as { generated_at: string; checks: MonitorCheck[] });
+}
+
+/** Synchronise les alertes system_alerts à partir d'un rapport (RPC SQL ou fonction JS). */
+export async function syncDomainAlerts(
+  module: string,
+  report: { generated_at: string; checks: MonitorCheck[] }
+): Promise<MonitorReport> {
   const checks = report.checks || [];
   const nowIso = new Date().toISOString();
 
@@ -151,7 +175,9 @@ export async function runPlatformMonitors(): Promise<{
   const domains: { key: string; label: string; report: MonitorReport }[] = [];
   for (const d of MONITOR_DOMAINS) {
     try {
-      const report = await runDomainMonitor(d.rpc, d.module);
+      const report = d.fn
+        ? await syncDomainAlerts(d.module, await d.fn())
+        : await runDomainMonitor(d.rpc!, d.module);
       domains.push({ key: d.key, label: d.label, report });
     } catch (e: any) {
       logger.warn(`[Monitor] domaine ${d.key} échoué: ${e?.message || e}`);
