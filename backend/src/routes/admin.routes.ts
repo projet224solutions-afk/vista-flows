@@ -492,7 +492,7 @@ router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
 // =====================================================================
 
 type IdDiscrepancyStatus =
-  | 'desync_user_ids' | 'desync_vendor' | 'desync_both' | 'missing_user_id' | 'conflict';
+  | 'desync_user_ids' | 'desync_vendor' | 'desync_profile_custom_id' | 'desync_both' | 'missing_user_id' | 'conflict';
 
 interface IdDiscrepancy {
   userId: string;
@@ -501,6 +501,7 @@ interface IdDiscrepancy {
   profilesPublicId: string;
   userIdsCustomId: string | null;
   vendorCode: string | null;
+  profilesCustomId: string | null;
   status: IdDiscrepancyStatus;
   canAutoFix: boolean;
   conflictWith?: string;
@@ -508,7 +509,7 @@ interface IdDiscrepancy {
 
 async function computeIdAudit() {
   const [profilesRes, userIdsRes, vendorsRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('id, email, first_name, last_name, public_id, role'),
+    supabaseAdmin.from('profiles').select('id, email, first_name, last_name, public_id, role, custom_id'),
     supabaseAdmin.from('user_ids').select('user_id, custom_id'),
     supabaseAdmin.from('vendors').select('user_id, vendor_code'),
   ]);
@@ -539,6 +540,9 @@ async function computeIdAudit() {
     const hasConflict = existingOwner && existingOwner !== p.id;
     const isUserIdDesync = customId && customId !== p.public_id;
     const isVendorDesync = vendorCode && vendorCode !== p.public_id;
+    // profiles.custom_id : colonne historiquement non auditée (peut rester sur l'ancien préfixe, ex. CLI…).
+    const profileCustomId = (p as any).custom_id as string | null;
+    const isProfileDesync = !!profileCustomId && profileCustomId !== p.public_id;
     const isMissing = !customId;
 
     let status: IdDiscrepancyStatus | 'ok' = 'ok';
@@ -547,6 +551,7 @@ async function computeIdAudit() {
     else if (isUserIdDesync && isVendorDesync) status = 'desync_both';
     else if (isUserIdDesync) status = 'desync_user_ids';
     else if (isVendorDesync) status = 'desync_vendor';
+    else if (isProfileDesync) status = 'desync_profile_custom_id';
     else if (isMissing) status = 'missing_user_id';
 
     if (status !== 'ok') {
@@ -557,6 +562,7 @@ async function computeIdAudit() {
         profilesPublicId: p.public_id,
         userIdsCustomId: customId || null,
         vendorCode: vendorCode || null,
+        profilesCustomId: profileCustomId || null,
         status,
         canAutoFix,
         conflictWith: hasConflict ? (existingOwner as string) : undefined,
@@ -571,6 +577,7 @@ async function computeIdAudit() {
       total: discrepancies.length,
       desyncUserIds: discrepancies.filter(d => d.status === 'desync_user_ids').length,
       desyncVendor: discrepancies.filter(d => d.status === 'desync_vendor').length,
+      desyncProfileCustomId: discrepancies.filter(d => d.status === 'desync_profile_custom_id').length,
       desyncBoth: discrepancies.filter(d => d.status === 'desync_both').length,
       conflicts: discrepancies.filter(d => d.status === 'conflict').length,
       missing: discrepancies.filter(d => d.status === 'missing_user_id').length,
@@ -616,6 +623,11 @@ router.post('/ids/fix', verifyJWT, requireRole(PDG_ROLES), async (req: Authentic
         }
         if (d.status === 'desync_vendor' || d.status === 'desync_both') {
           const { error } = await supabaseAdmin.from('vendors').update({ vendor_code: d.profilesPublicId }).eq('user_id', d.userId);
+          if (error) { errors++; continue; }
+        }
+        // Resync profiles.custom_id sur public_id (source de vérité) — colonne historiquement oubliée.
+        if (d.profilesCustomId && d.profilesCustomId !== d.profilesPublicId) {
+          const { error } = await supabaseAdmin.from('profiles').update({ custom_id: d.profilesPublicId }).eq('id', d.userId);
           if (error) { errors++; continue; }
         }
         fixed++;
@@ -671,7 +683,7 @@ router.post('/ids/normalize', verifyJWT, requireRole(PDG_ROLES), async (req: Aut
       res.status(500).json({ success: false, error: upErr.message });
       return;
     }
-    await supabaseAdmin.from('profiles').update({ public_id: newId }).eq('id', userId);
+    await supabaseAdmin.from('profiles').update({ public_id: newId, custom_id: newId }).eq('id', userId);
     await supabaseAdmin.from('vendors').update({ vendor_code: newId }).eq('user_id', userId);
 
     // Log best-effort
