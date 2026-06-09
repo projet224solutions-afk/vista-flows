@@ -32,7 +32,7 @@ interface IdDiscrepancy {
   profilesPublicId: string;
   userIdsCustomId: string | null;
   vendorCode: string | null;
-  status: 'desync_user_ids' | 'desync_vendor' | 'desync_both' | 'missing_user_id' | 'conflict' | 'ok';
+  status: 'desync_user_ids' | 'desync_vendor' | 'desync_profile_custom_id' | 'desync_both' | 'missing_user_id' | 'conflict' | 'ok';
   canAutoFix: boolean;
   conflictWith?: string; // userId du conflit potentiel
 }
@@ -150,6 +150,8 @@ export function IdAuditManager() {
         return <Badge variant="destructive" className="text-xs">user_ids désync</Badge>;
       case 'desync_vendor':
         return <Badge className="bg-[#ff4000] text-white text-xs">vendor désync</Badge>;
+      case 'desync_profile_custom_id':
+        return <Badge className="bg-orange-500 text-white text-xs">profil custom_id désync</Badge>;
       case 'desync_both':
         return <Badge variant="destructive" className="text-xs animate-pulse">CRITIQUE</Badge>;
       case 'missing_user_id':
