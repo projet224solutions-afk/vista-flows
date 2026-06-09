@@ -99,6 +99,44 @@ const validateBearerToken = async (req: any, res: any, next: any) => {
   }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔒 GARDE DE SÉCURITÉ GLOBAL (CORRECTIF CRITIQUE) — ces routes legacy étaient
+// montées SANS authentification → n'importe qui pouvait créditer un wallet
+// (manual-credit-seller), libérer un escrow, lire des transactions, etc.
+// On exige : auth pour TOUT (sauf webhooks signés), + rôle admin/PDG pour les
+// opérations privilégiées (crédit/libération/remboursement/audit/cron).
+// ─────────────────────────────────────────────────────────────────────────────
+const PUBLIC_EDGE_PAYMENT_PATHS = new Set<string>([
+  '/stripe/webhook', '/paypal/webhook',
+]);
+const ADMIN_EDGE_PAYMENT_PATHS = new Set<string>([
+  '/admin-release-funds', '/admin-review-payment', '/manual-credit-seller',
+  '/escrow-refund', '/escrow-auto-release', '/release-scheduled-funds',
+  '/marketplace-rotation', '/process-digital-renewals', '/wallet-audit',
+  '/wallet-operations', '/wallet-payment-api',
+]);
+const ADMIN_ROLES_EDGE = new Set(['admin', 'pdg', 'ceo', 'super_admin']);
+
+router.use(async (req: any, res: any, next: any) => {
+  try {
+    if (PUBLIC_EDGE_PAYMENT_PATHS.has(req.path)) return next();
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ success: false, error: 'Authentification requise' });
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) return res.status(401).json({ success: false, error: 'Token invalide' });
+    req.user = data.user;
+    if (ADMIN_EDGE_PAYMENT_PATHS.has(req.path)) {
+      const { data: prof } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+      if (!ADMIN_ROLES_EDGE.has(String((prof as any)?.role))) {
+        return res.status(403).json({ success: false, error: 'Permissions insuffisantes' });
+      }
+    }
+    return next();
+  } catch {
+    return res.status(500).json({ success: false, error: 'Auth guard error' });
+  }
+});
+
 // ============ POST /payments/stripe-deposit ============
 /**
  * Alias used by the frontend edge-function proxy.
