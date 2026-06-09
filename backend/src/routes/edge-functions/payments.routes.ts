@@ -113,7 +113,7 @@ const ADMIN_EDGE_PAYMENT_PATHS = new Set<string>([
   '/admin-release-funds', '/admin-review-payment', '/manual-credit-seller',
   '/escrow-refund', '/escrow-auto-release', '/release-scheduled-funds',
   '/marketplace-rotation', '/process-digital-renewals', '/wallet-audit',
-  '/wallet-operations', '/wallet-payment-api',
+  '/wallet-operations', '/wallet-payment-api', '/mobile-money-withdrawal',
 ]);
 const ADMIN_ROLES_EDGE = new Set(['admin', 'pdg', 'ceo', 'super_admin']);
 
