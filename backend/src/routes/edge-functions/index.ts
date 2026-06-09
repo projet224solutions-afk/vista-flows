@@ -16,6 +16,7 @@
  */
 
 import { Router } from "express";
+import { supabaseAdmin } from "../../config/supabase.js";
 
 // Import sub-routers
 import authRoutes from "./auth.routes.js";
@@ -39,6 +40,40 @@ import infrastructureRoutes from "./infrastructure.routes.js";
 import copiloteSearchRoutes from "./copilote-search.routes.js";
 
 const router = Router();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔒 GARDE D'AUTHENTIFICATION GLOBAL (CORRECTIF CRITIQUE)
+// La quasi-totalité des routes edge-functions migrées étaient montées SANS aucun
+// middleware → exploitables anonymement (argent, suppression d'utilisateurs,
+// sécurité…). On exige une authentification pour TOUT, sauf : endpoints d'auth
+// (login/OTP/reset), webhooks (signés en interne), health, et configs publiques.
+// (Les contrôles de rôle fins restent au niveau des sous-routeurs, ex. payments.)
+// ─────────────────────────────────────────────────────────────────────────────
+function isPublicEdgePath(p: string): boolean {
+  return (
+    p.startsWith('/auth') ||
+    p.startsWith('/webhooks') ||
+    p.includes('webhook') ||          // tous les webhooks (vérifiés par signature)
+    p === '/health' ||
+    p === '/send-otp-email' ||
+    p === '/paypal-client-id'
+  );
+}
+
+router.use(async (req, res, next) => {
+  try {
+    if (req.method === 'OPTIONS' || isPublicEdgePath(req.path)) return next();
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) { res.status(401).json({ success: false, error: 'Authentification requise' }); return; }
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) { res.status(401).json({ success: false, error: 'Token invalide' }); return; }
+    (req as any).user = data.user;
+    next();
+  } catch {
+    res.status(500).json({ success: false, error: 'Auth guard error' });
+  }
+});
 
 /**
  * Mount all Edge Functions routes
