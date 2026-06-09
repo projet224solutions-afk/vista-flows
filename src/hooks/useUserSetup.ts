@@ -38,16 +38,18 @@ export const useUserSetup = () => {
             console.log('🔍 Vérification du setup utilisateur pour:', userId);
 
             // Récupérer les infos en parallèle
-            const [profileData, userIdData, walletData, cardData] = await Promise.all([
-                supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+            const [profileData, userIdData, walletData, cardData, authRes] = await Promise.all([
+                // email/kyc non lisibles côté client (RLS colonne) → email propre pris depuis la session.
+                supabase.from('profiles').select('first_name, last_name, role').eq('id', userId).maybeSingle(),
                 supabase.from('user_ids').select('custom_id').eq('user_id', userId).maybeSingle(),
                 supabase.from('wallets').select('*').eq('user_id', userId).maybeSingle(),
-                supabase.from('virtual_cards').select('*').eq('user_id', userId).maybeSingle()
+                supabase.from('virtual_cards').select('*').eq('user_id', userId).maybeSingle(),
+                supabase.auth.getUser()
             ]);
 
             const completeInfo: UserCompleteInfo = {
                 user_id: userId,
-                email: profileData.data?.email || '',
+                email: (authRes.data?.user?.id === userId ? authRes.data.user.email : '') || '',
                 first_name: profileData.data?.first_name,
                 last_name: profileData.data?.last_name,
                 role: profileData.data?.role || 'client',

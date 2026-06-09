@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 import { LocalPrice } from '@/components/ui/LocalPrice';
 import {
@@ -87,15 +88,15 @@ export default function PDGEscrowDisputes() {
       // Enrich with profiles and escrow data
       const enriched = await Promise.all((data || []).map(async (d: any) => {
         const [initiatorRes, escrowRes] = await Promise.all([
-          supabase.from('profiles').select('full_name, phone, email').eq('id', d.initiator_user_id).maybeSingle(),
+          supabase.from('profiles').select('full_name, phone').eq('id', d.initiator_user_id).maybeSingle(),
           supabase.from('escrow_transactions').select('amount, currency, payer_id, receiver_id, order_id, status').eq('id', d.escrow_id).maybeSingle(),
         ]);
 
         let buyer_profile, seller_profile;
         if (escrowRes.data) {
           const [bp, sp] = await Promise.all([
-            supabase.from('profiles').select('full_name, phone, email').eq('id', escrowRes.data.payer_id).maybeSingle(),
-            supabase.from('profiles').select('full_name, phone, email').eq('id', escrowRes.data.receiver_id).maybeSingle(),
+            supabase.from('profiles').select('full_name, phone').eq('id', escrowRes.data.payer_id).maybeSingle(),
+            supabase.from('profiles').select('full_name, phone').eq('id', escrowRes.data.receiver_id).maybeSingle(),
           ]);
           buyer_profile = bp.data;
           seller_profile = sp.data;
@@ -109,6 +110,22 @@ export default function PDGEscrowDisputes() {
           seller_profile,
         };
       }));
+
+      // Email non lisible côté client (RLS colonne) → récupéré via le backend (service_role, PDG).
+      try {
+        const ids = [...new Set(enriched.flatMap((e: any) => [e.initiator_user_id, e.escrow?.payer_id, e.escrow?.receiver_id]).filter(Boolean))];
+        if (ids.length) {
+          const res = await backendFetch<Record<string, { email: string | null }>>('/api/admin/user-emails', { method: 'POST', body: { user_ids: ids } });
+          if (res.success && res.data) {
+            const m = res.data;
+            for (const e of enriched as any[]) {
+              if (e.initiator_profile) e.initiator_profile.email = m[e.initiator_user_id]?.email || null;
+              if (e.buyer_profile) e.buyer_profile.email = m[e.escrow?.payer_id]?.email || null;
+              if (e.seller_profile) e.seller_profile.email = m[e.escrow?.receiver_id]?.email || null;
+            }
+          }
+        }
+      } catch { /* email non bloquant */ }
 
       setDisputes(enriched);
     } catch (err) {

@@ -819,6 +819,29 @@ router.post('/aml/cap-override', verifyJWT, requireRole(PDG_ROLES), async (req: 
   }
 });
 
+/**
+ * POST /api/admin/user-emails { user_ids: string[] } — emails par user_id (PDG only).
+ * L'email/kyc des profils n'est plus lisible côté client (RLS colonne) : le PDG passe par ici
+ * (service_role) pour la gestion vendeurs / litiges escrow. Réservé PDG/admin.
+ */
+router.post('/user-emails', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const ids = Array.isArray(req.body?.user_ids) ? req.body.user_ids.filter((x: any) => typeof x === 'string') : [];
+    if (ids.length === 0) { res.json({ success: true, data: {} }); return; }
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, kyc_level, kyc_verified_at')
+      .in('id', ids.slice(0, 500));
+    if (error) throw error;
+    const map: Record<string, { email: string | null; kyc_level: number | null; kyc_verified_at: string | null }> = {};
+    for (const r of data || []) map[r.id] = { email: r.email ?? null, kyc_level: r.kyc_level ?? null, kyc_verified_at: r.kyc_verified_at ?? null };
+    res.json({ success: true, data: map });
+  } catch (error: any) {
+    logger.error(`[admin/user-emails] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur récupération emails' });
+  }
+});
+
 /** GET/PUT /api/admin/aml/caps — config globale des plafonds (rôle × palier KYC). */
 router.get('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
   try {

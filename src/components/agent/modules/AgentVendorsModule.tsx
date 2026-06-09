@@ -77,7 +77,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
           is_verified,
           kyc_status,
           created_at,
-          profiles!inner(email, first_name, last_name, phone)
+          profiles!inner(first_name, last_name, phone)
         `)
         .order('created_at', { ascending: false })
         .limit(200);
@@ -124,7 +124,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
   const filteredVendors = vendors.filter(v =>
     v.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.vendor_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    v.profiles?.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getKycBadge = (status: string | null, isVerified: boolean) => {
@@ -231,7 +231,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                       <div>
                         <p className="font-semibold">{vendor.business_name || 'Sans nom'}</p>
                         <p className="text-sm text-muted-foreground">
-                          {vendor.profiles?.email}
+                          {vendor.profiles?.phone}
                         </p>
                         <p className="text-xs font-mono text-primary">
                           {vendor.vendor_code}
@@ -299,8 +299,8 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                   </Badge>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{selectedVendor.profiles?.email}</p>
+                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <p className="font-medium">{selectedVendor.profiles?.phone}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Téléphone</p>

@@ -170,11 +170,21 @@ export default function PDGVendors() {
         .from('vendors')
         .select(`
           *,
-          profiles!inner(email, first_name, last_name, phone, custom_id)
+          profiles!inner(first_name, last_name, phone, custom_id)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Email non lisible côté client (RLS colonne) → récupéré via le backend (service_role, PDG).
+      let emailMap: Record<string, { email: string | null }> = {};
+      try {
+        const ids = (data || []).map((v: any) => v.user_id).filter(Boolean);
+        if (ids.length) {
+          const res = await backendFetch<Record<string, { email: string | null }>>('/api/admin/user-emails', { method: 'POST', body: { user_ids: ids } });
+          if (res.success && res.data) emailMap = res.data;
+        }
+      } catch { /* email non bloquant */ }
 
       // Enrichir avec les infos agents et abonnements
       const enrichedVendors = await Promise.all((data || []).map(async (vendor) => {
@@ -208,6 +218,7 @@ export default function PDGVendors() {
 
         return {
           ...vendor,
+          profiles: { ...(vendor as any).profiles, email: emailMap[vendor.user_id]?.email || null },
           agent_info: agentLink?.agents_management?.name || null,
           subscription: bestSubscription ? {
             plan_name: (bestSubscription.plans as any)?.display_name || 'N/A',

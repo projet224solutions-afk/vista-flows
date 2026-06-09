@@ -366,7 +366,7 @@ class CopiloteService {
     try {
       const [transactionsData, profilesData, walletsData] = await Promise.all([
         supabase.from('enhanced_transactions' as any).select('*').limit(50) as any,
-        supabase.from('profiles').select('*').limit(100),
+        supabase.from('profiles').select('id, role, status, created_at').limit(100),
         supabase.from('wallets').select('*').limit(50)
       ]);
 
