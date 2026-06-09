@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { errorMonitor } from '@/services/errorMonitor';
 import { ApiMonitoringService } from '@/services/apiMonitoring';
 import { InterfaceMetricsService } from '@/services/interfaceMetrics';
+import { healthCheckService } from '@/services/HealthCheckService';
 
 export interface SystemHealth {
   status: 'healthy' | 'warning' | 'critical';
@@ -116,33 +117,22 @@ export function usePdgMonitoring() {
       const metrics = await InterfaceMetricsService.getAllMetrics();
       setInterfaceMetrics(metrics);
 
-      // Calculer le statut des services
-      const services: ServiceStatus[] = [
-        {
-          name: 'Supabase',
-          status: 'online',
-          responseTime: 45,
-          errorRate: 0.1
-        },
-        {
-          name: 'Firebase',
-          status: 'online',
-          responseTime: 52,
-          errorRate: 0.2
-        },
-        {
-          name: 'API Gateway',
-          status: apiConnections.length > 0 ? 'online' : 'degraded',
-          responseTime: 38,
-          errorRate: 0.5
-        },
-        {
-          name: 'Monitoring System',
-          status: ((errorStats?.pending || 0) + (errorStats?.critical || 0)) < 50 ? 'online' : 'degraded',
-          responseTime: 25,
-          errorRate: 0.2
-        }
-      ];
+      // Statut des services depuis le VRAI moteur de health-checks (pings réels),
+      // plus aucune valeur hardcodée ni service fictif (Firebase n'était pas utilisé).
+      let services: ServiceStatus[] = [];
+      try {
+        const report = await healthCheckService.performHealthChecks();
+        const mapStatus = (s: string): ServiceStatus['status'] =>
+          s === 'healthy' ? 'online' : s === 'critical' ? 'offline' : 'degraded';
+        services = (report.checks || []).map((c) => ({
+          name: c.name,
+          status: mapStatus(c.status),
+          responseTime: Math.round(c.responseTime ?? 0),
+          errorRate: 0, // latence mesurée réellement ; pas de taux d'erreur par service inventé
+        }));
+      } catch {
+        services = [];
+      }
 
       // Calculer la santé globale via la fonction RPC intelligente
       let adjustedHealthScore = 100;
