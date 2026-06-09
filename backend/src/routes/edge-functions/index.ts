@@ -60,6 +60,13 @@ function isPublicEdgePath(p: string): boolean {
   );
 }
 
+// Opérations PRIVILÉGIÉES (sécurité/IP, data/infra, cron) → rôle admin/PDG requis,
+// pas seulement une session valide. (Le routeur payments gère déjà ses propres ops admin.)
+function isAdminEdgePath(p: string): boolean {
+  return /(^|\/)security[/-]|block-ip|forensics|incident-response|fraud-detection|fraud\/detect|security-analysis|security\/threats|apply-migrations|sync-cloudsql|sync-apis|production-cron|api-guard-monitor|pubsub|task-worker|debug\/logs|cleanup-cache|cache\/cleanup/.test(p);
+}
+const ADMIN_ROLES_EDGE = new Set(['admin', 'pdg', 'ceo', 'super_admin']);
+
 router.use(async (req, res, next) => {
   try {
     if (req.method === 'OPTIONS' || isPublicEdgePath(req.path)) return next();
@@ -69,6 +76,13 @@ router.use(async (req, res, next) => {
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data.user) { res.status(401).json({ success: false, error: 'Token invalide' }); return; }
     (req as any).user = data.user;
+    if (isAdminEdgePath(req.path)) {
+      const { data: prof } = await supabaseAdmin.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+      if (!ADMIN_ROLES_EDGE.has(String((prof as any)?.role))) {
+        res.status(403).json({ success: false, error: 'Permissions insuffisantes' });
+        return;
+      }
+    }
     next();
   } catch {
     res.status(500).json({ success: false, error: 'Auth guard error' });
