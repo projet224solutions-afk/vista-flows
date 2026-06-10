@@ -18,6 +18,7 @@ interface TranslatedProductCardProps {
   currency?: string;
   vendor: string;
   vendorId?: string;
+  vendorUserId?: string;
   vendorPublicId?: string;
   vendorLocation?: string;
   vendorRating?: number;

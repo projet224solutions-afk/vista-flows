@@ -27,7 +27,7 @@ import { LocalPrice } from "@/components/ui/LocalPrice";
 function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
   const { isCertified } = useVendorCertificationCached(vendorId);
   if (!isCertified) return null;
-  return <CertifiedVendorBadge status="CERTIFIE" />;
+  return <CertifiedVendorBadge status="CERTIFIE" size="lg" />;
 }
 
 interface Vendor {
@@ -173,22 +173,34 @@ export default function VendorShop() {
 
       let vendorData: Vendor | null = null;
 
+      // ⚠️ La RLS de `vendors` accorde à ANON uniquement les colonnes du catalogue public
+      // (sans phone/email/address/kyc). Un `select('*')` échoue donc en 42501 pour un visiteur
+      // non connecté → « Boutique introuvable ». On sélectionne les colonnes publiques pour anon
+      // (et tout `*` pour un connecté, qui a le droit de voir le contact).
+      const PUBLIC_VENDOR_COLUMNS =
+        'id, user_id, business_name, description, logo_url, cover_image_url, is_verified, is_active, ' +
+        'rating, total_reviews, created_at, updated_at, public_id, vendor_code, latitude, longitude, ' +
+        'city, neighborhood, business_type, service_type, country, shop_slug, shop_currency, ' +
+        'currency_locked, seller_country_code, delivery_base_price, delivery_price_per_km, ' +
+        'delivery_rush_bonus, delivery_enabled, average_delivery_days';
+      const vendorColumns = user ? '*' : PUBLIC_VENDOR_COLUMNS;
+
       if (isUUID) {
         const { data, error } = await supabase
           .from('vendors')
-          .select('*')
+          .select(vendorColumns)
           .eq('id', id)
           .maybeSingle();
         if (error) throw error;
-        vendorData = data;
+        vendorData = data as unknown as Vendor | null;
       } else {
         const { data, error } = await supabase
           .from('vendors')
-          .select('*')
+          .select(vendorColumns)
           .eq('shop_slug', id)
           .maybeSingle();
         if (error) throw error;
-        vendorData = data;
+        vendorData = data as unknown as Vendor | null;
       }
 
       // Check abort
@@ -588,8 +600,8 @@ export default function VendorShop() {
       <div className="px-4 pt-16 pb-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-2xl font-bold text-foreground">{vendor.business_name}</h2>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground">{vendor.business_name}</h2>
               <VendorCertBadgeInline vendorId={vendor.user_id} />
             </div>
 

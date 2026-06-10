@@ -17,6 +17,9 @@ interface RecommendedProduct {
   images: string[];
   rating: number | null;
   reason?: string;
+  vendor_id?: string | null;
+  vendor_user_id?: string | null;
+  vendor_name?: string | null;
 }
 
 interface ProductRecommendationSectionProps {
@@ -277,7 +280,9 @@ function ProductCard({
         price={product.price}
         rating={product.rating || 0}
         reviewCount={0}
-        vendor=""
+        vendor={product.vendor_name || ''}
+        vendorId={product.vendor_id || undefined}
+        vendorUserId={product.vendor_user_id || undefined}
         onAddToCart={() => onAddToCart?.(product.product_id)}
       />
       {product.reason && (

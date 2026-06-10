@@ -106,12 +106,27 @@ export default function ServicesProximite() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const selectedCategory = searchParams.get("type") || "all";
+  // Pays sélectionné dans le marketplace ('all' = Mondial). En mode pays, on borne la
+  // proximité à ce pays (et on lève le couperet des 20 km pour parcourir son catalogue).
+  const selectedCountry = searchParams.get("country") || "all";
+  // Ville sélectionnée ('all' = toutes). Filtre les services par ville (bidirectionnel).
+  const selectedCity = searchParams.get("city") || "all";
 
   const setSelectedCategory = useCallback((cat: string) => {
     if (cat === "all") {
       searchParams.delete("type");
     } else {
       searchParams.set("type", cat);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Filtre VILLE contrôlable sur la page (synchronisé à l'URL ?city=)
+  const setSelectedCity = useCallback((c: string) => {
+    if (!c || c === "all") {
+      searchParams.delete("city");
+    } else {
+      searchParams.set("city", c);
     }
     setSearchParams(searchParams, { replace: true });
   }, [searchParams, setSearchParams]);
@@ -131,151 +146,139 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
 
-      // Étape 1 : Récupérer les IDs des services avec abonnement actif via RPC SECURITY DEFINER
-      // (la RLS sur service_subscriptions bloque les visiteurs anonymes — le RPC contourne ça)
-      const { data: activeSubData, error: subError } = await supabase
-        .rpc('get_active_service_subscription_limits');
+      const norm = (s?: string) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
-      if (subError) {
-        console.warn('Erreur RPC abonnements:', subError);
-      }
-
+      // Étape 1 : IDs des services pro avec abonnement actif (RPC SECURITY DEFINER → contourne la RLS)
+      const { data: activeSubData } = await supabase.rpc('get_active_service_subscription_limits');
       const activeServiceIds: string[] = [
-        ...new Set(
-          (activeSubData || []).map((r: any) => r.professional_service_id as string).filter(Boolean)
-        ),
+        ...new Set((activeSubData || []).map((r: any) => r.professional_service_id as string).filter(Boolean)),
       ];
 
-      if (activeServiceIds.length === 0) {
-        setServices([]);
-        console.log('Proximité: aucun service avec abonnement actif');
-        return;
-      }
-
-      // Étape 2 : Charger les services actifs (sans join subscription — évite la RLS)
-      const { data, error } = await supabase
-        .from('professional_services')
-        .select(`
-          id,
-          business_name,
-          description,
-          address,
-          phone,
-          email,
-          logo_url,
-          cover_image_url,
-          rating,
-          total_reviews,
-          city,
-          neighborhood,
-          latitude,
-          longitude,
-          status,
-          service_type_id,
-          user_id,
-          service_types (id, name, code, category)
-        `)
-        .eq('status', 'active')
-        .in('id', activeServiceIds);
-
-      if (error) throw error;
-
-      // Étape 3 : Charger les images de galerie séparément (requête directe, plus fiable)
-      const { data: galleryData } = await supabase
-        .from('service_gallery_images')
-        .select('professional_service_id, image_url, media_type, is_cover, display_order')
-        .in('professional_service_id', activeServiceIds)
-        .eq('media_type', 'image')
-        .not('image_url', 'is', null)
-        .order('display_order', { ascending: true });
-
-      // Construire un map service_id → photos de galerie
-      const galleryByService = new Map<string, any[]>();
-      for (const row of (galleryData || [])) {
-        const sid = row.professional_service_id;
-        if (!galleryByService.has(sid)) galleryByService.set(sid, []);
-        galleryByService.get(sid)!.push(row);
-      }
-
-      // Pour chaque service : priorité à is_cover, sinon première photo par display_order
-      const galleryCoverMap = new Map<string, string>();
-      for (const [sid, photos] of galleryByService) {
-        const cover = photos.find((p: any) => p.is_cover) || photos[0];
-        if (cover?.image_url) galleryCoverMap.set(sid, cover.image_url);
-      }
-
-      let list: ProfessionalService[] = (data || []).map((item: any) => ({
-        ...item,
-        service_type: item.service_types,
-        cover_image_url: item.cover_image_url || galleryCoverMap.get(item.id) || null,
-        media_count: galleryByService.get(item.id)?.length || 0,
-      }));
-
-      // Tenter de récupérer les coordonnées GPS depuis vendors pour les services sans GPS
-      const withoutGpsList = list.filter(s => s.latitude == null || s.longitude == null);
-      if (withoutGpsList.length > 0) {
-        const userIds = [...new Set(withoutGpsList.map(s => (s as any).user_id).filter(Boolean))];
-        if (userIds.length > 0) {
-          const { data: vendorsData } = await supabase
-            .from('vendors')
-            .select('user_id, latitude, longitude')
-            .in('user_id', userIds)
-            .not('latitude', 'is', null)
-            .not('longitude', 'is', null);
-
-          if (vendorsData && vendorsData.length > 0) {
-            const vendorGpsMap = new Map(vendorsData.map(v => [v.user_id, { lat: v.latitude, lng: v.longitude }]));
-            list = list.map(s => {
-              if ((s.latitude == null || s.longitude == null) && (s as any).user_id) {
-                const vendorGps = vendorGpsMap.get((s as any).user_id);
-                if (vendorGps) {
-                  return { ...s, latitude: vendorGps.lat, longitude: vendorGps.lng };
-                }
-              }
-              return s;
-            });
-
-            // Synchroniser les coordonnées manquantes en arrière-plan
-            for (const s of withoutGpsList) {
-              const vendorGps = vendorGpsMap.get((s as any).user_id);
-              if (vendorGps) {
-                supabase
-                  .from('professional_services')
-                  .update({ latitude: vendorGps.lat, longitude: vendorGps.lng })
-                  .eq('id', s.id)
-                  .then(() => {});
-              }
-            }
-          }
+      // Étape 2 : LISTINGS UNIFIÉS (atomique) = services pro abonnés + boutiques/vendeurs
+      // (localisation effective + pays + GPS déjà résolus côté serveur). Inclut les boutiques
+      // créées comme `vendor` (ex. BMS/Labé) qui n'ont pas de fiche professional_services.
+      let list: ProfessionalService[] = [];
+      let serviceIdsForGallery: string[] = [];
+      let unifiedOk = false;
+      try {
+        const { data: rows, error: rErr } = await supabase
+          .rpc('get_proximity_listings', { p_service_ids: activeServiceIds });
+        if (!rErr && Array.isArray(rows)) {
+          list = rows.map((r: any) => ({
+            id: r.id,
+            business_name: r.business_name,
+            description: r.description,
+            address: r.address,
+            phone: r.phone,
+            email: r.email,
+            logo_url: r.logo_url,
+            cover_image_url: r.cover_image_url || null,
+            rating: Number(r.rating) || 0,
+            total_reviews: r.total_reviews || 0,
+            neighborhood: r.neighborhood,
+            latitude: r.latitude,
+            longitude: r.longitude,
+            user_id: r.user_id,
+            service_type: { id: r.service_type_id, name: r.service_type_name, code: r.service_type_code, category: r.service_type_category },
+            _city: r.effective_city ?? null,
+            _country: r.effective_country ?? null,
+            _source: r.source,
+          })) as any;
+          serviceIdsForGallery = rows.filter((r: any) => r.source === 'service').map((r: any) => r.id);
+          unifiedOk = true;
         }
+      } catch { /* repli ci-dessous */ }
+
+      // Repli durci si la RPC unifiée n'est pas appliquée : services pro abonnés seuls.
+      if (!unifiedOk) {
+        if (activeServiceIds.length === 0) { setServices([]); return; }
+        const { data, error } = await supabase
+          .from('professional_services')
+          .select('id,business_name,description,address,phone,email,logo_url,cover_image_url,rating,total_reviews,city,neighborhood,latitude,longitude,status,service_type_id,user_id,service_types (id, name, code, category)')
+          .eq('status', 'active').in('id', activeServiceIds);
+        if (error) throw error;
+        const resolved = new Map<string, any>();
+        try {
+          const { data: rl } = await supabase.rpc('get_services_resolved_location', { p_service_ids: activeServiceIds });
+          (rl || []).forEach((r: any) => resolved.set(r.service_id, { city: r.effective_city, country: r.effective_country, lat: r.latitude, lng: r.longitude }));
+        } catch { /* */ }
+        list = (data || []).map((item: any) => {
+          const r = resolved.get(item.id);
+          return {
+            ...item,
+            service_type: item.service_types,
+            _city: r?.city ?? ((item.city || '').trim() || null),
+            _country: r?.country ?? null,
+            latitude: item.latitude ?? r?.lat ?? null,
+            longitude: item.longitude ?? r?.lng ?? null,
+            _source: 'service',
+          };
+        }) as any;
+        serviceIdsForGallery = list.map((s) => s.id);
       }
 
-      // Calculer la distance et filtrer : uniquement les services avec GPS valide dans les 20 km
-      // Un service sans GPS ou hors rayon n'est pas affiché
-      const nearby = list
-        .map((s) => {
-          const lat_val = Number(s.latitude);
-          const lng_val = Number(s.longitude);
-          const hasValidCoords =
-            s.latitude != null && s.longitude != null &&
-            Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
-            !(lat_val === 0 && lng_val === 0);
-
-          const distance = hasValidCoords
-            ? calculateDistance(lat, lng, lat_val, lng_val)
-            : null;
-          return { ...s, distance };
-        })
-        .filter(s => s.distance !== null && s.distance <= RADIUS_KM)
-        .sort((a, b) => {
-          // Plus proche = premier ; à égalité, meilleure note = premier
-          const distDiff = (a.distance ?? 999) - (b.distance ?? 999);
-          return distDiff !== 0 ? distDiff : (b.rating ?? 0) - (a.rating ?? 0);
+      // Étape 3 : galerie (cover) pour les listings de type service (les boutiques utilisent leur logo/cover)
+      if (serviceIdsForGallery.length > 0) {
+        const { data: galleryData } = await supabase
+          .from('service_gallery_images')
+          .select('professional_service_id, image_url, media_type, is_cover, display_order')
+          .in('professional_service_id', serviceIdsForGallery)
+          .eq('media_type', 'image')
+          .not('image_url', 'is', null)
+          .order('display_order', { ascending: true });
+        const byService = new Map<string, any[]>();
+        (galleryData || []).forEach((row: any) => {
+          if (!byService.has(row.professional_service_id)) byService.set(row.professional_service_id, []);
+          byService.get(row.professional_service_id)!.push(row);
         });
+        list = list.map((s) => {
+          if (s.cover_image_url) return s;
+          const photos = byService.get(s.id);
+          if (photos && photos.length) {
+            const cover = photos.find((p: any) => p.is_cover) || photos[0];
+            if (cover?.image_url) return { ...s, cover_image_url: cover.image_url } as any;
+          }
+          return s;
+        });
+      }
+
+      // Filtrage par PAYS (sur le pays effectif)
+      if (selectedCountry && selectedCountry !== 'all') {
+        const target = norm(selectedCountry);
+        list = list.filter((s) => norm((s as any)._country) === target);
+      }
+
+      // Calculer la distance pour chaque service (null si GPS absent/invalide)
+      const isCountryMode = selectedCountry && selectedCountry !== 'all';
+      const withDistance = list.map((s) => {
+        const lat_val = Number(s.latitude);
+        const lng_val = Number(s.longitude);
+        const hasValidCoords =
+          s.latitude != null && s.longitude != null &&
+          Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
+          !(lat_val === 0 && lng_val === 0);
+
+        const distance = hasValidCoords
+          ? calculateDistance(lat, lng, lat_val, lng_val)
+          : null;
+        return { ...s, distance };
+      });
+
+      // Mode PAYS : tout le catalogue du pays, trié par proximité (sans couperet 20 km,
+      // les services sans GPS atterrissent en fin de liste).
+      // Mode MONDIAL : uniquement les services avec GPS valide dans les 20 km.
+      const nearby = (isCountryMode
+        ? withDistance
+        : withDistance.filter((s) => s.distance !== null && s.distance <= RADIUS_KM)
+      ).sort((a, b) => {
+        // Plus proche = premier ; à égalité, meilleure note = premier
+        const distDiff = (a.distance ?? 999999) - (b.distance ?? 999999);
+        return distDiff !== 0 ? distDiff : (b.rating ?? 0) - (a.rating ?? 0);
+      });
 
       console.log(
-        `Proximité: ${list.length} services avec abonnement actif, ` +
-        `${nearby.length} dans les ${RADIUS_KM} km`
+        `Proximité: ${list.length} services${isCountryMode ? ` (pays=${selectedCountry})` : ''}, ` +
+        `${nearby.length} affichés${isCountryMode ? '' : ` dans les ${RADIUS_KM} km`}`
       );
 
       setServices(nearby);
@@ -286,7 +289,14 @@ export default function ServicesProximite() {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, []);
+  }, [selectedCountry]);
+
+  // Recharger quand le pays sélectionné change (le filtre pays est appliqué côté chargement)
+  useEffect(() => {
+    if (!hasLoadedRef.current) return;
+    loadServices(positionRef.current.lat, positionRef.current.lng);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry]);
 
   // Charger immédiatement au montage avec la position disponible (cache ou défaut Conakry)
   // Ne pas bloquer sur positionReady — la position initiale est déjà valide
@@ -327,6 +337,16 @@ export default function ServicesProximite() {
       });
     }
 
+    // Filtrer par VILLE — match EXACT (insensible casse/espaces) sur la ville EFFECTIVE
+    // (_city = ps.city sinon vendors.city) → seuls les services de CETTE ville.
+    if (selectedCity && selectedCity !== 'all') {
+      const target = selectedCity.trim().replace(/\s+/g, ' ').toLowerCase();
+      result = result.filter((s) => {
+        const c = ((s as any)._city || s.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        return c === target;
+      });
+    }
+
     // Filtrer par recherche
     const q = searchQuery.trim().toLowerCase();
     if (q) {
@@ -342,10 +362,26 @@ export default function ServicesProximite() {
     }
 
     return result;
-  }, [services, selectedCategory, searchQuery]);
+  }, [services, selectedCategory, searchQuery, selectedCity]);
 
-  const handleServiceClick = (serviceId: string) => {
-    navigate(`/services-proximite/${serviceId}`);
+  // Villes disponibles pour le filtre (ville EFFECTIVE des services chargés)
+  const availableCities = useMemo(() => {
+    const set = new Set<string>();
+    services.forEach((s) => {
+      const c = ((s as any)._city || s.city || '').trim().replace(/\s+/g, ' ');
+      if (c) set.add(c);
+    });
+    return [...set].sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [services]);
+
+  const handleServiceClick = (service: any) => {
+    // Boutique-vendeur (sans fiche professional_services) → page boutique du marketplace.
+    // Service pro → page détail du service de proximité.
+    if (service?._source === 'vendor') {
+      navigate(`/shop/${service.id}`); // boutique-vendeur → page boutique directe
+    } else {
+      navigate(`/services-proximite/${service.id}`);
+    }
   };
 
   return (
@@ -408,6 +444,38 @@ export default function ServicesProximite() {
         </div>
       </section>
 
+      {/* Filtre par VILLE (chips défilables) — alimenté par la ville effective des services */}
+      {availableCities.length > 0 && (
+        <section className="px-4 py-3 border-b border-border bg-card">
+          <div className="flex items-center gap-1.5 mb-2">
+            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">Filtrer par ville</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <Button
+              variant={selectedCity === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCity('all')}
+              className="whitespace-nowrap flex-shrink-0 px-3"
+            >
+              Toutes les villes
+            </Button>
+            {availableCities.map((c) => (
+              <Button
+                key={c}
+                variant={selectedCity.toLowerCase() === c.toLowerCase() ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCity(c)}
+                className="whitespace-nowrap flex-shrink-0 px-3"
+              >
+                <MapPin className="mr-1.5 h-3.5 w-3.5" />
+                {c}
+              </Button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Liste des services */}
       <section className="max-w-7xl mx-auto px-4 py-6">
         {loading ? (
@@ -438,7 +506,7 @@ export default function ServicesProximite() {
                 return (
               <button
                 key={service.id}
-                onClick={() => handleServiceClick(service.id)}
+                onClick={() => handleServiceClick(service)}
                 className={cn(
                   "group relative flex flex-col p-4 rounded-2xl text-left",
                   "bg-card border border-border/50",

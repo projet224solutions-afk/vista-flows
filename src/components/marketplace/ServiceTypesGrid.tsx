@@ -179,17 +179,23 @@ const getServiceVisual = (serviceType: ServiceType) => {
 interface ServiceTypesGridProps {
   onBack?: () => void;
   searchQuery?: string;
+  /** Pays sélectionné dans le marketplace ('all' = Mondial). Filtre les services par pays. */
+  country?: string;
+  /** Ville sélectionnée ('all' = toutes). Filtre les services par ville (bidirectionnel). */
+  city?: string;
 }
 
-export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps) {
+export function ServiceTypesGrid({ onBack, searchQuery, country = 'all', city = 'all' }: ServiceTypesGridProps) {
   const navigate = useNavigate();
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceCounts, setServiceCounts] = useState<Record<string, number>>({});
 
+  // Recharger quand le pays OU la ville change pour recalculer les compteurs
   useEffect(() => {
     loadServiceTypes();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country, city]);
 
   const loadServiceTypes = async () => {
     try {
@@ -207,15 +213,57 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
 
       setServiceTypes(types || []);
 
-      // Charger le nombre de services par type
+      // Charger les services actifs (id pour résoudre la localisation effective)
       const { data: counts, error: countError } = await supabase
         .from('professional_services')
-        .select('service_type_id')
+        .select('id, service_type_id, user_id, city')
         .eq('status', 'active');
 
       if (!countError && counts) {
+        let rows = counts as any[];
+        const norm = (s?: string) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        const geoActive = (country && country !== 'all') || (city && city !== 'all');
+
+        if (geoActive) {
+          // Résolution ATOMIQUE ville/pays effectifs (ps sinon vendor) via RPC ; repli durci.
+          const ids = rows.map((r) => r.id).filter(Boolean);
+          const eff = new Map<string, { city: string | null; country: string | null }>();
+          let ok = false;
+          try {
+            const { data: rl, error: rlErr } = await supabase
+              .rpc('get_services_resolved_location', { p_service_ids: ids });
+            if (!rlErr && Array.isArray(rl)) {
+              rl.forEach((r: any) => eff.set(r.service_id, { city: r.effective_city ?? null, country: r.effective_country ?? null }));
+              ok = true;
+            }
+          } catch { /* repli */ }
+          if (!ok) {
+            const ownerIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+            const vmap = new Map<string, any>();
+            if (ownerIds.length > 0) {
+              const { data: vs } = await supabase
+                .from('vendors').select('user_id, city, country').in('user_id', ownerIds);
+              (vs || []).forEach((v: any) => vmap.set(v.user_id, v));
+            }
+            rows.forEach((r) => {
+              const v = vmap.get(r.user_id) || {};
+              const psCity = (r.city || '').trim();
+              eff.set(r.id, { city: psCity || v.city || null, country: v.country || null });
+            });
+          }
+
+          if (country && country !== 'all') {
+            const target = norm(country);
+            rows = rows.filter((r) => norm(eff.get(r.id)?.country || '') === target);
+          }
+          if (city && city !== 'all') {
+            const targetCity = norm(city);
+            rows = rows.filter((r) => norm(eff.get(r.id)?.city || '') === targetCity);
+          }
+        }
+
         const countMap: Record<string, number> = {};
-        counts.forEach((item) => {
+        rows.forEach((item) => {
           countMap[item.service_type_id] = (countMap[item.service_type_id] || 0) + 1;
         });
         setServiceCounts(countMap);
@@ -228,7 +276,7 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
   };
 
   // Filtrer par recherche
-  const filteredTypes = searchQuery
+  const searchFiltered = searchQuery
     ? serviceTypes.filter(type =>
         type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         type.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -236,9 +284,20 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
       )
     : serviceTypes;
 
+  // Pays OU ville précis sélectionné → ne montrer que les types ayant des services
+  // correspondants (compteurs déjà filtrés par pays + ville).
+  const hasGeoFilter = (country && country !== 'all') || (city && city !== 'all');
+  const filteredTypes = hasGeoFilter
+    ? searchFiltered.filter(type => (serviceCounts[type.id] || 0) > 0)
+    : searchFiltered;
+
   const handleServiceClick = (serviceType: ServiceType) => {
     // Naviguer vers la page des services de proximité avec le filtre du type
-    navigate(`/services-proximite?type=${serviceType.code}`);
+    // (+ le pays sélectionné pour que la proximité reste cantonnée à ce pays)
+    const params = new URLSearchParams({ type: serviceType.code });
+    if (country && country !== 'all') params.set('country', country);
+    if (city && city !== 'all') params.set('city', city);
+    navigate(`/services-proximite?${params.toString()}`);
   };
 
   if (loading) {

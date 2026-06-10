@@ -39,6 +39,7 @@ interface MarketplaceProductCardProps {
   currency?: string; // Devise du produit (USD, EUR, GNF, etc.)
   vendor: string;
   vendorId?: string;
+  vendorUserId?: string; // user_id du vendeur (= vendor_certifications.vendor_id) pour la certif
   vendorPublicId?: string; // public_id du vendeur (VND0001, etc.)
   vendorLocation?: string;
   vendorRating?: number;
@@ -65,6 +66,7 @@ export function MarketplaceProductCard({
   currency = 'GNF', // Devise par défaut
   vendor,
   vendorId,
+  vendorUserId,
   vendorPublicId,
   vendorLocation,
   vendorRating = 0,
@@ -90,7 +92,9 @@ export function MarketplaceProductCard({
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
 
-  const { isCertified } = useVendorCertificationCached(vendorId);
+  // Certification PDG : indexée par le USER_ID du vendeur (= vendor_certifications.vendor_id),
+  // PAS par vendors.id → on passe vendorUserId en priorité (sinon le badge ne s'affichait jamais).
+  const { isCertified } = useVendorCertificationCached(vendorUserId || vendorId);
 
   const formatPrice = (value: number) => {
     if (priceLoading) {
@@ -207,7 +211,7 @@ export function MarketplaceProductCard({
             {vendorPublicId && <span className="text-muted-foreground">•</span>}
             {vendor}
             {isCertified && (
-              <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5" />
+              <CertifiedIcon status="CERTIFIE" className="w-5 h-5 flex-shrink-0" />
             )}
           </span>
           {vendorLocation && (

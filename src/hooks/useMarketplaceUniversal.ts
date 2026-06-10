@@ -21,6 +21,42 @@ const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'physique_affilie': 'Produit Physique',
 };
 
+/**
+ * Nettoie un terme de recherche pour un usage SÛR dans les filtres PostgREST.
+ * Retire les caractères qui cassent la syntaxe `.or()` (`,` `(` `)`) et les
+ * jokers `ilike` (`%` `_`) ainsi que les backslashes. Compacte les espaces.
+ */
+function sanitizeSearchTerm(raw?: string): string {
+  return (raw || '')
+    .replace(/[,()%\\_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Retire les accents (é→e, à→a…) pour une recherche insensible aux accents. */
+function stripAccents(s: string): string {
+  // ̀-ͯ = marques diacritiques combinantes (séparées par normalize('NFD'))
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/**
+ * Sonde (mise en cache) : la recherche insensible aux accents est-elle disponible
+ * (colonnes générées `search_text` présentes en base) ? Si la migration n'est pas
+ * encore appliquée, on retombe sur la recherche classique (name/description).
+ */
+let searchTextCapability: Promise<boolean> | null = null;
+function hasUnaccentSearch(): Promise<boolean> {
+  if (!searchTextCapability) {
+    searchTextCapability = supabase
+      .from('products')
+      .select('search_text')
+      .limit(1)
+      .then(({ error }) => !error)
+      .catch(() => false);
+  }
+  return searchTextCapability;
+}
+
 export interface MarketplaceItem {
   id: string;
   name: string;
@@ -148,10 +184,13 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           marketplace_position,
           is_sponsored,
           seller_currency,
-          vendors(business_name, user_id, business_type, country, city, shop_currency),
+          vendors!inner(business_name, user_id, business_type, country, city, shop_currency),
           categories(name)
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        // Règle marketplace côté SERVEUR : seuls les vendeurs en ligne/hybride exposent
+        // des produits (plus de post-filtrage client → moins de sur-récupération).
+        .in('vendors.business_type', ['online', 'hybrid']);
 
       // Filtres
       if (vendorId) query = query.eq('vendor_id', vendorId);
@@ -161,8 +200,34 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           query = query.eq('category_id', category);
         }
       }
-      if (searchQuery?.trim()) {
-        query = query.ilike('name', `%${searchQuery.trim()}%`);
+      // 🔎 Recherche ÉLARGIE (serveur) : nom + description + nom de catégorie.
+      // Insensible aux accents si dispo (colonne search_text) ; sinon repli name/description.
+      const productSearch = sanitizeSearchTerm(searchQuery);
+      if (productSearch) {
+        const useUnaccent = await hasUnaccentSearch();
+        const ors: string[] = [];
+        let catIds: string[] = [];
+        if (useUnaccent) {
+          const term = stripAccents(productSearch).toLowerCase();
+          ors.push(`search_text.ilike.%${term}%`);
+          const { data: cats } = await supabase
+            .from('categories').select('id').ilike('search_name', `%${term}%`);
+          catIds = (cats || []).map((c: any) => c.id).filter(Boolean);
+        } else {
+          ors.push(`name.ilike.%${productSearch}%`, `description.ilike.%${productSearch}%`);
+          const { data: cats } = await supabase
+            .from('categories').select('id').ilike('name', `%${productSearch}%`);
+          catIds = (cats || []).map((c: any) => c.id).filter(Boolean);
+        }
+        if (catIds.length > 0) ors.push(`category_id.in.(${catIds.join(',')})`);
+        query = query.or(ors.join(','));
+      }
+      // 🏙️ Filtre VILLE côté SERVEUR — match EXACT (insensible à la casse) de la ville
+      // choisie. Pas de match sur le 1ᵉʳ mot (sinon « Préfecture De Labé » ramènerait aussi
+      // « Préfecture De Coyah »). → seuls les produits de CETTE ville.
+      if (city && city !== 'all') {
+        const c = sanitizeSearchTerm(city);
+        query = query.or(`city.ilike.${c}`, { referencedTable: 'vendors' });
       }
       if (minPrice && minPrice > 0) query = query.gte('price', minPrice);
       if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
@@ -173,29 +238,16 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .limit(sourceRowLimit);
       if (error) throw error;
 
-      // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
-      // + Filtrage par pays et ville
+      // Reste : seul le filtre PAYS demeure côté client (correspondance normalisée exacte,
+      // robuste aux variations de casse/espaces). business_type + ville sont déjà filtrés serveur.
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
-        if (!vendor) return false; // Pas de vendeur = pas affiché
+        if (!vendor) return false; // sécurité (jointure inner garantit déjà la présence)
 
-        // Exclure les vendeurs qui n'ont pas activé la vente en ligne
-        // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
-        const allowedTypes = ['hybrid', 'online'];
-        if (!vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
-
-        // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
           const vendorCountry = (vendor.country || '').trim().replace(/\s+/g, ' ').toLowerCase();
           const normalizedCountry = country.trim().replace(/\s+/g, ' ').toLowerCase();
           if (vendorCountry !== normalizedCountry) return false;
-        }
-
-        // Filtrage par ville (bidirectionnel: Coyah inclut Coyah Centre, et Coyah Centre inclut Coyah)
-        if (city && city !== 'all') {
-          const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
-          const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!vendorCity.startsWith(normalizedCity) && !normalizedCity.startsWith(vendorCity)) return false;
         }
 
         return true;
@@ -285,15 +337,21 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         `)
         .eq('status', 'active');
 
-      // Filtres
-      if (searchQuery?.trim()) {
-        query = query.or(`business_name.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`);
+      // Filtres — recherche insensible aux accents si dispo, sinon repli nom/description
+      const serviceSearch = sanitizeSearchTerm(searchQuery);
+      if (serviceSearch) {
+        if (await hasUnaccentSearch()) {
+          query = query.ilike('search_text', `%${stripAccents(serviceSearch).toLowerCase()}%`);
+        } else {
+          query = query.or(`business_name.ilike.%${serviceSearch}%,description.ilike.%${serviceSearch}%`);
+        }
       }
       if (minRating && minRating > 0) query = query.gte('rating', minRating);
 
-      // Filtrage par ville (bidirectionnel pour services pro)
+      // Filtrage par ville — match EXACT (insensible à la casse), côté serveur
       if (city && city !== 'all') {
-        query = query.or(`city.ilike.${city.trim()}%,city.ilike.${city.trim().split(' ')[0]}%`);
+        const c = sanitizeSearchTerm(city);
+        query = query.ilike('city', c);
       }
 
       const { data, error } = await query
@@ -301,10 +359,30 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .limit(sourceRowLimit);
       if (error) throw error;
 
-      // Note: professional_services n'a pas de champ country,
-      // donc le filtrage par pays n'est pas applicable pour ce type
+      // Filtrage par pays : professional_services n'a PAS de colonne `country`. Le pays du
+      // service = pays de son vendeur propriétaire (vendors.country) — même source que les
+      // chips de pays, et lisible par les visiteurs anonymes. On résout via user_id.
+      let rows = data || [];
+      if (country && country !== 'all') {
+        const ownerIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+        const ownerCountry: Record<string, string> = {};
+        if (ownerIds.length > 0) {
+          const { data: ownerVendors } = await supabase
+            .from('vendors')
+            .select('user_id, country')
+            .in('user_id', ownerIds);
+          (ownerVendors || []).forEach((v: any) => {
+            if (v.user_id && v.country) ownerCountry[v.user_id] = v.country;
+          });
+        }
+        const normalizedCountry = country.trim().replace(/\s+/g, ' ').toLowerCase();
+        rows = rows.filter(r => {
+          const c = (ownerCountry[r.user_id] || '').trim().replace(/\s+/g, ' ').toLowerCase();
+          return c === normalizedCountry;
+        });
+      }
 
-      return (data || []).map(service => {
+      return rows.map(service => {
         // Construire le tableau d'images à partir de logo_url et cover_image_url
         const images: string[] = [];
         if (service.cover_image_url) images.push(service.cover_image_url);
@@ -355,6 +433,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     ]);
 
     try {
+      // Jointure vendeur : INNER seulement si une ville est filtrée (pour pouvoir filtrer
+      // côté serveur sans faire disparaître les numériques sans vendeur quand aucune ville
+      // n'est sélectionnée). Les numériques restent MONDIAUX (jamais filtrés par pays).
+      const cityActive = !!(city && city !== 'all');
+      const vendorJoin = cityActive
+        ? 'vendors:vendors!digital_products_vendor_id_fkey!inner (business_name, user_id, shop_slug, country, city)'
+        : 'vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug, country, city)';
+
       let query = supabase
         .from("digital_products")
         .select(
@@ -380,7 +466,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           file_type,
           marketplace_position,
           is_sponsored,
-          vendors:vendors!digital_products_vendor_id_fkey (business_name, user_id, shop_slug, country, city)
+          ${vendorJoin}
         `
         )
         .eq("status", "published");
@@ -390,11 +476,20 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         query = query.eq("vendor_id", vendorId);
       }
 
-      // Filtre recherche
-      if (searchQuery?.trim()) {
-        query = query.or(
-          `title.ilike.%${searchQuery.trim()}%,description.ilike.%${searchQuery.trim()}%`
-        );
+      // Filtre recherche (titre + description) — insensible aux accents si dispo, sinon repli
+      const digitalSearch = sanitizeSearchTerm(searchQuery);
+      if (digitalSearch) {
+        if (await hasUnaccentSearch()) {
+          query = query.ilike('search_text', `%${stripAccents(digitalSearch).toLowerCase()}%`);
+        } else {
+          query = query.or(`title.ilike.%${digitalSearch}%,description.ilike.%${digitalSearch}%`);
+        }
+      }
+
+      // 🏙️ Filtre VILLE côté SERVEUR — match EXACT (insensible à la casse) de la ville.
+      if (cityActive) {
+        const c = sanitizeSearchTerm(city);
+        query = query.or(`city.ilike.${c}`, { referencedTable: 'vendors' });
       }
 
       // Filtre prix
@@ -411,27 +506,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         .limit(sourceRowLimit);
       if (error) throw error;
 
-      // Filtrage par pays et ville (via le vendeur associé)
-      const filtered = (data || []).filter((product: any) => {
-        const vendor = product.vendors as any;
-        if (!vendor) return true;
-
-        // Filtrage par pays (normaliser les espaces comme dans loadLocations)
-        if (country && country !== 'all') {
-          const vendorCountry = (vendor.country || '').trim().replace(/\s+/g, ' ').toLowerCase();
-          const normalizedCountry = country.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (vendorCountry !== normalizedCountry) return false;
-        }
-
-        // Filtrage par ville (bidirectionnel: Coyah inclut Coyah Centre, et vice versa)
-        if (city && city !== 'all') {
-          const vendorCity = (vendor.city || '').trim().replace(/\s+/g, ' ').toLowerCase();
-          const normalizedCity = city.trim().replace(/\s+/g, ' ').toLowerCase();
-          if (!vendorCity.startsWith(normalizedCity) && !normalizedCity.startsWith(vendorCity)) return false;
-        }
-
-        return true;
-      });
+      // Ville déjà filtrée côté SERVEUR (voir ci-dessus). Les numériques restent MONDIAUX
+      // (jamais filtrés par pays) → on garde tout le lot renvoyé.
+      const filtered = data || [];
 
       // Récupérer les public_id des vendeurs depuis profiles
       const vendorUserIds = filtered
@@ -606,6 +683,24 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           case 'newest':
             items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             break;
+          case 'visibility': {
+            // Score « Visibilité business » CÔTÉ CLIENT (repli si le backend de ranking est
+            // indisponible) : qualité (note/avis/description/images) + fraîcheur + sponsorisé.
+            // Le backend l'affine ensuite (abonnement/boost) quand il est joignable.
+            const vScore = (it: MarketplaceItem) => {
+              const rating = Number(it.rating) || 0;
+              const reviews = Number(it.reviews_count) || 0;
+              const imgs = Array.isArray(it.images) ? it.images.length : 0;
+              const descLen = (it.description || '').length;
+              const ageDays = Math.max(0, (Date.now() - new Date(it.created_at).getTime()) / 86_400_000);
+              const recency = Math.max(0, 1 - ageDays / 60); // 0..1 (plus récent = mieux, ~60j)
+              const quality = (rating / 5) * 45 + Math.log10(reviews + 1) * 20
+                + Math.min(descLen / 600, 1) * 15 + Math.min(imgs / 5, 1) * 20;
+              return quality + recency * 15 + (it.is_sponsored ? 15 : 0);
+            };
+            items.sort((a, b) => vScore(b) - vScore(a));
+            break;
+          }
           case 'position':
           default:
             // Rotation quotidienne: chaque produit reçoit un score pseudo-aléatoire

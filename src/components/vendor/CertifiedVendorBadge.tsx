@@ -16,6 +16,7 @@ interface CertifiedVendorBadgeProps {
   status: VendorCertificationStatus;
   verifiedAt?: string | null;
   variant?: 'default' | 'compact' | 'detailed';
+  size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
   className?: string;
 }
@@ -24,6 +25,7 @@ export function CertifiedVendorBadge({
   status,
   verifiedAt,
   variant = 'default',
+  size = 'sm',
   showTooltip = true,
   className
 }: CertifiedVendorBadgeProps) {
@@ -117,17 +119,24 @@ export function CertifiedVendorBadge({
     );
   }
 
-  // Variante par défaut
+  // Variante par défaut (taille ajustable)
+  const sizeStyles = {
+    sm: { pad: 'px-2 py-1', icon: 'w-3.5 h-3.5', text: 'text-xs' },
+    md: { pad: 'px-2.5 py-1', icon: 'w-4 h-4', text: 'text-sm' },
+    lg: { pad: 'px-3 py-1.5', icon: 'w-5 h-5', text: 'text-base' },
+  }[size];
+
   const badge = (
     <Badge
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 font-semibold shadow-sm",
+        "inline-flex items-center gap-1.5 font-semibold shadow-sm",
+        sizeStyles.pad,
         config.color,
         className
       )}
     >
-      <Icon className="w-3.5 h-3.5" />
-      <span className="text-xs">{config.label}</span>
+      <Icon className={sizeStyles.icon} />
+      <span className={sizeStyles.text}>{config.label}</span>
     </Badge>
   );
 

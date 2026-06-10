@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ResponsiveContainer } from "@/components/responsive/ResponsiveContainer";
 import { useCart } from "@/contexts/CartContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { getFlagEmoji, getCountryNameFromCode } from "@/data/countryMappings";
+import { getMarketplaceHomeCountry } from "@/services/marketplaceHomeCountry";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -40,6 +43,20 @@ import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTr
 // Couleurs de marque
 const BRAND_BLUE = '#04439e';
 const BRAND_ORANGE = '#ff4000';
+
+// Options de tri (bouton + chips défilables, comme le sélecteur de pays/ville)
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'position', label: 'Équitable' },
+  { value: 'visibility', label: 'Visibilité business' },
+  { value: 'newest', label: 'Plus récents' },
+  { value: 'popular', label: 'Popularité' },
+  { value: 'price_asc', label: 'Prix croissant' },
+  { value: 'price_desc', label: 'Prix décroissant' },
+  { value: 'rating', label: 'Mieux notés' },
+];
+
+// Le seuil de bascule auto + le comptage produits sont décidés CÔTÉ BACKEND
+// (endpoint /api/v2/marketplace/home-country) — source unique de vérité.
 
 /** Loading state with 10s timeout ÔÇö prevents infinite skeleton on mobile PWA */
 function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
@@ -108,6 +125,7 @@ interface Category {
   name: string;
   image_url?: string;
   is_active: boolean;
+  productCount?: number; // nb de produits dans le pays/ville sélectionnés
 }
 
 interface Product {
@@ -126,7 +144,8 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { userCountry } = useCurrency(); // pays détecté par IP/timezone (code ISO-2, ex. 'GN')
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
 
@@ -139,6 +158,11 @@ export default function Marketplace() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedItemType, setSelectedItemType] = useState<'all' | 'product' | 'professional_service' | 'digital_product'>('all');
   const [selectedDigitalCategory, setSelectedDigitalCategory] = useState<string>("all");
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [showSortPicker, setShowSortPicker] = useState(false);
+  // Onglet actif de la barre de type : un seul bouton allumé à la fois (Produits/Pays/Services/Numériques)
+  const [activeTab, setActiveTab] = useState<'products' | 'country' | 'services' | 'digital'>('products');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showBrowseModal, setShowBrowseModal] = useState(false);
   const [sortBy, setSortBy] = useState<'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position' | 'visibility'>("visibility");
@@ -148,6 +172,10 @@ export default function Marketplace() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [vendorName, setVendorName] = useState<string | null>(null);
   const [deferRecommendations, setDeferRecommendations] = useState(false);
+  // Auto-sélection du pays appliquée une seule fois (ne pas écraser un choix manuel ensuite)
+  const autoCountryAppliedRef = useRef(false);
+  // Pays « maison » résolu (pays détecté → chip), pour que « Produits » y ramène depuis Mondial
+  const homeCountryRef = useRef<string>('all');
 
   // Behavior tracking diff├®r├® pour ne pas ralentir l'ouverture initiale
   useBehaviorTracking({ sessionType: 'browse' }, deferRecommendations);
@@ -230,6 +258,62 @@ export default function Marketplace() {
   const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8, shouldLoadRecommendations);
   const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8, shouldLoadRecommendations);
 
+  // --- Filtrage des recommandations par PAYS + VILLE -------------------------
+  // Les 6 carrousels de reco ne portent pas la géo. On résout pays+ville du vendeur
+  // de chaque produit via UNE requête products→vendors(country,city) (clé = id produit),
+  // puis on filtre chaque liste selon le pays ET la ville sélectionnés (match exact).
+  const recoIdOf = (item: any): string | undefined => item?.id || item?.product_id;
+  const [recoGeoMap, setRecoGeoMap] = useState<Record<string, { country: string; city: string }>>({});
+
+  useEffect(() => {
+    const all = [aiPersonalized, aiTrending, discoveryProducts, smartRecs, trendingProducts, recentlyViewed];
+    const ids = [...new Set(all.flatMap((arr) => (arr || []).map(recoIdOf)).filter(Boolean))] as string[];
+    const missing = ids.filter((id) => !(id in recoGeoMap));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, vendors(country, city)')
+        .in('id', missing);
+      if (cancelled || !data) return;
+      setRecoGeoMap((prev) => {
+        const next = { ...prev };
+        data.forEach((p: any) => {
+          next[p.id] = { country: p.vendors?.country || '', city: p.vendors?.city || '' };
+        });
+        // marquer les ids non résolus pour éviter de re-requêter en boucle
+        missing.forEach((id) => { if (!(id in next)) next[id] = { country: '', city: '' }; });
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [aiPersonalized, aiTrending, discoveryProducts, smartRecs, trendingProducts, recentlyViewed, recoGeoMap]);
+
+  // Filtre une liste de reco par pays ET ville sélectionnés (match exact ; 'all' = ignoré).
+  const filterRecoByGeo = <T,>(arr: T[] | undefined): T[] | undefined => {
+    if (!arr) return arr;
+    const byCountry = selectedCountry && selectedCountry !== 'all';
+    const byCity = selectedCity && selectedCity !== 'all';
+    if (!byCountry && !byCity) return arr;
+    const norm = (s?: string) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const tc = norm(selectedCountry), tv = norm(selectedCity);
+    return arr.filter((item: any) => {
+      const g = recoGeoMap[recoIdOf(item) as string];
+      if (!g) return false;
+      if (byCountry && norm(g.country) !== tc) return false;
+      if (byCity && norm(g.city) !== tv) return false;
+      return true;
+    });
+  };
+
+  const aiPersonalizedF = filterRecoByGeo(aiPersonalized);
+  const aiTrendingF = filterRecoByGeo(aiTrending);
+  const discoveryProductsF = filterRecoByGeo(discoveryProducts);
+  const smartRecsF = filterRecoByGeo(smartRecs);
+  const trendingProductsF = filterRecoByGeo(trendingProducts);
+  const recentlyViewedF = filterRecoByGeo(recentlyViewed);
+
   // Charger le nom du vendeur si filtr├® par vendeur
   useEffect(() => {
     if (vendorId) {
@@ -251,36 +335,48 @@ export default function Marketplace() {
     }
   }, [vendorId]);
 
-  // Charger les cat├®gories et les localisations
+  // Charger les localisations au montage
   useEffect(() => {
-    loadCategories();
     loadLocations();
   }, []);
 
-  const loadCategories = async () => {
-    try {
-      // Charger les cat├®gories qui ont au moins un produit actif
-      const { data: categoriesWithProducts, error: countError } = await supabase
-        .from('products')
-        .select('category_id')
-        .eq('is_active', true)
-        .not('category_id', 'is', null);
+  // Charger/Recharger les catégories selon le PAYS + la VILLE (source unique : chips + Explorer)
+  useEffect(() => {
+    loadCategories(selectedCountry, selectedCity);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCountry, selectedCity]);
 
+  const loadCategories = async (countryFilter?: string, cityFilter?: string) => {
+    try {
+      const cf = (countryFilter ?? selectedCountry);
+      const ci = (cityFilter ?? selectedCity);
+      const hasCountry = cf && cf !== 'all';
+      const hasCity = ci && ci !== 'all';
+      const safe = (s: string) => (s || '').replace(/[,()]/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Catégories ayant des produits AFFICHABLES (vendeur en ligne/hybride), filtrées par
+      // le PAYS et la VILLE sélectionnés (match exact) → cohérent avec la grille. C'est la
+      // SOURCE unique (chips marketplace + onglet Catégories de la modale Explorer).
+      let pq: any = supabase
+        .from('products')
+        .select('category_id, vendors!inner(country, city, business_type)')
+        .eq('is_active', true)
+        .not('category_id', 'is', null)
+        .in('vendors.business_type', ['online', 'hybrid']);
+      if (hasCountry) pq = pq.or(`country.ilike.${safe(cf)}`, { referencedTable: 'vendors' });
+      if (hasCity) pq = pq.or(`city.ilike.${safe(ci)}`, { referencedTable: 'vendors' });
+      const { data: rows, error: countError } = await pq;
       if (countError) throw countError;
 
-      // Compter les produits par cat├®gorie
       const categoryProductCount = new Map<string, number>();
-      (categoriesWithProducts || []).forEach(product => {
-        if (product.category_id) {
-          const count = categoryProductCount.get(product.category_id) || 0;
-          categoryProductCount.set(product.category_id, count + 1);
+      (rows || []).forEach((p: any) => {
+        if (p.category_id) {
+          categoryProductCount.set(p.category_id, (categoryProductCount.get(p.category_id) || 0) + 1);
         }
       });
 
-      // Charger uniquement les cat├®gories qui ont des produits
-      const categoryIdsWithProducts = Array.from(categoryProductCount.keys());
-      
-      if (categoryIdsWithProducts.length === 0) {
+      const ids = Array.from(categoryProductCount.keys());
+      if (ids.length === 0) {
         setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
         return;
       }
@@ -289,22 +385,19 @@ export default function Marketplace() {
         .from('categories')
         .select('id, name, image_url, is_active')
         .eq('is_active', true)
-        .in('id', categoryIdsWithProducts)
+        .in('id', ids)
         .order('name');
-
       if (error) throw error;
-      
-      // Trier par nombre de produits (d├®croissant)
-      const sortedCategories = (data || []).sort((a, b) => {
-        const countA = categoryProductCount.get(a.id) || 0;
-        const countB = categoryProductCount.get(b.id) || 0;
-        return countB - countA;
-      });
+
+      // Compteur attaché + tri par nombre de produits (décroissant)
+      const sortedCategories = (data || [])
+        .map((c: any) => ({ ...c, productCount: categoryProductCount.get(c.id) || 0 }))
+        .sort((a, b) => (b.productCount || 0) - (a.productCount || 0));
 
       const allCategory = { id: 'all', name: t('common.all'), is_active: true };
       setCategories([allCategory, ...sortedCategories]);
     } catch (error) {
-      console.error('Erreur chargement cat├®gories:', error);
+      console.error('Erreur chargement catégories:', error);
       setCategories([{ id: 'all', name: t('common.all'), is_active: true }]);
     }
   };
@@ -383,6 +476,69 @@ export default function Marketplace() {
       console.error('Erreur chargement localisations:', error);
     }
   };
+
+  // Auto-pays : par défaut, présélectionner le PAYS DÉTECTÉ (IP/timezone) s'il existe des
+  // vendeurs dans ce pays. Sinon → « Mondial » (all). Vaut pour connecté ET anonyme.
+  // Le pays détecté est un code ISO-2 (ex. 'GN') ; les chips sont des noms ('Guinée') → on
+  // résout d'abord par nom, sinon par code ISO. Appliqué une seule fois (n'écrase pas un
+  // choix manuel ni une vue boutique).
+  useEffect(() => {
+    if (autoCountryAppliedRef.current) return;
+    if (vendorId) { autoCountryAppliedRef.current = true; return; } // vue boutique → ne pas forcer
+
+    // Détection RÉELLE : pays explicite du profil → détecté (profil) → détecté (IP/timezone)
+    const realCandidate = profile?.country || profile?.detected_country || userCountry || '';
+
+    // Secours : cache de géo-détection (peut être un fallback). Utilisé seulement si aucune
+    // détection réelle, et SANS verrouiller (une détection réelle plus tardive pourra corriger).
+    const readGeoCache = (): string => {
+      try {
+        const raw = localStorage.getItem('geo_detection_cache');
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (p?.data?.country && String(p.data.country).length === 2) return p.data.country;
+        }
+      } catch { /* ignore */ }
+      return '';
+    };
+
+    const provisional = !realCandidate;
+    const candidate = realCandidate || readGeoCache();
+    if (!candidate) return;             // aucune info géo encore → attendre
+    if (countries.length === 0) return; // chips pas encore chargés → attendre
+
+    // ── Résolution CLIENT (synchrone, FIABLE) du pays détecté → un chip existant.
+    // Garantit que « Produits » filtre TOUJOURS sur le pays de l'utilisateur, même si
+    // l'endpoint backend est indisponible/non déployé. (Indépendant du seuil.)
+    const norm = (s?: string) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    let clientMatch = countries.find((c) => norm(c) === norm(candidate));
+    if (!clientMatch) {
+      const nm = getCountryNameFromCode(candidate);
+      if (nm) clientMatch = countries.find((c) => norm(c) === norm(nm));
+    }
+    homeCountryRef.current = clientMatch || 'all';
+
+    // 🌍 DÉCISION DE SEUIL : autoritaire côté backend (atomique) quand dispo. Le backend
+    // résout le pays, compte les produits et applique le seuil. Si l'appel échoue, on
+    // reste prudemment sur « Mondial » (le bouton « Produits » fonctionne déjà via le client).
+    let cancelled = false;
+    (async () => {
+      const decision = await getMarketplaceHomeCountry(candidate);
+      if (cancelled || autoCountryAppliedRef.current) return; // ne pas écraser un choix manuel
+
+      // Si le backend a résolu un pays, il fait foi ; sinon on garde la résolution client.
+      const home = decision.homeCountry || clientMatch || 'all';
+      homeCountryRef.current = home;
+
+      // Le seuil décide UNIQUEMENT de l'état de DÉPART (sinon Mondial).
+      const startCountry = (decision.qualifies && decision.homeCountry) ? decision.homeCountry : 'all';
+      setSelectedCountry(startCountry);
+      setActiveTab(startCountry !== 'all' ? 'products' : 'country');
+
+      if (!provisional) autoCountryAppliedRef.current = true;
+    })();
+    return () => { cancelled = true; };
+  }, [user, profile, userCountry, countries, vendorId]);
 
   // Recharger les villes quand le pays change
   useEffect(() => {
@@ -511,6 +667,7 @@ export default function Marketplace() {
                   : "hover:bg-accent"
               )}
               onClick={() => {
+                setActiveTab('products');
                 setSelectedCategory(category.id);
                 setSelectedDigitalCategory('all');
                 setSelectedItemType(category.id === 'all' ? 'all' : 'product');
@@ -527,29 +684,80 @@ export default function Marketplace() {
         <div className="flex justify-center gap-2">
           <button
             onClick={() => {
-              setSelectedItemType('professional_service');
+              // « Produits » = accueil : onglet produits + retour au pays détecté (maison).
+              // itemType='all' → e-commerce du pays + produits numériques (mondiaux).
+              setActiveTab('products');
+              setSelectedItemType('all');
               setSelectedDigitalCategory('all');
+              setShowCountryPicker(false);
+              autoCountryAppliedRef.current = true;
+              setSelectedCountry(homeCountryRef.current); // produits du pays par défaut
             }}
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
-              selectedItemType === 'professional_service' 
-                ? 'text-white shadow-sm' 
+              activeTab === 'products'
+                ? 'text-white shadow-sm'
+                : 'bg-card border border-border hover:border-primary/50'
+            )}
+            style={activeTab === 'products' ? { backgroundColor: BRAND_BLUE } : undefined}
+          >
+            <Package className="w-3.5 h-3.5" />
+            Produits
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('country');
+              setSelectedItemType('all');
+              setSelectedDigitalCategory('all');
+              setShowCountryPicker((v) => !v);
+            }}
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
+              activeTab === 'country'
+                ? 'text-white shadow-sm'
+                : 'bg-card border border-border hover:border-primary/50'
+            )}
+            style={activeTab === 'country' ? { backgroundColor: BRAND_BLUE } : undefined}
+            title="Choisir un pays"
+          >
+            {activeTab === 'country' && selectedCountry !== 'all'
+              ? <span className="text-sm leading-none shrink-0" aria-hidden>{getFlagEmoji(selectedCountry) || '📍'}</span>
+              : <Globe className="w-3.5 h-3.5" />}
+            <span className="truncate">
+              {activeTab === 'country' && selectedCountry !== 'all' ? selectedCountry : 'Mondial'}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('services');
+              setSelectedItemType('professional_service');
+              setSelectedDigitalCategory('all');
+              setShowCountryPicker(false);
+            }}
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
+              activeTab === 'services'
+                ? 'text-white shadow-sm'
                 : 'bg-card border border-border hover:border-secondary/50'
             )}
-            style={selectedItemType === 'professional_service' ? { backgroundColor: BRAND_BLUE } : undefined}
+            style={activeTab === 'services' ? { backgroundColor: BRAND_BLUE } : undefined}
           >
             <Briefcase className="w-3.5 h-3.5" />
             Services Pro
           </button>
           <button
-            onClick={() => setSelectedItemType('digital_product')}
+            onClick={() => {
+              setActiveTab('digital');
+              setSelectedItemType('digital_product');
+              setShowCountryPicker(false);
+            }}
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
-              selectedItemType === 'digital_product' 
-                ? 'text-white shadow-sm' 
+              activeTab === 'digital'
+                ? 'text-white shadow-sm'
                 : 'bg-card border border-border hover:border-accent/50'
             )}
-            style={selectedItemType === 'digital_product' ? { backgroundColor: BRAND_ORANGE } : undefined}
+            style={activeTab === 'digital' ? { backgroundColor: BRAND_ORANGE } : undefined}
           >
             <Laptop className="w-3.5 h-3.5" />
             Numériques
@@ -596,54 +804,123 @@ export default function Marketplace() {
         </section>
       )}
 
+      {/* Liste des pays - affichée seulement quand on clique « Mondial » (chips défilables) */}
+      {showCountryPicker && (
+      <section className="px-2 py-1.5 border-b border-border bg-muted/30">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          {/* Mondial = tous les pays (fallback / vue monde entier) */}
+          <button
+            onClick={() => { setActiveTab('country'); autoCountryAppliedRef.current = true; setSelectedCountry('all'); setShowCountryPicker(false); }}
+            className={cn(
+              'flex items-center gap-1 px-2.5 h-8 rounded-lg shrink-0 transition-all text-[11px] sm:text-xs font-medium border',
+              selectedCountry === 'all'
+                ? 'text-white border-transparent shadow-sm'
+                : 'bg-card border-border hover:border-primary/40'
+            )}
+            style={selectedCountry === 'all' ? { backgroundColor: BRAND_BLUE } : undefined}
+          >
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            Mondial
+          </button>
+          {countries.map((country) => {
+            const isSelected = selectedCountry === country;
+            const flag = getFlagEmoji(country); // drapeau (ou '' si pays inconnu)
+            return (
+              <button
+                key={country}
+                onClick={() => { setActiveTab('country'); autoCountryAppliedRef.current = true; setSelectedCountry(country); setShowCountryPicker(false); }}
+                className={cn(
+                  'flex items-center gap-1 px-2.5 h-8 rounded-lg shrink-0 whitespace-nowrap transition-all text-[11px] sm:text-xs font-medium border',
+                  isSelected
+                    ? 'text-white border-transparent shadow-sm'
+                    : 'bg-card border-border hover:border-primary/40'
+                )}
+                style={isSelected ? { backgroundColor: BRAND_BLUE } : undefined}
+              >
+                {flag
+                  ? <span className="text-sm leading-none shrink-0" aria-hidden>{flag}</span>
+                  : <MapPin className="w-3 h-3 shrink-0" />}
+                {country}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      )}
+
+      {/* Liste des VILLES — affichée seulement au clic sur « Toutes les villes » (chips défilables) */}
+      {showCityPicker && cities.length > 0 && (
+        <section className="px-2 py-1.5 border-b border-border bg-muted/30">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+            <button
+              onClick={() => { setSelectedCity('all'); setShowCityPicker(false); }}
+              className={cn(
+                'flex items-center gap-1 px-2.5 h-8 rounded-lg shrink-0 whitespace-nowrap transition-all text-[11px] sm:text-xs font-medium border',
+                selectedCity === 'all'
+                  ? 'text-white border-transparent shadow-sm'
+                  : 'bg-card border-border hover:border-primary/40'
+              )}
+              style={selectedCity === 'all' ? { backgroundColor: BRAND_BLUE } : undefined}
+            >
+              <MapPin className="w-3 h-3 shrink-0" />
+              Toutes les villes
+            </button>
+            {cities.map((city) => {
+              const isSel = selectedCity === city;
+              return (
+                <button
+                  key={city}
+                  onClick={() => { setSelectedCity(city); setShowCityPicker(false); }}
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 h-8 rounded-lg shrink-0 whitespace-nowrap transition-all text-[11px] sm:text-xs font-medium border',
+                    isSel
+                      ? 'text-white border-transparent shadow-sm'
+                      : 'bg-card border-border hover:border-primary/40'
+                  )}
+                  style={isSel ? { backgroundColor: BRAND_BLUE } : undefined}
+                >
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  {city}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Filters & View Controls */}
       <section className="px-2 py-1.5 border-b border-border">
         {/* Premiere ligne de filtres - scrollable horizontalement */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-          {/* Tri */}
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[100px] sm:min-w-[120px] text-[10px] sm:text-xs border-border bg-background">
-              <ArrowUpDown className="w-3 h-3 mr-1 shrink-0" />
-              <span className="truncate"><SelectValue /></span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="position">Équitable</SelectItem>
-              <SelectItem value="visibility">Visibilité business</SelectItem>
-              <SelectItem value="newest">Plus récents</SelectItem>
-              <SelectItem value="popular">Popularité</SelectItem>
-              <SelectItem value="price_asc">Prix croissant</SelectItem>
-              <SelectItem value="price_desc">Prix décroissant</SelectItem>
-              <SelectItem value="rating">Mieux notés</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Tri — bouton qui déroule les options en chips (comme Mondial/Ville) */}
+          <button
+            onClick={() => setShowSortPicker((v) => !v)}
+            className={cn(
+              'h-8 shrink-0 w-auto min-w-[100px] sm:min-w-[140px] px-2.5 rounded-md flex items-center gap-1 text-[10px] sm:text-xs font-medium transition-all border',
+              showSortPicker ? 'text-white border-transparent shadow-sm' : 'bg-background border-border hover:border-primary/40'
+            )}
+            style={showSortPicker ? { backgroundColor: BRAND_BLUE } : undefined}
+            title="Trier"
+          >
+            <ArrowUpDown className="w-3 h-3 shrink-0" />
+            <span className="truncate">{SORT_OPTIONS.find((o) => o.value === sortBy)?.label || 'Trier'}</span>
+          </button>
 
-          {/* Filtre Pays */}
-          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[105px] sm:min-w-[130px] text-[10px] sm:text-xs border-border bg-background">
-              <Globe className="w-3 h-3 mr-1 shrink-0" />
-              <span className="truncate"><SelectValue placeholder="Tous les pays" /></span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les pays</SelectItem>
-              {countries.map((country) => (
-                <SelectItem key={country} value={country}>{country}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Filtre Ville */}
-          <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="h-8 shrink-0 w-auto min-w-[100px] sm:min-w-[140px] text-[10px] sm:text-xs border-border bg-background">
-              <MapPin className="w-3 h-3 mr-1 shrink-0" />
-              <span className="truncate"><SelectValue placeholder="Toutes villes" /></span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les villes</SelectItem>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city}>{city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filtre Ville — bouton à sa place ; clic = déroule la liste des villes (chips) */}
+          <button
+            onClick={() => setShowCityPicker((v) => !v)}
+            className={cn(
+              'h-8 shrink-0 w-auto min-w-[105px] sm:min-w-[140px] px-2.5 rounded-md flex items-center gap-1 text-[10px] sm:text-xs font-medium transition-all border',
+              showCityPicker || selectedCity !== 'all'
+                ? 'text-white border-transparent shadow-sm'
+                : 'bg-background border-border hover:border-primary/40'
+            )}
+            style={(showCityPicker || selectedCity !== 'all') ? { backgroundColor: BRAND_BLUE } : undefined}
+            title="Filtrer par ville"
+          >
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span className="truncate">{selectedCity === 'all' ? 'Toutes les villes' : selectedCity}</span>
+          </button>
 
           {!isMobile && (
             <div className="flex items-start gap-1 rounded-lg shrink-0">
@@ -702,13 +979,38 @@ export default function Marketplace() {
         )}
       </section>
 
-      {/* AI Recommendations - Alibaba style */}
+      {/* Liste des options de TRI — affichée au clic sur le bouton de tri (chips défilables) */}
+      {showSortPicker && (
+        <section className="px-2 py-1.5 border-b border-border bg-muted/30">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+            {SORT_OPTIONS.map((o) => {
+              const isSel = sortBy === o.value;
+              return (
+                <button
+                  key={o.value}
+                  onClick={() => { setSortBy(o.value as typeof sortBy); setShowSortPicker(false); }}
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 h-8 rounded-lg shrink-0 whitespace-nowrap transition-all text-[11px] sm:text-xs font-medium border',
+                    isSel ? 'text-white border-transparent shadow-sm' : 'bg-card border-border hover:border-primary/40'
+                  )}
+                  style={isSel ? { backgroundColor: BRAND_BLUE } : undefined}
+                >
+                  <ArrowUpDown className="w-3 h-3 shrink-0" />
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* AI Recommendations - Alibaba style (contenu filtré par pays, voir reco*Filtered) */}
       {selectedCategory === 'all' && selectedItemType !== 'professional_service' && selectedItemType !== 'digital_product' && (
         <section className="px-2 sm:px-4 py-2">
           <AIRecommendationSection
             title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
             subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
-            products={aiPersonalized}
+            products={aiPersonalizedF}
             isLoading={loadingAIPersonalized}
             icon="sparkles"
             showReason={true}
@@ -719,7 +1021,7 @@ export default function Marketplace() {
           <AIRecommendationSection
             title={t('marketplace.trendingNow') || 'Tendances du moment'}
             subtitle={t('marketplace.trendingSubtitle') || 'Les plus populaires cette semaine'}
-            products={aiTrending}
+            products={aiTrendingF}
             isLoading={loadingAITrending}
             icon="trending"
             showReason={false}
@@ -730,7 +1032,7 @@ export default function Marketplace() {
           <AIRecommendationSection
             title="À découvrir"
             subtitle="Des produits que vous n'avez pas encore explorés"
-            products={discoveryProducts}
+            products={discoveryProductsF}
             isLoading={loadingDiscovery}
             icon="gift"
             showReason={true}
@@ -741,7 +1043,7 @@ export default function Marketplace() {
           <AIRecommendationSection
             title="Recommandé pour vous"
             subtitle="Basé sur vos achats et consultations"
-            products={smartRecs}
+            products={smartRecsF}
             isLoading={loadingSmartRecs}
             icon="sparkles"
             showReason={true}
@@ -752,7 +1054,7 @@ export default function Marketplace() {
           <AIRecommendationSection
             title="Populaire en ce moment"
             subtitle="Les produits les plus consult├®s"
-            products={trendingProducts}
+            products={trendingProductsF}
             isLoading={loadingTrendingProducts}
             icon="trending"
             showReason={false}
@@ -763,7 +1065,7 @@ export default function Marketplace() {
           <AIRecommendationSection
             title="R├®cemment consult├®s"
             subtitle="Vos derni├¿res visites"
-            products={recentlyViewed}
+            products={recentlyViewedF}
             isLoading={loadingRecentlyViewed}
             icon="clock"
             showReason={false}
@@ -776,9 +1078,11 @@ export default function Marketplace() {
       <section className="px-2 sm:px-4 py-2">
         {/* Si "Services Pro" est s├®lectionn├®, afficher la grille des types de services */}
         {selectedItemType === 'professional_service' ? (
-          <ServiceTypesGrid 
-            onBack={() => setSelectedItemType('all')} 
+          <ServiceTypesGrid
+            onBack={() => { setActiveTab('products'); setSelectedItemType('all'); }}
             searchQuery={searchQuery}
+            country={selectedCountry}
+            city={selectedCity}
           />
         ) : (
           <>
@@ -820,6 +1124,7 @@ export default function Marketplace() {
                     currency={item.currency || 'GNF'}
                     vendor={item.vendor_name}
                     vendorId={item.vendor_id}
+                    vendorUserId={item.vendor_user_id}
                     vendorPublicId={item.vendor_public_id}
                     vendorLocation={item.address}
                     vendorRating={item.rating}
@@ -883,12 +1188,15 @@ export default function Marketplace() {
         onOpenChange={setShowBrowseModal}
         categories={categories}
         onSelectCategory={(catId) => {
+          setActiveTab('products');
           setSelectedCategory(catId);
           setSelectedDigitalCategory('all');
           setSelectedItemType(catId === 'all' ? 'all' : 'product');
         }}
         onSelectProduct={(productId) => handleProductClick(productId)}
-        onSelectVendor={(vendorId) => navigate(`/marketplace?vendor=${vendorId}`)}
+        onSelectVendor={(vendorId) => navigate(`/shop/${vendorId}`)}
+        country={selectedCountry}
+        city={selectedCity}
       />
     </div>
   );
