@@ -18,29 +18,37 @@ import path from 'path';
 
 const OUT = path.join('scripts', 'security', '.purge-replacements.txt'); // gitignoré
 
-// 1) Extraire les JWT fuités présents dans l'historique des .env.example
-const hist = execSync(
-  'git log --all -p -- .env.example backend/.env.example',
-  { maxBuffer: 1024 * 1024 * 200, encoding: 'utf8' }
-);
-const jwts = [...new Set(hist.match(/eyJ[A-Za-z0-9_-]{16,}\.eyJ[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{20,}/g) || [])];
+// 1) Extraire TOUS les secrets fuités présents dans TOUT l'historique (tous fichiers)
+//    — JWT Supabase (anon/service_role) ET clés Stripe (sk_live/sk_test/rk_*/whsec_).
+const hist = execSync('git log --all -p', { maxBuffer: 1024 * 1024 * 400, encoding: 'utf8' });
+const added = hist.split('\n').filter((l) => l.startsWith('+')).join('\n');
 
-if (jwts.length === 0) {
-  console.log('Aucun JWT trouvé dans l’historique des .env.example. Rien à purger (ou déjà fait).');
+const jwts = added.match(/eyJ[A-Za-z0-9_-]{16,}\.eyJ[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{20,}/g) || [];
+const stripe = added.match(/(sk|rk)_(live|test)_[0-9a-zA-Z]{20,}|whsec_[0-9a-zA-Z]{20,}/g) || [];
+const tokens = [...new Set([...jwts, ...stripe])];
+
+if (tokens.length === 0) {
+  console.log('Aucun secret connu trouvé dans l’historique. Rien à purger (ou déjà fait).');
   process.exit(0);
 }
 
-// 2) Identifier les rôles (pour info)
-const roleOf = (jwt) => {
-  try { return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString()).role || '?'; }
-  catch { return '?'; }
+// 2) Identifier le type (pour info, sans dévoiler la valeur)
+const typeOf = (tok) => {
+  if (tok.startsWith('eyJ')) {
+    try { return 'supabase:' + (JSON.parse(Buffer.from(tok.split('.')[1], 'base64').toString()).role || '?'); }
+    catch { return 'jwt:?'; }
+  }
+  if (tok.startsWith('sk_live_') || tok.startsWith('rk_live_')) return 'stripe:LIVE-secret';
+  if (tok.startsWith('sk_test_') || tok.startsWith('rk_test_')) return 'stripe:test-secret';
+  if (tok.startsWith('whsec_')) return 'stripe:webhook-secret';
+  return 'inconnu';
 };
-console.log('Tokens fuités détectés dans l’historique :');
-for (const j of jwts) console.log(`  - role=${roleOf(j)}  (${j.slice(0, 24)}…)`);
+console.log(`Secrets fuités détectés dans l’historique (${tokens.length} uniques) :`);
+for (const t of tokens) console.log(`  - ${typeOf(t).padEnd(24)} (${t.slice(0, 12)}…)`);
 
 // 3) Écrire le fichier de remplacement filter-repo (TOKEN==>***REMOVED***)
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, jwts.map((j) => `${j}==>***REMOVED-SUPABASE-KEY***`).join('\n') + '\n');
+fs.writeFileSync(OUT, tokens.map((t) => `${t}==>***REMOVED-SECRET***`).join('\n') + '\n');
 console.log(`\nFichier de remplacement écrit (gitignoré) : ${OUT}`);
 
 console.log(`
