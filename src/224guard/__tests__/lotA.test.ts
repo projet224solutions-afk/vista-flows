@@ -76,7 +76,7 @@ describe('PatternMatcher — JWT role-aware', () => {
   it('détecte Stripe secret, Redis URL, clé privée (CRITIQUE)', () => {
     expect(m.match('sk_live_' + '4eC39HqLyjWDarjtT1zdp7dcABCDEF')[0]?.patternKey).toBe('stripe.secret');
     expect(m.match('rediss://default:' + 'SuperP@ssw0rd' + '@host.upstash.io:6379')[0]?.patternKey).toBe('redis.url');
-    expect(m.match('-----BEGIN RSA PRIVATE KEY-----\nMIIE...')[0]?.patternKey).toBe('crypto.private_key');
+    expect(m.match('-----BEGIN ' + 'RSA PRIVATE KEY-----\nMIIE...')[0]?.patternKey).toBe('crypto.private_key');
   });
   it('classe Firebase apiKey comme PUBLIQUE (pas critique)', () => {
     const r = m.match('apiKey: "AIza' + 'SyA1234567890abcdefghijklmnopqrstuv"');
