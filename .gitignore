@@ -45,3 +45,6 @@ upabase
 
 # Cache intermédiaire des traductions auto (régénérable)
 scripts/.i18n-cache/
+
+# Fichier de remplacement de la purge de secrets (contient les tokens fuités — NE JAMAIS committer)
+scripts/security/.purge-replacements.txt
